@@ -313,6 +313,78 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         super().setUp()
         self.importer = self.setup_importer()
 
+    def test_importer_edit_album_header_album(self):
+        """Edit an album-level field (album) using the import header section,
+        apply changes, and verify all items and the album are updated.
+        """
+        # Show only album in the header and title per track.
+        self.config["edit"]["itemfields"] = "title"
+        self.config["edit"]["albumfields"] = "album"
+
+        self.run_mocked_interpreter(
+            {"replacements": {"Tag Album": "Modified Album"}},
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        # All items should have the new album name.
+        assert all(i.album == "Modified Album" for i in self.lib.items())
+
+        # The imported album record should also be updated.
+        assert self.lib.albums()[0].album == "Modified Album"
+
+    def test_importer_edit_album_header_and_items(self):
+        """Edit both the album header and per-track fields simultaneously."""
+        self.config["edit"]["itemfields"] = "title"
+        self.config["edit"]["albumfields"] = "album"
+
+        self.run_mocked_interpreter(
+            {
+                "replacements": {
+                    "Tag Album": "Modified Album",
+                    "Tag Track": "Modified Track",
+                }
+            },
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        # All items should have the new album and new title.
+        assert all(i.album == "Modified Album" for i in self.lib.items())
+        assert all("Modified Track" in i.title for i in self.lib.items())
+        assert self.lib.albums()[0].album == "Modified Album"
+
+    def test_importer_edit_album_header_skip_no_albumfields(self):
+        """When albumfields is empty, no header section is produced; editing
+        works as before.
+        """
+        self.config["edit"]["itemfields"] = "title"
+        self.config["edit"]["albumfields"] = ""
+
+        self.run_mocked_interpreter(
+            {"replacements": {"Tag Track": "Edited Track"}},
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        assert all("Edited Track" in i.title for i in self.lib.items())
+
+    def test_importer_edit_album_header_albumartist(self):
+        """Edit albumartist in the header (default albumfields)."""
+        self.run_mocked_interpreter(
+            {"replacements": {"Tag Artist": "Modified Artist"}},
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        assert all(
+            i.albumartist is not None and "Modified Artist" in i.albumartist
+            for i in self.lib.items()
+        ) or all(
+            i.albumartist is None and "Tag Artist" in i.artist
+            for i in self.lib.items()
+        )
+
     def test_edit_apply_asis(self):
         """Edit the album field for all items in the library, apply changes,
         using the original item tags.

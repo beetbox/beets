@@ -40,10 +40,13 @@ adds two new options to the user prompt:
 - ``edit Candidates``: use this option for using a candidate's metadata as the
   starting point for your edits.
 
-Please note that currently the interactive usage of the plugin will only allow
-you to change the item-level fields. In case you need to edit the album-level
-fields, the recommended approach is to invoke the plugin via the command line in
-album mode (``beet edit -a QUERY``) after the import.
+When editing an album during import (i.e., after you have chosen ``eDit`` or
+``edit Candidates`` for an album import), the fields listed in ``albumfields``
+are shown as a YAML header section before the per-track documents. This allows
+you to edit album-level fields (such as ``album``, ``albumartist``, or any
+configured ``albumfields`` entry) for all tracks at once. Fields that appear in
+both ``itemfields`` and ``albumfields`` are shown only in the header section,
+not per-track.
 
 Also, please be aware that the ``edit Candidates`` choice can only be used with
 the matches found during the initial search (and currently not supporting the
@@ -60,4 +63,5 @@ The available options are:
 - **itemfields**: A space-separated list of item fields to include in the editor
   by default. Default: ``track title artist album``
 - **albumfields**: The same when editing albums (with the ``-a`` option).
-  Default: ``album albumartist``
+  Default: ``album albumartist``. These fields are also shown as a YAML header
+  during interactive import when editing an album import.
