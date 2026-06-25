@@ -24,9 +24,14 @@ New features
 - :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
   ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
   :doc:`plugins/fetchart` plugin can retrieve.
+<<<<<<< HEAD
 - :ref:`modify-cmd`: Support ``+=`` and ``-=`` operators to add or remove
   individual values from multi-valued fields without replacing the whole field.
   :bug:`6587`
+- :doc:`plugins/edit`: The interactive import editor now shows album-level
+  fields (as configured by ``albumfields``) as a YAML header section when
+  editing an album import. Fields that appear in both ``itemfields`` and
+  ``albumfields`` are shown only in the header, not per-track.
 
 Bug fixes
 ~~~~~~~~~
