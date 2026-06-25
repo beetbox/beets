@@ -30,6 +30,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - :ref:`import-cmd`: Fix duplicate album merge during import when running in
   threaded mode. The merge action no longer creates a duplicate folder or
   reports ``could not get filesize`` errors. :bug:`6601`
@@ -123,6 +125,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - :ref:`import-cmd`: Multi-disc album detection now recognizes ``cassette``,
   ``digital media``, and ``vinyl`` as disc markers (e.g. ``vinyl 1``, ``12 vinyl
   2``), in addition to the existing ``disc``, ``disk``, and ``cd`` markers.
@@ -201,6 +205,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - :ref:`import-cmd` Automatically remux WAV files containing MP3 streams
   (``WAVE_FORMAT_MPEGLAYER3``) to proper MP3 files during import, instead of
   silently importing them with incorrect metadata. :bug:`6455`
@@ -276,6 +282,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - :doc:`plugins/deezer`: Fix Various Artists albums being tagged with a
   localized string instead of the configured ``va_name``. Detection now uses
   Deezer's artist ID rather than the artist name string. :bug:`4956`
@@ -350,6 +358,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - :doc:`plugins/missing`: Fix ``--album`` mode incorrectly reporting albums
   already in the library as missing. The comparison now correctly uses
   ``mb_releasegroupid``.
@@ -421,6 +431,8 @@ Other changes
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - Tests that depend on the optional ``langdetect`` package are now skipped when
   the package is not installed. :bug:`6421`
 
@@ -466,6 +478,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - :doc:`plugins/ftintitle`: Fix handling of multiple featured artists with
   ampersand.
@@ -522,6 +536,8 @@ Other changes
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - :doc:`plugins/musicbrainz`: Fix crash when release mediums lack the ``tracks``
   key. :bug:`6302`
 - :doc:`plugins/musicbrainz`: Fix search terms escaping. :bug:`6347`
@@ -548,6 +564,8 @@ Other changes
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - Make ``packaging`` a required dependency. :bug:`6332`
 
@@ -605,6 +623,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - :doc:`/plugins/lastgenre`: Canonicalize genres when ``force`` and
   ``keep_existing`` are ``on``, yet no genre info on lastfm could be found.
@@ -724,6 +744,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - |BeetsPlugin|: load the last plugin class defined in the plugin namespace.
   :bug:`6093`
 
@@ -774,6 +796,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - :doc:`plugins/musicbrainz` Refresh flexible MusicBrainz metadata on reimport
   so format changes are applied. :bug:`6036`
@@ -873,6 +897,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - :doc:`plugins/musicbrainz`: fix regression where user configured
   :conf:`plugins.musicbrainz:extra_tags` have been read incorrectly. :bug:`5788`
@@ -992,6 +1018,8 @@ Other changes
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - :doc:`/reference/pathformat`: Fixed a regression where path legalization
   incorrectly removed parts of user-configured path formats that followed a dot
   (**.**). :bug:`5771`
@@ -1026,6 +1054,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - :doc:`plugins/thumbnails`: Fix API call to GIO on big endian architectures
   (like s390x) in thumbnails plugin. :bug:`5708`
@@ -1109,6 +1139,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - Check if running python from the Microsoft Store and provide feedback to
   install from python.org. :bug:`5467`
 - Fix bug where matcher doesn't consider medium number when importing. This
@@ -1149,6 +1181,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - :doc:`plugins/ftintitle`: The detection of a "feat. X" part in a song title
   does not produce any false positives caused by words like "and" or "with"
@@ -1374,6 +1408,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
+
 - Improve ListenBrainz error handling. :bug:`5459`
 - :doc:`/plugins/deezer`: Improve requests error handling.
 - :doc:`/plugins/lastimport`: Improve error handling in the ``process_tracks``
@@ -1591,6 +1627,8 @@ Other new things
 
 Bug fixes
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - :doc:`/plugins/lyrics`: Fix a crash when Beautiful Soup is not installed.
   :bug:`4027`
@@ -4158,6 +4196,8 @@ dependency, the requests_ module.
 
 New stuff
 ~~~~~~~~~
+
+- Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
 - Added a :ref:`config-cmd` command to manage your configuration. It can show
   you what you currently have in your config file, point you at where the file
