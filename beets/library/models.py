@@ -1467,6 +1467,56 @@ class DefaultTemplateFunctions:
             lambda i: i.album_id is not None,
         )
 
+    def tmpl_tunique(
+        self,
+        keys: str | None = None,
+        disam: str | None = None,
+        bracket: str | None = None,
+    ) -> str:
+        """Generate a string that is guaranteed to be unique among all
+        items in the same album that share the same set of keys.
+
+        A field from "disam" is used in the string if one is sufficient to
+        disambiguate the tracks. Otherwise, a fallback opaque value is
+        used. Both "keys" and "disam" should be given as
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
+        """
+        if not self.item or not self.lib:
+            return ""
+
+        if isinstance(self.item, Item):
+            item_id = self.item.id
+        else:
+            raise NotImplementedError("tunique is only implemented for items")
+
+        if item_id is None:
+            return ""
+
+        # Only applies to items in an album.
+        album_id = self.item.get("album_id")
+        if album_id is None:
+            return ""
+
+        resolved_keys = keys or beets.config["tunique"]["keys"].as_str()
+        key_fields = resolved_keys.split() or ["title"]
+        query = dbcore.AndQuery(
+            [dbcore.MatchQuery(f, self.item.get(f)) for f in key_fields]
+            + [dbcore.MatchQuery("album_id", album_id)]
+        )
+
+        return self._tmpl_unique(
+            "tunique",
+            keys,
+            disam,
+            bracket,
+            item_id,
+            self.item,
+            lambda i: i.album_id is None,
+            query=query,
+        )
+
     def _tmpl_unique_memokey(
         self,
         name: str | None,
@@ -1488,6 +1538,7 @@ class DefaultTemplateFunctions:
         item_id: int,
         db_item: LibModel,
         skip_item: Callable[[LibModel], bool],
+        query: dbcore.Query | None = None,
     ) -> str:
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
@@ -1506,8 +1557,8 @@ class DefaultTemplateFunctions:
         "skip_item" is a function that must return True when the template
         should return an empty string.
 
-        "initial_subqueries" is a list of subqueries that should be included
-        in the query to find the ambiguous items.
+        "query" is a pre-built query to use instead of building one from
+        ``db_item.duplicates_query(keys)``.
         """
         lib = self.lib
         if lib is None:
@@ -1538,26 +1589,27 @@ class DefaultTemplateFunctions:
             bracket_r = ""
 
         # Find matching items to disambiguate with.
-        query = db_item.duplicates_query(keys_list)
-        ambigous_items = (
+        if query is None:
+            query = db_item.duplicates_query(keys_list)
+        ambiguous_items = (
             lib.items(query) if isinstance(db_item, Item) else lib.albums(query)
         )
 
         # If there's only one item to matching these details, then do
         # nothing.
-        if len(ambigous_items) == 1:
+        if len(ambiguous_items) == 1:
             lib._memotable[memokey] = ""
             return ""
 
         # Find the first disambiguator that distinguishes the items.
         for disambiguator in disam_list:
             # Get the value for each item for the current field.
-            disam_values = {s.get(disambiguator, "") for s in ambigous_items}
+            disam_values = {s.get(disambiguator, "") for s in ambiguous_items}
 
             # If the set of unique values is equal to the number of
             # items in the disambiguation set, we're done -- this is
             # sufficient disambiguation.
-            if len(disam_values) == len(ambigous_items):
+            if len(disam_values) == len(ambiguous_items):
                 break
         else:
             # No disambiguator distinguished all fields.
