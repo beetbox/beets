@@ -44,6 +44,7 @@ from beets.util import (
     clean_module_tempdir,
     syspath,
 )
+from beets.util.functemplate import template
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -60,7 +61,7 @@ if TYPE_CHECKING:
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
-def has_program(cmd: str, args: Iterable[str] = ["--version"]) -> bool:
+def has_program(cmd: str, args: Iterable[str] = ("--version",)) -> bool:
     """Returns `True` if `cmd` can be executed."""
     full_cmd = [cmd, *args]
     try:
@@ -166,7 +167,22 @@ class IOMixin(RunMixin):
         return self.io.getoutput()
 
 
-class TestHelper(RunMixin, ConfigMixin):
+class PathsMixin:
+    resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
+
+    @cached_property
+    def temp_dir_path(self) -> Path:
+        return Path(self.create_temp_dir())
+
+    def create_temp_dir(self, **kwargs: Any) -> str:
+        return mkdtemp(**kwargs)
+
+    def remove_temp_dir(self) -> None:
+        """Delete the temporary directory created by `create_temp_dir`."""
+        shutil.rmtree(self.temp_dir_path)
+
+
+class TestHelper(RunMixin, PathsMixin, ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
     This mixin provides methods to isolate beets' global state.
@@ -203,13 +219,7 @@ class TestHelper(RunMixin, ConfigMixin):
 
     lib: Library
 
-    resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
-
     db_on_disk: ClassVar[bool] = False
-
-    @cached_property
-    def temp_dir_path(self) -> Path:
-        return Path(self.create_temp_dir())
 
     @cached_property
     def temp_dir(self) -> bytes:
@@ -259,11 +269,12 @@ class TestHelper(RunMixin, ConfigMixin):
 
         self.config["directory"] = str(self.lib_path)
 
-        if self.db_on_disk:
-            dbpath = util.bytestring_path(self.config["library"].as_filename())
-        else:
-            dbpath = ":memory:"
-        self.lib = Library(dbpath, self.libdir)
+        dbpath = (
+            util.bytestring_path(self.config["library"].as_filename())
+            if self.db_on_disk
+            else ":memory:"
+        )
+        self.lib = Library(dbpath, str(self.lib_path))
 
     def teardown_beets(self) -> None:
         self.env_patcher.stop()
@@ -284,15 +295,14 @@ class TestHelper(RunMixin, ConfigMixin):
 
         The item is attached to the database from `self.lib`.
         """
-        values_ = {
-            "title": "t\u00eftle {}",
+        values_: dict[str, Any] = {
+            "title": "t\u00eftle 1",
             "artist": "the \u00e4rtist",
             "album": "the \u00e4lbum",
             "track": 1,
             "format": "MP3",
         }
         values_.update(values)
-        values_["title"] = values_["title"].format(1)
         values_["db"] = self.lib
         item = Item(**values_)
         if "path" not in values:
@@ -385,7 +395,7 @@ class TestHelper(RunMixin, ConfigMixin):
     def create_mediafile_fixture(
         self,
         ext: str = "mp3",
-        images: list[str] = [],
+        images: list[str] | None = None,
         target_dir: util.PathLike | None = None,
     ) -> bytes:
         """Copy a fixture mediafile with the extension to `temp_dir`.
@@ -417,13 +427,6 @@ class TestHelper(RunMixin, ConfigMixin):
 
     # Safe file operations
 
-    def create_temp_dir(self, **kwargs: Any) -> str:
-        return mkdtemp(**kwargs)
-
-    def remove_temp_dir(self) -> None:
-        """Delete the temporary directory created by `create_temp_dir`."""
-        shutil.rmtree(self.temp_dir_path)
-
     def touch(
         self,
         path: util.PathLike,
@@ -432,23 +435,24 @@ class TestHelper(RunMixin, ConfigMixin):
     ) -> bytes:
         """Create a file at `path` with given content.
 
-        If `dir` is given, it is prepended to `path`. After that, if the
+        If `dir_` is given, it is prepended to `path`. After that, if the
         path is relative, it is resolved with respect to
         `self.temp_dir`.
         """
+        bytes_path = os.fsencode(path)
         if dir_:
-            path = os.path.join(dir_, path)
+            bytes_path = os.path.join(os.fsencode(dir_), bytes_path)
 
-        if not os.path.isabs(path):
-            path = os.path.join(self.temp_dir, path)
+        if not os.path.isabs(bytes_path):
+            bytes_path = os.path.join(self.temp_dir, bytes_path)
 
-        parent = os.path.dirname(path)
+        parent = os.path.dirname(bytes_path)
         if not os.path.isdir(syspath(parent)):
             os.makedirs(syspath(parent))
 
-        with open(syspath(path), "a+") as f:
+        with open(syspath(bytes_path), "a+") as f:
             f.write(content)
-        return path
+        return bytes_path
 
 
 # A test harness for all beets tests.
@@ -491,12 +495,12 @@ class PluginMixin(ConfigMixin):
     preload_plugin: ClassVar[bool] = True
 
     def setup_beets(self) -> None:
-        super().setup_beets()
+        super().setup_beets()  # type: ignore[misc]
         if self.preload_plugin:
             self.load_plugins()
 
     def teardown_beets(self) -> None:
-        super().teardown_beets()
+        super().teardown_beets()  # type: ignore[misc]
         self.unload_plugins()
 
     def register_plugin(
@@ -552,7 +556,7 @@ class PluginTestHelper(PluginMixin, TestHelper):
     """
 
 
-class ImportHelper(TestHelper):
+class ImporterMixin(PathsMixin, ConfigMixin):
     """Provides tools to setup a library, a directory containing files that are
     to be imported and an import session. The class also provides stubs for the
     autotagging library and several assertions for the library.
@@ -571,6 +575,7 @@ class ImportHelper(TestHelper):
 
     lib: Library
     importer: ImportSession
+    import_media: list[MediaFile]
 
     @cached_property
     def import_path(self) -> Path:
@@ -581,15 +586,6 @@ class ImportHelper(TestHelper):
     @cached_property
     def import_dir(self) -> bytes:
         return bytestring_path(self.import_path)
-
-    def setup_beets(self) -> None:
-        super().setup_beets()
-        self.import_media = []
-        self.lib.path_formats = [
-            ("default", os.path.join("$artist", "$album", "$title")),
-            ("singleton:true", os.path.join("singletons", "$title")),
-            ("comp:true", os.path.join("compilations", "$album", "$title")),
-        ]
 
     def prepare_track_for_import(
         self, track_id: int, album_path: Path, album_id: int | None = None
@@ -661,9 +657,23 @@ class ImportHelper(TestHelper):
         return self.setup_importer(singletons=True, **kwargs)
 
 
-class AsIsImporterMixin:
+class ImportHelper(TestHelper, ImporterMixin):
     def setup_beets(self) -> None:
         super().setup_beets()
+        self.import_media = []
+        self.lib.path_formats = [
+            ("default", template(os.path.join("$artist", "$album", "$title"))),
+            ("singleton:true", template(os.path.join("singletons", "$title"))),
+            (
+                "comp:true",
+                template(os.path.join("compilations", "$album", "$title")),
+            ),
+        ]
+
+
+class AsIsImporterMixin(ImporterMixin):
+    def setup_beets(self) -> None:
+        super().setup_beets()  # type: ignore[misc]
         self.prepare_album_for_import(1)
 
     def run_asis_importer(self, **kwargs: Any) -> ImportSession:
@@ -709,13 +719,16 @@ class ImportSessionFixture(ImportSession):
         except IndexError:
             choice = self.default_choice
 
-        if choice == importer.Action.APPLY:
-            return task.candidates[0]
-        if isinstance(choice, int):
-            return task.candidates[choice - 1]
+        if task.candidates:
+            if choice == importer.Action.APPLY:
+                return task.candidates[0]  # type: ignore[return-value]
+            if isinstance(choice, int):
+                return task.candidates[choice - 1]  # type: ignore[return-value]
+
+        assert not isinstance(choice, int), f"Invalid choice: {choice}"
         return choice
 
-    choose_item = choose_match
+    choose_item = choose_match  # type: ignore[assignment]
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
@@ -862,10 +875,7 @@ class AutotagStub:
     ) -> AlbumInfo:
         id_ = f" {'M' * distance}" if distance else ""
 
-        if artist is None:
-            artist = "Various Artists"
-        else:
-            artist = f"{artist.replace('Tag', 'Applied')}{id_}"
+        artist = f"{artist.replace('Tag', 'Applied')}{id_}"
         album = f"{album.replace('Tag', 'Applied')}{id_}"
 
         track_infos = []
