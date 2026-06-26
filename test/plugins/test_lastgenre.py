@@ -266,6 +266,66 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             "ignored oldest ancestor must not appear in the result"
         )
 
+    # _filter_valid tests
+
+    def test_filter_valid_no_whitelist_no_ignorelist_returns_all(self):
+        """With neither whitelist nor ignorelist, all non-empty genres pass."""
+        self._setup_config(whitelist=False)
+        self.plugin.ignore_patterns = defaultdict(list)
+        result = self.plugin._filter_valid(["rock", "jazz", "blues"])
+        assert result == ["rock", "jazz", "blues"]
+
+    def test_filter_valid_strips_empty_and_whitespace(self):
+        """Empty strings and whitespace-only strings are always removed."""
+        self._setup_config(whitelist=False)
+        self.plugin.ignore_patterns = defaultdict(list)
+        result = self.plugin._filter_valid(["rock", "", "  ", "blues"])
+        assert result == ["rock", "blues"]
+
+    def test_filter_valid_whitelist_drops_unknown_genres(self):
+        """Genres not in the whitelist are removed."""
+        self._setup_config(whitelist={"rock", "blues"})
+        result = self.plugin._filter_valid(["rock", "jazz", "blues"])
+        assert result == ["rock", "blues"]
+
+    def test_filter_valid_whitelist_is_case_insensitive(self):
+        """Whitelist lookup is lowercased, so genre case doesn't matter."""
+        self._setup_config(whitelist={"rock"})
+        result = self.plugin._filter_valid(["Rock", "ROCK", "rock"])
+        assert result == ["Rock", "ROCK", "rock"]
+
+    def test_filter_valid_ignorelist_drops_matched_genres(self):
+        """Genres matching ignorelist patterns are removed."""
+        self._setup_config(whitelist=False)
+        self.plugin.ignore_patterns = defaultdict(
+            list, {"*": [re.compile(r"^metal$", re.IGNORECASE)]}
+        )
+        result = self.plugin._filter_valid(["rock", "metal", "jazz"])
+        assert result == ["rock", "jazz"]
+
+    def test_filter_valid_ignorelist_artist_specific(self):
+        """Artist-specific ignorelist patterns apply only for that artist."""
+        self._setup_config(whitelist=False)
+        self.plugin.ignore_patterns = defaultdict(
+            list, {"the artist": [re.compile(r"^noise$", re.IGNORECASE)]}
+        )
+        assert self.plugin._filter_valid(
+            ["noise", "rock"], artist="the artist"
+        ) == ["rock"]
+        assert self.plugin._filter_valid(["noise", "rock"], artist="other") == [
+            "noise",
+            "rock",
+        ]
+
+    def test_filter_valid_whitelist_and_ignorelist_combined(self):
+        """Whitelist is applied first; ignorelist further filters the remainder."""
+        self._setup_config(whitelist={"rock", "metal", "jazz"})
+        self.plugin.ignore_patterns = defaultdict(
+            list, {"*": [re.compile(r"^metal$", re.IGNORECASE)]}
+        )
+        result = self.plugin._filter_valid(["rock", "metal", "pop", "jazz"])
+        assert result == ["rock", "jazz"]
+
 
 @pytest.mark.parametrize(
     "config_values, item_genre, mock_genres, expected_result",
