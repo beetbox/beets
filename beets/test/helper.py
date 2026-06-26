@@ -583,10 +583,6 @@ class ImporterMixin(PathsMixin, ConfigMixin):
         import_path.mkdir(exist_ok=True)
         return import_path
 
-    @cached_property
-    def import_dir(self) -> bytes:
-        return bytestring_path(self.import_path)
-
     def prepare_track_for_import(
         self, track_id: int, album_path: Path, album_id: int | None = None
     ) -> Path:
@@ -641,16 +637,19 @@ class ImporterMixin(PathsMixin, ConfigMixin):
         for album_id in range(base_idx, count + base_idx):
             self.prepare_album_for_import(1, album_id=album_id)
 
-    def _get_import_session(self, import_dir: bytes) -> ImportSession:
+    def _get_import_session(self, import_dir: util.PathLike) -> ImportSession:
         return ImportSessionFixture(
-            self.lib, loghandler=None, query=None, paths=[import_dir]
+            self.lib,
+            loghandler=None,
+            query=None,
+            paths=[os.fsencode(import_dir)],
         )
 
     def setup_importer(
         self, import_dir: bytes | None = None, **kwargs: Any
     ) -> ImportSession:
         self.config["import"].set_args({**self.default_import_config, **kwargs})
-        self.importer = self._get_import_session(import_dir or self.import_dir)
+        self.importer = self._get_import_session(import_dir or self.import_path)
         return self.importer
 
     def setup_singleton_importer(self, **kwargs: Any) -> ImportSession:
@@ -782,13 +781,15 @@ class TerminalImportSessionFixture(TerminalImportSession):
 class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
 
-    def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
+    def _get_import_session(
+        self, import_dir: util.PathLike
+    ) -> importer.ImportSession:
         return TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,
             io=self.request.getfixturevalue("io"),
-            paths=[import_dir],
+            paths=[os.fsencode(import_dir)],
         )
 
 

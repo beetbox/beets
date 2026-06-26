@@ -316,12 +316,12 @@ class ImportSingletonTest(AutotagImportTestCase):
 
     def test_import_single_files(self):
         resource_path = os.path.join(_common.RSRC, b"empty.mp3")
-        single_path = os.path.join(self.import_dir, b"track_2.mp3")
+        single_path = self.import_path / "track_2.mp3"
 
         util.copy(resource_path, single_path)
-        import_files = [os.path.join(self.import_dir, b"album"), single_path]
+        import_files = [self.import_path / "album", single_path]
         self.setup_importer()
-        self.importer.paths = import_files
+        self.importer.paths = list(map(os.fsencode, import_files))
 
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.add_choice(importer.Action.ASIS)
@@ -379,7 +379,7 @@ class TestImportFormat(ImportHelper):
 
     def test_recognize_format(self):
         resource_src = os.path.join(_common.RSRC, b"no_ext")
-        resource_path = os.path.join(self.import_dir, b"no_ext")
+        resource_path = self.import_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
         self.importer.paths = [resource_path]
@@ -509,7 +509,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
     @NEEDS_FFPROBE
     def test_skip_non_album_dirs(self):
         assert (self.import_path / "album").exists()
-        self.touch(b"cruft", dir_=self.import_dir)
+        (self.import_path / "cruft").touch()
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -1868,7 +1868,9 @@ class TestImportId(ImportHelper):
     def test_candidates_album(self):
         """Test directly ImportTask.lookup_candidates()."""
         task = importer.ImportTask(
-            paths=self.import_dir, toppath="top path", items=[_common.item()]
+            paths=os.fsencode(self.import_path),
+            toppath="top path",
+            items=[_common.item()],
         )
 
         task.lookup_candidates([self.ID_RELEASE_0, self.ID_RELEASE_1])
@@ -1909,8 +1911,8 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""
         self.config["import"]["remux_mp3_in_wav"] = False
         src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
-        dest = os.path.join(self.import_dir, b"mpeglayer3.wav")
+        dest = self.import_path / "mpeglayer3.wav"
         shutil.copy(syspath(src), syspath(dest))
 
         self.run_asis_importer()
-        assert os.path.exists(dest)
+        assert dest.exists()

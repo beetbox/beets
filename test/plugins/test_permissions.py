@@ -33,8 +33,8 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
         if platform.system() == "Windows":
             pytest.skip("permissions not available on Windows")
 
-        track_file = os.path.join(self.import_dir, b"album", b"track_1.mp3")
-        assert os.stat(track_file).st_mode & 0o777 != 511
+        track_file = self.import_path / "album" / "track_1.mp3"
+        assert track_file.stat().st_mode & 0o777 != 511
 
         self.run_asis_importer()
         item = self.lib.items().get()
