@@ -44,7 +44,7 @@ imagine for your music collection. Via [plugins][], beets becomes a panacea:
 If beets doesn't do what you want yet, [writing your own plugin][writing] is
 shockingly simple if you know a little Python.
 
-[writing]: http://beets.readthedocs.org/page/dev/plugins.html
+[writing]: http://beets.readthedocs.org/page/dev/plugins/index.html
     
 <p class="teaser">Install beets by typing
 <code><a href="http://www.pip-installer.org/">pip</a> install beets</code>.
