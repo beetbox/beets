@@ -1053,10 +1053,6 @@ class Migration(ABC):
         if not beets.config["create_backup_before_migrations"].get(bool):
             return
 
-        # In-memory databases have no persistent file to back up.
-        if self.db.path in (":memory:", b":memory:"):
-            return
-
         dest = os.fsdecode(self.db.path) + f"-before-{table}-{self.name}.bak"
         self.db.create_backup(dest)
 

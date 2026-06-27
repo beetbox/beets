@@ -118,6 +118,7 @@ class ConfigMixin:
         config["verbose"] = 1
         config["ui"]["color"] = False
         config["threaded"] = False
+        config["create_backup_before_migrations"] = False
         return config
 
 
