@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item
 
-FeaturedField = Literal["artist", "artist_credit", "artist_sort"]
+FeaturedField = Literal["artist", "artist_sort"]
 
 
 DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
@@ -204,11 +204,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         return self.config["custom_words"].as_str_seq()
 
     @cached_property
-    def artist_credit(self) -> bool:
-        # This is the root-level import option, not an ftintitle option.
-        return config["artist_credit"].get(bool)
-
-    @cached_property
     def bracket_keywords(self) -> list[str]:
         return self.config["bracket_keywords"].as_str_seq()
 
@@ -271,17 +266,17 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         )
 
         self.import_stages = [self.imported]
-        self.register_listener("trackinfo_received", self.trackinfo_received)
-        self.register_listener("albuminfo_received", self.albuminfo_received)
+        if self.auto:
+            self.register_listener(
+                "trackinfo_received", self.trackinfo_received
+            )
+            self.register_listener(
+                "albuminfo_received", self.albuminfo_received
+            )
 
         self.album_template_fields["album_artist_no_feat"] = (
             _album_artist_no_feat
         )
-
-    def _effective_artist(self, metadata: Info | Item) -> str:
-        if self.artist_credit:
-            return metadata.get("artist_credit") or metadata.get("artist") or ""
-        return metadata.get("artist") or ""
 
     def _strip_featured_from_field(
         self,
@@ -318,22 +313,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             if self.ft_in_title(item):
                 item.store()
 
-    def trackinfo_received(self, info: TrackInfo) -> None:
-        """Move featuring artists in fetched singleton metadata."""
-        if not self.auto:
-            return
-
-        self.ft_in_info(info)
-
-    def albuminfo_received(self, info: AlbumInfo) -> None:
-        """Move featuring artists in fetched album track metadata."""
-        if not self.auto:
-            return
-
-        albumartist = self._effective_artist(info)
-        for track_info in info.tracks:
-            self.ft_in_info(track_info, albumartist)
-
     def update_item_metadata(self, item: Item, feat_part: str) -> bool:
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
@@ -355,11 +334,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self._log.info("artist: {0.artist} -> {1}", item, track_artist)
             item.artist = track_artist
             changed |= artist != track_artist
-
-            if self.artist_credit:
-                artist_credit = item.get("artist_credit") or ""
-                self._strip_featured_from_field(item, "artist_credit")
-                changed |= artist_credit != (item.get("artist_credit") or "")
 
         if artist_sort := item.get("artist_sort"):
             # Just strip the featured artist from the sort name.
@@ -387,22 +361,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         """Choose how to add featured artists to fetched metadata."""
         changed = False
         if not self.keep_in_artist_field:
-            before = (
-                info.get("artist"),
-                info.get("artist_credit"),
-                info.get("artist_sort"),
-            )
+            before = (info.get("artist"), info.get("artist_sort"))
             self._strip_featured_from_field(info, "artist")
-            if self.artist_credit:
-                self._strip_featured_from_field(
-                    info, "artist_credit", for_artist=False
-                )
             self._strip_featured_from_field(info, "artist_sort")
-            changed |= before != (
-                info.get("artist"),
-                info.get("artist_credit"),
-                info.get("artist_sort"),
-            )
+            changed |= before != (info.get("artist"), info.get("artist_sort"))
 
         title = info.get("title") or ""
         if not self.drop_feat and not contains_feat(title, self.custom_words):
@@ -417,7 +379,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
     def ft_in_info(self, info: Info, albumartist: str | None = None) -> bool:
         """Move featuring artists in fetched metadata and clear Info caches."""
-        artist = self._effective_artist(info).strip()
+        artist = (info.get("artist") or "").strip()
         if not self._has_feat_candidate(artist, albumartist):
             return False
 
@@ -430,6 +392,16 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         return self.update_info_metadata(info, feat_part)
 
+    def trackinfo_received(self, info: TrackInfo) -> None:
+        """Move featuring artists in fetched singleton metadata."""
+        self.ft_in_info(info)
+
+    def albuminfo_received(self, info: AlbumInfo) -> None:
+        """Move featuring artists in fetched album track metadata."""
+        albumartist = info.get("artist") or ""
+        for track_info in info.tracks:
+            self.ft_in_info(track_info, albumartist)
+
     def ft_in_title(self, item: Item) -> bool:
         """Look for featured artists in the item's artist fields and move
         them to the title.
@@ -437,7 +409,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         Returns:
             True if the item has been modified. False otherwise.
         """
-        artist = self._effective_artist(item).strip()
+        artist = (item.get("artist") or "").strip()
         albumartist = item.get("albumartist") or ""
         if not self._has_feat_candidate(artist, albumartist):
             return False
