@@ -16,6 +16,7 @@ from beetsplug import ftintitle
 
 class TestFtInTitlePluginFunctional(PluginTestHelper):
     plugin = "ftintitle"
+    preload_plugin = False
 
     @pytest.mark.parametrize(
         "cfg, cmd_args, given, expected",
@@ -237,14 +238,16 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert item["artist"] == expected_artist
         assert item["title"] == expected_title
 
-    def test_trackinfo_received_rewrites_info_before_item_data(self) -> None:
+    def test_trackinfo_received_rewrites_artist_when_artist_credit_enabled(
+        self,
+    ) -> None:
         self.config["artist_credit"] = True
         info = TrackInfo(
             artist="Alice feat. Bob",
-            artist_credit="Alice feat. Bobby",
+            artist_credit="Alice",
             artist_sort="Alice feat. Bob",
             artists=["Alice", "Bob"],
-            artists_credit=["Alice", "Bobby"],
+            artists_credit=["Alice"],
             title="Song",
         )
 
@@ -255,10 +258,10 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.artist_credit == "Alice"
         assert info.artist_sort == "Alice"
         assert info.artists == ["Alice", "Bob"]
-        assert info.artists_credit == ["Alice", "Bobby"]
-        assert info.title == "Song feat. Bobby"
+        assert info.artists_credit == ["Alice"]
+        assert info.title == "Song feat. Bob"
         assert info.item_data["artist"] == "Alice"
-        assert info.item_data["title"] == "Song feat. Bobby"
+        assert info.item_data["title"] == "Song feat. Bob"
 
     @pytest.mark.parametrize(
         "config, artist, title, expected_artist, expected_title",
@@ -359,7 +362,7 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.artist_credit == "Alice & Bobby"
         assert info.title == "Song feat. Bob"
 
-    def test_command_uses_artist_credit_for_featured_artist(self) -> None:
+    def test_command_preserves_artist_credit_when_enabled(self) -> None:
         self.config["artist_credit"] = True
         item = self.add_item(
             path="/",
@@ -374,8 +377,8 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
 
         item.load()
         assert item.artist == "Alice"
-        assert item.artist_credit == "Alice"
-        assert item.title == "Song feat. Bobby"
+        assert item.artist_credit == "Alice feat. Bobby"
+        assert item.title == "Song feat. Bob"
 
     def test_command_preserves_artist_credit_when_disabled(self) -> None:
         self.config["artist_credit"] = False
