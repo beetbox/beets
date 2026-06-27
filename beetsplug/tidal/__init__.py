@@ -78,7 +78,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-    def require_authentication(self):
+    def require_authentication(self) -> None:
         if not os.path.isfile(self._tokenfile()):
             raise UserError(
                 "Please login to TIDAL"
@@ -432,7 +432,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return artist_names, artist_ids
 
     @staticmethod
-    def _parse_title(attributes: MediaAttributes):
+    def _parse_title(attributes: MediaAttributes) -> str:
         """
         Tidal UIs append the version string at the end of the title. We do the same here
         by formatting it as ``"{title} ({version})"`` to stay consistent.
@@ -565,7 +565,9 @@ class TidalPlugin(MetadataSourcePlugin):
             default=False,
         )
 
-        def auth_func(lib: Library, opts: optparse.Values, args: list[str]):
+        def auth_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             if opts.auth:
                 self.api.ui_authenticate_flow()
             else:
@@ -603,7 +605,9 @@ class TidalPlugin(MetadataSourcePlugin):
             "Usage: beet tidalsync <query> [options]"
         )
 
-        def sync_func(lib: Library, opts: optparse.Values, args: list[str]):
+        def sync_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             query = ["data_source:tidal", *args]
 
             if opts.album:
