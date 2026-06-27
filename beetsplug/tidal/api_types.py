@@ -43,6 +43,17 @@ class ArtistAttributes(TypedDict):
 
 
 class MediaAttributes(TypedDict):
+    """Describe media metadata exposed by the TIDAL API.
+
+    Combines the core values needed to identify and present a media item with
+    optional publishing, attribution, and sharing details when TIDAL provides
+    them.
+
+    While this type is not part of the original TIDAL json:api schema itself, we
+    introduced it to simplify our type definitions and allow for easier reuse of
+    shared attributes.
+    """
+
     duration: str  # ISO 8601
     title: str
     explicit: bool
@@ -57,6 +68,12 @@ class MediaAttributes(TypedDict):
 
 
 class AlbumAttributes(MediaAttributes):
+    """Represent album-specific metadata returned by the TIDAL API.
+
+    Extends shared media fields with release packaging details that describe how
+    an album is published and how many items or volumes it contains.
+    """
+
     # see "Albums_Attributes"
     # in https://tidal-music.github.io/tidal-api-reference/tidal-api-oas.json
 
@@ -71,6 +88,12 @@ class AlbumAttributes(MediaAttributes):
 
 
 class TrackAttributes(MediaAttributes):
+    """Represent track-specific metadata returned by the TIDAL API.
+
+    Adds the musical and catalog information needed to describe an individual
+    recording, while allowing enrichment fields when TIDAL includes them.
+    """
+
     # see "Tracks_Attributes"
     # in https://tidal-music.github.io/tidal-api-reference/tidal-api-oas.json
 
