@@ -1236,7 +1236,9 @@ class Item(LibModel):
             )
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, self.db.replacements, extension or self.filepath.suffix
+            subpath,
+            self.db.replacements,
+            f".{extension}" if extension else self.filepath.suffix,
         )
         if fallback:
             # Print an error message if legalization fell back to

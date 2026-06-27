@@ -409,7 +409,7 @@ class ConvertPlugin(BeetsPlugin):
 
     def get_item_destination(self, item: Item) -> bytes:
         extension = (
-            f".{os.fsdecode(self.command.ext)}"
+            os.fsdecode(self.command.ext)
             if (
                 self.should_transcode(item)
                 and not self.config["keep_new"].get(bool)
