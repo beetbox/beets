@@ -129,8 +129,19 @@ class TidalPlugin(MetadataSourcePlugin):
             return candidates
 
         search_limit = self.config["search_limit"].get(int)
-        for query in self._album_queries(items):
-            candidates += self.search_albums_by_query(query, limit=search_limit)
+        query_iters = [
+            self.search_albums_by_query(q) for q in self._album_queries(items)
+        ]
+        while query_iters and len(candidates) < search_limit:
+            exhausted = []
+            for it in query_iters:
+                if len(candidates) >= search_limit:
+                    break
+                try:
+                    candidates.append(next(it))
+                except StopIteration:
+                    exhausted.append(it)
+            query_iters = [it for it in query_iters if it not in exhausted]
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
@@ -149,8 +160,19 @@ class TidalPlugin(MetadataSourcePlugin):
                 return candidates
 
         search_limit = self.config["search_limit"].get(int)
-        for query in self._item_queries(item):
-            candidates += self.search_tracks_by_query(query, limit=search_limit)
+        query_iters = [
+            self.search_tracks_by_query(q) for q in self._item_queries(item)
+        ]
+        while query_iters and len(candidates) < search_limit:
+            exhausted = []
+            for it in query_iters:
+                if len(candidates) >= search_limit:
+                    break
+                try:
+                    candidates.append(next(it))
+                except StopIteration:
+                    exhausted.append(it)
+            query_iters = [it for it in query_iters if it not in exhausted]
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
@@ -173,9 +195,7 @@ class TidalPlugin(MetadataSourcePlugin):
         for album, artist in itertools.product(album_names, artist_names):
             yield f"{artist} {album}"
 
-    def search_tracks_by_query(
-        self, query: str, limit: int | None = None
-    ) -> Iterable[TrackInfo]:
+    def search_tracks_by_query(self, query: str) -> Iterable[TrackInfo]:
         """Search for tracks given a string query."""
         search_doc = self.api.search_results(query, include=["tracks.artists"])
         track_by_id: dict[str, TidalTrack] = {
@@ -188,10 +208,7 @@ class TidalPlugin(MetadataSourcePlugin):
             for item in search_doc.get("included", [])
             if item["type"] == "artists"
         }
-        track_rels = search_doc["data"]["relationships"]["tracks"]["data"]
-        if limit is not None:
-            track_rels = track_rels[:limit]
-        for track_rel in track_rels:
+        for track_rel in search_doc["data"]["relationships"]["tracks"]["data"]:
             if track := track_by_id.get(track_rel["id"]):
                 yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
@@ -199,9 +216,7 @@ class TidalPlugin(MetadataSourcePlugin):
                     "Track with id {0} not found in lookup", track_rel["id"]
                 )
 
-    def search_albums_by_query(
-        self, query: str, limit: int | None = None
-    ) -> Iterable[AlbumInfo]:
+    def search_albums_by_query(self, query: str) -> Iterable[AlbumInfo]:
         """Search for album given a string query."""
         search_doc = self.api.search_results(
             query,
@@ -216,8 +231,6 @@ class TidalPlugin(MetadataSourcePlugin):
                 "data"
             ]
         ]
-        if limit is not None:
-            album_ids = album_ids[:limit]
         yield from filter(None, self.search_albums_by_ids(tidal_ids=album_ids))
 
     @overload

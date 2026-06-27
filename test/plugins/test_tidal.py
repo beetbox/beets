@@ -555,11 +555,12 @@ class TestSearchLimit(TidalPluginTest):
     """Tests for search_limit config option."""
 
     def test_candidates_respects_search_limit(self):
-        """Test that candidates returns at most search_limit results."""
+        """Test that candidates caps results to search_limit via early iteration stop."""
         items = [Item(title="My Song", artist="My Artist", album="My Album")]
 
         self.tidal.config["search_limit"] = 1
 
+        # Single query returns 2 album IDs; only the first should be used.
         self.tidal.api.search_results = Mock(
             return_value={
                 "data": {
@@ -602,28 +603,90 @@ class TestSearchLimit(TidalPluginTest):
         assert len(candidates) == 1
         assert candidates[0].album == "Album One"
 
+    def test_candidates_round_robin_across_queries(self):
+        """Test that candidates interleaves results across multiple queries."""
+        # Two artists produce two queries via _album_queries cartesian product.
+        items = [
+            Item(title="Song A", artist="Artist A", album="Shared Album"),
+            Item(title="Song B", artist="Artist B", album="Shared Album"),
+        ]
+
+        self.tidal.config["search_limit"] = 2
+
+        track_a = _make_track("101", "Track A", "PT3M", "ISRC001", ["1001"])
+        track_b = _make_track("201", "Track B", "PT3M", "ISRC002", ["1002"])
+        album_a, track_lookup_a, artist_lookup_a = _make_album(
+            "10", "Album A", [track_a], ["1001"]
+        )
+        album_b, track_lookup_b, artist_lookup_b = _make_album(
+            "20", "Album B", [track_b], ["1002"]
+        )
+
+        # Each query returns one album ID from its respective artist.
+        self.tidal.api.search_results = Mock(
+            side_effect=[
+                {
+                    "data": {
+                        "relationships": {
+                            "albums": {"data": [{"id": "10", "type": "albums"}]}
+                        }
+                    }
+                },
+                {
+                    "data": {
+                        "relationships": {
+                            "albums": {"data": [{"id": "20", "type": "albums"}]}
+                        }
+                    }
+                },
+            ]
+        )
+        self.tidal.api.get_albums = Mock(
+            side_effect=[
+                {
+                    "data": [album_a],
+                    "included": [
+                        *artist_lookup_a.values(),
+                        *track_lookup_a.values(),
+                    ],
+                },
+                {
+                    "data": [album_b],
+                    "included": [
+                        *artist_lookup_b.values(),
+                        *track_lookup_b.values(),
+                    ],
+                },
+            ]
+        )
+
+        candidates = list(
+            self.tidal.candidates(items, "Artist A", "Shared Album", False)
+        )
+
+        assert len(candidates) == 2
+        album_names = {c.album for c in candidates}
+        assert album_names == {"Album A", "Album B"}
+
     def test_item_candidates_respects_search_limit(self):
-        """Test that item_candidates returns at most search_limit results."""
-        # No artist so _item_queries yields only one query (title only)
-        item = Item(title="Query Song")
+        """Test that item_candidates caps results to search_limit via early iteration stop."""
+        item = Item(title="Query Song", artist="Query Artist")
 
         self.tidal.config["search_limit"] = 1
 
+        # _item_queries yields two queries: title, then "artist title".
+        # Each returns one track; only the first query's result should be kept.
         self.tidal.api.search_results = Mock(
             return_value={
                 "data": {
                     "relationships": {
                         "tracks": {
-                            "data": [
-                                {"id": "1", "type": "tracks"},
-                                {"id": "2", "type": "tracks"},
-                            ]
+                            "data": [{"id": "1", "type": "tracks"}]
                         }
                     }
                 },
                 "included": [
                     _make_track("1", "Track One", "PT3M", "ISRC001", ["1001"]),
-                    _make_track("2", "Track Two", "PT3M", "ISRC002", ["1001"]),
                     _make_artist("1001", "Query Artist"),
                 ],
             }
