@@ -26,15 +26,18 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     # objects.
     ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
-    templates = {
-        key: functemplate.template(value) for key, value in mods.items()
-    }
-    for obj in objs:
-        obj_mods = {
+    templates = {key: functemplate.template(value) for key, value in mods.items()}
+
+    def parse_mods(obj):
+        # Parse the raw assignment strings into properly typed values for the
+        # given object (e.g. dates into timestamps).
+        return {
             key: model_cls._parse(key, obj.evaluate_template(templates[key]))
             for key in mods.keys()
         }
-        if print_and_modify(obj, obj_mods, dels) and obj not in changed:
+
+    for obj in objs:
+        if print_and_modify(obj, parse_mods(obj), dels) and obj not in changed:
             changed.append(obj)
 
     # Still something to do?
@@ -56,7 +59,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
         changed = ui.input_select_objects(
             f"Really modify{extra}",
             changed,
-            lambda o: print_and_modify(o, mods, dels),
+            lambda o: print_and_modify(o, parse_mods(o), dels),
         )
 
     # Apply changes to database and files
@@ -121,9 +124,7 @@ def modify_func(lib, opts, args):
     )
 
 
-modify_cmd = ui.Subcommand(
-    "modify", help="change metadata fields", aliases=("mod",)
-)
+modify_cmd = ui.Subcommand("modify", help="change metadata fields", aliases=("mod",))
 modify_cmd.parser.add_option(
     "-m",
     "--move",
