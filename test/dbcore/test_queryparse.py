@@ -85,9 +85,7 @@ class QueryParseTest(unittest.TestCase):
 
 class QueryFromStringsTest(unittest.TestCase):
     def qfs(self, strings):
-        return dbcore.queryparse.query_from_strings(
-            query.AndQuery, ModelFixture1, strings
-        )
+        return dbcore.queryparse.build_and_query(ModelFixture1, strings)
 
     def test_zero_parts(self):
         q = self.qfs([])
