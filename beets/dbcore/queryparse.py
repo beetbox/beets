@@ -7,6 +7,7 @@ import re
 import shlex
 from dataclasses import dataclass
 from functools import partial, reduce
+from itertools import groupby
 from typing import TYPE_CHECKING, NamedTuple
 
 from typing_extensions import Self
@@ -17,7 +18,7 @@ from beets.util import cached_classproperty
 from . import query, sort
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
+    from collections.abc import Iterable, Sequence
 
     from beets.library.models import LibModel
 
@@ -139,7 +140,7 @@ class QueryTerm:
 
 # TYPING ERROR
 def build_and_query(
-    model_cls: type[LibModel], query_parts: Collection[str]
+    model_cls: type[LibModel], query_parts: Iterable[str]
 ) -> query.Query:
     """Build a query by combining search terms with a logical AND."""
     if not query_parts:
@@ -221,31 +222,21 @@ def parse_sorted_query(
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
     """
-    # Separate query token and sort token.
-    query_parts = []
-    sort_parts = []
+    sort_parts = [p for p in parts if SortTerm.check_valid(p)]
+    query_parts = [p for p in parts if not SortTerm.check_valid(p)]
 
-    # Split up query in to comma-separated subqueries, each representing
-    # an AndQuery, which need to be joined together in one OrQuery
-    subquery_parts = []
-    for part in [*parts, ","]:
-        if part.endswith(","):
-            # Ensure we can catch "foo, bar" as well as "foo , bar"
-            last_subquery_part = part[:-1]
-            if last_subquery_part:
-                subquery_parts.append(last_subquery_part)
-            # Parse the subquery in to a single Query
-            query_parts.append(build_and_query(model_cls, subquery_parts))
-            del subquery_parts[:]
-        elif SortTerm.check_valid(part):
-            sort_parts.append(part)
-        else:
-            subquery_parts.append(part)
+    queries = [
+        build_and_query(model_cls, g)
+        for k, g in groupby(query_parts, lambda p: p == ",")
+        if not k
+    ]
+    if not queries or "," in {query_parts[0], query_parts[-1]}:
+        queries.append(query.TrueQuery())
 
-    # Avoid needlessly wrapping single statements in an OR
-    q = query.OrQuery(query_parts) if len(query_parts) > 1 else query_parts[0]
-    s = sort_from_strings(model_cls, sort_parts)
-    return q, s
+    return (
+        reduce(operator.or_, queries),
+        sort_from_strings(model_cls, sort_parts),
+    )
 
 
 class ModelQuery(NamedTuple):
