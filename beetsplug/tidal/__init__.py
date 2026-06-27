@@ -131,7 +131,8 @@ class TidalPlugin(MetadataSourcePlugin):
 
         search_limit = self.config["search_limit"].get(int)
         query_iters = [
-            self.search_albums_by_query(q) for q in self._album_queries(items)
+            iter(self.search_albums_by_query(q))
+            for q in self._album_queries(items)
         ]
         while query_iters and len(candidates) < search_limit:
             exhausted = []
@@ -162,7 +163,8 @@ class TidalPlugin(MetadataSourcePlugin):
 
         search_limit = self.config["search_limit"].get(int)
         query_iters = [
-            self.search_tracks_by_query(q) for q in self._item_queries(item)
+            iter(self.search_tracks_by_query(q))
+            for q in self._item_queries(item)
         ]
         while query_iters and len(candidates) < search_limit:
             exhausted = []

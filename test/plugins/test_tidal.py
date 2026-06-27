@@ -677,7 +677,7 @@ class TestSearchLimit(TidalPluginTest):
     """Tests for search_limit config option."""
 
     def test_candidates_respects_search_limit(self):
-        """Test that candidates caps results to search_limit via early iteration stop."""
+        """Test that candidates caps results to search_limit."""
         items = [Item(title="My Song", artist="My Artist", album="My Album")]
 
         self.tidal.config["search_limit"] = 1
@@ -791,7 +791,7 @@ class TestSearchLimit(TidalPluginTest):
         assert album_names == {"Album A", "Album B"}
 
     def test_item_candidates_respects_search_limit(self):
-        """Test that item_candidates caps results to search_limit via early iteration stop."""
+        """Test that item_candidates caps results to search_limit."""
         item = Item(title="Query Song", artist="Query Artist")
 
         self.tidal.config["search_limit"] = 1
@@ -802,9 +802,7 @@ class TestSearchLimit(TidalPluginTest):
             return_value={
                 "data": {
                     "relationships": {
-                        "tracks": {
-                            "data": [{"id": "1", "type": "tracks"}]
-                        }
+                        "tracks": {"data": [{"id": "1", "type": "tracks"}]}
                     }
                 },
                 "included": [
