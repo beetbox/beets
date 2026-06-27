@@ -551,6 +551,92 @@ class TestCandidates(TidalPluginTest):
         assert candidates[0].album == "Query Album"
 
 
+class TestSearchLimit(TidalPluginTest):
+    """Tests for search_limit config option."""
+
+    def test_candidates_respects_search_limit(self):
+        """Test that candidates returns at most search_limit results."""
+        items = [Item(title="My Song", artist="My Artist", album="My Album")]
+
+        self.tidal.config["search_limit"] = 1
+
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "albums": {
+                            "data": [
+                                {"id": "1", "type": "albums"},
+                                {"id": "2", "type": "albums"},
+                            ]
+                        }
+                    }
+                }
+            }
+        )
+
+        track1 = _make_track("101", "Track 1", "PT3M", "ISRC001", ["1001"])
+        track2 = _make_track("201", "Track 2", "PT3M", "ISRC002", ["1001"])
+        album1, track_lookup1, artist_lookup1 = _make_album(
+            "1", "Album One", [track1], ["1001"]
+        )
+        album2, track_lookup2, artist_lookup2 = _make_album(
+            "2", "Album Two", [track2], ["1001"]
+        )
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album1, album2],
+                "included": [
+                    *artist_lookup1.values(),
+                    *artist_lookup2.values(),
+                    *track_lookup1.values(),
+                    *track_lookup2.values(),
+                ],
+            }
+        )
+
+        candidates = list(
+            self.tidal.candidates(items, "My Artist", "My Album", False)
+        )
+
+        assert len(candidates) == 1
+        assert candidates[0].album == "Album One"
+
+    def test_item_candidates_respects_search_limit(self):
+        """Test that item_candidates returns at most search_limit results."""
+        # No artist so _item_queries yields only one query (title only)
+        item = Item(title="Query Song")
+
+        self.tidal.config["search_limit"] = 1
+
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "tracks": {
+                            "data": [
+                                {"id": "1", "type": "tracks"},
+                                {"id": "2", "type": "tracks"},
+                            ]
+                        }
+                    }
+                },
+                "included": [
+                    _make_track("1", "Track One", "PT3M", "ISRC001", ["1001"]),
+                    _make_track("2", "Track Two", "PT3M", "ISRC002", ["1001"]),
+                    _make_artist("1001", "Query Artist"),
+                ],
+            }
+        )
+
+        results = list(
+            self.tidal.item_candidates(item, "Query Artist", "Query Song")
+        )
+
+        assert len(results) == 1
+        assert results[0].title == "Track One"
+
+
 class TestItemCandidates(TidalPluginTest):
     """Tests for item_candidates method."""
 
