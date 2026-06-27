@@ -64,6 +64,9 @@ Bug fixes
   longer crashes with a ``TypeError``. Missing values are now grouped together,
   ordered before present ones when sorting ascending and after them when
   descending. :bug:`3461`
+- ``modify``: Fix a crash when choosing ``select`` at the confirmation prompt
+  while modifying a non-string field such as ``added``; the per-object value is
+  now parsed before being applied. :bug:`4880`
 
 ..
     For plugin developers
