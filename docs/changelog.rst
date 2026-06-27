@@ -21,6 +21,8 @@ New features
 - A database backup is now automatically created before running schema
   migrations. Control with the ``create_backup_before_migrations`` option
   (default: yes).
+- :doc:`plugins/ftintitle`: Apply featured-artist rewriting to fetched metadata
+  before commands such as :doc:`plugins/mbsync` use it. :bug:`1153`
 
 Bug fixes
 ~~~~~~~~~
