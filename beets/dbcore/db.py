@@ -599,7 +599,7 @@ class Model(ABC, Generic[D]):
         assignments = []
         subvars: list[SQLiteType] = []
         for key in fields:
-            if key != "id" and key in self._dirty:
+            if key != "id" and key in self._fields and key in self._dirty:
                 self._dirty.remove(key)
                 assignments.append(f"{key}=?")
                 value = self._type(key).to_sql(self[key])
