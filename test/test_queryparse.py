@@ -17,6 +17,7 @@ import unittest
 
 from beets import dbcore
 from beets.dbcore import query, sort
+from beets.test.fixtures import ModelFixture1, SortFixture
 
 
 class QueryParseTest(unittest.TestCase):

@@ -11,9 +11,9 @@ import pytest
 
 from beets import dbcore
 from beets.dbcore import query, sort, types
-from beets.dbcore.db import DBCustomFunctionError, FormattedMapping, Index
-from beets.library import Album, Item, LibModel
-from beets.util import cached_classproperty
+from beets.dbcore.db import DBCustomFunctionError, Index
+from beets.library import Album, Item
+from beets.test.fixtures import ModelFixture1
 
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
@@ -24,52 +24,6 @@ def db(model):
     db = model(":memory:")
     yield db
     db._connection().close()
-
-
-class SortFixture(sort.FieldSort):
-    pass
-
-
-class QueryFixture(query.FieldQuery):
-    def __init__(self, pattern):
-        self.pattern = pattern
-
-    def clause(self):
-        return None, ()
-
-    def match(self):
-        return True
-
-
-class ModelFixture1(LibModel):
-    _table = "test"
-    _flex_table = "testflex"
-    _fields: ClassVar[dict[str, dbcore.types.Type]] = {
-        "id": dbcore.types.PRIMARY_ID,
-        "field_one": dbcore.types.INTEGER,
-        "field_two": dbcore.types.STRING,
-    }
-
-    _sorts: ClassVar[dict[str, type[sort.FieldSort]]] = {
-        "some_sort": SortFixture
-    }
-    _indices = (Index("field_one_index", ("field_one",)),)
-    _formatter = FormattedMapping
-
-    @cached_classproperty
-    def _types(cls):
-        return {"some_float_field": dbcore.types.FLOAT}
-
-    @cached_classproperty
-    def _queries(cls):
-        return {"some_query": QueryFixture}
-
-    @classmethod
-    def _getters(cls):
-        return {}
-
-    def _template_funcs(self):
-        return {}
 
 
 class DatabaseFixture1(dbcore.Database):
