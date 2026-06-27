@@ -138,19 +138,14 @@ class QueryTerm:
 
 
 # TYPING ERROR
-def query_from_strings(
-    query_cls: type[query.CollectionQuery],
-    model_cls: type[LibModel],
-    query_parts: Collection[str],
+def build_and_query(
+    model_cls: type[LibModel], query_parts: Collection[str]
 ) -> query.Query:
-    """Creates a collection query of type `query_cls` from a list of
-    strings in the format used by parse_query_part. `model_cls`
-    determines how queries are constructed from strings.
-    """
+    """Build a query by combining search terms with a logical AND."""
     if not query_parts:
         return query.TrueQuery()
     subqueries = [QueryTerm.make(p).get_query(model_cls) for p in query_parts]
-    return query_cls(subqueries) if len(subqueries) > 1 else subqueries[0]
+    return reduce(operator.and_, subqueries)
 
 
 class SortTerm(NamedTuple):
@@ -240,9 +235,7 @@ def parse_sorted_query(
             if last_subquery_part:
                 subquery_parts.append(last_subquery_part)
             # Parse the subquery in to a single Query
-            query_parts.append(
-                query_from_strings(query.AndQuery, model_cls, subquery_parts)
-            )
+            query_parts.append(build_and_query(model_cls, subquery_parts))
             del subquery_parts[:]
         elif SortTerm.check_valid(part):
             sort_parts.append(part)

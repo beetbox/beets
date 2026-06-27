@@ -2,6 +2,8 @@
 Library.
 """
 
+from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
+
 from .db import Database, Index, Model, Results
 from .query import (
     AndQuery,
@@ -13,11 +15,22 @@ from .query import (
 )
 from .queryparse import (
     ModelQuery,
+    build_and_query,
     parse_sorted_query,
-    query_from_strings,
     sort_from_strings,
 )
 from .types import Type
+
+
+def __getattr__(name: str):
+    if name == "query_from_strings":
+        deprecate_for_maintainers(
+            f"'beets.dbcore.{name}'", "'beets.dbcore.build_and_query'"
+        )
+        return build_and_query
+
+    return deprecate_imports(__name__, {}, name)
+
 
 __all__ = [
     "AndQuery",
@@ -32,7 +45,7 @@ __all__ = [
     "Query",
     "Results",
     "Type",
+    "build_and_query",
     "parse_sorted_query",
-    "query_from_strings",
     "sort_from_strings",
 ]

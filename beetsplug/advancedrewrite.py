@@ -6,7 +6,7 @@ from collections import defaultdict
 
 import confuse
 
-from beets.dbcore import AndQuery, query_from_strings
+from beets.dbcore import build_and_query
 from beets.dbcore.types import MULTI_VALUE_DSV
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
@@ -117,9 +117,7 @@ class AdvancedRewritePlugin(BeetsPlugin):
                     raise UserError(
                         "Advanced rewrites must have at least one replacement"
                     )
-                query = query_from_strings(
-                    AndQuery, Item, query_parts=shlex.split(match)
-                )
+                query = build_and_query(Item, shlex.split(match))
                 for fieldname, replacement in replacements.items():
                     if fieldname not in Item._fields:
                         raise UserError(
