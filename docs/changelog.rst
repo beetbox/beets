@@ -33,6 +33,8 @@ Bug fixes
   longer crashes when the stored album art path points to a missing file (for
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
+- :doc:`plugins/tidal`: Normalize Tidal copyright text before storing label
+  metadata. :bug:`6796`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
 
 ..

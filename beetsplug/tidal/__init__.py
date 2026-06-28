@@ -460,7 +460,11 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _parse_label(attributes: MediaAttributes) -> str | None:
         if copyright_ := attributes.get("copyright"):
-            return copyright_["text"]
+            label = LABEL_RIGHTS_PREFIX_RE.sub("", copyright_["text"], count=1)
+            label = LABEL_BOILERPLATE_RE.sub("", label)
+            label = LABEL_LEGAL_SUFFIX_RE.sub("", label)
+            label = re.sub(r"\s+", " ", label).strip(" ,.;")
+            return label or None
         return None
 
     @staticmethod
@@ -631,3 +635,20 @@ ISO_8601_RE = re.compile(
     r"(?:(?P<minutes>\d+)M)?"
     r"(?:(?P<seconds>\d+)S)?$"
 )
+
+LABEL_RIGHTS_PREFIX_RE = re.compile(
+    r"^\s*(?:(?:©|℗|\([cCpP]\))\s*)?(?:\d{4}\s*)?"
+)
+LABEL_BOILERPLATE_RE = re.compile(
+    r"\s*(?:,\s*)?(?:"
+    r"a\s+division\s+of"
+    r"|division\s+of"
+    r"|under\s+(?:exclusive\s+)?license\s+to"
+    r"|marketed\s+by"
+    r"|manufactured\s+by"
+    r"|distributed\s+by"
+    r"|for\s+the\s+(?:united\s+states|world)\b"
+    r").*",
+    re.IGNORECASE,
+)
+LABEL_LEGAL_SUFFIX_RE = re.compile(r"\s+L\.?L\.?C\.?$", re.IGNORECASE)

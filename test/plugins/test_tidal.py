@@ -626,7 +626,37 @@ class TestStaticHelpers:
     @pytest.mark.parametrize(
         "attrs, expected",
         [
-            ({"copyright": {"text": "(P) 2024 Tidal"}}, "(P) 2024 Tidal"),
+            ({"copyright": {"text": "(P) 2024 Tidal"}}, "Tidal"),
+            (
+                {
+                    "copyright": {
+                        "text": (
+                            "© 2011 Motown Records, a Division of UMG "
+                            "Recordings, Inc."
+                        )
+                    }
+                },
+                "Motown Records",
+            ),
+            (
+                {
+                    "copyright": {
+                        "text": (
+                            "© 2019 Atlantic Recording Corporation for the "
+                            "United States and WEA International Inc. for the "
+                            "world outside of the United States"
+                        )
+                    }
+                },
+                "Atlantic Recording Corporation",
+            ),
+            (
+                {"copyright": {"text": "(P) 1992 Zomba Recording LLC"}},
+                "Zomba Recording",
+            ),
+            ({"copyright": {"text": "℗ 2024 Example Label"}}, "Example Label"),
+            ({"copyright": {"text": "Plain Label Name"}}, "Plain Label Name"),
+            ({"copyright": {"text": "© 2024"}}, None),
             ({}, None),
         ],
     )
