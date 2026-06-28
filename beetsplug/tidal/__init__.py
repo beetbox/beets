@@ -39,6 +39,8 @@ if TYPE_CHECKING:
 
 log = getLogger("beets.tidal")
 
+_EXHAUSTED = object()
+
 
 class TidalPlugin(MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
@@ -73,6 +75,10 @@ class TidalPlugin(MetadataSourcePlugin):
             client_id=self.config["client_id"].as_str(),
             token_path=self._tokenfile(),
         )
+
+    @cached_property
+    def search_limit(self) -> int:
+        return self.config["search_limit"].get(int)
 
     def _tokenfile(self) -> str:
         """Return the configured path to the token file in the app directory."""
@@ -114,7 +120,6 @@ class TidalPlugin(MetadataSourcePlugin):
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
-        candidates: list[AlbumInfo] = []
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
@@ -128,21 +133,24 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return candidates
 
-        search_limit = self.config["search_limit"].get(int)
-        query_iters = [
-            iter(self.search_albums_by_query(q))
-            for q in self._album_queries(items)
-        ]
-        while query_iters and len(candidates) < search_limit:
-            exhausted = []
-            for it in query_iters:
-                if len(candidates) >= search_limit:
-                    break
-                try:
-                    candidates.append(next(it))
-                except StopIteration:
-                    exhausted.append(it)
-            query_iters = [it for it in query_iters if it not in exhausted]
+        candidates = list(
+            itertools.islice(
+                (
+                    candidate
+                    for candidate in itertools.chain.from_iterable(
+                        itertools.zip_longest(
+                            *(
+                                self.search_albums_by_query(query)
+                                for query in self._album_queries(items)
+                            ),
+                            fillvalue=_EXHAUSTED,
+                        )
+                    )
+                    if candidate is not _EXHAUSTED
+                ),
+                self.search_limit,
+            )
+        )
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
@@ -150,7 +158,6 @@ class TidalPlugin(MetadataSourcePlugin):
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        candidates: list[TrackInfo] = []
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
@@ -160,21 +167,24 @@ class TidalPlugin(MetadataSourcePlugin):
             ):
                 return candidates
 
-        search_limit = self.config["search_limit"].get(int)
-        query_iters = [
-            iter(self.search_tracks_by_query(q))
-            for q in self._item_queries(item)
-        ]
-        while query_iters and len(candidates) < search_limit:
-            exhausted = []
-            for it in query_iters:
-                if len(candidates) >= search_limit:
-                    break
-                try:
-                    candidates.append(next(it))
-                except StopIteration:
-                    exhausted.append(it)
-            query_iters = [it for it in query_iters if it not in exhausted]
+        candidates = list(
+            itertools.islice(
+                (
+                    candidate
+                    for candidate in itertools.chain.from_iterable(
+                        itertools.zip_longest(
+                            *(
+                                self.search_tracks_by_query(query)
+                                for query in self._item_queries(item)
+                            ),
+                            fillvalue=_EXHAUSTED,
+                        )
+                    )
+                    if candidate is not _EXHAUSTED
+                ),
+                self.search_limit,
+            )
+        )
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
