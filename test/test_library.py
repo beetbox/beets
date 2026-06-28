@@ -796,6 +796,33 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         self._setf("foo%aunique{albumartist album,albumtype}/$title")
         self._assert_dest(b"/base/foo [foo_bar]/the title", i1)
 
+    def test_unique_path_sanitized_keys(self, items):
+        i1, i2 = items
+        album1 = self.lib.get_album(i1)
+        album1.album = "1/1"
+        album2 = self.lib.get_album(i2)
+        album2.album = "1?1"
+        album1.store()
+        album2.store()
+        self._setf("foo/$album%aunique{albumartist album,year}/$title")
+
+        self._assert_dest(b"/base/foo/1_1 [2001]/the title", i1)
+        self._assert_dest(b"/base/foo/1_1 [2002]/the title", i2)
+
+    def test_unique_path_sanitized_keys_use_fallback_numbers(self, items):
+        i1, i2 = items
+        album1 = self.lib.get_album(i1)
+        album1.album = "1/1"
+        album2 = self.lib.get_album(i2)
+        album2.album = "1?1"
+        album2.year = 2001
+        album1.store()
+        album2.store()
+        self._setf("foo/$album%aunique{albumartist album,year}/$title")
+
+        self._assert_dest(b"/base/foo/1_1 [1]/the title", i1)
+        self._assert_dest(b"/base/foo/1_1 [2]/the title", i2)
+
     def test_drop_empty_disambig_string(self, items):
         i1, i2 = items
         album1 = self.lib.get_album(i1)
@@ -891,6 +918,17 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i1.store()
         self._setf("foo/$title%sunique{artist title,trackdisambig}")
         self._assert_dest(b"/base/foo/the title [foo_bar]", i1)
+
+    def test_sunique_path_sanitized_keys(self, items):
+        i1, i2 = items
+        i1.title = "1/1"
+        i2.title = "1?1"
+        i1.store()
+        i2.store()
+        self._setf("foo/$title%sunique{artist title,year}")
+
+        self._assert_dest(b"/base/foo/1_1 [2001]", i1)
+        self._assert_dest(b"/base/foo/1_1 [2002]", i2)
 
     def test_drop_empty_disambig_string(self, items):
         i1, i2 = items

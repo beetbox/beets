@@ -1438,6 +1438,53 @@ class DefaultTemplateFunctions:
         """
         return (name, keys, disam, item_id)
 
+    def _tmpl_unique_path_value(self, db_item, key):
+        value = db_item.formatted(for_path=True).get(key, "")
+        if not value:
+            return ""
+        return util.legalize_path(value, self.lib.replacements, "")[0]
+
+    def _tmpl_unique_path_key(self, db_item, keys):
+        return tuple(self._tmpl_unique_path_value(db_item, key) for key in keys)
+
+    def _tmpl_unique_path_index(self, name, keys, db_item, skip_item):
+        memokey = ("_tmpl_unique_path_index", name, tuple(keys))
+        path_index = self.lib._memotable.get(memokey)
+        if path_index is not None:
+            return path_index
+
+        path_index = {}
+        candidates = (
+            self.lib.items() if isinstance(db_item, Item) else self.lib.albums()
+        )
+        for candidate in candidates:
+            if skip_item(candidate):
+                continue
+            key = self._tmpl_unique_path_key(candidate, keys)
+            path_index.setdefault(key, []).append(candidate)
+
+        self.lib._memotable[memokey] = path_index
+        return path_index
+
+    def _tmpl_unique_items(self, name, keys, db_item, query, skip_item):
+        ambigous_items = (
+            self.lib.items(query)
+            if isinstance(db_item, Item)
+            else self.lib.albums(query)
+        )
+        items_by_id = {item.id: item for item in ambigous_items}
+
+        path_key = self._tmpl_unique_path_key(db_item, keys)
+        path_index = self._tmpl_unique_path_index(
+            name, keys, db_item, skip_item
+        )
+        for item in path_index.get(path_key, []):
+            if item.id in items_by_id:
+                continue
+            items_by_id[item.id] = item
+
+        return list(items_by_id.values())
+
     def _tmpl_unique(
         self, name, keys, disam, bracket, item_id, db_item, item_keys, skip_item
     ):
@@ -1487,10 +1534,8 @@ class DefaultTemplateFunctions:
 
         # Find matching items to disambiguate with.
         query = db_item.duplicates_query(keys)
-        ambigous_items = (
-            self.lib.items(query)
-            if isinstance(db_item, Item)
-            else self.lib.albums(query)
+        ambigous_items = self._tmpl_unique_items(
+            name, keys, db_item, query, skip_item
         )
 
         # If there's only one item to matching these details, then do
@@ -1502,7 +1547,10 @@ class DefaultTemplateFunctions:
         # Find the first disambiguator that distinguishes the items.
         for disambiguator in disam:
             # Get the value for each item for the current field.
-            disam_values = {s.get(disambiguator, "") for s in ambigous_items}
+            disam_values = {
+                self._tmpl_unique_path_value(s, disambiguator)
+                for s in ambigous_items
+            }
 
             # If the set of unique values is equal to the number of
             # items in the disambiguation set, we're done -- this is
@@ -1516,7 +1564,7 @@ class DefaultTemplateFunctions:
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = db_item.formatted(for_path=True).get(disambiguator)
+        disam_value = self._tmpl_unique_path_value(db_item, disambiguator)
 
         # Return empty string if disambiguator is empty.
         if disam_value:

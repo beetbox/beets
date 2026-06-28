@@ -25,6 +25,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`aunique` and :ref:`sunique`: Detect identifier values that become equal
+  after path replacements, so albums or singletons such as ``1/1`` and ``1?1``
+  get a disambiguator instead of sharing a destination. :bug:`6462`
 - Album ``store`` no longer copies ``artpath`` onto its items as an absolute
   path, which broke relative-path portability. A database migration removes any
   such stale ``artpath`` attributes left on items by earlier versions.

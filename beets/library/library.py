@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from contextlib import contextmanager
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import platformdirs
 
@@ -73,7 +73,7 @@ class Library(dbcore.Database):
         self.replacements = self.get_replacements()
 
         # Used for template substitution performance.
-        self._memotable: dict[tuple[str, ...], str] = {}
+        self._memotable: dict[tuple[Any, ...], Any] = {}
 
     @contextmanager
     def music_dir_context(self):
