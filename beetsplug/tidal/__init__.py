@@ -39,8 +39,6 @@ if TYPE_CHECKING:
 
 log = getLogger("beets.tidal")
 
-_EXHAUSTED = object()
-
 
 class TidalPlugin(MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
@@ -143,10 +141,10 @@ class TidalPlugin(MetadataSourcePlugin):
                                 self.search_albums_by_query(query)
                                 for query in self._album_queries(items)
                             ),
-                            fillvalue=_EXHAUSTED,
+                            fillvalue=None,
                         )
                     )
-                    if candidate is not _EXHAUSTED
+                    if candidate is not None
                 ),
                 self.search_limit,
             )
@@ -177,10 +175,10 @@ class TidalPlugin(MetadataSourcePlugin):
                                 self.search_tracks_by_query(query)
                                 for query in self._item_queries(item)
                             ),
-                            fillvalue=_EXHAUSTED,
+                            fillvalue=None,
                         )
                     )
-                    if candidate is not _EXHAUSTED
+                    if candidate is not None
                 ),
                 self.search_limit,
             )
