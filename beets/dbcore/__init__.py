@@ -13,21 +13,24 @@ from .query import (
     OrQuery,
     Query,
 )
-from .queryparse import (
-    ModelQuery,
-    build_and_query,
-    parse_sorted_query,
-    sort_from_strings,
-)
+from .queryparse import ModelQuery
 from .types import Type
+
+_NEW_METHOD_BY_OLD_METHOD_NAME = {
+    "query_from_strings": ModelQuery.build_and_query,
+    "sort_from_strings": ModelQuery.get_sort,
+    "parse_sorted_query": ModelQuery.parse,
+}
 
 
 def __getattr__(name: str):
-    if name == "query_from_strings":
-        deprecate_for_maintainers(
-            f"'beets.dbcore.{name}'", "'beets.dbcore.build_and_query'"
-        )
-        return build_and_query
+    for old_method_name, new_method in _NEW_METHOD_BY_OLD_METHOD_NAME.items():
+        if name == old_method_name:
+            deprecate_for_maintainers(
+                f"'beets.dbcore.{name}'",
+                f"'beets.dbcore.{new_method.__qualname__}'",
+            )
+            return new_method
 
     return deprecate_imports(__name__, {}, name)
 
@@ -45,7 +48,4 @@ __all__ = [
     "Query",
     "Results",
     "Type",
-    "build_and_query",
-    "parse_sorted_query",
-    "sort_from_strings",
 ]

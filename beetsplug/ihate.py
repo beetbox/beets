@@ -33,7 +33,7 @@ class IHatePlugin(BeetsPlugin):
         if action_patterns:
             for query_string in action_patterns:
                 model_cls = Album if task.is_album else Item
-                query, _ = model_cls.parse_query(query_string)
+                query = model_cls.parse_query(query_string).query
                 if any(query.match(item) for item in task.imported_items()):
                     return True
         return False
