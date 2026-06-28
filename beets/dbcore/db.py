@@ -30,7 +30,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
 from sqlite3 import Connection, sqlite_version_info
-from typing import (
+from typing import ClassVar, (
     TYPE_CHECKING,
     Any,
     AnyStr,
@@ -1012,6 +1012,8 @@ class Transaction:
 
 @dataclass
 class Migration(ABC):
+    CHUNK_SIZE: ClassVar[int] = 1000
+
     """Define a one-time data migration that runs during database startup."""
 
     db: Database
