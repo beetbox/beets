@@ -108,27 +108,24 @@ def move_items(
     if not objs:
         return
 
-    if pretend:
+    def path_changes(obj):
         if album:
-            show_path_changes(
-                [
-                    (item.path, item.destination(basedir=dest))
-                    for obj in objs
-                    for item in obj.items()
-                ]
-            )
-        else:
-            show_path_changes(
-                [(obj.path, obj.destination(basedir=dest)) for obj in objs]
-            )
+            return [
+                (item.path, item.destination(basedir=dest))
+                for item in obj.items()
+            ]
+        return [(obj.path, obj.destination(basedir=dest))]
+
+    if pretend:
+        show_path_changes(
+            [change for obj in objs for change in path_changes(obj)]
+        )
     else:
         if confirm:
             objs = ui.input_select_objects(
                 f"Really {act}",
                 objs,
-                lambda o: show_path_changes(
-                    [(o.path, o.destination(basedir=dest))]
-                ),
+                lambda o: show_path_changes(path_changes(o)),
             )
 
         for obj in objs:

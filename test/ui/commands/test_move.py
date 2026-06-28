@@ -1,5 +1,6 @@
 import os
 import shutil
+from unittest.mock import patch
 
 from beets import library
 from beets.test.helper import BeetsTestCase
@@ -82,6 +83,39 @@ class MoveTest(BeetsTestCase):
 
     def test_pretend_move_album(self):
         self._move(album=True, pretend=True)
+        self.i.load()
+        assert self.i.filepath == self.initial_item_path
+
+    def test_select_move_album_previews_item_paths(self):
+        def select_first(prompt, objs, rep):
+            rep(objs[0])
+            return []
+
+        with (
+            patch(
+                "beets.ui.commands.move.ui.input_select_objects",
+                side_effect=select_first,
+            ),
+            patch("beets.ui.commands.move.show_path_changes") as show_paths,
+        ):
+            move_items(
+                self.lib,
+                self.otherdir,
+                (),
+                copy=True,
+                album=True,
+                pretend=False,
+                confirm=True,
+            )
+
+        show_paths.assert_called_once_with(
+            [
+                (
+                    self.i.path,
+                    self.i.destination(basedir=os.fsencode(self.otherdir)),
+                )
+            ]
+        )
         self.i.load()
         assert self.i.filepath == self.initial_item_path
 

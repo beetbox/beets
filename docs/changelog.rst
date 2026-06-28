@@ -34,6 +34,8 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- :ref:`move-cmd`: Selecting albums during timid moves now previews the album's
+  item path changes instead of crashing. :bug:`2802`
 
 ..
     For plugin developers
