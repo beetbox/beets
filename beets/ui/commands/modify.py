@@ -69,7 +69,9 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     # objects.
     ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
-    templates = {key: functemplate.template(value) for key, value in mods.items()}
+    templates = {
+        key: functemplate.template(value) for key, value in mods.items()
+    }
 
     def parse_mods(obj):
         # Parse the raw assignment strings into properly typed values for the
@@ -170,7 +172,9 @@ def modify_func(lib, opts, args):
     )
 
 
-modify_cmd = ui.Subcommand("modify", help="change metadata fields", aliases=("mod",))
+modify_cmd = ui.Subcommand(
+    "modify", help="change metadata fields", aliases=("mod",)
+)
 modify_cmd.parser.add_option(
     "-m",
     "--move",
