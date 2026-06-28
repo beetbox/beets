@@ -22,6 +22,7 @@ from beets.util import displayable_path, normpath, pipeline, syspath
 
 from . import stages as stagefuncs
 from .actions import Action, DuplicateAction
+from .logfile import join_log_paths
 from .state import ImportState
 
 if TYPE_CHECKING:
@@ -156,7 +157,11 @@ class ImportSession:
         """Log a message about a given album to the importer log. The status
         should reflect the reason the album couldn't be tagged.
         """
-        self.logger.info("{} {}", status, displayable_path(paths))
+        if isinstance(paths, (str, bytes)):
+            log_paths = [displayable_path(paths)]
+        else:
+            log_paths = [displayable_path(p) for p in paths]
+        self.logger.info("{} {}", status, join_log_paths(log_paths))
 
     def log_choice(self, task: ImportTask, duplicate: bool = False) -> None:
         """Logs the task's current choice if it should be logged. If

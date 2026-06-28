@@ -4,6 +4,7 @@ import os
 
 from beets import config, logging, plugins, ui
 from beets.exceptions import UserError
+from beets.importer.logfile import decode_log_paths
 from beets.util import displayable_path, normpath, syspath
 
 from .session import TerminalImportSession
@@ -29,7 +30,7 @@ def paths_from_logfile(path):
             if verb not in {"asis", "skip", "duplicate-skip"}:
                 raise ValueError(f"line {i} contains unknown verb {verb}")
 
-            yield os.path.commonpath(paths.split("; "))
+            yield os.path.commonpath(decode_log_paths(paths))
 
 
 def parse_logfiles(logfiles):

@@ -34,6 +34,8 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- :ref:`import-cmd`: Import log files now write skipped paths as JSON lists so
+  ``--from-logfile`` can parse paths containing semicolons. :bug:`4941`
 
 ..
     For plugin developers

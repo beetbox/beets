@@ -7,6 +7,8 @@ import pytest
 from beets import config, library
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, distance
 from beets.exceptions import UserError
+from beets.importer.logfile import join_log_paths
+from beets.importer.session import ImportSession
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.import_ import import_files, paths_from_logfile
@@ -54,6 +56,64 @@ class ImportTest(BeetsTestCase):
             fp.write(logfile_content)
         actual_paths = list(paths_from_logfile(logfile))
         assert actual_paths == expected_paths
+
+    def test_parse_bracketed_legacy_paths_from_logfile(self):
+        logfile_content = (
+            "skip [box set]/Artist/Album; [box set]/Artist/Album/CD 01\n"
+            "duplicate-skip [1]\n"
+        )
+        expected_paths = [os.path.join("[box set]", "Artist", "Album"), "[1]"]
+
+        logfile = os.path.join(self.temp_dir, b"logfile.log")
+        with open(logfile, mode="w") as fp:
+            fp.write(logfile_content)
+
+        assert list(paths_from_logfile(logfile)) == expected_paths
+
+    def test_parse_json_paths_from_logfile(self):
+        logfile_content = (
+            "asis "
+            + join_log_paths(
+                [
+                    "/music/Artist; Name/Album",
+                    "/music/Artist; Name/Album/Disc \\ One",
+                    "/music/Artist; Name/Album/Disc; Two",
+                ]
+            )
+            + "\n"
+            "duplicate-skip "
+            + join_log_paths(["/music/Other; Artist/Album"])
+            + "\n"
+        )
+        expected_paths = [
+            os.path.join(os.sep, "music", "Artist; Name", "Album"),
+            os.path.join(os.sep, "music", "Other; Artist", "Album"),
+        ]
+
+        logfile = os.path.join(self.temp_dir, b"logfile.log")
+        with open(logfile, mode="w") as fp:
+            fp.write(logfile_content)
+
+        assert list(paths_from_logfile(logfile)) == expected_paths
+
+    def test_tag_log_writes_json_paths(self):
+        session = Mock()
+
+        ImportSession.tag_log(
+            session,
+            "skip",
+            [
+                b"/music/Artist; Name/Album",
+                b"/music/Artist; Name/Album/CD \\ 1",
+            ],
+        )
+
+        session.logger.info.assert_called_once_with(
+            "{} {}",
+            "skip",
+            '["/music/Artist; Name/Album", '
+            '"/music/Artist; Name/Album/CD \\\\ 1"]',
+        )
 
 
 @patch("beets.ui.term_width", Mock(return_value=54))

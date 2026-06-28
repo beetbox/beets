@@ -1310,14 +1310,14 @@ class TagLogTest(unittest.TestCase):
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
         session.tag_log("status", "path")
-        assert "status path" in sio.getvalue()
+        assert 'status ["path"]' in sio.getvalue()
 
     def test_tag_log_unicode(self):
         sio = StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
         session.tag_log("status", "caf\xe9")  # send unicode
-        assert "status caf\xe9" in sio.getvalue()
+        assert 'status ["caf\xe9"]' in sio.getvalue()
 
 
 class TestResumeImport(ImportHelper):
