@@ -85,7 +85,7 @@ class QueryParseTest(unittest.TestCase):
 
 class QueryFromStringsTest(unittest.TestCase):
     def qfs(self, strings):
-        return dbcore.queryparse.build_and_query(ModelFixture1, strings)
+        return ModelQuery.build_and_query(ModelFixture1, strings)
 
     def test_zero_parts(self):
         q = self.qfs([])
@@ -113,7 +113,7 @@ class QueryFromStringsTest(unittest.TestCase):
 
 class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):
-        return dbcore.queryparse.sort_from_strings(ModelFixture1, strings)
+        return ModelQuery.get_sort(ModelFixture1, strings)
 
     def test_zero_parts(self):
         s = self.sfs([])
@@ -146,7 +146,7 @@ class SortFromStringsTest(unittest.TestCase):
 
 class ParseSortedQueryTest(unittest.TestCase):
     def psq(self, parts):
-        return dbcore.parse_sorted_query(ModelFixture1, parts.split())
+        return ModelQuery.parse(ModelFixture1, parts.split())
 
     def test_and_query(self):
         q, s = self.psq("foo bar")
@@ -162,12 +162,9 @@ class ParseSortedQueryTest(unittest.TestCase):
 
     def test_no_space_before_comma_or_query(self):
         q, s = self.psq("foo, bar")
-        assert isinstance(q, query.AndQuery)
-        assert isinstance(q.subqueries[0], query.OrQuery)
-        assert isinstance(q.subqueries[1], query.OrQuery)
-        assert len(q.subqueries[0].subqueries) == 2
-        assert len(q.subqueries[1].subqueries) == 2
+        assert isinstance(q, query.OrQuery)
         assert isinstance(s, sort.NullSort)
+        assert len(q.subqueries) == 4
 
     def test_no_spaces_or_query(self):
         q, s = self.psq("foo,bar")

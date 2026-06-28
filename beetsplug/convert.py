@@ -369,7 +369,7 @@ class ConvertPlugin(BeetsPlugin):
         no_convert_query = self.config["no_convert"].as_str()
 
         if no_convert_query:
-            query, _ = Item.parse_query(no_convert_query)
+            query = Item.parse_query(no_convert_query).query
             return query.match(item)
         return False
 

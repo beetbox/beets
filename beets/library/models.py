@@ -79,7 +79,7 @@ class LibModel(dbcore.Model["Library"]):
     def default_sort(cls) -> Sort:
         """Get a :class:`beets.dbcore.sort.Sort` for configured fields."""
         config_key = f"sort_{cls.__name__.lower()}"
-        return dbcore.sort_from_strings(
+        return ModelQuery.get_sort(
             cls,  # type: ignore[arg-type]
             beets.config[config_key].as_str_seq(),
         )
@@ -1182,8 +1182,7 @@ class Item(LibModel):
         for query_str, path_format in path_formats:
             if query_str == PF_KEY_DEFAULT:
                 continue
-            query, _ = self.parse_query(query_str)
-            if query.match(self):
+            if self.parse_query(query_str).query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
                 break
