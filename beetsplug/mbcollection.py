@@ -28,7 +28,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
 from ._utils.musicbrainz import MusicBrainzAPI
-from ._utils.requests import BeetsHTTPError
+from ._utils.requests import BeetsHTTPError, HTTPNotFoundError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -149,6 +149,14 @@ class MBCollection:
             # Need to escape semicolons: https://github.com/psf/requests/issues/6990
             self.mb_api.delete(f"{self.releases_url}/{'%3B'.join(chunk)}")
 
+    def refresh(self) -> MBCollection:
+        """Return this collection with current metadata from MusicBrainz."""
+        for collection in self.mb_api.browse_collections():
+            if collection["id"] == self.id:
+                return type(self)(collection, self.mb_api)
+
+        raise UserError(f"collection no longer exists: {self.id}")
+
 
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self) -> None:
@@ -215,6 +223,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         """Update the MusicBrainz collection from a list of Beets albums"""
         try:
             collection = self.collection
+            albums = list(albums)
 
             # Get a list of all the album IDs.
             album_ids = [
@@ -227,10 +236,47 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             )
             collection.add_releases(album_ids)
             if remove_missing:
+                collection = collection.refresh()
                 lib_ids = {x.mb_albumid for x in lib.albums()}
                 albums_in_collection = {r["id"] for r in collection.releases}
+                lib_ids.update(
+                    self._canonical_release_ids(
+                        album_ids,
+                        albums_in_collection,
+                        albums_in_collection - lib_ids,
+                    )
+                )
                 collection.remove_releases(list(albums_in_collection - lib_ids))
 
             self._log.info("...MusicBrainz collection updated.")
         except BeetsHTTPError as exc:
             self._log.error("Failed to update MusicBrainz collection: {}", exc)
+
+    def _canonical_release_ids(
+        self,
+        release_ids: Iterable[str],
+        collection_ids: set[str],
+        removal_candidates: set[str],
+    ) -> set[str]:
+        """Find canonical MusicBrainz IDs for redirected local releases."""
+        remaining_candidates = set(removal_candidates)
+        canonical_ids = set()
+
+        for release_id in release_ids:
+            if not remaining_candidates:
+                break
+            if release_id in collection_ids:
+                continue
+
+            try:
+                canonical_id = self.mb_api.get_release(release_id, includes=[])[
+                    "id"
+                ]
+            except HTTPNotFoundError:
+                continue
+
+            if canonical_id in remaining_candidates:
+                canonical_ids.add(canonical_id)
+                remaining_candidates.remove(canonical_id)
+
+        return canonical_ids

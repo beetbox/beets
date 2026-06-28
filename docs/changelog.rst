@@ -34,6 +34,8 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- :doc:`/plugins/mbcollection`: ``mbupdate --remove`` now keeps MusicBrainz
+  releases that are canonical redirect targets for local album IDs. :bug:`2914`
 
 ..
     For plugin developers
