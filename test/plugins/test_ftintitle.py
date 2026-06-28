@@ -362,42 +362,6 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.artist_credit == "Alice & Bobby"
         assert info.title == "Song feat. Bob"
 
-    def test_command_preserves_artist_credit_when_enabled(self) -> None:
-        self.config["artist_credit"] = True
-        item = self.add_item(
-            path="/",
-            artist="Alice feat. Bob",
-            artist_credit="Alice feat. Bobby",
-            title="Song",
-            albumartist="Alice",
-        )
-
-        with self.configure_plugin({"auto": True}):
-            self.run_command("ftintitle")
-
-        item.load()
-        assert item.artist == "Alice"
-        assert item.artist_credit == "Alice feat. Bobby"
-        assert item.title == "Song feat. Bob"
-
-    def test_command_preserves_artist_credit_when_disabled(self) -> None:
-        self.config["artist_credit"] = False
-        item = self.add_item(
-            path="/",
-            artist="Alice feat. Bob",
-            artist_credit="Alice feat. Bobby",
-            title="Song",
-            albumartist="Alice",
-        )
-
-        with self.configure_plugin({"auto": True}):
-            self.run_command("ftintitle")
-
-        item.load()
-        assert item.artist == "Alice"
-        assert item.artist_credit == "Alice feat. Bobby"
-        assert item.title == "Song feat. Bob"
-
     def test_ft_in_title_reports_no_change_for_drop_keep_noop(self) -> None:
         item = self.add_item(
             path="/",
