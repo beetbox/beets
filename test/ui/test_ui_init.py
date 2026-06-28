@@ -26,6 +26,7 @@ from beets import config, library, ui
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
+import pytest
 
 
 class InputMethodsTest(IOMixin, unittest.TestCase):
@@ -142,14 +143,14 @@ class DatabaseErrorTest(BeetsTestCase):
                 "unable to open database file"
             ),
         ):
-            with self.assertRaises(UserError) as cm:
+            with pytest.raises(UserError) as cm:
                 ui._open_library(test_config)
 
-            error_message = str(cm.exception)
+            error_message = str(cm.value)
             # Should mention permissions and directory
-            self.assertIn("directory", error_message.lower())
-            self.assertIn("writable", error_message.lower())
-            self.assertIn("permissions", error_message.lower())
+            assert "directory" in error_message.lower()
+            assert "writable" in error_message.lower()
+            assert "permissions" in error_message.lower()
 
     def test_database_error_fallback(self):
         """Test fallback error message for other database errors."""
@@ -164,12 +165,12 @@ class DatabaseErrorTest(BeetsTestCase):
             "Library",
             side_effect=sqlite3.OperationalError("disk I/O error"),
         ):
-            with self.assertRaises(UserError) as cm:
+            with pytest.raises(UserError) as cm:
                 ui._open_library(test_config)
 
-            error_message = str(cm.exception)
+            error_message = str(cm.value)
             # Should contain the error but not the permissions message
-            self.assertIn("could not be opened", error_message)
-            self.assertIn("disk I/O error", error_message)
+            assert "could not be opened" in error_message
+            assert "disk I/O error" in error_message
             # Should NOT have the permissions-related message
-            self.assertNotIn("permissions", error_message.lower())
+            assert "permissions" not in error_message.lower()
