@@ -61,9 +61,6 @@ _normalize_label_re = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 
-_EXHAUSTED = object()
-
-
 class TidalPlugin(MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "tidal_track_id": types.STRING,
@@ -165,10 +162,10 @@ class TidalPlugin(MetadataSourcePlugin):
                                 self.search_albums_by_query(query)
                                 for query in self._album_queries(items)
                             ),
-                            fillvalue=_EXHAUSTED,
+                            fillvalue=None,
                         )
                     )
-                    if candidate is not _EXHAUSTED
+                    if candidate is not None
                 ),
                 self.search_limit,
             )
@@ -199,10 +196,10 @@ class TidalPlugin(MetadataSourcePlugin):
                                 self.search_tracks_by_query(query)
                                 for query in self._item_queries(item)
                             ),
-                            fillvalue=_EXHAUSTED,
+                            fillvalue=None,
                         )
                     )
-                    if candidate is not _EXHAUSTED
+                    if candidate is not None
                 ),
                 self.search_limit,
             )
