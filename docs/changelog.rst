@@ -36,8 +36,7 @@ Bug fixes
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
 - :doc:`plugins/badfiles`: Detach stdin from the controlling terminal when
   running checker commands, so a checker can no longer leave the terminal in a
-  modified state (e.g. with input echo disabled) after ``beet bad``.
-  :bug:`6750`
+  modified state (e.g. with input echo disabled) after ``beet bad``. :bug:`6750`
 
 ..
     For plugin developers
