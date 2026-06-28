@@ -14,6 +14,7 @@
 
 """Tests for the 'badfiles' plugin."""
 
+from subprocess import DEVNULL
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -46,3 +47,16 @@ class BadFilesPluginTest(PluginTestCase):
             result = plugin.on_import_task_before_choice(task, session=None)
 
         assert result == importer.Action.SKIP
+
+    def test_run_command_detaches_stdin(self):
+        # The checker commands are non-interactive; run_command must detach
+        # stdin from the terminal so a checker cannot leave the TTY in a
+        # modified state (e.g. with echo disabled). See #6750.
+        plugin = BadFiles()
+
+        with patch(
+            "beetsplug.badfiles.check_output", return_value=b""
+        ) as mock_check_output:
+            plugin.run_command(["mp3val", "foo.mp3"])
+
+        assert mock_check_output.call_args.kwargs["stdin"] is DEVNULL

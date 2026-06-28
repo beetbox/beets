@@ -18,7 +18,13 @@ import errno
 import os
 import shlex
 import sys
-from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
+from subprocess import (
+    DEVNULL,
+    STDOUT,
+    CalledProcessError,
+    check_output,
+    list2cmdline,
+)
 from typing import Literal
 
 import confuse
@@ -66,7 +72,10 @@ class BadFiles(BeetsPlugin):
             "running command: {}", displayable_path(list2cmdline(cmd))
         )
         try:
-            output = check_output(cmd, stderr=STDOUT)
+            # The checker commands are non-interactive, so detach stdin from
+            # the controlling terminal. Otherwise a checker may leave the TTY
+            # in a modified state (e.g. with echo disabled). See #6750.
+            output = check_output(cmd, stderr=STDOUT, stdin=DEVNULL)
             errors = 0
             status = 0
         except CalledProcessError as e:
