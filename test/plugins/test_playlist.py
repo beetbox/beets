@@ -25,10 +25,13 @@ class PlaylistTestCase(PluginTestCase):
     plugin = "playlist"
     preload_plugin = False
 
+    def get_music_dir(self):
+        return os.path.expanduser(os.path.join("~", "Music"))
+
     def setUp(self):
         super().setUp()
 
-        self.music_dir = os.path.expanduser(os.path.join("~", "Music"))
+        self.music_dir = self.get_music_dir()
 
         i1 = _common.item()
         i1.path = beets.util.normpath(
@@ -122,6 +125,11 @@ class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
             )
 
         self.config["playlist"]["relative_to"] = "library"
+
+
+class PlaylistTestRelativeToActiveLib(PlaylistTestRelativeToLib):
+    def get_music_dir(self):
+        return str(self.lib_path)
 
 
 class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):

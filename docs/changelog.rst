@@ -25,6 +25,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/playlist`: Match playlist entries that point inside the active
+  library directory when paths are stored library-relative. :bug:`6784`
 - Album ``store`` no longer copies ``artpath`` onto its items as an absolute
   path, which broke relative-path portability. A database migration removes any
   such stale ``artpath`` attributes left on items by earlier versions.
