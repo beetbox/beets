@@ -180,8 +180,19 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     error=e,
                 )
                 return None
-            with open(filename) as tmp_file:
-                analysis = json.load(tmp_file)
+            try:
+                with open(filename, "rb") as tmp_file:
+                    analysis = json.loads(
+                        tmp_file.read().decode("utf-8", "ignore")
+                    )
+            except json.JSONDecodeError as e:
+                self._log.warning(
+                    "Failed to parse AcousticBrainz analysis of {item}: "
+                    "{error}",
+                    item=item,
+                    error=e,
+                )
+                return None
             # Add the hash to the output.
             analysis["metadata"]["version"]["essentia_build_sha"] = (
                 self.extractor_sha
