@@ -128,7 +128,7 @@ class ThumbnailsTest(BeetsTestCase):
         mock_resize = mock_artresizer.shared.resize
         mock_resize.return_value = path_to_resized_art
 
-        plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
+        assert plugin.make_cover_thumbnail(album, 12345, thumbnail_dir) is True
 
         mock_os.path.exists.assert_called_once_with(syspath(md5_file))
 
@@ -152,13 +152,33 @@ class ThumbnailsTest(BeetsTestCase):
 
         mock_os.stat.side_effect = os_stat
 
-        plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
+        assert plugin.make_cover_thumbnail(album, 12345, thumbnail_dir) is False
         assert mock_resize.call_count == 0
 
         # and with force
         plugin.config["force"] = True
-        plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
+        assert plugin.make_cover_thumbnail(album, 12345, thumbnail_dir) is True
         mock_resize.assert_called_once_with(12345, path_to_art, md5_file)
+
+        # no move is needed when the resizer already wrote the target
+        plugin.config["force"] = False
+        mock_os.path.exists.return_value = False
+        mock_resize.return_value = md5_file
+        plugin.add_tags.reset_mock()
+        mock_shutils.move.reset_mock()
+
+        assert plugin.make_cover_thumbnail(album, 12345, thumbnail_dir) is True
+        plugin.add_tags.assert_called_once_with(album, md5_file)
+        mock_shutils.move.assert_not_called()
+
+        # a resize failure returns the original art; keep it in place
+        mock_resize.return_value = path_to_art
+        plugin.add_tags.reset_mock()
+        mock_shutils.move.reset_mock()
+
+        assert plugin.make_cover_thumbnail(album, 12345, thumbnail_dir) is False
+        plugin.add_tags.assert_not_called()
+        mock_shutils.move.assert_not_called()
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     def test_make_dolphin_cover_thumbnail(self):
@@ -201,20 +221,34 @@ class ThumbnailsTest(BeetsTestCase):
         # cannot get art size
         album.artpath = b"/path/to/art"
         get_size.return_value = None
+        plugin.config["dolphin"] = True
         plugin.process_album(album)
         get_size.assert_called_once_with(b"/path/to/art")
         assert make_cover.call_count == 0
+        assert make_dolphin.call_count == 0
 
         # dolphin tests
         plugin.config["dolphin"] = False
         plugin.process_album(album)
         assert make_dolphin.call_count == 0
 
+        get_size.return_value = 200, 200
         plugin.config["dolphin"] = True
+        make_cover.reset_mock()
+        parent = Mock()
+        parent.attach_mock(make_cover, "make_cover")
+        parent.attach_mock(make_dolphin, "make_dolphin")
+
         plugin.process_album(album)
-        make_dolphin.assert_called_once_with(album)
+        assert parent.mock_calls == [
+            call.make_cover(album, 128, NORMAL_DIR),
+            call.make_dolphin(album),
+        ]
 
         # small art
+        make_cover.reset_mock()
+        make_dolphin.reset_mock()
+        plugin.config["dolphin"] = False
         get_size.return_value = 200, 200
         plugin.process_album(album)
         make_cover.assert_called_once_with(album, 128, NORMAL_DIR)

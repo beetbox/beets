@@ -34,6 +34,9 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- :doc:`plugins/thumbnails`: Defer Dolphin ``.directory`` metadata until after
+  thumbnail generation, and avoid no-op moves when resizing already wrote the
+  target file. :bug:`3086`
 
 ..
     For plugin developers

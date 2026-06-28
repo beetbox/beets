@@ -115,9 +115,6 @@ class ThumbnailsPlugin(BeetsPlugin):
             self._log.info("album {} has no art", album)
             return
 
-        if self.config["dolphin"]:
-            self.make_dolphin_cover_thumbnail(album)
-
         size = ArtResizer.shared.get_size(album.artpath)
         if not size:
             self._log.warning(
@@ -129,6 +126,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         if max(size) >= 256:
             wrote &= self.make_cover_thumbnail(album, 256, LARGE_DIR)
         wrote &= self.make_cover_thumbnail(album, 128, NORMAL_DIR)
+
+        if self.config["dolphin"]:
+            self.make_dolphin_cover_thumbnail(album)
 
         if wrote:
             self._log.info("wrote thumbnail for {}", album)
@@ -161,8 +161,12 @@ class ThumbnailsPlugin(BeetsPlugin):
                 )
                 return False
         resized = ArtResizer.shared.resize(size, album.artpath, target)
+        if resized == album.artpath:
+            return False
+
         self.add_tags(album, resized)
-        shutil.move(syspath(resized), syspath(target))
+        if resized != target:
+            shutil.move(syspath(resized), syspath(target))
         return True
 
     def thumbnail_file_name(self, path):
