@@ -22,11 +22,12 @@ from copy import deepcopy
 from random import random
 from unittest import mock
 
+import pytest
+
 from beets import config, library, ui
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
-import pytest
 
 
 class InputMethodsTest(IOMixin, unittest.TestCase):
