@@ -52,6 +52,8 @@ New features
   :bug:`6466`
 - :doc:`plugins/lyrics`: Add ``lrcmux`` backend, which aggregates lyrics from
   various other sources.
+- :doc:`plugins/replaygain`: Add a ``metaflac`` backend that computes ReplayGain
+  for FLAC files using the ``metaflac`` command-line tool. :bug:`1203`
 
 Bug fixes
 ~~~~~~~~~
