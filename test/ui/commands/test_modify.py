@@ -118,7 +118,9 @@ class ModifyTest(IOMixin, BeetsTestCase):
 
     def test_modify_formatted(self):
         for i in range(3):
-            self.add_item_fixture(title=f"title{i}", artist="artist", album="album")
+            self.add_item_fixture(
+                title=f"title{i}", artist="artist", album="album"
+            )
         items = list(self.lib.items())
         self.modify("title=${title} - append")
         for item in items:
@@ -168,15 +170,16 @@ class ModifyTest(IOMixin, BeetsTestCase):
         self.modify("--album", "artists=Charli XCX")
         for item in self.lib.items():
             assert item.artists == ["Charli XCX"], (
-                f"artists should be a list with one element, " f"got {item.artists!r}"
+                f"artists should be a list with one element, "
+                f"got {item.artists!r}"
             )
 
     def test_album_modify_genres_not_split(self):
         self.modify("--album", "genres=Rock")
         for item in self.lib.items():
-            assert item.genres == [
-                "Rock"
-            ], f"genres should be a list with one element, got {item.genres!r}"
+            assert item.genres == ["Rock"], (
+                f"genres should be a list with one element, got {item.genres!r}"
+            )
 
     # Misc
 
@@ -222,7 +225,9 @@ class ModifyTest(IOMixin, BeetsTestCase):
         assert mods == {"title": "newTitle"}
 
     def test_arg_parsing_delete(self):
-        query, _, dels = modify_parse_args(["title:oldTitle", "title!"], is_album=False)
+        query, _, dels = modify_parse_args(
+            ["title:oldTitle", "title!"], is_album=False
+        )
         assert query == ["title:oldTitle"]
         assert dels == ["title"]
 
