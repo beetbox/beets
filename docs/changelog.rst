@@ -21,6 +21,8 @@ New features
 - A database backup is now automatically created before running schema
   migrations. Control with the ``create_backup_before_migrations`` option
   (default: yes).
+- :doc:`plugins/lyrics`: Added a ``--no-keep-synced`` command option to override
+  ``keep_synced: yes`` for a single manual lyrics fetch.
 
 Bug fixes
 ~~~~~~~~~

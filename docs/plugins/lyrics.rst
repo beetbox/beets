@@ -145,7 +145,9 @@ that already have lyrics.
 
 The ``--keep-synced`` option skips tracks that already have synced lyrics,
 regardless of the ``force`` flag. This is handy when you want to re-fetch plain
-lyrics without touching tracks that already have a synced version.
+lyrics without touching tracks that already have a synced version. Use
+``--no-keep-synced`` to override a ``keep_synced: yes`` configuration for a
+single command run.
 
 Inversely, the ``-l, --local`` option restricts operations to lyrics that are
 locally available, which show lyrics faster without using the network at all.
