@@ -550,6 +550,56 @@ class TestCandidates(TidalPluginTest):
         assert len(candidates) == 1
         assert candidates[0].album == "Query Album"
 
+    def test_candidates_use_explicit_search_terms(self):
+        """Test album query search uses the supplied search terms."""
+        items = [
+            Item(
+                title="Stored Song",
+                artist="Stored Artist",
+                album="Stored Album",
+            )
+        ]
+        self.tidal.search_albums_by_query = Mock(return_value=[])
+
+        candidates = list(
+            self.tidal.candidates(
+                items, "Entered Artist", "Entered Album", False
+            )
+        )
+
+        assert candidates == []
+        self.tidal.search_albums_by_query.assert_called_once_with(
+            "Entered Artist Entered Album"
+        )
+
+    def test_candidates_use_item_artists_when_artist_missing(self):
+        """Test album query search keeps item artist fallback."""
+        items = [Item(title="Stored Song", artist="Stored Artist")]
+        self.tidal.search_albums_by_query = Mock(return_value=[])
+
+        candidates = list(
+            self.tidal.candidates(items, "", "Entered Album", True)
+        )
+
+        assert candidates == []
+        self.tidal.search_albums_by_query.assert_called_once_with(
+            "Stored Artist Entered Album"
+        )
+
+    def test_candidates_use_album_when_no_artist_available(self):
+        """Test album query search can fall back to album-only search."""
+        items = [Item(title="Stored Song")]
+        self.tidal.search_albums_by_query = Mock(return_value=[])
+
+        candidates = list(
+            self.tidal.candidates(items, "", "Entered Album", True)
+        )
+
+        assert candidates == []
+        self.tidal.search_albums_by_query.assert_called_once_with(
+            "Entered Album"
+        )
+
 
 class TestItemCandidates(TidalPluginTest):
     """Tests for item_candidates method."""
@@ -601,6 +651,33 @@ class TestItemCandidates(TidalPluginTest):
 
         assert self.tidal.api.search_results.called
         assert results[0].title == "Query Track"
+
+    def test_item_candidates_use_explicit_search_terms(self):
+        """Test track query search uses the supplied search terms."""
+        item = Item(title="Stored Title", artist="Stored Artist")
+        self.tidal.search_tracks_by_query = Mock(return_value=[])
+
+        results = list(
+            self.tidal.item_candidates(item, "Entered Artist", "Entered Title")
+        )
+
+        assert results == []
+        assert [
+            call.args[0]
+            for call in self.tidal.search_tracks_by_query.call_args_list
+        ] == ["Entered Title", "Entered Artist Entered Title"]
+
+    def test_item_candidates_use_title_when_artist_missing(self):
+        """Test track query search can use the supplied title alone."""
+        item = Item(title="Stored Title", artist="Stored Artist")
+        self.tidal.search_tracks_by_query = Mock(return_value=[])
+
+        results = list(self.tidal.item_candidates(item, "", "Entered Title"))
+
+        assert results == []
+        self.tidal.search_tracks_by_query.assert_called_once_with(
+            "Entered Title"
+        )
 
 
 class TestStaticHelpers:
