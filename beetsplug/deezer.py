@@ -77,11 +77,12 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         if not (album_data := self.fetch_data(album_url)):
             return None
 
+        album_artist, album_artist_id = self.get_artist([album_data["artist"]])
         contributors = album_data.get("contributors")
-        if contributors is not None:
+        if contributors:
             artist, artist_id = self.get_artist(contributors)
         else:
-            artist, artist_id = None, None
+            artist, artist_id = album_artist, album_artist_id
 
         release_date = album_data["release_date"]
         date_parts = [int(part) for part in release_date.split("-")]
@@ -135,10 +136,8 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             album_id=deezer_id,
             deezer_album_id=deezer_id,
             artist=artist,
-            artist_credit=(
-                artist if is_va else self.get_artist([album_data["artist"]])[0]
-            ),
-            artist_id=str(artist_id),
+            artist_credit=(artist if is_va else album_artist),
+            artist_id=str(artist_id) if artist_id is not None else None,
             tracks=tracks,
             albumtype=album_data["record_type"],
             va=is_va,
