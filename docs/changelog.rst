@@ -24,6 +24,8 @@ New features
 - :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
   ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
   :doc:`plugins/fetchart` plugin can retrieve.
+- :doc:`plugins/replaygain`: Add a ``metaflac`` backend that computes ReplayGain
+  for FLAC files using the ``metaflac`` command-line tool. :bug:`1203`
 
 Bug fixes
 ~~~~~~~~~
