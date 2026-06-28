@@ -162,6 +162,15 @@ test_plugin_command() {
 
   initcli test - &&
   completes -o --option &&
+
+  initcli test-plugin - &&
+  completes -o --option &&
+
+  initcli test-alias &&
+  completes test-plugin &&
+
+  initcli test-alias - &&
+  completes -o --option &&
   true
 }
 

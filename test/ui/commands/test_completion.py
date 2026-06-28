@@ -4,12 +4,27 @@ import sys
 
 import pytest
 
+from beets import ui
 from beets.test import _common
 from beets.test.helper import RUNNING_IN_CI, IOMixin, has_program
-from beets.ui.commands.completion import BASH_COMPLETION_PATHS
+from beets.ui.commands.completion import (
+    BASH_COMPLETION_PATHS,
+    completion_script,
+)
 from beets.util import syspath
 
 from ..test_ui import TestPluginTestCase
+
+
+def test_completion_script_includes_hyphenated_aliases():
+    command = ui.Subcommand("test-plugin", aliases=["test-alias"])
+    command.parser.add_option("-o", "--option", dest="my_opt")
+
+    script = "".join(completion_script([command]))
+
+    assert "local aliases='test-alias'\n" in script
+    assert "local alias__test_alias=test-plugin\n" in script
+    assert "local opts__test_plugin='-o --option'\n" in script
 
 
 @pytest.mark.xfail(

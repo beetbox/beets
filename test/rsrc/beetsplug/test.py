@@ -14,6 +14,12 @@ class TestPlugin(BeetsPlugin):
         # Used in CompletionTest
         test.parser.add_option("-o", "--option", dest="my_opt")
 
+        hyphen = ui.Subcommand("test-plugin", aliases=["test-alias"])
+        hyphen.func = lambda *args: None
+
+        # Used in CompletionTest.
+        hyphen.parser.add_option("-o", "--option", dest="my_opt")
+
         plugin = ui.Subcommand("plugin")
         plugin.func = lambda *args: None
-        return [test, plugin]
+        return [test, hyphen, plugin]

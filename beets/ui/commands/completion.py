@@ -9,6 +9,12 @@ from beets.util import syspath
 # Global logger.
 log = logging.getLogger("beets")
 
+COMPLETABLE_ALIAS = re.compile(r"^\w[\w-]*$")
+
+
+def _shell_var_suffix(value):
+    return value.replace("-", "_")
+
 
 def print_completion(*args):
     from beets.ui.commands import default_commands
@@ -63,7 +69,7 @@ def completion_script(commands):
         command_names.append(name)
 
         for alias in cmd.aliases:
-            if re.match(r"^\w+$", alias):
+            if COMPLETABLE_ALIAS.match(alias):
                 aliases[alias] = name
 
         options[name] = {"flags": [], "opts": []}
@@ -96,7 +102,7 @@ def completion_script(commands):
     # Command aliases
     yield f"  local aliases={' '.join(aliases.keys())!r}\n"
     for alias, cmd in aliases.items():
-        yield f"  local alias__{alias.replace('-', '_')}={cmd}\n"
+        yield f"  local alias__{_shell_var_suffix(alias)}={cmd}\n"
     yield "\n"
 
     # Fields
@@ -110,7 +116,8 @@ def completion_script(commands):
                 option_list = " ".join(option_list)
                 yield (
                     "  local"
-                    f" {option_type}__{cmd.replace('-', '_')}='{option_list}'\n"
+                    f" {option_type}__{_shell_var_suffix(cmd)}="
+                    f"'{option_list}'\n"
                 )
 
     yield "  _beet_dispatch\n"
