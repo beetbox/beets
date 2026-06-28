@@ -25,6 +25,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`import-cmd`: Remuxing a ``WAVE_FORMAT_MPEGLAYER3`` file that already has
+  an ``.mp3`` extension no longer deletes the extracted MP3 during import.
+  :bug:`6748`
 - Album ``store`` no longer copies ``artpath`` onto its items as an absolute
   path, which broke relative-path portability. A database migration removes any
   such stale ``artpath`` attributes left on items by earlier versions.

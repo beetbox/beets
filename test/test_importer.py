@@ -37,7 +37,7 @@ from mediafile import MediaFile
 
 from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
-from beets.importer.tasks import albums_in_dir
+from beets.importer.tasks import ImportTaskFactory, albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
     NEEDS_FFPROBE,
@@ -1919,6 +1919,30 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
         assert mp3_path.endswith(b".mp3")
         assert os.path.exists(mp3_path)
         assert not os.path.exists(dest)
+
+    def test_remux_mpeglayer3_wav_keeps_mp3_source(self):
+        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        dest = os.path.join(self.temp_dir, b"mpeglayer3.mp3")
+        shutil.copy(syspath(src), syspath(dest))
+
+        mp3_path = remux_mpeglayer3_wav(dest)
+
+        assert mp3_path == dest
+        assert os.path.exists(dest)
+        with open(syspath(dest), "rb") as mp3_file:
+            assert mp3_file.read(4) != b"RIFF"
+
+    def test_import_remux_mpeglayer3_wav_keeps_mp3_source(self):
+        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
+        dest = os.path.join(self.import_dir, b"mpeglayer3.mp3")
+        shutil.copy(syspath(src), syspath(dest))
+        factory = ImportTaskFactory(self.import_dir, self.setup_importer())
+
+        item = factory.read_item(dest)
+
+        assert item is not None
+        assert item.path == dest
+        assert os.path.exists(dest)
 
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""

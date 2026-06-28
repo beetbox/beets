@@ -178,5 +178,6 @@ def remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
     with open(util.syspath(mp3_path), "wb") as mp3_file:
         mp3_file.write(mp3_data)
 
-    util.remove(path)
+    if not util.samefile(path, mp3_path):
+        util.remove(path)
     return mp3_path
