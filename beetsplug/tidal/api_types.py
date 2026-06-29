@@ -162,6 +162,28 @@ class TidalTrack(TypedDict):
     relationships: dict[str, RelationshipData]
 
 
+class FileMeta(TypedDict):
+    width: int
+    height: int
+
+
+class ArtworkFile(TypedDict):
+    href: str
+    meta: FileMeta
+
+
+class ArtworkAttributes(TypedDict):
+    mediaType: Literal["IMAGE"]
+    files: list[ArtworkFile]
+    visualMetadata: NotRequired[dict[str, str]]
+
+
+class TidalArtwork(TypedDict):
+    id: str
+    type: Literal["artworks"]
+    attributes: ArtworkAttributes
+
+
 class TidalSearch(TypedDict):
     id: str
     type: Literal["searchResults"]
@@ -174,7 +196,9 @@ T = TypeVar("T")
 
 class Document(TypedDict, Generic[T]):
     data: T
-    included: NotRequired[list[TidalArtist | TidalAlbum | TidalTrack]]
+    included: NotRequired[
+        list[TidalArtist | TidalAlbum | TidalTrack | TidalArtwork]
+    ]
     links: NotRequired[dict[str, str]]
 
 
