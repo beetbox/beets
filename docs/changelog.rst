@@ -24,6 +24,14 @@ New features
 - :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
   ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
   :doc:`plugins/fetchart` plugin can retrieve.
+- :doc:`plugins/lastgenre`: Add support for normalizing genre spellings and
+  naming variants with a new configuration option ``aliases``. The feature is
+  enabled by default and ships with a built-in list of regex patterns. These
+  patterns can be replaced via the user's configuration. The default whitelist
+  and genre tree were audited against the top 1,000 Last.fm tags: canonical
+  names are now consistent across both files, long-standing mismatches between
+  them have been resolved, and entries align with the built-in alias patterns.
+  :bug:`6466`
 
 Bug fixes
 ~~~~~~~~~
@@ -57,6 +65,9 @@ Other changes
   information. :bug:`5783`
 - :doc:`guides/installation`: Switch isolated tool installation guidance and
   GitHub workflow setup to ``uv tool`` commands.
+- :doc:`plugins/lastgenre`: Add a new "Choosing the Right Tool" documentation
+  section to guide users in picking the right approach across genre fetching,
+  filtering, and normalization.
 
 2.12.0 (June 22, 2026)
 ----------------------
