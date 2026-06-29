@@ -25,7 +25,7 @@ import pylast
 
 from beets import plugins
 
-from .utils import drop_ignored_genres
+from .utils import is_ignored, normalize_genre
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from beets.library import LibModel
     from beets.logging import BeetsLogger
 
-    from .utils import GenreIgnorePatterns
+    from .utils import AliasPatternWithReplacement, IgnorePatternsByArtist
 
     GenreCache = dict[str, list[str]]
     """Cache mapping entity keys to their genre lists.
@@ -68,17 +68,19 @@ class LastFmClient:
         self,
         log: BeetsLogger,
         min_weight: int,
-        ignore_patterns: GenreIgnorePatterns,
+        ignore_patterns: IgnorePatternsByArtist,
+        alias_patterns: list[AliasPatternWithReplacement],
     ):
         """Initialize the client.
 
         The min_weight parameter filters tags by their minimum weight.
         The ignorelist filters forbidden genres directly after Last.fm lookup.
         """
-        self._log = log
-        self._min_weight = min_weight
-        self._ignore_patterns: GenreIgnorePatterns = ignore_patterns
-        self._genre_cache: GenreCache = {}
+        self.log = log
+        self.min_weight = min_weight
+        self.ignore_patterns: IgnorePatternsByArtist = ignore_patterns
+        self.alias_patterns: list[AliasPatternWithReplacement] = alias_patterns
+        self.genre_cache: GenreCache = {}
 
     def fetch_genres(
         self, obj: pylast.Album | pylast.Artist | pylast.Track
@@ -87,16 +89,16 @@ class LastFmClient:
         try:
             res = obj.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
-            self._log.debug("last.fm error: {}", exc)
+            self.log.debug("last.fm error: {}", exc)
             return []
         except Exception as exc:
             # Isolate bugs in pylast.
-            self._log.debug("{}", traceback.format_exc())
-            self._log.error("error in pylast library: {}", exc)
+            self.log.debug("{}", traceback.format_exc())
+            self.log.error("error in pylast library: {}", exc)
             return []
 
         # Filter by weight (optionally).
-        if min_weight := self._min_weight:
+        if min_weight := self.min_weight:
             res = [el for el in res if (int(el.weight or 0)) >= min_weight]
 
         # Get strings from tags.
@@ -119,19 +121,21 @@ class LastFmClient:
 
         args_replaced = [a.replace("\u2010", "-") for a in args]
         key = f"{entity}.{'-'.join(str(a) for a in args_replaced)}"
-        if key not in self._genre_cache:
-            self._genre_cache[key] = self.fetch_genres(method(*args_replaced))
+        if key not in self.genre_cache:
+            self.genre_cache[key] = self.fetch_genres(method(*args_replaced))
 
-        genres = self._genre_cache[key]
-        self._log.extra_debug(
-            "last.fm (unfiltered) {} tags: {}", entity, genres
-        )
+        genres = self.genre_cache[key]
+        self.log.extra_debug("last.fm (unfiltered) {} tags: {}", entity, genres)
 
+        # Apply aliases and log each change.
         # Filter forbidden genres on every call so ignorelist hits are logged.
         # Artist is always the first element in args (album, artist, track lookups).
-        return drop_ignored_genres(
-            self._log, self._ignore_patterns, genres, args[0]
-        )
+        return [
+            normal
+            for g in genres
+            if (normal := normalize_genre(self.log, self.alias_patterns, g))
+            and not is_ignored(self.log, self.ignore_patterns, normal, args[0])
+        ]
 
     def fetch(self, kind: str, obj: LibModel, *args: str) -> list[str]:
         """Fetch Last.fm genres for the specified kind and entity.

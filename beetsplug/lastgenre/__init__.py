@@ -37,7 +37,7 @@ import yaml
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
 from beets.util import plurality, unique_list
-from beetsplug.lastgenre.utils import drop_ignored_genres, is_ignored
+from beetsplug.lastgenre.utils import is_ignored, normalize_genre
 
 from .client import LastFmClient
 
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
 
-    from .utils import GenreIgnorePatterns
+    from .utils import AliasPatternWithReplacement, IgnorePatternsByArtist
 
     Whitelist = set[str]
     """Set of valid genre names (lowercase). Empty set means all genres allowed."""
@@ -113,6 +113,7 @@ def sort_by_depth(tags: list[str], branches: CanonTree) -> list[str]:
 
 WHITELIST = os.path.join(os.path.dirname(__file__), "genres.txt")
 C14N_TREE = os.path.join(os.path.dirname(__file__), "genres-tree.yaml")
+ALIASES_FILE = os.path.join(os.path.dirname(__file__), "aliases.yaml")
 
 
 class LastGenrePlugin(plugins.BeetsPlugin):
@@ -135,6 +136,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "title_case": True,
                 "pretend": False,
                 "ignorelist": {},
+                "aliases": True,
             }
         )
         self.setup()
@@ -147,9 +149,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.whitelist: Whitelist = self._load_whitelist()
         self.c14n_branches: CanonTree
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
-        self.ignore_patterns: GenreIgnorePatterns = self._load_ignorelist()
+        self.ignore_patterns: IgnorePatternsByArtist = self._load_ignorelist()
+        self.alias_patterns: list[AliasPatternWithReplacement] = (
+            self._load_aliases()
+        )
         self.client = LastFmClient(
-            self._log, self.config["min_weight"].get(int), self.ignore_patterns
+            self._log,
+            self.config["min_weight"].get(int),
+            self.ignore_patterns,
+            self.alias_patterns,
         )
 
     def _load_whitelist(self) -> Whitelist:
@@ -193,7 +201,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
 
-    def _load_ignorelist(self) -> GenreIgnorePatterns:
+    def _load_ignorelist(self) -> IgnorePatternsByArtist:
         r"""Load patterns from configuration and compile them.
 
         Mapping of artist names to regex or literal patterns. Use the
@@ -224,7 +232,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             confuse.MappingValues(confuse.Sequence(str))
         )
 
-        compiled_ignorelist: GenreIgnorePatterns = defaultdict(list)
+        compiled_ignorelist: IgnorePatternsByArtist = defaultdict(list)
         for artist, patterns in raw_ignorelist.items():
             artist_patterns = []
             for pattern in patterns:
@@ -240,9 +248,60 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 [p.pattern for p in artist_patterns],
             )
 
-            compiled_ignorelist[artist] = artist_patterns
+            compiled_ignorelist[artist.lower()] = artist_patterns
 
         return compiled_ignorelist
+
+    def _load_aliases(self) -> list[AliasPatternWithReplacement]:
+        """Load the genre alias table from the beets config.
+
+        ``lastgenre.aliases`` is a tri-state option:
+
+        - ``yes`` (default): load the built-in aliases.
+        - ``no``: disable alias normalization entirely.
+        - mapping: an inline dict of canonical genre names to lists of regex
+          patterns.
+
+        The key (genre name) is used as a ``re.Match.expand()`` template,
+        so ``\\g<N>`` back-references to capture groups are supported.
+
+        Raises:
+            confuse.ConfigTypeError: when the config value is not a bool or
+            mapping, or when a mapping value is not a list.
+            re.error: when a pattern is not valid regex syntax.
+        """
+        aliases_config = self.config["aliases"].get()
+        if aliases_config is False:
+            return []
+
+        # Define view with either built-in or user-configured
+        aliases_view = confuse.Configuration(
+            self.config["aliases"].name, read=False
+        )
+        if aliases_config in (True, "", None):
+            self._log.debug("Loading built-in aliases")
+            with Path(ALIASES_FILE).open(encoding="utf-8") as f:
+                aliases_view.set(yaml.safe_load(f))
+        elif not isinstance(aliases_config, dict):
+            raise confuse.ConfigTypeError(
+                f"{self.config['aliases'].name} must be a dict or bool."
+            )
+        else:
+            aliases_view.set(aliases_config)
+
+        # Parse and compile. Raise for invalid regex!
+        raw_aliases = aliases_view.get(
+            confuse.MappingValues(confuse.Sequence(str))
+        )
+        compiled_aliases: list[AliasPatternWithReplacement] = []
+        for canonical, patterns in raw_aliases.items():
+            for raw_pat in patterns:
+                compiled_aliases.append(
+                    (re.compile(raw_pat, re.IGNORECASE), canonical.lower())
+                )
+
+        self._log.debug("Loaded {} alias entries", len(compiled_aliases))
+        return compiled_aliases
 
     @property
     def sources(self) -> tuple[str, ...]:
@@ -265,6 +324,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Canonicalize, sort and filter a list of genres.
 
         - Returns an empty list if the input tags list is empty.
+        - If aliases are configured, variant spellings are normalised first
+          (e.g. 'hip-hop' → 'hip hop', 'dnb' → 'drum and bass').
         - If canonicalization is enabled, it extends the list by incorporating
           parent genres from the canonicalization tree. When a whitelist is set,
           only parent tags that pass the whitelist filter are included;
@@ -283,6 +344,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         if not tags:
             return []
+
+        # Normalize variant spellings before any other processing.
+        if self.alias_patterns:
+            tags = [
+                normalize_genre(self._log, self.alias_patterns, tag)
+                for tag in tags
+            ]
 
         count = self.config["count"].get(int)
 
@@ -340,24 +408,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     ) -> list[str]:
         """Filter genres through whitelist and ignorelist.
 
-        Drops empty/whitespace-only strings, then applies whitelist and
-        ignorelist checks. Returns all genres if neither is configured.
-        Whitelist is checked first for performance reasons (ignorelist regex
-        matching is more expensive and for some call sites ignored genres were
-        already filtered).
+        Strips leading/trailing whitespace and drops empty strings, then
+        applies whitelist and ignorelist checks. Whitelist is checked first
+        for performance reasons (ignorelist regex matching is more expensive
+        and for some call sites ignored genres were already filtered).
         """
-        cleaned = [g for g in genres if g and g.strip()]
-        if not self.whitelist and not self.ignore_patterns:
-            return cleaned
-
-        whitelisted = [
+        non_blank = [s for g in genres if (s := g.strip())]
+        return [
             g
-            for g in cleaned
-            if not self.whitelist or g.lower() in self.whitelist
+            for g in non_blank
+            if (not self.whitelist or g.lower() in self.whitelist)
+            and not is_ignored(self._log, self.ignore_patterns, g, artist)
         ]
-        return drop_ignored_genres(
-            self._log, self.ignore_patterns, whitelisted, artist
-        )
 
     # Genre resolution pipeline.
 
