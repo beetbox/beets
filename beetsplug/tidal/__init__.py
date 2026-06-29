@@ -33,6 +33,7 @@ if TYPE_CHECKING:
         ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
+        TidalArtwork,
         TidalTrack,
     )
 
@@ -295,7 +296,7 @@ class TidalPlugin(MetadataSourcePlugin):
         albums_doc = self.api.get_albums(
             ids=list(filter(None, _ids)),
             barcode_ids=barcode_ids,
-            include=["items.artists", "artists"],
+            include=["items.artists", "artists", "coverArt"],
         )
         album_by_id: dict[str, TidalAlbum] = {
             item["id"]: item
@@ -312,11 +313,19 @@ class TidalPlugin(MetadataSourcePlugin):
             for item in albums_doc.get("included", [])
             if item["type"] == "artists"
         }
+        artwork_by_id: dict[str, TidalArtwork] = {
+            item["id"]: item
+            for item in albums_doc.get("included", [])
+            if item["type"] == "artworks"
+        }
 
         for _id in _ids:
             if _id is not None and (album := album_by_id.get(_id)):
                 yield self._get_album_info(
-                    album, track_by_id=track_by_id, artist_by_id=artist_by_id
+                    album,
+                    track_by_id=track_by_id,
+                    artist_by_id=artist_by_id,
+                    artwork_by_id=artwork_by_id,
                 )
             else:
                 yield None
@@ -332,6 +341,7 @@ class TidalPlugin(MetadataSourcePlugin):
                         album,
                         track_by_id=track_by_id,
                         artist_by_id=artist_by_id,
+                        artwork_by_id=artwork_by_id,
                     )
                 else:
                     yield None
@@ -341,8 +351,8 @@ class TidalPlugin(MetadataSourcePlugin):
         album: TidalAlbum,
         track_by_id: dict[str, TidalTrack],
         artist_by_id: dict[str, TidalArtist],
+        artwork_by_id: dict[str, TidalArtwork],
     ) -> AlbumInfo:
-
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
             album["relationships"]["items"]["data"], start=1
@@ -363,6 +373,7 @@ class TidalPlugin(MetadataSourcePlugin):
             artists_ids=artist_ids,
             data_url=self._parse_data_url(album["attributes"]),
             barcode=album["attributes"]["barcodeId"],
+            cover_art_url=self._parse_artwork_url(album, artwork_by_id),
             # Meta
             album=self._parse_title(album["attributes"]),
             tracks=track_infos,
@@ -380,6 +391,22 @@ class TidalPlugin(MetadataSourcePlugin):
             tidal_album_popularity=self._parse_popularity(album["attributes"]),
             tidal_updated=time.time(),
         )
+
+    @staticmethod
+    def _parse_artwork_url(
+        album: TidalAlbum, artwork_by_id: dict[str, TidalArtwork]
+    ) -> str | None:
+        cover_rel = album["relationships"].get("coverArt")
+        if cover_rel is None:
+            return None
+        for rel_data in cover_rel["data"]:
+            if (
+                rel_data["type"] == "artworks"
+                and (artwork := artwork_by_id.get(rel_data["id"]))
+                and (files := artwork["attributes"]["files"])
+            ):
+                return files[0]["href"]
+        return None
 
     def _get_track_info(
         self, track: TidalTrack, artist_by_id: dict[str, TidalArtist]

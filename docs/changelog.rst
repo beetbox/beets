@@ -21,6 +21,9 @@ New features
 - A database backup is now automatically created before running schema
   migrations. Control with the ``create_backup_before_migrations`` option
   (default: yes).
+- :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
+  ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
+  :doc:`plugins/fetchart` plugin can retrieve.
 
 Bug fixes
 ~~~~~~~~~
