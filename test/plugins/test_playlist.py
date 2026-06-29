@@ -61,6 +61,14 @@ class PlaylistTestCase(PluginTestCase):
         ]
         self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
 
+    def write_relative_playlist(self):
+        lines = [
+            os.path.join("a", "b", "c.mp3"),
+            os.path.join("d", "e", "f.mp3"),
+            "nonexisting.mp3",
+        ]
+        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
+
     def setup_test(self):
         raise NotImplementedError
 
@@ -101,12 +109,7 @@ class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
         self.write_absolute_playlist()
 
-        lines = [
-            os.path.join("a", "b", "c.mp3"),
-            os.path.join("d", "e", "f.mp3"),
-            "nonexisting.mp3",
-        ]
-        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
+        self.write_relative_playlist()
 
         self.config["playlist"]["relative_to"] = "library"
 
@@ -115,20 +118,13 @@ class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
         self.write_absolute_playlist()
 
-        lines = [
-            os.path.join("a", "b", "c.mp3"),
-            os.path.join("d", "e", "f.mp3"),
-            "nonexisting.mp3",
-        ]
-        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
+        self.write_relative_playlist()
 
         self.config["playlist"]["relative_to"] = self.music_dir
 
 
 class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
-    def setup_test(self):
-        self.write_absolute_playlist()
-
+    def write_relative_playlist(self):
         lines = [
             os.path.relpath(
                 os.path.join(self.music_dir, "a", "b", "c.mp3"),
@@ -145,6 +141,11 @@ class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
         ]
         self.relative_playlist_path.write_text("\n".join(lines) + "\n")
 
+    def setup_test(self):
+        self.write_absolute_playlist()
+
+        self.write_relative_playlist()
+
         self.config["playlist"]["relative_to"] = "playlist"
         self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)
 
@@ -153,12 +154,7 @@ class PlaylistUpdateTest:
     def setup_test(self):
         self.write_absolute_playlist()
 
-        lines = [
-            os.path.join("a", "b", "c.mp3"),
-            os.path.join("d", "e", "f.mp3"),
-            "nonexisting.mp3",
-        ]
-        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
+        self.write_relative_playlist()
 
         self.config["playlist"]["auto"] = True
         self.config["playlist"]["relative_to"] = "library"
