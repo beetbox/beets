@@ -3,7 +3,6 @@ from pathlib import Path
 from shlex import quote
 
 import beets
-from beets.test import _common
 from beets.test.helper import PluginTestCase
 
 
@@ -20,38 +19,18 @@ class PlaylistTestCase(PluginTestCase):
     def setUp(self):
         super().setUp()
 
-        self.music_dir = os.path.expanduser(os.path.join("~", "Music"))
+        self.music_dir = (Path("~") / "Music").expanduser()
 
-        i1 = _common.item()
-        i1.path = beets.util.normpath(
-            os.path.join(self.music_dir, "a", "b", "c.mp3")
-        )
-        i1.title = "some item"
-        i1.album = "some album"
-        self.lib.add(i1)
-        self.lib.add_album([i1])
-
-        i2 = _common.item()
-        i2.path = beets.util.normpath(
-            os.path.join(self.music_dir, "d", "e", "f.mp3")
-        )
-        i2.title = "another item"
-        i2.album = "another album"
-        self.lib.add(i2)
-        self.lib.add_album([i2])
-
-        i3 = _common.item()
-        i3.path = beets.util.normpath(
-            os.path.join(self.music_dir, "x", "y", "z.mp3")
-        )
-        i3.title = "yet another item"
-        i3.album = "yet another album"
-        self.lib.add(i3)
-        self.lib.add_album([i3])
+        for p, title, album in [
+            (self.c_track_path, "some item", "some album"),
+            (self.f_track_path, "another item", "another album"),
+            (self.z_track_path, "yet another item", "yet another album"),
+        ]:
+            self.add_album(path=self.music_dir / p, title=title, album=album)
 
         self.playlist_dir = self.temp_dir_path / "playlists"
         self.playlist_dir.mkdir(parents=True, exist_ok=True)
-        self.config["directory"] = self.music_dir
+        self.config["directory"] = str(self.music_dir)
         self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)
         self.absolute_playlist_path = self.playlist_dir / "absolute.m3u"
         self.relative_playlist_path = self.playlist_dir / "relative.m3u"
@@ -120,7 +99,7 @@ class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
 
 class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        self.config["playlist"]["relative_to"] = self.music_dir
+        self.config["playlist"]["relative_to"] = str(self.music_dir)
 
 
 class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
