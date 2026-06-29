@@ -905,7 +905,7 @@ def _raw_main(args: list[str] | None) -> None:
 
 
 def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
-    """Apply CLI to config, initialize logging, return error as value if any."""
+    """Apply CLI to config, return error as value if any."""
 
     deferred_error: confuse.ConfigError | None = None
     try:
@@ -932,7 +932,7 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
     return deferred_error
 
 
-def _bootstrap_logging():
+def _bootstrap_logging() -> None:
     if not log.handlers:
         handler = logging.StreamHandler()
         handler.setFormatter(
