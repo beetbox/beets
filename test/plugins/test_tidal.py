@@ -672,6 +672,46 @@ class TestCandidates(TidalPluginTest):
         assert len(candidates) == 1
         assert candidates[0].album == "Query Album"
 
+    def test_candidates_with_manual_search_override(self):
+        """Test candidates uses manual search terms instead of items tags."""
+        items = [
+            Item(
+                title="Original Song",
+                artist="Original Artist",
+                album="Original Album",
+            )
+        ]
+
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "albums": {"data": [{"id": "1", "type": "albums"}]}
+                    }
+                }
+            }
+        )
+
+        track = _make_track("101", "Album Track", "PT3M", "ISRC001", ["1001"])
+        album, track_lookup, artist_lookup = _make_album(
+            "1", "Query Album", [track], ["1001"]
+        )
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album],
+                "included": [*artist_lookup.values(), *track_lookup.values()],
+            }
+        )
+
+        list(
+            self.tidal.candidates(items, "Manual Artist", "Manual Album", False)
+        )
+
+        # Should search using manual query terms, not item tags
+        self.tidal.api.search_results.assert_called_once_with(
+            "Manual Artist Manual Album", include=["albums"]
+        )
+
 
 class TestItemCandidates(TidalPluginTest):
     """Tests for item_candidates method."""
@@ -723,6 +763,35 @@ class TestItemCandidates(TidalPluginTest):
 
         assert self.tidal.api.search_results.called
         assert results[0].title == "Query Track"
+
+    def test_item_candidates_with_manual_search_override(self):
+        """Test item_candidates uses manual search terms instead of item tags."""
+        item = Item(title="Original Song", artist="Original Artist")
+
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "tracks": {
+                            "data": [{"id": "490839595", "type": "tracks"}]
+                        }
+                    }
+                },
+                "included": [
+                    _make_track(
+                        "490839595", "Query Track", "PT3M", "ISRC002", ["1001"]
+                    ),
+                    _make_artist("1001", "Query Artist"),
+                ],
+            }
+        )
+
+        list(self.tidal.item_candidates(item, "Manual Artist", "Manual Song"))
+
+        # Should search using manual query terms, not item tags
+        self.tidal.api.search_results.assert_called_once_with(
+            "Manual Artist Manual Song", include=["tracks.artists"]
+        )
 
 
 class TestStaticHelpers:
