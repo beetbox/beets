@@ -10,6 +10,12 @@ from beets.test.helper import PluginTestCase
 class PlaylistTestCase(PluginTestCase):
     plugin = "playlist"
     preload_plugin = False
+    c_track_path = Path("a") / "b" / "c.mp3"
+    f_track_path = Path("d") / "e" / "f.mp3"
+    i_track_path = Path("g") / "h" / "i.mp3"
+    w_track_path = Path("u") / "v" / "w.mp3"
+    z_track_path = Path("x") / "y" / "z.mp3"
+    nonexisting_track_path = Path("nonexisting.mp3")
 
     def setUp(self):
         super().setUp()
@@ -57,19 +63,19 @@ class PlaylistTestCase(PluginTestCase):
 
     def write_absolute_playlist(self):
         lines = [
-            os.path.join(self.music_dir, "a", "b", "c.mp3"),
-            os.path.join(self.music_dir, "d", "e", "f.mp3"),
-            os.path.join(self.music_dir, "nonexisting.mp3"),
+            self.music_dir / self.c_track_path,
+            self.music_dir / self.f_track_path,
+            self.music_dir / self.nonexisting_track_path,
         ]
-        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
+        self.absolute_playlist_path.write_text("\n".join(map(str, lines)))
 
     def write_relative_playlist(self):
         lines = [
-            os.path.join("a", "b", "c.mp3"),
-            os.path.join("d", "e", "f.mp3"),
-            "nonexisting.mp3",
+            self.c_track_path,
+            self.f_track_path,
+            self.nonexisting_track_path,
         ]
-        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
+        self.relative_playlist_path.write_text("\n".join(map(str, lines)))
 
     def setup_test(self):
         raise NotImplementedError
@@ -82,7 +88,7 @@ class PlaylistQueryTest:
         assert {i.title for i in results} == {"some item", "another item"}
 
     def test_path_query_with_absolute_paths_in_playlist(self):
-        q = f"playlist:{self.absolute_playlist_path}"
+        q = f"playlist:{quote(str(self.absolute_playlist_path))}"
         results = self.lib.items(q)
         assert {i.title for i in results} == {"some item", "another item"}
 
@@ -92,7 +98,7 @@ class PlaylistQueryTest:
         assert {i.title for i in results} == {"some item", "another item"}
 
     def test_path_query_with_relative_paths_in_playlist(self):
-        q = f"playlist:{self.relative_playlist_path}"
+        q = f"playlist:{quote(str(self.relative_playlist_path))}"
         results = self.lib.items(q)
         assert {i.title for i in results} == {"some item", "another item"}
 
@@ -102,7 +108,7 @@ class PlaylistQueryTest:
         assert set(results) == set()
 
     def test_path_query_with_nonexisting_playlist(self):
-        q = f"playlist:{os.path.join(self.playlist_dir, 'nonexisting.m3u')!r}"
+        q = f"playlist:{quote(str(self.nonexisting_track_path))}"
         results = self.lib.items(q)
         assert set(results) == set()
 
@@ -121,16 +127,13 @@ class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
     def write_relative_playlist(self):
         lines = [
             os.path.relpath(
-                os.path.join(self.music_dir, "a", "b", "c.mp3"),
-                self.playlist_dir,
+                self.music_dir / self.c_track_path, self.playlist_dir
             ),
             os.path.relpath(
-                os.path.join(self.music_dir, "d", "e", "f.mp3"),
-                self.playlist_dir,
+                self.music_dir / self.f_track_path, self.playlist_dir
             ),
             os.path.relpath(
-                os.path.join(self.music_dir, "nonexisting.mp3"),
-                self.playlist_dir,
+                self.music_dir / self.nonexisting_track_path, self.playlist_dir
             ),
         ]
         self.relative_playlist_path.write_text("\n".join(lines) + "\n")
@@ -149,85 +152,75 @@ class PlaylistUpdateTest:
 class PlaylistTestItemMoved(PlaylistUpdateTest, PlaylistTestCase):
     def test_item_moved(self):
         # Emit item_moved event for an item that is in a playlist
-        results = self.lib.items(
-            f"path:{quote(os.path.join(self.music_dir, 'd', 'e', 'f.mp3'))}"
-        )
+        q = f"path:{quote(str(self.music_dir / self.f_track_path))}"
+        results = self.lib.items(q)
         item = results[0]
         beets.plugins.send(
             "item_moved",
             item=item,
             source=item.path,
-            destination=beets.util.bytestring_path(
-                os.path.join(self.music_dir, "g", "h", "i.mp3")
-            ),
+            destination=os.fsencode(self.music_dir / self.i_track_path),
         )
 
         # Emit item_moved event for an item that is not in a playlist
         results = self.lib.items(
-            f"path:{quote(os.path.join(self.music_dir, 'x', 'y', 'z.mp3'))}"
+            f"path:{quote(str(self.music_dir / self.z_track_path))}"
         )
         item = results[0]
         beets.plugins.send(
             "item_moved",
             item=item,
             source=item.path,
-            destination=beets.util.bytestring_path(
-                os.path.join(self.music_dir, "u", "v", "w.mp3")
-            ),
+            destination=os.fsencode(self.music_dir / self.w_track_path),
         )
 
         # Emit cli_exit event
         beets.plugins.send("cli_exit", lib=self.lib)
 
-        # Check playlist with absolute paths
-        playlist_path = os.path.join(self.playlist_dir, "absolute.m3u")
-        with open(playlist_path) as f:
-            lines = [line.strip() for line in f.readlines()]
-
-        assert lines == [
-            os.path.join(self.music_dir, "a", "b", "c.mp3"),
-            os.path.join(self.music_dir, "g", "h", "i.mp3"),
-            os.path.join(self.music_dir, "nonexisting.mp3"),
+        expected_paths = [
+            self.c_track_path,
+            self.i_track_path,
+            self.nonexisting_track_path,
         ]
+        # Check playlist with absolute paths
+        lines = list(
+            map(Path, self.absolute_playlist_path.read_text().splitlines())
+        )
+        assert lines == [self.music_dir / p for p in expected_paths]
 
         # Check playlist with relative paths
-        lines = self.relative_playlist_path.read_text().splitlines()
-
-        assert lines == [
-            os.path.join("a", "b", "c.mp3"),
-            os.path.join("g", "h", "i.mp3"),
-            "nonexisting.mp3",
-        ]
+        lines = list(
+            map(Path, self.relative_playlist_path.read_text().splitlines())
+        )
+        assert lines == expected_paths
 
 
 class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
     def test_item_removed(self):
         # Emit item_removed event for an item that is in a playlist
-        results = self.lib.items(
-            f"path:{quote(os.path.join(self.music_dir, 'd', 'e', 'f.mp3'))}"
-        )
+        q = f"path:{quote(str(self.music_dir / self.f_track_path))}"
+        results = self.lib.items(q)
         item = results[0]
         beets.plugins.send("item_removed", item=item)
 
         # Emit item_removed event for an item that is not in a playlist
-        results = self.lib.items(
-            f"path:{quote(os.path.join(self.music_dir, 'x', 'y', 'z.mp3'))}"
-        )
+        q = f"path:{quote(str(self.music_dir / self.z_track_path))}"
+        results = self.lib.items(q)
         item = results[0]
         beets.plugins.send("item_removed", item=item)
 
         # Emit cli_exit event
         beets.plugins.send("cli_exit", lib=self.lib)
 
+        expected_paths = [self.c_track_path, self.nonexisting_track_path]
         # Check playlist with absolute paths
-        lines = self.absolute_playlist_path.read_text().splitlines()
-
-        assert lines == [
-            os.path.join(self.music_dir, "a", "b", "c.mp3"),
-            os.path.join(self.music_dir, "nonexisting.mp3"),
-        ]
+        lines = list(
+            map(Path, self.absolute_playlist_path.read_text().splitlines())
+        )
+        assert lines == [self.music_dir / p for p in expected_paths]
 
         # Check playlist with relative paths
-        lines = self.relative_playlist_path.read_text().splitlines()
-
-        assert lines == [os.path.join("a", "b", "c.mp3"), "nonexisting.mp3"]
+        lines = list(
+            map(Path, self.relative_playlist_path.read_text().splitlines())
+        )
+        assert lines == expected_paths
