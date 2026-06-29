@@ -50,6 +50,8 @@ class PlaylistTestCase(PluginTestCase):
         self.absolute_playlist_path = self.playlist_dir / "absolute.m3u"
         self.relative_playlist_path = self.playlist_dir / "relative.m3u"
 
+        self.write_absolute_playlist()
+        self.write_relative_playlist()
         self.setup_test()
         self.load_plugins()
 
@@ -107,19 +109,11 @@ class PlaylistQueryTest:
 
 class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        self.write_absolute_playlist()
-
-        self.write_relative_playlist()
-
         self.config["playlist"]["relative_to"] = "library"
 
 
 class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        self.write_absolute_playlist()
-
-        self.write_relative_playlist()
-
         self.config["playlist"]["relative_to"] = self.music_dir
 
 
@@ -142,20 +136,12 @@ class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
         self.relative_playlist_path.write_text("\n".join(lines) + "\n")
 
     def setup_test(self):
-        self.write_absolute_playlist()
-
-        self.write_relative_playlist()
-
         self.config["playlist"]["relative_to"] = "playlist"
         self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)
 
 
 class PlaylistUpdateTest:
     def setup_test(self):
-        self.write_absolute_playlist()
-
-        self.write_relative_playlist()
-
         self.config["playlist"]["auto"] = True
         self.config["playlist"]["relative_to"] = "library"
 
