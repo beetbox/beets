@@ -53,6 +53,14 @@ class PlaylistTestCase(PluginTestCase):
         self.setup_test()
         self.load_plugins()
 
+    def write_absolute_playlist(self):
+        lines = [
+            os.path.join(self.music_dir, "a", "b", "c.mp3"),
+            os.path.join(self.music_dir, "d", "e", "f.mp3"),
+            os.path.join(self.music_dir, "nonexisting.mp3"),
+        ]
+        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
+
     def setup_test(self):
         raise NotImplementedError
 
@@ -91,12 +99,7 @@ class PlaylistQueryTest:
 
 class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        lines = [
-            os.path.join(self.music_dir, "a", "b", "c.mp3"),
-            os.path.join(self.music_dir, "d", "e", "f.mp3"),
-            os.path.join(self.music_dir, "nonexisting.mp3"),
-        ]
-        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
+        self.write_absolute_playlist()
 
         lines = [
             os.path.join("a", "b", "c.mp3"),
@@ -110,12 +113,7 @@ class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
 
 class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        lines = [
-            os.path.join(self.music_dir, "a", "b", "c.mp3"),
-            os.path.join(self.music_dir, "d", "e", "f.mp3"),
-            os.path.join(self.music_dir, "nonexisting.mp3"),
-        ]
-        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
+        self.write_absolute_playlist()
 
         lines = [
             os.path.join("a", "b", "c.mp3"),
@@ -129,12 +127,7 @@ class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
 
 class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        lines = [
-            os.path.join(self.music_dir, "a", "b", "c.mp3"),
-            os.path.join(self.music_dir, "d", "e", "f.mp3"),
-            os.path.join(self.music_dir, "nonexisting.mp3"),
-        ]
-        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
+        self.write_absolute_playlist()
 
         lines = [
             os.path.relpath(
@@ -158,12 +151,7 @@ class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
 
 class PlaylistUpdateTest:
     def setup_test(self):
-        lines = [
-            os.path.join(self.music_dir, "a", "b", "c.mp3"),
-            os.path.join(self.music_dir, "d", "e", "f.mp3"),
-            os.path.join(self.music_dir, "nonexisting.mp3"),
-        ]
-        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
+        self.write_absolute_playlist()
 
         lines = [
             os.path.join("a", "b", "c.mp3"),
