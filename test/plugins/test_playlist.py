@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from shlex import quote
 
 import beets
@@ -46,6 +47,8 @@ class PlaylistTestCase(PluginTestCase):
         self.playlist_dir.mkdir(parents=True, exist_ok=True)
         self.config["directory"] = self.music_dir
         self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)
+        self.absolute_playlist_path = self.playlist_dir / "absolute.m3u"
+        self.relative_playlist_path = self.playlist_dir / "relative.m3u"
 
         self.setup_test()
         self.load_plugins()
@@ -61,7 +64,7 @@ class PlaylistQueryTest:
         assert {i.title for i in results} == {"some item", "another item"}
 
     def test_path_query_with_absolute_paths_in_playlist(self):
-        q = f"playlist:{quote(os.path.join(self.playlist_dir, 'absolute.m3u'))}"
+        q = f"playlist:{self.absolute_playlist_path}"
         results = self.lib.items(q)
         assert {i.title for i in results} == {"some item", "another item"}
 
@@ -71,7 +74,7 @@ class PlaylistQueryTest:
         assert {i.title for i in results} == {"some item", "another item"}
 
     def test_path_query_with_relative_paths_in_playlist(self):
-        q = f"playlist:{quote(os.path.join(self.playlist_dir, 'relative.m3u'))}"
+        q = f"playlist:{self.relative_playlist_path}"
         results = self.lib.items(q)
         assert {i.title for i in results} == {"some item", "another item"}
 
@@ -88,81 +91,66 @@ class PlaylistQueryTest:
 
 class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.join(self.music_dir, "a", "b", "c.mp3") + "\n",
-                    os.path.join(self.music_dir, "d", "e", "f.mp3") + "\n",
-                    os.path.join(self.music_dir, "nonexisting.mp3") + "\n",
-                ]
-            )
+        lines = [
+            os.path.join(self.music_dir, "a", "b", "c.mp3"),
+            os.path.join(self.music_dir, "d", "e", "f.mp3"),
+            os.path.join(self.music_dir, "nonexisting.mp3"),
+        ]
+        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
 
-        with open(os.path.join(self.playlist_dir, "relative.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.join("a", "b", "c.mp3") + "\n",
-                    os.path.join("d", "e", "f.mp3") + "\n",
-                    "nonexisting.mp3\n",
-                ]
-            )
+        lines = [
+            os.path.join("a", "b", "c.mp3"),
+            os.path.join("d", "e", "f.mp3"),
+            "nonexisting.mp3",
+        ]
+        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
 
         self.config["playlist"]["relative_to"] = "library"
 
 
 class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.join(self.music_dir, "a", "b", "c.mp3") + "\n",
-                    os.path.join(self.music_dir, "d", "e", "f.mp3") + "\n",
-                    os.path.join(self.music_dir, "nonexisting.mp3") + "\n",
-                ]
-            )
+        lines = [
+            os.path.join(self.music_dir, "a", "b", "c.mp3"),
+            os.path.join(self.music_dir, "d", "e", "f.mp3"),
+            os.path.join(self.music_dir, "nonexisting.mp3"),
+        ]
+        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
 
-        with open(os.path.join(self.playlist_dir, "relative.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.join("a", "b", "c.mp3") + "\n",
-                    os.path.join("d", "e", "f.mp3") + "\n",
-                    "nonexisting.mp3\n",
-                ]
-            )
+        lines = [
+            os.path.join("a", "b", "c.mp3"),
+            os.path.join("d", "e", "f.mp3"),
+            "nonexisting.mp3",
+        ]
+        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
 
         self.config["playlist"]["relative_to"] = self.music_dir
 
 
 class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
-        with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.join(self.music_dir, "a", "b", "c.mp3") + "\n",
-                    os.path.join(self.music_dir, "d", "e", "f.mp3") + "\n",
-                    os.path.join(self.music_dir, "nonexisting.mp3") + "\n",
-                ]
-            )
+        lines = [
+            os.path.join(self.music_dir, "a", "b", "c.mp3"),
+            os.path.join(self.music_dir, "d", "e", "f.mp3"),
+            os.path.join(self.music_dir, "nonexisting.mp3"),
+        ]
+        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
 
-        with open(os.path.join(self.playlist_dir, "relative.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.relpath(
-                        os.path.join(self.music_dir, "a", "b", "c.mp3"),
-                        start=self.playlist_dir,
-                    )
-                    + "\n",
-                    os.path.relpath(
-                        os.path.join(self.music_dir, "d", "e", "f.mp3"),
-                        start=self.playlist_dir,
-                    )
-                    + "\n",
-                    os.path.relpath(
-                        os.path.join(self.music_dir, "nonexisting.mp3"),
-                        start=self.playlist_dir,
-                    )
-                    + "\n",
-                ]
-            )
+        lines = [
+            os.path.relpath(
+                os.path.join(self.music_dir, "a", "b", "c.mp3"),
+                self.playlist_dir,
+            ),
+            os.path.relpath(
+                os.path.join(self.music_dir, "d", "e", "f.mp3"),
+                self.playlist_dir,
+            ),
+            os.path.relpath(
+                os.path.join(self.music_dir, "nonexisting.mp3"),
+                self.playlist_dir,
+            ),
+        ]
+        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
 
         self.config["playlist"]["relative_to"] = "playlist"
         self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)
@@ -170,23 +158,19 @@ class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
 
 class PlaylistUpdateTest:
     def setup_test(self):
-        with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.join(self.music_dir, "a", "b", "c.mp3") + "\n",
-                    os.path.join(self.music_dir, "d", "e", "f.mp3") + "\n",
-                    os.path.join(self.music_dir, "nonexisting.mp3") + "\n",
-                ]
-            )
+        lines = [
+            os.path.join(self.music_dir, "a", "b", "c.mp3"),
+            os.path.join(self.music_dir, "d", "e", "f.mp3"),
+            os.path.join(self.music_dir, "nonexisting.mp3"),
+        ]
+        self.absolute_playlist_path.write_text("\n".join(lines) + "\n")
 
-        with open(os.path.join(self.playlist_dir, "relative.m3u"), "w") as f:
-            f.writelines(
-                [
-                    os.path.join("a", "b", "c.mp3") + "\n",
-                    os.path.join("d", "e", "f.mp3") + "\n",
-                    "nonexisting.mp3\n",
-                ]
-            )
+        lines = [
+            os.path.join("a", "b", "c.mp3"),
+            os.path.join("d", "e", "f.mp3"),
+            "nonexisting.mp3",
+        ]
+        self.relative_playlist_path.write_text("\n".join(lines) + "\n")
 
         self.config["playlist"]["auto"] = True
         self.config["playlist"]["relative_to"] = "library"
@@ -237,9 +221,7 @@ class PlaylistTestItemMoved(PlaylistUpdateTest, PlaylistTestCase):
         ]
 
         # Check playlist with relative paths
-        playlist_path = os.path.join(self.playlist_dir, "relative.m3u")
-        with open(playlist_path) as f:
-            lines = [line.strip() for line in f.readlines()]
+        lines = self.relative_playlist_path.read_text().splitlines()
 
         assert lines == [
             os.path.join("a", "b", "c.mp3"),
@@ -268,9 +250,7 @@ class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
         beets.plugins.send("cli_exit", lib=self.lib)
 
         # Check playlist with absolute paths
-        playlist_path = os.path.join(self.playlist_dir, "absolute.m3u")
-        with open(playlist_path) as f:
-            lines = [line.strip() for line in f.readlines()]
+        lines = self.absolute_playlist_path.read_text().splitlines()
 
         assert lines == [
             os.path.join(self.music_dir, "a", "b", "c.mp3"),
@@ -278,8 +258,6 @@ class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
         ]
 
         # Check playlist with relative paths
-        playlist_path = os.path.join(self.playlist_dir, "relative.m3u")
-        with open(playlist_path) as f:
-            lines = [line.strip() for line in f.readlines()]
+        lines = self.relative_playlist_path.read_text().splitlines()
 
         assert lines == [os.path.join("a", "b", "c.mp3"), "nonexisting.mp3"]
