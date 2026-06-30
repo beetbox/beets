@@ -1,19 +1,25 @@
 """Simple library to work out if a file is hidden on different platforms."""
 
+from __future__ import annotations
+
 import ctypes
 import os
 import stat
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from beets.util import PathLike
 
 
-def is_hidden(path: bytes | Path) -> bool:
+def is_hidden(path: PathLike) -> bool:
     """
     Determine whether the given path is treated as a 'hidden file' by the OS.
     """
-
-    if isinstance(path, bytes):
-        path = Path(os.fsdecode(path))
+    if not isinstance(path, Path):
+        path = os.fsdecode(path)
+    path = Path(path)
 
     # TODO: Avoid doing a platform check on every invocation of the function.
     # TODO: Stop supporting 'bytes' inputs once 'pathlib' is fully integrated.

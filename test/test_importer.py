@@ -1901,7 +1901,7 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
         mp3_path = remux_mpeglayer3_wav(dest)
 
         assert mp3_path is not None
-        assert mp3_path.endswith(b".mp3")
+        assert mp3_path.suffix == ".mp3"
         assert os.path.exists(mp3_path)
         assert not os.path.exists(dest)
 
