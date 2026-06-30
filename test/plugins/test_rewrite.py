@@ -21,7 +21,7 @@ class RewritePluginTest(PluginTestCase):
 
             assert item.artist == "Jimi Hendrix"
             assert item.albumartist == "Jimi Hendrix"
-            assert album.evaluate_template("$albumartist") == "Jimi Hendrix"
+            assert album.evaluate_fmt("$albumartist") == "Jimi Hendrix"
 
     def test_rewrite_all_matching_rules(self):
         with self.configure_plugin(
