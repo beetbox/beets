@@ -62,16 +62,18 @@ class LibModel(dbcore.Model["Library"]):
         return {f: TYPE_BY_FIELD[f] for f in sorted(cls._field_names)}
 
     @cached_classproperty
+    @classmethod
     def _types(cls) -> dict[str, types.Type]:
         """Return the types of the fields in this model."""
         return {
-            **plugins.types(cls),  # type: ignore[arg-type]
+            **plugins.types(cls),  # type: ignore[type-var]
             "data_source": TYPE_BY_FIELD["data_source"],
         }
 
     @cached_classproperty
+    @classmethod
     def _queries(cls) -> dict[str, FieldQueryType]:
-        return plugins.named_queries(cls)  # type: ignore[arg-type]
+        return plugins.named_queries(cls)  # type: ignore[type-var]
 
     @cached_classproperty
     def writable_media_fields(cls) -> set[str]:
