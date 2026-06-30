@@ -156,6 +156,7 @@ here are the options available:
   beets-doc``
 - **Solus**: ``eopkg install beets``
 - **NixOS** (`package <nixos_>`_): ``nix-env -i beets``
+- **Homebrew** (`formula <homebrew_>`_): ``brew install beets``
 - **MacPorts**: ``port install beets`` or ``port install beets-full`` (includes
   third-party plugins)
 
@@ -170,6 +171,8 @@ here are the options available:
 .. _dnf package: https://packages.fedoraproject.org/pkgs/beets/
 
 .. _freebsd: https://www.freshports.org/audio/beets/
+
+.. _homebrew: https://formulae.brew.sh/formula/beets
 
 .. _nixos: https://github.com/NixOS/nixpkgs/tree/master/pkgs/development/python-modules/beets
 

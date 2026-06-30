@@ -3,6 +3,7 @@
 library: library.db
 directory: ~/Music
 statefile: state.pickle
+create_backup_before_migrations: yes
 
 # --------------- Plugins ---------------
 

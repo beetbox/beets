@@ -12,6 +12,9 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`/plugins/convert`: Add new configuration option ``convert.refresh`` and
+  command-line option ``--refresh``, allowing to force ``convert`` operation
+  when original file is newer than existing converted file.
 - :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
   specifying a reStructuredText output directory, semantically equivalent to
   ``-r, --write-rest``. :bug:`2806`
@@ -22,18 +25,35 @@ New features
   when unset). ``skip`` drops already-imported tracks and adds the remaining new
   tracks to the existing album, completing a partially-imported album. Disabled
   by default.
+- A database backup is now automatically created before running schema
+  migrations. Control with the ``create_backup_before_migrations`` option
+  (default: yes).
+- :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
+  ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
+  :doc:`plugins/fetchart` plugin can retrieve.
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Album ``store`` no longer copies ``artpath`` onto its items as an absolute
+  path, which broke relative-path portability. A database migration removes any
+  such stale ``artpath`` attributes left on items by earlier versions.
+  :bug:`6756`
+- :doc:`plugins/convert`: ``convert -a`` with ``copy_album_art`` enabled no
+  longer crashes when the stored album art path points to a missing file (for
+  example a multi-disc album whose cover lives in the album root rather than a
+  per-disc directory); the missing art is skipped instead. :bug:`4692`
+- :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
 
 ..
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`/guides/installation` Add Homebrew to the list of supported package
+  managers in the installation guide.
 
 2.12.0 (June 22, 2026)
 ----------------------
