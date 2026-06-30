@@ -37,6 +37,9 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- ``modify``: Fix a crash when choosing ``select`` at the confirmation prompt
+  while modifying a non-string field such as ``added``; the per-object value is
+  now parsed before being applied. :bug:`4880`
 
 ..
     For plugin developers

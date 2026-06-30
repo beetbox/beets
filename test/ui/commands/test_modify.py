@@ -108,6 +108,14 @@ class ModifyTest(IOMixin, BeetsTestCase):
         assert len(list(original_items)) == 3
         assert len(list(new_items)) == 7
 
+    def test_selective_modify_typed_field(self):
+        # Regression test for a crash when selecting individual objects to
+        # modify a non-string (here date) field: the confirmation callback
+        # used to re-apply the raw string instead of the parsed value.
+        self.modify_inp(["s", "y"], "added=2002-06-03 00:00:00")
+        item = self.lib.items().get()
+        assert item.added == pytest.approx(1023062400, abs=24 * 60 * 60)
+
     def test_modify_formatted(self):
         for i in range(3):
             self.add_item_fixture(
