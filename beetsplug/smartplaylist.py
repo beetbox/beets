@@ -389,7 +389,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
             # the items and generate the correct m3u file names.
             matched_items: list[Item] = []
             for item in items:
-                m3u_name = item.evaluate_template(name, True)
+                m3u_name = item.evaluate_template(name, for_path=True)
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
                 item_uri = self.get_item_uri(item)
 
