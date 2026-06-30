@@ -4,6 +4,7 @@ import pytest
 from mediafile import MediaFile
 
 from beets import logging
+from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.modify import modify_parse_args
 from beets.util import syspath
@@ -119,6 +120,55 @@ class ModifyTest(IOMixin, BeetsTestCase):
             orig_title = item.title
             item.load()
             assert item.title == f"{orig_title} - append"
+
+    def test_modify_multi_value_assignment(self):
+        self.modify("--nowrite", "--nomove", "genres=Jazz; Blues")
+        item = self.lib.items().get()
+        assert item.genres == ["Jazz", "Blues"]
+
+    def test_modify_multi_value_append(self):
+        self.item.genres = ["Jazz", "Blues"]
+        self.item.store()
+
+        self.modify("--nowrite", "--nomove", "genres+=Funk")
+        item = self.lib.items().get()
+        assert item.genres == ["Jazz", "Blues", "Funk"]
+
+    def test_modify_multi_value_append_duplicate(self):
+        self.item.genres = ["Jazz", "Funk"]
+        self.item.store()
+
+        self.modify("--nowrite", "--nomove", "genres+=Funk")
+        item = self.lib.items().get()
+        assert item.genres == ["Jazz", "Funk"]
+
+    def test_modify_multi_value_remove_exact(self):
+        self.item.genres = ["Jazz", "Blues", "Funk"]
+        self.item.store()
+
+        self.modify("--nowrite", "--nomove", "genres-=Blues")
+        item = self.lib.items().get()
+        assert item.genres == ["Jazz", "Funk"]
+
+    def test_modify_multi_value_remove_no_partial_match(self):
+        self.item.genres = ["Jazz", "Blues Rock", "Blues"]
+        self.item.store()
+
+        self.modify("--nowrite", "--nomove", "genres-=Blues")
+        item = self.lib.items().get()
+        assert item.genres == ["Jazz", "Blues Rock"]
+
+    def test_modify_multi_value_append_preserves_order(self):
+        self.item.genres = ["Jazz", "Blues"]
+        self.item.store()
+
+        self.modify("--nowrite", "--nomove", "genres+=Funk; Soul")
+        item = self.lib.items().get()
+        assert item.genres == ["Jazz", "Blues", "Funk", "Soul"]
+
+    def test_modify_scalar_operator_error(self):
+        with pytest.raises(UserError, match="field 'title' does not support"):
+            self.modify("--nowrite", "--nomove", "title+=foo")
 
     # Album Tests
 
