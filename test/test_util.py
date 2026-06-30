@@ -239,3 +239,23 @@ class TestPlurality:
         assert consensus["albumartist"]
         assert not consensus["album"]
         assert not consensus["label"]
+
+
+class TestAsciifyPath:
+    @pytest.fixture(autouse=True)
+    def _setup_config(self, config):
+        config["asciify_paths"] = True
+
+    def test_unicode_normalized_nfd_on_mac(self, monkeypatch):
+        monkeypatch.setattr("sys.platform", "darwin")
+        assert util.asciify_path("caf\xe9") == "cafe"
+
+    def test_unicode_normalized_nfc_on_linux(self, monkeypatch):
+        monkeypatch.setattr("sys.platform", "linux")
+        assert util.asciify_path("caf\xe9") == "cafe"
+
+    def test_asciify_and_replace(self):
+        assert util.asciify_path("\u201c\u00f6\u2014\u00cf\u201d") == '"o--I"'
+
+    def test_asciify_character_expanding_to_slash(self):
+        assert util.asciify_path("ab\xa2\xbdd") == "abC_ 1_2d"
