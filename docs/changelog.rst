@@ -37,6 +37,8 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- ``beet update`` no longer crashes when a plugin-added media field is stored as
+  a flexible attribute. :bug:`5580`
 
 ..
     For plugin developers

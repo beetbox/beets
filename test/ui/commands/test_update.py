@@ -1,8 +1,10 @@
 import os
 
+import mediafile
 from mediafile import MediaFile
 
 from beets import library
+from beets.plugins import BeetsPlugin
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.update import update_items
@@ -83,6 +85,29 @@ class UpdateTest(IOMixin, BeetsTestCase):
         self._update()
         item = self.lib.items().get()
         assert item.title == "differentTitle"
+
+    def test_modified_plugin_media_field_detected(self):
+        plugin = BeetsPlugin()
+        plugin.add_media_field(
+            "customtag",
+            mediafile.MediaField(
+                mediafile.MP3DescStorageStyle("customtag"),
+                mediafile.StorageStyle("customtag"),
+            ),
+        )
+
+        try:
+            mf = MediaFile(syspath(self.i.path))
+            mf.customtag = "F#"
+            mf.save()
+
+            self._update()
+
+            item = self.lib.get_item(self.i.id)
+            assert item["customtag"] == "F#"
+        finally:
+            delattr(mediafile.MediaFile, "customtag")
+            library.Item._media_fields.remove("customtag")
 
     def test_modified_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))

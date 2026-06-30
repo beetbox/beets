@@ -311,6 +311,15 @@ class ModelTest(unittest.TestCase):
         other_model = self.db._get(ModelFixture1, model.id)
         assert other_model.foo == "bar"
 
+    def test_store_flexattr_in_fields(self):
+        model = ModelFixture1()
+        model.add(self.db)
+        model.foo = "bar"
+        model.store(fields=["foo"])
+
+        other_model = self.db._get(ModelFixture1, model.id)
+        assert other_model.foo == "bar"
+
     def test_delete_flexattr(self):
         model = ModelFixture1()
         model["foo"] = "bar"
