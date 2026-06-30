@@ -191,6 +191,8 @@ adfb73b66dba0fc799880af176ef6f9ac0a7ee68
 6493d4dd018e08eb5d16d5381ebff47deea98bb1
 # Import everything from parent beets.autotag
 29580d2f00eb02f1ce77ebe3e1435804f7252ba1
+# Move Match classes to beets.autotag.match
+fd46e5b7738a3e11ef01e6fa8dc6fb8e0c7c82ec
 # Add setup fixture to TestHelper
 7bad226c33c2d48b5102cff213c67f16eeb09a7b
 # Fix mbcollection tests
@@ -223,3 +225,5 @@ b1ae461723316b738f301406198382913207e100
 900543baca4cf5fa4dbe52dbe748f98a0371d0ed
 # Move DummyIMBackend to fixtures
 aef9c64cb07c8f828d0dd6e69a5485abf2c43396
+# Move AttrDict under beets.util
+7598877e4695f7b87ff102c3c325b9cb5aa22945

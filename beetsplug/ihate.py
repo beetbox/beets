@@ -8,15 +8,6 @@ __author__ = "baobab@heresiarch.info"
 __version__ = "2.0"
 
 
-def summary(task):
-    """Given an ImportTask, produce a short string identifying the
-    object.
-    """
-    if task.is_album:
-        return f"{task.cur_artist} - {task.cur_album}"
-    return f"{task.item.artist} - {task.item.title}"
-
-
 class IHatePlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
@@ -48,10 +39,10 @@ class IHatePlugin(BeetsPlugin):
                 self._log.debug("processing your hate")
                 if self.do_i_hate_this(task, skip_queries):
                     task.choice_flag = Action.SKIP
-                    self._log.info("skipped: {}", summary(task))
+                    self._log.info("skipped: {}", task.source.desc)
                     return
                 if self.do_i_hate_this(task, warn_queries):
-                    self._log.info("you may hate this: {}", summary(task))
+                    self._log.info("you may hate this: {}", task.source.desc)
             else:
                 self._log.debug("nothing to do")
         else:
