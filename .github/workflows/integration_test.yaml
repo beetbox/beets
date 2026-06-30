@@ -12,12 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
 
       - name: Install system dependencies
         run: |
@@ -33,8 +31,11 @@ jobs:
             pandoc \
             python3-gst-1.0
 
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
+
       - name: Install dependencies
-        run: poetry install --extras=autobpm --extras=discogs --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart --extras=chroma --extras=sonosupdate
+        run: poe install --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate --group docs
 
       - name: Test
         env:
