@@ -51,6 +51,13 @@ Other changes
 
 - :doc:`/guides/installation` Add Homebrew to the list of supported package
   managers in the installation guide.
+- :doc:`contributing`: The project now uses ``uv`` for packaging, virtual
+  environment, and dependency management, replacing ``poetry``. The build
+  backend has changed from ``poetry-core`` to ``hatchling``. Please see updates
+  in :ref:`development-tools` and :ref:`getting-the-source` for more
+  information. :bug:`5783`
+- :doc:`guides/installation`: Switch isolated tool installation guidance and
+  GitHub workflow setup to ``uv tool`` commands.
 
 2.12.0 (June 22, 2026)
 ----------------------
@@ -240,10 +247,6 @@ Bug fixes
   ``import.quiet: yes`` config) during import so the corrupt-file prompt is
   suppressed in non-interactive imports. :bug:`4736`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
-
 Other changes
 ~~~~~~~~~~~~~
 
@@ -313,10 +316,6 @@ For plugin developers
   ``url_relations``. The API responses are also now fully typed with concrete
   ``TypedDict`` models for releases, recordings, works, and relations. Update
   direct access to raw MusicBrainz response keys if needed.
-
-..
-    Other changes
-    ~~~~~~~~~~~~~
 
 2.9.0 (April 11, 2026)
 ----------------------

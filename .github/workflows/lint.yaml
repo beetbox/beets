@@ -37,15 +37,15 @@ jobs:
         with:
           files: |
             **.py
-            poetry.lock
+            uv.lock
 
       - name: Check changed python files
         id: changed-python-files
         env:
           CHANGED_PYTHON_FILES: ${{ steps.raw-changed-python-files.outputs.all_changed_files }}
         run: |
-          if [[ " $CHANGED_PYTHON_FILES " == *" poetry.lock "* ]]; then
-            # if poetry.lock is changed, we need to check everything
+          if [[ " $CHANGED_PYTHON_FILES " == *" uv.lock "* ]]; then
+            # if uv.lock is changed, we need to check everything
             CHANGED_PYTHON_FILES="."
           fi
           echo "all_changed_files=$CHANGED_PYTHON_FILES" >> "$GITHUB_OUTPUT"
@@ -57,15 +57,16 @@ jobs:
     needs: changed-files
     steps:
       - uses: actions/checkout@v5
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --only=lint
+        run: poe install --only-group lint
 
       - name: Check code formatting
         # the job output will contain colored diffs with what needs adjusting
@@ -78,15 +79,16 @@ jobs:
     needs: changed-files
     steps:
       - uses: actions/checkout@v5
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --only=lint
+        run: poe install --only-group lint
 
       - name: Lint code
         run: poe lint --output-format=github ${{ needs.changed-files.outputs.changed_python_files }}
@@ -98,15 +100,16 @@ jobs:
     needs: changed-files
     steps:
       - uses: actions/checkout@v5
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --only=typing
+        run: poe install --only-group typing
 
       - name: Type check code
         uses: liskin/gh-problem-matcher-wrap@v3
@@ -123,15 +126,16 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # needed to get the full git history for the changelog check
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --extras=docs
+        run: poe install --group docs
 
       - name: Add Sphinx problem matchers
         run: |

@@ -18,15 +18,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --with=release --extras=docs
+        run: poe install --group release --group docs
 
       - name: Bump project version
         run: poe bump "${{ env.NEW_VERSION }}"
@@ -49,15 +50,16 @@ jobs:
         with:
           ref: ${{ env.NEW_TAG }}
 
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --with=release --extras=docs
+        run: poe install --group release --group docs
 
       - name: Install pandoc
         run: sudo apt update && sudo apt install pandoc -y
