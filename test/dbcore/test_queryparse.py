@@ -4,14 +4,14 @@ import unittest
 
 import pytest
 
-from beets import dbcore
 from beets.dbcore import ModelQuery, query, sort
+from beets.dbcore.queryparse import QueryTerm
 from beets.test.fixtures import ModelFixture1, SortFixture
 
 
 class QueryParseTest(unittest.TestCase):
     def pqp(self, part):
-        term = dbcore.queryparse.QueryTerm.make(part)
+        term = QueryTerm.make(part)
         return term.field, term.pattern, term.get_query_cls(ModelFixture1)
 
     def test_one_basic_term(self):
@@ -66,7 +66,7 @@ class QueryParseTest(unittest.TestCase):
 
     def test_implicit_path(self):
         q = "/tmp"
-        r = ("path", "/tmp", dbcore.query.PathQuery)
+        r = ("path", "/tmp", query.PathQuery)
         assert self.pqp(q) == r
 
 
@@ -179,5 +179,5 @@ class ParseSortedQueryTest(unittest.TestCase):
 
 class ParseQueryTest:
     def test_parse_invalid_query_string(self):
-        with pytest.raises(dbcore.query.ParsingError):
+        with pytest.raises(query.ParsingError):
             ModelQuery.parse(ModelFixture1, 'foo"')
