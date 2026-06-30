@@ -64,10 +64,8 @@ funk:
     - (glitch|hip|jazz|trip)y?([ -]*hip)?[ -]*hop
 
 # Compound genres
-blues rock:
-    - blues[ -]*rock
-folk rock:
-    - folk[ -]*rock
+\1 rock:
+    - (blues|folk|indie|gothic|progressive)[ -]*rock
 alternative rock:
     - alt([ -]*rock)?
     - alternative([ -]*rock)?
