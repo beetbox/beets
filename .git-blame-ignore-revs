@@ -213,3 +213,9 @@ c070b29e14cd06419e129b76a6d42a82fe51e190
 e4baceae1fa03dfd6db9e0bab88ddd2812963ad3
 # Add missing types to beets.util.pipeline
 f0105bef73053098f8755376c88f38cc90d9b23f
+# Rip out util tests from test_files
+b1ae461723316b738f301406198382913207e100
+# Rip out queryparse tests away from test_dbcore
+88202493adb769e667f64a96a3ec0270f46ca60e
+# Define DB fixtures in a shared place
+816cddbfd5d0976a31e9d0788db0944c62ad16db
