@@ -21,23 +21,18 @@ class IPFSPluginTest(PluginTestCase):
             found = False
             want_item = test_album.items()[2]
             for check_item in added_album.items():
-                try:
-                    if check_item.get("ipfs", with_album=False):
-                        ipfs_item = os.fsdecode(
-                            os.path.basename(want_item.path)
-                        )
-                        want_path = util.normpath(
-                            os.path.join("/ipfs", test_album.ipfs, ipfs_item)
-                        )
-                        assert check_item.path == want_path
-                        assert (
-                            check_item.get("ipfs", with_album=False)
-                            == want_item.ipfs
-                        )
-                        assert check_item.title == want_item.title
-                        found = True
-                except AttributeError:
-                    pass
+                if check_item.get("ipfs", with_album=False):
+                    ipfs_item = os.fsdecode(os.path.basename(want_item.path))
+                    want_path = util.normpath(
+                        os.path.join("/ipfs", test_album.ipfs, ipfs_item)
+                    )
+                    assert check_item.path == want_path
+                    assert (
+                        check_item.get("ipfs", with_album=False)
+                        == want_item.ipfs
+                    )
+                    assert check_item.title == want_item.title
+                    found = True
             assert found
 
     def mk_test_album(self):
