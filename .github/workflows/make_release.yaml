@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python tools
-        run: uv tool install "poethepoet>=0.26"
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
         run: poe install --group release --group docs
@@ -56,7 +56,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python tools
-        run: uv tool install "poethepoet>=0.26"
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
         run: poe install --group release --group docs

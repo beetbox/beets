@@ -63,7 +63,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python tools
-        run: uv tool install "poethepoet>=0.26"
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
         run: poe install --only-group lint
@@ -85,7 +85,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python tools
-        run: uv tool install "poethepoet>=0.26"
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
         run: poe install --only-group lint
@@ -106,7 +106,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python tools
-        run: uv tool install "poethepoet>=0.26"
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
         run: poe install --only-group typing
@@ -132,7 +132,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Python tools
-        run: uv tool install "poethepoet>=0.26"
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
         run: poe install --group docs

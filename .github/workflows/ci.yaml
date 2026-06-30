@@ -32,7 +32,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Python tools
-        run: uv tool install "poethepoet>=0.26"
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install system dependencies on Windows
         if: matrix.platform == 'windows-latest'

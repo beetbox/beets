@@ -78,7 +78,7 @@ Then install poethepoet_:
 
 ::
 
-    $ uv tool install "poethepoet>=0.26"
+    $ uv tool install "poethepoet>=0.26,<0.47.0"
 
 .. _getting-the-source:
 
