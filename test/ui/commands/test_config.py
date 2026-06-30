@@ -16,7 +16,7 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
             if k in os.environ:
                 del os.environ[k]
 
-        temp_dir = self.temp_dir_path
+        temp_dir = self.temp_path
 
         self.config_path = str(temp_dir / "config.yaml")
         with open(self.config_path, "w") as file:

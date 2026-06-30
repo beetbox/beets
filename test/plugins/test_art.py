@@ -90,7 +90,7 @@ class UseThePlugin(TestHelper):
 
     @pytest.fixture
     def dpath(self) -> bytes:
-        dpath = self.temp_dir_path / "arttest"
+        dpath = self.temp_path / "arttest"
         os.mkdir(syspath(dpath))
         return os.fsencode(dpath)
 
@@ -300,7 +300,7 @@ class TestFSArt(UseThePlugin):
             next(source.get(Album(), settings, [dpath]))
 
     def test_configured_fallback_is_used(self, source, dpath, settings) -> None:
-        fallback = self.temp_dir_path / "a.jpg"
+        fallback = self.temp_path / "a.jpg"
         fallback.touch()
         settings.fallback = fallback  # type: ignore
         candidate = next(source.get(Album(), settings, [dpath]))
@@ -329,7 +329,7 @@ class TestFSArt(UseThePlugin):
         self, mock_samefile, source
     ) -> None:
         mock_samefile.side_effect = OSError("os error")
-        fallback = self.temp_dir_path / "a.jpg"
+        fallback = self.temp_path / "a.jpg"
         self.plugin.fallback = str(fallback)
         candidate = fetchart.Candidate(logger, source.ID, os.fsencode(fallback))
         result = self.plugin._is_candidate_fallback(candidate)
@@ -847,7 +847,7 @@ class TestArtImporter(UseThePlugin):
     def _setup(self, setup_plugin):
 
         # Mock the album art fetcher to always return our test file.
-        self.art_file = self.temp_dir_path / "tmpcover.jpg"
+        self.art_file = self.temp_path / "tmpcover.jpg"
         self.art_file.touch()
         self.old_afa = self.plugin.art_for_album
         self.afa_response = fetchart.Candidate(

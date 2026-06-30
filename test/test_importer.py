@@ -146,7 +146,7 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
 
 
 def create_archive(session):
-    handle, path = mkstemp(dir=session.temp_dir_path)
+    handle, path = mkstemp(dir=session.temp_path)
     path = bytestring_path(path)
     os.close(handle)
     archive = ZipFile(os.fsdecode(path), mode="w")
@@ -234,7 +234,7 @@ class TestImportZip(AsIsImporterMixin, ImportHelper):
 
 class TestImportTar(TestImportZip):
     def create_archive(self):
-        (handle, path) = mkstemp(dir=self.temp_dir_path)
+        (handle, path) = mkstemp(dir=self.temp_path)
         path = bytestring_path(path)
         os.close(handle)
         archive = TarFile(os.fsdecode(path), mode="w")
@@ -389,9 +389,9 @@ class TestImportFormat(ImportHelper):
 
     def test_recognize_format_already_exist(self, caplog):
         resource_path = os.path.join(_common.RSRC, b"no_ext")
-        temp_resource_path = self.temp_dir_path / "no_ext"
+        temp_resource_path = self.temp_path / "no_ext"
         util.copy(resource_path, temp_resource_path)
-        new_path = self.temp_dir_path / "no_ext.mp3"
+        new_path = self.temp_path / "no_ext.mp3"
         util.copy(temp_resource_path, new_path)
         self.setup_importer(autotag=False)
         self.importer.paths = [temp_resource_path]
@@ -413,22 +413,22 @@ class TestImportFormat(ImportHelper):
     def test_recognize_format_change_original(self):
         config["import"]["fix_ext_inplace"] = True
         resource_src = os.path.join(_common.RSRC, b"no_ext")
-        resource_path = self.temp_dir_path / "no_ext"
+        resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
         self.importer.paths = [resource_path]
         self.importer.run()
-        assert not Path(self.temp_dir_path / "no_ext").exists()
+        assert not Path(self.temp_path / "no_ext").exists()
 
     def test_recognize_format_keep_original(self):
         config["import"]["fix_ext_inplace"] = False
         resource_src = os.path.join(_common.RSRC, b"no_ext")
-        resource_path = self.temp_dir_path / "no_ext"
+        resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
         self.importer.paths = [resource_path]
         self.importer.run()
-        assert Path(self.temp_dir_path / "no_ext").exists()
+        assert Path(self.temp_path / "no_ext").exists()
 
 
 class TestImport(PathsMixin, AutotagImportHelper):
@@ -525,7 +525,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
 
     @NEEDS_FFPROBE
     def test_empty_directory_warning(self, caplog):
-        import_dir = self.temp_dir_path / "empty"
+        import_dir = self.temp_path / "empty"
         import_dir.mkdir()
         (import_dir / "non-audio").touch()
         self.setup_importer(import_dir=import_dir)
@@ -536,7 +536,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
 
     @NEEDS_FFPROBE
     def test_empty_directory_singleton_warning(self, caplog):
-        import_dir = self.temp_dir_path / "empty"
+        import_dir = self.temp_path / "empty"
         import_dir.mkdir()
         (import_dir / "non-audio").touch()
         self.setup_singleton_importer(import_dir=import_dir)
@@ -1395,7 +1395,7 @@ class AlbumsInDirTest(BeetsTestCase):
         super().setUp()
 
         # create a directory structure for testing
-        base = (self.temp_dir_path / "tempdir").resolve()
+        base = (self.temp_path / "tempdir").resolve()
         base.mkdir()
 
         album1_dir = base / "album1"
@@ -1444,7 +1444,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         directories are made). `ascii_` indicates ACII-only filenames;
         otherwise, we use Unicode names.
         """
-        self.base = (self.temp_dir_path / "tempdir").resolve()
+        self.base = (self.temp_path / "tempdir").resolve()
         self.base.mkdir()
 
         name = "CAT" if ascii_ else "C\xc1T"
@@ -1557,7 +1557,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
             ]
         ):
             with self.subTest(marker=marker, suffix1=suffix1, suffix2=suffix2):
-                base = os.path.abspath(self.temp_dir_path / f"marker_{i}")
+                base = os.path.abspath(self.temp_path / f"marker_{i}")
                 os.mkdir(syspath(base))
 
                 album_dir = os.path.join(base, "Album Name")
@@ -1580,7 +1580,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
     def test_no_coalesce_mismatched_prefixes(self):
         # "CD 02" and "Enhanced CD 01" share the "cd" marker but have
         # different prefixes, so they should not be collapsed.
-        base = os.path.abspath(self.temp_dir_path / "mismatched")
+        base = os.path.abspath(self.temp_path / "mismatched")
         os.mkdir(syspath(base))
 
         album_dir = os.path.join(base, "Album Name")
@@ -1737,7 +1737,7 @@ class TestImportPretend(ImportHelper):
         ]
 
     def test_import_pretend_empty(self, caplog):
-        empty_path = self.temp_dir_path / "empty"
+        empty_path = self.temp_path / "empty"
         empty_path.mkdir()
 
         importer = self.setup_importer(pretend=True, import_dir=empty_path)
@@ -1888,7 +1888,7 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
 
     def test_remux_mpeglayer3_wav(self):
         src = Path(os.fsdecode(_common.RSRC)) / "mpeglayer3.wav"
-        dest = self.temp_dir_path / "mpeglayer3.wav"
+        dest = self.temp_path / "mpeglayer3.wav"
         shutil.copy(syspath(src), syspath(dest))
 
         mp3_path = remux_mpeglayer3_wav(dest)

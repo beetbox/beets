@@ -21,7 +21,7 @@ class MoveTest(BeetsTestCase):
 
         # make a temporary file
         self.temp_music_file_name = "temp.mp3"
-        self.path = self.temp_dir_path / self.temp_music_file_name
+        self.path = self.temp_path / self.temp_music_file_name
         shutil.copy(self.resource_path, self.path)
 
         # add it to a temporary library
@@ -37,7 +37,7 @@ class MoveTest(BeetsTestCase):
         self.i.title = "three"
         self.dest = self.lib_path / "one" / "two" / "three.mp3"
 
-        self.otherdir = self.temp_dir_path / "testotherdir"
+        self.otherdir = self.temp_path / "testotherdir"
 
     def test_move_arrives(self):
         self.i.move()
@@ -184,7 +184,7 @@ class MoveTest(BeetsTestCase):
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_from_symlink(self):
-        link_path = self.temp_dir_path / "temp_link.mp3"
+        link_path = self.temp_path / "temp_link.mp3"
         link_path.symlink_to(self.temp_music_file_name)
         self.i.path = link_path
         self.i.move(operation=MoveOperation.HARDLINK)
@@ -213,7 +213,7 @@ class AlbumFileTest(BeetsTestCase):
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Alternate destination dir.
-        self.otherdir = os.fsencode(self.temp_dir_path / "testotherdir")
+        self.otherdir = os.fsencode(self.temp_path / "testotherdir")
 
     def test_albuminfo_move_changes_paths(self):
         self.ai.album = "newAlbumName"
@@ -280,7 +280,7 @@ class ArtFileTest(BeetsTestCase):
         self.ai.artpath = art_bytes
         self.ai.store()
         # Alternate destination dir.
-        self.otherdir = os.fsencode(self.temp_dir_path / "testotherdir")
+        self.otherdir = os.fsencode(self.temp_path / "testotherdir")
 
     def test_art_deleted_when_items_deleted(self):
         assert self.art.exists()
@@ -493,7 +493,7 @@ class RemoveTest(BeetsTestCase):
         assert self.lib_path.exists()
 
     def test_removing_last_item_in_album_with_albumart_prunes_dir(self):
-        artfile = self.temp_dir_path / "testart.jpg"
+        artfile = self.temp_path / "testart.jpg"
         artfile.touch()
         self.ai.set_art(artfile)
         self.ai.store()

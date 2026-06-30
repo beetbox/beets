@@ -171,7 +171,7 @@ class PathsMixin:
     resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
 
     @cached_property
-    def temp_dir_path(self) -> Path:
+    def temp_path(self) -> Path:
         return Path(self.create_temp_dir())
 
     def create_temp_dir(self, **kwargs: Any) -> str:
@@ -179,7 +179,7 @@ class PathsMixin:
 
     def remove_temp_dir(self) -> None:
         """Delete the temporary directory created by `create_temp_dir`."""
-        shutil.rmtree(self.temp_dir_path)
+        shutil.rmtree(self.temp_path)
 
 
 class TestHelper(RunMixin, PathsMixin, ConfigMixin):
@@ -223,7 +223,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
     @cached_property
     def lib_path(self) -> Path:
-        lib_path = self.temp_dir_path / "libdir"
+        lib_path = self.temp_path / "libdir"
         lib_path.mkdir(exist_ok=True)
         return lib_path
 
@@ -238,10 +238,10 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         Sets the following properties on itself.
 
-        - ``temp_dir_path`` Path to a temporary directory containing all
+        - ``temp_path`` Path to a temporary directory containing all
           files specific to beets
 
-        - ``lib_path`` Path to a subfolder of ``temp_dir_path``, containing the
+        - ``lib_path`` Path to a subfolder of ``temp_path``, containing the
           library's media files. Same as ``config['directory']``.
 
         - ``lib`` Library instance created with the settings from
@@ -249,7 +249,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
-        temp_dir_str = str(self.temp_dir_path)
+        temp_dir_str = str(self.temp_path)
         self.env_patcher = patch.dict(
             "os.environ",
             {
@@ -390,14 +390,14 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         images: list[str] | None = None,
         target_dir: util.PathLike | None = None,
     ) -> bytes:
-        """Copy a fixture mediafile with the extension to `temp_dir_path`.
+        """Copy a fixture mediafile with the extension to `temp_path`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
         if not target_dir:
-            target_dir = self.temp_dir_path
+            target_dir = self.temp_path
         src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
         handle, path = mkstemp(dir=target_dir)
         path = bytestring_path(path)
@@ -429,16 +429,14 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         If `dir_` is given, it is prepended to `path`. After that, if the
         path is relative, it is resolved with respect to
-        `self.temp_dir_path`.
+        `self.temp_path`.
         """
         bytes_path = os.fsencode(path)
         if dir_:
             bytes_path = os.path.join(os.fsencode(dir_), bytes_path)
 
         if not os.path.isabs(bytes_path):
-            bytes_path = os.path.join(
-                os.fsencode(self.temp_dir_path), bytes_path
-            )
+            bytes_path = os.path.join(os.fsencode(self.temp_path), bytes_path)
 
         parent = os.path.dirname(bytes_path)
         if not os.path.isdir(syspath(parent)):
@@ -573,7 +571,7 @@ class ImporterMixin(PathsMixin, ConfigMixin):
 
     @cached_property
     def import_path(self) -> Path:
-        import_path = self.temp_dir_path / "import"
+        import_path = self.temp_path / "import"
         import_path.mkdir(exist_ok=True)
         return import_path
 

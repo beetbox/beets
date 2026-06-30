@@ -60,7 +60,7 @@ class TestHookCommand(HookTestCase):
 
     @pytest.fixture(autouse=True)
     def setUp(self):
-        self.paths = [str(self.temp_dir_path / e) for e in self.EVENTS]
+        self.paths = [str(self.temp_path / e) for e in self.EVENTS]
 
     def _test_command(
         self,

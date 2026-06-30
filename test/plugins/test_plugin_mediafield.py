@@ -31,7 +31,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
     def _mediafile_fixture(self, name, extension="mp3"):
         name = f"{name}.{extension}"
         src = os.path.join(os.fsdecode(_common.RSRC), name)
-        target = self.temp_dir_path / name
+        target = self.temp_path / name
         shutil.copy(syspath(src), syspath(target))
         return mediafile.MediaFile(target)
 

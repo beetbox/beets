@@ -20,7 +20,7 @@ class MoveTest(BeetsTestCase):
         self.album = self.lib.add_album([self.i])
 
         # Alternate destination directory.
-        self.otherdir = self.temp_dir_path / "testotherdir"
+        self.otherdir = self.temp_path / "testotherdir"
 
     def _move(
         self,

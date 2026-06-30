@@ -286,7 +286,7 @@ class FilePathTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.path = self.temp_dir_path / "testfile"
+        self.path = self.temp_path / "testfile"
         self.path.touch()
 
 
@@ -304,7 +304,7 @@ class SafeMoveCopyTest(FilePathTestCase):
     def setUp(self):
         super().setUp()
 
-        self.otherpath = self.temp_dir_path / "testfile2"
+        self.otherpath = self.temp_path / "testfile2"
         self.otherpath.touch()
         self.dest = Path(f"{self.path}.dest")
 
@@ -349,7 +349,7 @@ class PruneTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.base = self.temp_dir_path / "testdir"
+        self.base = self.temp_path / "testdir"
         self.base.mkdir()
         self.sub = self.base / "subdir"
         self.sub.mkdir()
@@ -369,7 +369,7 @@ class WalkTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.base = self.temp_dir_path / "testdir"
+        self.base = self.temp_path / "testdir"
         self.base.mkdir()
         (self.base / "y").touch()
         (self.base / "x").touch()
@@ -405,7 +405,7 @@ class UniquePathTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.base = self.temp_dir_path / "testdir"
+        self.base = self.temp_path / "testdir"
         self.base.mkdir()
         (self.base / "x.mp3").touch()
         (self.base / "x.1.mp3").touch()
@@ -431,7 +431,7 @@ class UniquePathTest(BeetsTestCase):
 
 class MkDirAllTest(BeetsTestCase):
     def test_mkdirall(self):
-        child = self.temp_dir_path / "foo" / "bar" / "baz" / "quz.mp3"
+        child = self.temp_path / "foo" / "bar" / "baz" / "quz.mp3"
         util.mkdirall(child)
         assert not child.exists()
         assert child.parent.exists()

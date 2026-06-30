@@ -25,7 +25,7 @@ _p = pytest.param
 class PlaylistDirMixin(PathsMixin):
     @property
     def playlist_dir(self) -> Path:
-        return self.temp_dir_path / "playlists"
+        return self.temp_path / "playlists"
 
 
 class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
