@@ -43,8 +43,7 @@ darkwave:
 downtempo:
     - down[ -]*beat
 shoegaze:
-    - shoegaze?r?
-    - shoegazing
+    - shoegaz(e?r?|ing)
 nu skool breaks:
     - breaks  # https://www.last.fm/tag/breaks/wiki
 soundtrack:
