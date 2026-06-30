@@ -1,1546 +1,2985 @@
-2 tone
-2-step garage
-4-beat
-4x4 garage
-8-bit
-acapella
-acid
-acid breaks
-acid house
-acid jazz
-acid rock
-acoustic music
-acousticana
-adult contemporary music
-african popular music
-african rumba
-afrobeat
-aleatoric music
-alternative country
-alternative dance
-alternative hip hop
-alternative metal
-alternative rock
-ambient
-ambient house
-ambient music
-americana
-anarcho punk
-anti-folk
-apala
-ape haters
-arab pop
-arabesque
-arabic pop
-argentine rock
-ars antiqua
-ars nova
-art punk
-art rock
-ashiq
-asian american jazz
-australian country music
-australian hip hop
-australian pub rock
-austropop
-avant-garde
-avant-garde jazz
-avant-garde metal
-avant-garde music
-axé
-bac-bal
-bachata
-baggy
-baila
-baile funk
-baisha xiyue
-baithak gana
-baião
-bajourou
-bakersfield sound
-bakou
-bakshy
-bal-musette
-balakadri
-balinese gamelan
-balkan pop
-ballad
-ballata
-ballet
-bamboo band
-bambuco
-banda
-bangsawan
-bantowbol
-barbershop music
-barndance
-baroque
-baroque music
-baroque pop
-bass music
-batcave
-batucada
-batuco
-batá-rumba
-beach music
-beat
-beatboxing
-beautiful music
-bebop
-beiguan
-bel canto
-bend-skin
-benga
-berlin school of electronic music
-bhajan
-bhangra
-bhangra-wine
-bhangragga
-bhangramuffin
-big band
-big band music
-big beat
-biguine
-bihu
-bikutsi
-biomusic
-bitcore
-bitpop
-black metal
-blackened death metal
-blue-eyed soul
-bluegrass
-blues
-blues ballad
-blues-rock
-boogie
-boogie woogie
-boogie-woogie
-bossa nova
-brass band
-brazilian funk
-brazilian jazz
-breakbeat
-breakbeat hardcore
-breakcore
-breton music
-brill building pop
-britfunk
-british blues
-british invasion
-britpop
-broken beat
-brown-eyed soul
-brukdown
-brutal death metal
-bubblegum dance
-bubblegum pop
-bulerias
-bumba-meu-boi
-bunraku
-burger-highlife
-burgundian school
-byzantine chant
-ca din tulnic
-ca pe lunca
-ca trù
-cabaret
-cadence
-cadence rampa
-cadence-lypso
-café-aman
-cai luong
-cajun music
-cakewalk
-calenda
-calentanos
-calgia
-calypso
-calypso jazz
-calypso-style baila
-campursari
-canatronic
-canción de autor
-candombe
-canon
-canrock
-cantata
-cantautorato
-cantautor
-cantautora
-cante chico
-cante jondo
-canterbury scene
-cantiga
-cantique
-cantiñas
-canto livre
-canto nuevo
-canto popular
-cantopop
-canzone napoletana
-cape jazz
-capoeira music
-caracoles
-carceleras
-cardas
-cardiowave
-carimbó
-cariso
-carnatic music
-carol
-cartageneras
-cassette culture
-casséy-co
-cavacha
-caveman
-caña
-celempungan
-cello rock
-celtic
-celtic fusion
-celtic metal
-celtic punk
-celtic reggae
-celtic rock
-cha-cha-cha
-chakacha
-chalga
-chamamé
-chamber jazz
-chamber music
-chamber pop
-champeta
-changuí
-chanson
-chant
-charanga
-charanga-vallenata
-charikawi
-chastushki
-chau van
-chemical breaks
-chicago blues
-chicago house
-chicago soul
-chicano rap
-chicha
-chicken scratch
-children's music
-chillout
-chillwave
-chimurenga
-chinese music
-chinese pop
-chinese rock
-chip music
-cho-kantrum
-chongak
-chopera
-chorinho
-choro
-chouval bwa
-chowtal
-christian alternative
-christian black metal
-christian electronic music
-christian hardcore
-christian hip hop
-christian industrial
-christian metal
-christian music
-christian punk
-christian r&b
-christian rock
-christian ska
-christmas carol
-christmas music
-chumba
-chut-kai-pang
-chutney
-chutney soca
-chutney-bhangra
-chutney-hip hop
-chutney-soca
-chylandyk
-chzalni
-chèo
-cigányzene
-classic
-classic country
-classic female blues
-classic rock
-classical
-classical music
-classical music era
-clicks n cuts
-close harmony
-club music
-cocobale
-coimbra fado
-coladeira
-colombianas
-combined rhythm
-comedy
-comedy rap
-comedy rock
-comic opera
-comparsa
-compas direct
-compas meringue
-concert overture
-concerto
-concerto grosso
-congo
-conjunto
-contemporary christian
-contemporary christian music
-contemporary classical
-contemporary r&b
-contonbley
-contradanza
-cool jazz
-corrido
-corsican polyphonic song
-cothoza mfana
-country
-country blues
-country gospel
-country music
-country pop
-country r&b
-country rock
-country-rap
-countrypolitan
-couple de sonneurs
-coupé-décalé
-cowpunk
-cretan music
-crossover jazz
-crossover music
-crossover thrash
-crossover thrash metal
-crunk
-crunk&b
-crunkcore
-crust punk
-csárdás
-cuarteto
-cuban rumba
-cuddlecore
-cueca
-cumbia
-cumbia villera
-cybergrind
-dabka
-dadra
-daina
-dalauna
-dance
-dance music
-dance-pop
-dance-punk
-dance-rock
-dancehall
-dangdut
-danger music
-dansband
-danza
-danzón
-dark ambient
-dark cabaret
-dark pop
-darkcore
-darkstep
-darkwave
-de ascultat la servici
-de codru
-de dragoste
-de jale
-de pahar
-death industrial
-death metal
-death rock
-death/doom
-deathcore
-deathgrind
-deathrock
-deep funk
-deep house
-deep soul
-degung
-delta blues
-dementia
-desert rock
-desi
-detroit blues
-detroit techno
-dub techno
-dhamar
-dhimotiká
-dhrupad
-dhun
-digital hardcore
-dirge
-dirty dutch
-dirty rap
-dirty rap/pornocore
-dirty south
-disco
-disco house
-disco polo
-disney
-disney hardcore
-disney pop
-diva house
-divine rock
-dixieland
-dixieland jazz
-djambadon
-djent
-dodompa
-doina
-dombola
-dondang sayang
-donegal fiddle tradition
-dongjing
-doo wop
-doom metal
-doomcore
-downtempo
-drag
-dream pop
-drone doom
-drone metal
-drone music
-dronology
-drum and bass
-dub
-dub house
-dubanguthu
-dubstep
-dubtronica
-dunedin sound
-dunun
-dutch jazz
-décima
-early music
-east coast blues
-east coast hip hop
-easy listening
-electric blues
-electric folk
-electro
-electro backbeat
-electro hop
-electro house
-electro punk
-electro-industrial
-electro-swing
-electroclash
-electrofunk
-electronic
-electronic art music
-electronic body music
-electronic dance
-electronic luk thung
-electronic music
-electronic rock
-electronica
-electropop
-elevator music
-emo
-emo pop
-emo rap
-emocore
-emotronic
-enka
-epic doom metal
-epic metal
-eremwu eu
-ethereal pop
-ethereal wave
-euro
-euro disco
-eurobeat
-eurodance
-europop
-eurotrance
-eurourban
-exotica
-experimental music
-experimental noise
-experimental pop
-experimental rock
-extreme metal
-ezengileer
-fado
-falak
-fandango
-farruca
-fife and drum blues
-filk
-film score
-filmi
-filmi-ghazal
-finger-style
-fjatpangarri
-flamenco
-flamenco rumba
-flower power
-foaie verde
-fofa
-folk hop
-folk metal
-folk music
-folk pop
-folk punk
-folk rock
-folktronica
-forró
-franco-country
-freak-folk
-freakbeat
-free improvisation
-free jazz
-free music
-freestyle
-freestyle house
-freetekno
-french pop
-frenchcore
-frevo
-fricote
-fuji
-fuji music
-fulia
-full on
-funaná
-funeral doom
-funk
-funk metal
-funk rock
-funkcore
-funky house
-furniture music
-fusion jazz
-g-funk
-gaana
-gabba
-gabber
-gagaku
-gaikyoku
-gaita
-galant
-gamad
-gambang kromong
-gamelan
-gamelan angklung
-gamelan bang
-gamelan bebonangan
-gamelan buh
-gamelan degung
-gamelan gede
-gamelan kebyar
-gamelan salendro
-gamelan selunding
-gamelan semar pegulingan
-gamewave
-gammeldans
-gandrung
-gangsta rap
-gar
-garage rock
-garrotin
-gavotte
-gelugpa chanting
-gender wayang
-gending
-german folk music
-gharbi
-gharnati
-ghazal
-ghazal-song
-ghetto house
-ghettotech
-girl group
-glam metal
-glam punk
-glam rock
-glitch
-gnawa
-go-go
-goa
-goa trance
-gong-chime music
-goombay
-goregrind
-goshu ondo
-gospel music
-gothic metal
-gothic rock
-granadinas
-grebo
-gregorian chant
-grime
-grindcore
-groove metal
-group sounds
-grunge
-grupera
-guaguanbo
-guajira
-guasca
-guitarra baiana
-guitarradas
-gumbe
-gunchei
-gunka
-guoyue
-gwo ka
-gwo ka moderne
-gypsy jazz
-gypsy punk
-gypsybilly
-gyu ke
-habanera
-hajnali
-hakka
-halling
-hambo
-hands up
-hapa haole
-happy hardcore
-haqibah
-hard
-hard bop
-hard house
-hard rock
-hard trance
-hardcore hip hop
-hardcore metal
-hardcore punk
-hardcore techno
-hardstyle
-harepa
-harmonica blues
-hasaposérviko
-heart attack
-heartland rock
-heavy beat
-heavy metal
-hesher
-hi-nrg
-highlands
-highlife
-highlife fusion
-hillybilly music
-hindustani classical music
-hip hop
-hip hop & rap
-hip hop soul
-hip house
-hiplife
-hiragasy
-hiva usu
-hong kong and cantonese pop
-hong kong english pop
-honky tonk
-honkyoku
-hora lunga
-hornpipe
-horror punk
-horrorcore
-horrorcore rap
-house
-house music
-hua'er
-huasteco
-huayno
-hula
-humor
-humppa
-hunguhungu
-hyangak
-hymn
-hyphy
-hát chau van
-hát chèo
-hát cãi luong
-hát tuồng
-ibiza music
-icaro
-idm
-igbo music
-ijexá
-ilahije
-illbient
-impressionist music
-improvisational
-incidental music
-indian pop
-indie folk
-indie music
-indie pop
-indie rock
-indietronica
-indo jazz
-indo rock
-indonesian pop
-indoyíftika
-industrial death metal
-industrial hip hop
-industrial metal
-industrial music
-industrial musical
-industrial rock
-instrumental rock
-intelligent dance music
-international latin
-inuit music
-iranian pop
-irish folk
-irish rebel music
-iscathamiya
-isicathamiya
-isikhwela jo
-island
-isolationist
-italo dance
-italo disco
-italo house
-itsmeños
-izvorna bosanska muzika
-j'ouvert
-j-fusion
-j-pop
-j-rock
-jaipongan
-jaliscienses
-jam band
-jam rock
-jamana kura
-jamrieng samai
-jangle pop
-japanese pop
-jarana
-jariang
-jarochos
-jawaiian
-jazz
-jazz blues
-jazz fusion
-jazz metal
-jazz rap
-jazz-funk
-jazz-rock
-jegog
-jenkka
-jesus music
-jibaro
-jig
-jig punk
-jing ping
-jingle
-jit
-jitterbug
-jive
-joged
-joged bumbung
-joik
-jonnycore
-joropo
-jota
-jtek
-jug band
-jujitsu
-juju
-juke joint blues
-jump blues
-jumpstyle
-jungle
-junkanoo
-juré
-jùjú
-k-pop
-kaba
-kabuki
-kachāshī
-kadans
-kagok
-kagyupa chanting
-kaiso
-kalamatianó
-kalattuut
-kalinda
-kamba pop
-kan ha diskan
-kansas city blues
-kantrum
-kantádhes
-kargyraa
-karma
-kaseko
-katajjaq
-kawachi ondo
-kayōkyoku
-ke-kwe
-kebyar
-kecak
-kecapi suling
-kertok
-khaleeji
-khap
-khelimaski djili
-khene
-khoomei
-khorovodi
-khplam wai
-khrung sai
-khyal
-kilapanda
-kinko
-kirtan
-kiwi rock
-kizomba
-klape
-klasik
-klezmer
-kliningan
-kléftiko
-kochare
-kolomyjka
-komagaku
-kompa
-konpa
-korean pop
-koumpaneia
-kpanlogo
-krakowiak
-krautrock
-kriti
-kroncong
-krump
-krzesany
-kuduro
-kulintang
-kulning
-kumina
-kun-borrk
-kundere
-kundiman
-kussundé
-kutumba wake
-kveding
-kvæði
-kwaito
-kwassa kwassa
-kwela
-käng
-kélé
-kĩkũyũ pop
-la la
-latin american
-latin jazz
-latin pop
-latin rap
-lavway
-laïko
-laïkó
-le leagan
-legényes
-lelio
-letkajenkka
-levenslied
-lhamo
-lieder
-light music
-light rock
-likanos
-liquid drum&bass
-liquid funk
-liquindi
-llanera
-llanto
-lo-fi
-lo-fi music
-loki djili
-long-song
-louisiana blues
-louisiana swamp pop
-lounge music
-lovers rock
-lowercase
-lubbock sound
-lucknavi thumri
-luhya omutibo
-luk grung
-lullaby
-lundu
-lundum
-m-base
-madchester
-madrigal
-mafioso rap
-maglaal
-magnificat
-mahori
-mainstream jazz
-makossa
-makossa-soukous
-malagueñas
-malawian jazz
-malhun
-maloya
-maluf
-maluka
-mambo
-manaschi
-mandarin pop
-manding swing
-mango
-mangue bit
-mangulina
-manikay
-manila sound
-manouche
-manzuma
-mapouka
-mapouka-serré
-marabi
-maracatu
-marga
-mariachi
-marimba
-marinera
-marrabenta
-martial industrial
-martinetes
-maskanda
-mass
-matamuerte
-math rock
-mathcore
-matt bello
-maxixe
-mazurka
-mbalax
-mbaqanga
-mbube
-mbumba
-medh
-medieval folk rock
-medieval metal
-medieval music
-meditation
-mejorana
-melhoun
-melhûn
-melodic black metal
-melodic death metal
-melodic hardcore
-melodic metalcore
-melodic music
-melodic trance
-memphis blues
-memphis rap
-memphis soul
-mento
-merengue
-merengue típico moderno
-merengue-bomba
-meringue
-merseybeat
-metal
-metalcore
-metallic hardcore
-mexican pop
-mexican rock
-mexican son
-meykhana
-mezwed
-miami bass
-microhouse
-middle of the road
-midwest hip hop
-milonga
-min'yo
-mineras
-mini compas
-mini-jazz
-minimal techno
-minimalist music
-minimalist trance
-minneapolis sound
-minstrel show
-minuet
-mirolóyia
-modal jazz
-modern classical
-modern classical music
-modern laika
-modern rock
-modinha
-mohabelo
-montuno
-monumental dance
-mor lam
-mor lam sing
-morna
-motorpop
-motown
-mozambique
-mpb
-mugam
-multicultural
-murga
-musette
-museve
-mushroom jazz
-music drama
-music hall
-musiqi-e assil
-musique concrète
-mutuashi
-muwashshah
-muzak
-méringue
-música campesina
-música criolla
-música de la interior
-música llanera
-música nordestina
-música popular brasileira
-música tropical
-nagauta
-nakasi
-nangma
-nanguan
-narcocorrido
-nardcore
-narodna muzika
-nasheed
-nashville sound
-nashville sound/countrypolitan
-national socialist black metal
-naturalismo
-nederpop
-neo soul
-neo-classical metal
-neo-medieval
-neo-prog
-neo-psychedelia
-neoclassical
-neoclassical metal
-neoclassical music
-neofolk
-neotraditional country
-nerdcore
-neue deutsche härte
-neue deutsche welle
-new age music
-new beat
-new instrumental
-new jack swing
-new orleans blues
-new orleans jazz
-new pop
-new prog
-new rave
-new romantic
-new school hip hop
-new taiwanese song
-new wave
-new wave of british heavy metal
-new wave of new wave
-new weird america
-new york blues
-new york house
-newgrass
-nganja
-nightcore
-nintendocore
-nisiótika
-no wave
-noh
-noise music
-noise pop
-noise rock
-nongak
-norae undong
-nordic folk dance music
-nordic folk music
-nortec
-norteño
-northern soul
-nota
-nu jazz
-nu metal
-nu soul
-nu skool breaks
-nueva canción
-nyatiti
-néo kýma
-obscuro
-oi!
-old school hip hop
-old-time
-oldies
-olonkho
-oltului
-ondo
-opera
-operatic pop
-oratorio
-orchestra
-orchestral
-organ trio
-organic ambient
-organum
-orgel
-oriental metal
-ottava rima
-outlaw country
-outsider music
-p-funk
-pagan metal
-pagan rock
-pagode
-paisley underground
-palm wine
-palm-wine
-pambiche
-panambih
-panchai baja
-panchavadyam
-pansori
-paranda
-parang
-parody
-parranda
-partido alto
-pasillo
-patriotic
-peace punk
-pelimanni music
-petenera
-peyote song
-philadelphia soul
-piano blues
-piano rock
-piedmont blues
-pimba
-pinoy pop
-pinoy rock
-pinpeat orchestra
-piphat
-piyyutim
-plainchant
-plena
-pleng phua cheewit
-pleng thai sakorn
-political hip hop
-polka
-polo
-polonaise
-pols
-polska
-pong lang
-pop
-pop folk
-pop music
-pop punk
-pop rap
-pop rock
-pop sunda
-pornocore
-porro
-post disco
-post-britpop
-post-disco
-post-grunge
-post-hardcore
-post-industrial
-post-metal
-post-minimalism
-post-punk
-post-rock
-post-romanticism
-pow-wow
-power electronics
-power metal
-power noise
-power pop
-powerviolence
-ppongtchak
-praise song
-program symphony
-progressive bluegrass
-progressive country
-progressive death metal
-progressive electronic
-progressive electronic music
-progressive folk
-progressive folk music
-progressive house
-progressive metal
-progressive power metal
-progressive rock
-progressive trance
-progressive thrash metal
-protopunk
-psych folk
-psychedelic music
-psychedelic pop
-psychedelic rock
-psychedelic trance
-psychobilly
-punk blues
-punk cabaret
-punk jazz
-punk rock
-punta
-punta rock
-qasidah
-qasidah modern
-qawwali
-quadrille
-quan ho
-queercore
-quiet storm
-rada
-raga
-raga rock
-ragga
-ragga jungle
-raggamuffin
-ragtime
-rai
-rake-and-scrape
-ramkbach
-ramvong
-ranchera
-rap
-rap metal
-rap rock
-rapcore
-rara
-rare groove
-rasiya
-rave
-raw rock
-raï
-rebetiko
-red dirt
-reel
-reggae
-reggae 110
-reggae bultrón
-reggae en español
-reggae fusion
-reggae highlife
-reggaefusion
-reggaeton
-rekilaulu
-relax music
-religious
-rembetiko
-renaissance music
-requiem
-rhapsody
-rhyming spiritual
-rhythm & blues
-rhythm and blues
-ricercar
-riot grrrl
-rock
-rock and roll
-rock en español
-rock opera
-rockabilly
-rocksteady
-rococo
-romantic flow
-romantic period in music
-rondeaux
-ronggeng
-roots reggae
-roots rock
-roots rock reggae
-rumba
-russian pop
-rímur
-sabar
-sacred harp
-sacred music
-sadcore
-saibara
-sakara
-salegy
-salsa
-salsa erotica
-salsa romantica
-saltarello
-samba
-samba-canção
-samba-reggae
-samba-rock
-sambai
-sanjo
-sato kagura
-sawt
-saya
-scat
-schlager
-schottisch
-schranz
-scottish baroque music
-screamo
-scrumpy and western
-sea shanty
-sean nós
-second viennese school
-sega music
-seggae
-seis
-semba
-sephardic music
-serialism
-set dance
-sevdalinka
-sevillana
-shabab
-shabad
-shalako
-shan'ge
-shango
-shape note
-shibuya-kei
-shidaiqu
-shima uta
-shock rock
-shoegaze
-shoegazer
-shoka
-shomyo
-show tune
-sica
-siguiriyas
-silat
-sinawi
-situational
-ska
-ska punk
-skacore
-skald
-skate punk
-skiffle
-slack-key guitar
-slide
-slowcore
-sludge metal
-slängpolska
-smooth jazz
-soca
-soft rock
-son
-son montuno
-son-batá
-sonata
-songo
-songo-salsa
-sophisti-pop
-soukous
-soul
-soul blues
-soul jazz
-soul music
-southern gospel
-southern harmony
-southern hip hop
-southern metal
-southern rock
-southern soul
-space age pop
-space music
-space rock
-spectralism
-speed garage
-speed metal
-speedcore
-spirituals
-spouge
-sprechgesang
-square dance
-squee
-st. louis blues
-stand-up
-steelband
-stoner metal
-stoner rock
-straight edge
-strathspeys
-stride
-string
-string quartet
-sufi music
-suite
-sunshine pop
-suomirock
-super eurobeat
-surf ballad
-surf instrumental
-surf music
-surf pop
-surf rock
-swamp blues
-swamp pop
-swamp rock
-swing
-swing music
-swingbeat
-sygyt
-symphonic
-symphonic black metal
-symphonic metal
-symphonic poem
-symphonic rock
-symphony
-synthcore
-synthpop
-synthpunk
-t'ong guitar
-taarab
-tai tu
-taiwanese pop
-tala
-talempong
-tambu
-tamburitza
-tamil christian keerthanai
-tango
-tanguk
-tappa
-tarana
-tarantella
-taranto
-tech
-tech house
-tech trance
-technical death metal
-technical metal
-techno
-technoid
-technopop
-techstep
-techtonik
-teen pop
-tejano
-tejano music
-tekno
-tembang sunda
-teutonic thrash metal
-texas blues
-thai pop
-thillana
-thrash metal
-thrashcore
-thumri
-tibetan pop
-tiento
-timbila
-tin pan alley
-tinga
-tinku
-toeshey
-togaku
-trad jazz
-traditional bluegrass
-traditional heavy metal
-traditional pop music
-trallalero
-trance
-tribal house
-trikitixa
-trip hop
-trip rock
-tropicalia
-tropicalismo
-tropipop
-truck-driving country
-tumba
-turbo-folk
-turkish music
-turkish pop
-turntablism
-tuvan throat-singing
-twee pop
-twist
-two tone
-táncház
-uk garage
-uk pub rock
-unblack metal
-underground music
-uplifting
-uplifting trance
-urban cowboy
-urban folk
-urban jazz
-vallenato
-vaudeville
-venezuela
-verbunkos
-verismo
-viking metal
-villanella
-virelai
-vispop
-visual kei
-visual music
-vocal
-vocal house
-vocal jazz
-vocal music
-volksmusik
-waila
-waltz
-wangga
-warabe uta
-wassoulou
-weld
-were music
-west coast hip hop
-west coast jazz
-western
-western blues
-western swing
-witch house
-wizard rock
-women's music
-wong shadow
-wonky pop
-wood
-work song
-world fusion
-world fusion music
-world music
-worldbeat
-xhosa music
-xoomii
-yo-pop
-yodeling
-yukar
-yé-yé
-zajal
-zapin
-zarzuela
-zeibekiko
-zeuhl
-ziglibithy
-zouglou
-zouk
-zouk chouv
-zouklove
-zulu music
-zydeco
+16-bit
+2 Tone
+2-Step
+3-Step
+4-Beat
+Aak
+Abakuá
+Abkhazian Folk
+Aboio
+Aboio cantado
+Absolute Music
+Abstract Hip Hop
+Acholitronix
+Acid Breaks
+Acid House
+Acid Jazz
+Acid Rock
+Acid Techno
+Acid Trance
+Acidcore
+Acousmatic
+Acoustic Blues
+Acoustic Chicago Blues
+Acoustic Rock
+Acoustic Texas Blues
+Adhunik geet
+Adult Contemporary
+Aegean Islands Folk
+Afoxé
+African Court Music
+African Dance
+African Folk
+African Heavy Metal
+African Hip Hop
+African Pop
+Afrikaner Folk
+Afro House
+Afro Tech
+Afro Trap
+Afro-Cuban Jazz
+Afro-Funk
+Afro-Jazz
+Afro-Rock
+Afrobeat
+Afrobeats
+Afrofuturism
+Afropiano
+Afroswing
+Agbadza
+Agbekor
+Aguinaldo
+Ahwash
+Ainu
+Aita
+Akishibu-kei
+Akron Sound
+Al jeel
+Al-Jadīd
+Albanian Folk
+Aleke
+Alevi Folk
+Algerian Chaabi
+Algorave
+Alloukou
+Alpenrock
+Alpine Folk
+Alsatian Folk
+Alternative Country
+Alternative Dance
+Alternative Hip Hop
+Alternative Idol
+Alternative Metal
+Alternative Pop
+Alternative R&B
+Alternative Reggaetón
+Alternative Rock
+Alté
+AM Pop
+Amami shimauta
+Amapiano
+Ambasse bey
+Ambient
+Ambient Americana
+Ambient Dub
+Ambient Fusion
+Ambient House
+Ambient Noise Wall
+Ambient Plugg
+Ambient Pop
+Ambient Techno
+Ambient Trance
+Ambrosian Chant
+American Folk
+American Gamelan
+American Primitivism
+Americana
+Amigacore
+Anarcho-Punk
+Anatolian Rock
+Ancient
+Ancient Chinese
+Ancient Egyptian
+Ancient Greek
+Ancient Levitical
+Ancient Roman
+Andalusian Classical
+Andalusian Folk
+Andean Folk
+Andean New Age
+Anglican Chant
+Animal Sounds
+Anti-Folk
+Apala
+Appalachian Folk
+Aquacrunk
+Arabesk
+Arabesque Rap
+Arabic Bellydance
+Arabic Classical
+Arabic Folk
+Arabic Jazz
+Arabic Pop
+Aragonese Folk
+Arena Rock
+Argentine Rock
+Armenian Church
+Armenian Folk
+Aromanian Folk
+Arrocha
+Arrocha funk
+Arrocha sertanejo
+Arrochadeira
+Ars antiqua
+Ars nova
+Ars subtilior
+Art Pop
+Art Punk
+Art Rock
+Art Song
+Artcore
+Ashik
+Ashkenazi
+Ashkenazi Cantorial
+Asian Classical
+Asian Pop
+Asian Rock
+Asian Underground
+ASMR
+Assamese Folk
+Assiko
+Assyrian Folk
+Assyrian Folk-Pop
+Asturian Folk
+Athabaskan Fiddling
+Atlanta Bass
+Atlanta Hip Hop
+Atmospheric Black Metal
+Atmospheric Drum & Bass
+Atmospheric Sludge Metal
+Audio Drama
+Audio Media
+Audiobook
+Aussie Pub Rock
+Australian Country
+Australian Folk
+Australian Hip Hop
+Austropop
+Authenticité
+Autonomic
+Auvergnat Folk
+Avant-Folk
+Avant-Funk
+Avant-Garde Classical
+Avant-Garde Jazz
+Avant-Garde Metal
+Avant-Prog
+Avar Folk
+Avtorskaya pesnya
+Axé
+Ayyalah
+Azerbaijani Mugham
+Azmari
+Bacardi
+Bachata
+Bachatón
+Bagad
+Bagatelle
+Baggy
+Baguala
+Bahamian Rhyming Spiritual
+Baila
+Bailecito
+Baisha xiyue
+Baithak gana
+Baião
+Bajourou
+Bakersfield Sound
+Balakadri
+Balani Show
+Balearic Beat
+Balinese Gamelan
+Balitaw
+Balkan Brass
+Balkan Folk
+Balkan Pop-Folk
+Ballad Opera
+Ballata
+Ballet
+Ballet de cour
+Ballroom
+Ballroom Dance
+Baltic Folk
+Baltimore Club
+Balto-Finnic Folk
+Bamar Folk
+Bambuco
+Banda
+Banda de pífano
+Banda sinaloense
+Bandari
+Bandas de viento de México
+Bandinha
+Banga
+Bangladeshi Classical
+Bangsawan
+Bantengan
+Bantowbol
+Baqashot
+Barber Beats
+Barbershop
+Bard
+Bard Rock
+Bardcore
+Barn Dance
+Baroque
+Baroque Pop
+Baroque Suite
+Barynya
+Bashkir Folk
+Bashment Soca
+Basque Folk
+Bass House
+Bassline
+Batida
+Batidão romântico
+Batonebi Songs
+Battle Record
+Batucada
+Batuque
+Batá-rumba
+Baul gaan
+Bay Area Thrash Metal
+Bayawan
+Beach Music
+Beat
+Beat bolha
+Beat bruxaria
+Beat fino
+Beat Juggling
+Beat Poetry
+Beat Rock
+Beatboxing
+Beatdown Hardcore
+Beautiful Music
+Bebop
+Bedouin
+Bedroom Pop
+Bedtime Story
+Beguine
+Beiguan
+Beijing New Sound
+Bel Canto
+Belarusian Folk
+Bele
+Belgian Techno
+Belwo
+Bend-skin
+Benga
+Bengali Folk
+Beni
+Benna
+Beompae
+Berlin School
+Bernese Dialect Scene
+Bhajan
+Bhangra
+Bhangragga
+Bhangraton
+Bhojpuri Folk
+Bhojpuri Pop
+Big
+Big Band
+Big Beat
+Big Room House
+Big Room Trance
+Biguine
+Bihu
+Bikutsi
+Binaural Beats
+Biomusic
+Biraha
+Bird Sounds
+Birmingham Sound
+Bit Music
+Bitpop
+Black 'n' Roll
+Black Ambient
+Black Metal
+Black MIDI
+Black Noise
+Blackened Crust
+Blackened Death Metal
+Blackgaze
+Bleep Techno
+Bloghouse
+Blue Comedy
+Blue-Eyed Soul
+Bluegrass
+Bluegrass Gospel
+Blues
+Blues Ballad
+Blues Rock
+Bocet
+Boduberu
+Bogino duu
+Boi
+Bolero
+Bolero español
+Bolero son
+Bolero Việt Nam
+Bolero-Beat
+Bolivian Huayño
+Bomba
+Bongo Flava
+Boogaloo
+Boogie
+Boogie Rock
+Boogie Woogie
+Boom Bap
+Bop
+Bosnian Folk
+Bossa nova
+Bosstown Sound
+Bothy Ballad
+Bounce
+Bounce Beat
+Bouncy Techno
+Bouyon
+Boy Band
+Boyfriend Country
+Brass Band
+Brazilian Bass
+Brazilian Classical
+Brazilian Folk
+Brazilian Phonk
+Break-In
+Breakbeat
+Breakbeat Hardcore
+Breakbeat Kota
+Breakcore
+Breakstep
+Brega
+Brega calypso
+Brega funk
+Bregadeira
+Breton Celtic Folk
+Breton Folk
+Briddim
+Brill Building
+Bristol Sound
+Britcore
+Britfunk
+British Blues
+British Brass Band
+British Dance Band
+British Folk Rock
+British R&B
+British Rock
+British Rock & Roll
+British Trad Jazz
+Britpop
+Brno Alternative Scene
+Bro-Country
+BRock
+Broken Beat
+Broken Transmission
+Bronx Drill
+Brony
+Brooklyn Drill
+Brostep
+Brown-Eyed Soul
+Brukdown
+Brutal Death Metal
+Brutal Prog
+Bubblegum
+Bubblegum Bass
+Bubblegum Dance
+Bubbling
+Bubbling House
+Buchiage Trance
+Buddhist
+Budots
+Buganda Royal Court
+Bugle Call
+Bulawayo Jazz
+Bulería
+Bulgarian Folk
+Bullerengue
+Bunraku
+Burger-Highlife
+Burgundian School
+Burmese Classical
+Burning Spirits
+Burrakatha
+Burushaski Folk
+Bush Ballad
+Byzantine
+Byzantine Chant
+Bérite Club
+C-Pop
+C86
+Ca din tulnic
+Ca trù
+Cabaret
+Cabo-Zouk
+Cadence
+Cadence lypso
+Cadence rampa
+Caipira
+Cajun
+Cakewalk
+Calinda
+Calipso venezolano
+Calypso
+Calypso-Style Baila
+Cambodian Classical
+Cambodian Pop
+Campursari
+Campus Folk
+Canadian Blues
+Canadian Folk
+Canadian Maritime Folk
+Canarian Folk
+Canción melódica
+Candombe
+Candombe beat
+Candomblé
+Cantata
+Cante alentejano
+Cante chico
+Cante jondo
+Canterbury Scene
+Cantiga
+Cantiñas
+Canto a lo poeta
+Canto beneventano
+Canto cardenche
+Canto degli Alpini
+Canto mozárabe
+Cantonese Opera
+Cantopop
+Cantoria
+Cantu a chiterra
+Cantu a tenore
+Canzona
+Canzone d'autore
+Canzone napoletana
+Canzone neomelodica
+Cape Breton Fiddling
+Cape Breton Folk
+Cape Jazz
+Capoeira
+Caporal
+Capriccio
+Car Audio Bass
+Caribbean Folk
+Carimbó
+Carnatic Classical
+Carnaval cruceño
+Carnavalito
+Carranga
+Cartageneras
+Cartoon Music
+Cascadian Black Metal
+Catalan Folk
+Caucasian Folk
+CBGB Scene
+Celempungan
+Cello Rock
+Celtic Chant
+Celtic Electronica
+Celtic Folk
+Celtic Fusion
+Celtic Metal
+Celtic New Age
+Celtic Punk
+Celtic Reggae
+Celtic Rock
+Central Asian Folk
+Central Asian Throat Singing
+Chacarera
+Chachachá
+Chakacha
+Chalga
+Chamamé
+Chamamé tropical
+Chamarrita açoriana
+Chamarrita rioplatense
+Chamber Folk
+Chamber Jazz
+Chamber Music
+Chamber Pop
+Champeta
+Changa tuki
+Change Ringing
+Changjak gugak
+Changüí
+Chanson
+Chanson alternative
+Chanson québécoise
+Chanson réaliste
+Chanson à texte
+Chaozhou xianshi
+Chap Hop
+Character Piece
+Charanga
+Charanga-Vallenata
+Charikawi
+Chastushka
+Chazzanut
+Chechen Folk
+Chicago Blues
+Chicago Drill
+Chicago Hard House
+Chicago House
+Chicago No Wave
+Chicago Polka
+Chicago School
+Chicago Soul
+Chicano Rap
+Chicano Rock
+Chicha
+Chikipunk
+Children
+Children's Storytelling
+Chilean Folk
+Chilena
+Chillout
+Chillstep
+Chillsynth
+Chillwave
+Chilote
+Chimaychi
+Chimurenga
+Chinese Classical
+Chinese Folk
+Chinese Literati
+Chinese Opera
+Chinese Rock
+Chipmunk Soul
+Chiptune
+Chopped and Screwed
+Chopper
+Choral
+Choral Concerto
+Choral Symphony
+Chorale
+Chorale Cantata
+Chorale Concerto
+Chorale Fantasia
+Chorale Monody
+Chorale Motet
+Chorale Partita
+Chorale Prelude
+Choro
+Chotis madrileño
+Chouval bwa
+Chowtal
+Christian
+Christian Alternative Rock
+Christian Hardcore
+Christian Hip Hop
+Christian Liturgical
+Christian Metal
+Christian Punk
+Christian Rock
+Christian Ska
+Christmas Carol
+Chukchi Folk
+Chula
+Chumba
+Chuntunqui romántico
+Chut-kai-pang
+Chutney
+Chutney Soca
+Chuvash Folk
+Chylandyk
+Chèo
+Chöd
+Chầu văn
+Cilokaq
+Cinematic Classical
+Ciranda
+Circassian Folk
+Circus March
+Circus Music
+City Pop
+Classic Ragtime
+Classical
+Classical Crossover
+Classical Period
+Cleveland Punk
+Close Harmony
+Cloud Rap
+Clube da esquina
+Cocktail Nation
+Coco
+Coke Rap
+Coladeira
+Coldwave
+Colinde
+College Rock
+Colour Bass
+Combined Rhythm
+Comedy
+Comedy Rap
+Comedy Rock
+Comfy Synth
+Comic Opera
+Compas
+Complextro
+Comédie-ballet
+Concert Band
+Concertina Band
+Concerto
+Concerto for Orchestra
+Concerto grosso
+Conducted Improvisation
+Conga
+Congolese Rumba
+Conjunto andino
+Conscious Hip Hop
+Contemporary Bluegrass
+Contemporary Christian
+Contemporary Country
+Contemporary Folk
+Contemporary Jazz
+Contemporary R&B
+Contenance angloise
+Contradanza
+Cool Jazz
+Coon Song
+Copla
+Coptic
+Cornish Folk
+Corrido
+Corrido tumbado
+Corsican Folk
+Cosmic Country
+Country
+Country & Irish
+Country Blues
+Country Boogie
+Country Folk
+Country Gospel
+Country Pop
+Country Rap
+Country Rock
+Country Soul
+Country Trap
+Country Yodeling
+Countrypolitan
+Coupé-décalé
+Cowboy Country
+Cowboy Poetry
+Cowpunk
+Crack Rock Steady
+Creole
+Cretan Folk
+Crime Jazz
+Croatian Folk
+Crossbreed
+Crossover Thrash
+Cruise
+Crunk
+Crunk&B
+Crunkcore
+Crust Punk
+Csango Folk
+Csárdás
+Cuarteto
+Cuban Charanga
+Cuban Dance
+Cubaton
+Cuddlecore
+Cueca
+Cumbia
+Cumbia amazónica
+Cumbia argentina
+Cumbia chilena
+Cumbia colombiana
+Cumbia mexicana
+Cumbia norteña mexicana
+Cumbia norteña peruana
+Cumbia peruana
+Cumbia pop
+Cumbia rebajada
+Cumbia salvadoreña
+Cumbia santafesina
+Cumbia sonidera
+Cumbia turra
+Cumbia villera
+Cumbiatón
+Cuplé
+Currulao
+Cyber Metal
+Cybergrind
+Czech Bluegrass
+Czech Folk
+Cải lương
+D-Beat
+Dabke
+Dadra
+Dagestani Folk
+Dagomba
+Daina
+Dance
+Dance-Pop
+Dance-Punk
+Dance-Punk Revival
+Dance-Rock
+Dancecore
+Dancefloor Drum & Bass
+Dancehall
+Dang-ak
+Dangdut
+Dangdut koplo
+Danger Music
+Danish Folk
+Danmono
+Dansbandsmusik
+Dansktop
+Danza
+Danzón
+Dappankuthu
+Dariacore
+Dark Ambient
+Dark Cabaret
+Dark Electro
+Dark Folk
+Dark Jazz
+Dark Plugg
+Dark Psytrance
+Darkcore
+Darkside
+Darkstep
+Darksynth
+Darkwave
+Darmstadt School
+Data Sonification
+Death 'n' Roll
+Death Doom Metal
+Death Industrial
+Death Metal
+Deathchant Hardcore
+Deathcore
+Deathgrind
+Deathrock
+Deathstep
+Debate
+Dechovka
+Deconstructed Club
+Deejay
+Deep Drum & Bass
+Deep Funk
+Deep House
+Deep Soul
+Deep Tech
+Deep Techno
+Dek Bass
+Delta Blues
+Dembow
+Demoscene
+Demostyle
+Dennery Segment
+Denpa
+Depressive Suicidal Black Metal
+Descarga
+Desert Blues
+Desgarrada
+Desi
+Desi Hip Hop
+Detroit Blues
+Detroit Drill
+Detroit Sound
+Detroit Techno
+Deutschpunk
+Deutschrock
+Dhaanto
+Dhamar
+Dhol tasha
+Dhrupad
+Dhun
+Diablada
+Dialogue
+Digicore
+Digital Cumbia
+Digital Dancehall
+Digital Fusion
+Digital Hardcore
+Dikir barat
+Dimotika
+Dirge
+Dirty Rap
+Dirty South
+Disco
+Disco polo
+Disco Rap
+Dissonant Black Metal
+Dissonant Death Metal
+Diva House
+Divertimento
+Divertissement
+Dixieland
+Djanba
+Djent
+Doble paso
+Dobrado
+Documentary
+Doină
+Dolewave
+Dondang sayang
+Donegal Fiddle
+Dongjing
+Donosti Sound
+Doo-Wop
+Doom Metal
+Doomcore
+Doomgaze
+Doskpop
+Doujin
+Downtempo
+Downtempo Deathcore
+Dream Pop
+Dream Trance
+Dreampunk
+Dreamwave
+Drift Phonk
+Drill
+Drill and Bass
+Drone
+Drone Metal
+Drum & Bass
+Drum and Bugle Corps
+Drumfunk
+Drumless
+Drumline
+Drumstep
+Dub
+Dub Poetry
+Dub Techno
+Dubstep
+Dubstyle
+Dubtronica
+Dubwise Drum & Bass
+Duma
+Dunedin Sound
+Dungeon Rap
+Dungeon Sound
+Dungeon Synth
+Duranguense
+Dutch Cabaret
+Dutch Folk
+Dutch House
+Dutch Jazz
+Décima
+Düsseldorf School
+EAI
+Early Hardstyle
+Early Music
+East Asian Classical
+East Asian Folk
+East Coast Club
+East Coast Hip Hop
+Eastern-Style Polka
+Easy Listening
+Easycore
+Eccojams
+ECM Style Jazz
+Educational
+Egg Punk
+Electric Blues
+Electric Texas Blues
+Electro
+Electro Hop
+Electro House
+Electro latino
+Electro Swing
+Electro-Disco
+Electro-Industrial
+Electro-Soul
+Electroacoustic
+Electroclash
+Electronic
+Electronic Body
+Electronic Dance Music
+Electronic Rock
+Electronica
+Electronicore
+Electropop
+Electrotango
+Eleki
+Eletrofunk
+Elizabethan Song
+Embolada
+Emo
+Emo Rap
+Emo Revival
+Emo-Pop
+Emocore
+Emoviolence
+English Folk
+English Pastoral School
+English Underground
+Enka
+Entechna laika
+Epadunk
+Epic
+Epic Collage
+Epic Doom Metal
+Epic Metal
+Eremwu eu
+Estonian Folk
+Ethereal Wave
+Ethio-Jazz
+Ethiopian Church
+Ethno-Pop
+Euphoric Hardstyle
+Euro House
+Euro Reggae
+Euro Trance
+Euro-Disco
+Eurobeat
+Eurodance
+European Folk
+European Free Jazz
+European Pop
+European Rock
+European Singer-Songwriter
+Europop
+Euskal kantagintza berria
+Exotica
+Experimental
+Experimental Big Band
+Experimental Hip Hop
+Experimental Improvisation
+Experimental Rock
+Expressionism
+Extempo
+Extratone
+Extreme Metal
+Fado
+Fado de Coimbra
+Fairy Tales
+Falak
+Famo
+Fandango caiçara
+Fanfare
+Fantasia
+Fantezi
+Faroese Folk
+Farruca
+Festejo
+Festival Progressive House
+Festival Trap
+Fidget House
+Field Hollers
+Field Recording
+Fife and Drum Blues
+Fife and Drum Corps
+Fight Song
+Fijiri
+Filin
+Filk
+Filmi
+Filmi Ghazal
+Finnish Folk
+Finnish Tango
+First Wave of Detroit Techno
+Flamenco
+Flamenco Jazz
+Flamenco nuevo
+Flamenco Pop
+Flashcore
+Flemish Folk
+Flex Dance
+Flint Sound
+Florida Breaks
+Florida Fast
+FM Synthesis
+Foley
+Folk
+Folk Baroque
+Folk Jazz
+Folk Metal
+Folk Pop
+Folk Punk
+Folk Rock
+Folkhop
+Folklor miejski
+Folktale
+Folktronica
+Fon leb
+Football Chant
+Footwork
+Footwork Jungle
+Forest Psytrance
+Forró
+Forró de favela
+Forró eletrônico
+Forró universitário
+Fort Thunder Scene
+Foxtrot
+Franco-Flemish School
+Frapcore
+Frat Rap
+Frat Rock
+Freak Folk
+Freakbeat
+Free Car
+Free Folk
+Free Funk
+Free Improvisation
+Free Jazz
+Free Noise
+Freeform Hardcore
+Freestyle
+Freetekno
+French Electro
+French Folk
+French Hip Hop
+French House
+French Pop
+French-Canadian Folk
+Frenchcore
+Frevo
+Frevo de bloco
+Frevo de rua
+Frevo elétrico
+Frevo-canção
+Friese bries
+Fugue
+Fuji
+Full-On Psytrance
+Funaná
+Funeral Doom Metal
+Funeral March
+Fungi
+Funk
+Funk 150 bpm
+Funk automotivo
+Funk brasileiro
+Funk carioca
+Funk consciente
+Funk de BH
+Funk mandelão
+Funk melody
+Funk Metal
+Funk ostentação
+Funk Ousadia
+Funk proibidão
+Funk Rock
+Funknejo
+Funkot
+Funktronica
+Funky Breaks
+Funky House
+Furniture Music
+Fusion Gugak
+Future Bass
+Future Bounce
+Future Core
+Future Funk
+Future Garage
+Future House
+Future Rave
+Future Riddim
+Futurepop
+Futurism
+Futuristic Swag
+G-Funk
+G-House
+Gaana
+Gabber
+Gagaku
+Gagauz Folk
+Gagok
+Gaita zuliana
+Galant
+Galician Folk
+Gallican Chant
+Gambang kromong
+Gamelan
+Gamelan angklung
+Gamelan bebonangan
+Gamelan beleganjur
+Gamelan degung
+Gamelan gender wayang
+Gamelan gong gede
+Gamelan gong kebyar
+Gamelan jegog
+Gamelan salendro
+Gamelan sekaten
+Gamelan selonding
+Gamelan semar pegulingan
+Gandrung
+Ganga
+Gangsta Rap
+Gar
+Garage House
+Garage Psych
+Garage Punk
+Garage Rock
+Garage Rock Revival
+Garba
+Garifuna
+Gascon Folk
+Gato
+Geek Rock
+Gelineau Psalmody
+Genge
+Gengetone
+Georgian Folk
+Georgian Polyphony
+German Folk
+Ghazal
+Ghetto Funk
+Ghetto House
+Ghettotech
+Giddha
+Ginan
+Girl Group
+Glam Metal
+Glam Punk
+Glam Rock
+Glitch
+Glitch Hop
+Glitch Pop
+Gnawa
+Go-Go
+Goa Trance
+Golden Age Hip Hop
+Gommance
+Gondang
+Goombay
+Goral
+Goregrind
+Gorenoise
+Goshu ondo
+Gospel
+Gospel Blues
+Gospel House
+Gothabilly
+Gothenburg Sound
+Gothic Country
+Gothic Metal
+Gothic Rock
+Gqom
+Gqom Trap
+Grand opéra
+Graphical Sound
+Grebo
+Greek Folk
+Greenwich Village Scene
+Gregorian Chant
+Grime
+Grindcore
+Grindie
+Griot
+Groove Metal
+Group Sounds
+Grunge
+Grupera
+Gstanzl
+Guaguancó
+Guajira
+Guangdong yinyue
+Guaracha
+Guaracha santiagueña
+Guarania
+Gufeng
+Guggenmusik
+Guided Meditation
+Guitarrada
+Gujarati Folk
+Gumbe
+Gunchei
+Gunka
+Gwo ka
+Gwo ka moderne
+Gypsy Punk
+Género chico
+Għana
+H8000
+Habanera
+Haight-Ashbury Scene
+Haitian Vodou Drumming
+Halftime
+Halling
+Hambo
+Hamburger Schule
+Han Folk
+Hands Up
+Hanmai
+Haozi
+Hapa haole
+Happy Hardcore
+Happy Rock
+Haqibah
+Harana
+Harawi
+Hard Beat
+Hard Bop
+Hard Dance
+Hard Drum
+Hard House
+Hard Rock
+Hard Techno
+Hard Trance
+Hard Trap
+Hardbag
+Hardbass
+Hardcore
+Hardcore Breaks
+Hardcore Hip Hop
+Hardcore Punk
+Hardgroove Techno
+Hardline
+Hardstep
+Hardstyle
+Hardtek
+Hardvapour
+Hardwave
+Harlem Renaissance
+Harmonica Blues
+Harsh Noise
+Harsh Noise Wall
+Hasapiko
+Hasidic
+Hauntology
+Hawaiian
+Hazara Folk
+Heartland Rock
+Heaven Trap
+Heavy Metal
+Heavy Psych
+Heikyoku
+Hellenic Black Metal
+Henan Opera
+HexD
+Hi-NRG
+Hi-Tech Full-On
+Hi-Tech Psytrance
+High Quality Rip
+Highlife
+Hill Country Blues
+Himene tarava
+Hindustani Classical
+Hip Hop
+Hip Hop Soul
+Hip House
+Hip-hopolo
+Hipco
+Hiplife
+Hiragasy
+Hispanic American Folk
+Hmong Folk
+Hmong Pop
+Hoboken Sound
+Hokkien Pop
+Hokum
+Holiday
+Holy Minimalism
+Holy Terror
+Honky Tonk
+Honky-Tonk Piano
+Honkyoku
+Hookah Rap
+Hora
+Hora lungă
+Hornpipe
+Horror Punk
+Horror Synth
+Horrorcore
+Hot Rod
+House
+Houston Sound
+Huaylarsh
+Huayno
+Hula
+Humppa
+Hungarian Folk
+Hunguhungu
+Hutsul Folk
+Hyang-ak
+Hybrid Trap
+Hymns
+Hyperpop
+Hypertechno
+Hyphy
+Hypnagogic Pop
+Hypnosis
+Hát lô tô
+Hưng ca
+Ibiza Trance
+Icaro
+Icelandic Folk
+IDM
+Idol kayō
+Igbo
+Illbient
+Impressionism
+Impromptu
+Improvisational Comedy
+Incidental Music
+Indeterminacy
+Indian Pop
+Indian Rock
+Indie Folk
+Indie Pop
+Indie Rock
+Indie Surf
+Indietronica
+Indigenous American Traditional
+Indigenous Australian Traditional
+Indigenous Rock
+Indigenous Taiwanese
+Indo Jazz
+Indonesian Pop
+Indorock
+Industrial
+Industrial Death Metal
+Industrial Drum & Bass
+Industrial Folk Song
+Industrial Hardcore
+Industrial Hip Hop
+Industrial Metal
+Industrial Musical
+Industrial Rock
+Industrial Techno
+Industrial Thrash Metal
+Inkiranya
+Insect Sounds
+Instrumental Hip Hop
+Instrumental Pop
+Instrumental Rock
+Integral Serialism
+Interview
+Inuit
+Inuit Vocal Games
+Ionian Islands Folk
+Iraqi Maqam
+Irish Folk
+Irish Rebel
+Irish Showband
+Isicathamiya
+Islamic
+Israeli Folk
+Istrian Folk
+Italian Folk
+Italo Dance
+Italo House
+Italo Pop
+Italo-Disco
+Izlan
+Izvorna
+Izvorna bosanska muzika
+J-core
+J-Euro
+J-Pop
+J-Punk
+J-Rock
+Jackin' House
+Jaipongan
+Jam Band
+Jamaican Folk
+Jamaican Ska
+James Bay Fiddling
+Jamgrass
+Jamrieng samai
+Jangle Pop
+Japanese Classical
+Japanese Folk
+Japanese Hardcore
+Japanese Hip Hop
+Japanese Idol
+Japanoise
+Jarana yucateca
+Javanese Gamelan
+Jawaiian
+Jazz
+Jazz Blues
+Jazz Fusion
+Jazz guachaca
+Jazz House
+Jazz manouche
+Jazz Mugham
+Jazz Poetry
+Jazz Pop
+Jazz Rap
+Jazz-Funk
+Jazz-Rock
+Jazzstep
+Jenkka
+Jeong-ak
+Jerk
+Jerk Rap
+Jersey Club
+Jersey Club Rap
+Jersey Drill
+Jersey Shore Sound
+Jersey Sound
+Jesus Music
+Jewish
+Jewish Folk
+Jewish Liturgical
+Jiangnan sizhu
+Jibaro
+Jig
+Jigg
+Jilala
+Jing ping
+Jingle
+Jit
+Jiuta
+Joged
+Joged bumbung
+Joik
+Jongo
+Jook
+Joropo
+Jovem Guarda
+Jubilee
+Jug Band
+Juke
+Juke Joint Blues
+Jump Blues
+Jump-Up
+Jumpstyle
+Jungle
+Jungle Dutch
+Jungle Terror
+Junkanoo
+Jùjú
+Jōruri
+K-Pop
+K-Rock
+Kabarett
+Kabuki
+Kabye Folk
+Kacapi suling
+Kachāshī
+Kadongo kamu
+Kafi
+Kagura
+Kai
+Kaiso
+Kakawin
+Kalamatianó
+Kalattut
+Kalindula
+Kalon'ny fahiny
+Kan ha diskan
+Kaneka
+Kanikapila
+Kannada Folk
+Kansai No Wave
+Kansas City Blues
+Kantan Chamorrita
+Kanto
+Kantruem
+Kapuka
+Karakalpak Traditional
+Karelian Folk
+Kargyraa
+Kaseko
+Kashubian Folk
+Kawachi ondo
+Kawaii Future Bass
+Kawaii Metal
+Kayōkyoku
+Kecak
+Kef
+Keroncong
+Kertok
+Kete
+Ketuk tilu
+Khakas Traditional
+Khaliji
+Khayal
+Khene
+Khmer Folk
+Khoisan Folk
+Khrueang sai
+Kidandali
+Kidumbak
+Kilapanga
+Kirtan
+Kitchen Dance
+Kiwi Rock
+Kizomba
+Klapa
+Klasik
+Kleinkunst
+Klezmer
+Kliningan
+Koche bazari
+Kolo
+Kolomyjka
+Komagaku
+Komi Folk
+Konnakol
+Korean Ballad
+Korean Classical
+Korean Court
+Korean Folk
+Korean Hip Hop
+Korean Revolutionary Opera
+Kote kei
+Kouta
+Kpanlogo
+Krakowiak
+Krautrock
+Krishnacore
+Kriti
+Kriyat haTorah
+Krushclub
+Kréyol djaz
+Kuda kepang
+Kuduro
+Kujawiak
+Kujon
+Kulintang
+Kumiuta
+Kundiman
+Kunqu Opera
+Kurpian Folk
+Kvæði
+Kwaito
+Kwassa kwassa
+Kwela
+Kyivan Chant
+Kyrgyz Traditional
+Könsrock
+LA Beat Scene
+LA Hard House
+Lab Polyphony
+Ladbroke Grove Scene
+Ladino Folksong
+Laika
+Lambada
+Landó
+Langgam Jawa
+Language Learning
+Lao Folk
+Late Romanticism
+Latin Alternative
+Latin American Classical
+Latin American Rock
+Latin American Singer-Songwriter
+Latin Big Band
+Latin Dance
+Latin Disco
+Latin Freestyle
+Latin Funk
+Latin House
+Latin Jazz
+Latin Metal
+Latin Pop
+Latin R&B
+Latin Rap
+Latin Rock
+Latin Soul
+Latino Punk
+Latvian Folk
+Lauda
+Laurel Canyon Scene
+Lavani
+LDS Music
+Lecture
+Legényes
+Leningrad Rock Club Scene
+Lento violento
+Letkajenkka
+Levenslied
+Lhamo
+Lied
+Liedermacher
+Light Music
+Lilat
+Liquid Drum & Bass
+Liquid Riddim
+Liscio
+Lithuanian Folk
+Little Band Scene
+Livetronica
+Livonian Folk
+Liwa
+Lo-fi
+Lo-fi Hip Hop
+Lo-fi House
+Loft Jazz
+Logobi
+Lokal musik
+Lolicore
+Loncomeo
+Loner Folk
+Louisiana Blues
+Louisiana Funk
+Louisville Sound
+Lounge
+Lovers Rock
+Low Bap
+Lowend
+Lowercase
+Lubbock Sound
+Luk krung
+Luk thung
+Lullaby
+Lundu
+Luri Folk
+Lutheran Chorale
+Luxembourgish Folk
+Ländler
+M-Base
+Macedonian Folk
+Madchester
+Maddahi
+Madrigal
+Mafioso Rap
+Maftirim
+Magyar nóta
+Mahori
+Mahraganat
+Maidcore
+Makina
+Makossa
+Malagasy Folk
+Malagueña venezolana
+Malambo
+Malay Classical
+Malay Folk
+Malay Gamelan
+Malayali Folk
+Malhun
+Mall Screamo
+Mallsoft
+Maloya
+Maloya électronique
+Maloya élektrik
+Mambo
+Mambo chileno
+Mambo urbano
+Manaschi
+Mandopop
+Manele
+Mangambeu
+Manguebeat
+Manila Sound
+Mantra
+Manx Folk
+Manyao
+Manzuma
+Mapouka
+Mappila
+Mapuche Folk
+Maqāmic Classical
+Marabi
+Maracatu
+Marathi Folk
+March
+Marching Band
+Marchinha
+Mari Folk
+Mariachi
+Marinera
+Marrabenta
+Martial Industrial
+Martinetes
+Mascarene Islands Folk
+Mashcore
+Mashup
+Maskandi
+Mass
+Mataali
+Matamuerte
+Math Pop
+Math Rock
+Mathcore
+Maxixe
+Maya
+Mazur
+Mazurka
+Mbalax
+Mbaqanga
+Mbenga-Mbuti
+Mbolé
+Mbube
+Mchiriku
+Mechanical
+Medieval Classical
+Medieval Folk Rock
+Medieval Lyric Poetry
+Mega funk
+Meiji shinkyoku
+Mejoranera
+Melam
+Melbourne Bounce
+Melodic Bass
+Melodic Black Metal
+Melodic Death Metal
+Melodic Dubstep
+Melodic Hardcore
+Melodic House
+Melodic Metalcore
+Melodic Techno
+Memphis Blues
+Memphis Rap
+Memphis Soul
+Mentai Rock
+Mento
+Merecumbé
+Merengue
+Merengue típico
+Merenhouse
+Merseybeat
+Mesoamerican Folk
+Mesopotamian
+Metal
+Metalcore
+Mexican Folk
+Mexican Rock
+Meyxana
+Mezwed
+Miami Bass
+Microfunk
+Microhouse
+Micromontage
+Microsound
+Microtonal Classical
+Mid-School Hip Hop
+Middle Eastern Pop
+MIDI
+Midtempo Bass
+Midwest Emo
+Midwest Hip Hop
+Miejski folk
+Military Marching Band
+Milonga
+Min'yō
+Minatory
+Mincecore
+Mini-jazz
+Minimal Drum & Bass
+Minimal Synth
+Minimal Techno
+Minimal Wave
+Minimalism
+Minneapolis Sound
+Minstrelsy
+Minyue
+Mittelalter-Metal
+Mittelalter-Rock
+Mobb
+Mod
+Mod Revival
+Moda de viola
+Modal Jazz
+Modern Classical
+Modern Creative
+Modern Laika
+Modinha
+Molam
+Molam sing
+Mono
+Monodrama
+Monologue
+Montenegrin Folk
+Mood kayō
+Moogsploitation
+Moombahcore
+Moombahton
+Moravian Folk
+Mordvin Folk
+Morenada
+Morna
+Moroccan Chaabi
+Moscow School
+Motet
+Motown Sound
+Motswako
+Moutya
+Movida madrileña
+Movimiento alterado
+Mozambique
+MPB
+Muak
+Mulatós
+Muliza
+Mumble Rap
+Murga
+Murga uruguaya
+Musette
+Mushroom Jazz
+Music Hall
+Musical
+Musical Comedy
+Musika popullore
+Musique concrète
+Musique concrète instrumentale
+Mutant Disco
+Muwashshah
+Muzak
+Muzică de mahala
+Muzică lăutărească
+Muzika mizrahit
+Muzika yehudit mekorit
+Muzikat dika'on
+Muziki wa dansi
+Mystical Minimalism
+Mélodie
+Méringue
+Métis
+Métis Fiddling
+Música cebolla
+Música criolla peruana
+Música de intervenção
+Música gaúcha
+Música llanera
+Música típica chilena
+Māori
+Młoda Polska
+Mūsīqā lubnāniyya
+Nagauta
+Nagoya kei
+Nahua
+Nakasi
+Nangma
+Nanyin
+Narcocorrido
+Nardcore
+Narodna muzika
+Narodno zabavna glasba
+Nasheed
+Nashville Sound
+Native American New Age
+Nature Recordings
+Naturjodel
+Naxi
+Ndombolo
+Nederbeat
+Nederpop
+Neo-Acoustic
+Neo-Bop
+Neo-Canterbury
+Neo-City Pop
+Neo-Grime
+Neo-Medieval
+Neo-Medieval Folk
+Neo-Pagan Folk
+Neo-Prog
+Neo-Psychedelia
+Neo-Soul
+Neo-Traditionalist Country
+Neoclassical Darkwave
+Neoclassical Metal
+Neoclassical New Age
+Neoclassicism
+Neocrust
+Neofolk
+Neofolklore
+Neoperreo
+Neoromanticism
+Nepali Folk
+Nerdcore Hip Hop
+Nerdcore Techno
+Nervous
+Neue Deutsche Härte
+Neue Deutsche Todeskunst
+Neue Deutsche Welle
+Neue Volksmusik
+Neurofunk
+Neurohop
+New Acoustic
+New Age
+New Age Kirtan
+New Beat
+New Brunswick Basement Scene
+New Complexity
+New German School
+New Jack Swing
+New Jazz
+New London Jazz
+New Mexico
+New Music
+New Orleans Blues
+New Orleans Brass Band
+New Orleans R&B
+New Partisans
+New Pop
+New Primitivism
+New Prog
+New Rave
+New Romantic
+New School Hip Hop
+New Taiwanese Song
+New Tone
+New Wave
+New Wave of New Wave
+New Way of Danish Fuck You
+New Weird America
+New Weird Finland
+New York Drill
+New York Hardcore
+New York School
+Newa Folk
+Newfoundland Folk
+News Broadcast
+Ngoma
+Nguni Folk
+Ngâm thơ
+Nhạc tiền chiến
+Nhạc vàng
+Nhạc đỏ
+Nightcore
+Nigun
+Nintendocore
+Nisiotika
+Nitzhonot
+No Melody
+No Wave
+Nocturne
+Noh
+Noiadance
+Noise
+Noise Pop
+Noise Rock
+Noisecore
+Noisegrind
+NOLA Sludge
+Nordic Folk
+Nordic Folk Rock
+Nordic Old Time Dance
+Nortec
+Norteño
+Northern Gothic
+Northern Soul
+Northumbrian Folk
+Norwegian Folk
+Nouveau zydeco
+Nouvelle chanson
+Nova cançó
+Nova srpska scena
+Nova vanguarda paulistana
+Novaya scena
+Novelty Piano
+Novo Dub
+NRG
+Nu Gaze
+Nu Jazz
+Nu Metal
+Nu Skool Breaks
+Nu Style Gabber
+Nu-Disco
+Nuban
+Nueva canción
+Nueva canción chilena
+Nueva canción española
+Nueva canción latinoamericana
+Nueva cumbia chilena
+Nueva ola
+Nueva trova
+Nuevo Cancionero
+Nursery Rhyme
+Nustyle
+NWOBHM
+Nyahbinghi
+Néo kýma
+Nòva cançon
+Ob-Ugric Folk
+Oberek
+Obikhod
+Observational Comedy
+Occitan Folk
+Occult Rock
+Oceanian Folk
+Odia Folk
+Odissi Classical
+Ogene
+Oi!
+Okinawan
+Old Roman Chant
+Old Time Radio
+Old-School Hip Hop
+Old-Time
+Olonkho
+Omutibo
+Onda nueva
+Ondō
+Onkyo
+Opera
+Opera buffa
+Opera semiseria
+Opera seria
+Operatic Pop
+Operetta
+OPM
+Opéra-ballet
+Opéra-comique
+Oratorio
+Orchestral
+Orchestral Jazz
+Orchestral Pop
+Orchestral Song
+Organ Trio
+Organic House
+Organum
+Ori deck
+Oriental Ballad
+Oriental Jewish
+Oriental Metal
+Orkes gambus
+Orthodox Pop
+Oshare Kei
+Ossetian Folk
+OtoMAD
+Ottava rima
+Ottoman Military
+Outlaw Country
+Outsider House
+Outsider Music
+Overture
+P-Pop
+Pachanga
+Pacific Reggae
+Pagan Black Metal
+Pagan Rock
+Paghjella
+Pagode
+Pagode romântico
+Pagodão
+Paisley Underground
+Pakacaping
+Palingsound
+Palm Desert Scene
+Palm Wine
+Palo de mayo
+Panambih
+Panchavadyam
+Panche Baja
+Pansori
+Pansy Craze
+Papuan Folk
+Paranda
+Parang
+Parlour
+Parody Music
+Parranda
+Partido alto
+Pashto Folk
+Pasillo
+Pasodoble
+Passion
+Payada
+Peak Time Techno
+Peking Opera
+Pelimanni music
+Pennsylvania Dutch Folk
+Pep Band
+Performance
+Persian Classical
+Persian Folk
+Persian Pop
+Peyote Song
+Philippine Classical
+Philippine Rondalla
+Philly Club
+Philly Club Rap
+Philly Drill
+Philly Soul
+Phleng phuea chiwit
+Phonk
+Phonk House
+Piano Blues
+Piano Rock
+Picopop
+Piedmont Blues
+Pigfuck
+Pilón
+Pimba
+Pinoy Folk Rock
+Pinoy Rock
+Pinpeat
+Pipe Band
+Piphat
+Pirate Metal
+Pirekua
+Piseiro
+Piyyut
+Pizzica
+Plainsong
+Plena
+Pleng Thai sakorn
+Plugg
+PluggnB
+Plunderphonics
+Podcast
+Poetry
+Poezja śpiewana
+Polish Folk
+Polish Goral
+Political Comedy
+Political Hip Hop
+Polka
+Polka paraguaya
+Polka peruana
+Polo
+Polonaise
+Polska
+Polyphonic Chant
+Pon-chak disco
+Ponto de umbanda
+Pop
+Pop Batak
+Pop Ghazal
+Pop Kreatif
+Pop Minang
+Pop Rap
+Pop Raï
+Pop Rock
+Pop Soul
+Pop Standards
+Pop Sunda
+Pop Yeh-Yeh
+Pop-Punk
+Pops Orchestra
+Porn Groove
+Pornogrind
+Porro
+Portuguese Folk
+Positive Punk
+Post-Bop
+Post-Britpop
+Post-Disco
+Post-Dubstep
+Post-Grunge
+Post-Hardcore
+Post-Industrial
+Post-Metal
+Post-Minimalism
+Post-Punk
+Post-Punk Revival
+Post-Rock
+Powada
+Power Electronics
+Power Metal
+Power Noise
+Power Pop
+Power Soca
+Powerstomp
+Powerviolence
+Powwow
+Praise Break
+Prank Calls
+Prehistoric
+Prelude
+Process Music
+Progg
+Program Music
+Progressive Big Band
+Progressive Bluegrass
+Progressive Breaks
+Progressive Country
+Progressive Death Metal
+Progressive Electronic
+Progressive Folk
+Progressive House
+Progressive Metal
+Progressive Pop
+Progressive Psytrance
+Progressive Rock
+Progressive Soul
+Progressive Thrash Metal
+Progressive Trance
+Prostopinije
+Protest Folk
+Proto-Punk
+Psichedelia occulta italiana
+Psybient
+Psybreaks
+Psychedelia
+Psychedelic Folk
+Psychedelic Funk
+Psychedelic Pop
+Psychedelic Rock
+Psychedelic Soul
+Psychobilly
+Psychsploitation
+Psycore
+Psydub
+Psystyle
+Psytrance
+Pub Rock
+Public Broadcast
+Public Service Announcement
+Pueblo
+Pumping House
+Pungmul
+Punjabi Folk
+Punk
+Punk Blues
+Punk Cabaret
+Punk Jazz
+Punk Rock
+Punta
+Punta Rock
+Purple Sound
+Purísima
+Puxa
+Puya
+Pásztordal
+Pìobaireachd
+Q-Pop
+Qaraami
+Qasidah
+Qasidah modern
+Qawwali
+Quan họ
+Queercore
+Quiet Storm
+Quyi
+R&Bass
+Rabiz
+RABM
+Rabòday
+Raga Rock
+Rage
+Ragga
+Ragga Hip Hop
+Ragga Jungle
+Raggacore
+Raggatek
+Ragtime
+Ragtime Song
+Rain Sounds
+Rajasthani Folk
+Rake-and-Scrape
+Rakugo
+Ranchera
+Rap Metal
+Rap Rock
+Rapai dabõih
+Rapcore
+Rapso
+Raqs baladi
+Rara
+Rare Phonk
+Rasin
+Rasqueado
+Rasteirinha
+Ratchet
+Rautalanka
+Ravanahatha
+Rawphoric
+Rawstyle
+Raï
+Red Dirt
+Red Disco
+Reductionism
+Regalia
+Reggae
+Reggae Fusion
+Reggae Gospel
+Reggae Pop
+Reggae Rock
+Reggaetón
+Rekilaulu
+Religious
+Rembetika
+Renaissance
+Reparto
+Repente
+Requiem
+Retro-Soul
+Revolution Summer
+Revolutionary Opera
+Revue
+Rhumba
+Rhythm & Blues
+Rhythm & Grime
+Ricercar
+Riddim
+Rigsar
+Ring Shout
+Ringbang
+Riot Grrrl
+Ripsaw
+Ritmada
+Ritual Ambient
+Rizitika
+RKT
+Road Rap
+Rock
+Rock & Roll
+Rock andaluz
+Rock andino
+Rock barrial
+Rock in Opposition
+Rock Musical
+Rock Opera
+Rock radical vasco
+Rock rural
+Rock subterráneo
+Rock sónico
+Rock urbano español
+Rock urbano mexicano
+Rockabilly
+Rocksteady
+Rom kbach
+Roman School
+Romance
+Romani Folk
+Romanian Etno
+Romanian Folk
+Romanian Popcorn
+Romantic Style Reggaetón
+Romanticism
+Romantische Oper
+Romanţe
+Rominimal
+Rondeau
+Ronggeng
+Roots Reggae
+Roots Rock
+Rumba
+Rumba catalana
+Rumba cubana
+Rumba flamenca
+Rune Singing
+Russemusikk
+Russian Chanson
+Russian Folk
+Russian Pop
+Russian Romance
+Ryukyuan
+Ryūkōka
+Rímur
+Rōkyoku
+Sa'idi
+Sabar
+Sacred Harp
+Sacred Singing Circle
+Sacred Steel
+Saeta
+Saint Petersburg School
+Sakha Traditional
+Salegy
+Salsa
+Salsa choke
+Salsa dura
+Salsa romántica
+Saluang klasik
+Samba
+Samba de breque
+Samba de gafieira
+Samba de roda
+Samba de terreiro
+Samba Soul
+Samba-canção
+Samba-choro
+Samba-enredo
+Samba-exaltação
+Samba-jazz
+Samba-joia
+Samba-reggae
+Samba-rock
+Sambalanço
+Sambass
+Samoyedic Folk
+Sample Drill
+Sampledelia
+Samri
+San Diego Sound
+San Francisco Sound
+Sanjo
+Santería
+Santé engagé
+Sarala gee
+Sardana
+Sardinian Folk
+Sarum Chant
+Sass
+Satire
+Sawt
+Saya
+Scam Rap
+Scene
+Schlager
+Schottische
+Schranz
+Scots Song
+Scottish Country Dance
+Scottish Folk
+Scottish Folk Revival
+Scouse House
+Scratching
+Screamo
+Scrumpy and Western
+Sea Shanty
+Sean-nós
+Seapunk
+Second British Folk Revival
+Second Viennese School
+Second Wave of Detroit Techno
+Seggae
+Seinn nan salm
+Seis
+Seishun Punk
+Semba
+Semi-Trot
+Sephardic
+Sequencer & Tracker
+Serbian Folk
+Serenade
+Seresta
+Serialism
+Sermon
+Sertanejo
+Sertanejo de raiz
+Sertanejo romântico
+Sertanejo universitário
+Seto leelo
+Sevdalinka
+Sevillanas
+Sexy Drill
+Shaabi
+Shabad kirtan
+Shaker
+Shalakho
+Shan'ge
+Shangaan Electro
+Shaoxing Opera
+Shashmaqam
+Shatta
+Shehhi
+Shetland & Orkney Folk
+Shibuya-kei
+Shidaiqu
+Shilla
+Shimokita-kei
+Shitgaze
+Shock Jock
+Shoegaze
+Shona Mbira
+Shoor
+Shota
+Show Tunes
+Shōka
+Shōmyō
+Siberian Punk
+Sichuan Opera
+Sierreño
+Siffleur
+Sigilkore
+Silat
+Sinawi
+Sinfonia concertante
+Singeli
+Singer-Songwriter
+Singspiel
+Sinhalese Folk
+Sissy Bounce
+Sitarsploitation
+Sizhu
+Ska
+Ska Punk
+Skacore
+Skate Punk
+Sketch Comedy
+Skiffle
+Skiladika
+Skinhead Reggae
+Skullstep
+Skweee
+Slack-Key Guitar
+Slacker Rock
+Slam Death Metal
+Slam Poetry
+Slap House
+Slavic Folk
+Sleaze Rock
+Slide Guitar Blues
+Slimepunk
+Slovak Folk
+Slovenian Folk
+Slow Drag
+Slowcore
+Slowed & Reverb
+Sludge Metal
+Slushwave
+Smooth Jazz
+Smooth Soul
+Snap
+Snap&B
+Soca
+Soft Rock
+Soft Visual
+Solonese Gamelan
+Son calentano
+Son cubano
+Son de pascua
+Son huasteco
+Son istmeño
+Son jarocho
+Son montuno
+Son nica
+Son-batá
+Sonata
+Songo
+Songo-Salsa
+Songster
+Sonorism
+Sophisti-Pop
+Sotho-Tswana Folk
+Soukous
+Soul
+Soul Blues
+Soul Jazz
+Sound Art
+Sound Collage
+Sound Effects
+Sound Poetry
+SoundClown
+Soundscape
+South Asian Classical
+South Asian Dance
+South Asian Folk
+South Florida SoundCloud Rap
+Southeast Asian Classical
+Southeast Asian Dance
+Southeast Asian Folk
+Southeast Asian Pop
+Southern African Folk
+Southern Gospel
+Southern Hip Hop
+Southern Metal
+Southern Rock
+Southern Soul
+Soviet Estrada
+Sovietwave
+Space Age Pop
+Space Ambient
+Space Disco
+Space Rock
+Space Rock Revival
+Spacesynth
+Spaghetti Western
+Spanish Classical
+Spanish Folk
+Spectralism
+Speech
+Speed Garage
+Speed House
+Speed Metal
+Speedcore
+Spiritual Jazz
+Spirituals
+Splittercore
+Spoken Word
+Sports Commentary
+Spouge
+Spy Music
+St. Louis Blues
+Stand-Up Comedy
+Starogradska muzika
+Staïfi
+Steel Band
+Stenchcore
+Stereo
+Stochastic
+Stomp and Holler
+Stoner Metal
+Stoner Rap
+Stoner Rock
+Stornello
+Storytelling
+Straight Edge
+Street Punk
+Stride
+String Quartet
+Stutter House
+Sufi
+Sufi Rock
+Sufiana kalam
+Sungura
+Sunset Strip Glam Metal
+Sunshine Pop
+Suomisaundi
+Surf
+Surf Punk
+Surf Rock
+Sutartinės
+Swamp Blues
+Swamp Pop
+Swamp Rock
+Swancore
+Swedish Folk
+Sweet Jazz
+Swing
+Swing musette
+Swing Revival
+Sygyt
+Symphonic Black Metal
+Symphonic Metal
+Symphonic Mugham
+Symphonic Prog
+Symphonic Rock
+Symphony
+Synth Funk
+Synth-Punk
+Synthpop
+Synthwave
+Syriac Chant
+Sârbă
+Séga
+Sōkyoku
+T'ong Guitar
+T-Pop
+Taarab
+Tai tu
+Taiko
+Takamba
+Talempong
+Talempong goyang
+Talk Radio
+Talking Blues
+Tallava
+Tambor
+Tamborera
+Tamborito
+Tamborzão
+Tambu
+Tamil Christian Keerthanai
+Tamil Film
+Tamil Folk
+Tammurriata
+Tango
+Tango nuevo
+Tanjidor
+Taoist Ritual
+Tape Music
+Taquirari
+Taqwacore
+Tarana
+Tarantella
+Tarawangsa
+Tarraxinha
+Tassa
+Tassu
+Tchink System
+Tchinkoumé
+Tearout
+Tech House
+Tech Trance
+Technical Death Metal
+Technical Thrash Metal
+Techno
+Techno Bass
+Techno kayō
+Technoid
+Techstep
+Tecnobanda
+Tecnobrega
+Tecnofunk
+Tecnomerengue
+Tecnorumba
+Teen Pop
+Tejano
+Telugu Folk
+Tembang Sunda Cianjuran
+Terror Plugg
+Terrorcore
+Teutonic Thrash Metal
+Tex-Mex
+Texas Blues
+Texas Psychedelia
+Thai Classical
+Thai Folk
+Thall
+The Wave
+Theatre
+Theme and Variation
+Therapeutic Audio
+Thillana
+Third Stream
+Third Wave Ska
+Thrash Metal
+Thrashcore
+Thumri
+Tibetan Buddhist Chant
+Tibetan New Age
+Tibetan Pop
+Tientos
+Timba
+Timbila
+Tin Pan Alley
+Tinku
+Tivaner inngernerlu
+Tizita
+Toada de Boi
+Toccata
+Toeshey
+Tolai Rock
+Tonada chilena
+Tonada potosina
+Tondero
+Tone Poem
+Tontipop
+Torch Song
+Tosk Polyphony
+Totalism
+Touhou
+Township Bubblegum
+Township Jazz
+Township Jive
+Toypop
+Toytown Pop
+Tracker
+Tradi-moderne congolais
+Tradi-moderne ivoirien
+Traditional Black Gospel
+Traditional Bluegrass
+Traditional Cajun
+Traditional Country
+Traditional Doom Metal
+Traditional Folk
+Traditional Maloya
+Traditional Pop
+Traditional Raï
+Traditional Séga
+Tragédie en musique
+Trallalero
+Trampská hudba
+Trance
+Trance Metal
+Trancestep
+Trap
+Trap Dancehall
+Trap EDM
+Trap latino
+Trap Metal
+Trap shaabi
+Trap Soul
+Trapfunk
+Tread
+Tribal Ambient
+Tribal Guarachero
+Tribal House
+Trikitixa
+Trip Hop
+Tropical House
+Tropical Rock
+Tropicanibalismo
+Tropicália
+Tropipop
+Trot
+Trova
+Trova rosarina
+Trova yucateca
+Truck Driving Country
+Trás-os-Montes Folk
+Tsapiky
+Tsonga Disco
+Tsugaru shamisen
+Tumba
+Tumba francesa
+Tumbélé
+Tunantada
+Turbo-Folk
+Turkish Black Sea Region Folk
+Turkish Classical
+Turkish Folk
+Turkish Mevlevi
+Turkish Pop
+Turntable Music
+Turntablism
+Tuvan Throat Singing
+Twee Pop
+Twelve Muqam
+Twerk
+Twist
+Twoubadou
+Táncház
+Tân cổ giao duyên
+Uaajeerneq
+Udigrudi
+Udmurt Folk
+UK Bass
+UK Drill
+UK Funky
+UK Garage
+UK Hard House
+UK Hardcore
+UK Hip Hop
+UK Jackin'
+UK Street Soul
+UK82
+Ukrainian Folk
+Ultra
+Unakesa
+Unblack Metal
+Unyago
+Uplifting Trance
+Upopo
+Uptempo Hardcore
+Uptown Soul
+Urban Contemporary Gospel
+Urban Cowboy
+Urban Grooves
+Urban Pasifika
+Urtiin duu
+Urumi melam
+US Power Metal
+Utaite
+Utopian Virtual
+Uzun Hava
+V-Pop
+Vaigat
+Valencian Folk
+Vallenato
+Vals criollo
+Vals venezolano
+Valsa brasileira
+Vanera
+Vanguarda paulista
+Vapor
+Vapornoise
+Vaportrap
+Vaporwave
+Vaudeville
+Vaudeville Blues
+Vedic Chant
+Vegan Straight Edge
+Venezuelan Folk
+Verismo
+Vietnamese Court
+Vietnamese Folk
+Vietnamese New Wave
+Vietnamese Opera
+Viking Metal
+Vikingarock
+Villancico
+Villanella
+Vinahouse
+Vira
+Virelai
+Virgin Islander Cariso
+Visa
+Visual kei
+Vixa
+Vocal Jazz
+Vocal Surf
+Vocal Trance
+Vocalese
+Vocaloid Scene
+Volga Tatar Folk
+Volga-Ural Folk
+Volkstümliche Musik
+Voëlvry Movement
+Vude
+Wa Euro
+Waila
+Waka
+Walloon Folk
+Waltz
+Wangga
+War Metal
+Warez Scene
+Warsaw City Folk
+Wassoulou
+Water Sounds
+Wave
+Weather Sounds
+Weightless
+Welsh Folk
+Were music
+West Asian Folk
+West Coast Blues
+West Coast Breaks
+West Coast Hip Hop
+West Coast Jazz
+West Coast Sound of Holland
+West Side Sound
+Western
+Western Classical
+Western Swing
+Whale Song
+White Noise
+White Voice
+Windmill Scene
+Winter Synth
+Witch House
+Wizard Rock
+Women's Music
+Wong shadow
+Wonky
+Wonky Pop
+Wonky Techno
+Work Song
+Worldbeat
+Worship
+Wyrd Folk
+Xaxado
+Xian Psych
+Xibei feng
+Xinyao
+Xote
+Xuc
+Xẩm
+Yacht Rock
+Yakousei
+Yangzhou Opera
+Yaraví
+Yass
+Yayue
+Yemenite
+Yiddish Folksong
+Yo-pop
+Yodeling
+Yoruba
+Yoruba Folk Opera
+Youth Crew
+YTPMV
+Yu-Mex
+Yugoslav New Wave
+Yukar
+Yé-yé
+Zajal
+Zamacueca
+Zamba
+Zamrock
+Zapin
+Zarzuela
+Zarzuela barroca
+Zarzuela grande
+Zef
+Zeibekiko
+Zeitoper
+Zemer Ivri
+Zenonesque
+Zess
+Zeuhl
+Zeybek
+Zhabdro gorgom
+Zhongguo feng
+Ziglibithy
+Zimdancehall
+Zinli
+Znamenny Chant
+Zoblazo
+Zohioliin duu
+Zolo
+Zouglou
+Zouk
+Zouk Love
+Zydeco
+Éntekhno
+Étude
+Òrain Ghàidhlig
+Òrain luaidh
+Özgün Müzik
+Čalgija
+Česká alternativní scéna
+Česká nová vlna
+Český underground
