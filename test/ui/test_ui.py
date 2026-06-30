@@ -20,37 +20,14 @@ from beets.util import syspath
 
 class PrintTest(IOMixin, unittest.TestCase):
     def test_print_without_locale(self):
-        lang = os.environ.get("LANG")
-        if lang:
-            del os.environ["LANG"]
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("LANG", None)
 
-        try:
             ui.print_("something")
-        except TypeError:
-            self.fail("TypeError during print")
-        finally:
-            if lang:
-                os.environ["LANG"] = lang
 
+    @patch.dict(os.environ, {"LANG": "", "LC_CTYPE": "UTF-8"}, clear=False)
     def test_print_with_invalid_locale(self):
-        old_lang = os.environ.get("LANG")
-        os.environ["LANG"] = ""
-        old_ctype = os.environ.get("LC_CTYPE")
-        os.environ["LC_CTYPE"] = "UTF-8"
-
-        try:
-            ui.print_("something")
-        except ValueError:
-            self.fail("ValueError during print")
-        finally:
-            if old_lang:
-                os.environ["LANG"] = old_lang
-            else:
-                del os.environ["LANG"]
-            if old_ctype:
-                os.environ["LC_CTYPE"] = old_ctype
-            else:
-                del os.environ["LC_CTYPE"]
+        ui.print_("something")
 
 
 class ShowModelChangesTest(IOMixin, BeetsTestCase):
@@ -502,25 +479,27 @@ class CommonOptionsParserTest(unittest.TestCase):
         )
 
 
-class EncodingTest(unittest.TestCase):
+class TestEncoding:
     """Tests for the `terminal_encoding` config option and our
     `_in_encoding` and `_out_encoding` utility functions.
     """
 
-    def out_encoding_overridden(self):
+    def test_out_encoding_overridden(self, config):
         config["terminal_encoding"] = "fake_encoding"
         assert ui._out_encoding() == "fake_encoding"
 
-    def in_encoding_overridden(self):
+    def test_in_encoding_overridden(self, config):
         config["terminal_encoding"] = "fake_encoding"
         assert ui._in_encoding() == "fake_encoding"
 
-    def out_encoding_default_utf8(self):
+    def test_out_encoding_default_utf8(self, config):
+        config["terminal_encoding"] = None
         with patch("sys.stdout") as stdout:
             stdout.encoding = None
             assert ui._out_encoding() == "utf-8"
 
-    def in_encoding_default_utf8(self):
+    def test_in_encoding_default_utf8(self, config):
+        config["terminal_encoding"] = None
         with patch("sys.stdin") as stdin:
             stdin.encoding = None
             assert ui._in_encoding() == "utf-8"

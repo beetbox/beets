@@ -299,10 +299,7 @@ class SoftRemoveTest(FilePathTestCase):
         assert not self.path.exists()
 
     def test_soft_remove_silent_on_no_file(self):
-        try:
-            util.remove(self.path / "XXX", True)
-        except OSError:
-            self.fail("OSError when removing path")
+        util.remove(self.path / "XXX", True)
 
 
 class SafeMoveCopyTest(FilePathTestCase):

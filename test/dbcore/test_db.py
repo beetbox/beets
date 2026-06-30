@@ -2,7 +2,6 @@
 
 import os
 import shutil
-import sqlite3
 import unittest
 from tempfile import mkstemp
 from typing import ClassVar
@@ -96,9 +95,6 @@ class ModelFixtureWithGetters(dbcore.Model):
     def _getters(cls):
         return {"aComputedField": (lambda s: "thing")}
 
-    def _template_funcs(self):
-        return {}
-
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
@@ -166,12 +162,9 @@ class MigrationTest(unittest.TestCase):
 
     def test_extra_model_adds_table(self):
         new_lib = DatabaseFixtureTwoModels(self.libfile)
-        try:
-            c = new_lib._connection()
-            c.execute("select * from another")
-            c.close()
-        except sqlite3.OperationalError:
-            self.fail("select failed")
+        c = new_lib._connection()
+        c.execute("select * from another")
+        c.close()
 
     def test_index_creation(self):
         """Test that declared indices are created on database initialization."""

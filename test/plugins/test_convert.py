@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import fnmatch
 import os.path
-import re
 import shlex
 import sys
 from typing import TYPE_CHECKING
@@ -40,11 +39,6 @@ class ConvertPluginHelper(IOMixin, PluginTestHelper):
         """Return a conversion command that copies files and appends
         `tag` to the copy.
         """
-        if re.search("[^a-zA-Z0-9]", tag):
-            raise ValueError(
-                f"tag '{tag}' must only contain letters and digits"
-            )
-
         # A Python script that copies the file and appends a tag.
         stub = os.path.join(_common.RSRC, b"convert_stub.py").decode("utf-8")
         return f"{shlex.quote(sys.executable)} {shlex.quote(stub)} $source $dest {tag}"

@@ -246,11 +246,6 @@ class TestConcurrentEvents(AsIsImporterMixin, ImportHelper):
             self.exc = None
             self.t1_step = self.t2_step = 0
 
-        def log_all(self, name):
-            self._log.debug("debug {}", name)
-            self._log.info("info {}", name)
-            self._log.warning("warning {}", name)
-
         def listener1(self):
             try:
                 assert self._log.level == log.INFO
