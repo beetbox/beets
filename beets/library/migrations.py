@@ -13,7 +13,7 @@ from beets.dbcore.db import Migration
 from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.types import MULTI_VALUE_DELIMITER
 from beets.util import chunks, unique_list
-from beets.util.lyrics import Lyrics
+from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
 if TYPE_CHECKING:
     from beets.dbcore.db import Model
@@ -284,3 +284,46 @@ class RemoveInheritedArtpathMigration(Migration):
             tx.mutate(f"DELETE FROM {flex_table} WHERE key == 'artpath'")
 
         ui.print_(f"Migration complete: {total} {table} updated")
+
+
+class InstrumentalLyricsInFlexFieldMigration(Migration):
+    """Move legacy instrumental lyrics markers into a flexible field."""
+
+    def _migrate_data(self, model_cls: type[Model], _: set[str]) -> None:
+        """Migrate legacy instrumental markers out of the lyrics text."""
+        table = model_cls._table
+        flex_table = model_cls._flex_table
+
+        with self.db.transaction() as tx:
+            rows = tx.query(
+                f"""
+                SELECT id
+                FROM {table}
+                WHERE lyrics == ?
+                """,
+                (INSTRUMENTAL_LYRICS,),
+            )
+
+        if not rows:
+            return
+
+        total = len(rows)
+        ui.print_(f"Migrating instrumental lyrics for {total} {table}...")
+        with self.db.transaction() as tx:
+            tx.mutate(
+                f"""
+                UPDATE {table}
+                SET lyrics = ''
+                WHERE lyrics == ?
+                """,
+                (INSTRUMENTAL_LYRICS,),
+            )
+            tx.mutate_many(
+                f"""
+                INSERT INTO {flex_table} (entity_id, key, value)
+                VALUES (?, 'lyrics_instrumental', '1')
+                """,
+                [(r["id"],) for r in rows],
+            )
+
+        ui.print_(f"Migration complete: {total} of {total} {table} updated")
