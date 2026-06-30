@@ -831,10 +831,6 @@ class TestRestFiles:
 class TestLyricsRestDirectory(PluginTestHelper):
     plugin = "lyrics"
 
-    @pytest.fixture
-    def lib(self, helper):
-        return helper.lib
-
     @pytest.mark.parametrize(
         "config_path, arg_path, output_path",
         [
@@ -848,9 +844,7 @@ class TestLyricsRestDirectory(PluginTestHelper):
             ),
         ],
     )
-    def test_rest_config(
-        self, monkeypatch, lib, config_path, arg_path, output_path
-    ):
+    def test_rest_config(self, monkeypatch, config_path, arg_path, output_path):
         test_capture = {}
 
         class MockRestFiles:
@@ -861,12 +855,11 @@ class TestLyricsRestDirectory(PluginTestHelper):
                 test_capture["items"] = items
 
         monkeypatch.setattr(lyrics, "RestFiles", MockRestFiles)
-
-        if config_path:
-            self.config["lyrics"]["rest_directory"] = config_path
+        self.add_item(lyrics="hello")
 
         cmd_args = [] if arg_path is None else ["-r", arg_path]
-        self.run_command("lyrics", *cmd_args, lib=lib)
+        with self.configure_plugin({"rest_directory": config_path}):
+            self.run_command("lyrics", *cmd_args)
 
         assert test_capture.get("directory") == Path(output_path).expanduser()
 

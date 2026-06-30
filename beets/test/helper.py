@@ -19,6 +19,7 @@ import subprocess
 import sys
 import unittest
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
 from functools import cache, cached_property
 from pathlib import Path
@@ -47,6 +48,7 @@ from beets.util import (
 if TYPE_CHECKING:
     from types import TracebackType
 
+    from confuse import ConfigSource
     from requests_mock.mocker import Mocker
     from typing_extensions import Self
 
@@ -93,11 +95,24 @@ NEEDS_FFPROBE = pytest.mark.skipif(
 
 
 class ConfigMixin:
-    @cached_property
-    def config(self) -> beets.IncludeLazyConfig:
-        """Base beets configuration for tests."""
-        config = beets.config
-        config.sources = []
+    """Provide isolated configuration for tests."""
+
+    _default_config_sources: ClassVar[list[ConfigSource] | None] = None
+
+    @classmethod
+    def default_config_sources(cls) -> list[ConfigSource]:
+        """Return a reusable default configuration baseline.
+
+        This way, we only need to call very expensive ``config.read`` once per
+        test session.
+
+        NOTE: we're not using ``util.cached_classproperty`` here because its cache is
+        reset on every test.
+        """
+        if cls._default_config_sources is not None:
+            return deepcopy(cls._default_config_sources)
+
+        config = beets.IncludeLazyConfig("beets", beets.__name__)
         config.read(user=False, defaults=True)
 
         config["plugins"] = []
@@ -105,6 +120,16 @@ class ConfigMixin:
         config["ui"]["color"] = False
         config["threaded"] = False
         config["create_backup_before_migrations"] = False
+        cls._default_config_sources = deepcopy(config.sources)
+        return deepcopy(cls._default_config_sources)
+
+    @cached_property
+    def config(self) -> beets.IncludeLazyConfig:
+        """Reset the shared config to a fresh test baseline."""
+        config = beets.config
+        config.clear()
+        config._materialized = True
+        config.sources.extend(self.default_config_sources())
         return config
 
 
