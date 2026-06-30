@@ -71,18 +71,12 @@ class TestChroma(IOMixin, PluginMixin, ImportHelper):
         assert TEST_TITLE_1 in output.split("\n")[0]
 
 
-def _seed_acoustid_match(
-    item_path: bytes = b"/fake/path.mp3",
-    recording_ids: list[str] | None = None,
-    release_ids: list[str] | None = None,
-) -> Item:
+def _seed_acoustid_match(item_path: bytes = b"/fake/path.mp3") -> Item:
     """Seed the chroma module-level match cache as if acoustid had run."""
-    if recording_ids is None:
-        recording_ids = ["rec-id-1"]
-    if release_ids is None:
-        release_ids = ["rel-id-1", "rel-id-1", "rel-id-1"]
-
-    chroma._matches[item_path] = (recording_ids, release_ids)
+    chroma._matches[item_path] = (
+        ["rec-id-1"],
+        ["rel-id-1", "rel-id-1", "rel-id-1"],
+    )
     return Item(path=item_path)
 
 

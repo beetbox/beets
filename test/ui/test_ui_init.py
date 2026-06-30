@@ -1,10 +1,11 @@
 """Test module for file ui/__init__.py"""
 
 import os
-import shutil
 import unittest
 from copy import deepcopy
 from random import random
+
+import pytest
 
 from beets import config, ui
 from beets.exceptions import UserError
@@ -96,13 +97,6 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
         test_config["library"] = non_exist_path
 
         self.io.addinput("n")
-        try:
-            lib = ui._open_library(test_config)
-        except UserError:
-            if os.path.exists(non_exist_path_parent):
-                shutil.rmtree(non_exist_path_parent)
-                raise OSError("Parent directories should not be created.")
-        else:
-            if lib:
-                lib._close()
-            raise OSError("Parent directories should not be created.")
+        with pytest.raises(UserError):
+            ui._open_library(test_config)
+        assert not os.path.exists(non_exist_path_parent)

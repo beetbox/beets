@@ -25,13 +25,12 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         with open(util.syspath(self.cover_path(ext))) as f:
             assert f.read() == "IMAGE"
 
-    def hide_file_windows(self, ext="jpg"):
-        hidden_mask = 2
-        success = ctypes.windll.kernel32.SetFileAttributesW(
-            self.cover_path(ext), hidden_mask
-        )
-        if not success:
-            self.skipTest("unable to set file attributes")
+    def hide_file_windows(self, path: bytes) -> None:
+        if sys.platform == "win32":
+            hidden_mask = 2
+            assert ctypes.windll.kernel32.SetFileAttributesW(
+                util.syspath(path), hidden_mask
+            )
 
     def test_set_art_from_folder(self):
         self.touch(b"c\xc3\xb6ver.jpg", dir_=self.album.path, content="IMAGE")
@@ -62,9 +61,8 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.check_cover_is_stored()
 
     def test_filesystem_does_not_pick_up_hidden_file(self):
-        self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
-        if sys.platform == "win32":
-            self.hide_file_windows()
+        path = self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
+        self.hide_file_windows(path)
         self.config["ignore"] = []  # By default, ignore includes '.*'.
         self.config["ignore_hidden"] = True
         self.run_command("fetchart")
@@ -79,9 +77,8 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.check_cover_is_stored()
 
     def test_filesystem_picks_up_hidden_file(self):
-        self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
-        if sys.platform == "win32":
-            self.hide_file_windows()
+        path = self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
+        self.hide_file_windows(path)
         self.config["ignore"] = []  # By default, ignore includes '.*'.
         self.config["ignore_hidden"] = False
         self.run_command("fetchart")

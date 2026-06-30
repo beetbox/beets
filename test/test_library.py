@@ -995,11 +995,7 @@ class TestAlbumInfo(PytestItemHelper):
 
     def test_album_items_consistent(self, item_in_album):
         ai = self.lib.get_album(item_in_album)
-        for i in ai.items():
-            if i.id == item_in_album.id:
-                break
-        else:
-            self.fail("item not found")
+        assert item_in_album.id in {i.id for i in ai.items()}
 
     def test_albuminfo_changes_affect_items(self, item_in_album):
         ai = self.lib.get_album(item_in_album)

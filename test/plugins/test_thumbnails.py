@@ -101,15 +101,6 @@ class ThumbnailsTest(BeetsTestCase):
         plugin.thumbnail_file_name = Mock(return_value=b"md5")
         mock_os.path.exists.return_value = False
 
-        def os_stat(target):
-            if target == syspath(md5_file):
-                return Mock(st_mtime=1)
-            if target == syspath(path_to_art):
-                return Mock(st_mtime=2)
-            raise ValueError(f"invalid target {target}")
-
-        mock_os.stat.side_effect = os_stat
-
         mock_resize = mock_artresizer.shared.resize
         mock_resize.return_value = path_to_resized_art
 
