@@ -489,7 +489,7 @@ class SpotifyPlugin(
 
     def get_search_response(
         self, params: SearchParams
-    ) -> Sequence[SearchResponseAlbums | SearchResponseTracks]:
+    ) -> tuple[int, Sequence[SearchResponseAlbums | SearchResponseTracks]]:
         """Search Spotify and return raw album or track result items.
 
         Unauthorized responses trigger one token refresh attempt before the
@@ -514,14 +514,14 @@ class SpotifyPlugin(
                     self._authenticate()
                     continue
                 raise
-
-            return (
+            results = (
                 response.json()
                 .get(f"{params.query_type}s", {})
                 .get("items", [])
             )
+            return len(results), results
 
-        return ()
+        return 0, []
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
@@ -640,7 +640,7 @@ class SpotifyPlugin(
             if album:
                 query += f" album:'{album}'"
 
-            response_data_tracks = self._search_api("track", query, {})
+            total, response_data_tracks = self._search_api("track", query, {})
             if not response_data_tracks:
                 failures.append(query)
                 continue
@@ -654,21 +654,18 @@ class SpotifyPlugin(
                     if region_filter in track_data["available_markets"]
                 ]
 
-            if (
-                len(response_data_tracks) == 1
-                or self.config["tiebreak"].get() == "first"
-            ):
+            if total == 1 or self.config["tiebreak"].get() == "first":
                 self._log.debug(
                     "{.data_source} track(s) found, count: {}",
                     self,
-                    len(response_data_tracks),
+                    total,
                 )
-                chosen_result = response_data_tracks[0]
+                chosen_result = next(iter(response_data_tracks))
             else:
                 # Use the popularity filter
                 self._log.debug(
                     "Most popular track chosen, count: {}",
-                    len(response_data_tracks),
+                    total,
                 )
                 chosen_result = max(
                     response_data_tracks,
