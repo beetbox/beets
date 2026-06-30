@@ -219,3 +219,7 @@ b1ae461723316b738f301406198382913207e100
 88202493adb769e667f64a96a3ec0270f46ca60e
 # Define DB fixtures in a shared place
 816cddbfd5d0976a31e9d0788db0944c62ad16db
+# Move test modules under folders that they belong to
+900543baca4cf5fa4dbe52dbe748f98a0371d0ed
+# Move DummyIMBackend to fixtures
+aef9c64cb07c8f828d0dd6e69a5485abf2c43396
