@@ -4,7 +4,7 @@ import cProfile
 import timeit
 
 from beets import importer, plugins, ui
-from beets.autotag import Source, tag_album
+from beets.autotag import Candidates, Source
 from beets.plugins import BeetsPlugin
 from beets.util.functemplate import Template
 from beets.util.pathformats import PF_KEY_DEFAULT
@@ -68,7 +68,7 @@ def match_benchmark(lib, prof, query=None, album_id=None):
     # Run the match.
     def _run_match():
         source = Source.from_items(items)
-        tag_album(source, search_ids=[album_id])
+        Candidates.from_source(source).resolve([album_id])
 
     if prof:
         cProfile.runctx(
