@@ -812,6 +812,56 @@ class Google(SearchBackend):
 
 
 @dataclass
+class WriteToFile:
+    """Write lyrics to standalone lyric files."""
+
+    _log: Logger
+    directory: str
+
+    @classmethod
+    def from_config(cls, log: Logger, directory: str) -> WriteToFile:
+        return cls(log, directory)
+
+    def get_directory(self, item: Item) -> Path:
+        """
+        Return the directory where lyrics should be written.
+        """
+        if self.directory == "album_folder":
+            return Path(item.filepath).parent
+
+        path = (
+            Path(self.directory)
+            / slug(item.albumartist or item.artist)
+            / slug(item.album)
+        )
+
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def get_filename(self, item: Item) -> str:
+        return f"{slug(item.title)}.txt"
+
+    def write(self, item: Item, lyrics: str) -> Path:
+        """
+        Write lyrics for an item.
+        """
+
+        directory = self.get_directory(item)
+
+        file_path = directory / self.get_filename(item)
+
+        file_path.write_text(lyrics, encoding="utf-8")
+
+        self.info("Wrote lyrics file {}", file_path)
+
+        return file_path
+
+    def info(self, message: str, *args) -> None:
+        """Log an info message with the class name."""
+        self._log.info(f"{self.__class__.__name__}: {message}", *args)
+
+
+@dataclass
 class Translator(LyricsRequestHandler):
     """Translate lyrics text while preserving existing structured metadata."""
 
@@ -1016,6 +1066,13 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             return Translator.from_config(self._log, **config.flatten())
         return None
 
+    @cached_property
+    def lyric_file_writer(self) -> WriteToFile | None:
+        config = self.config["write_to_file"]
+        if config["directory"].get():
+            return WriteToFile.from_config(self._log, **config.flatten())
+        return None
+
     def __init__(self):
         super().__init__()
         self.config.add(
@@ -1048,6 +1105,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                     for n in BACKEND_BY_NAME
                     if n not in {"musixmatch", "tekstowo"}
                 ],
+                "write_to_file": {"directory": None},
             }
         )
         self.config["translate"]["api_key"].redact = True
@@ -1141,6 +1199,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         """Fetch and store lyrics for a single item. If ``write``, then the
         lyrics will also be written to the file itself.
         """
+
         if self.config["local"]:
             return
 
@@ -1190,6 +1249,8 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             item.store()
             if write:
                 item.try_write(tags={"synced_lyrics": sylt_data})
+            if writer := self.lyric_file_writer:
+                writer.write(item, lyrics_text)
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""
