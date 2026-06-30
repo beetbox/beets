@@ -18,6 +18,13 @@ New features
 - :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
   specifying a reStructuredText output directory, semantically equivalent to
   ``-r, --write-rest``. :bug:`2806`
+- Add the :ref:`duplicate_track_resolution` import option, which checks each
+  track of an album import against the library (using the :ref:`duplicate_keys`
+  ``item`` fields) and resolves matches via the new
+  :ref:`duplicate_track_action` option (falling back to :ref:`duplicate_action`
+  when unset). ``skip`` drops already-imported tracks and adds the remaining new
+  tracks to the existing album, completing a partially-imported album. Disabled
+  by default.
 - A database backup is now automatically created before running schema
   migrations. Control with the ``create_backup_before_migrations`` option
   (default: yes).

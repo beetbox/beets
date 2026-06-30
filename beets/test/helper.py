@@ -20,6 +20,7 @@ import sys
 import unittest
 from contextlib import contextmanager
 from dataclasses import dataclass
+from enum import Enum
 from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
@@ -668,6 +669,17 @@ class ImportSessionFixture(ImportSession):
         return choice
 
     choose_item = choose_match
+
+    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
+
+    default_resolution = "REMOVE"
+
+    def resolve_track_duplicates(self, task, duplicates):
+        return {
+            self.Resolution.SKIP: "s",
+            self.Resolution.KEEPBOTH: "k",
+            self.Resolution.REMOVE: "r",
+        }.get(self.default_resolution, "k")
 
 
 class TerminalImportSessionFixture(TerminalImportSession):

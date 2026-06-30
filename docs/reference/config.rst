@@ -850,6 +850,66 @@ is applied, which would, considering the default, look like this:
 
 Default: ``no``.
 
+.. _duplicate_track_resolution:
+
+duplicate_track_resolution
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When enabled, album imports also check each *individual track* against the
+library, using the same fields as :ref:`duplicate_keys` ``item`` (by default
+``artist`` and ``title``; set it to e.g. ``mb_trackid`` to match on the
+MusicBrainz track ID). Tracks already in the library are resolved according to
+:ref:`duplicate_track_action`.
+
+This complements the album-level duplicate check (which matches whole albums on
+:ref:`duplicate_keys` ``album``): it catches the case where some tracks of an
+album are already in your library even though the album itself is not. Matching
+considers *all* library items, whether they were imported as singletons or as
+part of another album.
+
+.. note::
+
+    The check runs *before* the autotagger lookup, so it matches on the incoming
+    files' existing tags rather than the metadata beets would apply. When
+    importing with autotagging on, match on a stable identifier such as
+    ``mb_trackid`` (via :ref:`duplicate_keys` ``item``); ``artist`` and
+    ``title`` may not yet agree with what is in your library.
+
+Default: ``no``.
+
+.. _duplicate_track_action:
+
+duplicate_track_action
+~~~~~~~~~~~~~~~~~~~~~~
+
+How to resolve individual album tracks that already exist in the library when
+:ref:`duplicate_track_resolution` is enabled. The available actions are:
+
+- ``skip`` drops the duplicate tracks and adds the remaining *new* tracks to the
+  existing album they belong to, instead of importing them as a separate album.
+  Use this to complete a partially-imported album. If every track is already
+  present, the whole album is skipped. (If the matching tracks do not all belong
+  to a single album, the new tracks are imported as their own album.)
+- ``remove`` removes the matching old items from the library before importing.
+- ``keep`` (and ``merge``) import the album unchanged.
+- ``ask`` prompts you to choose one of the above.
+
+When left empty, this falls back to :ref:`duplicate_action`.
+
+A typical configuration for completing partially-imported albums while
+autotagging looks like this:
+
+::
+
+    import:
+        duplicate_track_resolution: yes
+        duplicate_action: ask          # whole-album duplicates
+        duplicate_track_action: skip   # per-track duplicates: fold new tracks into the existing album
+        duplicate_keys:
+            item: mb_trackid           # match on a stable id (recommended when autotagging)
+
+Default: empty (inherit :ref:`duplicate_action`).
+
 .. _bell:
 
 bell

@@ -53,6 +53,8 @@ import:
         item: artist title
     duplicate_action: ask
     duplicate_verbose_prompt: no
+    duplicate_track_resolution: no
+    duplicate_track_action: ''
     bell: no
     set_fields: {}
     ignored_alias_types: []

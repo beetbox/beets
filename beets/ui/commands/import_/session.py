@@ -201,6 +201,28 @@ class TerminalImportSession(importer.ImportSession):
 
         return action
 
+    def resolve_track_duplicates(self, task, duplicates) -> str:
+        """Decide what to do with album tracks already in the library."""
+        log.warning("Some tracks are already in the library!")
+
+        if config["import"]["quiet"]:
+            # In quiet mode, don't prompt -- just skip the duplicate tracks.
+            log.info("Skipping duplicate tracks.")
+            return "s"
+
+        existing = [item for matches in duplicates.values() for item in matches]
+        ui.print_("Old: " + summarize_items(existing, True))
+        if config["import"]["duplicate_verbose_prompt"]:
+            for item in existing:
+                print(f"  {item}")
+
+        ui.print_("New: " + summarize_items(list(duplicates), True))
+        if config["import"]["duplicate_verbose_prompt"]:
+            for item in duplicates:
+                print(f"  {item}")
+
+        return ui.input_options(("Skip dupes", "Keep all", "Remove old"))
+
     def should_resume(self, path):
         return ui.input_yn(
             f"Import of the directory:\n{displayable_path(path)}\n"
