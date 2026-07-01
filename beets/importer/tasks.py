@@ -35,6 +35,8 @@ from .state import ImportState
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
+    import confuse
+
     from beets.autotag import Candidates
 
     from .session import ImportSession
@@ -265,18 +267,12 @@ class ImportTask(BaseImportTask, Generic[library.AnyLibModel, InfoT, MatchT]):
         ):
             self.save_history()
 
-        self.cleanup(
-            copy=session.config["copy"].get(bool),
-            delete=session.config["delete"].get(bool),
-            move=session.config["move"].get(bool),
-        )
+        self.cleanup(session.config)
 
         if not self.skip:
             self._emit_imported(session.lib)
 
-    def cleanup(
-        self, copy: bool = False, delete: bool = False, move: bool = False
-    ) -> None:
+    def cleanup(self, config: confuse.ConfigView) -> None:
         """Remove and prune imported paths."""
         # Do not delete any files or prune directories when skipping.
         if self.skip:
@@ -285,7 +281,7 @@ class ImportTask(BaseImportTask, Generic[library.AnyLibModel, InfoT, MatchT]):
         items = self.imported_items()
 
         # When copying and deleting originals, delete old files.
-        if copy and delete:
+        if config["copy"] and config["delete"]:
             new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in self.old_paths:
                 # Only delete files that were actually copied.
@@ -294,7 +290,7 @@ class ImportTask(BaseImportTask, Generic[library.AnyLibModel, InfoT, MatchT]):
                     self.prune(old_path)
 
         # When moving, prune empty directories containing the original files.
-        elif move:
+        elif config["move"]:
             for old_path in self.old_paths:
                 self.prune(old_path)
 
@@ -861,9 +857,7 @@ class SentinelImportTask(ImportTask):
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
         raise NotImplementedError
 
-    def cleanup(
-        self, copy: bool = False, delete: bool = False, move: bool = False
-    ) -> None:
+    def cleanup(self, config: dict[str, confuse.Subview]) -> None:
         pass
 
     def _emit_imported(self, lib: library.Library) -> None:
@@ -944,9 +938,7 @@ class ArchiveImportTask(SentinelImportTask):
 
         return _handlers
 
-    def cleanup(
-        self, copy: bool = False, delete: bool = False, move: bool = False
-    ) -> None:
+    def cleanup(self, config: confuse.ConfigView) -> None:
         """Remove the temporary extraction directory and optionally the archive.
 
         In ``move`` mode, if the extraction directory is empty after the
@@ -957,7 +949,7 @@ class ArchiveImportTask(SentinelImportTask):
         if not self.extracted:
             return
 
-        all_files_imported = move and not any(
+        all_files_imported = config["move"] and not any(
             files for _, _, files in os.walk(util.syspath(self.toppath))
         )
 
@@ -973,7 +965,7 @@ class ArchiveImportTask(SentinelImportTask):
                 util.displayable_path(self.archive_path),
             )
             util.remove(self.archive_path)
-        elif move:
+        elif config["move"]:
             log.debug(
                 "Not removing partially imported archive: {}",
                 util.displayable_path(self.archive_path),

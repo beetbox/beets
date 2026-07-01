@@ -168,6 +168,11 @@ class TestRmTemp(TestHelper):
         self.config["delete"] = False
         self._old_home = None
 
+    def import_config(self, **overrides):
+        import_config = {"copy": False, "delete": False, "move": False}
+        import_config.update(overrides)
+        return import_config
+
     def test_rm(self):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
@@ -185,25 +190,25 @@ class TestRmTemp(TestHelper):
             for f in files:
                 os.remove(os.path.join(root, f))
         assert Path(os.fsdecode(zip_path)).exists()
-        archive_task.cleanup(move=True)
+        archive_task.cleanup(self.import_config(move=True))
         assert not Path(os.fsdecode(zip_path)).exists()
 
     def test_archive_preserved_on_move_partial(self):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
-        archive_task.cleanup(move=True)
+        archive_task.cleanup(self.import_config(move=True))
         assert Path(os.fsdecode(zip_path)).exists()
 
     def test_archive_preserved_on_copy(self):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
-        archive_task.cleanup(copy=True)
+        archive_task.cleanup(self.import_config(copy=True))
         assert Path(os.fsdecode(zip_path)).exists()
 
     def test_tempdir_removed_in_all_modes(self):
-        for cleanup_kwargs in (
+        for import_config in (
             {},
             {"move": True},
             {"copy": True},
@@ -213,10 +218,10 @@ class TestRmTemp(TestHelper):
             archive_task = importer.ArchiveImportTask(zip_path)
             archive_task.extract()
             tmp_path = Path(os.fsdecode(archive_task.toppath))
-            assert tmp_path.exists(), f"extract failed for {cleanup_kwargs}"
-            archive_task.cleanup(**cleanup_kwargs)
+            assert tmp_path.exists(), f"extract failed for {import_config}"
+            archive_task.cleanup(self.import_config(**import_config))
             assert not tmp_path.exists(), (
-                f"tempdir {tmp_path} not removed for {cleanup_kwargs}"
+                f"tempdir {tmp_path} not removed for {import_config}"
             )
 
 
