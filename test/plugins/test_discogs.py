@@ -62,14 +62,12 @@ class TestDGAlbumInfo(TestHelper):
         )
 
     def _make_track(self, title, position="", duration="", type_=None):
-        track = {"title": title, "position": position, "duration": duration}
-        if type_ is not None:
-            # Test samples on discogs_client do not have a 'type_' field, but
-            # the API seems to return it. Values: 'track' for regular tracks,
-            # 'heading' for descriptive texts (ie. not real tracks - 12.13.2).
-            track["type_"] = type_
-
-        return track
+        return {
+            "title": title,
+            "position": position,
+            "duration": duration,
+            "type_": type_,
+        }
 
     def _make_release_from_positions(self, positions):
         """Return a Bag that mimics a discogs_client.Release with a

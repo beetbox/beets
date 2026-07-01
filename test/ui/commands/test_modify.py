@@ -1,5 +1,3 @@
-import unittest
-
 import pytest
 from mediafile import MediaFile
 
@@ -195,9 +193,8 @@ class ModifyTest(IOMixin, BeetsTestCase):
         item = self.lib.items().get()
         assert "flexattr" not in item
 
-    @unittest.skip("not yet implemented")
     def test_delete_initial_key_tag(self):
-        item = self.lib.items().get()
+        item = self.add_item_fixture()
         item.initial_key = "C#m"
         item.write()
         item.store()

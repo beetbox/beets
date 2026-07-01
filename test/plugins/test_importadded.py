@@ -7,17 +7,6 @@ import pytest
 from beets import importer
 from beets.test.helper import AutotagImportTestCase, PluginMixin
 from beets.util import displayable_path, syspath
-from beetsplug.importadded import ImportAddedPlugin
-
-_listeners = ImportAddedPlugin.listeners
-
-
-def preserve_plugin_listeners():
-    """Preserve the initial plugin listeners as they would otherwise be
-    deleted after the first setup / tear down cycle.
-    """
-    if not ImportAddedPlugin.listeners:
-        ImportAddedPlugin.listeners = _listeners
 
 
 def modify_mtimes(paths, offset=-60000):
@@ -32,7 +21,6 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
     min_mtime = None
 
     def setUp(self):
-        preserve_plugin_listeners()
         super().setUp()
         self.prepare_album_for_import(2)
         # Different mtimes on the files to be imported in order to test the
