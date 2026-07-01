@@ -295,10 +295,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         )
         compiled_aliases: list[AliasPatternWithReplacement] = []
         for canonical, patterns in raw_aliases.items():
-            for raw_pat in patterns:
-                compiled_aliases.append(
-                    (re.compile(raw_pat, re.IGNORECASE), canonical.lower())
-                )
+            lower_canonical = canonical.lower()
+            compiled_aliases.extend(
+                (re.compile(p, re.IGNORECASE), lower_canonical)
+                for p in patterns
+            )
 
         self._log.debug("Loaded {} alias entries", len(compiled_aliases))
         return compiled_aliases
