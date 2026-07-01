@@ -25,6 +25,15 @@ def _artist(name: str, **kwargs):
     } | kwargs
 
 
+def _track(title: str, position: str = "", duration: str = "", **kwargs):
+    return {
+        "title": title,
+        "position": position,
+        "duration": duration,
+        "type_": "track",
+    } | kwargs
+
+
 def get_release(data: dict[str, Any]) -> Release:
     return Release(Client("doesn't matter"), data)
 
@@ -66,18 +75,10 @@ class DiscogsTestMixin:
 
         return get_release(data)
 
-    def _make_track(self, title, position="", duration="", type_=None):
-        return {
-            "title": title,
-            "position": position,
-            "duration": duration,
-            "type_": type_,
-        }
-
     def _make_release_from_positions(self, positions):
         """Return discogs_client.Release with tracks at the given positions."""
         tracks = [
-            self._make_track(f"TITLE{i}", position)
+            _track(f"TITLE{i}", position)
             for (i, position) in enumerate(positions, start=1)
         ]
         return self._make_release(tracks)
@@ -86,8 +87,8 @@ class DiscogsTestMixin:
 class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
     def test_parse_media_for_tracks(self):
         tracks = [
-            self._make_track("TITLE ONE", "1", "01:01"),
-            self._make_track("TITLE TWO", "2", "02:02"),
+            _track("TITLE ONE", "1", "01:01"),
+            _track("TITLE TWO", "2", "02:02"),
         ]
         release = self._make_release(tracks=tracks)
 
@@ -168,78 +169,12 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         assert t[3].index == 4
         assert t[3].medium_total == 1
 
-    def test_parse_tracklist_subtracks_indices(self):
-        """Test parsing of subtracks that include index tracks."""
-        release = self._make_release_from_positions(["", "", "1.1", "1.2"])
-        # Track 1: Index track with medium title
-        release.data["tracklist"][0]["title"] = "MEDIUM TITLE"
-        # Track 2: Index track with track group title
-        release.data["tracklist"][1]["title"] = "TRACK GROUP TITLE"
-
-        d = DiscogsPlugin().get_album_info(release)
-        assert d.mediums == 1
-        assert d.tracks[0].disctitle == "MEDIUM TITLE"
-        assert len(d.tracks) == 1
-        assert d.tracks[0].title == "TRACK GROUP TITLE"
-
-    def test_parse_tracklist_subtracks_nested_logical(self):
-        """Test parsing of subtracks defined inside a index track that are
-        logical subtracks (ie. should be grouped together into a single track).
-        """
-        release = self._make_release_from_positions(["1", "", "3"])
-        # Track 2: Index track with track group title, and sub_tracks
-        release.data["tracklist"][1]["title"] = "TRACK GROUP TITLE"
-        release.data["tracklist"][1]["sub_tracks"] = [
-            self._make_track("TITLE ONE", "2.1", "01:01"),
-            self._make_track("TITLE TWO", "2.2", "02:02"),
-        ]
-
-        d = DiscogsPlugin().get_album_info(release)
-        assert d.mediums == 1
-        assert len(d.tracks) == 3
-        assert d.tracks[1].title == "TRACK GROUP TITLE"
-
-    def test_parse_tracklist_subtracks_nested_physical(self):
-        """Test parsing of subtracks defined inside a index track that are
-        physical subtracks (ie. should not be grouped together).
-        """
-        release = self._make_release_from_positions(["1", "", "4"])
-        # Track 2: Index track with track group title, and sub_tracks
-        release.data["tracklist"][1]["title"] = "TRACK GROUP TITLE"
-        release.data["tracklist"][1]["sub_tracks"] = [
-            self._make_track("TITLE ONE", "2", "01:01"),
-            self._make_track("TITLE TWO", "3", "02:02"),
-        ]
-
-        d = DiscogsPlugin().get_album_info(release)
-        assert d.mediums == 1
-        assert len(d.tracks) == 4
-        assert d.tracks[1].title == "TITLE ONE"
-        assert d.tracks[2].title == "TITLE TWO"
-
-    def test_parse_tracklist_disctitles(self):
-        """Test parsing of index tracks that act as disc titles."""
-        release = self._make_release_from_positions(
-            ["", "1-1", "1-2", "", "2-1"]
-        )
-        # Track 1: Index track with medium title (Cd1)
-        release.data["tracklist"][0]["title"] = "MEDIUM TITLE CD1"
-        # Track 4: Index track with medium title (Cd2)
-        release.data["tracklist"][3]["title"] = "MEDIUM TITLE CD2"
-
-        d = DiscogsPlugin().get_album_info(release)
-        assert d.mediums == 2
-        assert d.tracks[0].disctitle == "MEDIUM TITLE CD1"
-        assert d.tracks[1].disctitle == "MEDIUM TITLE CD1"
-        assert d.tracks[2].disctitle == "MEDIUM TITLE CD2"
-        assert len(d.tracks) == 3
-
     def test_parse_minimal_release(self):
         """Test parsing of a release with the minimal amount of information."""
         data = {
             "id": 123,
             "uri": "https://www.discogs.com/release/123456-something",
-            "tracklist": [self._make_track("A", "1", "01:01")],
+            "tracklist": [_track("A", "1", "01:01")],
             "artists": [_artist("ARTIST NAME", id=321)],
             "title": "TITLE",
         }
@@ -366,6 +301,88 @@ class TestTracklist(DiscogsTestMixin):
 
         assert d.mediums == expected_mediums
         assert len(d.tracks) == expected_tracks
+
+    @pytest.mark.parametrize(
+        "tracks,expected_mediums,expected_tracks",
+        [
+            _p(
+                [
+                    _track("MEDIUM TITLE"),
+                    _track("TRACK GROUP TITLE"),
+                    _track("TITLE ONE", "1.1"),
+                    _track("TITLE TWO", "1.2"),
+                ],
+                1,
+                [("TRACK GROUP TITLE", "MEDIUM TITLE")],
+                id="flat-logical-subtracks",
+            ),
+            _p(
+                [
+                    _track("TITLE ONE", "1"),
+                    _track(
+                        "TRACK GROUP TITLE",
+                        sub_tracks=[
+                            _track("SUBTITLE ONE", "2.1", "01:01"),
+                            _track("SUBTITLE TWO", "2.2", "02:02"),
+                        ],
+                    ),
+                    _track("TITLE THREE", "3"),
+                ],
+                1,
+                [
+                    ("TITLE ONE", None),
+                    ("TRACK GROUP TITLE", None),
+                    ("TITLE THREE", None),
+                ],
+                id="nested-logical-subtracks",
+            ),
+            _p(
+                [
+                    _track("TITLE ONE", "1"),
+                    _track(
+                        "TRACK GROUP TITLE",
+                        sub_tracks=[
+                            _track("SUBTITLE ONE", "2", "01:01"),
+                            _track("SUBTITLE TWO", "3", "02:02"),
+                        ],
+                    ),
+                    _track("TITLE FOUR", "4"),
+                ],
+                1,
+                [
+                    ("TITLE ONE", None),
+                    ("SUBTITLE ONE", None),
+                    ("SUBTITLE TWO", None),
+                    ("TITLE FOUR", None),
+                ],
+                id="nested-physical-subtracks",
+            ),
+            _p(
+                [
+                    _track("MEDIUM TITLE CD1"),
+                    _track("TITLE ONE", "1-1"),
+                    _track("TITLE TWO", "1-2"),
+                    _track("MEDIUM TITLE CD2"),
+                    _track("TITLE THREE", "2-1"),
+                ],
+                2,
+                [
+                    ("TITLE ONE", "MEDIUM TITLE CD1"),
+                    ("TITLE TWO", "MEDIUM TITLE CD1"),
+                    ("TITLE THREE", "MEDIUM TITLE CD2"),
+                ],
+                id="medium-titles",
+            ),
+        ],
+    )  # fmt: skip
+    def test_parse_tracklist_index_tracks(
+        self, plugin, tracks, expected_mediums, expected_tracks
+    ):
+        release = self._make_release(tracks)
+        album = plugin.get_album_info(release)
+
+        assert album.mediums == expected_mediums
+        assert [(t.title, t.disctitle) for t in album.tracks] == expected_tracks
 
 
 class TestDGSearchQuery(TestHelper):
