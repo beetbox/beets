@@ -261,7 +261,9 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
             _p((), None, True, "converted.ogg", id="never-convert-lossy"),
         ],
     )
-    def test_playlist_entry(self, args, no_convert, never_convert_lossy, expected_entry):
+    def test_playlist_entry(
+        self, args, no_convert, never_convert_lossy, expected_entry
+    ):
         if no_convert:
             self.config["convert"]["no_convert"] = no_convert
         if never_convert_lossy:
