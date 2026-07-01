@@ -16,14 +16,13 @@ from beets import logging, plugins
 from beets.util import cached_classproperty
 
 from . import query, sort
+from .query import Query  # noqa: TC001 required for docs type resolution
+from .sort import Sort  # noqa: TC001 required for docs type resolution
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
     from beets.library.models import LibModel
-
-    from .query import Query
-    from .sort import Sort
 
 
 PARSE_QUERY_PART_REGEX = re.compile(

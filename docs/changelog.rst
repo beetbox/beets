@@ -38,9 +38,15 @@ Bug fixes
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- Query parsing is now available through ``Item.parse_query`` and
+  ``Album.parse_query``, which return a
+  :class:`~beets.dbcore.queryparse.ModelQuery` containing the query and sort
+  order. The ``parse_query_string``, ``parse_query_parts``,
+  ``query_from_strings``, ``sort_from_strings``, and ``parse_sorted_query``
+  helpers are deprecated.
 
 Other changes
 ~~~~~~~~~~~~~
