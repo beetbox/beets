@@ -38,12 +38,7 @@ from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
-from beets.util import (
-    MoveOperation,
-    bytestring_path,
-    clean_module_tempdir,
-    syspath,
-)
+from beets.util import MoveOperation, clean_module_tempdir, syspath
 from beets.util.functemplate import template
 
 if TYPE_CHECKING:
@@ -385,7 +380,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         ext: str = "mp3",
         images: list[str] | None = None,
         target_dir: util.PathLike | None = None,
-    ) -> bytes:
+    ) -> Path:
         """Copy a fixture mediafile with the extension to `temp_path`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
@@ -395,8 +390,8 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         if not target_dir:
             target_dir = self.temp_path
         src = _common.RSRC / f"full.{ext}"
-        handle, path = mkstemp(dir=target_dir)
-        path = bytestring_path(path)
+        handle, str_path = mkstemp(dir=target_dir)
+        path = Path(os.fsdecode(str_path))
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
 

@@ -18,7 +18,7 @@ class InfoTest(IOMixin, PluginTestCase):
         mediafile.composer = None
         mediafile.save()
 
-        out = self.run_with_output("info", path)
+        out = self.run_with_output("info", str(path))
         assert os.fsdecode(path) in out
         assert "albumartist: AAA" in out
         assert "disctitle: DDD" in out
@@ -61,7 +61,9 @@ class InfoTest(IOMixin, PluginTestCase):
         item.store()
         mediafile.save()
 
-        out = self.run_with_output("info", "--summarize", "album:AAA", path)
+        out = self.run_with_output(
+            "info", "--summarize", "album:AAA", str(path)
+        )
         assert "album: AAA" in out
         assert "tracktotal: 5" in out
         assert "title: [various]" in out
@@ -86,7 +88,9 @@ class InfoTest(IOMixin, PluginTestCase):
         item.store()
         mediafile.save()
 
-        out = self.run_with_output("info", "--summarize", "album:AAA", path)
+        out = self.run_with_output(
+            "info", "--summarize", "album:AAA", str(path)
+        )
         assert "album: AAA" in out
         assert "tracktotal: 5" in out
         assert "title: [various]" in out
