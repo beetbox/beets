@@ -1058,7 +1058,7 @@ class FileSystem(LocalArtSource):
 
             # Find all files that look like images in the directory.
             images = []
-            ignore = config["ignore"].as_str_seq()
+            ignore = list(map(os.fsencode, config["ignore"].as_str_seq()))
             ignore_hidden = config["ignore_hidden"].get(bool)
             for _, _, files in sorted_walk(
                 path, ignore=ignore, ignore_hidden=ignore_hidden

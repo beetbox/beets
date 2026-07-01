@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 from collections.abc import Callable
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, AnyStr
 
 import mediafile
 
@@ -1156,22 +1156,24 @@ class ImportTaskFactory:
 
 
 _MULTIDISC_MARKERS = (
-    rb"dis[ck]",
-    rb"cd",
-    rb"cassette",
-    rb"digital\s+media",
-    rb"vinyl",
+    r"dis[ck]",
+    r"cd",
+    r"cassette",
+    r"digital\s+media",
+    r"vinyl",
 )
 
-MULTIDISC_PATTERNS = [
-    re.compile(rb"^(.*" + marker + rb"[\W_]*)\d", re.I)
+MULTIDISC_BYTES_PATTERNS = [
+    re.compile(rf"^(.*{marker}[\W_]*)\d".encode(), re.I)
     for marker in _MULTIDISC_MARKERS
 ]
 
+MULTIDISC_PATTERNS = [
+    re.compile(rf"^(.*{marker}[\W_]*)\d", re.I) for marker in _MULTIDISC_MARKERS
+]
 
-def is_subdir_of_any_in_list(
-    path: util.PathBytes, dirs: list[util.PathBytes]
-) -> bool:
+
+def is_subdir_of_any_in_list(path: AnyStr, dirs: list[AnyStr]) -> bool:
     """Returns True if path os a subdirectory of any directory in dirs
     (a list). In other case, returns False.
     """
@@ -1179,20 +1181,35 @@ def is_subdir_of_any_in_list(
     return any(d in ancestors for d in dirs)
 
 
-def albums_in_dir(
-    path: util.PathBytes,
-) -> Iterable[tuple[list[util.PathBytes], list[util.PathBytes]]]:
+def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
     """Recursively searches the given directory and returns an iterable
     of (paths, items) where paths is a list of directories and items is
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    collapse_paths: list[util.PathBytes] = []
-    collapse_items: list[util.PathBytes] = []
+    collapse_paths: list[AnyStr] = []
+    collapse_items: list[AnyStr] = []
     collapse_pat = None
 
-    ignore: list[str] = config["ignore"].as_str_seq()
+    _ignore = config["ignore"].as_str_seq()
+    ignore: list[AnyStr]
+    if isinstance(path, str):
+        ignore = _ignore
+    else:
+        ignore = list(map(os.fsencode, _ignore))
     ignore_hidden: bool = config["ignore_hidden"].get(bool)
+
+    patterns = (
+        MULTIDISC_PATTERNS
+        if isinstance(path, str)
+        else MULTIDISC_BYTES_PATTERNS
+    )
+
+    def get_numbered_variant_pattern(string: AnyStr) -> re.Pattern[AnyStr]:
+        pat = rf"^{re.escape(os.fsdecode(string))}\d"
+        return re.compile(
+            pat if isinstance(string, str) else os.fsencode(pat), re.I
+        )
 
     for root, dirs, files in util.sorted_walk(
         path, ignore=ignore, ignore_hidden=ignore_hidden, logger=log
@@ -1223,25 +1240,19 @@ def albums_in_dir(
         # 1") or it contains no items but only directories that are
         # named in this way.
         start_collapsing = False
-        for marker_pat in MULTIDISC_PATTERNS:
-            match = marker_pat.match(os.path.basename(root))
-
+        for marker_pat in patterns:
             # Is this directory the root of a nested multi-disc album?
             if dirs and not items:
                 # Check whether all subdirectories have the same prefix.
                 start_collapsing = True
                 subdir_pat = None
                 for subdir in dirs:
-                    subdir = util.bytestring_path(subdir)
                     # The first directory dictates the pattern for
                     # the remaining directories.
                     if not subdir_pat:
                         match = marker_pat.match(subdir)
                         if match:
-                            match_group = re.escape(match.group(1))
-                            subdir_pat = re.compile(
-                                b"".join([b"^", match_group, rb"\d"]), re.I
-                            )
+                            subdir_pat = get_numbered_variant_pattern(match[1])
                         else:
                             start_collapsing = False
                             break
@@ -1257,13 +1268,11 @@ def albums_in_dir(
                     break
 
             # Is this directory the first in a flattened multi-disc album?
-            elif match:
+            elif match := marker_pat.match(os.path.basename(root)):
                 start_collapsing = True
                 # Set the current pattern to match directories with the same
                 # prefix as this one, followed by a digit.
-                collapse_pat = re.compile(
-                    b"".join([b"^", re.escape(match.group(1)), rb"\d"]), re.I
-                )
+                collapse_pat = get_numbered_variant_pattern(match[1])
                 break
 
         # If either of the above heuristics indicated that this is the
