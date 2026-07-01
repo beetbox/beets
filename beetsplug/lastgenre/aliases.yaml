@@ -37,7 +37,7 @@ electronic:
 world music:
     - world
 chillout:
-    - chill([ -]*out)?
+    - chill[ -]*out
 darkwave:
     - dark[ -]*wave
 downtempo:
