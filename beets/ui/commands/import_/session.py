@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import chain
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from beets import config, importer, logging, plugins, ui
 from beets.autotag import AlbumMatch, Recommendation, TrackMatch
@@ -15,9 +15,15 @@ from beets.util.units import human_bytes, human_seconds_short
 from .display import show_change
 
 if TYPE_CHECKING:
-    from beets.autotag import Source
-    from beets.importer import AnyImportTask
+    from beets.autotag import Candidates, Source
+    from beets.importer import (
+        AlbumImportTask,
+        AnyImportTask,
+        ImportSession,
+        SingletonImportTask,
+    )
     from beets.library import AnyLibModel, Item
+    from beets.util import PathBytes
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -26,7 +32,9 @@ log = logging.getLogger("beets")
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal."""
 
-    def choose_match(self, task):
+    def choose_match(
+        self, task: AlbumImportTask
+    ) -> AlbumMatch | importer.Action:
         """Given an initial autotagging of items, go through an interactive
         dance with the user to ask for a choice of metadata. Returns an
         AlbumMatch object, ASIS, or SKIP.
@@ -78,25 +86,30 @@ class TerminalImportSession(importer.ImportSession):
                 choices=choices,
             )
 
-            # Basic choices that require no more action here.
-            if choice in (importer.Action.SKIP, importer.Action.ASIS):
+            # We have a specific match selection.
+            # or, basic choices that require no more action here.
+            if isinstance(choice, AlbumMatch) or (
+                isinstance(choice, importer.Action)
+                and choice in (importer.Action.SKIP, importer.Action.ASIS)
+            ):
                 # Pass selection to main control flow.
                 return choice
 
             # Plugin-provided choices. We invoke the associated callback
             # function.
-            if choice in choices:
+            if isinstance(choice, PromptChoice) and choice.callback:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-            # Otherwise, we have a specific match selection.
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
                 assert isinstance(choice, AlbumMatch)
                 return choice
 
-    def choose_item(self, task):
+    def choose_item(
+        self, task: SingletonImportTask
+    ) -> TrackMatch | importer.Action:
         """Ask the user for a choice about tagging a single item. Returns
         either an action constant or a TrackMatch object.
         """
@@ -122,17 +135,21 @@ class TerminalImportSession(importer.ImportSession):
                 choices=choices,
             )
 
-            if choice in (importer.Action.SKIP, importer.Action.ASIS):
+            # We have a specific match selection.
+            # or, basic choices that require no more action here.
+            if isinstance(choice, TrackMatch) or (
+                isinstance(choice, importer.Action)
+                and choice in (importer.Action.SKIP, importer.Action.ASIS)
+            ):
+                # Pass selection to main control flow.
                 return choice
 
-            if choice in choices:
+            # Plugin-provided choices. We invoke the associated callback
+            # function.
+            if isinstance(choice, PromptChoice) and choice.callback:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-            else:
-                # Chose a candidate.
-                assert isinstance(choice, TrackMatch)
-                return choice
 
     def _report_item_summary(
         self, prefix: Literal["Old", "New"], items: list[Item], is_album: bool
@@ -186,13 +203,13 @@ class TerminalImportSession(importer.ImportSession):
 
         return action
 
-    def should_resume(self, path):
+    def should_resume(self, path: PathBytes) -> bool:
         return ui.input_yn(
             f"Import of the directory:\n{displayable_path(path)}\n"
             "was interrupted. Resume (Y/n)?"
         )
 
-    def _get_choices(self, task):
+    def _get_choices(self, task: AnyImportTask) -> list[PromptChoice]:
         """Get the list of prompt choices that should be presented to the
         user. This consists of both built-in choices and ones provided by
         plugins.
@@ -240,7 +257,7 @@ class TerminalImportSession(importer.ImportSession):
         # Add a "dummy" choice for the other baked-in option, for
         # duplicate checking.
         all_choices = [
-            PromptChoice("a", "Apply", None),
+            PromptChoice("a", "Apply", lambda s, t: importer.Action.APPLY),
             *choices,
             *extra_choices,
         ]
@@ -267,7 +284,7 @@ class TerminalImportSession(importer.ImportSession):
         return choices + extra_choices
 
 
-def summarize_items(items, singleton):
+def summarize_items(items: list[Item], singleton: bool) -> str:
     """Produces a brief summary line describing a set of items. Used for
     manually resolving duplicates during import.
 
@@ -279,7 +296,7 @@ def summarize_items(items, singleton):
     if not singleton:
         summary_parts.append(f"{len(items)} items")
 
-    format_counts = {}
+    format_counts: dict[str, int] = {}
     for item in items:
         format_counts[item.format] = format_counts.get(item.format, 0) + 1
     if len(format_counts) == 1:
@@ -345,7 +362,12 @@ def _summary_judgment(rec: Recommendation) -> importer.Action | None:
     return action
 
 
-def choose_candidate(candidates, rec, source: Source, choices=[]):
+def choose_candidate(
+    candidates: Candidates[Any, Any],
+    rec: Recommendation,
+    source: Source,
+    choices: list[PromptChoice] = [],
+) -> AlbumMatch | TrackMatch | PromptChoice:
     """Ask the user for a selection of which candidate to use.
 
     Applies to both full albums and singletons (tracks). Candidates are either
@@ -464,7 +486,7 @@ def choose_candidate(candidates, rec, source: Source, choices=[]):
             return choice_actions[sel]
 
 
-def manual_search(session, task: AnyImportTask):
+def manual_search(session: ImportSession, task: AnyImportTask) -> None:
     """Resolve candidates using a manual search.
 
     Input either an artist and album (for full albums) or artist and
@@ -476,7 +498,7 @@ def manual_search(session, task: AnyImportTask):
     )
 
 
-def manual_id(session, task: AnyImportTask):
+def manual_id(session: ImportSession, task: AnyImportTask) -> None:
     """Resolve candidates using a manually-entered ID.
 
     Input an ID, either for an album ("release") or a track ("recording").
@@ -486,6 +508,6 @@ def manual_id(session, task: AnyImportTask):
     )
 
 
-def abort_action(session, task):
+def abort_action(session: ImportSession, task: AnyImportTask) -> None:
     """A prompt choice callback that aborts the importer."""
     raise importer.ImportAbortError()

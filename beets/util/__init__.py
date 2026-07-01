@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
+    from beets.importer import Action, AnyImportTask, ImportSession
     from beets.library import Item
 
 MAX_FILENAME_LENGTH = 200
@@ -169,7 +170,7 @@ class MoveOperation(Enum):
 class PromptChoice(NamedTuple):
     short: str
     long: str
-    callback: Any
+    callback: Callable[[ImportSession, AnyImportTask], Action | None] | None
 
 
 def normpath(path: PathLike) -> bytes:
