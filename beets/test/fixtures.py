@@ -1,16 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
 """Provide lightweight dbcore model fixtures for tests.
 
 These fixtures supply predictable query, sort, and model behavior for tests that
@@ -48,6 +35,7 @@ class ModelFixture1(LibModel):
         "id": types.PRIMARY_ID,
         "field_one": types.INTEGER,
         "field_two": types.STRING,
+        "path": types.PathType(),
     }
 
     _sorts: ClassVar[dict[str, type[sort.FieldSort]]] = {
@@ -55,6 +43,7 @@ class ModelFixture1(LibModel):
     }
     _indices = (Index("field_one_index", ("field_one",)),)
     _formatter = FormattedMapping
+    _search_fields = ("artist", "title")
 
     @cached_classproperty
     def _types(cls):
@@ -62,7 +51,7 @@ class ModelFixture1(LibModel):
 
     @cached_classproperty
     def _queries(cls):
-        return {"some_query": QueryFixture}
+        return {"some_query": QueryFixture, "year": query.NumericQuery}
 
     @classmethod
     def _getters(cls):

@@ -16,7 +16,7 @@ import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import types
 from beets.dbcore.db import FormattedMapping
-from beets.dbcore.pathutils import normalize_path_for_db
+from beets.dbcore.queryparse import ModelQuery
 from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
     MoveOperation,
@@ -26,19 +26,17 @@ from beets.util import (
     samefile,
     syspath,
 )
-from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.functemplate import Template, template
 from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
 from .fields import TYPE_BY_FIELD
-from .queries import parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView
+    from collections.abc import KeysView, Sequence
 
-    from beets.dbcore.query import FieldQuery, FieldQueryType
-    from beets.dbcore.sort import FieldSort
+    from beets.dbcore.query import FieldQuery, QueryByField
+    from beets.dbcore.sort import FieldSort, Sort
 
     from .library import Library  # noqa: F401
 
@@ -70,12 +68,28 @@ class LibModel(dbcore.Model["Library"]):
         }
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> QueryByField:
         return plugins.named_queries(cls)  # type: ignore[arg-type]
 
     @cached_classproperty
     def writable_media_fields(cls) -> set[str]:
         return set(MediaFile.fields()) & cls._fields.keys()
+
+    @cached_classproperty
+    def default_sort(cls) -> Sort:
+        """Get a :class:`beets.dbcore.sort.Sort` for configured fields."""
+        config_key = f"sort_{cls.__name__.lower()}"
+        return ModelQuery.get_sort(
+            cls,  # type: ignore[arg-type]
+            beets.config[config_key].as_str_seq(),
+        )
+
+    @classmethod
+    def parse_query(
+        cls, query: str | Sequence[str] | None = None
+    ) -> ModelQuery:
+        """Parse human-readable search and sort syntax for this model."""
+        return ModelQuery.parse(cls, query)
 
     @property
     def filepath(self) -> Path:
@@ -115,50 +129,19 @@ class LibModel(dbcore.Model["Library"]):
     # Convenient queries.
 
     @classmethod
-    def field_query(
-        cls, field: str, pattern: str, query_cls: FieldQueryType
-    ) -> FieldQuery:
-        """Get a `FieldQuery` for the given field on this model."""
-        field = maybe_replace_legacy_field(field, cls is Album)
-
-        fast = field in cls.all_db_fields
-        if (
-            cls._type(field).query is dbcore.query.PathQuery
-            and query_cls is not dbcore.query.PathQuery
-        ):
-            # Regex, exact, and string queries operate on the raw DB value, so
-            # strip the library prefix to match the stored relative path.
-            bytes_pattern = normalize_path_for_db(util.bytestring_path(pattern))
-            if query_cls is not dbcore.query.RegexpQuery:
-                bytes_pattern = util.path_as_posix(bytes_pattern)
-            pattern = os.fsdecode(bytes_pattern)
-
-        if field in cls.shared_db_fields:
-            # This field exists in both tables, so SQLite will encounter
-            # an OperationalError if we try to use it in a query.
-            # Using an explicit table name resolves this.
-            field = f"{cls._table}.{field}"
-
-        return query_cls(field, pattern, fast)
-
-    @classmethod
-    def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
-        return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
-        )
-
-    @classmethod
-    def any_writable_media_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+    def any_writable_media_field_query(
+        cls, pattern: str, query_cls: type[FieldQuery]
+    ) -> dbcore.OrQuery:
         fields = cls.writable_media_fields
         return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in fields]
+            [query_cls.from_model(cls, f, pattern) for f in fields]
         )
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
         return dbcore.AndQuery(
             [
-                self.field_query(f, self.get(f), dbcore.MatchQuery)
+                dbcore.MatchQuery.from_model(self.__class__, f, self.get(f))
                 for f in fields
             ]
         )
@@ -723,7 +706,7 @@ class Item(LibModel):
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> QueryByField:
         return {**super()._queries, "singleton": dbcore.query.SingletonQuery}
 
     _format_config_key = "format_item"
@@ -1197,11 +1180,10 @@ class Item(LibModel):
 
         # Use a path format based on a query, falling back on the
         # default.
-        for query, path_format in path_formats:
-            if query == PF_KEY_DEFAULT:
+        for query_str, path_format in path_formats:
+            if query_str == PF_KEY_DEFAULT:
                 continue
-            query, _ = parse_query_string(query, type(self))
-            if query.match(self):
+            if self.parse_query(query_str).query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
                 break

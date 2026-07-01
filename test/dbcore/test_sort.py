@@ -165,6 +165,23 @@ class TestCaseSensitivity:
         helper.add_item(artist="artist", flex1="flex1", track=10)
         helper.add_item(artist="Artist", flex1="Flex1", track=2)
 
+    @pytest.fixture
+    def config(self, monkeypatch, config):
+        """Monkeypatch the config to clear the cached sort settings.
+
+        This is needed because ``FieldSort`` is accessed multiple times during
+        the test.
+        """
+
+        def _set_config(_, key, value):
+            """Invalidate cached sort settings before updating the config."""
+            if key == "sort_case_insensitive":
+                util.cached_classproperty.cache.clear()
+            config.set({key: value})
+
+        monkeypatch.setattr("confuse.core.ConfigView.__setitem__", _set_config)
+        return config
+
     @pytest.mark.parametrize(
         "getter,query,attr,expected_insensitive,expected_sensitive",
         [
@@ -264,10 +281,7 @@ class TestNonExistingField:
         If a string ends with a sorting suffix, it takes precedence over the
         NotQuery parsing.
         """
-        query, sort = beets.library.parse_query_string(
-            "-bar+", beets.library.Item
-        )
-        assert len(query.subqueries) == 1
-        assert isinstance(query.subqueries[0], TrueQuery)
+        query, sort = beets.library.Item.parse_query("-bar+")
+        assert isinstance(query, TrueQuery)
         assert isinstance(sort, SlowFieldSort)
         assert sort.field == "-bar"

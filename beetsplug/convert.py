@@ -17,7 +17,7 @@ from confuse import ConfigTypeError, Optional
 
 from beets import plugins, ui, util
 from beets.exceptions import UserError
-from beets.library import Item, parse_query_string
+from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import pipeline
 from beets.util.artresizer import ArtResizer
@@ -369,7 +369,7 @@ class ConvertPlugin(BeetsPlugin):
         no_convert_query = self.config["no_convert"].as_str()
 
         if no_convert_query:
-            query, _ = parse_query_string(no_convert_query, Item)
+            query = Item.parse_query(no_convert_query).query
             return query.match(item)
         return False
 

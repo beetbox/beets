@@ -16,7 +16,7 @@ from beets import plugins, ui
 from beets.dbcore.query import ParsingError, Query
 from beets.dbcore.sort import Sort
 from beets.exceptions import UserError
-from beets.library import Album, Item, parse_query_string
+from beets.library import Album, Item
 from beets.util import (
     bytestring_path,
     mkdirall,
@@ -29,7 +29,7 @@ from beets.util import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from beets.library import Library
+    from beets.library import LibModel, Library
 
 QueryAndSort = tuple[Query, Sort]
 PlaylistQuery = Query | tuple[QueryAndSort, ...] | None
@@ -206,18 +206,18 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         self.update_playlists(lib)
 
     def _parse_one_query(
-        self, playlist: dict[str, Any], key: str, model_cls: type
+        self, playlist: dict[str, Any], key: str, model_cls: type[LibModel]
     ) -> tuple[PlaylistQuery, Sort | None]:
         qs = playlist.get(key)
         if qs is None:
             return None, None
         if isinstance(qs, str):
-            return parse_query_string(qs, model_cls)
+            return model_cls.parse_query(qs)
         if len(qs) == 1:
-            return parse_query_string(qs[0], model_cls)
+            return model_cls.parse_query(qs[0])
 
         queries_and_sorts: tuple[QueryAndSort, ...] = tuple(
-            parse_query_string(q, model_cls) for q in qs
+            model_cls.parse_query(q) for q in qs
         )
         return queries_and_sorts, None
 

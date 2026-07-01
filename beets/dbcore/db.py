@@ -52,7 +52,7 @@ if TYPE_CHECKING:
     from sqlite3 import Connection
     from types import TracebackType
 
-    from .query import FieldQueryType, Query, SQLiteType
+    from .query import Query, QueryByField, SQLiteType
     from .sort import FieldSort, Sort
 
 D = TypeVar("D", bound="Database", default=Any)
@@ -276,7 +276,7 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> QueryByField:
         """Named queries that use a field-like `name:value` syntax but which
         do not relate to any specific field.
         """
@@ -1373,7 +1373,7 @@ class Database:
 
     # Querying.
 
-    def _fetch(
+    def get_results(
         self,
         model_cls: type[AnyModel],
         query: Query | None = None,
@@ -1433,7 +1433,7 @@ class Database:
 
     def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
         """Get a Model object by its id or None if the id does not exist."""
-        return self._fetch(model_cls, MatchQuery("id", id_)).get()
+        return self.get_results(model_cls, MatchQuery("id", id_)).get()
 
 
 class Index(NamedTuple):

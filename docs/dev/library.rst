@@ -237,6 +237,22 @@ There are many different types of queries. Just as an example,
 :class:`CollectionQuery`) takes a set of other query objects and bundles them
 together, matching only albums/items that match all constituent queries.
 
-Beets has a human-writable plain-text query syntax that can be parsed into
-:class:`Query` objects. Calling ``AndQuery.from_strings`` parses a list of query
-parts into a query object that can then be used with |Library| objects.
+Beets has a human-writable plain-text query syntax. The |Library| query methods
+accept this syntax directly:
+
+.. code-block:: python
+
+    items = lib.items('artist:"The Beatles" year-')
+
+When code needs the :class:`Query` and sort objects directly, use
+``Item.parse_query`` for item queries or ``Album.parse_query`` for album
+queries. These class methods accept either a query string or a sequence of query
+parts and return a :class:`~beets.dbcore.queryparse.ModelQuery` containing both
+objects.
+
+Use :meth:`FieldQuery.from_model` when constructing a field query directly. This
+applies the model's field aliases and normalization rules:
+
+.. code-block:: python
+
+    query = MatchQuery.from_model(Item, "artist", "The Beatles")

@@ -6,14 +6,18 @@ import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import MutableMapping, Sequence
 from datetime import datetime, timedelta
 from functools import cached_property, reduce
 from operator import mul, or_
 from re import Pattern
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
+from typing_extensions import Self
+
 from beets import context, util
+from beets.dbcore.pathutils import normalize_path_for_db
+from beets.util.deprecation import maybe_replace_legacy_field
 from beets.util.units import raw_seconds_short
 
 from . import pathutils
@@ -97,6 +101,9 @@ class Query(ABC):
     def __and__(self, other: Query) -> AndQuery:
         return AndQuery([self, other])
 
+    def __or__(self, other: Query) -> OrQuery:
+        return OrQuery([self, other])
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
@@ -114,7 +121,7 @@ class Query(ABC):
 
 SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
-FieldQueryType = type["FieldQuery"]
+QueryByField = MutableMapping[str, type["FieldQuery"]]
 
 
 class FieldQuery(Query, Generic[P]):
@@ -124,6 +131,36 @@ class FieldQuery(Query, Generic[P]):
     string. Subclasses may also provide `col_clause` to implement the
     same matching functionality in SQLite.
     """
+
+    @classmethod
+    def normalize_pattern(
+        cls, model_cls: type[Model], field: str, pattern: P
+    ) -> P:
+        """Normalize the pattern for this query.
+
+        By default, this does nothing, but subclasses can override it to perform
+        normalization on the pattern before it's used for matching.
+        """
+        return pattern
+
+    @classmethod
+    def from_model(
+        cls, model_cls: type[Model], field_name: str, pattern: P
+    ) -> Self:
+        field = maybe_replace_legacy_field(
+            field_name, model_cls.__name__ == "Album"
+        )
+
+        fast = field in model_cls.all_db_fields
+        if field in model_cls.shared_db_fields:
+            # This field exists in both tables, so SQLite will encounter
+            # an OperationalError if we try to use it in a query.
+            # Using an explicit table name resolves this.
+            field = f"{model_cls._table}.{field}"
+
+        return cls(
+            field, cls.normalize_pattern(model_cls, field, pattern), fast
+        )
 
     @property
     def field(self) -> str:
@@ -208,6 +245,21 @@ class StringFieldQuery(FieldQuery[P]):
     """A FieldQuery that converts values to strings before matching
     them.
     """
+
+    @classmethod
+    def normalize_pattern(  # type: ignore[override]
+        cls, model_cls: type[Model], field: str, pattern: str
+    ) -> str:
+        """Strip the library prefix to match the stored relative path."""
+        if model_cls._type(field).query is PathQuery:
+            bytes_pattern = normalize_path_for_db(util.bytestring_path(pattern))
+            # do not remove escape chars (`\`) from the pattern, since they are
+            # used for escaping in the SQL query regex
+            if cls is not RegexpQuery:
+                bytes_pattern = util.path_as_posix(bytes_pattern)
+            return os.fsdecode(bytes_pattern)
+
+        return pattern
 
     @classmethod
     def value_match(cls, pattern: P, value: Any):
@@ -580,6 +632,14 @@ class MutableCollectionQuery(CollectionQuery):
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
+    def __and__(self, other: Query) -> AndQuery:
+        if isinstance(other, AndQuery):
+            self.subqueries.extend(other.subqueries)
+        else:
+            self.subqueries.append(other)
+
+        return self
+
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("and")
 
@@ -589,6 +649,14 @@ class AndQuery(MutableCollectionQuery):
 
 class OrQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
+
+    def __or__(self, other: Query) -> OrQuery:
+        if isinstance(other, OrQuery):
+            self.subqueries.extend(other.subqueries)
+        else:
+            self.subqueries.append(other)
+
+        return self
 
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("or")

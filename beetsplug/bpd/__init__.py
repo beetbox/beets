@@ -1384,14 +1384,14 @@ class Server(BaseServer):
                     if allow_any_query:
                         queries.append(
                             Item.any_writable_media_field_query(
-                                query_type, value
+                                value, query_type
                             )
                         )
                     else:
                         raise BPDError(ERROR_UNKNOWN, "no such tagtype")
                 else:
                     _, key = self._tagtype_lookup(tag)
-                    queries.append(Item.field_query(key, value, query_type))
+                    queries.append(query_type.from_model(Item, key, value))
             return dbcore.query.AndQuery(queries)
         # No key-value pairs.
         return dbcore.query.TrueQuery()
@@ -1452,7 +1452,7 @@ class Server(BaseServer):
         songs = 0
         playtime = 0.0
         for item in self.lib.items(
-            Item.field_query(key, value, dbcore.query.MatchQuery)
+            dbcore.query.MatchQuery.from_model(Item, key, value)
         ):
             songs += 1
             playtime += item.length
