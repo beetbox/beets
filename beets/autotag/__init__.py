@@ -7,17 +7,10 @@ from importlib import import_module
 # Parts of external interface.
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
 
+from .candidates import AlbumCandidates, Recommendation, TrackCandidates
 from .distance import Distance, distance, string_dist, track_distance
 from .hooks import AlbumInfo, Info, TrackInfo, correct_list_fields
-from .match import (
-    AlbumCandidates,
-    AlbumMatch,
-    Match,
-    Recommendation,
-    TrackCandidates,
-    TrackMatch,
-    assign_items,
-)
+from .match import AlbumMatch, Match, TrackMatch, assign_items
 from .source import Source
 
 
