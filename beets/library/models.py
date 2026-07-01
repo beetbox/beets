@@ -86,6 +86,7 @@ class LibModel(dbcore.Model["Library"]):
     def parse_query(
         cls, query: str | Sequence[str] | None = None
     ) -> ModelQuery:
+        """Parse human-readable search and sort syntax for this model."""
         return ModelQuery.parse(cls, query)
 
     @property
