@@ -4,15 +4,15 @@ import sys
 from unittest import mock
 
 from beets import util
-from beets.test.helper import IOMixin, PluginTestCase
+from beets.test.helper import IOMixin, PluginTestHelper
 from beetsplug.fetchart import FetchArtPlugin, FileSystem
 
 
-class FetchartCliTest(IOMixin, PluginTestCase):
+class TestFetchartCli(IOMixin, PluginTestHelper):
     plugin = "fetchart"
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.config["fetchart"]["cover_names"] = "c\xc3\xb6ver.jpg"
         self.config["art_filename"] = "mycover"
         self.album = self.add_album()
