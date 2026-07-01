@@ -252,17 +252,20 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         assert self.file_endswith(converted, "opus")
 
     @pytest.mark.parametrize(
-        "args,no_convert,expected_entry",
+        "args,no_convert,never_convert_lossy,expected_entry",
         [
-            _p((), None, "converted.mp3", id="config-format"),
-            _p(("--format", "opus"), None, "converted.ops", id="cli-format"),
-            _p((), "format:ogg", "converted.ogg", id="not-transcoded"),
-            _p(("--keep-new",), None, "converted.ogg", id="keep-new"),
+            _p((), None, False, "converted.mp3", id="config-format"),
+            _p(("--format", "opus"), None, False, "converted.ops", id="cli-format"),
+            _p((), "format:ogg", False, "converted.ogg", id="not-transcoded"),
+            _p(("--keep-new",), None, False, "converted.ogg", id="keep-new"),
+            _p((), None, True, "converted.ogg", id="never-convert-lossy"),
         ],
     )
-    def test_playlist_entry(self, args, no_convert, expected_entry):
+    def test_playlist_entry(self, args, no_convert, never_convert_lossy, expected_entry):
         if no_convert:
             self.config["convert"]["no_convert"] = no_convert
+        if never_convert_lossy:
+            self.config["convert"]["never_convert_lossy_files"] = True
 
         self.io.addinput("y")
         self.run_convert(*args, "--playlist", "playlist.m3u8")
