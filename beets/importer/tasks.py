@@ -689,7 +689,7 @@ class AlbumImportTask(ImportTask[library.Album, AlbumInfo, AlbumMatch]):
 
     def choose_match(self, session: ImportSession) -> None:
         """Ask the session which match should apply and apply it."""
-        choice = session.choose_match(self)
+        choice = session.choose_album(self)
         self.set_choice(choice)
         session.log_choice(self)
 

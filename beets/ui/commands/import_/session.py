@@ -32,7 +32,7 @@ log = logging.getLogger("beets")
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal."""
 
-    def choose_match(
+    def choose_album(
         self, task: AlbumImportTask
     ) -> AlbumMatch | importer.Action:
         """Given an initial autotagging of items, go through an interactive

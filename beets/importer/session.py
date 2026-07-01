@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 
     from .tasks import (
         AlbumImportTask,
-        ImportTask,
         AnyImportTask,
+        ImportTask,
         SingletonImportTask,
     )
 
@@ -174,7 +174,7 @@ class ImportSession:
     def should_resume(self, path: PathBytes) -> bool:
         raise NotImplementedError
 
-    def choose_match(self, task: AlbumImportTask) -> AlbumMatch | Action:
+    def choose_album(self, task: AlbumImportTask) -> AlbumMatch | Action:
         raise NotImplementedError
 
     def get_duplicate_action(
