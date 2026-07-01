@@ -255,7 +255,13 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         "args,no_convert,never_convert_lossy,expected_entry",
         [
             _p((), None, False, "converted.mp3", id="config-format"),
-            _p(("--format", "opus"), None, False, "converted.ops", id="cli-format"),
+            _p(
+                ("--format", "opus"),
+                None,
+                False,
+                "converted.ops",
+                id="cli-format",
+            ),
             _p((), "format:ogg", False, "converted.ogg", id="not-transcoded"),
             _p(("--keep-new",), None, False, "converted.ogg", id="keep-new"),
             _p((), None, True, "converted.ogg", id="never-convert-lossy"),
