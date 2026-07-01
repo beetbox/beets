@@ -659,7 +659,7 @@ class ImportSessionFixture(ImportSession):
     def clear_choices(self) -> None:
         self._choices = []
 
-    def choose_match(
+    def choose_album(
         self, task: importer.AnyImportTask
     ) -> AlbumMatch | importer.Action:
         try:
@@ -676,7 +676,7 @@ class ImportSessionFixture(ImportSession):
         assert not isinstance(choice, int), f"Invalid choice: {choice}"
         return choice
 
-    choose_item = choose_match  # type: ignore[arg-type, assignment]
+    choose_item = choose_album  # type: ignore[arg-type, assignment]
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
@@ -708,11 +708,11 @@ class TerminalImportSessionFixture(TerminalImportSession):
             self.io.addinput(self._duplicate_actions.pop(0).value)
         return super()._get_duplicate_action_from_user(task, found_duplicates)
 
-    def choose_match(
+    def choose_album(
         self, task: importer.AlbumImportTask
     ) -> AlbumMatch | importer.Action:
         self._add_choice_input()
-        return super().choose_match(task)
+        return super().choose_album(task)
 
     def choose_item(
         self, task: importer.SingletonImportTask
