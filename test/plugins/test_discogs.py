@@ -1,7 +1,6 @@
 """Tests for discogs plugin."""
 
 from typing import Any
-from unittest.mock import Mock, patch
 
 import pytest
 from discogs_client import Client, Release
@@ -28,7 +27,14 @@ def get_release(data: dict[str, Any]) -> Release:
     return Release(Client("doesn't matter"), data)
 
 
-@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
+@pytest.fixture(autouse=True)
+def _patch_discogs_setup(monkeypatch):
+    """Autouse fixture to patch DiscogsPlugin.setup for each test."""
+    monkeypatch.setattr(
+        "beetsplug.discogs.DiscogsPlugin.setup", lambda *_: None
+    )
+
+
 class TestDGAlbumInfo(TestHelper):
     def _make_release(self, tracks=None):
         """Return discogs_client.Release.
@@ -410,7 +416,6 @@ class TestDGAlbumInfo(TestHelper):
         config["discogs"]["strip_disambiguation"] = True
 
 
-@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 class TestDGSearchQuery(TestHelper):
     def test_default_search_filters_without_extra_tags(self):
         """Discogs search uses only the type filter when no extra_tags are set."""
@@ -568,7 +573,6 @@ class TestAnv:
         self._assert_fields(album_info, expected_album_fields)
 
 
-@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_anv_album_artist():
     """Test using artist name variations when the album artist
     is the same as the track artist, but only the track artist
@@ -603,7 +607,6 @@ def test_anv_album_artist():
     assert r.tracks[0].artists_credit == ["ARTIST"]
 
 
-@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_parse_featured_artists():
     """Tests the plugins ability to parse a featured artist.
     Ignores artists that are not listed as featured."""
@@ -641,7 +644,6 @@ def test_parse_featured_artists():
     assert t.composers == ["RANDOM"]
 
 
-@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_parse_extraartist_roles():
     plugin = DiscogsPlugin()
     artistinfo = ArtistState.from_config(plugin.config, [_artist("ARTIST")])
@@ -692,7 +694,6 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     assert result == (expected_media, expected_albumtype)
 
 
-@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 def test_va_buildartistinfo():
     config["va_name"] = "VARIOUS ARTISTS"
     expected_info = {
