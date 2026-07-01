@@ -10,6 +10,8 @@ from beets.library import Item
 from beets.test.helper import TestHelper
 from beetsplug.discogs import ArtistState, DiscogsPlugin
 
+_p = pytest.param
+
 
 def _artist(name: str, **kwargs):
     return {
@@ -35,7 +37,7 @@ def _patch_discogs_setup(monkeypatch):
     )
 
 
-class TestDGAlbumInfo(TestHelper):
+class DiscogsTestMixin:
     def _make_release(self, tracks=None):
         """Return discogs_client.Release.
 
@@ -80,6 +82,8 @@ class TestDGAlbumInfo(TestHelper):
         ]
         return self._make_release(tracks)
 
+
+class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
     def test_parse_media_for_tracks(self):
         tracks = [
             self._make_track("TITLE ONE", "1", "01:01"),
@@ -163,88 +167,6 @@ class TestDGAlbumInfo(TestHelper):
         assert t[3].medium_index == 1
         assert t[3].index == 4
         assert t[3].medium_total == 1
-
-    def test_parse_tracklist_without_sides(self):
-        """Test standard Discogs position 12.2.9#1: "without sides"."""
-        release = self._make_release_from_positions(["1", "2", "3"])
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 1
-        assert len(d.tracks) == 3
-
-    def test_parse_tracklist_with_sides(self):
-        """Test standard Discogs position 12.2.9#2: "with sides"."""
-        release = self._make_release_from_positions(["A1", "A2", "B1", "B2"])
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 1  # 2 sides = 1 LP
-        assert len(d.tracks) == 4
-
-    def test_parse_tracklist_multiple_lp(self):
-        """Test standard Discogs position 12.2.9#3: "multiple LP"."""
-        release = self._make_release_from_positions(["A1", "A2", "B1", "C1"])
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 2  # 3 sides = 1 LP + 1 LP
-        assert len(d.tracks) == 4
-
-    def test_parse_tracklist_multiple_cd(self):
-        """Test standard Discogs position 12.2.9#4: "multiple CDs"."""
-        release = self._make_release_from_positions(
-            ["1-1", "1-2", "2-1", "3-1"]
-        )
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 3
-        assert len(d.tracks) == 4
-
-    def test_parse_tracklist_non_standard(self):
-        """Test non standard Discogs position."""
-        release = self._make_release_from_positions(["I", "II", "III", "IV"])
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 1
-        assert len(d.tracks) == 4
-
-    def test_parse_tracklist_subtracks_dot(self):
-        """Test standard Discogs position 12.2.9#5: "sub tracks, dots"."""
-        release = self._make_release_from_positions(["1", "2.1", "2.2", "3"])
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 1
-        assert len(d.tracks) == 3
-
-        release = self._make_release_from_positions(
-            ["A1", "A2.1", "A2.2", "A3"]
-        )
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 1
-        assert len(d.tracks) == 3
-
-    def test_parse_tracklist_subtracks_letter(self):
-        """Test standard Discogs position 12.2.9#5: "sub tracks, letter"."""
-        release = self._make_release_from_positions(["A1", "A2a", "A2b", "A3"])
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 1
-        assert len(d.tracks) == 3
-
-        release = self._make_release_from_positions(
-            ["A1", "A2.a", "A2.b", "A3"]
-        )
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 1
-        assert len(d.tracks) == 3
-
-    def test_parse_tracklist_subtracks_extra_material(self):
-        """Test standard Discogs position 12.2.9#6: "extra material"."""
-        release = self._make_release_from_positions(["1", "2", "Video 1"])
-        d = DiscogsPlugin().get_album_info(release)
-
-        assert d.mediums == 2
-        assert len(d.tracks) == 3
 
     def test_parse_tracklist_subtracks_indices(self):
         """Test parsing of subtracks that include index tracks."""
@@ -414,6 +336,36 @@ class TestDGAlbumInfo(TestHelper):
         assert d.tracks[0].artists == ["TEST ARTIST (5)"]
         assert d.label == "LABEL NAME (5)"
         config["discogs"]["strip_disambiguation"] = True
+
+
+class TestTracklist(DiscogsTestMixin):
+    @pytest.fixture
+    def plugin(self):
+        return DiscogsPlugin()
+
+    @pytest.mark.parametrize(
+        "positions,expected_mediums,expected_tracks",
+        [
+            _p(["1", "2", "3"], 1, 3, id="without-sides"),
+            _p(["A1", "A2", "B1", "B2"], 1, 4, id="with-sides"),
+            _p(["A1", "A2", "B1", "C1"], 2, 4, id="multiple-lp"),
+            _p(["1-1", "1-2", "2-1", "3-1"], 3, 4, id="multiple-cd"),
+            _p(["I", "II", "III", "IV"], 1, 4, id="non-standard"),
+            _p(["1", "2.1", "2.2", "3"], 1, 3, id="subtracks-dot"),
+            _p(["A1", "A2.1", "A2.2", "A3"], 1, 3, id="subtracks-dot-with-sides"),
+            _p(["A1", "A2a", "A2b", "A3"], 1, 3, id="subtracks-letter"),
+            _p(["A1", "A2.a", "A2.b", "A3"], 1, 3, id="subtracks-letter-with-dot"),
+            _p(["1", "2", "Video 1"], 2, 3, id="subtracks-extra-material"),
+        ],
+    )  # fmt: skip
+    def test_parse_tracklist_positions(
+        self, plugin, positions, expected_mediums, expected_tracks
+    ):
+        release = self._make_release_from_positions(positions)
+        d = plugin.get_album_info(release)
+
+        assert d.mediums == expected_mediums
+        assert len(d.tracks) == expected_tracks
 
 
 class TestDGSearchQuery(TestHelper):
