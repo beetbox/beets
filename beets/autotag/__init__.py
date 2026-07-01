@@ -10,14 +10,13 @@ from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
 from .distance import Distance, distance, string_dist, track_distance
 from .hooks import AlbumInfo, Info, TrackInfo, correct_list_fields
 from .match import (
+    AlbumCandidates,
     AlbumMatch,
     Match,
-    Proposal,
     Recommendation,
+    TrackCandidates,
     TrackMatch,
     assign_items,
-    tag_album,
-    tag_item,
 )
 from .source import Source
 
@@ -33,21 +32,20 @@ def __getattr__(name: str):
 
 
 __all__ = [
+    "AlbumCandidates",
     "AlbumInfo",
     "AlbumMatch",
     "Distance",
     "Info",
     "Match",
-    "Proposal",
     "Recommendation",
     "Source",
+    "TrackCandidates",
     "TrackInfo",
     "TrackMatch",
     "assign_items",
     "correct_list_fields",
     "distance",
     "string_dist",
-    "tag_album",
-    "tag_item",
     "track_distance",
 ]
