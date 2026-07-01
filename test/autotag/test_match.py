@@ -4,12 +4,12 @@ import pytest
 
 from beets import metadata_plugins
 from beets.autotag import (
+    AlbumCandidates,
     AlbumInfo,
     Source,
+    TrackCandidates,
     TrackInfo,
     assign_items,
-    tag_album,
-    tag_item,
 )
 from beets.library import Item
 
@@ -160,37 +160,39 @@ class TestTagMultipleDataSources:
             lambda: [DeezerPlugin(), DiscogsPlugin()],
         )
 
-    def check_proposal(self, proposal):
-        sources = [
-            candidate.info.data_source for candidate in proposal.candidates
-        ]
+    def check_candidates(self, candidates):
+        sources = [m.info.data_source for m in candidates.matches]
         assert len(sources) == 2
         assert set(sources) == {"Discogs", "Deezer"}
 
     def test_search_album_ids(self, shared_album_id):
         source = Source.from_items([Item()])
 
-        proposal = tag_album(source, search_ids=[shared_album_id])
+        candidates = AlbumCandidates(source)
+        candidates.resolve([shared_album_id])
 
-        self.check_proposal(proposal)
+        self.check_candidates(candidates)
 
     def test_search_album_current_id(self, shared_album_id):
         source = Source.from_items([Item(mb_albumid=shared_album_id)])
 
-        proposal = tag_album(source)
+        candidates = AlbumCandidates(source)
+        candidates.resolve([])
 
-        self.check_proposal(proposal)
+        self.check_candidates(candidates)
 
     def test_search_track_ids(self, shared_track_id):
         source = Source.from_item(Item())
 
-        proposal = tag_item(source, search_ids=[shared_track_id])
+        candidates = TrackCandidates(source)
+        candidates.resolve([shared_track_id])
 
-        self.check_proposal(proposal)
+        self.check_candidates(candidates)
 
     def test_search_track_current_id(self, shared_track_id):
         source = Source.from_item(Item(mb_trackid=shared_track_id))
 
-        proposal = tag_item(source)
+        candidates = TrackCandidates(source)
+        candidates.resolve([])
 
-        self.check_proposal(proposal)
+        self.check_candidates(candidates)

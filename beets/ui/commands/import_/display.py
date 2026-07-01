@@ -108,7 +108,7 @@ class Change:
             ui.print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
         if self.source.name:
-            type_ = self.match.type
+            type_ = self.match.type.capitalize()
             name_l, name_r = self.source.name, self.match.info.name
             if self.source.name != self.match.info.name != VARIOUS_ARTISTS:
                 name_l, name_r = colordiff(name_l, name_r)
