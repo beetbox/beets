@@ -1,16 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
 """Tests for base utils from the beets.util package."""
 
 import os
@@ -19,6 +6,7 @@ import re
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -26,6 +14,9 @@ import pytest
 from beets import util
 from beets.library import Item
 from beets.test import _common
+from beets.test._common import touch
+from beets.test.helper import NEEDS_REFLINK, BeetsTestCase
+from beets.util import syspath
 
 
 class UtilTest(unittest.TestCase):
@@ -252,3 +243,197 @@ class TestPlurality:
         assert consensus["albumartist"]
         assert not consensus["album"]
         assert not consensus["label"]
+
+
+class HelperTest(unittest.TestCase):
+    def test_ancestry_works_on_file(self):
+        p = "/a/b/c"
+        a = ["/", "/a", "/a/b"]
+        assert util.ancestry(p) == a
+
+    def test_ancestry_works_on_dir(self):
+        p = "/a/b/c/"
+        a = ["/", "/a", "/a/b", "/a/b/c"]
+        assert util.ancestry(p) == a
+
+    def test_ancestry_works_on_relative(self):
+        p = "a/b/c"
+        a = ["a", "a/b"]
+        assert util.ancestry(p) == a
+
+    def test_components_works_on_file(self):
+        p = "/a/b/c"
+        a = ["/", "a", "b", "c"]
+        assert util.components(p) == a
+
+    def test_components_works_on_dir(self):
+        p = "/a/b/c/"
+        a = ["/", "a", "b", "c"]
+        assert util.components(p) == a
+
+    def test_components_works_on_relative(self):
+        p = "a/b/c"
+        a = ["a", "b", "c"]
+        assert util.components(p) == a
+
+    def test_forward_slash(self):
+        p = rb"C:\a\b\c"
+        a = rb"C:/a/b/c"
+        assert util.path_as_posix(p) == a
+
+
+class FilePathTestCase(BeetsTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.path = self.temp_dir_path / "testfile"
+        self.path.touch()
+
+
+# Tests that we can "delete" nonexistent files.
+class SoftRemoveTest(FilePathTestCase):
+    def test_soft_remove_deletes_file(self):
+        util.remove(self.path, True)
+        assert not self.path.exists()
+
+    def test_soft_remove_silent_on_no_file(self):
+        try:
+            util.remove(self.path / "XXX", True)
+        except OSError:
+            self.fail("OSError when removing path")
+
+
+class SafeMoveCopyTest(FilePathTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.otherpath = self.temp_dir_path / "testfile2"
+        self.otherpath.touch()
+        self.dest = Path(f"{self.path}.dest")
+
+    def test_successful_move(self):
+        util.move(self.path, self.dest)
+        assert self.dest.exists()
+        assert not self.path.exists()
+
+    def test_successful_copy(self):
+        util.copy(self.path, self.dest)
+        assert self.dest.exists()
+        assert self.path.exists()
+
+    @NEEDS_REFLINK
+    def test_successful_reflink(self):
+        util.reflink(str(self.path), str(self.dest))
+        assert self.dest.exists()
+        assert self.path.exists()
+
+    def test_unsuccessful_move(self):
+        with pytest.raises(util.FilesystemError):
+            util.move(self.path, self.otherpath)
+
+    def test_unsuccessful_copy(self):
+        with pytest.raises(util.FilesystemError):
+            util.copy(self.path, self.otherpath)
+
+    def test_unsuccessful_reflink(self):
+        with pytest.raises(util.FilesystemError, match="target exists"):
+            util.reflink(self.path, self.otherpath)
+
+    def test_self_move(self):
+        util.move(self.path, self.path)
+        assert self.path.exists()
+
+    def test_self_copy(self):
+        util.copy(self.path, self.path)
+        assert self.path.exists()
+
+
+class PruneTest(BeetsTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.base = self.temp_dir_path / "testdir"
+        self.base.mkdir()
+        self.sub = self.base / "subdir"
+        self.sub.mkdir()
+
+    def test_prune_existent_directory(self):
+        util.prune_dirs(self.sub, self.base)
+        assert self.base.exists()
+        assert not self.sub.exists()
+
+    def test_prune_nonexistent_directory(self):
+        util.prune_dirs(self.sub / "another", self.base)
+        assert self.base.exists()
+        assert not self.sub.exists()
+
+
+class WalkTest(BeetsTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.base = os.path.join(self.temp_dir, b"testdir")
+        os.mkdir(syspath(self.base))
+        touch(os.path.join(self.base, b"y"))
+        touch(os.path.join(self.base, b"x"))
+        os.mkdir(syspath(os.path.join(self.base, b"d")))
+        touch(os.path.join(self.base, b"d", b"z"))
+
+    def test_sorted_files(self):
+        res = list(util.sorted_walk(self.base))
+        assert len(res) == 2
+        assert res[0] == (self.base, [b"d"], [b"x", b"y"])
+        assert res[1] == (os.path.join(self.base, b"d"), [], [b"z"])
+
+    def test_ignore_file(self):
+        res = list(util.sorted_walk(self.base, (b"x",)))
+        assert len(res) == 2
+        assert res[0] == (self.base, [b"d"], [b"y"])
+        assert res[1] == (os.path.join(self.base, b"d"), [], [b"z"])
+
+    def test_ignore_directory(self):
+        res = list(util.sorted_walk(self.base, (b"d",)))
+        assert len(res) == 1
+        assert res[0] == (self.base, [], [b"x", b"y"])
+
+    def test_ignore_everything(self):
+        res = list(util.sorted_walk(self.base, (b"*",)))
+        assert len(res) == 1
+        assert res[0] == (self.base, [], [])
+
+
+class UniquePathTest(BeetsTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.base = os.path.join(self.temp_dir, b"testdir")
+        os.mkdir(syspath(self.base))
+        touch(os.path.join(self.base, b"x.mp3"))
+        touch(os.path.join(self.base, b"x.1.mp3"))
+        touch(os.path.join(self.base, b"x.2.mp3"))
+        touch(os.path.join(self.base, b"y.mp3"))
+
+    def test_new_file_unchanged(self):
+        path = util.unique_path(os.path.join(self.base, b"z.mp3"))
+        assert path == os.path.join(self.base, b"z.mp3")
+
+    def test_conflicting_file_appends_1(self):
+        path = util.unique_path(os.path.join(self.base, b"y.mp3"))
+        assert path == os.path.join(self.base, b"y.1.mp3")
+
+    def test_conflicting_file_appends_higher_number(self):
+        path = util.unique_path(os.path.join(self.base, b"x.mp3"))
+        assert path == os.path.join(self.base, b"x.3.mp3")
+
+    def test_conflicting_file_with_number_increases_number(self):
+        path = util.unique_path(os.path.join(self.base, b"x.1.mp3"))
+        assert path == os.path.join(self.base, b"x.3.mp3")
+
+
+class MkDirAllTest(BeetsTestCase):
+    def test_mkdirall(self):
+        child = self.temp_dir_path / "foo" / "bar" / "baz" / "quz.mp3"
+        util.mkdirall(child)
+        assert not child.exists()
+        assert child.parent.exists()
+        assert child.parent.is_dir()

@@ -211,3 +211,15 @@ c9ad80dad2528af67cdb76c35d7ba5e4824b7600
 c070b29e14cd06419e129b76a6d42a82fe51e190
 # Add missing types to importer
 e4baceae1fa03dfd6db9e0bab88ddd2812963ad3
+# Add missing types to beets.util.pipeline
+f0105bef73053098f8755376c88f38cc90d9b23f
+# Rip out util tests from test_files
+b1ae461723316b738f301406198382913207e100
+# Rip out queryparse tests away from test_dbcore
+88202493adb769e667f64a96a3ec0270f46ca60e
+# Define DB fixtures in a shared place
+816cddbfd5d0976a31e9d0788db0944c62ad16db
+# Move test modules under folders that they belong to
+900543baca4cf5fa4dbe52dbe748f98a0371d0ed
+# Move DummyIMBackend to fixtures
+aef9c64cb07c8f828d0dd6e69a5485abf2c43396

@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2020, David Swarbrick.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for image resizing based on filesize."""
 
 import os
@@ -20,24 +6,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from beets.test import _common
+from beets.test.fixtures import DummyIMBackend
 from beets.test.helper import BeetsTestCase, CleanupModulesMixin
 from beets.util import command_output, syspath
 from beets.util.artresizer import IMBackend, PILBackend
-
-
-class DummyIMBackend(IMBackend):
-    """An `IMBackend` which pretends that ImageMagick is available.
-
-    The version is sufficiently recent to support image comparison.
-    """
-
-    def __init__(self):
-        """Init a dummy backend class for mocked ImageMagick tests."""
-        self.version = (7, 0, 0)
-        self.legacy = False
-        self.convert_cmd = ["magick"]
-        self.identify_cmd = ["magick", "identify"]
-        self.compare_cmd = ["magick", "compare"]
 
 
 class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):

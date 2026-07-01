@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 from __future__ import annotations
 
 import os
@@ -28,6 +14,7 @@ from mediafile import MediaFile
 from beets import config, logging
 from beets.exceptions import UserError
 from beets.test import _common
+from beets.test.fixtures import DummyIMBackend
 from beets.test.helper import (
     NEEDS_FFPROBE,
     FetchImageHelper,
@@ -38,7 +25,6 @@ from beets.test.helper import (
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug._utils import art
-from test.test_art_resize import DummyIMBackend
 
 if TYPE_CHECKING:
     from beets.test.helper import ImageRequestMocker

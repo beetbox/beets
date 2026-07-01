@@ -1,16 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
 from __future__ import annotations
 
 import fnmatch
@@ -180,6 +167,21 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
         self.run_convert()
         mediafile = MediaFile(self.converted_mp3)
         assert mediafile.images[0].data == image_data
+
+    def test_copy_album_art_missing_source(self, caplog):
+        # A missing/stale art source should be skipped instead of crashing
+        # the conversion (see #4692).
+        self.config["convert"]["copy_album_art"] = True
+        self.album.artpath = os.path.join(_common.RSRC, b"nonexistent.jpg")
+        self.album.store()
+
+        with caplog.at_level("INFO", logger="beets.convert"):
+            self.run_command("convert", "-a", "--yes")
+
+        assert any(
+            "source file not found" in message for message in caplog.messages
+        )
+        assert self.file_endswith(self.converted_mp3, "mp3")
 
     def test_skip_existing(self):
         converted = self.converted_mp3

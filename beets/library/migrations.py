@@ -261,3 +261,26 @@ class RelativePathMigration(Migration):
     ) -> None:
         for field in {"path", "artpath"} & current_fields:
             self._migrate_field(model_cls, field)
+
+
+class RemoveInheritedArtpathMigration(Migration):
+    """Remove artpath flex attribute erroneously inherited onto items."""
+
+    def _migrate_data(self, model_cls: type[Model], _: set[str]) -> None:
+        table = model_cls._table
+        flex_table = model_cls._flex_table
+
+        with self.db.transaction() as tx:
+            rows = tx.query(
+                f"SELECT entity_id FROM {flex_table} WHERE key == 'artpath'"
+            )
+
+        total = len(rows)
+        if not total:
+            return
+
+        ui.print_(f"Removing inherited artpath from {total} {table}...")
+        with self.db.transaction() as tx:
+            tx.mutate(f"DELETE FROM {flex_table} WHERE key == 'artpath'")
+
+        ui.print_(f"Migration complete: {total} {table} updated")

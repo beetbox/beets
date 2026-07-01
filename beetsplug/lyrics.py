@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Fetches, embeds, and displays lyrics."""
 
 from __future__ import annotations
@@ -31,6 +17,7 @@ from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from confuse import Optional
 from unidecode import unidecode
 
 from beets import plugins, ui
@@ -1052,6 +1039,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 "keep_synced": False,
                 "local": False,
                 "print": False,
+                "rest_directory": None,
                 "synced": False,
                 # Musixmatch and Tekstowo are disabled by default as they
                 # currently block requests with the beets user agent.
@@ -1084,7 +1072,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             "--write-rest",
             dest="rest_directory",
             action="store",
-            default=None,
+            default=self.config["rest_directory"].get(Optional(str)),
             metavar="dir",
             help="write lyrics to given directory as ReST files",
         )
@@ -1122,7 +1110,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             if opts.rest_directory and (
                 items := [i for i in items if i.lyrics]
             ):
-                RestFiles(Path(opts.rest_directory)).write(items)
+                RestFiles(Path(opts.rest_directory).expanduser()).write(items)
 
         cmd.func = func
         return [cmd]

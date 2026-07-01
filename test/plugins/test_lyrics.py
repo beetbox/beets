@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Fabrice Laporte.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the 'lyrics' plugin."""
 
 from __future__ import annotations
@@ -20,6 +6,7 @@ import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
+from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
@@ -27,15 +14,13 @@ import pytest
 import requests
 
 from beets.library import Item
-from beets.test.helper import PluginMixin
+from beets.test.helper import PluginMixin, PluginTestHelper
 from beets.util.lyrics import Lyrics
 from beetsplug import lyrics
 
 from .lyrics_pages import lyrics_pages
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from .lyrics_pages import LyricsPage
 
 PHRASE_BY_TITLE = {
@@ -841,6 +826,49 @@ class TestRestFiles:
             < c.index("Song Three")
             < c.index("Lyrics Three")
         )
+
+
+class TestLyricsRestDirectory(PluginTestHelper):
+    plugin = "lyrics"
+
+    @pytest.fixture
+    def lib(self, helper):
+        return helper.lib
+
+    @pytest.mark.parametrize(
+        "config_path, arg_path, output_path",
+        [
+            pytest.param(
+                "test/config", "test/cmd", "test/cmd", id="config and cmd arg"
+            ),
+            pytest.param("test/config", None, "test/config", id="config only"),
+            pytest.param(None, "test/cmd", "test/cmd", id="cmd arg only"),
+            pytest.param(
+                "~/test/config", None, "~/test/config", id="user home path"
+            ),
+        ],
+    )
+    def test_rest_config(
+        self, monkeypatch, lib, config_path, arg_path, output_path
+    ):
+        test_capture = {}
+
+        class MockRestFiles:
+            def __init__(self, directory):
+                test_capture["directory"] = directory
+
+            def write(self, items):
+                test_capture["items"] = items
+
+        monkeypatch.setattr(lyrics, "RestFiles", MockRestFiles)
+
+        if config_path:
+            self.config["lyrics"]["rest_directory"] = config_path
+
+        cmd_args = [] if arg_path is None else ["-r", arg_path]
+        self.run_command("lyrics", *cmd_args, lib=lib)
+
+        assert test_capture.get("directory") == Path(output_path).expanduser()
 
 
 class TestLyricsSyltProperty:

@@ -12,6 +12,55 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`/plugins/convert`: Add new configuration option ``convert.refresh`` and
+  command-line option ``--refresh``, allowing to force ``convert`` operation
+  when original file is newer than existing converted file.
+- :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
+  specifying a reStructuredText output directory, semantically equivalent to
+  ``-r, --write-rest``. :bug:`2806`
+- A database backup is now automatically created before running schema
+  migrations. Control with the ``create_backup_before_migrations`` option
+  (default: yes).
+- :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
+  ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
+  :doc:`plugins/fetchart` plugin can retrieve.
+
+Bug fixes
+~~~~~~~~~
+
+- Album ``store`` no longer copies ``artpath`` onto its items as an absolute
+  path, which broke relative-path portability. A database migration removes any
+  such stale ``artpath`` attributes left on items by earlier versions.
+  :bug:`6756`
+- :doc:`plugins/convert`: ``convert -a`` with ``copy_album_art`` enabled no
+  longer crashes when the stored album art path points to a missing file (for
+  example a multi-disc album whose cover lives in the album root rather than a
+  per-disc directory); the missing art is skipped instead. :bug:`4692`
+- :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`/guides/installation` Add Homebrew to the list of supported package
+  managers in the installation guide.
+- :doc:`contributing`: The project now uses ``uv`` for packaging, virtual
+  environment, and dependency management, replacing ``poetry``. The build
+  backend has changed from ``poetry-core`` to ``hatchling``. Please see updates
+  in :ref:`development-tools` and :ref:`getting-the-source` for more
+  information. :bug:`5783`
+- :doc:`guides/installation`: Switch isolated tool installation guidance and
+  GitHub workflow setup to ``uv tool`` commands.
+
+2.12.0 (June 22, 2026)
+----------------------
+
+New features
+~~~~~~~~~~~~
+
 - :doc:`plugins/convert`: The ``--force`` and ``--keep-new`` CLI flags are now
   also available as config options via ``force`` and ``keep_new``.
 - :ref:`import-cmd`: The ``--nomove`` / ``-M`` CLI flag can now be used to
@@ -194,10 +243,6 @@ Bug fixes
   ``import.quiet: yes`` config) during import so the corrupt-file prompt is
   suppressed in non-interactive imports. :bug:`4736`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
-
 Other changes
 ~~~~~~~~~~~~~
 
@@ -267,10 +312,6 @@ For plugin developers
   ``url_relations``. The API responses are also now fully typed with concrete
   ``TypedDict`` models for releases, recordings, works, and relations. Update
   direct access to raw MusicBrainz response keys if needed.
-
-..
-    Other changes
-    ~~~~~~~~~~~~~
 
 2.9.0 (April 11, 2026)
 ----------------------

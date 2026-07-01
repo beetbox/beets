@@ -29,11 +29,12 @@ if TYPE_CHECKING:
 
     from .api_types import (
         AlbumAttributes,
+        MediaAttributes,
         ResourceIdentifier,
         TidalAlbum,
         TidalArtist,
+        TidalArtwork,
         TidalTrack,
-        TrackAttributes,
     )
 
 
@@ -78,7 +79,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-    def require_authentication(self):
+    def require_authentication(self) -> None:
         if not os.path.isfile(self._tokenfile()):
             raise UserError(
                 "Please login to TIDAL"
@@ -295,7 +296,7 @@ class TidalPlugin(MetadataSourcePlugin):
         albums_doc = self.api.get_albums(
             ids=list(filter(None, _ids)),
             barcode_ids=barcode_ids,
-            include=["items.artists", "artists"],
+            include=["items.artists", "artists", "coverArt"],
         )
         album_by_id: dict[str, TidalAlbum] = {
             item["id"]: item
@@ -312,11 +313,19 @@ class TidalPlugin(MetadataSourcePlugin):
             for item in albums_doc.get("included", [])
             if item["type"] == "artists"
         }
+        artwork_by_id: dict[str, TidalArtwork] = {
+            item["id"]: item
+            for item in albums_doc.get("included", [])
+            if item["type"] == "artworks"
+        }
 
         for _id in _ids:
             if _id is not None and (album := album_by_id.get(_id)):
                 yield self._get_album_info(
-                    album, track_by_id=track_by_id, artist_by_id=artist_by_id
+                    album,
+                    track_by_id=track_by_id,
+                    artist_by_id=artist_by_id,
+                    artwork_by_id=artwork_by_id,
                 )
             else:
                 yield None
@@ -332,6 +341,7 @@ class TidalPlugin(MetadataSourcePlugin):
                         album,
                         track_by_id=track_by_id,
                         artist_by_id=artist_by_id,
+                        artwork_by_id=artwork_by_id,
                     )
                 else:
                     yield None
@@ -341,8 +351,8 @@ class TidalPlugin(MetadataSourcePlugin):
         album: TidalAlbum,
         track_by_id: dict[str, TidalTrack],
         artist_by_id: dict[str, TidalArtist],
+        artwork_by_id: dict[str, TidalArtwork],
     ) -> AlbumInfo:
-
         track_infos: list[TrackInfo] = []
         for i, track_rel in enumerate(
             album["relationships"]["items"]["data"], start=1
@@ -363,13 +373,14 @@ class TidalPlugin(MetadataSourcePlugin):
             artists_ids=artist_ids,
             data_url=self._parse_data_url(album["attributes"]),
             barcode=album["attributes"]["barcodeId"],
+            cover_art_url=self._parse_artwork_url(album, artwork_by_id),
             # Meta
             album=self._parse_title(album["attributes"]),
             tracks=track_infos,
             artist=", ".join(artist_names),
             artists=artist_names,
             duration=self._duration_to_seconds(album["attributes"]["duration"]),
-            albumtype=album["attributes"]["albumType"],
+            albumtypes=[album["attributes"]["albumType"].lower()],
             label=self._parse_label(album["attributes"]),
             year=date_parts[0] if date_parts else None,
             month=date_parts[1] if date_parts else None,
@@ -380,6 +391,22 @@ class TidalPlugin(MetadataSourcePlugin):
             tidal_album_popularity=self._parse_popularity(album["attributes"]),
             tidal_updated=time.time(),
         )
+
+    @staticmethod
+    def _parse_artwork_url(
+        album: TidalAlbum, artwork_by_id: dict[str, TidalArtwork]
+    ) -> str | None:
+        cover_rel = album["relationships"].get("coverArt")
+        if cover_rel is None:
+            return None
+        for rel_data in cover_rel["data"]:
+            if (
+                rel_data["type"] == "artworks"
+                and (artwork := artwork_by_id.get(rel_data["id"]))
+                and (files := artwork["attributes"]["files"])
+            ):
+                return files[0]["href"]
+        return None
 
     def _get_track_info(
         self, track: TidalTrack, artist_by_id: dict[str, TidalArtist]
@@ -432,7 +459,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return artist_names, artist_ids
 
     @staticmethod
-    def _parse_title(attributes: AlbumAttributes | TrackAttributes):
+    def _parse_title(attributes: MediaAttributes) -> str:
         """
         Tidal UIs append the version string at the end of the title. We do the same here
         by formatting it as ``"{title} ({version})"`` to stay consistent.
@@ -442,9 +469,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return attributes["title"]
 
     @staticmethod
-    def _parse_data_url(
-        attributes: AlbumAttributes | TrackAttributes,
-    ) -> str | None:
+    def _parse_data_url(attributes: MediaAttributes) -> str | None:
         if external_links := attributes.get("externalLinks"):
             return external_links[0].get("href")
         return None
@@ -460,9 +485,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return parts["seconds"] + parts["minutes"] * 60 + parts["hours"] * 3600
 
     @staticmethod
-    def _parse_label(
-        attributes: AlbumAttributes | TrackAttributes,
-    ) -> str | None:
+    def _parse_label(attributes: MediaAttributes) -> str | None:
         if copyright_ := attributes.get("copyright"):
             return copyright_["text"]
         return None
@@ -482,7 +505,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return None
 
     @staticmethod
-    def _parse_popularity(attributes: AlbumAttributes | TrackAttributes) -> int:
+    def _parse_popularity(attributes: MediaAttributes) -> int:
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
@@ -569,7 +592,9 @@ class TidalPlugin(MetadataSourcePlugin):
             default=False,
         )
 
-        def auth_func(lib: Library, opts: optparse.Values, args: list[str]):
+        def auth_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             if opts.auth:
                 self.api.ui_authenticate_flow()
             else:
@@ -607,7 +632,9 @@ class TidalPlugin(MetadataSourcePlugin):
             "Usage: beet tidalsync <query> [options]"
         )
 
-        def sync_func(lib: Library, opts: optparse.Values, args: list[str]):
+        def sync_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             query = ["data_source:tidal", *args]
 
             if opts.album:

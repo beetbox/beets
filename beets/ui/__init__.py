@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """This module contains all of the core logic for beets' command-line
 interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
@@ -56,13 +42,6 @@ if sys.platform == "win32":
 
 
 log = logging.getLogger("beets")
-if not log.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(
-        logging.LegacyFormatter("%(legacy_prefix)s%(message)s")
-    )
-    log.addHandler(handler)
-log.propagate = False  # Don't propagate to root handler.
 
 
 # Encoding utilities.
@@ -767,14 +746,11 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 # The main entry point and bootstrapping.
 
 
-def _setup(
-    options: optparse.Values,
-) -> tuple[list[Subcommand], library.Library]:
+def _setup() -> tuple[list[Subcommand], library.Library]:
     """Prepare and global state and updates it with command line options.
 
     Returns a list of subcommands, a list of plugins, and a library instance.
     """
-    config = _configure(options)
 
     plugins.load_plugins()
 
@@ -788,43 +764,6 @@ def _setup(
     plugins.send("library_opened", lib=lib)
 
     return subcommands, lib
-
-
-def _configure(options):
-    """Amend the global configuration object with command line options."""
-    # Add any additional config files specified with --config. This
-    # special handling lets specified plugins get loaded before we
-    # finish parsing the command line.
-    if getattr(options, "config", None) is not None:
-        overlay_path = options.config
-        del options.config
-        config.set_file(overlay_path)
-    else:
-        overlay_path = None
-    config.set_args(options)
-
-    # Configure the logger.
-    if config["verbose"].get(int):
-        log.set_global_level(logging.DEBUG)
-    else:
-        log.set_global_level(logging.INFO)
-
-    if overlay_path:
-        log.debug(
-            "overlaying configuration: {}", util.displayable_path(overlay_path)
-        )
-
-    config_path = config.user_config_path()
-    if os.path.isfile(config_path):
-        log.debug("user configuration: {}", util.displayable_path(config_path))
-    else:
-        log.debug(
-            "no user configuration found at {}",
-            util.displayable_path(config_path),
-        )
-
-    log.debug("data directory: {}", util.displayable_path(config.config_dir()))
-    return config
 
 
 def _ensure_db_directory_exists(path):
@@ -929,9 +868,11 @@ def _raw_main(args: list[str] | None) -> None:
 
     options, subargs = parser.parse_global_options(args)
 
-    # Special case for the `config --edit` command: bypass _setup so
-    # that an invalid configuration does not prevent the editor from
-    # starting.
+    # Defer config errors such that logging is available early for error reporting
+    # also allows `config --edit` command to bypass on config errors
+    deferred_error = _bootstrap_config(options)
+    _bootstrap_logging()
+
     if (
         subargs
         and subargs[0] == "config"
@@ -941,7 +882,18 @@ def _raw_main(args: list[str] | None) -> None:
 
         return config_edit(options)
 
-    subcommands, lib = _setup(options)
+    if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
+        raise UserError(
+            "beets is unable to use the Microsoft Store version of "
+            "Python. Please install Python from https://python.org.\n"
+            "More details can be found here "
+            "https://beets.readthedocs.io/en/stable/guides/main.html"
+        )
+
+    if deferred_error:
+        raise deferred_error
+
+    subcommands, lib = _setup()
     parser.add_subcommand(*subcommands)
 
     subcommand, suboptions, subargs = parser.parse_subcommand(subargs)
@@ -952,18 +904,57 @@ def _raw_main(args: list[str] | None) -> None:
     return None
 
 
+def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
+    """Apply CLI to config, return error as value if any."""
+
+    deferred_error: confuse.ConfigError | None = None
+    try:
+        # Explicit read() so we own error handling (a broken user config file would
+        # otherwise surface on the first implicit config access e.g. config["verbose"].
+        # It also ensures confuse's source list is populated before set_file() adds the
+        #  --config overlay.
+        config.read()
+        if overlay_path := getattr(options, "config", None):
+            config.set_file(overlay_path)
+    except confuse.ConfigError as e:
+        deferred_error = e
+        # Ensure defaults are loaded even when user config is broken,
+        # so that logging and other subsystems can read basic settings.
+        config.read(user=False, defaults=True)
+
+    # Even if the earlier config loading fails we seperatly try to set the
+    # cli options
+    try:
+        config.set_args(options)
+    except confuse.ConfigError as e:
+        deferred_error = e
+
+    return deferred_error
+
+
+def _bootstrap_logging() -> None:
+    if not log.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(
+            logging.LegacyFormatter("%(legacy_prefix)s%(message)s")
+        )
+        log.addHandler(handler)
+
+    # Verbosity level set via cli --verbose.
+    if config["verbose"].get(int):
+        log.set_global_level(logging.DEBUG)
+    else:
+        log.set_global_level(logging.INFO)
+
+    # List configuration sources for user convenience.
+    config.log_sources(log)
+    log.debug("data directory: {}", util.displayable_path(config.config_dir()))
+
+
 def main(args: list[str] | None = None) -> None:
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
-    if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
-        log.error(
-            "error: beets is unable to use the Microsoft Store version of "
-            "Python. Please install Python from https://python.org.\n"
-            "error: More details can be found here "
-            "https://beets.readthedocs.io/en/stable/guides/main.html"
-        )
-        sys.exit(1)
     try:
         _raw_main(args)
     except UserError as exc:
