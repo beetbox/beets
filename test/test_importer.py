@@ -1430,10 +1430,12 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
         # With the option off, no track-level resolution happens.
         assert len(self.lib.items()) == 3
 
-    def test_singleton_match_leaves_new_track_as_own_album(self):
-        # Incoming album has tracks 1, 2 and 3. Track 1 matches an album
-        # member (album X); track 2 matches a singleton. Track 3 is new. The
-        # mixed matches must prevent folding, so track 3 becomes its own album.
+    def test_singleton_match_still_folds_into_album(self):
+        # snejus's scenario: incoming album has tracks 1, 2 and 3. Track 1
+        # matches an album member (album X); track 2 matches a singleton;
+        # track 3 is new. The singleton match is skipped individually but does
+        # not prevent folding: track 3 (the intended outcome for "C") is folded
+        # into album X, the album the matched album member belongs to.
         self.prepare_album_for_import(3)
         member = self.add_album_member_fixture(
             artist="Tag Artist", title="Tag Track 1"
@@ -1443,12 +1445,15 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
 
         self._import(action="skip")
 
-        # Track 3 is imported into a brand-new album, not folded into X.
+        # No new album is created; track 3 joins album X.
+        assert len(self.lib.albums()) == 1
         new_track = self.lib.items("title:'Tag Track 3'").get()
         assert new_track is not None
-        assert new_track.album_id != album_x.id
-        new_album = self.lib.get_album(new_track.album_id)
-        assert {i.title for i in new_album.items()} == {"Tag Track 3"}
+        assert new_track.album_id == album_x.id
+        assert {i.title for i in album_x.items()} == {
+            "Tag Track 1",
+            "Tag Track 3",
+        }
 
     def test_within_run_dedup_sequential(self):
         # Two identical albums imported in one (sequential) run: the second

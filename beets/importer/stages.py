@@ -189,16 +189,20 @@ def group_albums(session: ImportSession) -> StageCoro:
         # Only some tracks were duplicates; we have already dropped them, so
         # don't let the album-level check skip the rest.
         task.duplicate_tracks_resolved = True
-        # Fold the remaining new tracks into the existing album only when
-        # every matched duplicate belongs to that same album. A singleton
-        # match (``album_id`` is ``None``) means the duplicates do not all
-        # belong to one album, so the new tracks are imported as their own.
+        # Fold the remaining new tracks into the existing album the matched
+        # duplicates belong to. Tracks matching a *singleton* are skipped
+        # individually but do not affect the fold target (their ``album_id``
+        # is ``None``), so a mix of album-member and singleton matches still
+        # completes the album. Only when the matched album members span more
+        # than one album -- or none of the matches belong to an album at all
+        # -- are the new tracks imported as their own album.
         album_ids = {
             match.album_id
             for matches in duplicates.values()
             for match in matches
+            if match.album_id is not None
         }
-        if len(album_ids) == 1 and None not in album_ids:
+        if len(album_ids) == 1:
             task.fold_into_album_id = album_ids.pop()
         else:
             log.warning(

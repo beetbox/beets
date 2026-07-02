@@ -888,8 +888,11 @@ How to resolve individual album tracks that already exist in the library when
 - ``skip`` drops the duplicate tracks and adds the remaining *new* tracks to the
   existing album they belong to, instead of importing them as a separate album.
   Use this to complete a partially-imported album. If every track is already
-  present, the whole album is skipped. (If the matching tracks do not all belong
-  to a single album, the new tracks are imported as their own album.)
+  present, the whole album is skipped. A track matching an existing *singleton*
+  is skipped individually but does not affect where the new tracks go, so a mix
+  of album-member and singleton matches still completes the album. The new
+  tracks are imported as their own album only when the matched album members
+  span more than one album, or when none of the matches belong to an album.
 - ``remove`` removes the matching old items from the library before importing.
 - ``keep`` (and ``merge``) import the album unchanged.
 - ``ask`` prompts you to choose one of the above.
