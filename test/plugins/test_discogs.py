@@ -384,6 +384,33 @@ class TestTracklist(DiscogsTestMixin):
         assert album.mediums == expected_mediums
         assert [(t.title, t.disctitle) for t in album.tracks] == expected_tracks
 
+    def test_parse_tracklist_inherited_artists(self, plugin):
+        """Verify grouped tracks combine explicit and inherited artist credits.
+
+        This covers releases where a track group provides the default artist for
+        sub-tracks that do not declare one themselves.
+
+        Note: this is based on the following release:
+        https://www.discogs.com/release/3647530
+        """
+        track_artist = "TRACK ARTIST"
+        group_artist = "GROUP ARTIST"
+        tracks = [
+            _track(
+                "TRACK GROUP TITLE",
+                artists=[_artist(group_artist)],
+                sub_tracks=[
+                    _track("TRACK ONE", "2", artists=[_artist(track_artist)]),
+                    _track("SUBTITLE TWO", "3"),
+                ],
+            )
+        ]
+        release = self._make_release(tracks)
+        album = plugin.get_album_info(release)
+
+        assert album.mediums == 1
+        assert {t.artist for t in album.tracks} == {track_artist, group_artist}
+
 
 class TestDGSearchQuery(TestHelper):
     def test_default_search_filters_without_extra_tags(self):
