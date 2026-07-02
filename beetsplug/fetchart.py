@@ -1439,6 +1439,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         except UnknownPairError as e:
             raise UserError(e)
 
+    @cached_property
+    def fetch_for_asis(self) -> bool:
+        return self.config["fetch_for_asis"].get(bool)
+
     @staticmethod
     def _is_source_file_removal_enabled() -> bool:
         return config["import"]["delete"].get(bool) or config["import"][
@@ -1467,7 +1471,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             if task.choice_flag == importer.Action.ASIS:
                 # For as-is imports, don't search Web sources for art,
                 # unless fetch_for_asis is set
-                local = not self.config["fetch_for_asis"]
+                local = not self.fetch_for_asis
             elif task.choice_flag in (
                 importer.Action.APPLY,
                 importer.Action.RETAG,

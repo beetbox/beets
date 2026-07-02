@@ -1,11 +1,66 @@
 import ctypes
 import os
 import sys
+from typing import Any, ClassVar
 from unittest import mock
 
-from beets import util
-from beets.test.helper import IOMixin, PluginTestHelper
-from beetsplug.fetchart import FetchArtPlugin, FileSystem
+from beets import importer, util
+from beets.test.helper import (
+    AutotagImportHelper,
+    IOMixin,
+    PluginMixin,
+    PluginTestHelper,
+)
+from beetsplug.fetchart import CoverArtArchive, FetchArtPlugin, FileSystem
+
+
+class TestFetchartImport(PluginMixin, AutotagImportHelper):
+    plugin = "fetchart"
+    preload_plugin = False
+    plugin_defaults: ClassVar[Any] = {"sources": ["filesystem", "coverart"]}
+
+    def setup_beets(self):
+        super().setup_beets()
+
+        self.prepare_album_for_import(1)
+        self.setup_importer()
+
+        self.local_art_patcher = mock.patch.object(
+            FileSystem, "get", autospec=True, return_value=iter(())
+        )
+        self.local_art_mock = self.local_art_patcher.start()
+        self.remote_art_patcher = mock.patch.object(
+            CoverArtArchive, "get", autospec=True, return_value=iter(())
+        )
+        self.remote_art_mock = self.remote_art_patcher.start()
+
+    def teardown_beets(self):
+        super().teardown_beets()
+        self.local_art_patcher.stop()
+        self.remote_art_patcher.stop()
+
+    def test_asis_skips_network_sources(self):
+        self.importer.add_choice(importer.Action.ASIS)
+        with self.configure_plugin(self.plugin_defaults):
+            self.importer.run()
+        self.local_art_mock.assert_called()
+        self.remote_art_mock.assert_not_called()
+
+    def test_apply_uses_network_sources(self):
+        self.importer.add_choice(importer.Action.APPLY)
+        with self.configure_plugin(self.plugin_defaults):
+            self.importer.run()
+        self.local_art_mock.assert_called()
+        self.remote_art_mock.assert_called()
+
+    def test_fetch_for_asis_uses_network_sources(self):
+        self.importer.add_choice(importer.Action.ASIS)
+        with self.configure_plugin(
+            self.plugin_defaults | {"fetch_for_asis": True}
+        ):
+            self.importer.run()
+        self.local_art_mock.assert_called()
+        self.remote_art_mock.assert_called()
 
 
 class TestFetchartCli(IOMixin, PluginTestHelper):
