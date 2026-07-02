@@ -44,13 +44,10 @@ downtempo:
     - down[ -]*beat
 shoegaze:
     - shoegaz(e?r?|ing)
-nu skool breaks:
-    - breaks  # https://www.last.fm/tag/breaks/wiki
 soundtrack:
     - disney
 footwork:
     - (chicago )?footwork( music)?
-    - juke/footwork
 juke:
     - (chicago )?juke( music| house)?
     - juke/footwork
