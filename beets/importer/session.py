@@ -185,11 +185,19 @@ class ImportSession:
     def choose_item(self, task: SingletonImportTask) -> TrackMatch | Action:
         raise NotImplementedError
 
-    def resolve_track_duplicates(self, task: ImportTask, duplicates) -> str:
+    def resolve_track_duplicates(
+        self,
+        task: ImportTask,
+        duplicates: dict[library.Item, list[library.Item]],
+    ) -> DuplicateAction:
         """Decide what to do with album tracks that already exist in the
-        library. Return ``"s"`` (skip the duplicate tracks and fold the
-        remaining new tracks into the existing album), ``"k"`` (keep all) or
-        ``"r"`` (remove the old items).
+        library: :attr:`~DuplicateAction.SKIP` (drop the duplicate tracks and
+        fold the remaining new tracks into the existing album),
+        :attr:`~DuplicateAction.KEEP` (import everything) or
+        :attr:`~DuplicateAction.REMOVE` (remove the old items).
+
+        ``duplicates`` maps each incoming :class:`~beets.library.Item` to the
+        existing library items it duplicates.
         """
         raise NotImplementedError
 
