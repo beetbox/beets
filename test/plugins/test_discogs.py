@@ -275,8 +275,14 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
 
 class TestTracklist(DiscogsTestMixin):
     @pytest.fixture
-    def plugin(self):
-        return DiscogsPlugin()
+    def plugin_config(self):
+        return {}
+
+    @pytest.fixture
+    def plugin(self, plugin_config):
+        plugin = DiscogsPlugin()
+        plugin.config.set(plugin_config)
+        return plugin
 
     @pytest.mark.parametrize(
         "positions,expected_mediums,expected_tracks",
@@ -303,9 +309,10 @@ class TestTracklist(DiscogsTestMixin):
         assert len(d.tracks) == expected_tracks
 
     @pytest.mark.parametrize(
-        "tracks,expected_mediums,expected_tracks",
+        "plugin_config,tracks,expected_mediums,expected_tracks",
         [
             _p(
+                {"index_tracks": False},
                 [
                     _track("MEDIUM TITLE"),
                     _track("TRACK GROUP TITLE"),
@@ -317,6 +324,7 @@ class TestTracklist(DiscogsTestMixin):
                 id="flat-logical-subtracks",
             ),
             _p(
+                {"index_tracks": False},
                 [
                     _track("TITLE ONE", "1"),
                     _track(
@@ -337,6 +345,7 @@ class TestTracklist(DiscogsTestMixin):
                 id="nested-logical-subtracks",
             ),
             _p(
+                {"index_tracks": False},
                 [
                     _track("TITLE ONE", "1"),
                     _track(
@@ -358,6 +367,29 @@ class TestTracklist(DiscogsTestMixin):
                 id="nested-physical-subtracks",
             ),
             _p(
+                {"index_tracks": True},
+                [
+                    _track("TITLE ONE", "1"),
+                    _track(
+                        "TRACK GROUP TITLE",
+                        sub_tracks=[
+                            _track("SUBTITLE ONE", "2", "01:01"),
+                            _track("SUBTITLE TWO", "3", "02:02"),
+                        ],
+                    ),
+                    _track("TITLE FOUR", "4"),
+                ],
+                1,
+                [
+                    ("TITLE ONE", None),
+                    ("TRACK GROUP TITLE: SUBTITLE ONE", None),
+                    ("TRACK GROUP TITLE: SUBTITLE TWO", None),
+                    ("TITLE FOUR", None),
+                ],
+                id="nested-physical-subtracks-with-index-tracks",
+            ),
+            _p(
+                {"index_tracks": False},
                 [
                     _track("MEDIUM TITLE CD1"),
                     _track("TITLE ONE", "1-1"),
