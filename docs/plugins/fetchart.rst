@@ -68,13 +68,16 @@ file. The available options are:
   of the longer edge (``enforce_ratio: 0.5%``). Default: ``no``.
 - **sources**: List of sources to search for images. An asterisk ``*`` expands
   to all available sources. Default: ``filesystem coverart itunes amazon
-  albumart``, i.e., everything but ``wikipedia``, ``google``, ``fanarttv`` and
-  ``lastfm``. Enable those sources for more matches at the cost of some speed.
-  They are searched in the given order, thus in the default config, no remote
-  (Web) art source are queried if local art is found in the filesystem. To use a
-  local image as fallback, move it to the end of the list. For even more
-  fine-grained control over the search order, see the section on
-  :ref:`album-art-sources` below.
+  albumart``, i.e., everything but :ref:`embedded <embedded-art-source>`,
+  ``wikipedia``, ``google``, ``fanarttv`` and ``lastfm``. Enable those sources
+  for more matches at the cost of some speed. They are searched in the given
+  order, thus in the default config, no remote (Web) art source are queried if
+  local art is found in the filesystem. To use a local image as fallback, move
+  it to the end of the list. For even more fine-grained control over the search
+  order, see the section on :ref:`album-art-sources` below.
+- **skip_embedded**: Don't fetch art for files that already have embedded
+  artwork. Enabling both ``skip_embedded`` and the ``embedded`` source
+  effectively cancel each other out. Default: ``no``
 - **google_key**: Your Google API key (to enable the Google Custom Search
   backend). Default: None.
 - **google_engine**: The custom search engine to use. Default: The `beets custom
@@ -216,6 +219,21 @@ refer to the respective MusicBrainz IDs.
 When you choose to apply changes during an import, beets will search for art as
 described above. For "as-is" imports (and non-autotagged imports using the
 ``-A`` flag), beets only looks for art on the local filesystem.
+
+.. _embedded-art-source:
+
+Embedded Art
+~~~~~~~~~~~~
+
+Enable the ``embedded`` source to extract embedded art into the album's
+directory, to the file named by the :ref:`art-filename` config option. Placing
+``embedded`` at the beginning of the ``sources`` list will prevent fetching from
+other art sources if the album's files already have embedded art.
+
+To skip fetching art for files that have embedded art, enable the
+``skip_embedded`` configuration option.
+
+See also: The :doc:`/plugins/embedart` for embedding fetched art into files.
 
 Google custom search
 ~~~~~~~~~~~~~~~~~~~~
