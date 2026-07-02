@@ -47,6 +47,16 @@ def _patch_discogs_setup(monkeypatch):
 
 
 class DiscogsTestMixin:
+    @pytest.fixture
+    def plugin_config(self):
+        return {}
+
+    @pytest.fixture
+    def plugin(self, plugin_config):
+        plugin = DiscogsPlugin()
+        plugin.config.set(plugin_config)
+        return plugin
+
     def _make_release(self, tracks=None):
         """Return discogs_client.Release.
 
@@ -211,40 +221,10 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         assert d.style is None
         assert d.genres == ["GENRE1", "GENRE2"]
 
-    def test_strip_disambiguation(self):
-        """Test removing disambiguation from all disambiguated fields."""
-        data = {
-            "id": 123,
-            "uri": "https://www.discogs.com/release/123456-something",
-            "tracklist": [
-                {
-                    "title": "track",
-                    "position": "A",
-                    "type_": "track",
-                    "duration": "5:44",
-                    "artists": [_artist("TEST ARTIST (5)", id=11146)],
-                }
-            ],
-            "artists": [
-                _artist("ARTIST NAME (2)", id=321, join="&"),
-                _artist("OTHER ARTIST (5)", id=322),
-            ],
-            "title": "title",
-            "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
-        }
-        d = DiscogsPlugin().get_album_info(get_release(data))
-        assert d.artist == "ARTIST NAME & OTHER ARTIST"
-        assert d.artists == ["ARTIST NAME", "OTHER ARTIST"]
-        assert d.artists_ids == ["321", "322"]
-        assert d.tracks[0].artist == "TEST ARTIST"
-        assert d.tracks[0].artists == ["TEST ARTIST"]
-        assert d.tracks[0].artist_id == "11146"
-        assert d.tracks[0].artists_ids == ["11146"]
-        assert d.label == "LABEL NAME"
 
-    def test_strip_disambiguation_false(self):
-        """Test disabling disambiguation removal from all disambiguated fields."""
-        config["discogs"]["strip_disambiguation"] = False
+class TestStripDisambiguation(DiscogsTestMixin):
+    @pytest.fixture
+    def album_info(self, plugin):
         data = {
             "id": 123,
             "uri": "https://www.discogs.com/release/123456-something",
@@ -264,26 +244,31 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
             "title": "title",
             "labels": [{"name": "LABEL NAME (5)", "catno": "catalog number"}],
         }
-        d = DiscogsPlugin().get_album_info(get_release(data))
-        assert d.artist == "ARTIST NAME (2) & OTHER ARTIST (5)"
-        assert d.artists == ["ARTIST NAME (2)", "OTHER ARTIST (5)"]
-        assert d.tracks[0].artist == "TEST ARTIST (5)"
-        assert d.tracks[0].artists == ["TEST ARTIST (5)"]
-        assert d.label == "LABEL NAME (5)"
-        config["discogs"]["strip_disambiguation"] = True
+        return plugin.get_album_info(get_release(data))
+
+    @pytest.mark.parametrize("plugin_config", [{"strip_disambiguation": True}])
+    def test_strip_disambiguation(self, album_info):
+        """Test removing disambiguation from all disambiguated fields."""
+        assert album_info.artist == "ARTIST NAME & OTHER ARTIST"
+        assert album_info.artists == ["ARTIST NAME", "OTHER ARTIST"]
+        assert album_info.artists_ids == ["321", "322"]
+        assert album_info.tracks[0].artist == "TEST ARTIST"
+        assert album_info.tracks[0].artists == ["TEST ARTIST"]
+        assert album_info.tracks[0].artist_id == "11146"
+        assert album_info.tracks[0].artists_ids == ["11146"]
+        assert album_info.label == "LABEL NAME"
+
+    @pytest.mark.parametrize("plugin_config", [{"strip_disambiguation": False}])
+    def test_dont_strip_disambiguation(self, album_info):
+        """Test disabling disambiguation removal from all disambiguated fields."""
+        assert album_info.artist == "ARTIST NAME (2) & OTHER ARTIST (5)"
+        assert album_info.artists == ["ARTIST NAME (2)", "OTHER ARTIST (5)"]
+        assert album_info.tracks[0].artist == "TEST ARTIST (5)"
+        assert album_info.tracks[0].artists == ["TEST ARTIST (5)"]
+        assert album_info.label == "LABEL NAME (5)"
 
 
 class TestTracklist(DiscogsTestMixin):
-    @pytest.fixture
-    def plugin_config(self):
-        return {}
-
-    @pytest.fixture
-    def plugin(self, plugin_config):
-        plugin = DiscogsPlugin()
-        plugin.config.set(plugin_config)
-        return plugin
-
     @pytest.mark.parametrize(
         "positions,expected_mediums,expected_tracks",
         [
