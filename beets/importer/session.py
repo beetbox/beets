@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets import config, logging, plugins, util
 from beets.util import displayable_path, normpath, pipeline, syspath
@@ -46,6 +46,7 @@ class ImportSession:
     _is_resuming: dict[bytes, bool]
     _merged_items: set[PathBytes]
     _merged_dirs: set[PathBytes]
+    _seen_track_keys: set[tuple[Any, ...]]
 
     def __init__(
         self,
@@ -74,6 +75,7 @@ class ImportSession:
         self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
+        self._seen_track_keys = set()
 
         # Normalize the paths.
         self.paths = list(map(normpath, paths or []))
@@ -307,6 +309,25 @@ class ImportSession:
             for path in paths
         }
         self._merged_dirs.update(dirs)
+
+    def track_key_seen(self, key: tuple[Any, ...]) -> bool:
+        """Return whether a per-track duplicate ``key`` was already claimed by
+        an earlier task in this import run (see :ref:`duplicate_track_resolution`).
+
+        This lets the track-level duplicate check catch tracks imported earlier
+        in the *same* run before they reach the database, which matters under
+        the default threaded import where a later task may be checked before an
+        earlier one has been added.
+        """
+        return key in self._seen_track_keys
+
+    def remember_track_key(self, key: tuple[Any, ...]) -> None:
+        """Record a per-track duplicate ``key`` claimed by the current task.
+
+        Only ever called from the single-threaded ``resolve_track_duplicates``
+        pipeline stage, so the shared set needs no locking.
+        """
+        self._seen_track_keys.add(key)
 
     def is_resuming(self, toppath: PathBytes) -> bool:
         """Return `True` if user wants to resume import of this path.
