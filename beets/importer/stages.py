@@ -3,7 +3,7 @@ from __future__ import annotations
 import contextvars
 import itertools
 import logging
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from beets import config, dbcore, plugins
 from beets.util import MoveOperation, displayable_path, pipeline
@@ -152,16 +152,34 @@ def group_albums(session: ImportSession) -> StageCoro:
     if not keys:
         return
 
-    # Map each incoming item to the existing library items it duplicates.
+    def item_key(item: library.Item) -> tuple[Any, ...]:
+        return tuple(item.get(k) for k in keys)
+
+    def has_key(item: library.Item) -> bool:
+        return any(item.get(k) for k in keys)
+
+    def remember(items: Iterable[library.Item]) -> None:
+        # Claim the keys of the tracks this task will import so that later
+        # tasks in the same run recognise them as duplicates before they reach
+        # the database (see ``ImportSession.track_key_seen``).
+        for item in items:
+            if has_key(item):
+                session.remember_track_key(item_key(item))
+
+    # Map each incoming item to the existing library items it duplicates. A
+    # track also counts as a duplicate when its key was already claimed by an
+    # earlier task in this same import run, even if that task has not been
+    # added to the library yet.
     duplicates: dict[library.Item, list[library.Item]] = {}
     for item in task.items:
-        if not any(item.get(k) for k in keys):
+        if not has_key(item):
             continue
         matches = _find_track_duplicates(session.lib, item, keys)
-        if matches:
+        if matches or session.track_key_seen(item_key(item)):
             duplicates[item] = matches
 
     if not duplicates:
+        remember(task.items)
         return
 
     action = _track_duplicate_action()
@@ -215,6 +233,9 @@ def group_albums(session: ImportSession) -> StageCoro:
         task.duplicate_tracks_resolved = True
     # KEEP and MERGE leave the incoming tracks untouched; whole-album
     # duplicates are still handled by the regular resolution stage.
+
+    # Claim the keys of the tracks that remain to be imported.
+    remember(task.items)
 
 
 @pipeline.mutator_stage

@@ -1457,12 +1457,9 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
 
     def test_within_run_dedup_sequential(self):
         # Two identical albums imported in one (sequential) run: the second
-        # album's tracks are caught against the first once it is in the
-        # library, so only two items land overall. In threaded mode (the
-        # default) this guarantee does not hold -- both albums can pass the
-        # check before either is added -- which matches the existing
-        # album-level duplicate behaviour, since both check the library
-        # before ``add()``.
+        # album's tracks are caught against the first, so only two items land
+        # overall. The session's seen-key cache makes this hold regardless of
+        # ordering (see the threaded variant below).
         self.prepare_album_for_import(2, album_id=2)  # a second album dir
         self.setup_importer(
             autotag=False,
@@ -1474,6 +1471,40 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
 
         titles = sorted(i.title for i in self.lib.items())
         assert titles == ["Tag Track 1", "Tag Track 2"]
+
+    def test_seen_key_cache_catches_within_run_duplicate(self):
+        # Deterministically isolate the seen-key cache: drive the stage over
+        # two tasks with *no* DB add() in between (as can happen under a
+        # threaded import, where a later task is checked before an earlier one
+        # is added). The second task's matching track must be caught purely via
+        # the cache, against an empty library.
+        from beets.importer.stages import resolve_track_duplicates
+        from beets.importer.tasks import ImportTask
+        from beets.library import Item
+
+        session = self.setup_importer(
+            autotag=False,
+            duplicate_track_resolution=True,
+            duplicate_action="skip",
+        )
+
+        def make_task(path):
+            item = Item(artist="Tag Artist", title="Tag Track 1")
+            item.path = path
+            return ImportTask(None, [path], [item])
+
+        task1 = make_task(b"/import/a/track.mp3")
+        task2 = make_task(b"/import/b/track.mp3")
+
+        coro = resolve_track_duplicates(session)
+        next(coro)  # prime the coroutine
+        coro.send(task1)  # first occurrence: nothing dropped, key remembered
+        coro.send(task2)  # second occurrence: caught via the cache alone
+
+        assert not task1.skip
+        assert [i.title for i in task1.items] == ["Tag Track 1"]
+        assert task2.skip
+        assert task2.items == []
 
     def test_inherits_duplicate_action_when_unset(self):
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
