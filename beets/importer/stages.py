@@ -165,10 +165,10 @@ def group_albums(session: ImportSession) -> StageCoro:
         return
 
     action = _track_duplicate_action()
-    if action == "a":
+    if action is DuplicateAction.ASK:
         action = session.resolve_track_duplicates(task, duplicates)
 
-    if action == "s":
+    if action is DuplicateAction.SKIP:
         for item in duplicates:
             log.info(
                 colorize("text_warning", "Skipping duplicate track: {}"),
@@ -189,27 +189,28 @@ def group_albums(session: ImportSession) -> StageCoro:
         # Only some tracks were duplicates; we have already dropped them, so
         # don't let the album-level check skip the rest.
         task.duplicate_tracks_resolved = True
-        # Fold the remaining new tracks into the existing album, if the
-        # matched duplicates all belong to a single one.
+        # Fold the remaining new tracks into the existing album only when
+        # every matched duplicate belongs to that same album. A singleton
+        # match (``album_id`` is ``None``) means the duplicates do not all
+        # belong to one album, so the new tracks are imported as their own.
         album_ids = {
             match.album_id
             for matches in duplicates.values()
             for match in matches
-            if match.album_id is not None
         }
-        if len(album_ids) == 1:
+        if len(album_ids) == 1 and None not in album_ids:
             task.fold_into_album_id = album_ids.pop()
         else:
             log.warning(
                 "cannot fold tracks into a single existing album; "
                 "importing them as a new album"
             )
-    elif action == "r":
+    elif action is DuplicateAction.REMOVE:
         for matches in duplicates.values():
             task.duplicate_track_items_to_remove.extend(matches)
         task.duplicate_tracks_resolved = True
-    # "k" (keep) and "m" (merge) leave the incoming tracks untouched; whole
-    # album duplicates are still handled by the regular resolution stage.
+    # KEEP and MERGE leave the incoming tracks untouched; whole-album
+    # duplicates are still handled by the regular resolution stage.
 
 
 @pipeline.mutator_stage
@@ -423,26 +424,20 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
         task.set_fields(session.lib)
 
 
-def _track_duplicate_action() -> str:
-    """Return the single-letter action for per-track duplicate resolution.
+def _track_duplicate_action() -> DuplicateAction:
+    """Return the configured :class:`DuplicateAction` for per-track resolution.
 
     Uses ``import.duplicate_track_action`` when set, otherwise falls back to
     ``import.duplicate_action``.
     """
-    choices = {
-        "skip": "s",
-        "keep": "k",
-        "remove": "r",
-        "merge": "m",
-        "ask": "a",
-    }
     cfg = config["import"]
     view = (
         cfg["duplicate_track_action"]
         if cfg["duplicate_track_action"].get()
         else cfg["duplicate_action"]
     )
-    return view.as_choice(choices)
+    choice = view.as_choice(DuplicateAction.choices())
+    return DuplicateAction(choice)  # type: ignore[call-arg]
 
 
 def _find_track_duplicates(

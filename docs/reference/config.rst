@@ -897,16 +897,16 @@ How to resolve individual album tracks that already exist in the library when
 When left empty, this falls back to :ref:`duplicate_action`.
 
 A typical configuration for completing partially-imported albums while
-autotagging looks like this:
+autotagging looks like this (values other than the defaults are commented):
 
-::
+.. code-block:: yaml
 
     import:
-        duplicate_track_resolution: yes
-        duplicate_action: ask          # whole-album duplicates
-        duplicate_track_action: skip   # per-track duplicates: fold new tracks into the existing album
+        duplicate_track_resolution: yes  # default: no
+        duplicate_action: ask            # default: ask -- whole-album duplicates
+        duplicate_track_action: skip     # default: '' -- per-track duplicates; fold new tracks into the existing album
         duplicate_keys:
-            item: mb_trackid           # match on a stable id (recommended when autotagging)
+            item: mb_trackid             # default: artist title -- match on a stable id (recommended when autotagging)
 
 Default: empty (inherit :ref:`duplicate_action`).
 
