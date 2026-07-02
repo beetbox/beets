@@ -875,6 +875,12 @@ part of another album.
     ``mb_trackid`` (via :ref:`duplicate_keys` ``item``); ``artist`` and
     ``title`` may not yet agree with what is in your library.
 
+    Matching on ``mb_trackid`` only works for files that actually carry that
+    tag: a track missing it is not compared at all and will import as a
+    duplicate. If your files are reliably tagged with ``artist`` and ``title``
+    but not always with MusicBrainz IDs, the default ``item: artist title``
+    catches more duplicates.
+
 Default: ``no``.
 
 .. _duplicate_track_action:
@@ -910,6 +916,19 @@ autotagging looks like this (values other than the defaults are commented):
         duplicate_track_action: skip     # default: '' -- per-track duplicates; fold new tracks into the existing album
         duplicate_keys:
             item: mb_trackid             # default: artist title -- match on a stable id (recommended when autotagging)
+
+If some of your files are missing ``mb_trackid`` but are otherwise correctly
+tagged, keep the default ``item`` keys instead, so tracks are matched on their
+names rather than an ID that may be absent:
+
+.. code-block:: yaml
+
+    import:
+        duplicate_track_resolution: yes
+        duplicate_track_action: skip
+        duplicate_keys:
+            album: albumartist album  # default
+            item: artist title        # default
 
 Default: empty (inherit :ref:`duplicate_action`).
 
