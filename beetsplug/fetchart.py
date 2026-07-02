@@ -21,6 +21,7 @@ from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 from beets.util.color import colorize
 from beets.util.config import UnknownPairError, sanitize_pairs
+from beetsplug._utils import art
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -771,11 +772,11 @@ class FanartTV(RemoteArtSource):
 
         matches = []
         # can there be more than one releasegroupid per response?
-        for mbid, art in data.get("albums", {}).items():
+        for mbid, images in data.get("albums", {}).items():
             # there might be more art referenced, e.g. cdart, and an albumcover
             # might not be present, even if the request was successful
-            if album.mb_releasegroupid == mbid and "albumcover" in art:
-                matches.extend(art["albumcover"])
+            if album.mb_releasegroupid == mbid and "albumcover" in images:
+                matches.extend(images["albumcover"])
             # can this actually occur?
             else:
                 self._log.debug(
@@ -1285,9 +1286,49 @@ class CoverArtUrl(RemoteArtSource):
             return
 
 
+class Embedded(LocalArtSource):
+    NAME = "Embedded"
+    ID = "embedded"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+    def cleanup(self, candidate: Candidate) -> None:
+        if candidate.path:
+            try:
+                util.remove(path=candidate.path)
+            except util.FilesystemError as exc:
+                self._log.debug("error cleaning up tmp art: {}", exc)
+
+    def get(
+        self,
+        album: Album,
+        plugin: FetchArtPlugin,
+        paths: None | Sequence[bytes],
+    ) -> Iterator[Candidate]:
+        filename = get_temp_filename(__name__)
+        for item in album.items():
+            if extracted_path := art.extract(self._log, filename, item):
+                yield self._candidate(
+                    path=extracted_path, match=MetadataMatch.EXACT
+                )
+                break
+        else:
+            self._log.debug("embedded: art not found for {}", album)
+
+        try:
+            # Always remove tempfile because art.extract will have created a new
+            # file with the same basename but correct file extension added
+            util.remove(path=filename)
+        except util.FilesystemError as exc:
+            self._log.debug("error cleaning up tempfile: {}", exc)
+        return
+
+
 # All art sources. The order they will be tried in is specified by the config.
 ART_SOURCES: set[type[ArtSource]] = {
     FileSystem,
+    Embedded,
     CoverArtArchive,
     ITunesStore,
     AlbumArtOrg,
@@ -1319,6 +1360,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             {
                 "auto": True,
                 "fetch_for_asis": False,
+                "skip_embedded": False,
                 "minwidth": 0,
                 "maxwidth": 0,
                 "quality": 0,
@@ -1443,6 +1485,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def fetch_for_asis(self) -> bool:
         return self.config["fetch_for_asis"].get(bool)
 
+    @cached_property
+    def skip_embedded(self) -> bool:
+        return self.config["skip_embedded"].get(bool)
+
     @staticmethod
     def _is_source_file_removal_enabled() -> bool:
         return config["import"]["delete"].get(bool) or config["import"][
@@ -1463,9 +1509,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def fetch_art(self, session: ImportSession, task: ImportTask) -> None:
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
-            if task.album.artpath and os.path.isfile(
-                syspath(task.album.artpath)
-            ):
+            if self.album_has_art(task.album):
                 # Album already has art (probably a re-import); skip it.
                 return
             if task.choice_flag == importer.Action.ASIS:
@@ -1554,6 +1598,17 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cmd.func = func
         return [cmd]
 
+    def album_has_art(self, album: Album):
+        if album.artpath and os.path.isfile(syspath(album.artpath)):
+            self._log.debug("skipping {}: has stored artwork", album)
+            return True
+        if self.skip_embedded:
+            if any(art.get_art(self._log, item) for item in album.items()):
+                self._log.debug("skipping {}: has embedded artwork", album)
+                return True
+
+        return False
+
     # Utilities converted from functions to methods on logging overhaul
 
     def art_for_album(
@@ -1607,11 +1662,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         fetchart CLI command.
         """
         for album in albums:
-            if (
-                album.artpath
-                and not force
-                and os.path.isfile(syspath(album.artpath))
-            ):
+            if not force and self.album_has_art(album):
                 if not quiet:
                     message = colorize("text_highlight_minor", "has album art")
                     ui.print_(f"{album}: {message}")
