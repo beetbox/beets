@@ -296,6 +296,7 @@ class TestTracklist(DiscogsTestMixin):
             _p(["A1", "A2.1", "A2.2", "A3"], 1, 3, id="subtracks-dot-with-sides"),
             _p(["A1", "A2a", "A2b", "A3"], 1, 3, id="subtracks-letter"),
             _p(["A1", "A2.a", "A2.b", "A3"], 1, 3, id="subtracks-letter-with-dot"),
+            _p(["1.1", "1.2", "2.1", "2.2"], 1, 2, id="multiple-subtrack-groups"),
             _p(["1", "2", "Video 1"], 2, 3, id="subtracks-extra-material"),
         ],
     )  # fmt: skip
