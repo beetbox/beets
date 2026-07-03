@@ -337,6 +337,31 @@ class TestFSArt(UseThePlugin):
         assert not result
 
 
+class TestEmbeddedArt(UseThePlugin):
+    def setup_beets(self):
+        super().setup_beets()
+        self.albums = [
+            self.add_album_fixture(fname="image", ext=ext)
+            for ext in ["ape", "flac", "m4a", "mp3", "ogg", "wma"]
+        ]
+
+    @pytest.fixture
+    def settings(self) -> Settings:
+        return Settings(fallback=None)
+
+    @pytest.fixture
+    def source(self) -> fetchart.Embedded:
+        return fetchart.Embedded(logger, self.plugin.config)
+
+    def test_extract_embedded_art(self, source, settings):
+        for album in self.albums:
+            candidate = next(source.get(album, settings, None))
+            assert candidate
+            # image.* fixtures have embedded PNG data
+            assert os.path.splitext(candidate.path)[1] == b".png"
+            assert Path(os.fsdecode(candidate.path)).exists()
+
+
 class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     ASIN = "xxxx"
     MBID = "releaseid"
