@@ -18,6 +18,8 @@ from beets.test._common import touch
 from beets.test.helper import NEEDS_REFLINK, BeetsTestCase
 from beets.util import syspath
 
+_p = pytest.param
+
 
 class UtilTest(unittest.TestCase):
     def test_open_anything(self):
@@ -442,18 +444,54 @@ class MkDirAllTest(BeetsTestCase):
 class TestAsciifyPath:
     @pytest.fixture(autouse=True)
     def _setup_config(self, config):
-        config["asciify_paths"] = True
+        config["path_sep_replace"] = "_"
 
-    def test_unicode_normalized_nfd_on_mac(self, monkeypatch):
-        monkeypatch.setattr("sys.platform", "darwin")
+    @pytest.mark.parametrize(
+        "platform, normalization",
+        [
+            _p("darwin", "NFD", id="macos"),
+            _p("linux", "NFC", id="other-platform"),
+        ],
+    )
+    def test_normalizes_unicode_for_platform(
+        self, monkeypatch, platform, normalization
+    ):
+        normalize = Mock(wraps=util.unicodedata.normalize)
+        monkeypatch.setattr("sys.platform", platform)
+        monkeypatch.setattr("beets.util.unicodedata.normalize", normalize)
+
         assert util.asciify_path("caf\xe9") == "cafe"
+        normalize.assert_called_once_with(normalization, "caf\xe9")
 
-    def test_unicode_normalized_nfc_on_linux(self, monkeypatch):
-        monkeypatch.setattr("sys.platform", "linux")
-        assert util.asciify_path("caf\xe9") == "cafe"
+    @pytest.mark.parametrize(
+        "path, expected",
+        [
+            _p("plain", "plain", id="ascii"),
+            _p("\u201c\u00f6\u2014\u00cf\u201d", '"o--I"', id="unicode"),
+            _p(
+                f"caf\xe9{os.sep}na\xefve",
+                f"cafe{os.sep}naive",
+                id="path-components",
+            ),
+        ],
+    )
+    def test_transliterates_path(self, path, expected):
+        assert util.asciify_path(path) == expected
 
-    def test_asciify_and_replace(self):
-        assert util.asciify_path("\u201c\u00f6\u2014\u00cf\u201d") == '"o--I"'
+    @pytest.mark.parametrize(
+        "replacement, expected",
+        [
+            _p("_", "abC_ 1_2d", id="default"),
+            _p("-", "abC- 1-2d", id="configured"),
+        ],
+    )
+    def test_replaces_generated_separators(self, config, replacement, expected):
+        config["path_sep_replace"] = replacement
 
-    def test_asciify_character_expanding_to_slash(self):
-        assert util.asciify_path("ab\xa2\xbdd") == "abC_ 1_2d"
+        assert util.asciify_path("ab\xa2\xbdd") == expected
+
+    def test_normalizes_alternate_path_separator(self, monkeypatch):
+        monkeypatch.setattr("beets.util.os.sep", "/")
+        monkeypatch.setattr("beets.util.os.altsep", "\\")
+
+        assert util.asciify_path("caf\xe9\\na\xefve") == "cafe/naive"

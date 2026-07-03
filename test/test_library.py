@@ -455,6 +455,13 @@ class TestDestination(PytestItemHelper):
             dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
 
+    def test_asciify_character_expanding_to_slash(self, item_in_db):
+        config["asciify_paths"] = True
+        self.lib.directory = b"lib"
+        self.lib.path_formats = [("default", "$title")]
+        item_in_db.title = "ab\xa2\xbdd"
+        assert item_in_db.destination() == np("lib/abC_ 1_2d")
+
     def test_destination_with_replacements(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.replacements = [(re.compile(r"a"), "e")]
