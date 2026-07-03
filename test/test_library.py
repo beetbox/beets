@@ -7,7 +7,6 @@ import os.path
 import re
 import shutil
 import stat
-import unicodedata
 import unittest
 from unittest.mock import patch
 
@@ -449,34 +448,12 @@ class TestDestination(PytestItemHelper):
         p = item_in_db.destination()
         assert p.rsplit(util.PATH_SEP, 1)[1] == b"something"
 
-    def test_unicode_normalized_nfd_on_mac(self, item_in_db):
-        instr = unicodedata.normalize("NFC", "caf\xe9")
-        self.lib.path_formats = [("default", instr)]
-        with patch("sys.platform", "darwin"):
-            dest = item_in_db.destination(relative_to_libdir=True)
-        assert as_string(dest) == unicodedata.normalize("NFD", instr)
-
-    def test_unicode_normalized_nfc_on_linux(self, item_in_db):
-        instr = unicodedata.normalize("NFD", "caf\xe9")
-        self.lib.path_formats = [("default", instr)]
-        with patch("sys.platform", "linux"):
-            dest = item_in_db.destination(relative_to_libdir=True)
-        assert as_string(dest) == unicodedata.normalize("NFC", instr)
-
     def test_unicode_extension_in_fragment(self, item_in_db):
         self.lib.path_formats = [("default", "foo")]
         item_in_db.path = util.bytestring_path("bar.caf\xe9")
         with patch("sys.platform", "linux"):
             dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
-
-    def test_asciify_and_replace(self, item_in_db):
-        config["asciify_paths"] = True
-        self.lib.replacements = [(re.compile('"'), "q")]
-        self.lib.directory = b"lib"
-        self.lib.path_formats = [("default", "$title")]
-        item_in_db.title = "\u201c\u00f6\u2014\u00cf\u201d"
-        assert item_in_db.destination() == np("lib/qo--Iq")
 
     def test_asciify_character_expanding_to_slash(self, item_in_db):
         config["asciify_paths"] = True

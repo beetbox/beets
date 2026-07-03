@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
+import unicodedata
 from collections import Counter
 from collections.abc import Sequence
 from contextlib import suppress
@@ -29,6 +30,7 @@ from typing import (
     AnyStr,
     ClassVar,
     Generic,
+    Literal,
     NamedTuple,
     TypeVar,
     cast,
@@ -1001,27 +1003,29 @@ def case_sensitive(path: bytes) -> bool:
         return not os.path.samefile(lower_sys, upper_sys)
 
 
-def asciify_path(path: str, sep_replace: str) -> str:
+def asciify_path(path: str) -> str:
     """Decodes all unicode characters in a path into ASCII equivalents.
 
     Substitutions are provided by the unidecode module. Path separators in the
     input are preserved.
-
-    Keyword arguments:
-    path -- The path to be asciified.
-    sep_replace -- the string to be used to replace extraneous path separators.
     """
+    # Prepare path for output: normalize Unicode characters.
+    form: Literal["NFD", "NFC"] = "NFD" if sys.platform == "darwin" else "NFC"
+    path = unicodedata.normalize(form, path)
+    replacements = [os.sep]
     # if this platform has an os.altsep, change it to os.sep.
     if os.altsep:
         path = path.replace(os.altsep, os.sep)
-    path_components: list[str] = path.split(os.sep)
-    for index, item in enumerate(path_components):
-        path_components[index] = unidecode(item).replace(os.sep, sep_replace)
-        if os.altsep:
-            path_components[index] = unidecode(item).replace(
-                os.altsep, sep_replace
-            )
-    return os.sep.join(path_components)
+        replacements.append(os.altsep)
+
+    sep_replace = beets.config["path_sep_replace"].as_str()
+
+    def replace(path: str) -> str:
+        for repl in replacements:
+            path = path.replace(repl, sep_replace)
+        return path
+
+    return os.sep.join(replace(unidecode(p)) for p in path.split(os.sep))
 
 
 def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
