@@ -28,6 +28,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/importfeeds`: ``beet import`` no longer aborts the whole run
+  when a symlink cannot be created (e.g. on Windows or a read-only directory);
+  the failure is logged and the import continues. :bug:`840`
 - Album ``store`` no longer copies ``artpath`` onto its items as an absolute
   path, which broke relative-path portability. A database migration removes any
   such stale ``artpath`` attributes left on items by earlier versions.
