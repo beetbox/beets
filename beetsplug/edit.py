@@ -1,10 +1,13 @@
 """Open metadata information in a text editor to let the user edit it."""
 
+from __future__ import annotations
+
 import codecs
 import os
 import shlex
 import subprocess
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING, Any, cast
 
 import yaml
 
@@ -14,6 +17,10 @@ from beets.exceptions import UserError
 from beets.importer import Action
 from beets.ui.commands.utils import do_query
 from beets.util import PromptChoice
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -331,7 +338,9 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return choices
 
-    def _importer_edit_album_header(self, task):
+    def _importer_edit_album_header(
+        self, task: ImportTask
+    ) -> dict[str, Any] | None:
         """Build the album-header YAML document for import editing.
 
         Returns a dict of album-level fields, or ``None`` when the current
@@ -348,7 +357,9 @@ class EditPlugin(plugins.BeetsPlugin):
         header = flatten(first_item, album_fields)
         return header if header else None
 
-    def _importer_edit_apply_header(self, items, header_data):
+    def _importer_edit_apply_header(
+        self, items: list[Item], header_data: dict[str, Any]
+    ) -> None:
         """Apply album-header changes (from ``_importer_edit_album_header``)
         to every item in the list.
         """
@@ -358,8 +369,11 @@ class EditPlugin(plugins.BeetsPlugin):
             apply_(item, header_data)
 
     def _importer_edit_apply_tracks(
-        self, old_track_data, new_track_data, items
-    ):
+        self,
+        old_track_data: list[dict[str, Any]],
+        new_track_data: list[dict[str, Any]],
+        items: list[Item],
+    ) -> bool:
         """Apply per-track YAML document changes to the matching items.
 
         Returns ``True`` if any change was made.
@@ -388,7 +402,9 @@ class EditPlugin(plugins.BeetsPlugin):
             changed = True
         return changed
 
-    def _edit_yaml(self, old_str):
+    def _edit_yaml(
+        self, old_str: str
+    ) -> tuple[list[dict[str, Any]], str] | None:
         """Open a temporary file with `old_str`, let the user edit it, and
         return the parsed list of YAML documents.
 
@@ -420,7 +436,9 @@ class EditPlugin(plugins.BeetsPlugin):
         finally:
             os.remove(new.name)
 
-    def importer_edit(self, session, task):
+    def importer_edit(
+        self, session: ImportSession, task: ImportTask
+    ) -> Action | None:
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
         """
@@ -478,7 +496,7 @@ class EditPlugin(plugins.BeetsPlugin):
             new_track_data = new_all_data[num_data_docs:]
 
             # Snapshot originals for diff display and restore.
-            objs_old = [obj.copy() for obj in task.items]
+            objs_old = cast("list[Item]", [obj.copy() for obj in task.items])
 
             # Apply header changes to every item.
             if new_header_data:
@@ -513,14 +531,16 @@ class EditPlugin(plugins.BeetsPlugin):
                 continue
 
     @staticmethod
-    def _importer_edit_cleanup(task):
+    def _importer_edit_cleanup(task: ImportTask) -> None:
         """Remove temporary negative ids from task items."""
         for obj in task.items:
             if obj.id is not None and obj.id < 0:
                 obj.id = None
 
     @staticmethod
-    def _importer_edit_restore_from_copies(task, copies):
+    def _importer_edit_restore_from_copies(
+        task: ImportTask, copies: list[Item]
+    ) -> None:
         """Restore items to their state before the last edit cycle.
 
         ``copies`` must be a list of :class:`Item <beets.library.Item>` copies
