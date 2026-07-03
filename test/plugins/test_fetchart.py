@@ -4,6 +4,8 @@ import sys
 from typing import Any, ClassVar
 from unittest import mock
 
+import pytest
+
 from beets import importer, util
 from beets.test.helper import (
     AutotagImportHelper,
@@ -12,6 +14,16 @@ from beets.test.helper import (
     PluginTestHelper,
 )
 from beetsplug.fetchart import CoverArtArchive, FetchArtPlugin, FileSystem
+
+
+@pytest.fixture(autouse=True)
+def disable_http_requests(requests_mock):
+    """Disable all outgoing requests and raise an error on HTTP
+
+    For test safety to ensure no changes cause tests to make
+    real, unmocked requests for cover art.
+    """
+    return
 
 
 class TestFetchartImport(PluginMixin, AutotagImportHelper):
@@ -61,6 +73,53 @@ class TestFetchartImport(PluginMixin, AutotagImportHelper):
             self.importer.run()
         self.local_art_mock.assert_called()
         self.remote_art_mock.assert_called()
+
+
+class TestFetchartEmbeddedImport(PluginMixin, AutotagImportHelper):
+    plugin = "fetchart"
+    preload_plugin = False
+
+    def setup_beets(self):
+        super().setup_beets()
+
+        # Use track data fixture with embedded art
+        self.resource_path = self.resource_path.with_name("image.mp3")
+
+        self.prepare_album_for_import(1)
+        self.setup_importer()
+
+    @mock.patch.object(
+        FetchArtPlugin,
+        "art_for_album",
+        autospec=True,
+        wraps=FetchArtPlugin.art_for_album,
+    )
+    def test_embedded_art_skips_fetch(self, art_for_album_mock):
+        self.importer.add_choice(importer.Action.APPLY)
+        with self.configure_plugin({"skip_embedded": True}):
+            self.importer.run()
+        art_for_album_mock.assert_not_called()
+        imported_album = self.lib.albums().get()
+        assert imported_album
+        assert not imported_album.art_filepath
+
+    def test_embedded_art_extracted(self):
+        self.importer.add_choice(importer.Action.APPLY)
+        with self.configure_plugin({"sources": ["embedded"]}):
+            self.importer.run()
+        imported_album = self.lib.albums().get()
+        assert imported_album
+        assert imported_album.art_filepath
+        assert imported_album.art_filepath.exists()
+
+    def test_embedded_art_extracted_when_asis(self):
+        self.importer.add_choice(importer.Action.ASIS)
+        with self.configure_plugin({"sources": ["embedded"]}):
+            self.importer.run()
+        imported_album = self.lib.albums().get()
+        assert imported_album
+        assert imported_album.art_filepath
+        assert imported_album.art_filepath.exists()
 
 
 class TestFetchartCli(IOMixin, PluginTestHelper):
@@ -180,7 +239,7 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
     def test_sources_is_an_asterisk(self):
         self.config["fetchart"].set({"sources": "*"})
         fa = FetchArtPlugin()
-        assert len(fa.sources) == 10
+        assert len(fa.sources) == 11
 
     def test_sources_is_a_string_list(self):
         self.config["fetchart"].set({"sources": ["filesystem", "coverart"]})
