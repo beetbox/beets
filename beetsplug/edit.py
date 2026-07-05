@@ -377,10 +377,18 @@ class EditPlugin(plugins.BeetsPlugin):
         Returns ``True`` if any change was made.
         """
         ignore_fields = set(self.config["ignore_fields"].as_str_seq())
+        items_by_id = {item.id: item for item in items}
+        old_by_id = {old_doc.get("id"): old_doc for old_doc in old_track_data}
+
         changed = False
-        for old_doc, new_doc, item in zip(
-            old_track_data, new_track_data, items
-        ):
+        for new_doc in new_track_data:
+            new_id = new_doc.get("id")
+            old_doc = old_by_id.get(new_id)
+            item = items_by_id.get(new_id)
+            if old_doc is None or item is None:
+                self._log.warning("ignoring object whose id changed")
+                continue
+
             forbidden = False
             for key in ignore_fields:
                 if old_doc.get(key) != new_doc.get(key):
@@ -388,12 +396,6 @@ class EditPlugin(plugins.BeetsPlugin):
                     forbidden = True
                     break
             if forbidden:
-                continue
-
-            old_id = old_doc.get("id")
-            new_id = new_doc.get("id")
-            if old_id is not None and new_id is not None and old_id != new_id:
-                self._log.warning("ignoring object whose id changed")
                 continue
 
             apply_(item, new_doc)
@@ -409,11 +411,10 @@ class EditPlugin(plugins.BeetsPlugin):
         Returns ``(parsed_data, edited_str)`` on success, or ``None`` if the
         user aborted (no changes or unresolvable parse error).
         """
-        new = NamedTemporaryFile(
+        with NamedTemporaryFile(
             mode="w", suffix=".yaml", delete=False, encoding="utf-8"
-        )
-        new.write(old_str)
-        new.close()
+        ) as new:
+            new.write(old_str)
 
         try:
             while True:
