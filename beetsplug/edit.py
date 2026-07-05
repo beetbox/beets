@@ -221,71 +221,47 @@ class EditPlugin(plugins.BeetsPlugin):
         """
         # Get the content to edit as raw data structures.
         old_data = [flatten(o, fields) for o in objs]
-
-        # Set up a temporary file with the initial data for editing.
-        new = NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False, encoding="utf-8"
-        )
-        old_str = dump(old_data)
-        new.write(old_str)
-        new.close()
+        cur_str = dump(old_data)
 
         # Loop until we have parseable data and the user confirms.
-        try:
-            while True:
-                # Ask the user to edit the data.
-                edit(new.name, self._log)
+        while True:
+            result = self._edit_yaml(cur_str)
+            if result is None:
+                return False
+            new_data, new_str = result
 
-                # Read the data back after editing and check whether anything
-                # changed.
-                with codecs.open(new.name, encoding="utf-8") as f:
-                    new_str = f.read()
-                if new_str == old_str:
-                    ui.print_("No changes; aborting.")
-                    return False
+            # Show the changes.
+            # If the objects are not on the DB yet, we need a copy of their
+            # original state for show_model_changes.
+            objs_old = [obj.copy() if obj.id < 0 else None for obj in objs]
+            self.apply_data(objs, old_data, new_data)
+            changed = False
+            for obj, obj_old in zip(objs, objs_old):
+                changed |= ui.show_model_changes(obj, obj_old)
+            if not changed:
+                ui.print_("No changes to apply.")
+                return False
 
-                # Parse the updated data.
-                try:
-                    new_data = load(new_str)
-                except ParseError as e:
-                    ui.print_(f"Could not read data: {e}")
-                    if ui.input_yn("Edit again to fix? (Y/n)", True):
-                        continue
-                    return False
-
-                # Show the changes.
-                # If the objects are not on the DB yet, we need a copy of their
-                # original state for show_model_changes.
-                objs_old = [obj.copy() if obj.id < 0 else None for obj in objs]
-                self.apply_data(objs, old_data, new_data)
-                changed = False
-                for obj, obj_old in zip(objs, objs_old):
-                    changed |= ui.show_model_changes(obj, obj_old)
-                if not changed:
-                    ui.print_("No changes to apply.")
-                    return False
-
-                # For cancel/keep-editing, restore objects to their original
-                # in-memory state so temp edits don't leak into the session
-                choice = ui.input_options(
-                    ("continue Editing", "apply", "cancel")
-                )
-                if choice == "a":  # Apply.
-                    return True
-                if choice == "c":  # Cancel.
-                    self.apply_data(objs, new_data, old_data)
-                    return False
-                if choice == "e":  # Keep editing.
-                    self.apply_data(objs, new_data, old_data)
-                    continue
-
-        # Remove the temporary file before returning.
-        finally:
-            os.remove(new.name)
+            # For cancel/keep-editing, restore objects to their original
+            # in-memory state so temp edits don't leak into the session
+            choice = ui.input_options(("continue Editing", "apply", "cancel"))
+            if choice == "a":  # Apply.
+                return True
+            if choice == "c":  # Cancel.
+                self.apply_data(objs, new_data, old_data)
+                return False
+            if choice == "e":  # Keep editing.
+                self.apply_data(objs, new_data, old_data)
+                cur_str = new_str
+                continue
 
     def apply_data(self, objs, old_data, new_data):
         """Take potentially-updated data and apply it to a set of Model
         objects.
+
+        Documents are matched to objects by their ``id`` field rather than
+        by position, so a reordered or otherwise misaligned document list
+        cannot cause one object's data to be applied to a different object.
 
         The objects are not written back to the database, so the changes
         are temporary.
@@ -298,8 +274,16 @@ class EditPlugin(plugins.BeetsPlugin):
             )
 
         obj_by_id = {o.id: o for o in objs}
+        old_by_id = {d.get("id"): d for d in old_data}
         ignore_fields = self.config["ignore_fields"].as_str_seq()
-        for old_dict, new_dict in zip(old_data, new_data):
+        for new_dict in new_data:
+            new_id = new_dict.get("id")
+            old_dict = old_by_id.get(new_id)
+            obj = obj_by_id.get(new_id)
+            if old_dict is None or obj is None:
+                self._log.warning("ignoring object whose id changed")
+                continue
+
             # Prohibit any changes to forbidden fields to avoid
             # clobbering `id` and such by mistake.
             forbidden = False
@@ -311,8 +295,7 @@ class EditPlugin(plugins.BeetsPlugin):
             if forbidden:
                 continue
 
-            id_ = int(old_dict["id"])
-            apply_(obj_by_id[id_], new_dict)
+            apply_(obj, new_dict)
 
     def save_changes(self, objs):
         """Save a list of updated Model objects to the database."""
@@ -365,42 +348,6 @@ class EditPlugin(plugins.BeetsPlugin):
             return
         for item in items:
             apply_(item, header_data)
-
-    def _importer_edit_apply_tracks(
-        self,
-        old_track_data: list[dict[str, Any]],
-        new_track_data: list[dict[str, Any]],
-        items: list[Item],
-    ) -> bool:
-        """Apply per-track YAML document changes to the matching items.
-
-        Returns ``True`` if any change was made.
-        """
-        ignore_fields = set(self.config["ignore_fields"].as_str_seq())
-        items_by_id = {item.id: item for item in items}
-        old_by_id = {old_doc.get("id"): old_doc for old_doc in old_track_data}
-
-        changed = False
-        for new_doc in new_track_data:
-            new_id = new_doc.get("id")
-            old_doc = old_by_id.get(new_id)
-            item = items_by_id.get(new_id)
-            if old_doc is None or item is None:
-                self._log.warning("ignoring object whose id changed")
-                continue
-
-            forbidden = False
-            for key in ignore_fields:
-                if old_doc.get(key) != new_doc.get(key):
-                    self._log.warning("ignoring object whose {} changed", key)
-                    forbidden = True
-                    break
-            if forbidden:
-                continue
-
-            apply_(item, new_doc)
-            changed = True
-        return changed
 
     def _edit_yaml(
         self, old_str: str
@@ -502,9 +449,7 @@ class EditPlugin(plugins.BeetsPlugin):
                 self._importer_edit_apply_header(task.items, new_header_data[0])
 
             # Apply per-track changes.
-            self._importer_edit_apply_tracks(
-                old_track_data, new_track_data, task.items
-            )
+            self.apply_data(task.items, old_track_data, new_track_data)
 
             # Show the diff.
             changed = False

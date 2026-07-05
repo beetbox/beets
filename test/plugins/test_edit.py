@@ -293,11 +293,11 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
         assert mock_write.call_count == 0
 
 
-class ApplyTracksMatchingTest(PluginMixin, BeetsTestCase):
-    """`_importer_edit_apply_tracks` must match documents to items by their
-    ``id`` field, not by their position in the list. A reordered or
-    otherwise misaligned document list must not cause one track's data to
-    be applied to a different item.
+class ApplyDataMatchingTest(PluginMixin, BeetsTestCase):
+    """`apply_data` must match documents to objects by their ``id`` field,
+    not by their position in the list. A reordered or otherwise misaligned
+    document list must not cause one object's data to be applied to a
+    different object.
     """
 
     plugin = "edit"
@@ -312,24 +312,21 @@ class ApplyTracksMatchingTest(PluginMixin, BeetsTestCase):
     def test_matches_by_id_when_documents_are_reordered(self):
         plugin = EditPlugin()
         items = self.make_items()
-        old_track_data = [
+        old_data = [
             {"id": i.id, "title": i.title, "track": i.track} for i in items
         ]
 
         # The saved documents come back in a different order than `items`,
         # as could happen after a "keep editing" round-trip or a reordering
         # editor action. Only track 2's title was actually edited.
-        new_track_data = [
+        new_data = [
             {"id": 3, "title": "Title 3", "track": 3},
             {"id": 1, "title": "Title 1", "track": 1},
             {"id": 2, "title": "Modified Title 2", "track": 2},
         ]
 
-        changed = plugin._importer_edit_apply_tracks(
-            old_track_data, new_track_data, items
-        )
+        plugin.apply_data(items, old_data, new_data)
 
-        assert changed
         assert [i.title for i in items] == [
             "Title 1",
             "Modified Title 2",
@@ -340,21 +337,19 @@ class ApplyTracksMatchingTest(PluginMixin, BeetsTestCase):
     def test_ignores_document_with_missing_id(self):
         plugin = EditPlugin()
         items = self.make_items()
-        old_track_data = [
+        old_data = [
             {"id": i.id, "title": i.title, "track": i.track} for i in items
         ]
 
         # A document without an `id` must never be silently applied to an
-        # unrelated item.
-        new_track_data = [
+        # unrelated object.
+        new_data = [
             {"title": "Header-like doc", "track": 99},
             {"id": 2, "title": "Modified Title 2", "track": 2},
             {"id": 3, "title": "Title 3", "track": 3},
         ]
 
-        plugin._importer_edit_apply_tracks(
-            old_track_data, new_track_data, items
-        )
+        plugin.apply_data(items, old_data, new_data)
 
         assert items[0].title == "Title 1"
         assert items[0].track == 1
