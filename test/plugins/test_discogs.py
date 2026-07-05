@@ -1,6 +1,8 @@
 """Tests for discogs plugin."""
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from discogs_client import Client, Release
@@ -9,6 +11,12 @@ from beets import config
 from beets.library import Item
 from beets.test.helper import TestHelper
 from beetsplug.discogs import ArtistState, DiscogsPlugin
+
+from .factories import discogs as factories
+
+if TYPE_CHECKING:
+    from beetsplug.discogs import types
+
 
 _p = pytest.param
 
@@ -25,13 +33,23 @@ def _artist(name: str, **kwargs):
     } | kwargs
 
 
-def _track(title: str, position: str = "", duration: str = "", **kwargs):
-    return {
-        "title": title,
-        "position": position,
-        "duration": duration,
-        "type_": "track",
-    } | kwargs
+def audio_track(
+    title: str, position: str = "", duration: str = "", **kwargs
+) -> types.AudioTrack:
+    kwargs.update(title=title, position=position, duration=duration)
+    return factories.AudioTrackFactory.build(**kwargs)
+
+
+def index_track(
+    title: str, sub_tracks: list[types.AudioTrack], **kwargs
+) -> types.IndexTrack:
+    kwargs.update(title=title, sub_tracks=sub_tracks)
+    return factories.IndexTrackFactory.build(**kwargs)
+
+
+def heading_track(title: str, **kwargs) -> types.HeadingTrack:
+    kwargs.update(title=title)
+    return factories.HeadingTrackFactory.build(**kwargs)
 
 
 def get_release(data: dict[str, Any]) -> Release:
@@ -88,7 +106,7 @@ class DiscogsTestMixin:
     def _make_release_from_positions(self, positions):
         """Return discogs_client.Release with tracks at the given positions."""
         tracks = [
-            _track(f"TITLE{i}", position)
+            audio_track(f"TITLE{i}", position)
             for (i, position) in enumerate(positions, start=1)
         ]
         return self._make_release(tracks)
@@ -97,8 +115,8 @@ class DiscogsTestMixin:
 class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
     def test_parse_media_for_tracks(self):
         tracks = [
-            _track("TITLE ONE", "1", "01:01"),
-            _track("TITLE TWO", "2", "02:02"),
+            audio_track("TITLE ONE", "1", "01:01"),
+            audio_track("TITLE TWO", "2", "02:02"),
         ]
         release = self._make_release(tracks=tracks)
 
@@ -184,7 +202,7 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         data = {
             "id": 123,
             "uri": "https://www.discogs.com/release/123456-something",
-            "tracklist": [_track("A", "1", "01:01")],
+            "tracklist": [audio_track("A", "1", "01:01")],
             "artists": [_artist("ARTIST NAME", id=321)],
             "title": "TITLE",
         }
@@ -300,27 +318,26 @@ class TestTracklist(DiscogsTestMixin):
             _p(
                 {"index_tracks": False},
                 [
-                    _track("MEDIUM TITLE"),
-                    _track("TRACK GROUP TITLE"),
-                    _track("TITLE ONE", "1.1"),
-                    _track("TITLE TWO", "1.2"),
+                    heading_track("MEDIUM TITLE"),
+                    audio_track("TITLE ONE", "1.1"),
+                    audio_track("TITLE TWO", "1.2"),
                 ],
                 1,
-                [("TRACK GROUP TITLE", "MEDIUM TITLE")],
+                [("TITLE ONE / TITLE TWO", "MEDIUM TITLE")],
                 id="flat-logical-subtracks",
             ),
             _p(
                 {"index_tracks": False},
                 [
-                    _track("TITLE ONE", "1"),
-                    _track(
+                    audio_track("TITLE ONE", "1"),
+                    index_track(
                         "TRACK GROUP TITLE",
-                        sub_tracks=[
-                            _track("SUBTITLE ONE", "2.1", "01:01"),
-                            _track("SUBTITLE TWO", "2.2", "02:02"),
+                        [
+                            audio_track("SUBTITLE ONE", "2.1", "01:01"),
+                            audio_track("SUBTITLE TWO", "2.2", "02:02"),
                         ],
                     ),
-                    _track("TITLE THREE", "3"),
+                    audio_track("TITLE THREE", "3"),
                 ],
                 1,
                 [
@@ -333,15 +350,15 @@ class TestTracklist(DiscogsTestMixin):
             _p(
                 {"index_tracks": False},
                 [
-                    _track("TITLE ONE", "1"),
-                    _track(
+                    audio_track("TITLE ONE", "1"),
+                    index_track(
                         "TRACK GROUP TITLE",
-                        sub_tracks=[
-                            _track("SUBTITLE ONE", "2", "01:01"),
-                            _track("SUBTITLE TWO", "3", "02:02"),
+                        [
+                            audio_track("SUBTITLE ONE", "2", "01:01"),
+                            audio_track("SUBTITLE TWO", "3", "02:02"),
                         ],
                     ),
-                    _track("TITLE FOUR", "4"),
+                    audio_track("TITLE FOUR", "4"),
                 ],
                 1,
                 [
@@ -355,15 +372,15 @@ class TestTracklist(DiscogsTestMixin):
             _p(
                 {"index_tracks": True},
                 [
-                    _track("TITLE ONE", "1"),
-                    _track(
+                    audio_track("TITLE ONE", "1"),
+                    index_track(
                         "TRACK GROUP TITLE",
-                        sub_tracks=[
-                            _track("SUBTITLE ONE", "2", "01:01"),
-                            _track("SUBTITLE TWO", "3", "02:02"),
+                        [
+                            audio_track("SUBTITLE ONE", "2", "01:01"),
+                            audio_track("SUBTITLE TWO", "3", "02:02"),
                         ],
                     ),
-                    _track("TITLE FOUR", "4"),
+                    audio_track("TITLE FOUR", "4"),
                 ],
                 1,
                 [
@@ -377,11 +394,11 @@ class TestTracklist(DiscogsTestMixin):
             _p(
                 {"index_tracks": False},
                 [
-                    _track("MEDIUM TITLE CD1"),
-                    _track("TITLE ONE", "1-1"),
-                    _track("TITLE TWO", "1-2"),
-                    _track("MEDIUM TITLE CD2"),
-                    _track("TITLE THREE", "2-1"),
+                    heading_track("MEDIUM TITLE CD1"),
+                    audio_track("TITLE ONE", "1-1"),
+                    audio_track("TITLE TWO", "1-2"),
+                    heading_track("MEDIUM TITLE CD2"),
+                    audio_track("TITLE THREE", "2-1"),
                 ],
                 2,
                 [
@@ -414,13 +431,15 @@ class TestTracklist(DiscogsTestMixin):
         track_artist = "TRACK ARTIST"
         group_artist = "GROUP ARTIST"
         tracks = [
-            _track(
+            index_track(
                 "TRACK GROUP TITLE",
-                artists=[_artist(group_artist)],
-                sub_tracks=[
-                    _track("TRACK ONE", "2", artists=[_artist(track_artist)]),
-                    _track("SUBTITLE TWO", "3"),
+                [
+                    audio_track(
+                        "TRACK ONE", "2", artists=[_artist(track_artist)]
+                    ),
+                    audio_track("SUBTITLE TWO", "3"),
                 ],
+                artists=[_artist(group_artist)],
             )
         ]
         release = self._make_release(tracks)
