@@ -683,12 +683,11 @@ class MetaflacBackend(Backend):
     def compute_track_gain(self, task: AnyRgTask) -> AnyRgTask:
         """Compute the track gain for each FLAC item in the task."""
         track_gains = []
-        for item in task.items:
-            if self.format_supported(item):
-                self._add_replay_gain([item])
-                track_gains.append(
-                    self._read_gain(item, "TRACK", task.target_level)
-                )
+        for item in filter(self.format_supported, task.items):
+            self._add_replay_gain([item])
+            track_gains.append(
+                self._read_gain(item, "TRACK", task.target_level)
+            )
         task.track_gains = track_gains
         return task
 
