@@ -51,8 +51,6 @@ footwork:
 juke:
     - (chicago )?juke( music| house)?
     - juke/footwork
-minimal:
-    - minimal techno
 funk:
     - Funk / Soul
 
@@ -64,8 +62,8 @@ funk:
 \1 rock:
     - (blues|folk|indie|gothic|progressive)[ -]*rock
 alternative rock:
-    - alt([ -]*rock)?
-    - alternative([ -]*rock)?
+    - alt[ -]*rock
+    - alternative[ -]*rock
 indie rock:
     - indie([ -]*rock)?
 # negative lookahead avoids matching 'gothic metal'
