@@ -448,6 +448,20 @@ class TestTracklist(DiscogsTestMixin):
         assert album.mediums == 1
         assert {t.artist for t in album.tracks} == {track_artist, group_artist}
 
+    def test_coalesce_logical_index_as_audio_track(self, plugin):
+        index = index_track(
+            "TRACK GROUP TITLE",
+            [
+                audio_track("SUBTITLE ONE", "2.1"),
+                audio_track("SUBTITLE TWO", "2.2"),
+            ],
+            duration="03:03",
+        )
+
+        assert plugin._coalesce_tracks([index]) == [
+            audio_track("TRACK GROUP TITLE", "2", "03:03")
+        ]
+
 
 class TestDGSearchQuery(TestHelper):
     def test_default_search_filters_without_extra_tags(self):
