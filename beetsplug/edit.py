@@ -360,9 +360,7 @@ class EditPlugin(plugins.BeetsPlugin):
     def _importer_edit_apply_header(
         self, items: list[Item], header_data: dict[str, Any]
     ) -> None:
-        """Apply album-header changes (from ``_importer_edit_album_header``)
-        to every item in the list.
-        """
+        """Apply album-header changes to every item in the list."""
         if not header_data:
             return
         for item in items:
