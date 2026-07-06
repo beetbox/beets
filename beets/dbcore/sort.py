@@ -32,20 +32,20 @@ class Sort:
     def __hash__(self) -> int:
         return 0
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         return type(self) is type(other)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
 
 class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts."""
 
-    def __init__(self, sorts: list[Sort] | None = None):
+    def __init__(self, sorts: list[Sort] | None = None) -> None:
         self.sorts = sorts or []
 
-    def add_sort(self, sort: Sort):
+    def add_sort(self, sort: Sort) -> None:
         self.sorts.append(sort)
 
     def order_clause(self) -> str:
@@ -72,7 +72,7 @@ class MultipleSort(Sort):
                 return True
         return False
 
-    def sort(self, items):
+    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
         slow_sorts = []
         switch_slow = False
         for sort in reversed(self.sorts):
@@ -88,13 +88,13 @@ class MultipleSort(Sort):
             items = sort.sort(items)
         return items
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.sorts!r})"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(tuple(self.sorts))
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return super().__eq__(other) and self.sorts == other.sorts
 
 
@@ -105,7 +105,7 @@ class FieldSort(Sort):
 
     def __init__(
         self, field: str, ascending: bool = True, case_insensitive: bool = True
-    ):
+    ) -> None:
         self.field = field
         self.ascending = ascending
         self.case_insensitive = case_insensitive
@@ -144,7 +144,7 @@ class FieldSort(Sort):
     def __hash__(self) -> int:
         return hash((self.field, self.ascending))
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         return (
             super().__eq__(other)
             and self.field == other.field
@@ -190,7 +190,7 @@ class NullSort(Sort):
     def __bool__(self) -> bool:
         return False
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         return type(self) is type(other) or other is None
 
     def __hash__(self) -> int:
@@ -202,7 +202,7 @@ class SmartArtistSort(FieldSort):
     prioritizing the sort field over the raw field.
     """
 
-    def order_clause(self):
+    def order_clause(self) -> str:
         order = "ASC" if self.ascending else "DESC"
         collate = "COLLATE NOCASE" if self.case_insensitive else ""
         field = self.field
@@ -210,7 +210,7 @@ class SmartArtistSort(FieldSort):
         return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
 
     def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
-        def key(o):
+        def key(o: Model) -> str | bytes:
             val = o[f"{self.field}_sort"] or o[self.field]
             return val.lower() if self.case_insensitive else val
 
