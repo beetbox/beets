@@ -6,7 +6,7 @@ import time
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from mediafile import MediaFile, UnreadableFileError
 from typing_extensions import Self
@@ -34,12 +34,14 @@ from .fields import TYPE_BY_FIELD
 from .queries import parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, KeysView
+    from collections.abc import Callable, Iterable, KeysView, Mapping
 
+    from beets.dbcore import Results
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort
+    from beets.util.pathformats import PathFormat
 
-    from .library import Library  # noqa: F401
+    from .library import Library
 
 log = logging.getLogger("beets")
 
@@ -81,12 +83,12 @@ class LibModel(dbcore.Model["Library"]):
         """The path to the entity as pathlib.Path."""
         return Path(os.fsdecode(self.path))
 
-    def _template_funcs(self):
+    def _template_funcs(self) -> Mapping[str, Callable[[str], str]]:
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
         return funcs
 
-    def store(self, fields=None) -> None:
+    def store(self, fields: Iterable[str] | None = None) -> None:
         super().store(fields)
         plugins.send("database_change", lib=self._db, model=self)
 
@@ -94,12 +96,12 @@ class LibModel(dbcore.Model["Library"]):
         super().remove()
         plugins.send("database_change", lib=self._db, model=self)
 
-    def add(self, lib=None) -> None:
+    def add(self, lib: Database | None = None) -> None:
         # super().add() calls self.store(), which sends `database_change`,
         # so don't do it here
         super().add(lib)
 
-    def __format__(self, spec) -> str:
+    def __format__(self, spec: str) -> str:
         if not spec:
             spec = beets.config[self._format_config_key].as_str()
         assert isinstance(spec, str)
@@ -141,13 +143,15 @@ class LibModel(dbcore.Model["Library"]):
         return query_cls(field, pattern, fast)
 
     @classmethod
-    def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+    def any_field_query(cls, *args: Any, **kwargs: Any) -> dbcore.OrQuery:
         return dbcore.OrQuery(
             [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
         )
 
     @classmethod
-    def any_writable_media_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+    def any_writable_media_field_query(
+        cls, *args: Any, **kwargs: Any
+    ) -> dbcore.OrQuery:
         fields = cls.writable_media_fields
         return dbcore.OrQuery(
             [cls.field_query(f, *args, **kwargs) for f in fields]
@@ -358,7 +362,7 @@ class Album(LibModel):
             "albumtotal": Album._albumtotal,
         }
 
-    def items(self):
+    def items(self) -> Results[Item]:
         """Return an iterable over the items associated with this
         album.
 
@@ -369,7 +373,7 @@ class Album(LibModel):
         """
         return self._db.items(dbcore.MatchQuery("album_id", self.id))
 
-    def remove(self, delete=False, with_items=True) -> None:
+    def remove(self, delete: bool = False, with_items: bool = True) -> None:
         """Remove this album and all its associated items from the
         library.
 
@@ -395,7 +399,11 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, operation=MoveOperation.MOVE, item_dir=None) -> None:
+    def move_art(
+        self,
+        operation: MoveOperation = MoveOperation.MOVE,
+        item_dir: bytes | None = None,
+    ) -> None:
         """Move, copy, link or hardlink (depending on `operation`) any
         existing album art so that it remains in the same directory as
         the items.
@@ -449,7 +457,12 @@ class Album(LibModel):
             assert False, "unknown MoveOperation"
         self.artpath = new_art
 
-    def move(self, operation=MoveOperation.MOVE, basedir=None, store=True) -> None:
+    def move(
+        self,
+        operation: MoveOperation = MoveOperation.MOVE,
+        basedir: bytes | None = None,
+        store: bool = True,
+    ) -> None:
         """Move, copy, link or hardlink (depending on `operation`)
         all items to their destination. Any album art moves along with them.
 
@@ -483,7 +496,7 @@ class Album(LibModel):
         if store:
             self.store()
 
-    def item_dir(self):
+    def item_dir(self) -> bytes:
         """Return the directory containing the album's first item,
         provided that such an item exists.
         """
@@ -492,7 +505,7 @@ class Album(LibModel):
             raise ValueError(f"empty album for album id {self.id}")
         return os.path.dirname(item.path)
 
-    def _albumtotal(self):
+    def _albumtotal(self) -> int:
         """Return the total number of tracks on all discs on the album."""
         if self.disctotal == 1 or not beets.config["per_disc_numbering"]:
             return self.items()[0].tracktotal
@@ -512,7 +525,9 @@ class Album(LibModel):
 
         return total
 
-    def art_destination(self, image, item_dir=None):
+    def art_destination(
+        self, image: bytes, item_dir: bytes | None = None
+    ) -> bytes:
         """Return a path to the destination for the album art image
         for the album.
 
@@ -540,7 +555,7 @@ class Album(LibModel):
 
         return bytestring_path(dest)
 
-    def set_art(self, path, copy=True) -> None:
+    def set_art(self, path: bytes, copy: bool = True) -> None:
         """Set the album's cover art to the image at the given path.
 
         The image is copied (or moved) into place, replacing any
@@ -572,7 +587,9 @@ class Album(LibModel):
 
         plugins.send("art_set", album=self)
 
-    def store(self, fields=None, inherit=True) -> None:
+    def store(
+        self, fields: Iterable[str] | None = None, inherit: bool = True
+    ) -> None:
         """Update the database with the album information.
 
         `fields` represents the fields to be stored. If not specified,
@@ -610,7 +627,7 @@ class Album(LibModel):
                             del item[key]
                     item.store()
 
-    def try_sync(self, write, move, inherit=True) -> None:
+    def try_sync(self, write: bool, move: bool, inherit: bool = True) -> None:
         """Synchronize the album and its items with the database.
         Optionally, also write any new tags into the files and update
         their paths.
@@ -746,7 +763,7 @@ class Item(LibModel):
         )
 
     @property
-    def _cached_album(self):
+    def _cached_album(self) -> Album | None:
         """The Album object that this item belongs to, if any, or
         None if the item is a singleton or is not associated with a
         library.
@@ -762,7 +779,7 @@ class Item(LibModel):
         return self.__album
 
     @_cached_album.setter
-    def _cached_album(self, album) -> None:
+    def _cached_album(self, album: Album | None) -> None:
         self.__album = album
 
     @classmethod
@@ -781,7 +798,7 @@ class Item(LibModel):
         )
 
     @classmethod
-    def from_path(cls, path):
+    def from_path(cls, path: util.PathLike) -> Self:
         """Create a new item from the media file at the specified path."""
         # Initiate with values that aren't read from files.
         i = cls(album_id=None)
@@ -789,7 +806,7 @@ class Item(LibModel):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
         if key == "path":
@@ -805,7 +822,7 @@ class Item(LibModel):
         if changed and key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         """Get the value for a field, falling back to the album if
         necessary.
 
@@ -827,7 +844,9 @@ class Item(LibModel):
             f"({', '.join(f'{k}={self[k]!r}' for k in self.keys(with_album=False))})"
         )
 
-    def keys(self, computed=False, with_album=True) -> KeysView[str]:
+    def keys(
+        self, computed: bool = False, with_album: bool = True
+    ) -> KeysView[str]:
         """Get a list of available field names.
 
         `with_album` controls whether the album's fields are included.
@@ -838,7 +857,9 @@ class Item(LibModel):
 
         return dict.fromkeys(keys).keys()
 
-    def get(self, key, default=None, with_album=True):
+    def get(
+        self, key: str, default: Any = None, with_album: bool = True
+    ) -> Any:
         """Get the value for a given key or `default` if it does not
         exist.
 
@@ -851,7 +872,7 @@ class Item(LibModel):
                 return self._cached_album.get(key, default)
             return default
 
-    def update(self, values) -> None:
+    def update(self, values: Mapping[str, Any]) -> None:
         """Set all key/value pairs in the mapping.
 
         If mtime is specified, it is not reset (as it might otherwise be).
@@ -865,7 +886,7 @@ class Item(LibModel):
         for key in self._media_tag_fields:
             setattr(self, key, None)
 
-    def get_album(self):
+    def get_album(self) -> Album | None:
         """Get the Album object that this item belongs to, if any, or
         None if the item is a singleton or is not associated with a
         library.
@@ -876,7 +897,7 @@ class Item(LibModel):
 
     # Interaction with file metadata.
 
-    def read(self, read_path=None) -> None:
+    def read(self, read_path: util.PathLike | None = None) -> None:
         """Read the metadata from the associated file.
 
         If `read_path` is specified, read metadata from that file
@@ -907,7 +928,12 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self, path=None, tags=None, id3v23=None) -> None:
+    def write(
+        self,
+        path: bytes | None = None,
+        tags: Mapping[str, Any] | None = None,
+        id3v23: bool | None = None,
+    ) -> None:
         """Write the item's metadata to a media file.
 
         All fields in `_media_fields` are written to disk according to
@@ -959,7 +985,7 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send("after_write", item=self, path=path)
 
-    def try_write(self, *args, **kwargs) -> bool | None:
+    def try_write(self, *args: Any, **kwargs: Any) -> bool | None:
         """Call `write()` but catch and log `FileOperationError`
         exceptions.
 
@@ -972,7 +998,9 @@ class Item(LibModel):
             log.error("{}", exc)
             return False
 
-    def try_sync(self, write, move, with_album=True) -> None:
+    def try_sync(
+        self, write: bool, move: bool, with_album: bool = True
+    ) -> None:
         """Synchronize the item with the database and, possibly, update its
         tags on disk and its path (by moving the file).
 
@@ -995,7 +1023,9 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move_file(self, dest, operation=MoveOperation.MOVE) -> None:
+    def move_file(
+        self, dest: bytes, operation: MoveOperation = MoveOperation.MOVE
+    ) -> None:
         """Move, copy, link or hardlink the item depending on `operation`,
         updating the path value if the move succeeds.
 
@@ -1047,13 +1077,13 @@ class Item(LibModel):
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
 
-    def current_mtime(self):
+    def current_mtime(self) -> int:
         """Return the current mtime of the file, rounded to the nearest
         integer.
         """
         return int(os.path.getmtime(syspath(self.path)))
 
-    def try_filesize(self):
+    def try_filesize(self) -> int:
         """Get the size of the underlying file in bytes.
 
         If the file is missing, return 0 (and log a warning).
@@ -1064,7 +1094,7 @@ class Item(LibModel):
             log.warning("could not get filesize: {}", exc)
             return 0
 
-    def has_cover_art(self):
+    def has_cover_art(self) -> bool:
         """Check if item has embedded cover art.
 
         Return True if images embedded in file, False otherwise.
@@ -1077,7 +1107,7 @@ class Item(LibModel):
 
     # Model methods.
 
-    def remove(self, delete=False, with_album=True) -> None:
+    def remove(self, delete: bool = False, with_album: bool = True) -> None:
         """Remove the item.
 
         If `delete`, then the associated file is removed from disk.
@@ -1109,10 +1139,10 @@ class Item(LibModel):
 
     def move(
         self,
-        operation=MoveOperation.MOVE,
-        basedir=None,
-        with_album=True,
-        store=True,
+        operation: MoveOperation = MoveOperation.MOVE,
+        basedir: bytes | None = None,
+        with_album: bool = True,
+        store: bool = True,
     ) -> None:
         """Move the item to its designated location within the library
         directory (provided by destination()).
@@ -1181,7 +1211,10 @@ class Item(LibModel):
     # Templating.
 
     def destination(
-        self, relative_to_libdir=False, basedir=None, path_formats=None
+        self,
+        relative_to_libdir: bool = False,
+        basedir: bytes | None = None,
+        path_formats: list[PathFormat] | None = None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
