@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from contextlib import contextmanager
 from functools import cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import platformdirs
@@ -20,7 +21,7 @@ from .queries import parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
     from beets.dbcore import Results
-    from beets.util import Replacements
+    from beets.util import PathLike, Replacements
     from beets.util.pathformats import PathFormat
 
 
@@ -61,7 +62,7 @@ class Library(dbcore.Database):
 
     def __init__(
         self,
-        path="library.blb",
+        path: PathLike = Path("library.blb"),
         directory: str | None = None,
         set_music_dir: bool = True,
     ):

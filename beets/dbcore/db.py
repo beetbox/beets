@@ -15,6 +15,7 @@ from collections.abc import Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
+from pathlib import Path
 from sqlite3 import Connection, sqlite_version_info
 from typing import (
     TYPE_CHECKING,
@@ -52,8 +53,7 @@ if TYPE_CHECKING:
     from sqlite3 import Connection
     from types import TracebackType
 
-    from beets.util import PathLike
-
+    from ..util import PathLike
     from .query import FieldQueryType, Query, SQLiteType
     from .sort import FieldSort, Sort
 
@@ -1085,6 +1085,8 @@ class Database:
     data is written in a transaction.
     """
 
+    path: Path
+
     def __init__(self, path: PathLike, timeout: float = 5.0) -> None:
         if sqlite3.threadsafety == 0:
             raise RuntimeError(
@@ -1098,7 +1100,7 @@ class Database:
         if hasattr(sqlite3, "enable_callback_tracebacks"):
             sqlite3.enable_callback_tracebacks(True)
 
-        self.path = path
+        self.path = Path(os.fsdecode(path))
         self.timeout = timeout
 
         self._connections: dict[int, sqlite3.Connection] = {}

@@ -3,6 +3,7 @@
 import os
 import shutil
 import unittest
+from pathlib import Path
 from tempfile import mkstemp
 from typing import ClassVar
 
@@ -88,6 +89,28 @@ class ModelFixture5(ModelFixture1):
 
 class DatabaseFixtureTwoModels(dbcore.Database):
     _models = (ModelFixture2, AnotherModelFixture)
+
+
+class TestDatabasePath:
+    @pytest.mark.parametrize(
+        "path", [":memory:", b":memory:", Path(":memory:")]
+    )
+    def test_path_inputs_are_stored_as_path(self, path):
+        db = DatabaseFixture1(path)
+        try:
+            assert db.path == Path(":memory:")
+            assert isinstance(db.path, Path)
+        finally:
+            db._connection().close()
+
+    def test_bytes_filesystem_path_opens_decoded_path(self, tmp_path):
+        db_path = tmp_path / "library.db"
+        db = DatabaseFixture1(os.fsencode(db_path))
+        try:
+            assert db.path == db_path
+            assert db_path.exists()
+        finally:
+            db._connection().close()
 
 
 class ModelFixtureWithGetters(dbcore.Model):
