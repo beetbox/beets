@@ -95,7 +95,11 @@ class MultipleSort(Sort):
         return hash(tuple(self.sorts))
 
     def __eq__(self, other: object) -> bool:
-        return super().__eq__(other) and self.sorts == other.sorts
+        return (
+            isinstance(other, MultipleSort)
+            and super().__eq__(other)
+            and self.sorts == other.sorts
+        )
 
 
 class FieldSort(Sort):
@@ -146,7 +150,8 @@ class FieldSort(Sort):
 
     def __eq__(self, other: object) -> bool:
         return (
-            super().__eq__(other)
+            isinstance(other, FieldSort)
+            and super().__eq__(other)
             and self.field == other.field
             and self.ascending == other.ascending
         )
@@ -210,8 +215,8 @@ class SmartArtistSort(FieldSort):
         return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
 
     def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
-        def key(o: Model) -> str | bytes:
-            val = o[f"{self.field}_sort"] or o[self.field]
+        def key(obj: Model) -> str | bytes:
+            val = obj[f"{self.field}_sort"] or obj[self.field]
             return val.lower() if self.case_insensitive else val
 
         return sorted(objs, key=key, reverse=not self.ascending)
