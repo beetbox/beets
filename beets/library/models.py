@@ -34,7 +34,7 @@ from .fields import TYPE_BY_FIELD
 from .queries import parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, KeysView, Mapping
+    from collections.abc import Callable, Iterable, Iterator, KeysView, Mapping
 
     from beets.dbcore import Results
     from beets.dbcore.query import FieldQuery, FieldQueryType
@@ -196,11 +196,11 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         self.item = item
 
     @cached_property
-    def all_keys(self):
+    def all_keys(self) -> set[str]:
         return set(self.model_keys).union(self.album_keys)
 
     @cached_property
-    def album_keys(self):
+    def album_keys(self) -> list[str]:
         album_keys = []
         if self.album:
             if self.included_keys == self.ALL_KEYS:
@@ -213,10 +213,10 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         return album_keys
 
     @property
-    def album(self):
+    def album(self) -> Album:
         return self.item._cached_album
 
-    def _get(self, key):
+    def _get(self, key: str) -> str:
         """Get the value for a key, either from the album or the item.
 
         Raise a KeyError for invalid keys.
@@ -229,7 +229,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             return self._get_formatted(self.album, key)
         raise KeyError(key)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> str:
         """Get the value for a key.
 
         `artist` and `albumartist` are fallback values for each other
@@ -250,7 +250,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
         return value
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.all_keys)
 
     def __len__(self) -> int:
@@ -1283,7 +1283,7 @@ class Item(LibModel):
         return normpath(os.path.join(basedir, lib_path_bytes))
 
 
-def _int_arg(s):
+def _int_arg(s: str) -> int:
     """Convert a string argument to an integer for use in a template
     function.
 
@@ -1308,7 +1308,9 @@ class DefaultTemplateFunctions:
         """Names of tmpl_* functions in this class."""
         return [s for s in dir(cls) if s.startswith(cls._prefix)]
 
-    def __init__(self, item=None, lib=None) -> None:
+    def __init__(
+        self, item: LibModel | None = None, lib: Library | None = None
+    ) -> None:
         """Parametrize the functions.
 
         If `item` or `lib` is None, then some functions (namely, ``aunique``)
@@ -1317,7 +1319,7 @@ class DefaultTemplateFunctions:
         self.item = item
         self.lib = lib
 
-    def functions(self):
+    def functions(self) -> dict[str, Callable[..., str]]:
         """Return a dictionary containing the functions defined in this
         object.
 
@@ -1330,37 +1332,37 @@ class DefaultTemplateFunctions:
         return out
 
     @staticmethod
-    def tmpl_lower(s):
+    def tmpl_lower(s: str) -> str:
         """Convert a string to lower case."""
         return s.lower()
 
     @staticmethod
-    def tmpl_upper(s):
+    def tmpl_upper(s: str) -> str:
         """Convert a string to upper case."""
         return s.upper()
 
     @staticmethod
-    def tmpl_capitalize(s):
+    def tmpl_capitalize(s: str) -> str:
         """Converts to a capitalized string."""
         return s.capitalize()
 
     @staticmethod
-    def tmpl_title(s):
+    def tmpl_title(s: str) -> str:
         """Convert a string to title case."""
         return string.capwords(s)
 
     @staticmethod
-    def tmpl_left(s, chars):
+    def tmpl_left(s: str, chars: str) -> str:
         """Get the leftmost characters of a string."""
         return s[0 : _int_arg(chars)]
 
     @staticmethod
-    def tmpl_right(s, chars):
+    def tmpl_right(s: str, chars: str) -> str:
         """Get the rightmost characters of a string."""
         return s[-_int_arg(chars) :]
 
     @staticmethod
-    def tmpl_if(condition, trueval, falseval=""):
+    def tmpl_if(condition: str, trueval: str, falseval: str = "") -> str:
         """If ``condition`` is nonempty and nonzero, emit ``trueval``;
         otherwise, emit ``falseval`` (if provided).
         """
@@ -1377,17 +1379,22 @@ class DefaultTemplateFunctions:
         return falseval
 
     @staticmethod
-    def tmpl_asciify(s):
+    def tmpl_asciify(s: str) -> str:
         """Translate non-ASCII characters to their ASCII equivalents."""
         return util.asciify_path(s)
 
     @staticmethod
-    def tmpl_time(s, fmt):
+    def tmpl_time(s: str, fmt: str) -> str:
         """Format a time value using `strftime`."""
         cur_fmt = beets.config["time_format"].as_str()
         return time.strftime(fmt, time.strptime(s, cur_fmt))
 
-    def tmpl_aunique(self, keys=None, disam=None, bracket=None):
+    def tmpl_aunique(
+        self,
+        keys: str | None = None,
+        disam: str | None = None,
+        bracket: str | None = None,
+    ) -> str:
         """Generate a string that is guaranteed to be unique among all
         albums in the library who share the same set of keys.
 
@@ -1429,7 +1436,12 @@ class DefaultTemplateFunctions:
             lambda a: a is None,
         )
 
-    def tmpl_sunique(self, keys=None, disam=None, bracket=None):
+    def tmpl_sunique(
+        self,
+        keys: str | None = None,
+        disam: str | None = None,
+        bracket: str | None = None,
+    ) -> str:
         """Generate a string that is guaranteed to be unique among all
         singletons in the library who share the same set of keys.
 
@@ -1464,15 +1476,29 @@ class DefaultTemplateFunctions:
             lambda i: i.album_id is not None,
         )
 
-    def _tmpl_unique_memokey(self, name, keys, disam, item_id):
+    def _tmpl_unique_memokey(
+        self,
+        name: str | None,
+        keys: str | None,
+        disam: str | None,
+        item_id: str | None,
+    ) -> tuple[str | None, ...]:
         """Get the memokey for the unique template named "name" for the
         specific parameters.
         """
         return (name, keys, disam, item_id)
 
     def _tmpl_unique(
-        self, name, keys, disam, bracket, item_id, db_item, item_keys, skip_item
-    ):
+        self,
+        name: str,
+        keys: str | None,
+        disam: str | None,
+        bracket: str | None,
+        item_id: int,
+        db_item: LibModel,
+        item_keys: set[str],
+        skip_item: Callable[[LibModel | None], bool],
+    ) -> str:
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
 
@@ -1562,7 +1588,13 @@ class DefaultTemplateFunctions:
         return res
 
     @staticmethod
-    def tmpl_first(s, count=1, skip=0, sep="; ", join_str="; "):
+    def tmpl_first(
+        s: str,
+        count: int = 1,
+        skip: int = 0,
+        sep: str = "; ",
+        join_str: str = "; ",
+    ) -> str:
         """Get the item(s) from x to y in a string separated by something
         and join then with something.
 
@@ -1577,7 +1609,9 @@ class DefaultTemplateFunctions:
         count = skip + int(count)
         return join_str.join(s.split(sep)[skip:count])
 
-    def tmpl_ifdef(self, field, trueval="", falseval=""):
+    def tmpl_ifdef(
+        self, field: str, trueval: str = "", falseval: str = ""
+    ) -> str:
         """If field exists return trueval or the field (default)
         otherwise, emit return falseval (if provided).
 
