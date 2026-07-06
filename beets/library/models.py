@@ -86,29 +86,29 @@ class LibModel(dbcore.Model["Library"]):
         funcs.update(plugins.template_funcs())
         return funcs
 
-    def store(self, fields=None):
+    def store(self, fields=None) -> None:
         super().store(fields)
         plugins.send("database_change", lib=self._db, model=self)
 
-    def remove(self):
+    def remove(self) -> None:
         super().remove()
         plugins.send("database_change", lib=self._db, model=self)
 
-    def add(self, lib=None):
+    def add(self, lib=None) -> None:
         # super().add() calls self.store(), which sends `database_change`,
         # so don't do it here
         super().add(lib)
 
-    def __format__(self, spec):
+    def __format__(self, spec) -> str:
         if not spec:
             spec = beets.config[self._format_config_key].as_str()
         assert isinstance(spec, str)
         return self.evaluate_template(spec)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return format(self)
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         return self.__str__().encode("utf-8")
 
     # Convenient queries.
@@ -247,7 +247,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     def __iter__(self):
         return iter(self.all_keys)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.all_keys)
 
 
@@ -369,7 +369,7 @@ class Album(LibModel):
         """
         return self._db.items(dbcore.MatchQuery("album_id", self.id))
 
-    def remove(self, delete=False, with_items=True):
+    def remove(self, delete=False, with_items=True) -> None:
         """Remove this album and all its associated items from the
         library.
 
@@ -395,7 +395,7 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, operation=MoveOperation.MOVE, item_dir=None):
+    def move_art(self, operation=MoveOperation.MOVE, item_dir=None) -> None:
         """Move, copy, link or hardlink (depending on `operation`) any
         existing album art so that it remains in the same directory as
         the items.
@@ -449,7 +449,7 @@ class Album(LibModel):
             assert False, "unknown MoveOperation"
         self.artpath = new_art
 
-    def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
+    def move(self, operation=MoveOperation.MOVE, basedir=None, store=True) -> None:
         """Move, copy, link or hardlink (depending on `operation`)
         all items to their destination. Any album art moves along with them.
 
@@ -540,7 +540,7 @@ class Album(LibModel):
 
         return bytestring_path(dest)
 
-    def set_art(self, path, copy=True):
+    def set_art(self, path, copy=True) -> None:
         """Set the album's cover art to the image at the given path.
 
         The image is copied (or moved) into place, replacing any
@@ -572,7 +572,7 @@ class Album(LibModel):
 
         plugins.send("art_set", album=self)
 
-    def store(self, fields=None, inherit=True):
+    def store(self, fields=None, inherit=True) -> None:
         """Update the database with the album information.
 
         `fields` represents the fields to be stored. If not specified,
@@ -610,7 +610,7 @@ class Album(LibModel):
                             del item[key]
                     item.store()
 
-    def try_sync(self, write, move, inherit=True):
+    def try_sync(self, write, move, inherit=True) -> None:
         """Synchronize the album and its items with the database.
         Optionally, also write any new tags into the files and update
         their paths.
@@ -762,7 +762,7 @@ class Item(LibModel):
         return self.__album
 
     @_cached_album.setter
-    def _cached_album(self, album):
+    def _cached_album(self, album) -> None:
         self.__album = album
 
     @classmethod
@@ -789,7 +789,7 @@ class Item(LibModel):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
         if key == "path":
@@ -818,7 +818,7 @@ class Item(LibModel):
                 return self._cached_album[key]
             raise
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # This must not use `with_album=True`, because that might access
         # the database. When debugging, that is not guaranteed to succeed, and
         # can even deadlock due to the database lock.
@@ -851,7 +851,7 @@ class Item(LibModel):
                 return self._cached_album.get(key, default)
             return default
 
-    def update(self, values):
+    def update(self, values) -> None:
         """Set all key/value pairs in the mapping.
 
         If mtime is specified, it is not reset (as it might otherwise be).
@@ -860,7 +860,7 @@ class Item(LibModel):
         if self.mtime == 0 and "mtime" in values:
             self.mtime = values["mtime"]
 
-    def clear(self):
+    def clear(self) -> None:
         """Set all key/value pairs to None."""
         for key in self._media_tag_fields:
             setattr(self, key, None)
@@ -876,7 +876,7 @@ class Item(LibModel):
 
     # Interaction with file metadata.
 
-    def read(self, read_path=None):
+    def read(self, read_path=None) -> None:
         """Read the metadata from the associated file.
 
         If `read_path` is specified, read metadata from that file
@@ -907,7 +907,7 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self, path=None, tags=None, id3v23=None):
+    def write(self, path=None, tags=None, id3v23=None) -> None:
         """Write the item's metadata to a media file.
 
         All fields in `_media_fields` are written to disk according to
@@ -959,7 +959,7 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send("after_write", item=self, path=path)
 
-    def try_write(self, *args, **kwargs):
+    def try_write(self, *args, **kwargs) -> bool | None:
         """Call `write()` but catch and log `FileOperationError`
         exceptions.
 
@@ -972,7 +972,7 @@ class Item(LibModel):
             log.error("{}", exc)
             return False
 
-    def try_sync(self, write, move, with_album=True):
+    def try_sync(self, write, move, with_album=True) -> None:
         """Synchronize the item with the database and, possibly, update its
         tags on disk and its path (by moving the file).
 
@@ -995,7 +995,7 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move_file(self, dest, operation=MoveOperation.MOVE):
+    def move_file(self, dest, operation=MoveOperation.MOVE) -> None:
         """Move, copy, link or hardlink the item depending on `operation`,
         updating the path value if the move succeeds.
 
@@ -1077,7 +1077,7 @@ class Item(LibModel):
 
     # Model methods.
 
-    def remove(self, delete=False, with_album=True):
+    def remove(self, delete=False, with_album=True) -> None:
         """Remove the item.
 
         If `delete`, then the associated file is removed from disk.
@@ -1113,7 +1113,7 @@ class Item(LibModel):
         basedir=None,
         with_album=True,
         store=True,
-    ):
+    ) -> None:
         """Move the item to its designated location within the library
         directory (provided by destination()).
 
@@ -1267,7 +1267,7 @@ class DefaultTemplateFunctions:
         """Names of tmpl_* functions in this class."""
         return [s for s in dir(cls) if s.startswith(cls._prefix)]
 
-    def __init__(self, item=None, lib=None):
+    def __init__(self, item=None, lib=None) -> None:
         """Parametrize the functions.
 
         If `item` or `lib` is None, then some functions (namely, ``aunique``)
