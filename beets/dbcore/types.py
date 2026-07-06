@@ -385,7 +385,10 @@ class BasePathType(Type[bytes, N]):
         return value
 
     def from_sql(self, sql_value: SQLiteType) -> bytes | N:
-        return pathutils.expand_path_from_db(self.normalize(sql_value))
+        value = self.normalize(sql_value)
+        if isinstance(value, bytes):
+            return pathutils.expand_path_from_db(value)
+        return value
 
     def to_sql(self, value: pathutils.MaybeBytes) -> BLOB_TYPE | None:
         value = pathutils.normalize_path_for_db(value)
@@ -451,7 +454,7 @@ class DurationType(Float):
     def format(self, value: float) -> str:
         if not beets.config["format_raw_length"].get(bool):
             return human_seconds_short(value or 0.0)
-        return value
+        return str(value)
 
     def parse(self, string: str) -> float | N:
         try:
