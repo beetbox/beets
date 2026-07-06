@@ -10,6 +10,7 @@ import platformdirs
 
 import beets
 from beets import config, context, dbcore
+from beets.dbcore.query import Query
 from beets.dbcore.sort import NullSort
 from beets.exceptions import UserError
 from beets.util import normpath
@@ -22,7 +23,6 @@ from .queries import parse_query_parts, parse_query_string
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
 
-    from beets.dbcore.query import Query
     from beets.dbcore.sort import Sort
     from beets.util import PathLike, Replacements
     from beets.util.pathformats import PathFormat
@@ -143,15 +143,22 @@ class Library(dbcore.Database):
         the `sort` argument is ignored.
         """
         # Parse the query, if necessary.
+        parsed_sort = None
+        parsed_query = None
         try:
-            parsed_sort = None
             # Query parsing needs the library root, but keeping it scoped here
             # avoids leaking one Library's directory into another's work.
             with context.music_dir(self.directory):
+                if isinstance(query, Query):
+                    parsed_query = query
                 if isinstance(query, str):
-                    query, parsed_sort = parse_query_string(query, model_cls)
+                    parsed_query, parsed_sort = parse_query_string(
+                        query, model_cls
+                    )
                 elif isinstance(query, (list, tuple)):
-                    query, parsed_sort = parse_query_parts(query, model_cls)
+                    parsed_query, parsed_sort = parse_query_parts(
+                        query, model_cls
+                    )
         except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
 
@@ -160,7 +167,7 @@ class Library(dbcore.Database):
         if parsed_sort and not isinstance(parsed_sort, NullSort):
             sort = parsed_sort
 
-        return super()._get_results(model_cls, query, sort)
+        return super()._get_results(model_cls, parsed_query, sort)
 
     @staticmethod
     def get_default_album_sort() -> Sort:
