@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 from mediafile import MediaFile, UnreadableFileError
+from typing_extensions import Self
 
 import beets
 from beets import dbcore, logging, plugins, util
@@ -33,7 +34,7 @@ from .fields import TYPE_BY_FIELD
 from .queries import parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView
+    from collections.abc import Callable, KeysView
 
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort
@@ -348,7 +349,7 @@ class Album(LibModel):
         return Path(os.fsdecode(self.artpath)) if self.artpath else None
 
     @classmethod
-    def _getters(cls):
+    def _getters(cls) -> dict[str, Callable[[Self], object]]:
         # In addition to plugin-provided computed fields, also expose
         # the album's directory as `path`.
         getters = plugins.album_field_getters()
@@ -764,7 +765,7 @@ class Item(LibModel):
         self.__album = album
 
     @classmethod
-    def _getters(cls):
+    def _getters(cls) -> dict[str, Callable[[Self], object]]:
         getters = plugins.item_field_getters()
         getters["singleton"] = lambda i: i.album_id is None
         getters["filesize"] = Item.try_filesize  # In bytes.
