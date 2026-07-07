@@ -204,6 +204,7 @@ class ConvertPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-r",
             "--remove-missing",
+            default=self.config["remove_missing"].get(),
             action="store_true",
             help=(
                 "remove all files in the destination directory that are not"
