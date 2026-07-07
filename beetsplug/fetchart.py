@@ -1220,7 +1220,7 @@ class Spotify(RemoteArtSource):
         paths: None | Sequence[bytes],
     ) -> Iterator[Candidate]:
         try:
-            url = f"{self.SPOTIFY_ALBUM_URL}{album.items().get().spotify_album_id}"
+            url = f"{self.SPOTIFY_ALBUM_URL}{album.items().get().spotify_album_id}"  # type: ignore[union-attr]
         except AttributeError:
             self._log.debug("Fetchart: no Spotify album ID found")
             return
@@ -1273,7 +1273,7 @@ class CoverArtUrl(RemoteArtSource):
             if album.get("cover_art_url"):
                 image_url = album.cover_art_url
             else:
-                image_url = album.items().get().cover_art_url
+                image_url = album.items().get().cover_art_url  # type: ignore[union-attr]
             self._log.debug("Cover art URL {} found for {}", image_url, album)
         except (AttributeError, TypeError):
             self._log.debug("Cover art URL not found for {}", album)
@@ -1494,7 +1494,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         failure (e.g. permission errors when writing the art file).
         """
         try:
-            album.set_art(candidate.path, delete)
+            album.set_art(candidate.path, delete)  # type: ignore[arg-type]
         except OSError as exc:
             self._log.warning(
                 "fetchart: could not write art for {0.albumartist} - "

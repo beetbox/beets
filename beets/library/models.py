@@ -90,13 +90,13 @@ class LibModel(dbcore.Model["Library"]):
 
     def store(self, fields: Iterable[str] | None = None) -> None:
         super().store(fields)
-        plugins.send("database_change", lib=self._db, model=self)
+        plugins.send("database_change", lib=self.db, model=self)
 
     def remove(self) -> None:
         super().remove()
-        plugins.send("database_change", lib=self._db, model=self)
+        plugins.send("database_change", lib=self.db, model=self)
 
-    def add(self, lib: Database | None = None) -> None:
+    def add(self, lib: Library | None = None) -> None:
         # super().add() calls self.store(), which sends `database_change`,
         # so don't do it here
         super().add(lib)
@@ -143,18 +143,20 @@ class LibModel(dbcore.Model["Library"]):
         return query_cls(field, pattern, fast)
 
     @classmethod
-    def any_field_query(cls, *args: Any, **kwargs: Any) -> dbcore.OrQuery:
+    def any_field_query(
+        cls, pattern: str, query_cls: FieldQueryType
+    ) -> dbcore.OrQuery:
         return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
+            [cls.field_query(f, pattern, query_cls) for f in cls._search_fields]
         )
 
     @classmethod
     def any_writable_media_field_query(
-        cls, *args: Any, **kwargs: Any
+        cls, pattern: str, query_cls: FieldQueryType
     ) -> dbcore.OrQuery:
         fields = cls.writable_media_fields
         return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in fields]
+            [cls.field_query(f, pattern, query_cls) for f in fields]
         )
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
@@ -262,7 +264,7 @@ class Album(LibModel):
     Reflects the library's "albums" table, including album art.
     """
 
-    artpath: bytes
+    artpath: bytes | None
 
     _table = "albums"
     _flex_table = "album_attributes"
@@ -362,7 +364,7 @@ class Album(LibModel):
             "albumtotal": Album._albumtotal,
         }
 
-    def items(self) -> Results[Item]:
+    def items(self) -> Results[Item]:  # type: ignore[override]
         """Return an iterable over the items associated with this
         album.
 
@@ -371,6 +373,9 @@ class Album(LibModel):
         Since :meth:`Album.items` predates these methods, and is
         likely to be used by plugins, we keep this interface as-is.
         """
+        if self._db is None:
+            raise AttributeError(f"{type(self).__name__} has no database")
+
         return self._db.items(dbcore.MatchQuery("album_id", self.id))
 
     def remove(self, delete: bool = False, with_items: bool = True) -> None:
@@ -440,7 +445,7 @@ class Album(LibModel):
             util.move(old_art, new_art)
             util.prune_dirs(
                 os.path.dirname(old_art),
-                self._db.directory,
+                self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
         elif operation == MoveOperation.COPY:
@@ -475,7 +480,7 @@ class Album(LibModel):
         the album is not stored automatically, and it will have to be manually
         stored after invoking this method.
         """
-        basedir = basedir or self._db.directory
+        basedir = basedir or self.db.directory
 
         # Ensure new metadata is available to items for destination
         # computation.
@@ -546,12 +551,12 @@ class Album(LibModel):
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
         subpath = util.sanitize_path(
-            subpath, replacements=self._db.replacements
+            subpath, replacements=self.db.replacements
         )
-        subpath = bytestring_path(subpath)
+        subpath_bytes = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
-        dest = os.path.join(item_dir, subpath + ext)
+        dest = os.path.join(item_dir, subpath_bytes + ext)
 
         return bytestring_path(dest)
 
@@ -613,7 +618,7 @@ class Album(LibModel):
                 else:  # is a flexible attribute
                     track_updates[key] = self[key]
 
-        with self._db.transaction():
+        with self.db.transaction():
             super().store(fields)
             if track_updates:
                 for item in self.items():
@@ -851,7 +856,7 @@ class Item(LibModel):
 
         `with_album` controls whether the album's fields are included.
         """
-        keys = super().keys(computed=computed)
+        keys: set[str] = set(super().keys(computed=computed))
         if with_album and self._cached_album:
             keys |= self._cached_album.keys(computed=computed)
 
@@ -985,14 +990,19 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send("after_write", item=self, path=path)
 
-    def try_write(self, *args: Any, **kwargs: Any) -> bool | None:
+    def try_write(
+        self,
+        path: bytes | None = None,
+        tags: Mapping[str, Any] | None = None,
+        id3v23: bool | None = None,
+    ) -> bool:
         """Call `write()` but catch and log `FileOperationError`
         exceptions.
 
         Return `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(*args, **kwargs)
+            self.write(path=path, tags=tags, id3v23=id3v23)
             return True
         except FileOperationError as exc:
             log.error("{}", exc)
@@ -1131,11 +1141,11 @@ class Item(LibModel):
             util.remove(self.path)
             util.prune_dirs(
                 os.path.dirname(self.path),
-                self._db.directory,
+                self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
 
-        self._db._memotable = {}
+        self.db._memotable = {}
 
     def move(
         self,
@@ -1204,7 +1214,7 @@ class Item(LibModel):
         if operation == MoveOperation.MOVE:
             util.prune_dirs(
                 os.path.dirname(old_path),
-                self._db.directory,
+                self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
 
@@ -1227,20 +1237,18 @@ class Item(LibModel):
         basedir = basedir or self.db.directory
         path_formats = path_formats or self.db.path_formats
 
-        # Use a path format based on a query, falling back on the
-        # default.
-        for query, path_format in path_formats:
-            if query == PF_KEY_DEFAULT:
+        for query_str, path_format in path_formats:
+            if query_str == PF_KEY_DEFAULT:
                 continue
-            query, _ = parse_query_string(query, type(self))
+            query, _ = parse_query_string(query_str, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
                 break
         else:
             # No query matched; fall back to default.
-            for query, path_format in path_formats:
-                if query == PF_KEY_DEFAULT:
+            for query_str, path_format in path_formats:
+                if query_str == PF_KEY_DEFAULT:
                     break
             else:
                 assert False, "no default path format"
@@ -1485,13 +1493,17 @@ class DefaultTemplateFunctions:
         "initial_subqueries" is a list of subqueries that should be included
         in the query to find the ambiguous items.
         """
+        lib = self.lib
+        if lib is None:
+            return ""
+
         memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
-        memoval = self.lib._memotable.get(memokey)
+        memoval = lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
 
         if skip_item(db_item):
-            self.lib._memotable[memokey] = ""
+            lib._memotable[memokey] = ""
             return ""
 
         keys = keys or beets.config[name]["keys"].as_str()
@@ -1512,15 +1524,13 @@ class DefaultTemplateFunctions:
         # Find matching items to disambiguate with.
         query = db_item.duplicates_query(keys)
         ambigous_items = (
-            self.lib.items(query)
-            if isinstance(db_item, Item)
-            else self.lib.albums(query)
+            lib.items(query) if isinstance(db_item, Item) else lib.albums(query)
         )
 
         # If there's only one item to matching these details, then do
         # nothing.
         if len(ambigous_items) == 1:
-            self.lib._memotable[memokey] = ""
+            lib._memotable[memokey] = ""
             return ""
 
         # Find the first disambiguator that distinguishes the items.
@@ -1536,7 +1546,7 @@ class DefaultTemplateFunctions:
         else:
             # No disambiguator distinguished all fields.
             res = f" {bracket_l}{item_id}{bracket_r}"
-            self.lib._memotable[memokey] = res
+            lib._memotable[memokey] = res
             return res
 
         # Flatten disambiguation value into a string.
@@ -1548,7 +1558,7 @@ class DefaultTemplateFunctions:
         else:
             res = ""
 
-        self.lib._memotable[memokey] = res
+        lib._memotable[memokey] = res
         return res
 
     @staticmethod

@@ -56,6 +56,7 @@ EventType = Literal[
     "album_removed",
     "albuminfo_received",
     "album_matched",
+    "art_set",
     "before_choose_candidate",
     "before_item_moved",
     "cli_exit",
