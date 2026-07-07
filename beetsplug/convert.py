@@ -202,7 +202,7 @@ class ConvertPlugin(BeetsPlugin):
             ),
         )
         cmd.parser.add_option(
-            "-r",
+            "-s",
             "--remove-missing",
             default=self.config["remove_missing"].get(),
             action="store_true",
