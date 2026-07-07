@@ -43,6 +43,8 @@ def libtree(lib: Library) -> Node:
     """
     root = Node({}, {})
     for item in lib.items():
+        if item.id is None:
+            continue
         dest = item.destination(relative_to_libdir=True)
         parts = util.components(util.as_string(dest))
         _insert(root, parts, item.id)

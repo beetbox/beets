@@ -352,10 +352,11 @@ class Album(LibModel):
     def _getters(cls) -> dict[str, Callable[[Self], object]]:
         # In addition to plugin-provided computed fields, also expose
         # the album's directory as `path`.
-        getters = plugins.album_field_getters()
-        getters["path"] = Album.item_dir
-        getters["albumtotal"] = Album._albumtotal
-        return getters
+        return {
+            **plugins.album_field_getters(),
+            "path": Album.item_dir,
+            "albumtotal": Album._albumtotal,
+        }
 
     def items(self):
         """Return an iterable over the items associated with this
@@ -766,11 +767,12 @@ class Item(LibModel):
 
     @classmethod
     def _getters(cls) -> dict[str, Callable[[Self], object]]:
-        getters = plugins.item_field_getters()
-        getters["singleton"] = lambda i: i.album_id is None
-        getters["filesize"] = Item.try_filesize  # In bytes.
-        getters["has_cover_art"] = Item.has_cover_art
-        return getters
+        return {
+            **plugins.item_field_getters(),
+            "singleton": lambda i: i.album_id is None,
+            "filesize": Item.try_filesize,  # In bytes.
+            "has_cover_art": Item.has_cover_art,
+        }
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""

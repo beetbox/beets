@@ -242,13 +242,15 @@ class Model(ABC, Generic[D]):
     flags are used to track which fields need to be stored.
     """
 
+    id: int | None
+
     # Abstract components (to be provided by subclasses).
 
-    _table: str
+    _table: ClassVar[str]
     """The main SQLite table name.
     """
 
-    _flex_table: str
+    _flex_table: ClassVar[str]
     """The flex field SQLite table name.
     """
 
@@ -257,12 +259,12 @@ class Model(ABC, Generic[D]):
     keys are field names and the values are `Type` objects.
     """
 
-    _search_fields: Sequence[str] = ()
+    _search_fields: ClassVar[Sequence[str]] = ()
     """The fields that should be queried by default by unqualified query
     terms.
     """
 
-    _indices: Sequence[Index] = ()
+    _indices: ClassVar[Sequence[Index]] = ()
     """A sequence of `Index` objects that describe the indices to be
     created for this table.
     """
@@ -298,7 +300,7 @@ class Model(ABC, Generic[D]):
     @cached_classproperty
     def _relation(cls) -> type[Model]:
         """The model that this model is closely related to."""
-        return cls
+        return cls  # type: ignore[return-value]
 
     @cached_classproperty
     def relation_join(cls) -> str:
@@ -332,7 +334,8 @@ class Model(ABC, Generic[D]):
     def get_fresh_from_db(self) -> Self:
         """Load this object from the database."""
         model_cls = self.__class__
-        if obj := self.db._get(model_cls, self.id):
+
+        if self.id is not None and (obj := self.db._get(model_cls, self.id)):
             return obj
 
         raise NotFoundError(f"No matching {model_cls.__name__} found") from None
@@ -400,7 +403,7 @@ class Model(ABC, Generic[D]):
 
         return self._db
 
-    def copy(self) -> Model:
+    def copy(self) -> Self:
         """Create a copy of the model object.
 
         The field values and other state is duplicated, but the new copy
@@ -1032,13 +1035,13 @@ class Migration(ABC):
             self.db._connection().row_factory = original_factory
 
     def migrate_model(
-        self, model_cls: type[Model], *args: Any, **kwargs: Any
+        self, model_cls: type[Model], current_fields: set[str]
     ) -> None:
         """Run this migration once for a model's backing table."""
         table = model_cls._table
         if not self.db.migration_exists(self.name, table):
             self._before_migration_backup(table)
-            self._migrate_data(model_cls, *args, **kwargs)
+            self._migrate_data(model_cls, current_fields)
             self.db.record_migration(self.name, table)
 
     def _before_migration_backup(self, table: str) -> None:
@@ -1194,8 +1197,8 @@ class Database:
             0,
         ):
             # If possible, disable double-quoted strings
-            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DDL, 0)
-            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DML, 0)
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DDL, False)
+            conn.setconfig(sqlite3.SQLITE_DBCONFIG_DQS_DML, False)
 
         self.add_functions(conn)
 
