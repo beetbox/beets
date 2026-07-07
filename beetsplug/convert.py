@@ -692,9 +692,7 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album)
 
         if self.remove_missing:
-            self.remove_non_item_files(
-                items, self.dest, self.fmt, pretend, opts.yes
-            )
+            self.remove_non_item_files(items, opts.yes)
 
         # If the user supplied a playlist name, create a playlist for files
         # copied to the destination.
@@ -798,7 +796,7 @@ class ConvertPlugin(BeetsPlugin):
         convert = [self.convert_item(keep_new) for _ in range(self.threads)]
         pipeline.Pipeline([iter(items), convert]).run_parallel()
 
-    def remove_non_item_files(self, items, dest, fmt, pretend, yes):
+    def remove_non_item_files(self, items: list[Item], yes: bool):
         """
         Remove all files in the destination directory ``dest`` that do not
         correspond to an item to be converted. If ``pretend=True`` it will
@@ -807,11 +805,12 @@ class ConvertPlugin(BeetsPlugin):
         """
         _, ext = self.command
         item_destinations = {
-            replace_ext(item.destination(basedir=dest), ext) for item in items
+            replace_ext(item.destination(basedir=self.dest), ext)
+            for item in items
         }
         files_to_remove = list()
 
-        for dirpath, _, filenames in os.walk(dest):
+        for dirpath, _, filenames in os.walk(self.dest):
             for filename in filenames:
                 filepath = util.bytestring_path(os.path.join(dirpath, filename))
                 if filepath not in item_destinations:
@@ -825,7 +824,7 @@ class ConvertPlugin(BeetsPlugin):
         for f in files_to_remove:
             ui.print_(util.displayable_path(f))
 
-        if (not pretend) and (yes or ui.input_yn("Delete files? (Y/n)")):
+        if (not self.pretend) and (yes or ui.input_yn("Delete files? (Y/n)")):
             for file in files_to_remove:
                 util.remove(file)
                 self._log.info(f'Removed file "{util.displayable_path(file)}"')
