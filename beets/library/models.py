@@ -25,7 +25,6 @@ from beets.util import (
     syspath,
 )
 from beets.util.deprecation import maybe_replace_legacy_field
-from beets.util.functemplate import Template, template
 from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
@@ -37,6 +36,7 @@ if TYPE_CHECKING:
 
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort
+    from beets.util.pathformats import PathFormat
 
     from .library import Library  # noqa: F401
 
@@ -99,10 +99,9 @@ class LibModel(dbcore.Model["Library"]):
         super().add(lib)
 
     def __format__(self, spec):
-        if not spec:
-            spec = beets.config[self._format_config_key].as_str()
-        assert isinstance(spec, str)
-        return self.evaluate_template(spec)
+        return self.evaluate_template(
+            spec or beets.config[self._format_config_key].as_str()
+        )
 
     def __str__(self):
         return format(self)
@@ -524,8 +523,8 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = template(beets.config["art_filename"].as_str())
-        subpath = self.evaluate_template(filename_tmpl, True)
+        filename_tmpl = beets.config["art_filename"].as_str()
+        subpath = self.evaluate_template(filename_tmpl, for_path=True)
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
         subpath = util.sanitize_path(
@@ -1178,7 +1177,10 @@ class Item(LibModel):
     # Templating.
 
     def destination(
-        self, relative_to_libdir=False, basedir=None, path_formats=None
+        self,
+        relative_to_libdir=False,
+        basedir=None,
+        path_formats: list[PathFormat] | None = None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1208,13 +1210,8 @@ class Item(LibModel):
                     break
             else:
                 assert False, "no default path format"
-        if isinstance(path_format, Template):
-            subpath_tmpl = path_format
-        else:
-            subpath_tmpl = template(path_format)
-
         # Evaluate the selected template.
-        subpath = self.evaluate_template(subpath_tmpl, True)
+        subpath = self.evaluate_template(path_format, for_path=True)
 
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
