@@ -47,6 +47,9 @@ class Library(dbcore.Database):
         (migrations.RemoveInheritedArtpathMigration, (Item,)),
         (migrations.InstrumentalLyricsInFlexFieldMigration, (Item,)),
     )
+
+    # Used for template substitution performance.
+    _memotable: dict[tuple[str | None, str | None, str | None, int | None], str]
     replacements: Replacements
 
     @cached_property
@@ -80,9 +83,7 @@ class Library(dbcore.Database):
         super().__init__(path, timeout=beets.config["timeout"].as_number())
 
         self.replacements = self.get_replacements()
-
-        # Used for template substitution performance.
-        self._memotable: dict[tuple[str, ...], str] = {}
+        self._memotable = {}
 
     @contextmanager
     def music_dir_context(self) -> Iterator[Library]:

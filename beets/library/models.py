@@ -203,17 +203,17 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     def album_keys(self) -> list[str]:
         album_keys = []
         if self.album:
-            if self.included_keys == self.ALL_KEYS:
+            if isinstance(self.included_keys, list):
+                album_keys = self.included_keys
+            else:
                 # Performance note: this triggers a database query.
                 for key in self.album.keys(computed=True):
                     if key in Album.item_keys or key not in self.item._fields:
                         album_keys.append(key)
-            else:
-                album_keys = self.included_keys
         return album_keys
 
     @property
-    def album(self) -> Album:
+    def album(self) -> Album | None:
         return self.item._cached_album
 
     def _get(self, key: str) -> str:
@@ -221,11 +221,11 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
         Raise a KeyError for invalid keys.
         """
-        if self.for_path and key in self.album_keys:
+        if self.album and self.for_path and key in self.album_keys:
             return self._get_formatted(self.album, key)
         if key in self.model_keys:
             return self._get_formatted(self.model, key)
-        if key in self.album_keys:
+        if self.album and key in self.album_keys:
             return self._get_formatted(self.album, key)
         raise KeyError(key)
 
@@ -550,9 +550,7 @@ class Album(LibModel):
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
-        subpath = util.sanitize_path(
-            subpath, replacements=self.db.replacements
-        )
+        subpath = util.sanitize_path(subpath, replacements=self.db.replacements)
         subpath_bytes = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
@@ -1308,9 +1306,7 @@ class DefaultTemplateFunctions:
         """Names of tmpl_* functions in this class."""
         return [s for s in dir(cls) if s.startswith(cls._prefix)]
 
-    def __init__(
-        self, item: LibModel | None = None, lib: Library | None = None
-    ) -> None:
+    def __init__(self, item: LibModel, lib: Library | None) -> None:
         """Parametrize the functions.
 
         If `item` or `lib` is None, then some functions (namely, ``aunique``)
@@ -1366,17 +1362,14 @@ class DefaultTemplateFunctions:
         """If ``condition`` is nonempty and nonzero, emit ``trueval``;
         otherwise, emit ``falseval`` (if provided).
         """
+        _condition: str | int = condition
         try:
-            int_condition = _int_arg(condition)
+            _condition = _int_arg(condition)
         except ValueError:
             if condition.lower() == "false":
                 return falseval
-        else:
-            condition = int_condition
 
-        if condition:
-            return trueval
-        return falseval
+        return trueval if _condition else falseval
 
     @staticmethod
     def tmpl_asciify(s: str) -> str:
@@ -1422,7 +1415,7 @@ class DefaultTemplateFunctions:
         if memoval is not None:
             return memoval
 
-        album = self.lib.get_album(album_id)
+        album: Album = self.lib.get_album(album_id)  # type: ignore[assignment]
 
         return self._tmpl_unique(
             "aunique",
@@ -1431,7 +1424,6 @@ class DefaultTemplateFunctions:
             bracket,
             album_id,
             album,
-            album.item_keys,
             # Do nothing for singletons.
             lambda a: a is None,
         )
@@ -1471,7 +1463,6 @@ class DefaultTemplateFunctions:
             bracket,
             item_id,
             self.item,
-            Item.all_keys(),
             # Do nothing for non singletons.
             lambda i: i.album_id is not None,
         )
@@ -1481,8 +1472,8 @@ class DefaultTemplateFunctions:
         name: str | None,
         keys: str | None,
         disam: str | None,
-        item_id: str | None,
-    ) -> tuple[str | None, ...]:
+        item_id: int | None,
+    ) -> tuple[str | None, str | None, str | None, int | None]:
         """Get the memokey for the unique template named "name" for the
         specific parameters.
         """
@@ -1496,8 +1487,7 @@ class DefaultTemplateFunctions:
         bracket: str | None,
         item_id: int,
         db_item: LibModel,
-        item_keys: set[str],
-        skip_item: Callable[[LibModel | None], bool],
+        skip_item: Callable[[LibModel], bool],
     ) -> str:
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
@@ -1536,8 +1526,8 @@ class DefaultTemplateFunctions:
         disam = disam or beets.config[name]["disambiguators"].as_str()
         if bracket is None:
             bracket = beets.config[name]["bracket"].as_str()
-        keys = keys.split()
-        disam = disam.split()
+        keys_list = keys.split()
+        disam_list = disam.split()
 
         # Assign a left and right bracket or leave blank if argument is empty.
         if len(bracket) == 2:
@@ -1548,7 +1538,7 @@ class DefaultTemplateFunctions:
             bracket_r = ""
 
         # Find matching items to disambiguate with.
-        query = db_item.duplicates_query(keys)
+        query = db_item.duplicates_query(keys_list)
         ambigous_items = (
             lib.items(query) if isinstance(db_item, Item) else lib.albums(query)
         )
@@ -1560,7 +1550,7 @@ class DefaultTemplateFunctions:
             return ""
 
         # Find the first disambiguator that distinguishes the items.
-        for disambiguator in disam:
+        for disambiguator in disam_list:
             # Get the value for each item for the current field.
             disam_values = {s.get(disambiguator, "") for s in ambigous_items}
 
