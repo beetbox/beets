@@ -155,9 +155,7 @@ class TestListenBrainzPlugin(ConfigMixin):
             call_count += 1
             if call_count == 1:
                 return {"payload": {"listens": page1}}
-            if call_count == 2:
-                return {"payload": {"listens": page2}}
-            return {"payload": {"listens": []}}
+            return {"payload": {"listens": page2}}
 
         with patch.object(plugin, "_make_request", side_effect=mock_request):
             result = plugin.get_listens(count=5)

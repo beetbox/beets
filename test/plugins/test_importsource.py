@@ -6,17 +6,6 @@ import time
 from beets import importer, plugins
 from beets.test.helper import AutotagImportTestCase, IOMixin, PluginMixin
 from beets.util import syspath
-from beetsplug.importsource import ImportSourcePlugin
-
-_listeners = ImportSourcePlugin.listeners
-
-
-def preserve_plugin_listeners():
-    """Preserve the initial plugin listeners as they would otherwise be
-    deleted after the first setup / tear down cycle.
-    """
-    if not ImportSourcePlugin.listeners:
-        ImportSourcePlugin.listeners = _listeners
 
 
 class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
@@ -24,7 +13,6 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
     preload_plugin = False
 
     def setUp(self):
-        preserve_plugin_listeners()
         super().setUp()
         self.config[self.plugin]["suggest_removal"] = True
         self.load_plugins()
@@ -120,9 +108,6 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
 
         class MockTask:
             skip = True
-
-            def imported_items(self):
-                return "whatever"
 
         plugin = plugins._instances[0]
         mock_task = MockTask()

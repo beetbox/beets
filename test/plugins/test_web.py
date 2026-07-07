@@ -41,10 +41,6 @@ class WebPluginMixin(PluginMixin):
         else:
             self.path_prefix = ""
 
-        # Add fixtures
-        for track in self.lib.items():
-            track.remove()
-
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3

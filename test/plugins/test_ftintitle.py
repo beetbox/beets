@@ -389,10 +389,8 @@ def test_contains_feat(given: str, expected: bool) -> None:
     ],
 )
 def test_custom_words(
-    given: str, custom_words: list[str] | None, expected: bool
+    given: str, custom_words: list[str], expected: bool
 ) -> None:
-    if custom_words is None:
-        custom_words = []
     assert ftintitle.contains_feat(given, custom_words) is expected
 
 
