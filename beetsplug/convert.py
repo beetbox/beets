@@ -205,8 +205,10 @@ class ConvertPlugin(BeetsPlugin):
             "-r",
             "--remove-missing",
             action="store_true",
-            help="""remove all files in the destination directory that are not
-                    present in the library.""",
+            help=(
+                "remove all files in the destination directory that are not"
+                " present in the library."
+            ),
         )
         cmd.parser.add_option(
             "-F",
@@ -683,7 +685,7 @@ class ConvertPlugin(BeetsPlugin):
         if opts.album and self.config["copy_album_art"]:
             for album in albums:
                 self.copy_album_art(album)
-        
+
         if remove_missing:
             self.remove_non_item_files(items, dest, fmt, pretend, opts.yes)
 
