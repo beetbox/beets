@@ -271,6 +271,10 @@ class ConvertPlugin(BeetsPlugin):
         return not self.hardlink and self.config["link"].get(bool)
 
     @cached_property
+    def remove_missing(self) -> bool:
+        return self.config["remove_missing"].get(bool)
+
+    @cached_property
     def command(self) -> FormatCommand:
         """Return the command template and the extension from the config."""
         fmt = ALIASES.get(self.fmt, self.fmt)
@@ -686,8 +690,10 @@ class ConvertPlugin(BeetsPlugin):
             for album in albums:
                 self.copy_album_art(album)
 
-        if remove_missing:
-            self.remove_non_item_files(items, dest, fmt, pretend, opts.yes)
+        if self.remove_missing:
+            self.remove_non_item_files(
+                items, self.dest, self.fmt, pretend, opts.yes
+            )
 
         # If the user supplied a playlist name, create a playlist for files
         # copied to the destination.
@@ -798,7 +804,7 @@ class ConvertPlugin(BeetsPlugin):
         not actually remove any files and only print a list of files to be
         deleted. If ``yes=True`` it will not ask for confirmation.
         """
-        _, ext = get_format(fmt)
+        _, ext = self.command
         item_destinations = {
             replace_ext(item.destination(basedir=dest), ext) for item in items
         }
