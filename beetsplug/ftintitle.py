@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from functools import cached_property, lru_cache
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from beets import config, plugins, ui
 
@@ -12,9 +12,6 @@ if TYPE_CHECKING:
     from beets.autotag import AlbumInfo, Info, TrackInfo
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item
-
-FeaturedField = Literal["artist", "artist_sort"]
-
 
 DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
     "abridged",
@@ -264,18 +261,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             _album_artist_no_feat
         )
 
-    def _strip_featured_from_field(
-        self,
-        metadata: Info | Item,
-        field: FeaturedField,
-        for_artist: bool = True,
-    ) -> None:
-        if value := metadata.get(field):
-            stripped, _ = split_on_feat(
-                value, for_artist=for_artist, custom_words=self.custom_words
-            )
-            metadata[field] = stripped
-
     def commands(self) -> list[ui.Subcommand]:
         def func(lib, opts, args):
             self.config.set_args(opts)
@@ -347,10 +332,20 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         """Choose how to add featured artists to fetched metadata."""
         changed = False
         if not self.keep_in_artist_field:
-            before = (info.get("artist"), info.get("artist_sort"))
-            self._strip_featured_from_field(info, "artist")
-            self._strip_featured_from_field(info, "artist_sort")
-            changed |= before != (info.get("artist"), info.get("artist_sort"))
+            artist = info.get("artist") or ""
+            if artist:
+                artist_no_feat, _ = split_on_feat(
+                    artist, custom_words=self.custom_words
+                )
+                info["artist"] = artist_no_feat
+                changed |= artist != artist_no_feat
+
+            if artist_sort := info.get("artist_sort"):
+                artist_sort_no_feat, _ = split_on_feat(
+                    artist_sort, custom_words=self.custom_words
+                )
+                info["artist_sort"] = artist_sort_no_feat
+                changed |= artist_sort != artist_sort_no_feat
 
         title = info.get("title") or ""
         if not self.drop_feat and not contains_feat(title, self.custom_words):
