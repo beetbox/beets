@@ -284,76 +284,45 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             if self.ft_in_title(item):
                 item.store()
 
-    def update_item_metadata(self, item: Item, feat_part: str) -> bool:
+    def update_metadata(self, metadata: Item | Info, feat_part: str) -> bool:
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
         If `drop_feat` is set, then do not add the artist to the title; just
         remove it from the artist field.
         """
         changed = False
-
+        artist = metadata.get("artist") or ""
         # In case the artist is kept, do not update the artist fields.
         if self.keep_in_artist_field:
             self._log.info(
-                "artist: {.artist} (Not changing due to keep_in_artist)", item
+                "artist: {} (Not changing due to keep_in_artist)", artist
             )
         else:
-            artist = item.get("artist") or ""
             track_artist, _ = split_on_feat(
                 artist, custom_words=self.custom_words
             )
-            self._log.info("artist: {0.artist} -> {1}", item, track_artist)
-            item.artist = track_artist
+            self._log.info("artist: {} -> {}", artist, track_artist)
+            metadata["artist"] = track_artist
             changed |= artist != track_artist
 
-        if artist_sort := item.get("artist_sort"):
+        if artist_sort := metadata.get("artist_sort"):
             # Just strip the featured artist from the sort name.
             artist_sort_no_feat, _ = split_on_feat(
                 artist_sort, custom_words=self.custom_words
             )
-            item.artist_sort = artist_sort_no_feat
+            metadata["artist_sort"] = artist_sort_no_feat
             changed |= artist_sort != artist_sort_no_feat
 
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
-        title = item.get("title") or ""
+        title = metadata.get("title") or ""
         if not self.drop_feat and not contains_feat(title, self.custom_words):
             formatted = self.feat_format.format(feat_part)
             new_title = self.insert_ft_into_title(
                 title, formatted, self.bracket_keywords
             )
-            self._log.info("title: {.title} -> {}", item, new_title)
-            item.title = new_title
-            changed |= title != new_title
-
-        return changed
-
-    def update_info_metadata(self, info: Info, feat_part: str) -> bool:
-        """Choose how to add featured artists to fetched metadata."""
-        changed = False
-        if not self.keep_in_artist_field:
-            artist = info.get("artist") or ""
-            if artist:
-                artist_no_feat, _ = split_on_feat(
-                    artist, custom_words=self.custom_words
-                )
-                info["artist"] = artist_no_feat
-                changed |= artist != artist_no_feat
-
-            if artist_sort := info.get("artist_sort"):
-                artist_sort_no_feat, _ = split_on_feat(
-                    artist_sort, custom_words=self.custom_words
-                )
-                info["artist_sort"] = artist_sort_no_feat
-                changed |= artist_sort != artist_sort_no_feat
-
-        title = info.get("title") or ""
-        if not self.drop_feat and not contains_feat(title, self.custom_words):
-            formatted = self.feat_format.format(feat_part)
-            new_title = self.insert_ft_into_title(
-                title, formatted, self.bracket_keywords
-            )
-            info.title = new_title
+            self._log.info("title: {} -> {}", title, new_title)
+            metadata["title"] = new_title
             changed |= title != new_title
 
         return changed
@@ -371,7 +340,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self._log.info("no featuring artists found")
             return False
 
-        return self.update_info_metadata(info, feat_part)
+        return self.update_metadata(info, feat_part)
 
     def trackinfo_received(self, info: TrackInfo) -> None:
         """Move featuring artists in fetched singleton metadata."""
@@ -403,7 +372,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self._log.info("no featuring artists found")
             return False
 
-        return self.update_item_metadata(item, feat_part)
+        return self.update_metadata(item, feat_part)
 
     def _has_feat_candidate(self, artist: str, albumartist: str | None) -> bool:
         albumartist = (albumartist or "").strip()
