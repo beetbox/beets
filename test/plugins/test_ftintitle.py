@@ -316,13 +316,15 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.artist == expected_artist
         assert info.title == expected_title
 
-    def test_ft_in_info_reports_no_change_for_drop_keep_noop(self) -> None:
+    def test_ft_in_title_reports_no_change_for_info_drop_keep_noop(
+        self,
+    ) -> None:
         info = TrackInfo(artist="Alice feat. Bob", title="Song")
 
         with self.configure_plugin({"drop": True, "keep_in_artist": True}):
             plugin = next(iter(plugins.find_plugins()))
             assert isinstance(plugin, ftintitle.FtInTitlePlugin)
-            assert plugin.ft_in_info(info) is False
+            assert plugin.ft_in_title(info, "") is False
 
         assert info.artist == "Alice feat. Bob"
         assert info.title == "Song"
@@ -362,7 +364,9 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.artist_credit == "Alice & Bobby"
         assert info.title == "Song feat. Bob"
 
-    def test_ft_in_title_reports_no_change_for_drop_keep_noop(self) -> None:
+    def test_ft_in_title_reports_no_change_for_item_drop_keep_noop(
+        self,
+    ) -> None:
         item = self.add_item(
             path="/",
             artist="Alice feat. Bob",
@@ -374,7 +378,9 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         with self.configure_plugin({"drop": True, "keep_in_artist": True}):
             plugin = next(iter(plugins.find_plugins()))
             assert isinstance(plugin, ftintitle.FtInTitlePlugin)
-            assert plugin.ft_in_title(item) is False
+            assert (
+                plugin.ft_in_title(item, item.get("albumartist") or "") is False
+            )
 
         assert item.artist == "Alice feat. Bob"
         assert item.title == "Song"

@@ -267,7 +267,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             write = ui.should_write()
 
             for item in lib.items(args):
-                if self.ft_in_title(item):
+                if self.ft_in_title(item, item.get("albumartist") or ""):
                     item.store()
                     if write:
                         item.try_write()
@@ -281,7 +281,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             return
 
         for item in task.imported_items():
-            if self.ft_in_title(item):
+            if self.ft_in_title(item, item.get("albumartist") or ""):
                 item.store()
 
     def update_metadata(self, metadata: Item | Info, feat_part: str) -> bool:
@@ -327,47 +327,31 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         return changed
 
-    def ft_in_info(self, info: Info, albumartist: str | None = None) -> bool:
-        """Move featuring artists in fetched metadata and clear Info caches."""
-        artist = (info.get("artist") or "").strip()
-        if not self._has_feat_candidate(artist, albumartist):
-            return False
-
-        feat_part = find_feat_part(
-            artist, (albumartist or "").strip(), self.custom_words
-        )
-        if not feat_part:
-            self._log.info("no featuring artists found")
-            return False
-
-        return self.update_metadata(info, feat_part)
-
     def trackinfo_received(self, info: TrackInfo) -> None:
         """Move featuring artists in fetched singleton metadata."""
-        self.ft_in_info(info)
+        self.ft_in_title(info, "")
 
     def albuminfo_received(self, info: AlbumInfo) -> None:
         """Move featuring artists in fetched album track metadata."""
         albumartist = info.get("artist") or ""
         for track_info in info.tracks:
-            self.ft_in_info(track_info, albumartist)
+            self.ft_in_title(track_info, albumartist)
 
-    def ft_in_title(self, item: Item) -> bool:
-        """Look for featured artists in the item's artist fields and move
-        them to the title.
+    def ft_in_title(self, item: Item | Info, albumartist: str) -> bool:
+        """Look for featured artists in the item's artist fields and move them
+        to the title.
 
         Returns:
             True if the item has been modified. False otherwise.
         """
         artist = (item.get("artist") or "").strip()
-        albumartist = item.get("albumartist") or ""
+        albumartist = albumartist.strip()
         if not self._has_feat_candidate(artist, albumartist):
             return False
 
-        self._log.info("{.filepath}", item)
-        feat_part = find_feat_part(
-            artist, albumartist.strip(), self.custom_words
-        )
+        if hasattr(item, "filepath"):
+            self._log.info("{.filepath}", item)
+        feat_part = find_feat_part(artist, albumartist, self.custom_words)
         if not feat_part:
             self._log.info("no featuring artists found")
             return False
