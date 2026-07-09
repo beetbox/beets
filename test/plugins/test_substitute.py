@@ -1,10 +1,10 @@
 """Test the substitute plugin regex functionality."""
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestHelper
 from beetsplug.substitute import Substitute
 
 
-class SubstitutePluginTest(PluginTestCase):
+class TestSubstitutePlugin(PluginTestHelper):
     plugin = "substitute"
     preload_plugin = False
 
