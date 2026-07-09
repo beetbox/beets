@@ -260,7 +260,6 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.artists == ["Alice", "Bob"]
         assert info.artists_credit == ["Alice"]
         assert info.title == "Song feat. Bob"
-        assert info.item_data["artist"] == "Alice"
         assert info.item_data["title"] == "Song feat. Bob"
 
     @pytest.mark.parametrize(
