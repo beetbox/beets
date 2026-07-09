@@ -4,7 +4,7 @@ drum and bass:
 rhythm and blues:
     - r(hythm)?[ &n/]*b(lues)?
 rock and roll:
-    - rock[ '‐&n/ \-]*roll
+    - rock[- ‐'&n/]*roll
 
 # Hyphenation: k-pop, j-rock, post-rock, lo-fi, p-funk, avant-garde
 \1-\2:
