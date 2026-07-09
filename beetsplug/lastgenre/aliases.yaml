@@ -84,6 +84,8 @@ traditional folk:
 # psy folk, psych-pop, psychedelic-rock, psychedelic soul, but not psychedelic (standalone)
 psychedelic \1:
     - psy(?:ch(?:edelic)?)?[ -]*(folk|pop|rock|soul)
+psytrance:
+    - psy[ -]*trance
 ska jazz:
     - ska[ -]*jazz
 dixieland:
