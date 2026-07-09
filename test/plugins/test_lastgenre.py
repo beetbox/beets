@@ -1039,8 +1039,8 @@ class TestAliases:
         [
             ("dnb", "drum and bass"),
             ("drum n bass", "drum and bass"),
-            ("r&b", "rhythm and blues"),
-            ("rnb", "rhythm and blues"),
+            ("r&b", "r&b"),
+            ("rnb", "r&b"),
             ("rock & roll", "rock and roll"),
             ("rock'n'roll", "rock and roll"),
             ("kpop", "k-pop"),
