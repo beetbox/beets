@@ -50,8 +50,6 @@ downtempo:
     - down[ -]*beat
 shoegaze:
     - shoegaz(e?r?|ing)
-soundtrack:
-    - disney
 footwork:
     - (chicago )?footwork( music)?
 juke:

@@ -1097,6 +1097,7 @@ class TestAliases:
             ("psy-trance", "psytrance"),
             ("psy rock", "psychedelic rock"),
             ("psych-pop", "psychedelic pop"),
+            ("disney", "disney"),
         ],
     )
     def test_default_alias_patterns(self, config, input_genre, expected_genre):
