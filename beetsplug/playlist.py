@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 import confuse
 
 import beets
+from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
 
@@ -27,7 +28,7 @@ class PlaylistQuery(InQuery[bytes]):
 
     @property
     def subvals(self) -> Sequence[BLOB_TYPE]:
-        return [BLOB_TYPE(p) for p in self.pattern]
+        return [BLOB_TYPE(normalize_path_for_db(p)) for p in self.pattern]
 
     def __init__(self, _, pattern: str, __) -> None:
         config = beets.config["playlist"]
