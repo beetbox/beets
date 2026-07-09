@@ -117,20 +117,14 @@ def find_feat_part(
     """Attempt to find featured artists in the item's artist fields and
     return the results. Returns None if no featured artist found.
     """
-    if not albumartist:
-        _, feat_part = split_on_feat(
-            artist, for_artist=True, custom_words=custom_words
-        )
-        return feat_part
-
     # If the album artist is featured, move the remaining artist to the title.
     artist_part, feat_part = split_on_feat(artist, custom_words=custom_words)
-    if feat_part == albumartist and artist_part:
+    if albumartist and feat_part == albumartist and artist_part:
         return artist_part
 
     # Handle a wider variety of extraction cases if the album artist is
     # contained within the track artist.
-    if albumartist in artist:
+    if albumartist and albumartist in artist:
         albumartist_split = artist.split(albumartist, 1)
 
         # If the last element of the split (the right-hand side of the

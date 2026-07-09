@@ -283,14 +283,6 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
             ),
             pytest.param(
                 {"auto": True},
-                "Alice & Bob",
-                "Song",
-                "Alice",
-                "Song feat. Bob",
-                id="generic-separator-singleton",
-            ),
-            pytest.param(
-                {"auto": True},
                 "Alice feat. Bob",
                 "Song feat. Bob",
                 "Alice",
@@ -434,7 +426,6 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         ("Alice & Bob", "Bob", "Alice"),
         ("Alice ft. Bob", "Bob", "Alice"),
         ("Alice ft. Carol", "Bob", "Carol"),
-        ("Alice & Bob", "", "Bob"),
     ],
 )
 def test_find_feat_part(
