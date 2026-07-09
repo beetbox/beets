@@ -10,7 +10,7 @@ from unittest.mock import Mock
 import pytest
 
 from beets.library.models import Item
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestHelper
 from beetsplug.tidal import TidalPlugin
 
 if TYPE_CHECKING:
@@ -141,11 +141,11 @@ def set_current_ts(monkeypatch):
     monkeypatch.setattr("beetsplug.tidal.time.time", lambda: CURRENT_TS)
 
 
-class TidalPluginTest(PluginTestCase):
+class TidalPluginTest(PluginTestHelper):
     plugin = "tidal"
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.tidal = TidalPlugin()
 
 
