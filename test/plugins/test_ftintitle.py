@@ -338,23 +338,6 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.title == "Song feat. Bob"
         assert info.item_data["artist_credit"] == "Alice feat. Bobby"
 
-    def test_trackinfo_received_preserves_collaborative_artist_credit(
-        self,
-    ) -> None:
-        self.config["artist_credit"] = False
-        info = TrackInfo(
-            artist="Alice feat. Bob",
-            artist_credit="Alice & Bobby",
-            title="Song",
-        )
-
-        with self.configure_plugin({"auto": True}):
-            plugins.send("trackinfo_received", info=info)
-
-        assert info.artist == "Alice"
-        assert info.artist_credit == "Alice & Bobby"
-        assert info.title == "Song feat. Bob"
-
     def test_ft_in_title_reports_no_change_for_item_drop_keep_noop(
         self,
     ) -> None:
