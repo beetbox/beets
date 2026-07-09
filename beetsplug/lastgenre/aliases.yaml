@@ -6,7 +6,7 @@ rhythm and blues:
 rock and roll:
     - rock[ '‐&n/ \-]*roll
 
-# Hyphenation: k-pop, j-rock, post-rock, lo-fi, p-funk, synthpop, avant-garde
+# Hyphenation: k-pop, j-rock, post-rock, lo-fi, p-funk, avant-garde
 \1-\2:
     - ([ckj]) *(folk|goth|pop|rock|ska|trance)
 post-\1:
@@ -15,11 +15,17 @@ lo-fi:
     - (g?lo) *fi
 \1-funk:
     - ([pg]) *funk
-synth\1:
-    - synth[ -]+(\w+)
 avant-garde:
     - avant *(garde?)?
     - avant-gard
+
+# synth... spellings
+synthwave:
+    - synth[- ]*wave
+synth funk:
+    - synth[- ]*funk
+synth-pop:
+    - synth[- ]*pop
 
 # Nu- spellings: nu-disco -> nu disco, nu-jazz -> nu jazz
 nu \1:
