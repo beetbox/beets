@@ -63,13 +63,14 @@ class PlaylistQuery(InQuery[bytes]):
             relative_to_bytes = beets.util.bytestring_path(relative_to)
 
             for line in f:
-                if line[0] == "#":
-                    # ignore comments, and extm3u extension
+                line = line.rstrip()
+                if not line or line.startswith(b"#"):
+                    # ignore blank lines, comments, and extm3u extension
                     continue
 
                 paths.append(
                     beets.util.normpath(
-                        os.path.join(relative_to_bytes, line.rstrip())
+                        os.path.join(relative_to_bytes, line)
                     )
                 )
             f.close()
