@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import beets
+from beets.dbcore import pathutils
 from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
 
@@ -64,8 +65,10 @@ class PlaylistQuery(InQuery[bytes]):
                     continue
 
                 paths.append(
-                    beets.util.normpath(
-                        os.path.join(relative_to_bytes, line.rstrip())
+                    pathutils.normalize_path_for_db(
+                        beets.util.normpath(
+                            os.path.join(relative_to_bytes, line)
+                        )
                     )
                 )
             f.close()
