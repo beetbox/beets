@@ -8,12 +8,13 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 import confuse
 
 import beets
+from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.query import InQuery
 from beets.plugins import BeetsPlugin
 from beets.util import path_as_posix
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
 
     from beets.dbcore.query import FieldQueryType
     from beets.library import Item, Library
@@ -25,6 +26,10 @@ def is_m3u_file(path: str) -> bool:
 
 class PlaylistQuery(InQuery[bytes]):
     """Matches files listed by a playlist file."""
+
+    @property
+    def subvals(self) -> Sequence[bytes]:
+        return [normalize_path_for_db(p) for p in self.pattern]
 
     def __init__(self, _, pattern: str, __) -> None:
         config = beets.config["playlist"]
