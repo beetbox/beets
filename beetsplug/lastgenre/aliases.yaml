@@ -59,7 +59,7 @@ juke:
 
 # Spacing: hip hop, trip hop, etc.
 \1 hop:
-    - (glitch|hip|jazz|trip)y?([ -]*hip)?[ -]*hop
+    - (glitch|hip|trip)y?([ -]*hip)?[ -]*hop
 
 # Compound genres
 \1 rock:
@@ -79,8 +79,6 @@ progressive rock:
     - progressive[ -]*rock
 punk rock:
     - punk
-traditional folk:
-    - traditional[ -]*folk
 # psy folk, psych-pop, psychedelic-rock, psychedelic soul, but not psychedelic (standalone)
 psychedelic \1:
     - psy(?:ch(?:edelic)?)?[ -]*(folk|pop|rock|soul)
