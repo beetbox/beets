@@ -923,14 +923,10 @@ class TestAliases:
         [
             # Static replacement
             ({"foo bar": ["foobar"]}, "foobar", "foo bar"),
-            # Template with \g<1> back-reference
-            (
-                {r"\g<1> music": [r"(fake)[ /-]*music"]},
-                "fake-music",
-                "fake music",
-            ),
-            # Template with \g<1> and \g<2> back-references
-            ({r"\g<1>-\g<2>": [r"(x)[ /-]*(y)"]}, "x y", "x-y"),
+            # Template with back-reference
+            ({r"\1 music": [r"(fake)[ /-]*music"]}, "fake-music", "fake music"),
+            # Template with multiple back-references
+            ({r"\1-\2": [r"(x)[ /-]*(y)"]}, "x y", "x-y"),
             # Case-insensitive matching
             ({"foo bar": ["foobar"]}, "FOOBAR", "foo bar"),
             # No match — genre returned as-is (lowercased)
