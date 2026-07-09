@@ -2,11 +2,11 @@
 
 import pytest
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestHelper
 from beets.ui import UserError
 
 
-class AdvancedRewritePluginTest(PluginTestCase):
+class TestAdvancedRewritePlugin(PluginTestHelper):
     plugin = "advancedrewrite"
     preload_plugin = False
 
