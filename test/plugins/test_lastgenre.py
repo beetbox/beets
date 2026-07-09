@@ -1044,6 +1044,7 @@ class TestAliases:
             ("rock & roll", "rock and roll"),
             ("rock'n'roll", "rock and roll"),
             ("kpop", "k-pop"),
+            ("k -pop", "k-pop"),
             ("j rock", "j-rock"),
             ("post rock", "post-rock"),
             ("lofi", "lo-fi"),
