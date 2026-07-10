@@ -1094,6 +1094,8 @@ class TestAliases:
             ("indie rock", "indie rock"),
             ("juke/footwork", "juke/footwork"),
             ("Funk / Soul", "funk / soul"),
+            ("psy rock", "psychedelic rock"),
+            ("psych-pop", "psychedelic pop"),
         ],
     )
     def test_default_alias_patterns(self, config, input_genre, expected_genre):

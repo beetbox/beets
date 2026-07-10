@@ -81,9 +81,9 @@ punk rock:
     - punk
 traditional folk:
     - traditional[ -]*folk
-# psy-trance, psych-pop, psychedelic-rock, but not psychedelic (standalone)
+# psy folk, psych-pop, psychedelic-rock, psychedelic soul, but not psychedelic (standalone)
 psychedelic \1:
-    - psy(?:ch(?:edelic)?)?[ -]+(\w+)
+    - psy(?:ch(?:edelic)?)?[ -]*(folk|pop|rock|soul)
 ska jazz:
     - ska[ -]*jazz
 dixieland:
