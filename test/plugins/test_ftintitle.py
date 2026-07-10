@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
+from beets import plugins
+from beets.autotag import AlbumInfo, TrackInfo
+from beets.importer import ImportSession, SingletonImportTask
 from beets.library.models import Album
 from beets.test.helper import PluginTestHelper
 from beetsplug import ftintitle
@@ -11,6 +16,7 @@ from beetsplug import ftintitle
 
 class TestFtInTitlePluginFunctional(PluginTestHelper):
     plugin = "ftintitle"
+    preload_plugin = False
 
     @pytest.mark.parametrize(
         "cfg, cmd_args, given, expected",
@@ -231,6 +237,161 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         expected_artist, expected_title = expected
         assert item["artist"] == expected_artist
         assert item["title"] == expected_title
+
+    def test_trackinfo_received_rewrites_artist_when_artist_credit_enabled(
+        self,
+    ) -> None:
+        self.config["artist_credit"] = True
+        info = TrackInfo(
+            artist="Alice feat. Bob",
+            artist_credit="Alice",
+            artist_sort="Alice feat. Bob",
+            artists=["Alice", "Bob"],
+            artists_credit=["Alice"],
+            title="Song",
+        )
+
+        with self.configure_plugin({"auto": True}):
+            plugins.send("trackinfo_received", info=info)
+
+        assert info.artist == "Alice"
+        assert info.artist_credit == "Alice"
+        assert info.artist_sort == "Alice"
+        assert info.artists == ["Alice", "Bob"]
+        assert info.artists_credit == ["Alice"]
+        assert info.title == "Song feat. Bob"
+        assert info.item_data["title"] == "Song feat. Bob"
+
+    @pytest.mark.parametrize(
+        "config, artist, title, expected_artist, expected_title",
+        [
+            pytest.param(
+                {"auto": False},
+                "Alice feat. Bob",
+                "Song",
+                "Alice feat. Bob",
+                "Song",
+                id="auto-disabled",
+            ),
+            pytest.param(
+                {"auto": True},
+                "Alice",
+                "Song",
+                "Alice",
+                "Song",
+                id="no-feature",
+            ),
+            pytest.param(
+                {"auto": True},
+                "Alice feat. Bob",
+                "Song feat. Bob",
+                "Alice",
+                "Song feat. Bob",
+                id="existing-title-feature",
+            ),
+        ],
+    )
+    def test_trackinfo_received_rewrites_or_skips_simple_cases(
+        self,
+        config: dict[str, bool],
+        artist: str,
+        title: str,
+        expected_artist: str,
+        expected_title: str,
+    ) -> None:
+        info = TrackInfo(artist=artist, title=title)
+
+        with self.configure_plugin(config):
+            plugins.send("trackinfo_received", info=info)
+
+        assert info.artist == expected_artist
+        assert info.title == expected_title
+
+    def test_ft_in_title_reports_no_change_for_info_drop_keep_noop(
+        self,
+    ) -> None:
+        info = TrackInfo(artist="Alice feat. Bob", title="Song")
+
+        with self.configure_plugin({"drop": True, "keep_in_artist": True}):
+            plugin = next(iter(plugins.find_plugins()))
+            assert isinstance(plugin, ftintitle.FtInTitlePlugin)
+            assert plugin.ft_in_title(info, "") is False
+
+        assert info.artist == "Alice feat. Bob"
+        assert info.title == "Song"
+
+    def test_trackinfo_received_preserves_artist_credit_when_disabled(
+        self,
+    ) -> None:
+        self.config["artist_credit"] = False
+        info = TrackInfo(
+            artist="Alice feat. Bob",
+            artist_credit="Alice feat. Bobby",
+            title="Song",
+        )
+
+        with self.configure_plugin({"auto": True}):
+            plugins.send("trackinfo_received", info=info)
+
+        assert info.artist == "Alice"
+        assert info.artist_credit == "Alice feat. Bobby"
+        assert info.title == "Song feat. Bob"
+        assert info.item_data["artist_credit"] == "Alice feat. Bobby"
+
+    def test_ft_in_title_reports_no_change_for_item_drop_keep_noop(
+        self,
+    ) -> None:
+        item = self.add_item(
+            path="/",
+            artist="Alice feat. Bob",
+            artist_sort="",
+            title="Song",
+            albumartist="Alice",
+        )
+
+        with self.configure_plugin({"drop": True, "keep_in_artist": True}):
+            plugin = next(iter(plugins.find_plugins()))
+            assert isinstance(plugin, ftintitle.FtInTitlePlugin)
+            assert (
+                plugin.ft_in_title(item, item.get("albumartist") or "") is False
+            )
+
+        assert item.artist == "Alice feat. Bob"
+        assert item.title == "Song"
+
+    def test_imported_stage_rewrites_imported_items(self) -> None:
+        item = self.add_item(
+            path="/",
+            artist="Alice feat. Bob",
+            title="Song",
+            albumartist="Alice",
+        )
+
+        with self.configure_plugin({"auto": True}):
+            plugin = next(iter(plugins.find_plugins()))
+            assert isinstance(plugin, ftintitle.FtInTitlePlugin)
+            plugin.imported(
+                cast(ImportSession, None), SingletonImportTask(None, item)
+            )
+
+        item.load()
+        assert item.artist == "Alice"
+        assert item.title == "Song feat. Bob"
+
+    def test_albuminfo_received_rewrites_tracks_with_album_artist(self) -> None:
+        track_info = TrackInfo(
+            artist="Alice & Bob", artist_sort="Alice & Bob", title="Song"
+        )
+        info = AlbumInfo(artist="Alice", album="Album", tracks=[track_info])
+
+        with self.configure_plugin({"auto": True}):
+            plugins.send("albuminfo_received", info=info)
+
+        assert track_info.artist == "Alice"
+        assert track_info.artist_sort == "Alice"
+        assert track_info.title == "Song feat. Bob"
+        assert track_info.item_data["artist"] == "Alice"
+        assert track_info.item_data["title"] == "Song feat. Bob"
 
 
 @pytest.mark.parametrize(

@@ -31,6 +31,8 @@ New features
   fields (as configured by ``albumfields``) as a YAML header section when
   editing an album import. Fields that appear in both ``itemfields`` and
   ``albumfields`` are shown only in the header, not per-track.
+- :doc:`plugins/ftintitle`: Apply featured-artist rewriting to fetched metadata
+  before commands such as :doc:`plugins/mbsync` use it. :bug:`1153`
 
 Bug fixes
 ~~~~~~~~~
