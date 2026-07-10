@@ -50,9 +50,6 @@ footwork:
     - (chicago )?footwork( music)?
 juke:
     - (chicago )?juke( music| house)?
-    - juke/footwork
-funk:
-    - Funk / Soul
 
 # Spacing: hip hop, trip hop, etc.
 \1 hop:
@@ -65,7 +62,7 @@ alternative rock:
     - alt[ -]*rock
     - alternative[ -]*rock
 indie rock:
-    - indie([ -]*rock)?
+    - indie[ -]*rock
 # negative lookahead avoids matching 'gothic metal'
 gothic rock:
     - goth(?!ic)([ -]*rock)?
@@ -76,9 +73,8 @@ progressive rock:
     - progressive[ -]*rock
 punk rock:
     - punk
-# avoids matching 'trad jazz' or 'traditional country'
 traditional folk:
-    - trad(/|ition(/|al)?)?-?
+    - traditional[ -]*folk
 # psy-trance, psych-pop, psychedelic-rock, but not psychedelic (standalone)
 psychedelic \1:
     - psy(?:ch(?:edelic)?)?[ -]+(\w+)
@@ -86,4 +82,3 @@ ska jazz:
     - ska[ -]*jazz
 dixieland:
     - dixieland[ -]*jazz
-

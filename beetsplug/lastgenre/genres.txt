@@ -230,6 +230,7 @@ chicano rap
 chicha
 chicken scratch
 children's music
+chill
 chillout
 chillwave
 chimurenga
@@ -522,6 +523,7 @@ full on
 funaná
 funeral doom
 funk
+funk / soul
 funk metal
 funk rock
 funkcore
@@ -683,6 +685,7 @@ impressionist music
 improvisational
 incidental music
 indian pop
+indie
 indie folk
 indie music
 indie pop
@@ -761,6 +764,7 @@ jug band
 jujitsu
 juju
 juke
+juke/footwork
 juke joint blues
 jump blues
 jumpstyle
@@ -1467,6 +1471,7 @@ tinga
 tinku
 toeshey
 togaku
+trad
 trad jazz
 traditional bluegrass
 traditional heavy metal
