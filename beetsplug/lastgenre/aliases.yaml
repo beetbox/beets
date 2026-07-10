@@ -6,31 +6,31 @@ r&b:
 rock and roll:
     - rock[- ‐'&n/]*roll
 
-# Hyphenation: k-pop, j-rock, post-rock, lo-fi, p-funk, avant-garde
-\1-pop:
-    - ([ckj])[- ]*pop
-j-rock:
-    - j[- ]*rock
-post-\1:
-    - post[- ]*(\w+)
-lo-fi:
-    - (g?lo)[- ]*fi
-\1-funk:
-    - ([pg])[- ]*funk
+# Hyphenation
+\1-\2:
+    - ([ckj])[- ]*(pop)
+    - (j)[- ]*(rock)
+    - (post)[- ]*(\w+)
+    - (g?lo)[- ]*(fi)
+    - ([pg])[- ]*(funk)
+    - (synth)[- ]*(pop)
 avant-garde:
     - avant[- ]*(garde?)?
 
-# synth... spellings
-synthwave:
-    - synth[- ]*wave
-synth funk:
-    - synth[- ]*funk
-synth-pop:
-    - synth[- ]*pop
+# Adding space
+\1 \2:
+    - (nu)[ -]*(disco|jazz|metal|soul)
+    - (dark)[ -]*(wave)
+    - (blues|folk|indie|gothic|progressive|alternative|punk)[ -]*(rock)
+    - (ska)[ -]*(jazz)
+    - (synth)[- ]*(funk)
+    - (glitch|hip|trip)y?(?:[ -]*hip)?[ -]*(hop)
 
-# Nu- spellings: nu-disco -> nu disco, nu-jazz -> nu jazz
-nu \1:
-    - nu[ -]*(disco|jazz|metal|soul)
+# Removing delimiters
+\1\2:
+    - (synth)[- ]*(wave)
+    - (psy)[ -]*(trance)
+    - (chill)[ -]*(out)
 
 # Old School spellings: old-school death metal, oldschool hip-hop, old-skool-jungle/-hardcore
 old school death metal:
@@ -45,10 +45,6 @@ electronic:
     - electronic music
 world music:
     - world
-chillout:
-    - chill[ -]*out
-dark wave:
-    - dark[ -]*wave
 downtempo:
     - down[ -]*beat
 shoegaze:
@@ -58,34 +54,19 @@ footwork:
 juke:
     - (chicago )?juke( music| house)?
 
-# Spacing: hip hop, trip hop, etc.
-\1 hop:
-    - (glitch|hip|trip)y?([ -]*hip)?[ -]*hop
-
 # Compound genres
-\1 rock:
-    - (blues|folk|indie|gothic|progressive)[ -]*rock
 alternative rock:
     - alt[ -]*rock
-    - alternative[ -]*rock
-indie rock:
-    - indie[ -]*rock
 # negative lookahead avoids matching 'gothic metal'
 gothic rock:
     - goth(?!ic)([ -]*rock)?
-    - gothic[ -]*rock
 # avoids matching 'progressive metal'
 progressive rock:
     - prog([ -]*rock)?
-    - progressive[ -]*rock
 punk rock:
     - punk
 # psy folk, psych-pop, psychedelic-rock, psychedelic soul, but not psychedelic (standalone)
 psychedelic \1:
     - psy(?:ch(?:edelic)?)?[ -]*(folk|pop|rock|soul)
-psytrance:
-    - psy[ -]*trance
-ska jazz:
-    - ska[ -]*jazz
 dixieland:
     - dixieland[ -]*jazz
