@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 from beets import config, plugins, ui
 
 if TYPE_CHECKING:
+    from beets.autotag import AlbumInfo, Info, TrackInfo
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item
-
 
 DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
     "abridged",
@@ -243,6 +243,13 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         )
 
         self.import_stages = [self.imported]
+        if self.auto:
+            self.register_listener(
+                "trackinfo_received", self.trackinfo_received
+            )
+            self.register_listener(
+                "albuminfo_received", self.albuminfo_received
+            )
 
         self.album_template_fields["album_artist_no_feat"] = (
             _album_artist_no_feat
@@ -254,7 +261,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             write = ui.should_write()
 
             for item in lib.items(args):
-                if self.ft_in_title(item):
+                if self.ft_in_title(item, item.get("albumartist") or ""):
                     item.store()
                     if write:
                         item.try_write()
@@ -268,77 +275,93 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             return
 
         for item in task.imported_items():
-            if self.ft_in_title(item):
+            if self.ft_in_title(item, item.get("albumartist") or ""):
                 item.store()
 
-    def update_metadata(self, item: Item, feat_part: str) -> None:
+    def update_metadata(self, metadata: Item | Info, feat_part: str) -> bool:
         """Choose how to add new artists to the title and set the new
         metadata. Also, print out messages about any changes that are made.
         If `drop_feat` is set, then do not add the artist to the title; just
         remove it from the artist field.
         """
+        changed = False
+        artist = metadata.get("artist") or ""
         # In case the artist is kept, do not update the artist fields.
         if self.keep_in_artist_field:
             self._log.info(
-                "artist: {.artist} (Not changing due to keep_in_artist)", item
+                "artist: {} (Not changing due to keep_in_artist)", artist
             )
         else:
             track_artist, _ = split_on_feat(
-                item.artist, custom_words=self.custom_words
+                artist, custom_words=self.custom_words
             )
-            self._log.info("artist: {0.artist} -> {1}", item, track_artist)
-            item.artist = track_artist
+            self._log.info("artist: {} -> {}", artist, track_artist)
+            metadata["artist"] = track_artist
+            changed |= artist != track_artist
 
-        if item.artist_sort:
+        if artist_sort := metadata.get("artist_sort"):
             # Just strip the featured artist from the sort name.
-            item.artist_sort, _ = split_on_feat(
-                item.artist_sort, custom_words=self.custom_words
+            artist_sort_no_feat, _ = split_on_feat(
+                artist_sort, custom_words=self.custom_words
             )
+            metadata["artist_sort"] = artist_sort_no_feat
+            changed |= artist_sort != artist_sort_no_feat
 
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
-        if not self.drop_feat and not contains_feat(
-            item.title, self.custom_words
-        ):
+        title = metadata.get("title") or ""
+        if not self.drop_feat and not contains_feat(title, self.custom_words):
             formatted = self.feat_format.format(feat_part)
             new_title = self.insert_ft_into_title(
-                item.title, formatted, self.bracket_keywords
+                title, formatted, self.bracket_keywords
             )
-            self._log.info("title: {.title} -> {}", item, new_title)
-            item.title = new_title
+            self._log.info("title: {} -> {}", title, new_title)
+            metadata["title"] = new_title
+            changed |= title != new_title
 
-    def ft_in_title(self, item: Item) -> bool:
-        """Look for featured artists in the item's artist fields and move
-        them to the title.
+        return changed
+
+    def trackinfo_received(self, info: TrackInfo) -> None:
+        """Move featuring artists in fetched singleton metadata."""
+        self.ft_in_title(info, "")
+
+    def albuminfo_received(self, info: AlbumInfo) -> None:
+        """Move featuring artists in fetched album track metadata."""
+        albumartist = info.get("artist") or ""
+        for track_info in info.tracks:
+            self.ft_in_title(track_info, albumartist)
+
+    def ft_in_title(self, item: Item | Info, albumartist: str) -> bool:
+        """Look for featured artists in the item's artist fields and move them
+        to the title.
 
         Returns:
             True if the item has been modified. False otherwise.
         """
-        artist = item.artist.strip()
-        albumartist = item.albumartist.strip()
-
-        # Check whether there is a featured artist on this track and the
-        # artist field does not exactly match the album artist field. In
-        # that case, we attempt to move the featured artist to the title.
-        if self.preserve_album_artist and albumartist and artist == albumartist:
+        artist = (item.get("artist") or "").strip()
+        albumartist = albumartist.strip()
+        if not self._has_feat_candidate(artist, albumartist):
             return False
 
-        _, featured = split_on_feat(artist, custom_words=self.custom_words)
-        if not featured:
-            return False
-
-        self._log.info("{.filepath}", item)
-
-        # Attempt to find the featured artist.
+        if hasattr(item, "filepath"):
+            self._log.info("{.filepath}", item)
         feat_part = find_feat_part(artist, albumartist, self.custom_words)
-
         if not feat_part:
             self._log.info("no featuring artists found")
             return False
 
-        # If we have a featuring artist, move it to the title.
-        self.update_metadata(item, feat_part)
-        return True
+        return self.update_metadata(item, feat_part)
+
+    def _has_feat_candidate(self, artist: str, albumartist: str | None) -> bool:
+        albumartist = (albumartist or "").strip()
+        if self.preserve_album_artist and albumartist and artist == albumartist:
+            return False
+
+        for_artist = not albumartist or albumartist in artist
+        _, featured = split_on_feat(
+            artist, for_artist=for_artist, custom_words=self.custom_words
+        )
+        return bool(featured)
 
     @classmethod
     def insert_ft_into_title(
