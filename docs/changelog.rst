@@ -24,7 +24,6 @@ New features
 - :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
   ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
   :doc:`plugins/fetchart` plugin can retrieve.
-<<<<<<< HEAD
 - :ref:`modify-cmd`: Support ``+=`` and ``-=`` operators to add or remove
   individual values from multi-valued fields without replacing the whole field.
   :bug:`6587`
