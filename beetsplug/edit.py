@@ -6,6 +6,7 @@ import codecs
 import os
 import shlex
 import subprocess
+from collections import Counter
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING, Any, cast
 
@@ -275,9 +276,20 @@ class EditPlugin(plugins.BeetsPlugin):
 
         obj_by_id = {o.id: o for o in objs}
         old_by_id = {d.get("id"): d for d in old_data}
+        new_id_counts = Counter(d.get("id") for d in new_data)
         ignore_fields = self.config["ignore_fields"].as_str_seq()
         for new_dict in new_data:
             new_id = new_dict.get("id")
+            if new_id_counts[new_id] > 1:
+                # Two or more documents claim the same id: either a document's
+                # id was edited to collide with another one, or the same
+                # document was duplicated. We can't tell which document is
+                # the "real" one, so ignore all of them.
+                self._log.warning(
+                    "ignoring objects with duplicate id {}", new_id
+                )
+                continue
+
             old_dict = old_by_id.get(new_id)
             obj = obj_by_id.get(new_id)
             if old_dict is None or obj is None:
@@ -437,9 +449,28 @@ class EditPlugin(plugins.BeetsPlugin):
                 self._importer_edit_cleanup(task)
                 return None
 
-            # Split into album header and per-track documents.
-            new_header_data = new_all_data[:num_data_docs] if has_header else []
-            new_track_data = new_all_data[num_data_docs:]
+            # Split into album header and per-track documents. Every track
+            # document always has an `id` field (see `track_fields` above),
+            # while the header never does, so identify the header by the
+            # absence of `id` rather than by position. This keeps the split
+            # correct even if the user moves the header elsewhere in the
+            # file, since `apply_data` already matches track documents by
+            # id regardless of order.
+            if has_header:
+                new_header_data = [d for d in new_all_data if "id" not in d]
+                new_track_data = [d for d in new_all_data if "id" in d]
+                if len(new_header_data) != 1:
+                    ui.print_(
+                        "Could not identify the album header: exactly one "
+                        "document must have no `id` field."
+                    )
+                    if ui.input_yn("Edit again to fix? (Y/n)", True):
+                        continue
+                    self._importer_edit_cleanup(task)
+                    return None
+            else:
+                new_header_data = []
+                new_track_data = new_all_data
 
             # Snapshot originals for diff display and restore.
             objs_old = cast("list[Item]", [obj.copy() for obj in task.items])

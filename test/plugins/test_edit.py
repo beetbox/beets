@@ -13,7 +13,7 @@ from beets.test.helper import (
     PluginMixin,
     TerminalImportMixin,
 )
-from beetsplug.edit import EditPlugin
+from beetsplug.edit import EditPlugin, dump, load
 
 
 class ModifyFileMocker:
@@ -354,6 +354,29 @@ class ApplyDataMatchingTest(PluginMixin, BeetsTestCase):
         assert items[0].title == "Title 1"
         assert items[0].track == 1
 
+    def test_ignores_documents_with_duplicate_id(self):
+        plugin = EditPlugin()
+        items = self.make_items()
+        old_data = [
+            {"id": i.id, "title": i.title, "track": i.track} for i in items
+        ]
+
+        # The user changed document 2's `id` to 1, an id that already
+        # belongs to another document. Neither document should be applied:
+        # we can't tell which one is legitimately item 1's data.
+        new_data = [
+            {"id": 1, "title": "Title 1", "track": 1},
+            {"id": 1, "title": "Modified Title 2", "track": 2},
+            {"id": 3, "title": "Title 3", "track": 3},
+        ]
+
+        plugin.apply_data(items, old_data, new_data)
+
+        assert items[0].title == "Title 1"
+        assert items[0].track == 1
+        assert items[1].title == "Title 2"
+        assert items[1].track == 2
+
 
 class EditDuringImporterTestCase(
     EditMixin, TerminalImportMixin, AutotagImportTestCase
@@ -447,6 +470,32 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             i.albumartist is None and "Tag Artist" in i.artist
             for i in self.lib.items()
         )
+
+    def test_importer_edit_album_header_reordered(self):
+        """If the user moves the album header document below the track
+        documents, it must still be recognized as the header (identified by
+        the absence of an `id` field) rather than misapplying a track's
+        fields to every item.
+        """
+        self.config["edit"]["itemfields"] = "title"
+        self.config["edit"]["albumfields"] = "album"
+
+        def reorder_and_edit(filename, log):
+            with codecs.open(filename, encoding="utf-8") as f:
+                docs = load(f.read())
+            header = next(d for d in docs if "id" not in d)
+            tracks = [d for d in docs if "id" in d]
+            header["album"] = "Modified Album"
+            with codecs.open(filename, "w", encoding="utf-8") as f:
+                f.write(dump([*tracks, header]))
+
+        with patch("beetsplug.edit.edit", side_effect=reorder_and_edit):
+            self.importer.add_choice("d")
+            self.importer.add_choice("a")
+            self.importer.run()
+
+        assert all(i.album == "Modified Album" for i in self.lib.items())
+        assert all("Tag Track" in i.title for i in self.lib.items())
 
     def test_edit_apply_asis(self):
         """Edit the album field for all items in the library, apply changes,
