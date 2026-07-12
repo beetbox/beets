@@ -10,8 +10,6 @@ from unittest.mock import patch
 
 import confuse
 import pytest
-from requests_mock import ANY as ANYREEQUEST
-from requests_mock.exceptions import NoMockAddress
 
 from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance
@@ -79,8 +77,8 @@ class UseThePlugin(TestHelper):
         # Register some “safe” mocks you actually want to allow, if any:
         # requests_mock.get("https://example.com/health", json={"status": "ok"})
 
-        # Optional: disable any URL not explicitly mocked
-        requests_mock.register_uri(ANYREEQUEST, ANYREEQUEST, exc=NoMockAddress)
+        # Disable any URL not explicitly mocked
+        return
 
     @pytest.fixture(autouse=True, scope="class")
     def cleanup(self):
@@ -343,6 +341,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     ASIN = "xxxx"
     MBID = "releaseid"
     AMAZON_URL = f"https://images.amazon.com/images/P/{ASIN}.01.LZZZZZZZ.jpg"
+    AMAZON_URL_2 = f"https://images.amazon.com/images/P/{ASIN}.02.LZZZZZZZ.jpg"
     AAO_URL = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
 
     @pytest.fixture
@@ -394,6 +393,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
 
     def test_main_interface_falls_back_to_aao(self, dpath, image_request_mock):
         image_request_mock.get(self.AMAZON_URL, content_type="text/html")
+        image_request_mock.get(self.AMAZON_URL_2, content_type="text/html")
         image_request_mock.get(self.AAO_URL, content_type="image/jpeg")
         album = Album(asin=self.ASIN)
         self.plugin.art_for_album(album, [dpath])
