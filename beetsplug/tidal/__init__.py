@@ -75,6 +75,10 @@ class TidalPlugin(MetadataSourcePlugin):
             token_path=self._tokenfile(),
         )
 
+    @cached_property
+    def search_limit(self) -> int:
+        return self.config["search_limit"].get(int)
+
     def _tokenfile(self) -> str:
         """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
@@ -115,7 +119,6 @@ class TidalPlugin(MetadataSourcePlugin):
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
-        candidates: list[AlbumInfo] = []
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
@@ -129,8 +132,24 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return candidates
 
-        for query in self._album_queries(items):
-            candidates += self.search_albums_by_query(query)
+        candidates = list(
+            itertools.islice(
+                (
+                    candidate
+                    for candidate in itertools.chain.from_iterable(
+                        itertools.zip_longest(
+                            *(
+                                self.search_albums_by_query(query)
+                                for query in self._album_queries(items)
+                            ),
+                            fillvalue=None,
+                        )
+                    )
+                    if candidate is not None
+                ),
+                self.search_limit,
+            )
+        )
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
@@ -138,7 +157,6 @@ class TidalPlugin(MetadataSourcePlugin):
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        candidates: list[TrackInfo] = []
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
@@ -148,8 +166,24 @@ class TidalPlugin(MetadataSourcePlugin):
             ):
                 return candidates
 
-        for query in self._item_queries(item):
-            candidates += self.search_tracks_by_query(query)
+        candidates = list(
+            itertools.islice(
+                (
+                    candidate
+                    for candidate in itertools.chain.from_iterable(
+                        itertools.zip_longest(
+                            *(
+                                self.search_tracks_by_query(query)
+                                for query in self._item_queries(item)
+                            ),
+                            fillvalue=None,
+                        )
+                    )
+                    if candidate is not None
+                ),
+                self.search_limit,
+            )
+        )
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
