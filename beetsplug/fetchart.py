@@ -1309,6 +1309,7 @@ class Embedded(LocalArtSource):
         filename = get_temp_filename(__name__)
         for item in album.items():
             if extracted_path := art.extract(self._log, filename, item):
+                self._log.debug("embedded: extracting art from {}", item)
                 yield self._candidate(
                     path=extracted_path, match=MetadataMatch.EXACT
                 )
