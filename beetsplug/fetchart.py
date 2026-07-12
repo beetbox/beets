@@ -1318,6 +1318,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.config.add(
             {
                 "auto": True,
+                "fetch_for_asis": False,
                 "minwidth": 0,
                 "maxwidth": 0,
                 "quality": 0,
@@ -1438,6 +1439,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         except UnknownPairError as e:
             raise UserError(e)
 
+    @cached_property
+    def fetch_for_asis(self) -> bool:
+        return self.config["fetch_for_asis"].get(bool)
+
     @staticmethod
     def _is_source_file_removal_enabled() -> bool:
         return config["import"]["delete"].get(bool) or config["import"][
@@ -1464,8 +1469,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # Album already has art (probably a re-import); skip it.
                 return
             if task.choice_flag == importer.Action.ASIS:
-                # For as-is imports, don't search Web sources for art.
-                local = True
+                # For as-is imports, don't search Web sources for art,
+                # unless fetch_for_asis is set
+                local = not self.fetch_for_asis
             elif task.choice_flag in (
                 importer.Action.APPLY,
                 importer.Action.RETAG,

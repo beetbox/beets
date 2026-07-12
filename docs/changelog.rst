@@ -33,6 +33,10 @@ New features
   ``albumfields`` are shown only in the header, not per-track.
 - :doc:`plugins/ftintitle`: Apply featured-artist rewriting to fetched metadata
   before commands such as :doc:`plugins/mbsync` use it. :bug:`1153`
+- :doc:`plugins/fetchart`: Add ``fetch_for_asis`` setting that enables fetching
+  album art from online sources even when imported files are not modified by the
+  auto-tagger. Default is ``no`` which means ``fetchart`` looks for art only in
+  the local filesystem when the user (or ``quiet_fallback``) chooses ``asis``.
 
 Bug fixes
 ~~~~~~~~~

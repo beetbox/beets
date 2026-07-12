@@ -38,6 +38,9 @@ file. The available options are:
   ``cover front art album folder``.
 - **fallback**: Path to a fallback album art file if no album art was found
   otherwise. Default: ``None`` (disabled).
+- **fetch_for_asis**: Fetch album art from online sources during import, even
+  when the as-is option is selected in the Auto-Tagger. When ``no``, only local
+  filesystem sources of art are considered for as-is imports. Default: ``no``.
 - **minwidth**: Only images with a width bigger or equal to ``minwidth`` are
   considered as valid album art candidates. Default: 0.
 - **maxwidth**: A maximum image width to downscale fetched images if they are
