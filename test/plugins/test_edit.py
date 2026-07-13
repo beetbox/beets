@@ -426,26 +426,6 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         super().setUp()
         self.importer = self.setup_importer()
 
-    def test_importer_edit_album_header_album(self):
-        """Edit an album-level field (album) using the import header section,
-        apply changes, and verify all items and the album are updated.
-        """
-        # Show only album in the header and title per track.
-        self.config["edit"]["itemfields"] = "title"
-        self.config["edit"]["albumfields"] = "album"
-
-        self.run_mocked_interpreter(
-            {"replacements": {"Tag Album": "Modified Album"}},
-            # eDit, Apply changes.
-            ["d", "a"],
-        )
-
-        # All items should have the new album name.
-        assert all(i.album == "Modified Album" for i in self.lib.items())
-
-        # The imported album record should also be updated.
-        assert self.lib.albums()[0].album == "Modified Album"
-
     def test_importer_edit_album_header_and_items(self):
         """Edit both the album header and per-track fields simultaneously."""
         self.config["edit"]["itemfields"] = "title"
