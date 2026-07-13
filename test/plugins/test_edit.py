@@ -455,6 +455,30 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
 
         assert all("Edited Track" in i.title for i in self.lib.items())
 
+    def test_importer_edit_album_header_ignores_item_only_fields(self):
+        """`albumfields` may be misconfigured with item-only fields (e.g.
+        `track`, `title`, `path`) that vary per track. Those must not end
+        up in the header, since the header gets applied to every item and
+        would otherwise stamp one track's values onto the whole album.
+        """
+        self.prepare_album_for_import(3)
+        self.items_orig = [Item.from_path(f.path) for f in self.import_media]
+
+        self.config["edit"]["itemfields"] = "track title artist album"
+        self.config["edit"]["albumfields"] = "album albumartist track title"
+
+        self.run_mocked_interpreter(
+            {"replacements": {"Tag Album": "Modified Album"}},
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        titles = [i.title for i in self.lib.items()]
+        tracks = [i.track for i in self.lib.items()]
+        assert len(set(titles)) == len(titles)
+        assert len(set(tracks)) == len(tracks)
+        assert all(i.album == "Modified Album" for i in self.lib.items())
+
     def test_importer_edit_album_header_albumartist(self):
         """Edit albumartist in the header (default albumfields)."""
         self.run_mocked_interpreter(

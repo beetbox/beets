@@ -16,6 +16,7 @@ from beets import plugins, ui, util
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.importer import Action
+from beets.library import Album
 from beets.ui.commands.utils import do_query
 from beets.util import PromptChoice
 
@@ -345,6 +346,21 @@ class EditPlugin(plugins.BeetsPlugin):
             return None
 
         album_fields = set(self.config["albumfields"].as_str_seq())
+        if not album_fields:
+            return None
+
+        # Restrict to fields that actually exist on the Album model. Item
+        # has every Album field plus track-only ones (title, track, path,
+        # ...); since the header is built from a single item and then
+        # applied to every item, an item-only field here would silently
+        # stamp that one item's value onto the whole album.
+        invalid_fields = album_fields - Album._field_names
+        if invalid_fields:
+            self._log.warning(
+                "ignoring albumfields not valid for albums: {}",
+                ", ".join(sorted(invalid_fields)),
+            )
+            album_fields &= Album._field_names
         if not album_fields:
             return None
 
