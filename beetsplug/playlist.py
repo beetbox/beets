@@ -12,7 +12,7 @@ from beets.util import path_as_posix
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.dbcore.query import FieldQueryType
+    from beets.dbcore.query import QueryByField
 
 
 def is_m3u_file(path: str) -> bool:
@@ -74,9 +74,7 @@ class PlaylistQuery(InQuery[bytes]):
 
 
 class PlaylistPlugin(beets.plugins.BeetsPlugin):
-    item_queries: ClassVar[dict[str, FieldQueryType]] = {
-        "playlist": PlaylistQuery
-    }
+    item_queries: ClassVar[QueryByField] = {"playlist": PlaylistQuery}
 
     def __init__(self):
         super().__init__()

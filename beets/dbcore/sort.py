@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import beets
+from beets.util import cached_classproperty
+
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.dbcore.db import AnyModel, Model
 
 
@@ -42,8 +47,8 @@ class Sort:
 class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts."""
 
-    def __init__(self, sorts: list[Sort] | None = None):
-        self.sorts = sorts or []
+    def __init__(self, sorts: Sequence[Sort] | None = None):
+        self.sorts = list(sorts or [])
 
     def add_sort(self, sort: Sort):
         self.sorts.append(sort)
@@ -103,12 +108,13 @@ class FieldSort(Sort):
     any kind).
     """
 
-    def __init__(
-        self, field: str, ascending: bool = True, case_insensitive: bool = True
-    ):
+    def __init__(self, field: str, ascending: bool = True):
         self.field = field
         self.ascending = ascending
-        self.case_insensitive = case_insensitive
+
+    @cached_classproperty
+    def case_insensitive(cls) -> bool:
+        return beets.config["sort_case_insensitive"].get(bool)
 
     def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
         # TODO: Support flexible attributes with different types (e.g. a mix

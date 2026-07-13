@@ -24,7 +24,7 @@ from beets import plugins, ui
 from beets.autotag import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
-from beets.library import Item, parse_query_string
+from beets.library import Item
 from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
@@ -1126,7 +1126,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     def imported(self, _, task: ImportTask) -> None:
         """Import hook for fetching lyrics automatically."""
         if query_str := self.config["auto_ignore"].get():
-            query, _ = parse_query_string(query_str, Item)
+            query, _ = Item.parse_query(query_str)
         else:
             # matches nothing, so all items proceed normally
             query = FalseQuery()

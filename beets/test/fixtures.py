@@ -6,7 +6,7 @@ exercise metadata registration and model integration.
 
 from typing import ClassVar
 
-from beets.dbcore import sort, types
+from beets.dbcore import query, sort, types
 from beets.dbcore.db import FormattedMapping, Index
 from beets.library import LibModel
 from beets.util import cached_classproperty
@@ -24,6 +24,7 @@ class ModelFixture1(LibModel):
         "id": types.PRIMARY_ID,
         "field_one": types.INTEGER,
         "field_two": types.STRING,
+        "path": types.PathType(),
     }
 
     _sorts: ClassVar[dict[str, type[sort.FieldSort]]] = {
@@ -31,10 +32,15 @@ class ModelFixture1(LibModel):
     }
     _indices = (Index("field_one_index", ("field_one",)),)
     _formatter = FormattedMapping
+    _search_fields = ("artist", "title")
 
     @cached_classproperty
     def _types(cls):
         return {"some_float_field": types.FLOAT}
+
+    @cached_classproperty
+    def _queries(cls):
+        return {"year": query.NumericQuery}
 
     @classmethod
     def _getters(cls):
