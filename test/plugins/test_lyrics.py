@@ -350,6 +350,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         item = helper.lib.get_item(item.id)
 
         assert item.lyrics_url == lyrics.url
+        assert item.lyrics_instrumental == "0"
         assert item.lyrics_backend == lyrics.backend
         if is_importable("langdetect"):
             assert item.lyrics_language == "EN"
@@ -621,9 +622,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
             pytest.param(
-                [lyrics_match(instrumental=True)],
-                "[Instrumental]",
-                id="instrumental track",
+                [lyrics_match(instrumental=True)], "", id="instrumental track"
             ),
             pytest.param(
                 [lyrics_match(syncedLyrics=None)],
@@ -862,6 +861,39 @@ class TestLyricsRestDirectory(PluginTestHelper):
             self.run_command("lyrics", *cmd_args)
 
         assert test_capture.get("directory") == Path(output_path).expanduser()
+
+
+class TestLyricsKeepSyncedCommand(PluginTestHelper):
+    plugin = "lyrics"
+
+    @pytest.mark.parametrize(
+        "config_keep_synced, cmd_args, expected_keep_synced",
+        [
+            pytest.param(False, (), False, id="disabled-by-default"),
+            pytest.param(True, (), True, id="enabled-by-config"),
+            pytest.param(False, ("--keep-synced",), True, id="cli-enables"),
+            pytest.param(
+                True, ("--no-keep-synced",), False, id="cli-disables-config"
+            ),
+        ],
+    )
+    def test_keep_synced_cli_option(
+        self, monkeypatch, config_keep_synced, cmd_args, expected_keep_synced
+    ):
+        self.config["lyrics"]["keep_synced"] = config_keep_synced
+        self.add_item(lyrics="[00:00.00] old synced")
+        observed_keep_synced = []
+
+        def capture_keep_synced(plugin, *_):
+            observed_keep_synced.append(plugin.config["keep_synced"].get(bool))
+
+        monkeypatch.setattr(
+            lyrics.LyricsPlugin, "add_item_lyrics", capture_keep_synced
+        )
+
+        self.run_command("lyrics", *cmd_args)
+
+        assert observed_keep_synced.pop(0) is expected_keep_synced
 
 
 class TestLyricsSyltProperty:
