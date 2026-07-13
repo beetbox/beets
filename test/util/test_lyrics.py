@@ -9,7 +9,8 @@ class TestLyrics:
             "[Instrumental]", "lrclib", url="https://lrclib.net/api/1"
         )
 
-        assert lyrics.full_text == "[Instrumental]"
+        assert lyrics.full_text == ""
+        assert lyrics.instrumental
         assert lyrics.backend == "lrclib"
         assert lyrics.url == "https://lrclib.net/api/1"
         assert lyrics.language is None
@@ -38,3 +39,4 @@ class TestLyrics:
         assert lyrics.translation_language == (
             "FR" if langdetect_available else None
         )
+        assert not lyrics.instrumental
