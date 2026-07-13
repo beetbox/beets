@@ -1,10 +1,14 @@
 """Open metadata information in a text editor to let the user edit it."""
 
+from __future__ import annotations
+
 import codecs
 import os
 import shlex
 import subprocess
+from collections import Counter
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING, Any, cast
 
 import yaml
 
@@ -12,8 +16,12 @@ from beets import plugins, ui, util
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.importer import Action
+from beets.library import Album, Item
 from beets.ui.commands.utils import do_query
 from beets.util import PromptChoice
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -23,6 +31,12 @@ SAFE_TYPES = (
     types.Boolean,
     types.DelimitedString,
 )
+
+# Fixed fields that only exist on Item, not Album (e.g. title, track, path).
+# Flexible attributes are deliberately excluded from this set: they aren't
+# part of either model's fixed schema, so they can't be told apart by name
+# alone and are left for the user to configure correctly.
+ITEM_ONLY_FIELDS = Item._field_names - Album._field_names
 
 
 class ParseError(Exception):
@@ -214,71 +228,47 @@ class EditPlugin(plugins.BeetsPlugin):
         """
         # Get the content to edit as raw data structures.
         old_data = [flatten(o, fields) for o in objs]
-
-        # Set up a temporary file with the initial data for editing.
-        new = NamedTemporaryFile(
-            mode="w", suffix=".yaml", delete=False, encoding="utf-8"
-        )
-        old_str = dump(old_data)
-        new.write(old_str)
-        new.close()
+        cur_str = dump(old_data)
 
         # Loop until we have parseable data and the user confirms.
-        try:
-            while True:
-                # Ask the user to edit the data.
-                edit(new.name, self._log)
+        while True:
+            result = self._edit_yaml(cur_str)
+            if result is None:
+                return False
+            new_data, new_str = result
 
-                # Read the data back after editing and check whether anything
-                # changed.
-                with codecs.open(new.name, encoding="utf-8") as f:
-                    new_str = f.read()
-                if new_str == old_str:
-                    ui.print_("No changes; aborting.")
-                    return False
+            # Show the changes.
+            # If the objects are not on the DB yet, we need a copy of their
+            # original state for show_model_changes.
+            objs_old = [obj.copy() if obj.id < 0 else None for obj in objs]
+            self.apply_data(objs, old_data, new_data)
+            changed = False
+            for obj, obj_old in zip(objs, objs_old):
+                changed |= ui.show_model_changes(obj, obj_old)
+            if not changed:
+                ui.print_("No changes to apply.")
+                return False
 
-                # Parse the updated data.
-                try:
-                    new_data = load(new_str)
-                except ParseError as e:
-                    ui.print_(f"Could not read data: {e}")
-                    if ui.input_yn("Edit again to fix? (Y/n)", True):
-                        continue
-                    return False
-
-                # Show the changes.
-                # If the objects are not on the DB yet, we need a copy of their
-                # original state for show_model_changes.
-                objs_old = [obj.copy() if obj.id < 0 else None for obj in objs]
-                self.apply_data(objs, old_data, new_data)
-                changed = False
-                for obj, obj_old in zip(objs, objs_old):
-                    changed |= ui.show_model_changes(obj, obj_old)
-                if not changed:
-                    ui.print_("No changes to apply.")
-                    return False
-
-                # For cancel/keep-editing, restore objects to their original
-                # in-memory state so temp edits don't leak into the session
-                choice = ui.input_options(
-                    ("continue Editing", "apply", "cancel")
-                )
-                if choice == "a":  # Apply.
-                    return True
-                if choice == "c":  # Cancel.
-                    self.apply_data(objs, new_data, old_data)
-                    return False
-                if choice == "e":  # Keep editing.
-                    self.apply_data(objs, new_data, old_data)
-                    continue
-
-        # Remove the temporary file before returning.
-        finally:
-            os.remove(new.name)
+            # For cancel/keep-editing, restore objects to their original
+            # in-memory state so temp edits don't leak into the session
+            choice = ui.input_options(("continue Editing", "apply", "cancel"))
+            if choice == "a":  # Apply.
+                return True
+            if choice == "c":  # Cancel.
+                self.apply_data(objs, new_data, old_data)
+                return False
+            if choice == "e":  # Keep editing.
+                self.apply_data(objs, new_data, old_data)
+                cur_str = new_str
+                continue
 
     def apply_data(self, objs, old_data, new_data):
         """Take potentially-updated data and apply it to a set of Model
         objects.
+
+        Documents are matched to objects by their ``id`` field rather than
+        by position, so a reordered or otherwise misaligned document list
+        cannot cause one object's data to be applied to a different object.
 
         The objects are not written back to the database, so the changes
         are temporary.
@@ -291,8 +281,27 @@ class EditPlugin(plugins.BeetsPlugin):
             )
 
         obj_by_id = {o.id: o for o in objs}
+        old_by_id = {d.get("id"): d for d in old_data}
+        new_id_counts = Counter(d.get("id") for d in new_data)
         ignore_fields = self.config["ignore_fields"].as_str_seq()
-        for old_dict, new_dict in zip(old_data, new_data):
+        for new_dict in new_data:
+            new_id = new_dict.get("id")
+            if new_id_counts[new_id] > 1:
+                # Two or more documents claim the same id: either a document's
+                # id was edited to collide with another one, or the same
+                # document was duplicated. We can't tell which document is
+                # the "real" one, so ignore all of them.
+                self._log.warning(
+                    "ignoring objects with duplicate id {}", new_id
+                )
+                continue
+
+            old_dict = old_by_id.get(new_id)
+            obj = obj_by_id.get(new_id)
+            if old_dict is None or obj is None:
+                self._log.warning("ignoring object whose id changed")
+                continue
+
             # Prohibit any changes to forbidden fields to avoid
             # clobbering `id` and such by mistake.
             forbidden = False
@@ -304,8 +313,7 @@ class EditPlugin(plugins.BeetsPlugin):
             if forbidden:
                 continue
 
-            id_ = int(old_dict["id"])
-            apply_(obj_by_id[id_], new_dict)
+            apply_(obj, new_dict)
 
     def save_changes(self, objs):
         """Save a list of updated Model objects to the database."""
@@ -331,7 +339,85 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return choices
 
-    def importer_edit(self, session, task):
+    def _importer_edit_album_header(
+        self, task: ImportTask
+    ) -> dict[str, Any] | None:
+        """Build the album-header YAML document for import editing.
+
+        Returns a dict of album-level fields, or ``None`` when the current
+        task is not an album import.
+        """
+        if not getattr(task, "is_album", False) or not task.items:
+            return None
+
+        album_fields = set(self.config["albumfields"].as_str_seq())
+        if not album_fields:
+            return None
+
+        # Drop fields that only exist on Item (title, track, path, ...);
+        # since the header is built from a single item and then applied to
+        # every item, an item-only field here would silently stamp that
+        # one item's value onto the whole album. Flexible fields are left
+        # alone so they can still be edited at the album level.
+        item_only_fields = album_fields & ITEM_ONLY_FIELDS
+        if item_only_fields:
+            self._log.warning(
+                "ignoring item-only fields configured in albumfields: {}",
+                ", ".join(sorted(item_only_fields)),
+            )
+            album_fields -= ITEM_ONLY_FIELDS
+        if not album_fields:
+            return None
+
+        first_item = task.items[0]
+        header = flatten(first_item, album_fields)
+        return header if header else None
+
+    def _importer_edit_apply_header(
+        self, items: list[Item], header_data: dict[str, Any]
+    ) -> None:
+        """Apply album-header changes to every item in the list."""
+        if not header_data:
+            return
+        for item in items:
+            apply_(item, header_data)
+
+    def _edit_yaml(
+        self, old_str: str
+    ) -> tuple[list[dict[str, Any]], str] | None:
+        """Open a temporary file with `old_str`, let the user edit it, and
+        return the parsed list of YAML documents.
+
+        Returns ``(parsed_data, edited_str)`` on success, or ``None`` if the
+        user aborted (no changes or unresolvable parse error).
+        """
+        with NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+        ) as new:
+            new.write(old_str)
+
+        try:
+            while True:
+                edit(new.name, self._log)
+
+                with codecs.open(new.name, encoding="utf-8") as f:
+                    new_str = f.read()
+                if new_str == old_str:
+                    ui.print_("No changes; aborting.")
+                    return None
+
+                try:
+                    return load(new_str), new_str
+                except ParseError as e:
+                    ui.print_(f"Could not read data: {e}")
+                    if not ui.input_yn("Edit again to fix? (Y/n)", True):
+                        return None
+        finally:
+            os.remove(new.name)
+
+    def importer_edit(
+        self, session: ImportSession, task: ImportTask
+    ) -> Action | None:
         """Callback for invoking the functionality during an interactive
         import session on the *original* item tags.
         """
@@ -343,21 +429,123 @@ class EditPlugin(plugins.BeetsPlugin):
             if not obj._db or obj.id is None:
                 obj.id = -i
 
-        # Present the YAML to the user and let them change it.
-        fields = self._get_fields(album=False, extra=[])
-        success = self.edit_objects(task.items, fields)
+        # Decide which fields to show.
+        album_fields = set()
+        if getattr(task, "is_album", False):
+            album_fields = set(self.config["albumfields"].as_str_seq())
+        item_fields = set(self.config["itemfields"].as_str_seq())
 
-        # Remove temporary ids.
+        # Track-level fields exclude any that are shown in the album header
+        # to avoid duplication.
+        track_fields = item_fields - album_fields
+        track_fields.add("id")
+
+        # Build the YAML document list.
+        header_data = self._importer_edit_album_header(task)
+        old_track_data = [flatten(o, track_fields) for o in task.items]
+        all_old_data = []
+        if header_data is not None:
+            all_old_data.append(header_data)
+        all_old_data.extend(old_track_data)
+        has_header = header_data is not None
+        num_data_docs = 1 if has_header else 0
+
+        cur_str = dump(all_old_data)
+
+        while True:
+            result = self._edit_yaml(cur_str)
+            if result is None:
+                self._importer_edit_cleanup(task)
+                return None
+            new_all_data, new_str = result
+
+            expected_total = num_data_docs + len(task.items)
+            if len(new_all_data) != expected_total:
+                ui.print_(
+                    f"Number of documents changed from {expected_total} to "
+                    f"{len(new_all_data)}."
+                )
+                if ui.input_yn("Edit again to fix? (Y/n)", True):
+                    continue
+                self._importer_edit_cleanup(task)
+                return None
+
+            # Split into album header and per-track documents. Every track
+            # document always has an `id` field (see `track_fields` above),
+            # while the header never does, so identify the header by the
+            # absence of `id` rather than by position. This keeps the split
+            # correct even if the user moves the header elsewhere in the
+            # file, since `apply_data` already matches track documents by
+            # id regardless of order.
+            if has_header:
+                new_header_data = [d for d in new_all_data if "id" not in d]
+                new_track_data = [d for d in new_all_data if "id" in d]
+                if len(new_header_data) != 1:
+                    ui.print_(
+                        "Could not identify the album header: exactly one "
+                        "document must have no `id` field."
+                    )
+                    if ui.input_yn("Edit again to fix? (Y/n)", True):
+                        continue
+                    self._importer_edit_cleanup(task)
+                    return None
+            else:
+                new_header_data = []
+                new_track_data = new_all_data
+
+            # Snapshot originals for diff display and restore.
+            objs_old = cast("list[Item]", [obj.copy() for obj in task.items])
+
+            # Apply header changes to every item.
+            if new_header_data:
+                self._importer_edit_apply_header(task.items, new_header_data[0])
+
+            # Apply per-track changes.
+            self.apply_data(task.items, old_track_data, new_track_data)
+
+            # Show the diff.
+            changed = False
+            for item, old_copy in zip(task.items, objs_old):
+                changed |= ui.show_model_changes(item, old_copy)
+
+            if not changed:
+                ui.print_("No changes to apply.")
+                self._importer_edit_cleanup(task)
+                return None
+
+            choice = ui.input_options(("continue Editing", "apply", "cancel"))
+            if choice == "a":  # Apply.
+                self._importer_edit_cleanup(task)
+                return Action.RETAG
+            if choice == "c":  # Cancel.
+                self._importer_edit_restore_from_copies(task, objs_old)
+                self._importer_edit_cleanup(task)
+                return None
+            if choice == "e":  # Keep editing.
+                self._importer_edit_restore_from_copies(task, objs_old)
+                cur_str = new_str
+                continue
+
+    @staticmethod
+    def _importer_edit_cleanup(task: ImportTask) -> None:
+        """Remove temporary negative ids from task items."""
         for obj in task.items:
-            if obj.id < 0:
+            if obj.id is not None and obj.id < 0:
                 obj.id = None
 
-        # Save the new data.
-        if success:
-            # Return Action.RETAG, which makes the importer write the tags
-            # to the files if needed without re-applying metadata.
-            return Action.RETAG
-        return None
+    @staticmethod
+    def _importer_edit_restore_from_copies(
+        task: ImportTask, copies: list[Item]
+    ) -> None:
+        """Restore items to their state before the last edit cycle.
+
+        ``copies`` must be a list of :class:`Item <beets.library.Item>` copies
+        taken *before* the changes were applied.
+        """
+        for i, item in enumerate(task.items):
+            if i < len(copies):
+                for key in item._fields:
+                    item[key] = copies[i][key]
 
     def importer_edit_candidate(self, session, task):
         """Callback for invoking the functionality during an interactive

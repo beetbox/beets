@@ -27,6 +27,10 @@ New features
 - :ref:`modify-cmd`: Support ``+=`` and ``-=`` operators to add or remove
   individual values from multi-valued fields without replacing the whole field.
   :bug:`6587`
+- :doc:`plugins/edit`: The interactive import editor now shows album-level
+  fields (as configured by ``albumfields``) as a YAML header section when
+  editing an album import. Fields that appear in both ``itemfields`` and
+  ``albumfields`` are shown only in the header, not per-track.
 - :doc:`plugins/ftintitle`: Apply featured-artist rewriting to fetched metadata
   before commands such as :doc:`plugins/mbsync` use it. :bug:`1153`
 - :doc:`plugins/fetchart`: Add ``fetch_for_asis`` setting that enables fetching
