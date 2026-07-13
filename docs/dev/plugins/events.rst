@@ -111,9 +111,11 @@ registration process in this case:
 
 ``write``
     :Parameters: ``item`` (|Item|), ``path`` (path), ``tags`` (dict)
-    :Description: Called just before a file's metadata is written to disk.
-        Handlers may modify ``tags`` or raise ``library.FileOperationError`` to
-        abort.
+    :Description: Called before beets decides whether to write a file's
+        metadata to disk. Handlers may modify ``tags`` or raise
+        ``library.FileOperationError`` to abort. ``after_write`` is skipped
+        when the file being written is the item's own and already holds the
+        tags.
 
 ``after_write``
     :Parameters: ``item`` (|Item|)

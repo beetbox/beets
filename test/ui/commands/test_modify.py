@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from mediafile import MediaFile
 
@@ -238,6 +240,24 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
         )
         assert query == ["title:foo=bar"]
         assert mods == {"title": ModifyOperation(None, "newTitle")}
+
+
+class TestWriteTags(ModifyHelper, TestHelper):
+    @pytest.fixture
+    def item(self):
+        album = self.add_album_fixture()
+        [item] = album.items()
+        item.write()
+        item.store()
+        os.utime(syspath(item.path), (1000000000, 1000000000))
+        return item
+
+    def test_keep_file_when_only_database_field_changes(self, item):
+        self.modify("--nomove", "data_source=bandcamp")
+
+        item.load()
+        assert item.data_source == "bandcamp"
+        assert item.current_mtime() == 1000000000
 
 
 class TestMultiValue(ModifyHelper, TestHelper):

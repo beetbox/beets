@@ -10,6 +10,7 @@ import stat
 import unittest
 from unittest.mock import patch
 
+import mutagen
 import pytest
 from mediafile import MediaFile, UnreadableFileError
 
@@ -1308,6 +1309,53 @@ class TestWrite(TestHelper):
         item.date = "foo"
         item.write()
         assert MediaFile(syspath(item.path)).year == clean_year
+
+    @pytest.mark.parametrize("file_format", ["MP3", "FLAC"])
+    def test_no_write_when_file_has_the_tags(self, file_format):
+        item = self.add_item_fixture(format=file_format)
+        # The file keeps six decimal places of the peak, so the value read
+        # back from it never equals the one stored in the database.
+        item.rg_track_peak = 10 ** (-1.2 / 20)
+        item.write()
+        os.utime(syspath(item.path), (1000000000, 1000000000))
+
+        item.write()
+
+        assert item.current_mtime() == 1000000000
+
+    def test_write_list_tag_that_drops_an_empty_value(self):
+        # An empty value the file happens to hold is still a value there, so
+        # the file no longer holds the tags once it is gone.
+        item = self.add_item_fixture(format="FLAC")
+        item.write()
+        mediafile = MediaFile(syspath(item.path))
+        mediafile.artists = ["the artist", "", "another artist"]
+        mediafile.save()
+        item.artists = ["the artist", "another artist"]
+        os.utime(syspath(item.path), (1000000000, 1000000000))
+
+        item.write()
+
+        assert item.current_mtime() != 1000000000
+        assert MediaFile(syspath(item.path)).artists == [
+            "the artist",
+            "another artist",
+        ]
+
+    def test_write_file_with_an_unreadable_image(self):
+        # The images are not read, so a file beets cannot parse one from is
+        # written like any other.
+        path = os.path.join(self.temp_dir, b"unreadable_image.ogg")
+        shutil.copy(os.path.join(_common.RSRC, b"full.ogg"), path)
+        mediafile = mutagen.File(syspath(path))
+        mediafile["metadata_block_picture"] = ["not base64"]
+        mediafile.save()
+        item = beets.library.Item.from_path(path)
+        item.title = "another title"
+
+        item.write()
+
+        assert MediaFile(syspath(path)).title == "another title"
 
 
 class TestItemRead(PytestItemHelper):
