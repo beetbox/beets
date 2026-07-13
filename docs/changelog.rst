@@ -55,6 +55,11 @@ Bug fixes
   instrumental track, and store that state in ``lyrics_instrumental`` flexible
   attribute. Existing ``[Instrumental]`` lyrics are migrated automatically.
   :bug:`6719`
+- Sorting by a nullable field (for example a flexible attribute with a declared
+  type whose null value is ``None``) that is present on only some items no
+  longer crashes with a ``TypeError``. Missing values are now grouped together,
+  ordered before present ones when sorting ascending and after them when
+  descending. :bug:`3461`
 
 ..
     For plugin developers
