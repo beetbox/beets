@@ -120,6 +120,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/missing`: Honor the ``-f``/``--format`` option (and the
+  ``format_album`` configuration) when listing missing albums in album mode.
+  :bug:`3804`
 - :doc:`plugins/lyrics`: Add rate limiting and exponential backoff to HTTP
   requests to prevent ``429 Too Many Requests`` errors from lyrics sources
   during bulk imports. :bug:`6728`

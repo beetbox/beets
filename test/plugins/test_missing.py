@@ -56,6 +56,43 @@ class TestMissingAlbums(MissingTestHelper):
         with self.configure_plugin({}):
             assert self.run_with_output("missing", "--album") == expected_output
 
+    def test_missing_albums_custom_format(self, requests_mock):
+        """Test -f/--format is honored when listing missing albums."""
+        artist_mbid = str(uuid.uuid4())
+        self.lib.add(
+            Album(
+                album="Album",
+                albumartist="Artist",
+                mb_albumartistid=artist_mbid,
+                mb_albumid="album",
+                mb_releasegroupid="release_group_in_lib",
+            )
+        )
+        requests_mock.get(
+            re.compile(
+                rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"
+            ),
+            json={
+                "release-groups": [
+                    {
+                        "id": "other",
+                        "title": "Other Album",
+                        "primary-type": "Album",
+                    }
+                ]
+            },
+        )
+
+        with self.configure_plugin({}):
+            output = self.run_with_output(
+                "missing",
+                "-a",
+                "-f",
+                "$mb_releasegroupid | $albumtype | $album",
+            )
+
+        assert output == "other | album | Other Album\n"
+
     def test_release_types_filters_results(self, requests_mock):
         """Test --release-types filters to only show specified type."""
         artist_mbid = str(uuid.uuid4())
