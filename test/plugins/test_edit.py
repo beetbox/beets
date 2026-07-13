@@ -378,6 +378,33 @@ class ApplyDataMatchingTest(PluginMixin, BeetsTestCase):
         assert items[1].track == 2
 
 
+class AlbumHeaderFieldsTest(PluginMixin, BeetsTestCase):
+    """`_importer_edit_album_header` must strip item-only fixed fields
+    (title, track, path, ...), since the header is built from a single
+    item and then applied to every item in the album. Flexible fields
+    are not part of either model's fixed schema, so they must be left
+    alone rather than discarded by an overly broad filter.
+    """
+
+    plugin = "edit"
+
+    class _StubTask:
+        is_album = True
+
+        def __init__(self, items):
+            self.items = items
+
+    def test_keeps_flexible_fields_but_drops_item_only_fields(self):
+        item = Item(id=1, title="Title 1", track=1, album="Album", mood="Happy")
+        task = self._StubTask([item])
+
+        self.config["edit"]["albumfields"] = "album mood track title"
+
+        header = EditPlugin()._importer_edit_album_header(task)
+
+        assert header == {"album": "Album", "mood": "Happy"}
+
+
 class EditDuringImporterTestCase(
     EditMixin, TerminalImportMixin, AutotagImportTestCase
 ):

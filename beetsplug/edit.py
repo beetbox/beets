@@ -16,13 +16,12 @@ from beets import plugins, ui, util
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.importer import Action
-from beets.library import Album
+from beets.library import Album, Item
 from beets.ui.commands.utils import do_query
 from beets.util import PromptChoice
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -32,6 +31,12 @@ SAFE_TYPES = (
     types.Boolean,
     types.DelimitedString,
 )
+
+# Fixed fields that only exist on Item, not Album (e.g. title, track, path).
+# Flexible attributes are deliberately excluded from this set: they aren't
+# part of either model's fixed schema, so they can't be told apart by name
+# alone and are left for the user to configure correctly.
+ITEM_ONLY_FIELDS = Item._field_names - Album._field_names
 
 
 class ParseError(Exception):
@@ -349,18 +354,18 @@ class EditPlugin(plugins.BeetsPlugin):
         if not album_fields:
             return None
 
-        # Restrict to fields that actually exist on the Album model. Item
-        # has every Album field plus track-only ones (title, track, path,
-        # ...); since the header is built from a single item and then
-        # applied to every item, an item-only field here would silently
-        # stamp that one item's value onto the whole album.
-        invalid_fields = album_fields - Album._field_names
-        if invalid_fields:
+        # Drop fields that only exist on Item (title, track, path, ...);
+        # since the header is built from a single item and then applied to
+        # every item, an item-only field here would silently stamp that
+        # one item's value onto the whole album. Flexible fields are left
+        # alone so they can still be edited at the album level.
+        item_only_fields = album_fields & ITEM_ONLY_FIELDS
+        if item_only_fields:
             self._log.warning(
-                "ignoring albumfields not valid for albums: {}",
-                ", ".join(sorted(invalid_fields)),
+                "ignoring item-only fields configured in albumfields: {}",
+                ", ".join(sorted(item_only_fields)),
             )
-            album_fields &= Album._field_names
+            album_fields -= ITEM_ONLY_FIELDS
         if not album_fields:
             return None
 
