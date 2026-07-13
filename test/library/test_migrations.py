@@ -346,3 +346,32 @@ class TestMigrationBackup(MigrationTestHelper):
             if os.fsdecode(f).endswith(".bak")
         ]
         assert len(backups) == expected_count
+
+
+class TestInstrumentalLyricsInFlexFieldMigration(MigrationTestHelper):
+    """Verify legacy instrumental markers move out of canonical lyrics."""
+
+    migration = (migrations.InstrumentalLyricsInFlexFieldMigration, (Item,))
+
+    def test_migrate(self):
+        """Ensure exact instrumental markers become metadata, not lyric text."""
+        instrumental_item = self.add_item(lyrics="[Instrumental]")
+        regular_item = self.add_item(lyrics="Regular lyrics")
+
+        self.lib._migrate()
+
+        instrumental_item.load()
+        regular_item.load()
+
+        assert instrumental_item.lyrics == ""
+        assert instrumental_item.lyrics_instrumental == "1"
+        assert regular_item.lyrics == "Regular lyrics"
+
+        with pytest.raises(AttributeError, match="lyrics_instrumental"):
+            regular_item.lyrics_instrumental
+
+        # remove cached initial db tables data
+        del self.lib.db_tables
+        assert self.lib.migration_exists(
+            "instrumental_lyrics_in_flex_field", "items"
+        )

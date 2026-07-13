@@ -111,9 +111,8 @@ class FieldSort(Sort):
         self.case_insensitive = case_insensitive
 
     def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
-        # TODO: Conversion and null-detection here. In Python 3,
-        # comparisons with None fail. We should also support flexible
-        # attributes with different types without falling over.
+        # TODO: Support flexible attributes with different types (e.g. a mix
+        # of strings and numbers) without falling over.
 
         def key(obj: Model) -> Any:
             field_val = obj.get(self.field, None)
@@ -126,7 +125,13 @@ class FieldSort(Sort):
                     field_val = ""
             if self.case_insensitive and isinstance(field_val, str):
                 field_val = field_val.lower()
-            return field_val
+            # Nullable types (e.g. ``NullInteger``/``NullFloat``) use ``None``
+            # as their null value, so a field may be missing on some objects
+            # and present on others. Comparing ``None`` with a real value
+            # raises a ``TypeError``, so group all missing values together:
+            # this places them first when sorting ascending and last when
+            # descending, matching SQLite's default ordering of NULLs.
+            return (field_val is not None, field_val)
 
         return sorted(objs, key=key, reverse=not self.ascending)
 

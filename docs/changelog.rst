@@ -33,6 +33,8 @@ New features
   album art from online sources even when imported files are not modified by the
   auto-tagger. Default is ``no`` which means ``fetchart`` looks for art only in
   the local filesystem when the user (or ``quiet_fallback``) chooses ``asis``.
+- :doc:`plugins/lyrics`: Added a ``--no-keep-synced`` command option to override
+  ``keep_synced: yes`` for a single manual lyrics fetch.
 
 Bug fixes
 ~~~~~~~~~
@@ -49,6 +51,15 @@ Bug fixes
   example a multi-disc album whose cover lives in the album root rather than a
   per-disc directory); the missing art is skipped instead. :bug:`4692`
 - :doc:`plugins/tidal`: Normalize Tidal album types to lowercase.
+- :doc:`plugins/lyrics`: Leave lyrics empty when a source reports an
+  instrumental track, and store that state in ``lyrics_instrumental`` flexible
+  attribute. Existing ``[Instrumental]`` lyrics are migrated automatically.
+  :bug:`6719`
+- Sorting by a nullable field (for example a flexible attribute with a declared
+  type whose null value is ``None``) that is present on only some items no
+  longer crashes with a ``TypeError``. Missing values are now grouped together,
+  ordered before present ones when sorting ascending and after them when
+  descending. :bug:`3461`
 
 ..
     For plugin developers
