@@ -253,6 +253,34 @@ class TestNonExistingField:
         assert ids_asc == [*null_values_ids, lower_item.id, higher_item.id]
         assert ids_desc == [higher_item.id, lower_item.id, *null_values_ids]
 
+    @pytest.mark.parametrize(
+        "field_type,lower,higher",
+        [
+            _p(types.NullInteger(), 2, 10, id="null-integer"),
+            _p(types.NullFloat(), 2.5, 10.5, id="null-float"),
+        ],
+    )
+    def test_nullable_field_present_in_some_items(
+        self, monkeypatch, field_type, lower, higher
+    ):
+        """Ordering by a nullable-typed field (whose null value is ``None``)
+        that is present on only some items should not raise. See #3461.
+        """
+        monkeypatch.setitem(Item._types, "mynull", field_type)
+
+        lower_item, higher_item, *items_without_val = self.lib.items("id+")
+        for item, value in zip((lower_item, higher_item), (lower, higher)):
+            item.mynull = value
+            item.store()
+
+        null_values_ids = [i.id for i in items_without_val]
+
+        ids_asc = [i.id for i in self.lib.items("mynull+ id+")]
+        ids_desc = [i.id for i in self.lib.items("mynull- id+")]
+
+        assert ids_asc == [*null_values_ids, lower_item.id, higher_item.id]
+        assert ids_desc == [higher_item.id, lower_item.id, *null_values_ids]
+
     def test_negation_interaction(self):
         """Test the handling of negation and sorting together.
 
