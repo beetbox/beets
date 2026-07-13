@@ -33,6 +33,8 @@ New features
   album art from online sources even when imported files are not modified by the
   auto-tagger. Default is ``no`` which means ``fetchart`` looks for art only in
   the local filesystem when the user (or ``quiet_fallback``) chooses ``asis``.
+- :doc:`plugins/lyrics`: Added a ``--no-keep-synced`` command option to override
+  ``keep_synced: yes`` for a single manual lyrics fetch.
 
 Bug fixes
 ~~~~~~~~~
