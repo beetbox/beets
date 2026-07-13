@@ -69,17 +69,20 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     # objects.
     ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
-    templates = {
-        key: functemplate.template(value) for key, value in mods.items()
-    }
+    templates = {}
+    for key, mod in mods.items():
+        templates[key] = functemplate.template(mod.value)
 
     def parse_mods(obj):
         # Parse the raw assignment strings into properly typed values for the
-        # given object (e.g. dates into timestamps).
-        return {
-            key: model_cls._parse(key, obj.evaluate_template(templates[key]))
-            for key in mods.keys()
-        }
+        # given object (e.g. dates into timestamps) and apply each mod.
+        obj_mods = {}
+        for key, mod in mods.items():
+            parsed_value = model_cls._parse(
+                key, obj.evaluate_template(templates[key])
+            )
+            obj_mods[key] = mod.apply(obj, key, parsed_value)
+        return obj_mods
 
     for obj in objs:
         if print_and_modify(obj, parse_mods(obj), dels) and obj not in changed:
