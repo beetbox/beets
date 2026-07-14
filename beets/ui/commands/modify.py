@@ -72,14 +72,20 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     templates = {}
     for key, mod in mods.items():
         templates[key] = functemplate.template(mod.value)
-    for obj in objs:
+
+    def parse_mods(obj):
+        # Parse the raw assignment strings into properly typed values for the
+        # given object (e.g. dates into timestamps) and apply each mod.
         obj_mods = {}
         for key, mod in mods.items():
             parsed_value = model_cls._parse(
                 key, obj.evaluate_template(templates[key])
             )
             obj_mods[key] = mod.apply(obj, key, parsed_value)
-        if print_and_modify(obj, obj_mods, dels) and obj not in changed:
+        return obj_mods
+
+    for obj in objs:
+        if print_and_modify(obj, parse_mods(obj), dels) and obj not in changed:
             changed.append(obj)
 
     # Still something to do?
@@ -101,7 +107,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
         changed = ui.input_select_objects(
             f"Really modify{extra}",
             changed,
-            lambda o: print_and_modify(o, mods, dels),
+            lambda o: print_and_modify(o, parse_mods(o), dels),
         )
 
     # Apply changes to database and files
