@@ -12,6 +12,9 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- Recognize native Spotify URIs (e.g. ``spotify:album:<id>`` and
+  ``spotify:track:<id>``) when extracting release/track IDs, in addition to full
+  ``open.spotify.com`` URLs and bare IDs.
 - :doc:`/plugins/convert`: Add new configuration option ``convert.refresh`` and
   command-line option ``--refresh``, allowing to force ``convert`` operation
   when original file is newer than existing converted file.

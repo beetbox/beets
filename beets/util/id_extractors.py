@@ -10,7 +10,11 @@ log = logging.getLogger("beets")
 
 
 PATTERN_BY_SOURCE = {
-    "spotify": re.compile(r"(?:^|open\.spotify\.com/[^/]+/)([0-9A-Za-z]{22})"),
+    # Aceita o ID puro, URLs open.spotify.com e as URIs nativas
+    # (ex.: "spotify:album:<id>", "spotify:track:<id>").
+    "spotify": re.compile(
+        r"(?:^|open\.spotify\.com/[^/]+/|spotify:[a-z]+:)([0-9A-Za-z]{22})"
+    ),
     "deezer": re.compile(r"(?:^|deezer\.com/)(?:[a-z]*/)?(?:[^/]+/)?(\d+)"),
     "beatport": re.compile(r"(?:^|beatport\.com/release/.+/)(\d+)$"),
     "musicbrainz": re.compile(r"(\w{8}(?:-\w{4}){3}-\w{12})"),
