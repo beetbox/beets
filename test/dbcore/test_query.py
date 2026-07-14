@@ -15,6 +15,7 @@ from beets.dbcore.query import (
     BooleanQuery,
     DateQuery,
     FalseQuery,
+    InQuery,
     MatchQuery,
     NoneQuery,
     NotQuery,
@@ -469,6 +470,12 @@ class TestQuery:
     @pytest.mark.parametrize("query_class", [MatchQuery, StringFieldQuery])
     def test_equality(self, query_class):
         assert query_class("foo", "bar") == query_class("foo", "bar")
+
+    def test_in_query_hashable(self):
+        # smartplaylist puts queries in a set; an InQuery whose pattern is a
+        # list used to raise `unhashable type: 'list'`. See #5354.
+        query = InQuery("field", [1, 2, 3])
+        assert query in {query}
 
     @pytest.mark.parametrize(
         "make_q, expected_msg",
