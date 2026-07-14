@@ -152,7 +152,7 @@ class StrFormatLogger(Logger):
         exc_info: _ExcInfoType = None,
         extra: Mapping[str, Any] | None = None,
         stack_info: bool = False,
-        stacklevel: int = 1,
+        stacklevel: int = 2,
         **kwargs,
     ):
         """Log msg.format(*args, **kwargs)"""
