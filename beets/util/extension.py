@@ -1,14 +1,20 @@
 """A tool that finds an extension for files without one"""
 
+from __future__ import annotations
+
 import os
 import subprocess
 from logging import Logger
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import mutagen.wave
 
 import beets
 from beets import util
+
+if TYPE_CHECKING:
+    from beets.util import AnyPath
 
 logger = Logger.info
 
@@ -137,7 +143,7 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None):
     return new_path
 
 
-def remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
+def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:
     """If 'path' is a WAV file containing an MP3 stream
     (WAVE_FORMAT_MPEGLAYER3, wFormatTag = 0x0055), extract the MP3 stream
     to a new .mp3 file and return its path. Returns None if the file is not
@@ -160,9 +166,14 @@ def remux_mpeglayer3_wav(path: util.PathBytes) -> util.PathBytes | None:
     # Skip 'data' marker (4 bytes) and chunk size (4 bytes).
     mp3_data = data[data_offset + 8 :]
 
-    mp3_path = os.path.splitext(path)[0] + b".mp3"
-    with open(util.syspath(mp3_path), "wb") as mp3_file:
-        mp3_file.write(mp3_data)
+    syspath = Path(util.syspath(path))
+    mp3_path = syspath.with_suffix(".mp3")
+    mp3_path.write_bytes(mp3_data)
 
     util.remove(path)
+
+    if isinstance(path, str):
+        return str(mp3_path)
+    if isinstance(path, bytes):
+        return os.fsencode(mp3_path)
     return mp3_path
