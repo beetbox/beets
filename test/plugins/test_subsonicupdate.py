@@ -166,3 +166,21 @@ class SubsonicPluginTest(unittest.TestCase):
         )
 
         self.subsonicupdate.start_scan()
+
+    @responses.activate
+    def test_start_scan_failed_non_json_response(self):
+        """Tests failed path based on a non-JSON server response."""
+        responses.add(
+            responses.GET,
+            "http://localhost:4040/rest/startScan",
+            status=503,
+            body="<html>server unavailable</html>",
+            content_type="text/html",
+        )
+
+        with self.assertLogs("beets", level="ERROR") as logs:
+            self.subsonicupdate.start_scan()
+
+        assert "Subsonic server returned a non-JSON response" in "\n".join(
+            logs.output
+        )

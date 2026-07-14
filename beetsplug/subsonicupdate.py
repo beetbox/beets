@@ -121,7 +121,18 @@ class SubsonicUpdate(BeetsPlugin):
         try:
             response = requests.get(url, params=payload, timeout=10)
             json = response.json()
-
+        except requests.exceptions.JSONDecodeError:
+            self._log.error(
+                "Subsonic server returned a non-JSON response from {} "
+                "(HTTP {})",
+                url,
+                response.status_code,
+            )
+            return
+        except requests.exceptions.RequestException as error:
+            self._log.error("Error connecting to Subsonic server: {}", error)
+            return
+        try:
             if (
                 response.status_code == 200
                 and json["subsonic-response"]["status"] == "ok"
