@@ -1,7 +1,6 @@
 """Testsuite for the M3UFile class."""
 
 import sys
-import unittest
 from os import path
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -13,7 +12,7 @@ from beets.util import bytestring_path
 from beets.util.m3u import EmptyPlaylistError, M3UFile
 
 
-class M3UFileTest(unittest.TestCase):
+class TestM3UFile:
     """Tests the M3UFile class."""
 
     def test_playlist_write_empty(self):
@@ -55,7 +54,7 @@ class M3UFileTest(unittest.TestCase):
         assert path.exists(the_playlist_file)
         rmtree(tempdir)
 
-    @unittest.skipUnless(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform != "win32", reason="win32")
     def test_playlist_write_and_read_unicode_windows(self):
         """Test saving unicode paths to a playlist file on Windows."""
         tempdir = bytestring_path(mkdtemp())
@@ -83,7 +82,7 @@ class M3UFileTest(unittest.TestCase):
         )
         rmtree(tempdir)
 
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_playlist_load_ascii(self):
         """Test loading ascii paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b"playlist.m3u")
@@ -93,7 +92,7 @@ class M3UFileTest(unittest.TestCase):
             "/This/is/a/path/to_a_file.mp3"
         )
 
-    @unittest.skipIf(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_playlist_load_unicode(self):
         """Test loading unicode paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b"playlist.m3u8")
@@ -103,7 +102,7 @@ class M3UFileTest(unittest.TestCase):
             "/This/is/å/path/to_a_file.mp3"
         )
 
-    @unittest.skipUnless(sys.platform == "win32", "win32")
+    @pytest.mark.skipif(sys.platform != "win32", reason="win32")
     def test_playlist_load_unicode_windows(self):
         """Test loading unicode paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b"playlist_windows.m3u8")

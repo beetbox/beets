@@ -2,13 +2,12 @@
 
 import json
 import os.path
-import unittest
 
 from beets.test._common import RSRC
 from beetsplug.acousticbrainz import ABSCHEME, AcousticPlugin
 
 
-class MapDataToSchemeTest(unittest.TestCase):
+class TestMapDataToScheme:
     def test_basic(self):
         ab = AcousticPlugin()
         data = {"key 1": "value 1", "key 2": "value 2"}

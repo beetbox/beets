@@ -3,11 +3,11 @@ from unittest.mock import ANY, Mock, call, patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestHelper
 from beetsplug.mpdstats import MPDStats, mpd_config
 
 
-class MPDStatsTest(PluginTestCase):
+class TestMPDStats(PluginTestHelper):
     plugin = "mpdstats"
 
     def test_update_rating(self):

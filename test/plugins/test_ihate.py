@@ -1,13 +1,11 @@
 """Tests for the 'ihate' plugin"""
 
-import unittest
-
 from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin
 
 
-class IHatePluginTest(unittest.TestCase):
+class TestIHatePlugin:
     def test_hate(self):
         match_pattern = {}
         test_item = Item(

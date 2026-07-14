@@ -6,13 +6,13 @@ from mediafile import MediaFile
 
 from beets.exceptions import UserError
 from beets.test import _common
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestHelper
 from beetsplug.replace import ReplacePlugin
 
 replace = ReplacePlugin()
 
 
-class ReplaceCommandTest(PluginTestCase):
+class TestReplaceCommand(PluginTestHelper):
     plugin = "replace"
 
     def test_command_callback_accepts_cli_arguments(self):
