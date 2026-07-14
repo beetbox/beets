@@ -122,7 +122,7 @@ class ConfigMixin:
         config.read(user=False, defaults=True)
 
         config["plugins"] = []
-        config["verbose"] = 1
+        config["verbose"] = 2
         config["ui"]["color"] = False
         config["threaded"] = False
         config["create_backup_before_migrations"] = False

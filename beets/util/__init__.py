@@ -50,6 +50,7 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
+AnyPath = TypeVar("AnyPath", str, bytes, Path)
 StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
@@ -203,41 +204,33 @@ def ancestry(path: AnyStr) -> list[AnyStr]:
 
 
 def sorted_walk(
-    path: PathLike,
-    ignore: Sequence[PathLike] = (),
+    path: AnyStr,
+    ignore: Sequence[AnyStr] = (),
     ignore_hidden: bool = False,
     logger: Logger | None = None,
-) -> Iterator[tuple[bytes, Sequence[bytes], Sequence[bytes]]]:
+) -> Iterator[tuple[AnyStr, Sequence[AnyStr], Sequence[AnyStr]]]:
     """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
     pattern in `ignore` are skipped. If `logger` is provided, then
     warning messages are logged there when a directory cannot be listed.
     """
-    # Make sure the paths aren't Unicode strings.
-    bytes_path = bytestring_path(path)
-    ignore_bytes = [  # rename prevents mypy variable shadowing issue
-        bytestring_path(i) for i in ignore
-    ]
-
     # Get all the directories and files at this level.
     try:
-        contents = os.listdir(syspath(bytes_path))
+        contents = os.listdir(path)
     except OSError:
         if logger:
             logger.warning(
                 "could not list directory {}",
-                displayable_path(bytes_path),
+                displayable_path(path),
                 exc_info=True,
             )
         return
     dirs = []
     files = []
-    for str_base in contents:
-        base = bytestring_path(str_base)
-
+    for base in contents:
         # Skip ignored filenames.
         skip = False
-        for pat in ignore_bytes:
+        for pat in ignore:
             if fnmatch.fnmatch(base, pat):
                 if logger:
                     logger.debug(
@@ -249,7 +242,7 @@ def sorted_walk(
             continue
 
         # Add to output as either a file or a directory.
-        cur = os.path.join(bytes_path, base)
+        cur = os.path.join(path, base)
         if (ignore_hidden and not hidden.is_hidden(cur)) or not ignore_hidden:
             if os.path.isdir(syspath(cur)):
                 dirs.append(base)
@@ -257,14 +250,15 @@ def sorted_walk(
                 files.append(base)
 
     # Sort lists (case-insensitive) and yield the current level.
-    dirs.sort(key=bytes.lower)
-    files.sort(key=bytes.lower)
-    yield (bytes_path, dirs, files)
+    sort_key = path.__class__.lower
+    dirs.sort(key=sort_key)
+    files.sort(key=sort_key)
+    yield (path, dirs, files)
 
     # Recurse into directories.
     for base in dirs:
-        cur = os.path.join(bytes_path, base)
-        yield from sorted_walk(cur, ignore_bytes, ignore_hidden, logger)
+        cur = os.path.join(path, base)
+        yield from sorted_walk(cur, ignore, ignore_hidden, logger)
 
 
 def path_as_posix(path: bytes) -> bytes:
@@ -640,7 +634,7 @@ def reflink(
         ) from exc
 
 
-def unique_path(path: bytes) -> bytes:
+def unique_path(path: AnyStr) -> AnyStr:
     """Returns a version of ``path`` that does not exist on the
     filesystem. Specifically, if ``path` itself already exists, then
     something unique is appended to the path.
@@ -648,7 +642,8 @@ def unique_path(path: bytes) -> bytes:
     if not os.path.exists(syspath(path)):
         return path
 
-    base, ext = os.path.splitext(path)
+    byte_path = os.fsencode(path)
+    base, ext = os.path.splitext(byte_path)
     match = re.search(rb"\.(\d)+$", base)
     if match:
         num = int(match.group(1))
@@ -660,6 +655,8 @@ def unique_path(path: bytes) -> bytes:
         suffix = f".{num}".encode() + ext
         new_path = base + suffix
         if not os.path.exists(new_path):
+            if not isinstance(path, bytes):
+                return os.fsdecode(new_path)
             return new_path
 
 
