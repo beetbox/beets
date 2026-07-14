@@ -107,7 +107,9 @@ def flatten(obj, fields):
     d = {}
     for key in obj.keys():
         value = obj[key]
-        if _safe_value(obj, key, value):
+        if value is None:
+            d[key] = None
+        elif _safe_value(obj, key, value):
             # A safe value that is faithfully representable in YAML.
             d[key] = value
         else:
@@ -128,7 +130,9 @@ def apply_(obj, data):
     strings as values.
     """
     for key, value in data.items():
-        if _safe_value(obj, key, value):
+        if value is None:
+            obj[key] = None
+        elif _safe_value(obj, key, value):
             # A safe value *stayed* represented as a safe type. Assign it
             # directly.
             obj[key] = value
