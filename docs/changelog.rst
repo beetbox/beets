@@ -44,8 +44,8 @@ Bug fixes
 ~~~~~~~~~
 
 - :doc:`plugins/edit`: Preserve missing album art paths when editing album
-  metadata, instead of turning ``artpath: null`` into a path ending in
-  ``None``. :bug:`2438`
+  metadata, instead of turning ``artpath: null`` into a path ending in ``None``.
+  :bug:`2438`
 - :doc:`plugins/subsonicupdate`: Log a clearer error when the Subsonic server
   returns a non-JSON response. :bug:`5635`
 - :doc:`plugins/missing`: Honor the ``-f``/``--format`` option (and the
