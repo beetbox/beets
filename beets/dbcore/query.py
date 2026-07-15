@@ -504,6 +504,11 @@ class InQuery(Generic[AnySQLiteType], FieldQuery[Sequence[AnySQLiteType]]):
     ) -> bool:
         return value in pattern
 
+    def __hash__(self) -> int:
+        # `pattern` is a sequence, so the base class hashing it directly
+        # raises for list patterns. Hash a tuple copy instead. See #5354.
+        return hash((self.field_name, tuple(self.pattern)))
+
 
 class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be
