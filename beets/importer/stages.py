@@ -14,6 +14,9 @@ from .tasks import (
     ImportTaskFactory,
     SentinelImportTask,
     SingletonImportTask,
+    _dup_album_ids,
+    _dup_items,
+    resolve_upgrade,
 )
 
 if TYPE_CHECKING:
@@ -272,7 +275,10 @@ def manipulate_files(session: ImportSession, task: ImportTask) -> None:
     finalizes each task.
     """
     if not task.skip:
-        if task.duplicate_action is DuplicateAction.REMOVE:
+        if task.duplicate_action in (
+            DuplicateAction.REMOVE,
+            DuplicateAction.UPGRADE,
+        ):
             task.remove_duplicates(session.lib)
 
         if session.config["move"]:
@@ -339,6 +345,27 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
             task.duplicate_action = session.get_duplicate_action(
                 task, found_duplicates
             )
+
+            if task.duplicate_action is DuplicateAction.UPGRADE:
+                if task.apply:
+                    # Apply metadata early so items carry their final
+                    # (post-tag) identity before we match them against
+                    # old library items, which store post-tag metadata
+                    # too. `_apply_choice` re-applies it later, which is
+                    # harmless (metadata application is idempotent).
+                    task.apply_metadata()
+                old_items = [i for d in found_duplicates for i in _dup_items(d)]
+                keys = config["import"]["duplicate_keys"]["item"].as_str_seq()
+                kept, superseded = resolve_upgrade(
+                    task.imported_items(), old_items, keys
+                )
+                if not kept:
+                    log.debug("upgrade: no track was an improvement, declining")
+                    task.duplicate_action = DuplicateAction.SKIP
+                else:
+                    task.apply_upgrade(
+                        kept, superseded, _dup_album_ids(found_duplicates)
+                    )
 
             session.log_choice(task, True)
 
