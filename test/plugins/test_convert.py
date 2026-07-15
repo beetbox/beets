@@ -340,7 +340,7 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
             "format": "mp3",
         }
 
-    def create_dummy_file(self, path):
+    def create_dummy_file(self, path: str) -> Path:
         "Creates a dummy file in the conversion directory"
         p = self.convert_dest / path
         p.parent.mkdir(parents=True, exist_ok=True)
