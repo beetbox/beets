@@ -91,6 +91,8 @@ def _safe_value(obj, key, value):
     This ensures that values do not change their type when the user edits their
     YAML representation.
     """
+    if value is None:
+        return True
     typ = obj._type(key)
     return isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type)
 
@@ -107,9 +109,7 @@ def flatten(obj, fields):
     d = {}
     for key in obj.keys():
         value = obj[key]
-        if value is None:
-            d[key] = None
-        elif _safe_value(obj, key, value):
+        if _safe_value(obj, key, value):
             # A safe value that is faithfully representable in YAML.
             d[key] = value
         else:
@@ -130,9 +130,7 @@ def apply_(obj, data):
     strings as values.
     """
     for key, value in data.items():
-        if value is None:
-            obj[key] = None
-        elif _safe_value(obj, key, value):
+        if _safe_value(obj, key, value):
             # A safe value *stayed* represented as a safe type. Assign it
             # directly.
             obj[key] = value
