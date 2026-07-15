@@ -266,7 +266,7 @@
         - yorkshire bleeps and bass
     - disco:
         - cosmic disco
-        - disco polo
+        - disco polo:
             - euro disco
         - italo disco
         - nu disco
@@ -629,8 +629,8 @@
         - deep funk
         - go-go
         - p-funk
-        - synth funk
-          - minneapolis sound
+        - synth funk:
+            - minneapolis sound
     - soul:
         - blue-eyed soul
         - neo soul
