@@ -4,7 +4,7 @@ import fnmatch
 import os.path
 import shlex
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from mediafile import MediaFile
@@ -359,7 +359,7 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
     )
     def test_convert_remove_missing(
         self,
-        plugin_config: dict,
+        plugin_config: dict[str, Any],
         cli_options: list[str],
         files_to_mark_for_removal: list[str],
         expect_removal: bool,
