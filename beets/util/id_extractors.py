@@ -10,7 +10,7 @@ log = logging.getLogger("beets")
 
 
 PATTERN_BY_SOURCE = {
-    # Aceita o ID puro, URLs open.spotify.com e as URIs nativas
+    # Accepts the raw ID, open.spotify.com URLs, and native URIs.
     # (ex.: "spotify:album:<id>", "spotify:track:<id>").
     "spotify": re.compile(
         r"(?:^|open\.spotify\.com/[^/]+/|spotify:[a-z]+:)([0-9A-Za-z]{22})"
