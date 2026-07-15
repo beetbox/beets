@@ -348,45 +348,22 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
             f.write("test")
         return p
 
-    def test_default_convert(self):
-        "Test that files are not removed when the remove_missing option is not enabled"
-        file_to_remove = self.create_dummy_file("to_remove.mp3")
-
-        self.run_convert("--yes")
-
-        assert file_to_remove.exists()
-
-    def test_convert_pretend_removemissing(self):
-        "Test that files are not removed when the pretend flag is enabled"
-        file_to_remove = self.create_dummy_file("to_remove.mp3")
-
-        self.run_convert("--yes", "--remove-missing", "--pretend")
-
-        assert file_to_remove.exists()
-
-    def test_convert_removemissing_option(self):
-        "Test that files are removed when the remove_missing option is enabled"
-        file_to_remove = self.create_dummy_file("to_remove.mp3")
-
-        self.run_convert("--yes", "--remove-missing")
-
-        assert not file_to_remove.exists()
-
-        # This should hit the case where no files to remove are present
-        self.run_convert("--yes", "--remove-missing")
-
-    def test_convert_removemissing_config(self):
-        "Test that files are removed when the remove_missing config is set to True"
-        file_to_remove = self.create_dummy_file("to_remove.mp3")
-
-        self.config["convert"]["remove_missing"] = True
-        self.run_convert("--yes")
-
-        assert not file_to_remove.exists()
-
-    def test_convert_dont_remove_present(self):
-        """Test that already converted files are not removed when the
-        remove_missing option is enabled"""
+    @pytest.mark.parametrize(
+        "plugin_config,cli_options,files_to_mark_for_removal,expect_removal",
+        [
+            ({}, [], ["to_remove.mp3"], False),
+            ({}, ["--remove-missing", "--pretend"], ["to_remove.mp3"], False),
+            ({}, ["--remove-missing"], ["to_remove.mp3"], True),
+            ({"remove_missing": True}, [], ["to_remove.mp3"], True),
+        ],
+    )
+    def test_convert_remove_missing(
+        self,
+        plugin_config: dict,
+        cli_options: list[str],
+        files_to_mark_for_removal: list[str],
+        expect_removal: bool,
+    ):
         # This file mocks an already existing converted file that should not be
         # removed or modified.
         file_not_to_remove = self.create_dummy_file(
@@ -394,7 +371,21 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
         )
         original_mtime = os.path.getmtime(file_not_to_remove)
 
-        self.run_convert("--yes", "--remove-missing")
+        # Create files to be marked for removal
+        paths_to_mark_for_removal = [
+            self.create_dummy_file(f) for f in files_to_mark_for_removal
+        ]
 
+        # Set configurations
+        for key, val in plugin_config.items():
+            self.config["convert"][key] = val
+
+        self.run_convert("--yes", *cli_options)
+
+        # Check if files were expectedly removed or not
+        for p in paths_to_mark_for_removal:
+            assert (not p.exists()) == expect_removal
+
+        # Check that files not to be removed are still there unmodified
         assert file_not_to_remove.exists()
         assert os.path.getmtime(file_not_to_remove) == original_mtime
