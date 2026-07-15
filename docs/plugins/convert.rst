@@ -75,6 +75,9 @@ files. If an original file is newer than a converted file, the converted file
 will be removed from the filesystem, and the original file will be converted
 once again.
 
+The ``-r`` (or ``--remove-missing``) option will remove files in the destination
+folder that are not present in the library.
+
 Configuration
 -------------
 
@@ -170,6 +173,12 @@ The available options are:
 - **refresh**: Refresh the converted files if needed by re-converting modified
   original files. This configuration is overridden by the ``-r`` (``--refresh``)
   command line option. Default: ``false``.
+- **remove_missing**: Whether to remove files in the destination folder that are
+  no longer present in the library. This means that if you remove an item from
+  the database that was previously converted, it will be removed on the next run
+  of the ``convert`` command (you will be asked for confirmation unless the
+  ``--yes`` option is enabled). This is useful if you want to keep a converted
+  version of your library in sync. Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next section):
 
