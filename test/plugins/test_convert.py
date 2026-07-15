@@ -348,7 +348,7 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
             f.write("test")
         return p
 
-    def test_convert_not_removemissing(self):
+    def test_default_convert(self):
         "Test that files are not removed when the remove_missing option is not enabled"
         file_to_remove = self.create_dummy_file("to_remove.mp3")
 
