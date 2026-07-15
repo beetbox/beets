@@ -229,3 +229,11 @@ aef9c64cb07c8f828d0dd6e69a5485abf2c43396
 1418a80e0531fba1e01d0ad2a4decdefaed6b365
 # typing: add types to beets.test.helper
 29c887db5bff1cfc4c6ea60505636742fa41cccf
+# typing: type beets.dbcore.db
+8d03803fcf1b18385e477cb9273553e2431447ce
+# typing: type beets.dbcore.sort
+ca8e9f69a8a0254aa767dc86f6d808d02f6af05d
+# typing: type beets.dbcore.query
+b1701c2e12b2de8e5462affe46ecc6816a5fc508
+# typing: type beets.dbcore.types
+ea3d6af6169d33be009b86bf5607baae7cf9652a
