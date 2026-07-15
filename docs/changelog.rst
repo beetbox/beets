@@ -88,6 +88,11 @@ Bug fixes
 - :doc:`plugins/smartplaylist`: ``splupdate`` no longer crashes with
   ``TypeError: unhashable type: 'list'`` when a playlist configuration includes
   a ``playlist:`` query. :bug:`5354`
+- A date query containing a stray ``|`` (for example ``added:2000|2001``, as
+  might be typed by a user expecting ``|`` to mean "or") now raises a clean "a
+  valid date/time string" error instead of crashing with an uncaught
+  ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
+  regular expression character-class typo.
 
 ..
     For plugin developers

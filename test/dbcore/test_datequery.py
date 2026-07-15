@@ -231,6 +231,14 @@ class DateQueryConstructTest(unittest.TestCase):
             with pytest.raises(InvalidQueryArgumentValueError):
                 DateQuery("added", q)
 
+    def test_pipe_in_relative_date_query(self):
+        # A stray "|" (e.g. a user expecting OR syntax like "added:2000|2001")
+        # must raise a clean InvalidQueryArgumentValueError rather than an
+        # uncaught KeyError from the relative-date parser.
+        for q in ["2000|2001", "1|", "5|3d"]:
+            with pytest.raises(InvalidQueryArgumentValueError):
+                DateQuery("added", q)
+
     def test_datetime_uppercase_t_separator(self):
         date_query = DateQuery("added", "2000-01-01T12")
         assert date_query.interval.start == datetime(2000, 1, 1, 12)
