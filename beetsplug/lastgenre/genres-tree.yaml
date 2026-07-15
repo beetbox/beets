@@ -257,6 +257,7 @@
         - broken beat
         - florida breaks
         - nu skool breaks
+        - breaks
     - chiptune:
         - bitpop
         - game boy music
@@ -268,12 +269,12 @@
         - disco polo
             - euro disco
         - italo disco
-        - nu-disco
+        - nu disco
         - space disco
     - downtempo:
         - acid jazz
         - balearic beat
-        - chill out
+        - chillout
         - dub music
         - dubtronica
         - ethnic electronica
@@ -293,7 +294,7 @@
         - jungle:
             - darkside jungle
             - ragga jungle
-            - oldschool jungle
+            - old school jungle
         - raggacore
         - sambass
         - techstep
@@ -327,7 +328,7 @@
         - indietronica
         - new rave
         - space rock
-        - synthpop
+        - synth-pop
         - synthpunk
     - electronica:
         - berlin school
@@ -358,6 +359,7 @@
         - happy hardcore
         - hardstyle
         - jumpstyle
+        - old school hardcore
         - makina
         - speedcore
         - terrorcore
@@ -426,6 +428,7 @@
         - dub techno
         - free tekno
         - ghettotech
+        - industrial techno
         - minimal
         - nortec
         - schranz
@@ -437,9 +440,10 @@
         - acid trance
         - classic trance
         - dream trance
-        - goa trance:
+        - psytrance:
             - dark psytrance
             - full on
+            - goa trance
             - psybreaks
             - psyprog
             - suomisaundi
@@ -492,8 +496,8 @@
     - gangsta rap
     - glitch hop
     - golden age hip hop
+    - hardcore hip hop
     - hip hop soul
-    - hip pop
     - hyphy
     - industrial hip hop
     - instrumental hip hop
@@ -620,11 +624,13 @@
     - turkish pop
     - vispop
     - wonky pop
-- rhythm and blues:
+- r&b:
     - funk:
         - deep funk
         - go-go
         - p-funk
+        - synth funk
+            - minneapolis sound
     - soul:
         - blue-eyed soul
         - neo soul
@@ -670,6 +676,7 @@
             - death/doom
             - goregrind
             - melodic death metal
+            - old school death metal
             - technical death metal
         - doom metal:
             - epic doom metal
@@ -708,6 +715,7 @@
         - traditional heavy metal
     - math rock
     - new wave:
+        - synthwave
         - world fusion
     - paisley underground
     - pop rock
@@ -786,7 +794,7 @@
     - chanson
     - canción de autor
     - nueva canción
-- world:
+- world music:
     - world dub
     - world fusion
     - worldbeat
