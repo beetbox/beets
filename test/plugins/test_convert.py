@@ -323,7 +323,7 @@ class TestNoConvert(PluginTestHelper):
         assert convert.ConvertPlugin().in_no_convert(item) == should_skip
 
 
-class ConvertRemoveMissingTest(ConvertPluginHelper, ConvertCommand):
+class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
     "Tests the effect of the `remove_missing option`"
 
     @pytest.fixture(autouse=True)
