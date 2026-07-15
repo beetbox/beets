@@ -511,6 +511,7 @@ def manual_search(session: ImportSession, task: ImportTask) -> Proposal:
     """
     artist = ui.input_("Artist:").strip()
     name = ui.input_(f"{task.source.type.capitalize()}:").strip()
+    query = SearchQuery(artist=artist, title=name)
 
     method = tag_item if isinstance(task, SingletonImportTask) else tag_album
     return method(task.source, artist, name)
