@@ -897,6 +897,42 @@ class Translator(LyricsRequestHandler):
         return lyrics
 
 
+class LRCMux(Backend):
+    """Fetch lyrics from the lrcmux API."""
+
+    DEFAULT_URL = "https://api.lrcmux.dev"
+
+    @cached_property
+    def url(self) -> str:
+        base = self.config["lrcmux"]["url"].get(str)
+        return f"{base.rstrip('/')}/get"
+
+    def fetch(
+        self, artist: str, title: str, album: str, length: int
+    ) -> Lyrics | None:
+        synced = self.config["synced"].get(bool)
+        sources = self.config["lrcmux"]["sources"].as_str_seq()
+
+        params: JSONDict = {
+            "artist": artist,
+            "title": title,
+            "duration": int(length),
+            "format": "lrc" if synced else "txt",
+            "level": "line" if synced else "none",
+        }
+        if album:
+            params["album"] = album
+        if sources:
+            params["sources"] = ",".join(sources)
+
+        full_url = self.format_url(self.url, params)
+        with suppress(HTTPNotFoundError):
+            if text := self.get_text(self.url, params=params).strip():
+                return Lyrics(text, self.__class__.name, full_url)
+
+        return None
+
+
 @dataclass
 class RestFiles:
     # The content for the base index.rst generated in ReST mode.
@@ -986,7 +1022,7 @@ class RestFiles:
 
 
 BACKEND_BY_NAME = {
-    b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
+    b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch, LRCMux]
 }
 
 
@@ -1035,6 +1071,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                     "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
                     "76V-uFL5jks5dNvcGCdarqFjDhP9c"
                 ),
+                "lrcmux": {"url": LRCMux.DEFAULT_URL, "sources": []},
                 "fallback": None,
                 "force": False,
                 "keep_synced": False,
