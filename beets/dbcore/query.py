@@ -704,7 +704,7 @@ class Period:
         "w": 7,
         "d": 1,
     }
-    relative_re = "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)(?P<timespan>[y|m|w|d])"
+    relative_re = "(?P<sign>[+-]?)(?P<quantity>[0-9]+)(?P<timespan>[ymwd])"
 
     def __init__(self, date: datetime, precision: str) -> None:
         """Create a period with the given date (a `datetime` object) and
