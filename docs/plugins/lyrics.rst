@@ -3,11 +3,13 @@ Lyrics Plugin
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses Genius.com_, Tekstowo.pl_,
-LRCLIB_ and, optionally, the Google Custom Search API.
+LRCLIB_, lrcmux_ and, optionally, the Google Custom Search API.
 
 .. _genius.com: https://genius.com/
 
 .. _lrclib: https://lrclib.net/
+
+.. _lrcmux: https://lrcmux.dev/
 
 .. _tekstowo.pl: https://www.tekstowo.pl/
 
@@ -62,9 +64,12 @@ Default configuration:
         keep_synced: no
         google_API_key: null
         google_engine_ID: 009217259823014548361:lndtuqkycfu
+        lrcmux:
+          url: https://api.lrcmux.dev
+          sources: []
         print: no
         rest_directory: null
-        sources: [lrclib, google, genius]
+        sources: [lrclib, google, genius, lrcmux]
         synced: no
 
 The available options are:
@@ -111,6 +116,15 @@ The available options are:
 - **google_engine_ID**: The custom search engine to use. Default: The `beets
   custom search engine`_, which gathers an updated list of sources known to be
   scrapeable.
+- **lrcmux**:
+
+  - **url**: Base URL of the lrcmux_ instance to use. Override this to point at
+    a self-hosted instance.
+  - **sources**: List of lrcmux provider IDs to restrict the search to, e.g.
+    ``[ytmusic, kugou]``. Prefix an entry with ``!`` to exclude that provider
+    instead, e.g. ``["!musixmatch"]``. Leave empty (the default) to use all
+    providers.
+
 - **print**: Print lyrics to the console.
 - **rest_directory**: The directory to which reStructuredText_ (ReST) rendered
   lyric documents will be output. See :ref:`rendering-lyrics`.
@@ -119,7 +133,7 @@ The available options are:
   deactivated if no ``google_API_key`` is setup. By default, ``musixmatch`` and
   ``tekstowo`` are excluded because they block the beets User-Agent.
 - **synced**: Prefer synced lyrics over plain lyrics if a source offers them.
-  Currently ``lrclib`` is the only source that provides them. Using this option,
+  ``lrclib`` and ``lrcmux`` both provide synced lyrics. Using this option,
   existing synced lyrics are not replaced by newly fetched plain lyrics (even
   when ``force`` is enabled). To allow that replacement, disable ``synced``.
   When synced lyrics are written to an ID3-tagged file (MP3, AIFF, etc.) the

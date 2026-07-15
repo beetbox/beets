@@ -41,11 +41,18 @@ class LyricsPage(NamedTuple):
 
     @property
     def source(self) -> str:
-        return self.root_url.replace("www.", "").split(".")[0]
+        return (
+            self.root_url.replace("www.", "").replace("api.", "").split(".")[0]
+        )
 
     @property
     def backend(self) -> str:
-        if (source := self.source) in {"genius", "tekstowo", "lrclib"}:
+        if (source := self.source) in {
+            "genius",
+            "tekstowo",
+            "lrclib",
+            "lrcmux",
+        }:
             return source
         return "google"
 
@@ -298,6 +305,35 @@ lyrics_pages = [
         [01:53.73] Lady Madonna, children at your feet
         [01:58.65] Wonder how you manage to make ends meet
         [02:06.04]
+        """,
+    ),
+    LyricsPage.make(
+        "https://api.lrcmux.dev/get?artist=The+Beatles&title=Lady+Madonna&duration=186&format=lrc&level=line&sources=ytmusic",
+        """
+        [00:08.71] Lady Madonna, children at your feet
+        [00:13.08] Wonder how you manage to make ends meet
+        [00:17.43] Who finds the money when you pay the rent?
+        [00:21.92] Did you think that money was Heaven-sent?
+        [00:26.21] Friday night arrives without a suitcase
+        [00:30.54] Sunday morning creeping like a nun
+        [00:35.07] Monday's child has learned to tie his bootlace
+        [00:39.37] See how they run
+        [00:43.80] Lady Madonna, baby at your breast
+        [00:48.23] Wonders how you manage to feed the rest
+        [00:55.32]
+        [01:01.30] Pa-pa-pa-pa, pa-pa-pa-pa-pa
+        [01:05.68] Pa-pa-pa-pa, pa-pa-pa-pa-pa-pa-pa
+        [01:09.86] Pa-pa-pa-pa, pa-pa-pa-pa-pa
+        [01:14.40] See how they run
+        [01:18.81] Lady Madonna lying on the bed
+        [01:23.25] Listen to the music playing in your head
+        [01:30.21]
+        [01:36.40] Tuesday afternoon is never ending
+        [01:40.78] Wednesday morning papers didn't come
+        [01:45.06] Thursday night you stocking needed mending
+        [01:49.48] See how they run
+        [01:53.90] Lady Madonna, children at your feet
+        [01:58.42] Wonder how you manage to make ends meet
         """,
     ),
     LyricsPage.make(

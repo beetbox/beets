@@ -47,6 +47,8 @@ New features
   names are now consistent across both files, long-standing mismatches between
   them have been resolved, and entries align with the built-in alias patterns.
   :bug:`6466`
+- :doc:`plugins/lyrics`: Add ``lrcmux`` backend, which aggregates lyrics from
+  various other sources.
 
 Bug fixes
 ~~~~~~~~~
