@@ -796,11 +796,11 @@ class ConvertPlugin(BeetsPlugin):
         convert = [self.convert_item(keep_new) for _ in range(self.threads)]
         pipeline.Pipeline([iter(items), convert]).run_parallel()
 
-    def remove_non_item_files(self, items: list[Item], yes: bool):
+    def remove_non_item_files(self, items: list[Item], yes: bool) -> None:
         """
         Remove all files in the destination directory ``dest`` that do not
         correspond to an item to be converted.
-        
+
         If ``pretend`` is set, keep files and report what would be removed.
         If ``yes`` is set, do not ask for confirmation.
         """
