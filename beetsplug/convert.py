@@ -799,9 +799,10 @@ class ConvertPlugin(BeetsPlugin):
     def remove_non_item_files(self, items: list[Item], yes: bool):
         """
         Remove all files in the destination directory ``dest`` that do not
-        correspond to an item to be converted. If ``pretend=True`` it will
-        not actually remove any files and only print a list of files to be
-        deleted. If ``yes=True`` it will not ask for confirmation.
+        correspond to an item to be converted.
+        
+        If ``pretend`` is set, keep files and report what would be removed.
+        If ``yes`` is set, do not ask for confirmation.
         """
         _, ext = self.command
         item_destinations = {
