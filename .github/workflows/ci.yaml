@@ -14,6 +14,27 @@ env:
   PY_COLORS: 1
 
 jobs:
+  base-install:
+    name: Test base installation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          python-version: "3.10"
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
+
+      - name: Install base dependencies
+        run: poe install --no-dev
+
+      - name: Run beets
+        env:
+          BEETSDIR: ${{ runner.temp }}/beets
+        run: uv run --no-sync beet version
+
   test:
     name: Run tests
     strategy:
