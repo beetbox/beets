@@ -91,6 +91,8 @@ def _safe_value(obj, key, value):
     This ensures that values do not change their type when the user edits their
     YAML representation.
     """
+    if value is None:
+        return True
     typ = obj._type(key)
     return isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type)
 

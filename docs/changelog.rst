@@ -43,6 +43,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/edit`: Preserve missing album art paths when editing album
+  metadata, instead of turning ``artpath: null`` into a path ending in ``None``.
+  :bug:`2438`
 - :doc:`plugins/subsonicupdate`: Log a clearer error when the Subsonic server
   returns a non-JSON response. :bug:`5635`
 - :doc:`plugins/missing`: Honor the ``-f``/``--format`` option (and the
@@ -69,6 +72,9 @@ Bug fixes
   longer crashes with a ``TypeError``. Missing values are now grouped together,
   ordered before present ones when sorting ascending and after them when
   descending. :bug:`3461`
+- :doc:`plugins/smartplaylist`: ``splupdate`` no longer crashes with
+  ``TypeError: unhashable type: 'list'`` when a playlist configuration includes
+  a ``playlist:`` query. :bug:`5354`
 
 ..
     For plugin developers

@@ -268,6 +268,25 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
             self.album.items(), self.items_orig, ["albumartist", "mtime"]
         )
 
+    def test_a_album_edit_preserves_missing_artpath(self, mock_write):
+        """Album query (-a), edit album field, preserve missing artpath."""
+        self.config["edit"]["albumfields"] = "album artpath"
+
+        self.run_mocked_command(
+            {"replacements": {"\u00e4lbum": "modified \u00e4lbum"}},
+            # Apply changes.
+            ["a"],
+            args=["-a"],
+        )
+
+        self.album.load()
+        assert mock_write.call_count == self.TRACK_COUNT
+        assert self.album.album == "modified \u00e4lbum"
+        assert self.album.artpath is None
+        self.assertItemFieldsModified(
+            self.album.items(), self.items_orig, ["album", "mtime"]
+        )
+
     def test_malformed_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a malformed yaml
         document)."""
