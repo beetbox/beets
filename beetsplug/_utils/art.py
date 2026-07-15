@@ -160,7 +160,6 @@ def extract(log, outpath, item):
     art = get_art(log, item)
     outpath = bytestring_path(outpath)
     if not art:
-        log.info("No album art present in {}, skipping.", item)
         return None
 
     # Add an extension to the filename.
@@ -170,9 +169,6 @@ def extract(log, outpath, item):
         return None
     outpath += bytestring_path(f".{ext}")
 
-    log.info(
-        "Extracting album art from: {} to: {}", item, displayable_path(outpath)
-    )
     with open(syspath(outpath), "wb") as f:
         f.write(art)
     return outpath
@@ -182,7 +178,13 @@ def extract_first(log, outpath, items):
     for item in items:
         real_path = extract(log, outpath, item)
         if real_path:
+            log.info(
+                "Extracting album art from: {} to: {}",
+                item,
+                displayable_path(real_path),
+            )
             return real_path
+        log.info("No album art present in {}, skipping.", item)
     return None
 
 

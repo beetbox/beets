@@ -39,6 +39,10 @@ New features
   the local filesystem when the user (or ``quiet_fallback``) chooses ``asis``.
 - :doc:`plugins/lyrics`: Added a ``--no-keep-synced`` command option to override
   ``keep_synced: yes`` for a single manual lyrics fetch.
+- :doc:`plugins/fetchart`: Add ``embedded`` source that extracts embedded art
+  for an album into the file named by :ref:`art-filename`. Add ``skip_embedded``
+  setting that allows ``fetchart`` to skip fetching art for files that already
+  have embedded art.
 
 Bug fixes
 ~~~~~~~~~

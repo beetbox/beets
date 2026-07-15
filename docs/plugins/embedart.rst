@@ -22,6 +22,11 @@ be embedded. Art will be embedded after each album has its cover art set.
 
 This behavior can be disabled with the ``auto`` config option (see below).
 
+Extracting Art Automatically
+----------------------------
+
+See the ``embedded`` source of the :doc:`/plugins/fetchart`.
+
 .. _image-similarity-check:
 
 Image Similarity
