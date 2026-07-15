@@ -148,7 +148,7 @@ compute ReplayGain values for FLAC files. It only supports FLAC; files in other
 formats are skipped. To use it, install the ``flac`` package, which provides
 ``metaflac``, and select the ``metaflac`` backend in your configuration file:
 
-::
+.. code-block:: yaml
 
     replaygain:
         backend: metaflac
