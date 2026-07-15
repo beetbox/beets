@@ -389,7 +389,9 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
         remove_missing option is enabled"""
         # This file mocks an already existing converted file that should not be
         # removed or modified.
-        file_not_to_remove = self.create_dummy_file("artist/album/01 title.mp3")
+        file_not_to_remove = self.create_dummy_file(
+            util.syspath(self.item.path)
+        )
         original_mtime = os.path.getmtime(file_not_to_remove)
 
         self.run_convert("--yes", "--remove-missing")
