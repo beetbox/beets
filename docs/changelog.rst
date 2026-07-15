@@ -49,9 +49,9 @@ New features
   :bug:`6466`
 - :doc:`plugins/lyrics`: Add ``lrcmux`` backend, which aggregates lyrics from
   various other sources.
-- :doc:`plugins/convert`: Added the new ``remove_missing`` configuration and
-  corresponding ``--remove-missing`` option to enable removing files in the
-  destination directory that were removed from the library.
+- :doc:`plugins/convert`: Added a new ``remove_missing`` configuration option
+  and corresponding ``-s``/``--remove-missing`` flags to remove files from the
+  destination directory when they have been removed from the library.
 
 Bug fixes
 ~~~~~~~~~
