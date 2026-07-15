@@ -13,6 +13,7 @@ from beets.test.helper import (
 from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
+    MetaflacBackend,
 )
 
 try:
@@ -34,6 +35,8 @@ GAIN_PROG = next(
 )
 
 FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
+
+METAFLAC_AVAILABLE = has_program("metaflac", ["--version"])
 
 
 def reset_replaygain(item):
@@ -110,6 +113,16 @@ class CmdBackendMixin(BackendMixin):
 class FfmpegBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "ffmpeg"}
     has_r128_support = True
+
+
+class MetaflacBackendMixin(BackendMixin):
+    plugin_config: ClassVar[dict[str, Any]] = {"backend": "metaflac"}
+    has_r128_support = False
+
+    def test_backend(self):
+        """Skip the test when the metaflac tool is not installed."""
+        if not METAFLAC_AVAILABLE:
+            pytest.skip("metaflac cannot be found")
 
 
 class ReplayGainCliTest:
@@ -380,6 +393,29 @@ class TestReplayGainFfmpegNoiseCli(
     ReplayGainCliTest, ReplayGainPluginHelper, FfmpegBackendMixin
 ):
     FNAME = "whitenoise"
+
+
+@pytest.mark.skipif(not METAFLAC_AVAILABLE, reason="metaflac cannot be found")
+class TestReplayGainMetaflacCli(
+    ReplayGainCliTest, ReplayGainPluginHelper, MetaflacBackendMixin
+):
+    FNAME = "whitenoise"
+
+    def _add_album(self, *args, **kwargs):
+        kwargs.setdefault("ext", "flac")
+        return super()._add_album(*args, **kwargs)
+
+
+def test_metaflac_backend_parses_replaygain_tags():
+    output = (
+        b"REPLAYGAIN_TRACK_GAIN=-11.55 dB\nREPLAYGAIN_TRACK_PEAK=0.99998772\n"
+    )
+    tags = MetaflacBackend._parse_tags(output)
+    assert MetaflacBackend._parse_gain(tags["REPLAYGAIN_TRACK_GAIN"]) == (
+        pytest.approx(-11.55)
+    )
+    assert float(tags["REPLAYGAIN_TRACK_PEAK"]) == pytest.approx(0.99998772)
+    assert MetaflacBackend._parse_gain("+4.56 dB") == pytest.approx(4.56)
 
 
 class ImportTest(AsIsImporterMixin):
