@@ -5,44 +5,23 @@ from __future__ import annotations
 import os
 import sys
 from contextlib import contextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import beets
 import beets.library
 
 # Make sure the development versions of the plugins are used
-import beetsplug
-from beets import importer, logging, util
+from beets import importer, logging
 from beets.ui import commands
 from beets.util import syspath
 
 if TYPE_CHECKING:
     import pytest
 
-beetsplug.__path__ = [
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "beetsplug",
-        )
-    )
-]
-
 # Test resources path.
-RSRC = util.bytestring_path(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "test",
-            "rsrc",
-        )
-    )
-)
-PLUGINPATH = os.path.join(RSRC.decode(), "beetsplug")
+RSRC = (Path(__file__).parent.parent.parent / "test" / "rsrc").resolve()
+PLUGINPATH = str(RSRC / "beetsplug")
 
 # Propagate to root logger so the test runner can capture it
 log = logging.getLogger("beets")
