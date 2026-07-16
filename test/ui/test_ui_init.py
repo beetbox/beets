@@ -3,6 +3,7 @@
 import os
 import unittest
 from copy import deepcopy
+from pathlib import Path
 from random import random
 
 import pytest
@@ -74,6 +75,10 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
 
 
 class ParentalDirCreation(IOMixin, BeetsTestCase):
+    def test_memory_path_skips_creation_prompt(self):
+        ui._ensure_db_directory_exists(Path(":memory:"))
+        assert not self.io.getoutput()
+
     def test_create_yes(self):
         non_exist_path = _common.os.fsdecode(
             os.path.join(self.temp_dir, b"nonexist", str(random()).encode())
