@@ -945,9 +945,10 @@ class Item(LibModel):
         def value(field: str) -> Any:
             value = getattr(mediafile, field)
             if isinstance(value, list):
-                # An empty list reads back as `[""]` from some formats. Keep
-                # the values themselves, so that dropping an empty one shows.
-                return value if any(v != "" for v in value) else None
+                # An absent list of tags reads back as an empty one from some
+                # formats. The values themselves are kept, empty ones
+                # included, so that dropping one shows.
+                return value or None
 
             if isinstance(value, float):
                 # A gain of zero decibels is a value, not the lack of one.

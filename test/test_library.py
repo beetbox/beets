@@ -1367,6 +1367,21 @@ class TestWrite(TestHelper):
             "another artist",
         ]
 
+    def test_write_drops_a_list_tag_of_empty_values(self):
+        # A tag holding only empty values is still a tag the file keeps, so
+        # removing it is a change to save.
+        item = self.add_item_fixture(format="FLAC")
+        item.write()
+        mediafile = MediaFile(syspath(item.path))
+        mediafile.artists = [""]
+        mediafile.save()
+        os.utime(syspath(item.path), (1000000000, 1000000000))
+
+        item.write()
+
+        assert item.current_mtime() != 1000000000
+        assert MediaFile(syspath(item.path)).artists is None
+
     def test_write_file_with_an_unreadable_image(self):
         # Images are not compared, so an unreadable one does not stop the
         # write.
