@@ -115,6 +115,19 @@ class ParseTest(unittest.TestCase):
     def test_empty_braces_symbol(self):
         assert list(_normparse("a ${} b")) == ["a ${} b"]
 
+    def test_empty_braces_symbol_inside_call_arg(self):
+        parts = list(_normparse("%foo{a${}b}"))
+        assert len(parts) == 1
+        self._assert_call(parts[0], "foo", 1)
+        assert list(_normexpr(parts[0].args[0])) == ["a${}b"]
+
+    def test_empty_braces_symbol_inside_call_arg_list(self):
+        parts = list(_normparse("%foo{a${}b,baz}"))
+        assert len(parts) == 1
+        self._assert_call(parts[0], "foo", 2)
+        assert list(_normexpr(parts[0].args[0])) == ["a${}b"]
+        assert list(_normexpr(parts[0].args[1])) == ["baz"]
+
     def test_call_without_args_at_end(self):
         assert list(_normparse("foo %bar")) == ["foo %bar"]
 

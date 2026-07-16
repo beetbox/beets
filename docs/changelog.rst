@@ -95,6 +95,9 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- Path formats: an empty ``${}`` inside a function call argument no longer
+  truncates the argument list and leaks the rest of the template as literal
+  text.
 
 ..
     For plugin developers
