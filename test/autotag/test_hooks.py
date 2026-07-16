@@ -34,9 +34,6 @@ _p = pytest.param
             str_field_deprecation,
             None,
             id="empty str value should become None, warning raised",
-            marks=pytest.mark.xfail(
-                reason="Empty string should not become ['']"
-            ),
         ),
         _p(
             "value",
