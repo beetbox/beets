@@ -95,6 +95,10 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- A range query against a nullable numeric field (such as ``rg_track_gain`` on
+  an item without ReplayGain data, or ``album_id`` on a singleton) no longer
+  crashes with a ``TypeError``. The range now matches nothing, as it already
+  did on the SQL side.
 
 ..
     For plugin developers
