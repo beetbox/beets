@@ -1277,6 +1277,18 @@ class TestWrite(TestHelper):
         assert MediaFile(syspath(custom_path)).artist == "new artist"
         assert MediaFile(syspath(item.path)).artist != "new artist"
 
+    def test_write_custom_path_with_the_tags(self):
+        # A write to a path other than the item's own file always saves.
+        item = self.add_item_fixture()
+        item.write()
+        custom_path = os.path.join(self.temp_dir, b"custom.mp3")
+        shutil.copy(syspath(item.path), syspath(custom_path))
+        os.utime(syspath(custom_path), (1000000000, 1000000000))
+
+        item.write(custom_path)
+
+        assert os.path.getmtime(syspath(custom_path)) != 1000000000
+
     def test_write_custom_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artist": "new artist"})
