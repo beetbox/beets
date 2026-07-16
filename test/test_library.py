@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import mutagen
 import pytest
-from mediafile import MediaFile, UnreadableFileError
+from mediafile import Image, MediaFile, UnreadableFileError
 
 import beets.dbcore.query
 import beets.library
@@ -1394,9 +1394,39 @@ class TestWrite(TestHelper):
         assert item.current_mtime() != 1000000000
         assert MediaFile(syspath(item.path)).artists is None
 
+    def test_write_image_tag_always_saves(self):
+        # Images are never compared, so a write that carries one saves even
+        # when the file already embeds the same image.
+        item = self.add_item_fixture(format="MP3")
+        with open(os.path.join(_common.RSRC, b"image-2x3.jpg"), "rb") as f:
+            image = Image(f.read())
+        item.write(tags={"images": [image]})
+        os.utime(syspath(item.path), (1000000000, 1000000000))
+
+        item.write(tags={"images": [image]})
+
+        assert item.current_mtime() != 1000000000
+
+    def test_write_skip_records_the_compared_mtime(self):
+        # A change landing while the file is read and compared stays newer
+        # than the recorded mtime, so that a later sync still sees it.
+        item = self.add_item_fixture(format="MP3")
+        item.write()
+        mtime = item.current_mtime()
+        real_init = MediaFile.__init__
+
+        def racy_init(mediafile, *args, **kwargs):
+            os.utime(syspath(item.path), (mtime + 100, mtime + 100))
+            real_init(mediafile, *args, **kwargs)
+
+        with patch.object(MediaFile, "__init__", racy_init):
+            item.write()
+
+        assert item.mtime == mtime
+
     def test_write_file_with_an_unreadable_image(self):
-        # Images are not compared, so an unreadable one does not stop the
-        # write.
+        # Only the fields being written are compared, so an image beets
+        # cannot read does not stop the write.
         path = os.path.join(self.temp_dir, b"unreadable_image.ogg")
         shutil.copy(os.path.join(_common.RSRC, b"full.ogg"), path)
         mediafile = mutagen.File(syspath(path))

@@ -75,9 +75,10 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
         class EventPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
-                self.register_listener(
-                    "after_write", lambda item, path: events.append(path)
-                )
+                self.register_listener("after_write", self.on_after_write)
+
+            def on_after_write(self, item, path):
+                events.append(path)
 
         self.register_plugin(EventPlugin)
         item = self.add_item_fixture()
