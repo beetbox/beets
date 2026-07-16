@@ -97,8 +97,8 @@ Bug fixes
   regular expression character-class typo.
 - Autotagging distance calculations no longer treat ordinary words containing
   "ft" (such as "draft", "left", "gift", "craft") as a "featuring artist"
-  suffix, which was silently making genuinely different titles/artists score
-  as near-identical matches.
+  suffix, which was silently making genuinely different titles/artists score as
+  near-identical matches.
 
 ..
     For plugin developers
