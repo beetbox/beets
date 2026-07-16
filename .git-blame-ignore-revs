@@ -237,3 +237,5 @@ ca8e9f69a8a0254aa767dc86f6d808d02f6af05d
 b1701c2e12b2de8e5462affe46ecc6816a5fc508
 # typing: type beets.dbcore.types
 ea3d6af6169d33be009b86bf5607baae7cf9652a
+# Fix #6177, remove derived types, refactor coalesce tracks
+9efe87101ce03706660129633e03147a222765cf

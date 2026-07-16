@@ -345,20 +345,6 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 )
                 return None
 
-        # Sanity check for required fields. The list of required fields is
-        # defined at Guideline 1.3.1.a, but in practice some releases might be
-        # lacking some of these fields. This function expects at least:
-        # `artists` (>0), `title`, `id`, `tracklist` (>0)
-        # https://www.discogs.com/help/doc/submission-guidelines-general-rules
-        if not all(
-            [
-                result.data.get(k)
-                for k in ["artists", "title", "id", "tracklist"]
-            ]
-        ):
-            self._log.warning("Release does not contain the required fields")
-            return None
-
         artist_data = [a.data for a in result.artists]
         # Information for the album artist
         albumartist = ArtistState.from_config(
