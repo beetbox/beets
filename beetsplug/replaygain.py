@@ -1415,7 +1415,7 @@ class ReplayGainPlugin(BeetsPlugin):
                     discs[item.disc] = []
                 discs[item.disc].append(item)
         else:
-            discs[1] = album.items()
+            discs[1] = list(album.items())
 
         def store_cb(task: RgTask):
             task.store(write)

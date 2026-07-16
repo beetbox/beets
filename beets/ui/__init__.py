@@ -767,9 +767,12 @@ def _setup() -> tuple[list[Subcommand], library.Library]:
 
 
 def _ensure_db_directory_exists(path):
-    if path == b":memory:":  # in memory db
+    dbpath = os.fspath(path)
+    if dbpath in (":memory:", b":memory:"):  # in memory db
         return
-    newpath = os.path.dirname(path)
+    newpath = os.path.dirname(dbpath)
+    if not newpath:
+        return
     if not os.path.isdir(newpath):
         if input_yn(
             f"The database directory {util.displayable_path(newpath)} does not"
@@ -780,7 +783,7 @@ def _ensure_db_directory_exists(path):
 
 def _open_library(config: confuse.LazyConfig) -> library.Library:
     """Create a new library instance from the configuration."""
-    dbpath = util.bytestring_path(config["library"].as_filename())
+    dbpath = config["library"].as_path()
     _ensure_db_directory_exists(dbpath)
     try:
         lib = library.Library(dbpath, config["directory"].as_filename())

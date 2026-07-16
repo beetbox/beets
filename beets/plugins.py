@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 
     from confuse import Subview
 
-    from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
     from beets.importer import ImportSession, ImportTask
@@ -57,6 +56,7 @@ EventType = Literal[
     "album_removed",
     "albuminfo_received",
     "album_matched",
+    "art_set",
     "before_choose_candidate",
     "before_item_moved",
     "cli_exit",
@@ -306,7 +306,7 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
 
         return wrapper
 
-    def queries(self) -> dict[str, type[Query]]:
+    def queries(self) -> dict[str, FieldQueryType]:
         """Return a dict mapping prefixes to Query subclasses."""
         return {}
 
@@ -476,14 +476,11 @@ def commands() -> list[Subcommand]:
     return out
 
 
-def queries() -> dict[str, type[Query]]:
-    """Returns a dict mapping prefix strings to Query subclasses all loaded
-    plugins.
-    """
-    out: dict[str, type[Query]] = {}
-    for plugin in find_plugins():
-        out.update(plugin.queries())
-    return out
+def queries() -> dict[str, FieldQueryType]:
+    """Return configured query prefixes from all plugins."""
+    return {
+        p: q for plugin in find_plugins() for p, q in plugin.queries().items()
+    }
 
 
 def types(model_cls: type[AnyModel]) -> dict[str, Type]:

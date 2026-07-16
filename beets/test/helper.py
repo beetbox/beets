@@ -270,9 +270,9 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         self.config["directory"] = str(self.lib_path)
 
         dbpath = (
-            util.bytestring_path(self.config["library"].as_filename())
+            self.config["library"].as_path()
             if self.db_on_disk
-            else ":memory:"
+            else Path(":memory:")
         )
         self.lib = Library(dbpath, str(self.lib_path))
 
