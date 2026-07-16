@@ -1740,7 +1740,7 @@ class AlbumsInDirTest(BeetsTestCase):
         _mkmp3(album2_dir / "album2song.mp3")
         _mkmp3(album3_dir / "album3song.mp3")
         _mkmp3(album4_dir / "album4song.mp3")
-        self.base = str(base)
+        self.base = base
 
     def test_finds_all_albums(self):
         albums = list(albums_in_dir(self.base))
@@ -1749,7 +1749,7 @@ class AlbumsInDirTest(BeetsTestCase):
     def test_separates_contents(self):
         found = []
         for _, album in albums_in_dir(self.base):
-            found.append(re.search(r"album(.)song", album[0]).group(1))
+            found.append(re.search(r"album(.)song", str(album[0])).group(1))
         assert "1" in found
         assert "2" in found
         assert "3" in found
@@ -1757,7 +1757,7 @@ class AlbumsInDirTest(BeetsTestCase):
 
     def test_finds_multiple_songs(self):
         for _, album in albums_in_dir(self.base):
-            n = re.search(r"album(.)song", album[0]).group(1)
+            n = re.search(r"album(.)song", str(album[0])).group(1)
             if n == "1":
                 assert len(album) == 2
             else:
@@ -1808,10 +1808,6 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         if files:
             for path in self.files:
                 _mkmp3(path)
-
-        self.dirs = list(map(str, self.dirs))
-        self.files = list(map(str, self.files))
-        self.base = str(self.base)
 
     def _normalize_path(self, path: Path) -> Path:
         """Normalize a path's Unicode combining form according to the
@@ -1896,9 +1892,9 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
                     disc = album_dir / f"{marker}{suffix}"
                     disc.mkdir()
                     _mkmp3(disc / "song.mp3")
-                    discs.append(str(disc))
+                    discs.append(disc)
 
-                albums = list(albums_in_dir(str(base)))
+                albums = list(albums_in_dir(base))
                 assert len(albums) == 1
                 root, items = albums[0]
                 for disc in discs:
@@ -1919,7 +1915,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
             d.mkdir()
             _mkmp3(d / "song.mp3")
 
-        albums = list(albums_in_dir(str(base)))
+        albums = list(albums_in_dir(base))
         assert len(albums) == 2
 
 

@@ -8,8 +8,9 @@ import time
 from collections import defaultdict
 from collections.abc import Callable
 from functools import cached_property
+from pathlib import Path
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Any, AnyStr
+from typing import TYPE_CHECKING, Any
 
 import mediafile
 
@@ -1264,16 +1265,20 @@ class ImportTaskFactory:
         single track when `toppath` is a file, a single directory in
         `flat` mode.
         """
+        toppath_path = Path(os.fsdecode(self.toppath))
         if not os.path.isdir(util.syspath(self.toppath)):
             yield [self.toppath], [self.toppath]
         elif self.session.config["flat"]:
-            paths = []
-            for dirs, paths_in_dir in albums_in_dir(self.toppath):
-                paths += paths_in_dir
-            yield [self.toppath], paths
+            byte_paths = []
+            for _, paths_in_dir in albums_in_dir(toppath_path):
+                byte_paths += list(map(os.fsencode, paths_in_dir))
+            yield [self.toppath], byte_paths
         else:
-            for dirs, paths in albums_in_dir(self.toppath):
-                yield dirs, paths
+            for dirs, paths in albums_in_dir(toppath_path):
+                yield (
+                    list(map(os.fsencode, dirs)),
+                    list(map(os.fsencode, paths)),
+                )
 
     def singleton(self, path: util.PathBytes) -> SingletonImportTask | None:
         """Return a `SingletonImportTask` for the music file."""
@@ -1389,65 +1394,47 @@ _MULTIDISC_MARKERS = (
     r"vinyl",
 )
 
-MULTIDISC_BYTES_PATTERNS = [
-    re.compile(rf"^(.*{marker}[\W_]*)\d".encode(), re.I)
-    for marker in _MULTIDISC_MARKERS
-]
-
 MULTIDISC_PATTERNS = [
     re.compile(rf"^(.*{marker}[\W_]*)\d", re.I) for marker in _MULTIDISC_MARKERS
 ]
 
 
-def is_subdir_of_any_in_list(path: AnyStr, dirs: list[AnyStr]) -> bool:
+def is_subdir_of_any_in_list(path: Path, dirs: list[Path]) -> bool:
     """Returns True if path os a subdirectory of any directory in dirs
     (a list). In other case, returns False.
     """
-    ancestors = util.ancestry(path)
+    ancestors = path.parents
     return any(d in ancestors for d in dirs)
 
 
-def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
+def albums_in_dir(path: Path) -> Iterable[tuple[list[Path], list[Path]]]:
     """Recursively searches the given directory and returns an iterable
     of (paths, items) where paths is a list of directories and items is
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    collapse_paths: list[AnyStr] = []
-    collapse_items: list[AnyStr] = []
+    collapse_paths: list[Path] = []
+    collapse_items: list[Path] = []
     collapse_pat = None
 
-    _ignore = config["ignore"].as_str_seq()
-    ignore: list[AnyStr]
-    if isinstance(path, str):
-        ignore = _ignore
-    else:
-        ignore = list(map(os.fsencode, _ignore))
+    ignore = config["ignore"].as_str_seq()
     ignore_hidden: bool = config["ignore_hidden"].get(bool)
 
-    patterns = (
-        MULTIDISC_PATTERNS
-        if isinstance(path, str)
-        else MULTIDISC_BYTES_PATTERNS
-    )
-
-    def get_numbered_variant_pattern(string: AnyStr) -> re.Pattern[AnyStr]:
-        pat = rf"^{re.escape(os.fsdecode(string))}\d"
-        return re.compile(
-            pat if isinstance(string, str) else os.fsencode(pat), re.I
-        )
+    def get_numbered_variant_pattern(string: str) -> re.Pattern[str]:
+        pat = rf"^{re.escape(string)}\d"
+        return re.compile(pat, re.I)
 
     for root, dirs, files in util.sorted_walk(
         path, ignore=ignore, ignore_hidden=ignore_hidden, logger=log
     ):
-        items = [os.path.join(root, f) for f in files]
+        items = [root / f for f in files]
         # If we're currently collapsing the constituent directories in a
         # multi-disc album, check whether we should continue collapsing
         # and add the current directory. If so, just add the directory
         # and move on to the next directory. If not, stop collapsing.
         if collapse_paths:
             if (is_subdir_of_any_in_list(root, collapse_paths)) or (
-                collapse_pat and collapse_pat.match(os.path.basename(root))
+                collapse_pat and collapse_pat.match(root.name)
             ):
                 # Still collapsing.
                 collapse_paths.append(root)
@@ -1466,7 +1453,7 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
         # 1") or it contains no items but only directories that are
         # named in this way.
         start_collapsing = False
-        for marker_pat in patterns:
+        for marker_pat in MULTIDISC_PATTERNS:
             # Is this directory the root of a nested multi-disc album?
             if dirs and not items:
                 # Check whether all subdirectories have the same prefix.
@@ -1475,8 +1462,9 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
                 for subdir in dirs:
                     # The first directory dictates the pattern for
                     # the remaining directories.
+                    subdir_str = str(subdir)
                     if not subdir_pat:
-                        match = marker_pat.match(subdir)
+                        match = marker_pat.match(subdir_str)
                         if match:
                             subdir_pat = get_numbered_variant_pattern(match[1])
                         else:
@@ -1484,7 +1472,7 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
                             break
 
                     # Subsequent directories must match the pattern.
-                    elif not subdir_pat.match(subdir):
+                    elif not subdir_pat.match(subdir_str):
                         start_collapsing = False
                         break
 
