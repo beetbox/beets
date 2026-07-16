@@ -35,7 +35,7 @@ SD_END_WORDS = ["the", "a", "an"]
 SD_PATTERNS = [
     (r"^the ", 0.1),
     (r"[\[\(]?(ep|single)[\]\)]?", 0.0),
-    (r"[\[\(]?(featuring|feat|ft)[\. :].+", 0.1),
+    (r"[\[\(]?\b(featuring|feat|ft)[\. :].+", 0.1),
     (r"\(.*?\)", 0.3),
     (r"\[.*?\]", 0.3),
     (r"(, )?(pt\.|part) .+", 0.2),

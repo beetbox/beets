@@ -283,6 +283,23 @@ class TestStringDistance:
         assert string_dist("Some String", "Totally Different") != 0.0
 
     @pytest.mark.parametrize(
+        "string1, string2",
+        [
+            ("Draft Beer", "Draft Whiskey"),
+            ("Left Field", "Left Symphony"),
+            ("Gift Ideas", "Gift Cards"),
+            ("Craft Beer", "Craft Wine"),
+        ],
+    )
+    def test_featuring_pattern_does_not_match_mid_word(self, string1, string2):
+        # The "featuring"/"feat"/"ft" pattern must not match "ft" embedded
+        # inside an ordinary word (draft, left, gift, craft, ...) -- doing so
+        # would treat everything after "ft" as a low-weight suffix and make
+        # genuinely different strings look almost identical instead of
+        # correctly registering as a large distance.
+        assert string_dist(string1, string2) > 0.3
+
+    @pytest.mark.parametrize(
         "string1, string2, reference",
         [
             ("XXX Band Name", "The Band Name", "Band Name"),

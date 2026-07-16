@@ -95,6 +95,10 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- Autotagging distance calculations no longer treat ordinary words containing
+  "ft" (such as "draft", "left", "gift", "craft") as a "featuring artist"
+  suffix, which was silently making genuinely different titles/artists score
+  as near-identical matches.
 
 ..
     For plugin developers
