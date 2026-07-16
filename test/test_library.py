@@ -1323,6 +1323,31 @@ class TestWrite(TestHelper):
 
         assert item.current_mtime() == 1000000000
 
+    def test_write_converts_id3v23_file_to_v24(self):
+        # Saving is what converts the tags of an older MP3 to the default
+        # ID3v2.4, so a v2.3 file is saved even when it holds the tags.
+        item = self.add_item_fixture(format="MP3")
+        item.write()
+        mediafile = mutagen.File(syspath(item.path))
+        mediafile.tags.update_to_v23()
+        mediafile.save(v2_version=3)
+        item.read()
+
+        item.write()
+
+        assert mutagen.File(syspath(item.path)).tags.version >= (2, 4, 0)
+
+    def test_id3v23_write_saves_file_with_the_tags(self):
+        # Converting the tags to ID3v2.3 also happens when the file is saved,
+        # so a write with the option enabled never skips the save.
+        item = self.add_item_fixture(format="MP3")
+        item.write()
+        os.utime(syspath(item.path), (1000000000, 1000000000))
+
+        item.write(id3v23=True)
+
+        assert item.current_mtime() != 1000000000
+
     def test_write_list_tag_that_drops_an_empty_value(self):
         # An empty value the file happens to hold is still a value there, so
         # the file no longer holds the tags once it is gone.
@@ -1343,8 +1368,8 @@ class TestWrite(TestHelper):
         ]
 
     def test_write_file_with_an_unreadable_image(self):
-        # The images are not read, so a file beets cannot parse one from is
-        # written like any other.
+        # Images are not compared, so an unreadable one does not stop the
+        # write.
         path = os.path.join(self.temp_dir, b"unreadable_image.ogg")
         shutil.copy(os.path.join(_common.RSRC, b"full.ogg"), path)
         mediafile = mutagen.File(syspath(path))

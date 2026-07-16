@@ -69,6 +69,26 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
 
         assert MediaFile(syspath(item.path)).artist == "YYY"
 
+    def test_after_write_skipped_when_file_has_the_tags(self):
+        events = []
+
+        class EventPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener(
+                    "after_write", lambda item, path: events.append(path)
+                )
+
+        self.register_plugin(EventPlugin)
+        item = self.add_item_fixture()
+        item.write()
+        assert events
+
+        events.clear()
+        item.write()
+
+        assert not events
+
     def test_multi_value_flex_field_type(self):
         item = Item(path="apath", artist="aaa")
         item.multi_value = ["one", "two", "three"]

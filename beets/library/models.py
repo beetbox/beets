@@ -983,7 +983,9 @@ class Item(LibModel):
 
         Unless `force` is set, the item's own file is not saved when reading it
         back already gives the tags to be written. Saving it would give it a new
-        mtime without changing any of its tags.
+        mtime without changing any of its tags. A file whose tags still need
+        converting to another ID3 version is saved either way, since saving is
+        what converts them.
 
         Can raise either a `ReadError` or a `WriteError`.
         """
@@ -1020,6 +1022,10 @@ class Item(LibModel):
             # loses what the older version cannot hold, so a file written that
             # way is saved every time. `MediaFile` sets this for MP3s only.
             and not mediafile.id3v23
+            # Saving is also what converts older ID3 tags to the default
+            # v2.4. Reading translates them in memory, and `MediaFile` does
+            # not expose the version the file holds, hence mutagen's.
+            and getattr(mediafile.mgfile.tags, "version", (2, 4)) >= (2, 4)
             and path == self.path
             and written.isdisjoint(("art", "images"))
         )
