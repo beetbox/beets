@@ -866,8 +866,8 @@ class TestArtImporter(UseThePlugin):
         self.plugin.art_for_album = art_for_album
 
         # Test library.
-        os.mkdir(syspath(os.path.join(self.libdir, b"album")))
-        itempath = os.path.join(self.libdir, b"album", b"test.mp3")
+        (self.lib_path / "album").mkdir()
+        itempath = self.lib_path / "album" / "test.mp3"
         shutil.copyfile(
             syspath(os.path.join(_common.RSRC, b"full.mp3")), syspath(itempath)
         )

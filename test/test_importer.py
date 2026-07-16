@@ -745,7 +745,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         super().setUp()
         self.prepare_album_for_import(1)
 
-        self.reimporter = self.setup_importer(import_dir=self.libdir)
+        self.reimporter = self.setup_importer(import_dir=self.lib_path)
         self.importer = self.setup_importer()
 
     def tearDown(self):
@@ -1630,7 +1630,7 @@ class ReimportTest(AutotagImportTestCase):
         item.store()
 
     def _setup_session(self, singletons=False):
-        self.setup_importer(import_dir=self.libdir, singletons=singletons)
+        self.setup_importer(import_dir=self.lib_path, singletons=singletons)
         self.importer.add_choice(importer.Action.APPLY)
 
     def _album(self):

@@ -288,7 +288,7 @@ class BPDTestHelper(PluginTestCase):
                     "--library",
                     self.config["library"].as_filename(),
                     "--directory",
-                    os.fsdecode(self.libdir),
+                    str(self.lib_path),
                     "--config",
                     os.fsdecode(config_file.name),
                     "bpd",

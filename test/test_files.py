@@ -315,8 +315,8 @@ class ArtFileTest(BeetsTestCase):
     def test_setart_copies_image(self):
         util.remove(self.art)
 
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -331,8 +331,8 @@ class ArtFileTest(BeetsTestCase):
         util.remove(self.art)
 
         # Original art.
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -345,8 +345,8 @@ class ArtFileTest(BeetsTestCase):
         assert ai.art_filepath.exists()
 
     def test_setart_to_existing_but_unset_art_works(self):
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -362,8 +362,8 @@ class ArtFileTest(BeetsTestCase):
         assert ai.art_filepath.exists()
 
     def test_setart_to_conflicting_file_replaces_it(self):
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -380,8 +380,8 @@ class ArtFileTest(BeetsTestCase):
         assert artdest == ai.artpath
 
     def test_setart_replaces_old_art_at_different_path(self):
-        newart = os.path.join(self.libdir, b"newart.png")
-        touch(newart)
+        newart = self.lib_path / "newart.png"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -394,8 +394,8 @@ class ArtFileTest(BeetsTestCase):
         assert os.path.exists(syspath(old_artpath))
 
         # Set new art with a different extension.
-        another_art = os.path.join(self.libdir, b"another.jpg")
-        touch(another_art)
+        another_art = self.lib_path / "another.jpg"
+        another_art.touch()
         ai.set_art(another_art)
 
         # Old art should be removed.
@@ -405,9 +405,9 @@ class ArtFileTest(BeetsTestCase):
     def test_setart_sets_permissions(self):
         util.remove(self.art)
 
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
-        os.chmod(syspath(newart), 0o400)  # read-only
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
+        newart.chmod(0o400)  # read-only
 
         try:
             i2 = item()

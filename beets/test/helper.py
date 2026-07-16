@@ -231,10 +231,6 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         lib_path.mkdir(exist_ok=True)
         return lib_path
 
-    @cached_property
-    def libdir(self) -> bytes:
-        return bytestring_path(self.lib_path)
-
     # TODO automate teardown through hook registration
 
     def setup_beets(self) -> None:
@@ -249,7 +245,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         - ``temp_dir`` Path to a temporary directory containing all
           files specific to beets
 
-        - ``libdir`` Path to a subfolder of ``temp_dir``, containing the
+        - ``lib_path`` Path to a subfolder of ``temp_dir``, containing the
           library's media files. Same as ``config['directory']``.
 
         - ``lib`` Library instance created with the settings from
@@ -637,7 +633,7 @@ class ImporterMixin(PathsMixin, ConfigMixin):
         for album_id in range(base_idx, count + base_idx):
             self.prepare_album_for_import(1, album_id=album_id)
 
-    def _get_import_session(self, import_dir: util.PathLike) -> ImportSession:
+    def _get_import_session(self, import_dir: Path) -> ImportSession:
         return ImportSessionFixture(
             self.lib,
             loghandler=None,
@@ -646,7 +642,7 @@ class ImporterMixin(PathsMixin, ConfigMixin):
         )
 
     def setup_importer(
-        self, import_dir: bytes | None = None, **kwargs: Any
+        self, import_dir: Path | None = None, **kwargs: Any
     ) -> ImportSession:
         self.config["import"].set_args({**self.default_import_config, **kwargs})
         self.importer = self._get_import_session(import_dir or self.import_path)
@@ -781,9 +777,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
 class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
 
-    def _get_import_session(
-        self, import_dir: util.PathLike
-    ) -> importer.ImportSession:
+    def _get_import_session(self, import_dir: Path) -> importer.ImportSession:
         return TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
