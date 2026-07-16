@@ -352,9 +352,9 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         web.app.config["READONLY"] = False
 
         # Create an item with a file
-        ipath = os.path.join(self.temp_dir, b"testfile1.mp3")
+        ipath = self.temp_dir_path / "testfile1.mp3"
         shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
-        assert os.path.exists(ipath)
+        assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
         # Check we can find the temporary item we just created
@@ -373,16 +373,16 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response.status_code == 404
 
         # Check the file has not gone
-        assert os.path.exists(ipath)
-        os.remove(ipath)
+        assert ipath.exists()
+        ipath.unlink()
 
     def test_delete_item_with_file(self):
         web.app.config["READONLY"] = False
 
         # Create an item with a file
-        ipath = os.path.join(self.temp_dir, b"testfile2.mp3")
+        ipath = self.temp_dir_path / "testfile2.mp3"
         shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
-        assert os.path.exists(ipath)
+        assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
         # Check we can find the temporary item we just created
@@ -401,7 +401,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response.status_code == 404
 
         # Check the file has gone
-        assert not os.path.exists(ipath)
+        assert not ipath.exists()
 
     def test_delete_item_query(self):
         web.app.config["READONLY"] = False
@@ -687,9 +687,9 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         self.lib.get_item(item_id).remove()
 
     def test_get_item_file(self):
-        ipath = os.path.join(self.temp_dir, b"testfile2.mp3")
+        ipath = self.temp_dir_path / "testfile2.mp3"
         shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
-        assert os.path.exists(ipath)
+        assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
         response = self.client.get(f"/item/{item_id}/file")

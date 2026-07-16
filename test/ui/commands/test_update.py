@@ -25,11 +25,11 @@ class UpdateTest(IOMixin, BeetsTestCase):
         self.album = self.lib.add_album([self.i, self.i2])
 
         # Album art.
-        artfile = os.path.join(self.temp_dir, b"testart.jpg")
-        _common.touch(artfile)
+        artfile = self.temp_dir_path / "testart.jpg"
+        artfile.touch()
         self.album.set_art(artfile)
         self.album.store()
-        remove(artfile)
+        artfile.unlink()
 
     def _update(
         self,

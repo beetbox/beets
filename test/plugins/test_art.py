@@ -88,6 +88,12 @@ class UseThePlugin(TestHelper):
             for module in self.modules:
                 clean_module_tempdir(module)
 
+    @pytest.fixture
+    def dpath(self) -> bytes:
+        dpath = self.temp_dir_path / "arttest"
+        os.mkdir(syspath(dpath))
+        return os.fsencode(dpath)
+
 
 class CAAData:
     """Helper mixin for mocking requests to the Cover Art Archive."""
@@ -264,12 +270,6 @@ class TestFSArt(UseThePlugin):
         return Settings(cautious=False, cover_names=("art",), fallback=None)
 
     @pytest.fixture
-    def dpath(self) -> bytes:
-        dpath = os.path.join(self.temp_dir, b"arttest")
-        os.mkdir(syspath(dpath))
-        return dpath
-
-    @pytest.fixture
     def source(self) -> fetchart.FileSystem:
         return fetchart.FileSystem(logger, self.plugin.config)
 
@@ -300,8 +300,8 @@ class TestFSArt(UseThePlugin):
             next(source.get(Album(), settings, [dpath]))
 
     def test_configured_fallback_is_used(self, source, dpath, settings) -> None:
-        fallback = os.path.join(self.temp_dir, b"a.jpg")
-        _common.touch(fallback)
+        fallback = self.temp_dir_path / "a.jpg"
+        fallback.touch()
         settings.fallback = fallback  # type: ignore
         candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == fallback
@@ -329,9 +329,9 @@ class TestFSArt(UseThePlugin):
         self, mock_samefile, source
     ) -> None:
         mock_samefile.side_effect = OSError("os error")
-        fallback = os.path.join(self.temp_dir, b"a.jpg")
+        fallback = self.temp_dir_path / "a.jpg"
         self.plugin.fallback = str(fallback)
-        candidate = fetchart.Candidate(logger, source.ID, fallback)
+        candidate = fetchart.Candidate(logger, source.ID, os.fsencode(fallback))
         result = self.plugin._is_candidate_fallback(candidate)
         mock_samefile.assert_called_once()
         assert not result
@@ -343,12 +343,6 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     AMAZON_URL = f"https://images.amazon.com/images/P/{ASIN}.01.LZZZZZZZ.jpg"
     AMAZON_URL_2 = f"https://images.amazon.com/images/P/{ASIN}.02.LZZZZZZZ.jpg"
     AAO_URL = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
-
-    @pytest.fixture
-    def dpath(self):
-        dpath = os.path.join(self.temp_dir, b"arttest")
-        os.mkdir(syspath(dpath))
-        return dpath
 
     def test_main_interface_returns_amazon_art(self, image_request_mock):
         image_request_mock.get(self.AMAZON_URL)

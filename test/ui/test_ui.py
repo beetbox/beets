@@ -188,8 +188,8 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
     #    @unittest.skip('Difficult to implement with optparse')
     #    def test_multiple_cli_config_files(self):
-    #        cli_config_path_1 = os.path.join(self.temp_dir, b'config.yaml')
-    #        cli_config_path_2 = os.path.join(self.temp_dir, b'config_2.yaml')
+    #        cli_config_path_1 = self.temp_dir_path / 'config.yaml'
+    #        cli_config_path_2 = self.temp_dir_path / 'config_2.yaml'
     #
     #        with open(cli_config_path_1, 'w') as file:
     #            file.write('first: value')
@@ -204,8 +204,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
     #
     #    @unittest.skip('Difficult to implement with optparse')
     #    def test_multiple_cli_config_overwrite(self):
-    #        cli_overwrite_config_path = os.path.join(self.temp_dir,
-    #                                                 b'overwrite_config.yaml')
+    #        cli_overwrite_config_path = self.temp_dir_path / 'overwrite_config.yaml'
     #
     #        with open(self.cli_config_path, 'w') as file:
     #            file.write('anoption: value')
@@ -241,7 +240,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
     def test_command_line_option_relative_to_working_dir(self):
         config.read()
-        os.chdir(syspath(self.temp_dir))
+        os.chdir(syspath(self.temp_dir_path))
         self.run_command("--library", "foo.db", "test")
         assert config["library"].as_path() == Path.cwd() / "foo.db"
 

@@ -131,9 +131,7 @@ class TestAdd(PytestItemHelper):
     ):
         """Test library.add emits only one database_change event."""
 
-        item.path = beets.util.normpath(
-            os.path.join(self.temp_dir, b"a", b"b.mp3")
-        )
+        item.path = beets.util.normpath(self.temp_dir_path / "a" / "b.mp3")
         item.album = "a"
         item.title = "b"
 
@@ -1152,7 +1150,7 @@ class TestPathString(PytestItemHelper):
 class TestMtime(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
-        self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
+        self.ipath = self.temp_dir_path / "testfile.mp3"
         shutil.copy(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
             syspath(self.ipath),
@@ -1160,11 +1158,11 @@ class TestMtime(TestHelper):
         item = beets.library.Item.from_path(self.ipath)
         self.lib.add(item)
         yield item
-        if os.path.exists(self.ipath):
-            os.remove(self.ipath)
+        if self.ipath.exists():
+            self.ipath.unlink()
 
     def _mtime(self):
-        return int(os.path.getmtime(self.ipath))
+        return int(self.ipath.stat().st_mtime)
 
     def test_mtime_initially_up_to_date(self, item):
         assert item.mtime >= self._mtime()
@@ -1260,7 +1258,7 @@ class TestWrite(TestHelper):
 
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
-        custom_path = os.path.join(self.temp_dir, b"custom.mp3")
+        custom_path = self.temp_dir_path / "custom.mp3"
         shutil.copy(syspath(item.path), syspath(custom_path))
 
         item["artist"] = "new artist"

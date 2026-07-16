@@ -222,10 +222,6 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
     db_on_disk: ClassVar[bool] = False
 
     @cached_property
-    def temp_dir(self) -> bytes:
-        return util.bytestring_path(self.temp_dir_path)
-
-    @cached_property
     def lib_path(self) -> Path:
         lib_path = self.temp_dir_path / "libdir"
         lib_path.mkdir(exist_ok=True)
@@ -242,10 +238,10 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         Sets the following properties on itself.
 
-        - ``temp_dir`` Path to a temporary directory containing all
+        - ``temp_dir_path`` Path to a temporary directory containing all
           files specific to beets
 
-        - ``lib_path`` Path to a subfolder of ``temp_dir``, containing the
+        - ``lib_path`` Path to a subfolder of ``temp_dir_path``, containing the
           library's media files. Same as ``config['directory']``.
 
         - ``lib`` Library instance created with the settings from
@@ -394,14 +390,14 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         images: list[str] | None = None,
         target_dir: util.PathLike | None = None,
     ) -> bytes:
-        """Copy a fixture mediafile with the extension to `temp_dir`.
+        """Copy a fixture mediafile with the extension to `temp_dir_path`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
         if not target_dir:
-            target_dir = self.temp_dir
+            target_dir = self.temp_dir_path
         src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
         handle, path = mkstemp(dir=target_dir)
         path = bytestring_path(path)
@@ -433,14 +429,16 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         If `dir_` is given, it is prepended to `path`. After that, if the
         path is relative, it is resolved with respect to
-        `self.temp_dir`.
+        `self.temp_dir_path`.
         """
         bytes_path = os.fsencode(path)
         if dir_:
             bytes_path = os.path.join(os.fsencode(dir_), bytes_path)
 
         if not os.path.isabs(bytes_path):
-            bytes_path = os.path.join(self.temp_dir, bytes_path)
+            bytes_path = os.path.join(
+                os.fsencode(self.temp_dir_path), bytes_path
+            )
 
         parent = os.path.dirname(bytes_path)
         if not os.path.isdir(syspath(parent)):

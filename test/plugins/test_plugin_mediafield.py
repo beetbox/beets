@@ -10,7 +10,7 @@ from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
-from beets.util import bytestring_path, syspath
+from beets.util import syspath
 
 field_extension = mediafile.MediaField(
     mediafile.MP3DescStorageStyle("customtag"),
@@ -29,9 +29,9 @@ list_field_extension = mediafile.ListMediaField(
 
 class ExtendedFieldTestMixin(BeetsTestCase):
     def _mediafile_fixture(self, name, extension="mp3"):
-        name = bytestring_path(f"{name}.{extension}")
-        src = os.path.join(_common.RSRC, name)
-        target = os.path.join(self.temp_dir, name)
+        name = f"{name}.{extension}"
+        src = os.path.join(os.fsdecode(_common.RSRC), name)
+        target = self.temp_dir_path / name
         shutil.copy(syspath(src), syspath(target))
         return mediafile.MediaFile(target)
 

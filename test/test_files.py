@@ -184,14 +184,13 @@ class MoveTest(BeetsTestCase):
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_from_symlink(self):
-        link_path = join(self.temp_dir, b"temp_link.mp3")
-        link_source = join("./", self.temp_music_file_name)
-        os.symlink(syspath(link_source), syspath(link_path))
+        link_path = self.temp_dir_path / "temp_link.mp3"
+        link_path.symlink_to(self.temp_music_file_name)
         self.i.path = link_path
         self.i.move(operation=MoveOperation.HARDLINK)
 
-        s1 = os.stat(syspath(self.path))
-        s2 = os.stat(syspath(self.dest))
+        s1 = self.path.stat()
+        s2 = self.dest.stat()
         assert (s1[stat.ST_INO], s1[stat.ST_DEV]) == (
             s2[stat.ST_INO],
             s2[stat.ST_DEV],
@@ -214,7 +213,7 @@ class AlbumFileTest(BeetsTestCase):
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Alternate destination dir.
-        self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
+        self.otherdir = os.fsencode(self.temp_dir_path / "testotherdir")
 
     def test_albuminfo_move_changes_paths(self):
         self.ai.album = "newAlbumName"
@@ -281,7 +280,7 @@ class ArtFileTest(BeetsTestCase):
         self.ai.artpath = art_bytes
         self.ai.store()
         # Alternate destination dir.
-        self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
+        self.otherdir = os.fsencode(self.temp_dir_path / "testotherdir")
 
     def test_art_deleted_when_items_deleted(self):
         assert self.art.exists()
@@ -494,8 +493,8 @@ class RemoveTest(BeetsTestCase):
         assert self.lib_path.exists()
 
     def test_removing_last_item_in_album_with_albumart_prunes_dir(self):
-        artfile = os.path.join(self.temp_dir, b"testart.jpg")
-        touch(artfile)
+        artfile = self.temp_dir_path / "testart.jpg"
+        artfile.touch()
         self.ai.set_art(artfile)
         self.ai.store()
 

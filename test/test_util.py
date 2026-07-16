@@ -14,9 +14,7 @@ import pytest
 from beets import util
 from beets.library import Item
 from beets.test import _common
-from beets.test._common import touch
 from beets.test.helper import NEEDS_REFLINK, BeetsTestCase
-from beets.util import syspath
 
 _p = pytest.param
 
@@ -371,62 +369,64 @@ class WalkTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.base = os.path.join(self.temp_dir, b"testdir")
-        os.mkdir(syspath(self.base))
-        touch(os.path.join(self.base, b"y"))
-        touch(os.path.join(self.base, b"x"))
-        os.mkdir(syspath(os.path.join(self.base, b"d")))
-        touch(os.path.join(self.base, b"d", b"z"))
+        self.base = self.temp_dir_path / "testdir"
+        self.base.mkdir()
+        (self.base / "y").touch()
+        (self.base / "x").touch()
+        base_d = self.base / "d"
+        base_d.mkdir()
+        (base_d / "z").touch()
+        self.str_base = str(self.base)
 
     def test_sorted_files(self):
-        res = list(util.sorted_walk(self.base))
+        res = list(util.sorted_walk(self.str_base))
         assert len(res) == 2
-        assert res[0] == (self.base, [b"d"], [b"x", b"y"])
-        assert res[1] == (os.path.join(self.base, b"d"), [], [b"z"])
+        assert res[0] == (self.str_base, ["d"], ["x", "y"])
+        assert res[1] == (str(self.base / "d"), [], ["z"])
 
     def test_ignore_file(self):
-        res = list(util.sorted_walk(self.base, (b"x",)))
+        res = list(util.sorted_walk(self.str_base, ("x",)))
         assert len(res) == 2
-        assert res[0] == (self.base, [b"d"], [b"y"])
-        assert res[1] == (os.path.join(self.base, b"d"), [], [b"z"])
+        assert res[0] == (self.str_base, ["d"], ["y"])
+        assert res[1] == (str(self.base / "d"), [], ["z"])
 
     def test_ignore_directory(self):
-        res = list(util.sorted_walk(self.base, (b"d",)))
+        res = list(util.sorted_walk(self.str_base, ("d",)))
         assert len(res) == 1
-        assert res[0] == (self.base, [], [b"x", b"y"])
+        assert res[0] == (self.str_base, [], ["x", "y"])
 
     def test_ignore_everything(self):
-        res = list(util.sorted_walk(self.base, (b"*",)))
+        res = list(util.sorted_walk(self.str_base, ("*",)))
         assert len(res) == 1
-        assert res[0] == (self.base, [], [])
+        assert res[0] == (self.str_base, [], [])
 
 
 class UniquePathTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.base = os.path.join(self.temp_dir, b"testdir")
-        os.mkdir(syspath(self.base))
-        touch(os.path.join(self.base, b"x.mp3"))
-        touch(os.path.join(self.base, b"x.1.mp3"))
-        touch(os.path.join(self.base, b"x.2.mp3"))
-        touch(os.path.join(self.base, b"y.mp3"))
+        self.base = self.temp_dir_path / "testdir"
+        self.base.mkdir()
+        (self.base / "x.mp3").touch()
+        (self.base / "x.1.mp3").touch()
+        (self.base / "x.2.mp3").touch()
+        (self.base / "y.mp3").touch()
 
     def test_new_file_unchanged(self):
-        path = util.unique_path(os.path.join(self.base, b"z.mp3"))
-        assert path == os.path.join(self.base, b"z.mp3")
+        path = util.unique_path(self.base / "z.mp3")
+        assert path == self.base / "z.mp3"
 
     def test_conflicting_file_appends_1(self):
-        path = util.unique_path(os.path.join(self.base, b"y.mp3"))
-        assert path == os.path.join(self.base, b"y.1.mp3")
+        path = util.unique_path(self.base / "y.mp3")
+        assert path == str(self.base / "y.1.mp3")
 
     def test_conflicting_file_appends_higher_number(self):
-        path = util.unique_path(os.path.join(self.base, b"x.mp3"))
-        assert path == os.path.join(self.base, b"x.3.mp3")
+        path = util.unique_path(self.base / "x.mp3")
+        assert path == str(self.base / "x.3.mp3")
 
     def test_conflicting_file_with_number_increases_number(self):
-        path = util.unique_path(os.path.join(self.base, b"x.1.mp3"))
-        assert path == os.path.join(self.base, b"x.3.mp3")
+        path = util.unique_path(self.base / "x.1.mp3")
+        assert path == str(self.base / "x.3.mp3")
 
 
 class MkDirAllTest(BeetsTestCase):
