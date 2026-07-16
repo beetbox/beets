@@ -150,7 +150,7 @@ def create_archive(session):
     path = bytestring_path(path)
     os.close(handle)
     archive = ZipFile(os.fsdecode(path), mode="w")
-    archive.write(syspath(os.path.join(_common.RSRC, b"full.mp3")), "full.mp3")
+    archive.write(syspath(_common.RSRC / "full.mp3"), "full.mp3")
     archive.close()
     return bytestring_path(path)
 
@@ -238,9 +238,7 @@ class TestImportTar(TestImportZip):
         path = bytestring_path(path)
         os.close(handle)
         archive = TarFile(os.fsdecode(path), mode="w")
-        archive.add(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")), "full.mp3"
-        )
+        archive.add(syspath(_common.RSRC / "full.mp3"), "full.mp3")
         archive.close()
         return path
 
@@ -248,18 +246,18 @@ class TestImportTar(TestImportZip):
 @pytest.mark.skipif(not has_program("unrar"), reason="unrar program not found")
 class TestImportRar(TestImportZip):
     def create_archive(self):
-        return os.path.join(_common.RSRC, b"archive.rar")
+        return _common.RSRC / "archive.rar"
 
 
 class TestImport7z(TestImportZip):
     def create_archive(self):
-        return os.path.join(_common.RSRC, b"archive.7z")
+        return _common.RSRC / "archive.7z"
 
 
 @pytest.mark.skip(reason="Implement me!")
 class TestImportPasswordRar(TestImportZip):
     def create_archive(self):
-        return os.path.join(_common.RSRC, b"password.rar")
+        return _common.RSRC / "password.rar"
 
 
 class ImportSingletonTest(AutotagImportTestCase):
@@ -316,7 +314,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert len(self.lib.items()) == 1
 
     def test_import_single_files(self):
-        resource_path = os.path.join(_common.RSRC, b"empty.mp3")
+        resource_path = _common.RSRC / "empty.mp3"
         single_path = self.import_path / "track_2.mp3"
 
         util.copy(resource_path, single_path)
@@ -379,22 +377,22 @@ class TestImportFormat(ImportHelper):
     """Test fix_extension during import."""
 
     def test_recognize_format(self):
-        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_src = _common.RSRC / "no_ext"
         resource_path = self.import_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [resource_path]
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
         assert self.lib.items().get().path.endswith(b".mp3")
 
     def test_recognize_format_already_exist(self, caplog):
-        resource_path = os.path.join(_common.RSRC, b"no_ext")
+        resource_path = _common.RSRC / "no_ext"
         temp_resource_path = self.temp_path / "no_ext"
         util.copy(resource_path, temp_resource_path)
         new_path = self.temp_path / "no_ext.mp3"
         util.copy(temp_resource_path, new_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [temp_resource_path]
+        self.importer.paths = [os.fsencode(temp_resource_path)]
         with caplog.at_level("DEBUG"):
             self.importer.run()
         assert (
@@ -404,29 +402,29 @@ class TestImportFormat(ImportHelper):
         assert self.lib.items().get().path.endswith(b".mp3")
 
     def test_recognize_format_not_music(self):
-        resource_path = os.path.join(_common.RSRC, b"no_ext_not_music")
+        resource_path = _common.RSRC / "no_ext_not_music"
         self.setup_importer(autotag=False)
-        self.importer.paths = [resource_path]
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
         assert len(self.lib.items()) == 0
 
     def test_recognize_format_change_original(self):
         config["import"]["fix_ext_inplace"] = True
-        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [resource_path]
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
         assert not Path(self.temp_path / "no_ext").exists()
 
     def test_recognize_format_keep_original(self):
         config["import"]["fix_ext_inplace"] = False
-        resource_src = os.path.join(_common.RSRC, b"no_ext")
+        resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [resource_path]
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
         assert Path(self.temp_path / "no_ext").exists()
 
@@ -1046,7 +1044,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
 
     def test_remove_duplicate_album_deletes_art(self):
         album = self.lib.albums().get()
-        art_source = os.path.join(_common.RSRC, b"abbey.jpg")
+        art_source = _common.RSRC / "abbey.jpg"
         album.set_art(art_source)
         album.store()
         old_artpath = album.art_filepath
@@ -1385,9 +1383,7 @@ class TestIncrementalImport(AsIsImporterMixin, ImportHelper):
 
 
 def _mkmp3(path):
-    shutil.copyfile(
-        syspath(os.path.join(_common.RSRC, b"min.mp3")), syspath(path)
-    )
+    shutil.copyfile(syspath(_common.RSRC / "min.mp3"), syspath(path))
 
 
 class AlbumsInDirTest(BeetsTestCase):
@@ -1674,7 +1670,7 @@ class ReimportTest(AutotagImportTestCase):
 
     def test_reimported_item_preserves_art(self):
         self._setup_session()
-        art_source = os.path.join(_common.RSRC, b"abbey.jpg")
+        art_source = _common.RSRC / "abbey.jpg"
         replaced_album = self._album()
         replaced_album.set_art(art_source)
         replaced_album.store()
@@ -1887,7 +1883,7 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
 
     def test_remux_mpeglayer3_wav(self):
-        src = Path(os.fsdecode(_common.RSRC)) / "mpeglayer3.wav"
+        src = _common.RSRC / "mpeglayer3.wav"
         dest = self.temp_path / "mpeglayer3.wav"
         shutil.copy(syspath(src), syspath(dest))
 
@@ -1901,7 +1897,7 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""
         self.config["import"]["remux_mp3_in_wav"] = False
-        src = Path(os.fsdecode(_common.RSRC)) / "mpeglayer3.wav"
+        src = _common.RSRC / "mpeglayer3.wav"
         dest = self.import_path / "mpeglayer3.wav"
         shutil.copy(syspath(src), syspath(dest))
 

@@ -43,7 +43,7 @@ class TestReplace:
 
     def test_path_is_supported_file(self):
         dest = self.fake_file / "full.mp3"
-        src = Path(_common.RSRC.decode()) / "full.mp3"
+        src = _common.RSRC / "full.mp3"
         shutil.copyfile(src, dest)
 
         mediafile = MediaFile(dest)
@@ -102,7 +102,7 @@ class TestReplace:
             replace.confirm_replacement("test", song)
 
     def test_confirm_replacement_yes(self, monkeypatch):
-        src = Path(_common.RSRC.decode()) / "full.mp3"
+        src = _common.RSRC / "full.mp3"
         monkeypatch.setattr("builtins.input", lambda _: "YES    ")
 
         class Song:
@@ -113,7 +113,7 @@ class TestReplace:
         assert replace.confirm_replacement("test", song) is True
 
     def test_confirm_replacement_no(self, monkeypatch):
-        src = Path(_common.RSRC.decode()) / "full.mp3"
+        src = _common.RSRC / "full.mp3"
         monkeypatch.setattr("builtins.input", lambda _: "test123")
 
         class Song:
