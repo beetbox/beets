@@ -1376,8 +1376,7 @@ class TestIncrementalImport(AsIsImporterMixin, ImportHelper):
         assert len(self.lib.items()) == 2
 
     def test_invalid_state_file(self):
-        with open(self.config["statefile"].as_filename(), "wb") as f:
-            f.write(b"000")
+        self.config["statefile"].as_path().write_bytes(b"000")
         self.run_asis_importer(incremental=True)
         assert len(self.lib.albums()) == 1
 
@@ -1553,20 +1552,20 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
             ]
         ):
             with self.subTest(marker=marker, suffix1=suffix1, suffix2=suffix2):
-                base = os.path.abspath(self.temp_path / f"marker_{i}")
-                os.mkdir(syspath(base))
+                base = self.temp_path / f"marker_{i}"
+                base.mkdir()
 
-                album_dir = os.path.join(base, "Album Name")
-                os.mkdir(syspath(album_dir))
+                album_dir = base / "Album Name"
+                album_dir.mkdir()
 
                 discs = []
                 for suffix in (suffix1, suffix2):
-                    disc = os.path.join(album_dir, marker + suffix)
-                    os.mkdir(syspath(disc))
-                    _mkmp3(syspath(os.path.join(disc, "song.mp3")))
-                    discs.append(disc)
+                    disc = album_dir / f"{marker}{suffix}"
+                    disc.mkdir()
+                    _mkmp3(disc / "song.mp3")
+                    discs.append(str(disc))
 
-                albums = list(albums_in_dir(base))
+                albums = list(albums_in_dir(str(base)))
                 assert len(albums) == 1
                 root, items = albums[0]
                 for disc in discs:
@@ -1576,18 +1575,18 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
     def test_no_coalesce_mismatched_prefixes(self):
         # "CD 02" and "Enhanced CD 01" share the "cd" marker but have
         # different prefixes, so they should not be collapsed.
-        base = os.path.abspath(self.temp_path / "mismatched")
-        os.mkdir(syspath(base))
+        base = self.temp_path / "mismatched"
+        base.mkdir()
 
-        album_dir = os.path.join(base, "Album Name")
-        os.mkdir(syspath(album_dir))
+        album_dir = base / "Album Name"
+        album_dir.mkdir()
 
         for subdir in ("CD 02", "Enhanced CD 01"):
-            d = os.path.join(album_dir, subdir)
-            os.mkdir(syspath(d))
-            _mkmp3(syspath(os.path.join(d, "song.mp3")))
+            d = album_dir / subdir
+            d.mkdir()
+            _mkmp3(d / "song.mp3")
 
-        albums = list(albums_in_dir(base))
+        albums = list(albums_in_dir(str(base)))
         assert len(albums) == 2
 
 

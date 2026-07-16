@@ -1,17 +1,24 @@
 """Tests for the `importadded` plugin."""
 
+from __future__ import annotations
+
 import os
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from beets import importer
 from beets.test.helper import AutotagImportTestCase, PluginMixin
-from beets.util import displayable_path, syspath
+from beets.util import syspath
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
-def modify_mtimes(paths, offset=-60000):
+def modify_mtimes(paths: Iterable[Path], offset=-60000):
     for i, path in enumerate(paths, start=1):
-        mstat = os.stat(path)
+        mstat = path.stat()
         os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
@@ -25,10 +32,9 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         self.prepare_album_for_import(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
-        modify_mtimes(mfile.path for mfile in self.import_media)
-        self.min_mtime = min(
-            os.path.getmtime(mfile.path) for mfile in self.import_media
-        )
+        paths = [Path(mfile.path) for mfile in self.import_media]
+        modify_mtimes(paths)
+        self.min_mtime = min(p.stat().st_mtime for p in paths)
         self.importer = self.setup_importer()
         self.importer.add_choice(importer.Action.APPLY)
 

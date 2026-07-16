@@ -13,7 +13,7 @@ from beets.library import Album, Item, parse_query_string
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, IOMixin, PathsMixin, PluginTestCase
 from beets.ui import UserError
-from beets.util import CHAR_REPLACE, syspath
+from beets.util import CHAR_REPLACE
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 if TYPE_CHECKING:
@@ -369,11 +369,11 @@ class SmartPlaylistCLITest(PlaylistDirMixin, IOMixin, PluginTestCase):
         m3u_path = self.playlist_dir / "my_playlist.m3u"
         assert m3u_path.exists()
         assert m3u_path.read_bytes() == self.item.path + b"\n"
-        os.remove(syspath(m3u_path))
+        m3u_path.unlink()
 
         self.run_with_output("splupdate", "my_playlist.m3u")
         assert m3u_path.read_bytes() == self.item.path + b"\n"
-        os.remove(syspath(m3u_path))
+        m3u_path.unlink()
 
         self.run_with_output("splupdate")
         for name in ("my_playlist.m3u", "all.m3u"):

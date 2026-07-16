@@ -1,5 +1,6 @@
 import os
 import textwrap
+from pathlib import Path
 from typing import ClassVar
 
 import pytest
@@ -276,7 +277,7 @@ class TestRelativePathMigration(MigrationTestHelper):
 
     def test_migrate(self):
         """Ensure stored paths become relative while the public API stays stable."""
-        relative_path = os.path.join("foo", "bar", "baz.mp3")
+        relative_path = str(Path("foo") / "bar" / "baz.mp3")
         abs_string_path = str(self.lib_path / relative_path)
         abs_bytes_path = os.fsencode(abs_string_path)
 
@@ -336,13 +337,13 @@ class TestMigrationBackup(MigrationTestHelper):
     def test_backup_config(self, config_value, expected_count):
         self.config["create_backup_before_migrations"] = config_value
         self.add_item(lyrics="some lyrics")
-        db_path = self.lib.path
+        db_path = self.lib_path
 
         self.lib._migrate()
 
         backups = [
             f
-            for f in os.listdir(os.path.dirname(db_path))
+            for f in db_path.parent.iterdir()
             if os.fsdecode(f).endswith(".bak")
         ]
         assert len(backups) == expected_count
