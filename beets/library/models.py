@@ -1007,6 +1007,14 @@ class Item(LibModel):
             item_tags.update(tags)
         plugins.send("write", item=self, path=path, tags=item_tags)
 
+        # The mtime of the file the tags are about to be read from. A save
+        # skipped below records this one, so a change landing once the file
+        # is read stays newer than the database and still shows.
+        mtime = 0
+        if path == self.path:
+            with suppress(OSError):
+                mtime = self.current_mtime()
+
         # Open the file.
         try:
             mediafile = MediaFile(syspath(path), id3v23=id3v23)
@@ -1040,7 +1048,7 @@ class Item(LibModel):
             # new mtime, which makes tools that sync the library copy the file
             # again for nothing.
             log.debug("no tags to write to {.filepath}", self)
-            self.mtime = self.current_mtime()
+            self.mtime = mtime
             return
 
         try:
