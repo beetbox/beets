@@ -236,7 +236,7 @@ class TracklistState:
     ) -> TracklistState:
         state = cls()
         for track in clean_tracklist:
-            if track["position"]:
+            if track["type_"] == "track":
                 state.index += 1
                 if state.next_divisions:
                     state.divisions += state.next_divisions
