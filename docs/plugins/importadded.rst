@@ -47,9 +47,9 @@ file. There are two options available:
 - **preserve_mtimes**: After importing files, re-set their mtimes to their
   original value. Default: ``no``.
 - **preserve_write_mtimes**: After writing files, re-set their mtimes to their
-  original value. A file that already holds the tags being written is not
-  saved, so its mtime is not re-set either; pass ``-f`` to ``beet write`` to
-  force the save. Default: ``no``.
+  original value. A file that already holds the tags being written is not saved,
+  so its mtime is not re-set either; pass ``-f`` to ``beet write`` to force the
+  save. Default: ``no``.
 
 Reimport
 --------
