@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, NamedTuple
+from typing import TYPE_CHECKING, Literal, NamedTuple
 
-from beets.util import AttrDict, get_most_common_tags
+from beets.util import Likelies, get_most_common_tags
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -14,7 +14,7 @@ class Source(NamedTuple):
     type: Literal["album", "track"]
     artist: str
     name: str
-    data: AttrDict[Any]
+    data: Likelies
     items: Sequence[Item]
     id: str
     id_consensus: bool
@@ -35,11 +35,11 @@ class Source(NamedTuple):
         likelies = get_most_common_tags(items)
         return cls(
             type="album",
-            artist=likelies["artist"],
-            name=likelies["album"],
-            data=AttrDict(likelies),
+            artist=likelies.artist,
+            name=likelies.album,
+            data=likelies,
             items=items,
-            id=likelies["mb_albumid"],
+            id=likelies.mb_albumid,
             id_consensus=len({i.mb_albumid for i in items}) == 1,
         )
 
@@ -50,7 +50,7 @@ class Source(NamedTuple):
             type="track",
             artist=item.artist,
             name=item.title,
-            data=AttrDict(item),
+            data=Likelies(item),
             items=[item],
             id=item.mb_trackid,
             id_consensus=True,

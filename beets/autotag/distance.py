@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator, KeysView, Sequence
 
     from beets.library import Item
-    from beets.util import AttrDict
+    from beets.util import Likelies
     from beets.util.color import ColorName
 
     from .hooks import AlbumInfo, TrackInfo
@@ -428,7 +428,7 @@ def track_distance(
 
 
 def distance(
-    original: AttrDict[Any],
+    original: Likelies,
     album_info: AlbumInfo,
     item_info_pairs: list[tuple[Item, TrackInfo]],
     unmatched_count: int,
@@ -436,7 +436,7 @@ def distance(
     """Determine how "significant" an album metadata change would be.
 
     Returns a Distance object.
-    `original` is an AttrDict with the original album metadata.
+    `original` contains original album metadata.
     `album_info` is an AlbumInfo object reflecting the album to be compared.
     `item_info_pairs` is a list with matched (Item, TrackInfo) pairs.
     `unmatched_count` is the number of unmatched tracks on the release.
