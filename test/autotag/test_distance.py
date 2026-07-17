@@ -5,6 +5,7 @@ import pytest
 from beets.autotag import (
     AlbumInfo,
     Distance,
+    Source,
     TrackInfo,
     distance,
     string_dist,
@@ -187,7 +188,12 @@ class TestAlbumDistance:
     @pytest.fixture
     def get_dist(self, items):
         def inner(info: AlbumInfo):
-            return distance(items, info, list(zip(items, info.tracks)))
+            return distance(
+                Source.from_items(items).data,
+                info,
+                list(zip(items, info.tracks)),
+                len(items) - len(info.tracks),
+            )
 
         return inner
 

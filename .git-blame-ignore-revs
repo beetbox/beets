@@ -191,6 +191,8 @@ adfb73b66dba0fc799880af176ef6f9ac0a7ee68
 6493d4dd018e08eb5d16d5381ebff47deea98bb1
 # Import everything from parent beets.autotag
 29580d2f00eb02f1ce77ebe3e1435804f7252ba1
+# Move Match classes to beets.autotag.match
+fd46e5b7738a3e11ef01e6fa8dc6fb8e0c7c82ec
 # Add setup fixture to TestHelper
 7bad226c33c2d48b5102cff213c67f16eeb09a7b
 # Fix mbcollection tests
@@ -253,3 +255,5 @@ f167dc29e41439e342c04c073758102b2a2e1af8
 9b375d0b2d2dc9388892f1b901aae67ab0ad8290
 # typing: type the rest of beets.library.models
 9022cb5ed7fddf60c1156dc3ca7e3a540dc8f7f2
+# Move AttrDict under beets.util
+6e2ed46ad41ffca28e2ca689d15f3e6e4e24234a

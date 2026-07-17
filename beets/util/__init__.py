@@ -18,8 +18,9 @@ import unicodedata
 from collections import Counter
 from collections.abc import Sequence
 from contextlib import suppress
+from copy import deepcopy
 from enum import Enum
-from functools import cache
+from functools import cache, cached_property
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -36,6 +37,7 @@ from typing import (
     cast,
 )
 
+from typing_extensions import Self
 from unidecode import unidecode
 
 import beets
@@ -807,18 +809,11 @@ def plurality(objs: Iterable[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def get_most_common_tags(
-    items: Sequence[Item],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Extract the likely current metadata for an album given a list of its
-    items. Return two dictionaries:
-     - The most common value for each field.
-     - Whether each field's value was unanimous (values are booleans).
-    """
+def get_most_common_tags(items: Sequence[Item]) -> Likelies:
+    """Extract the most common value for each field given a list of items."""
     assert items  # Must be nonempty.
 
     likelies = {}
-    consensus = {}
     fields = [
         "artist",
         "album",
@@ -836,14 +831,13 @@ def get_most_common_tags(
     ]
     for field in fields:
         values = [item.get(field) for item in items if item]
-        likelies[field], freq = plurality(values)
-        consensus[field] = freq == len(values)
+        likelies[field], _ = plurality(values)
 
     # If there's an album artist consensus, use this for the artist.
-    if consensus["albumartist"] and likelies["albumartist"]:
+    if len({i.albumartist for i in items}) == 1 and likelies["albumartist"]:
         likelies["artist"] = likelies["albumartist"]
 
-    return likelies, consensus
+    return Likelies(likelies)
 
 
 # stdout and stderr as bytes
@@ -1199,3 +1193,66 @@ def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield list(lst[i : i + n])
+
+
+class AttrDict(dict[str, T]):
+    """Mapping enabling attribute-style access to stored metadata values."""
+
+    def copy(self) -> Self:
+        """Return a detached copy preserving subclass-specific behavior."""
+        return deepcopy(self)
+
+    def __getattribute__(self, attr: str) -> T:
+        # Intercept cached_property failures so an AttributeError raised
+        # inside the property body is not masked by __getattr__ fallback.
+        # Reuse the original traceback so the wrapped RuntimeError still
+        # points at the real failing line, but suppress the printed cause
+        # block to keep CLI tracebacks readable. See #6558 (and #6503 /
+        # #6506 for the same masking pattern with different metadata
+        # providers).
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as exc:
+            if not attr.startswith("__"):
+                for klass in type(self).__mro__:
+                    descr = klass.__dict__.get(attr)
+                    if descr is None:
+                        continue
+                    if isinstance(descr, cached_property):
+                        raise RuntimeError(
+                            f"{type(self).__name__}.{attr} failed: {exc}"
+                        ).with_traceback(exc.__traceback__) from None
+                    break
+            raise
+
+    def __getattr__(self, attr: str) -> T:
+        if attr in self:
+            return self[attr]
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+        )
+
+    def __setattr__(self, key: str, value: T) -> None:
+        self.__setitem__(key, value)
+
+    def __hash__(self) -> int:  # type: ignore[override]
+        return id(self)
+
+
+class Likelies(AttrDict[Any]):
+    """A dictionary of the most common tags in a list of items."""
+
+    artist: str
+    album: str
+    albumartist: str
+    year: int
+    disctotal: int
+    mb_albumid: str
+    label: str
+    barcode: str
+    catalognum: str
+    country: str
+    media: str
+    albumdisambig: str
+    data_source: str
