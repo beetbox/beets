@@ -1290,7 +1290,7 @@ class TestImportDuplicateSingleton(ImportHelper):
 
 
 class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
-    """``import.duplicate_track_resolution``: per-track dedup on album import.
+    """``duplicate_tracks``: per-track dedup on album import.
 
     The imported album has two tracks (``Tag Track 1`` and ``Tag Track 2``);
     tests seed the library with items matching one or both of them (as
@@ -1317,12 +1317,9 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
         return item
 
     def _import(self, action="skip", enabled=True, track_action=None):
-        self.setup_importer(
-            autotag=False,
-            duplicate_track_resolution=enabled,
-            duplicate_action=action,
-            duplicate_track_action=track_action or "",
-        )
+        self.config["import"]["duplicate_tracks"] = enabled
+        self.config["import"]["duplicate_tracks_action"] = track_action or ""
+        self.setup_importer(autotag=False, duplicate_action=action)
         self.importer.run()
 
     def test_skip_singleton_dup_imports_remainder_as_new_album(self):
@@ -1455,56 +1452,16 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 3",
         }
 
-    def test_within_run_dedup_sequential(self):
-        # Two identical albums imported in one (sequential) run: the second
-        # album's tracks are caught against the first, so only two items land
-        # overall. The session's seen-key cache makes this hold regardless of
-        # ordering (see the threaded variant below).
+    def test_within_run_dedup(self):
+        # Two identical albums imported in one run: the second album's tracks
+        # are caught against the first, so only two items land overall. This
+        # holds because tasks are resolved in order, after the previous task's
+        # items have been added to the library.
         self.prepare_album_for_import(2, album_id=2)  # a second album dir
-        self.setup_importer(
-            autotag=False,
-            duplicate_track_resolution=True,
-            duplicate_action="skip",
-            threaded=False,
-        )
-        self.importer.run()
+        self._import(action="skip")
 
         titles = sorted(i.title for i in self.lib.items())
         assert titles == ["Tag Track 1", "Tag Track 2"]
-
-    def test_seen_key_cache_catches_within_run_duplicate(self):
-        # Deterministically isolate the seen-key cache: drive the stage over
-        # two tasks with *no* DB add() in between (as can happen under a
-        # threaded import, where a later task is checked before an earlier one
-        # is added). The second task's matching track must be caught purely via
-        # the cache, against an empty library.
-        from beets.importer.stages import resolve_track_duplicates
-        from beets.importer.tasks import ImportTask
-        from beets.library import Item
-
-        session = self.setup_importer(
-            autotag=False,
-            duplicate_track_resolution=True,
-            duplicate_action="skip",
-        )
-
-        def make_task(path):
-            item = Item(artist="Tag Artist", title="Tag Track 1")
-            item.path = path
-            return ImportTask(None, [path], [item])
-
-        task1 = make_task(b"/import/a/track.mp3")
-        task2 = make_task(b"/import/b/track.mp3")
-
-        coro = resolve_track_duplicates(session)
-        next(coro)  # prime the coroutine
-        coro.send(task1)  # first occurrence: nothing dropped, key remembered
-        coro.send(task2)  # second occurrence: caught via the cache alone
-
-        assert not task1.skip
-        assert [i.title for i in task1.items] == ["Tag Track 1"]
-        assert task2.skip
-        assert task2.items == []
 
     def test_inherits_duplicate_action_when_unset(self):
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
@@ -1539,6 +1496,30 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
 
         # "keep" wins, so nothing is dropped.
         assert len(self.lib.items()) == 3
+
+    def test_merge_track_action_rejected(self):
+        # ``merge`` is only defined for whole albums; configuring it as the
+        # per-track action is a configuration error.
+        import confuse
+
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        with pytest.raises(confuse.ConfigValueError):
+            self._import(action="keep", track_action="merge")
+
+    def test_skipped_tracks_never_added_to_library(self):
+        # Duplicate tracks are dropped before the task is added, so no
+        # library row ever exists for them, even transiently.
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+        max_id_before = max(i.id for i in self.lib.items())
+
+        self._import(action="skip")
+
+        new_ids = [i.id for i in self.lib.items() if i.id > max_id_before]
+        # Only one new row: the non-duplicate track.
+        assert len(new_ids) == 1
+        # No gap in row ids: nothing was inserted and removed again.
+        assert new_ids[0] == max_id_before + 1
 
 
 class TagLogTest(unittest.TestCase):

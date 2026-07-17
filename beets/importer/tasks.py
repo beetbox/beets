@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, AnyStr
 
 import mediafile
 
-from beets import config, library, plugins, util
+from beets import config, dbcore, library, plugins, util
 from beets.autotag import AlbumMatch, tag_album, tag_item
 from beets.dbcore.query import PathQuery
 from beets.util import extension
@@ -170,19 +170,12 @@ class ImportTask(BaseImportTask):
         items: Iterable[library.Item] | None,
     ) -> None:
         super().__init__(toppath, paths, items)
-        self.should_remove_duplicates = False
-        self.should_merge_duplicates = False
-        # Existing library items to remove because individual tracks of this
-        # album duplicate them (see ``duplicate_track_resolution``).
-        self.duplicate_track_items_to_remove: list[library.Item] = []
-        # Set once per-track duplicate resolution has handled this task, so the
-        # album-level duplicate check does not then skip the remaining tracks.
-        self.duplicate_tracks_resolved = False
-        # Id of an existing album to fold the imported items into (instead of
-        # creating a new album), set when skipping per-track duplicates leaves
-        # new tracks belonging to an existing album.
-        self.fold_into_album_id: int | None = None
         self.is_album = True
+        # Per-track duplicate state: each entry maps an item of this task
+        # to the existing library items it duplicates, and to the action
+        # chosen for it.
+        self.track_duplicates: dict[library.Item, list[library.Item]] = {}
+        self.track_duplicate_actions: dict[library.Item, DuplicateAction] = {}
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -293,18 +286,7 @@ class ImportTask(BaseImportTask):
                     clutter=config["clutter"].as_str_seq(),
                 )
 
-    def remove_duplicate_track_items(self, lib: library.Library):
-        """Remove the old library items that individual tracks of this album
-        duplicate, as recorded in ``duplicate_track_items_to_remove``.
-        """
-        seen: set[int] = set()
-        for item in self.duplicate_track_items_to_remove:
-            if item.id in seen:
-                continue
-            seen.add(item.id)
-            _remove_duplicate_item(lib, item)
-
-    def set_fields(self, lib: library.Library):
+    def set_fields(self, lib: library.Library) -> None:
         """Sets the fields given at CLI or configuration to the specified
         values, for both the album and all its items.
         """
@@ -430,6 +412,77 @@ class ImportTask(BaseImportTask):
 
         return duplicates
 
+    def find_track_duplicates(
+        self, lib: library.Library
+    ) -> dict[library.Item, list[library.Item]]:
+        """Return a mapping from each of this task's items to the existing
+        library items it duplicates.
+
+        Items are compared on the ``import.duplicate_keys.item`` fields using
+        the metadata the import would end up with: for an applied album match,
+        the chosen candidate's per-track metadata; for as-is/retag imports,
+        the items' current tags. Existing items with the same path as a task
+        item (i.e. re-imports) are not considered duplicates.
+        """
+        keys: list[str] = config["import"]["duplicate_keys"][
+            "item"
+        ].as_str_seq()
+        if not keys:
+            return {}
+
+        pairs: list[tuple[library.Item, library.Item]]
+        if self.choice_flag is Action.APPLY and isinstance(
+            self.match, AlbumMatch
+        ):
+            # Build temporary items carrying the candidate metadata, the
+            # same way `apply_metadata` would modify them.
+            pairs = []
+            for item, data in self.match.merged_pairs:
+                tmp_item = library.Item(lib, **dict(item))
+                tmp_item.update(data)
+                pairs.append((item, tmp_item))
+        elif self.choice_flag in (Action.ASIS, Action.RETAG):
+            pairs = [(item, item) for item in self.items]
+        else:
+            return {}
+
+        task_paths = {i.path for i in self.items if i}
+        duplicates: dict[library.Item, list[library.Item]] = {}
+        for item, tmp_item in pairs:
+            if not any(tmp_item.get(k) for k in keys):
+                continue
+            # Unlike `Item.duplicates_query`, do not restrict matches to
+            # singletons: an existing album member duplicates an incoming
+            # track just the same.
+            dup_query = dbcore.AndQuery(
+                [
+                    tmp_item.field_query(k, tmp_item.get(k), dbcore.MatchQuery)
+                    for k in keys
+                ]
+            )
+            if found := [
+                other
+                for other in lib.items(dup_query)
+                if other.path not in task_paths
+            ]:
+                duplicates[item] = found
+        return duplicates
+
+    def remove_track_duplicates(self, lib: library.Library) -> None:
+        """Remove the old library items duplicated by tracks whose duplicate
+        action is REMOVE.
+        """
+        seen: set[int] = set()
+        for item, action in self.track_duplicate_actions.items():
+            if action is not DuplicateAction.REMOVE:
+                continue
+            for old_item in self.track_duplicates.get(item, []):
+                if old_item.id is None or old_item.id in seen:
+                    continue
+                seen.add(old_item.id)
+                log.debug("removing duplicate {.filepath}", old_item)
+                _remove_duplicate_item(lib, old_item)
+
     def align_album_level_fields(self) -> None:
         """Make some album fields equal across `self.items`. For the
         RETAG action, we assume that the responsible for returning it
@@ -528,23 +581,6 @@ class ImportTask(BaseImportTask):
         with lib.transaction():
             self.record_replaced(lib)
             self.remove_replaced(lib)
-
-            fold_album = (
-                lib.get_album(self.fold_into_album_id)
-                if self.fold_into_album_id is not None
-                else None
-            )
-            if fold_album is not None:
-                # Fold the imported items into an existing album rather than
-                # creating a new one.
-                self.album = fold_album
-                for item in self.imported_items():
-                    item.album_id = self.album.id
-                    if item.id is None:
-                        item.add(lib)
-                    else:
-                        item.store()
-                return
 
             self.album = lib.add_album(self.imported_items())
             if self.choice_flag == Action.APPLY and isinstance(
