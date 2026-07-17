@@ -130,6 +130,11 @@ def patch_logging_handler(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def do_not_log_sources(monkeypatch):
+    monkeypatch.setattr("beets.config.log_sources", lambda _: None)
+
+
+@pytest.fixture(autouse=True)
 def clear_cached_classproperty():
     cached_classproperty.cache.clear()
 
