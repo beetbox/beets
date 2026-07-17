@@ -52,9 +52,9 @@ import:
         album: albumartist album
         item: artist title
     duplicate_action: ask
+    duplicate_tracks: no
+    duplicate_tracks_action: ''
     duplicate_verbose_prompt: no
-    duplicate_track_resolution: no
-    duplicate_track_action: ''
     bell: no
     set_fields: {}
     ignored_alias_types: []

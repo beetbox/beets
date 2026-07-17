@@ -201,30 +201,56 @@ class TerminalImportSession(importer.ImportSession):
 
         return action
 
-    def resolve_track_duplicates(
-        self, task: importer.ImportTask, duplicates: dict[Item, list[Item]]
-    ) -> DuplicateAction:
-        """Decide what to do with album tracks already in the library."""
-        log.warning("Some tracks are already in the library!")
+    def get_track_duplicate_actions(
+        self,
+        task: importer.ImportTask,
+        track_duplicates: dict[Item, list[Item]],
+    ) -> dict[Item, DuplicateAction]:
+        actions = super().get_track_duplicate_actions(task, track_duplicates)
+        if DuplicateAction.ASK not in actions.values():
+            return actions
 
-        if config["import"]["quiet"].get(bool):
+        log.warning(
+            "Some tracks ({} of {}) are already in the library!",
+            len(track_duplicates),
+            len(task.imported_items()),
+        )
+        if config["import"]["quiet"]:
             # In quiet mode, don't prompt -- just skip the duplicate tracks.
             log.info("Skipping duplicate tracks.")
-            return DuplicateAction.SKIP
+            return dict.fromkeys(track_duplicates, DuplicateAction.SKIP)
 
-        existing = [item for matches in duplicates.values() for item in matches]
-        ui.print_("Old: " + summarize_items(existing, True))
-        if config["import"]["duplicate_verbose_prompt"].get(bool):
-            for item in existing:
-                print(f"  {item}")
+        # Print some detail about the existing and new items so the user
+        # can make an informed decision.
+        existing = [
+            item for matches in track_duplicates.values() for item in matches
+        ]
+        self._report_item_summary("Old", existing, is_album=True)
+        self._report_item_summary("New", list(track_duplicates), is_album=True)
 
-        ui.print_("New: " + summarize_items(list(duplicates), True))
-        if config["import"]["duplicate_verbose_prompt"].get(bool):
-            for item in duplicates:
-                print(f"  {item}")
+        choice = ui.input_options(
+            [*DuplicateAction.track_options(), "sElect per track"]
+        )
+        if choice != "e":
+            return dict.fromkeys(
+                track_duplicates,
+                DuplicateAction(choice),  # type: ignore[call-arg]
+            )
 
-        selection = ui.input_options(("Skip dupes", "Keep all", "Remove old"))
-        return DuplicateAction(selection)  # type: ignore[call-arg]
+        # Ask for each duplicate track individually.
+        return {
+            item: self._get_single_track_duplicate_action(item, matches)
+            for item, matches in track_duplicates.items()
+        }
+
+    def _get_single_track_duplicate_action(
+        self, item: Item, matches: list[Item]
+    ) -> DuplicateAction:
+        self._report_item_summary("Old", matches, is_album=False)
+        self._report_item_summary("New", [item], is_album=False)
+        return DuplicateAction(
+            ui.input_options(DuplicateAction.track_options())
+        )  # type: ignore[call-arg]
 
     def should_resume(self, path):
         return ui.input_yn(

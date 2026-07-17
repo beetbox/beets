@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from beets import config, logging, plugins, util
 from beets.util import displayable_path, normpath, pipeline, syspath
@@ -46,7 +46,6 @@ class ImportSession:
     _is_resuming: dict[bytes, bool]
     _merged_items: set[PathBytes]
     _merged_dirs: set[PathBytes]
-    _seen_track_keys: set[tuple[Any, ...]]
 
     def __init__(
         self,
@@ -75,7 +74,6 @@ class ImportSession:
         self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
-        self._seen_track_keys = set()
 
         # Normalize the paths.
         self.paths = list(map(normpath, paths or []))
@@ -187,24 +185,62 @@ class ImportSession:
     def choose_item(self, task: SingletonImportTask) -> TrackMatch | Action:
         raise NotImplementedError
 
-    def resolve_track_duplicates(
+    def get_track_duplicate_actions(
         self,
         task: ImportTask,
-        duplicates: dict[library.Item, list[library.Item]],
-    ) -> DuplicateAction:
-        """Decide what to do with album tracks that already exist in the
-        library: :attr:`~DuplicateAction.SKIP` (drop the duplicate tracks and
-        fold the remaining new tracks into the existing album),
-        :attr:`~DuplicateAction.KEEP` (import everything) or
-        :attr:`~DuplicateAction.REMOVE` (remove the old items).
+        track_duplicates: dict[library.Item, list[library.Item]],
+    ) -> dict[library.Item, DuplicateAction]:
+        """Get the configured action for each track that duplicates items
+        already in the library.
 
-        ``duplicates`` maps each incoming :class:`~beets.library.Item` to the
-        existing library items it duplicates.
+        ``track_duplicates`` maps each :class:`~beets.library.Item` of the
+        task to the existing library items it duplicates.
         """
-        raise NotImplementedError
+        view = config["import"]["duplicate_tracks_action"]
+        if view.get():
+            # MERGE is not offered per track, so reject it loudly here.
+            choice = view.as_choice(DuplicateAction.track_choices())
+            action = DuplicateAction(choice)  # type: ignore[call-arg]
+        else:
+            choice = config["import"]["duplicate_action"].as_choice(
+                DuplicateAction.choices()
+            )
+            action = DuplicateAction(choice)  # type: ignore[call-arg]
+            if action is DuplicateAction.MERGE:
+                log.debug(
+                    "merge is not available for duplicate tracks; keeping all"
+                )
+                action = DuplicateAction.KEEP
+        log.debug("default action for duplicate tracks: {}", action.value)
+        return dict.fromkeys(track_duplicates, action)
 
-    def choose_item(self, task: ImportTask):
-        raise NotImplementedError
+    def resolve_duplicates(
+        self,
+        task: ImportTask,
+        found_duplicates: list[AnyLibModel],
+        track_duplicates: dict[library.Item, list[library.Item]],
+    ) -> None:
+        """Decide, at a single point, what to do about the album- and
+        track-level duplicates found for ``task``.
+
+        Sets ``task.duplicate_action`` from the album-level duplicates or
+        ``task.track_duplicate_actions`` from the track-level ones. When only
+        *some* tracks duplicate existing items, the import is a partial
+        overlap (e.g. completing a partially-imported album), so per-track
+        resolution applies and the whole-album action is suppressed. When
+        every track is a duplicate, the task is a whole-album duplicate and
+        the album-level action decides.
+        """
+        partial = 0 < len(track_duplicates) < len(task.imported_items())
+
+        if found_duplicates and not partial:
+            task.duplicate_action = self.get_duplicate_action(
+                task, found_duplicates
+            )
+        elif track_duplicates:
+            task.track_duplicate_actions = self.get_track_duplicate_actions(
+                task, track_duplicates
+            )
 
     def run(self):
         """Run the import task."""
@@ -225,10 +261,6 @@ class ImportSession:
             if self.config["group_albums"] and not self.config["singletons"]:
                 # Split directory tasks into one task for each album.
                 stages += [stagefuncs.group_albums(self)]
-
-            # Optionally drop or replace album tracks that already exist in
-            # the library before the autotag lookup runs.
-            stages += [stagefuncs.resolve_track_duplicates(self)]
 
             # These stages either talk to the user to get a decision or,
             # in the case of a non-autotagged import, just choose to
@@ -309,25 +341,6 @@ class ImportSession:
             for path in paths
         }
         self._merged_dirs.update(dirs)
-
-    def track_key_seen(self, key: tuple[Any, ...]) -> bool:
-        """Return whether a per-track duplicate ``key`` was already claimed by
-        an earlier task in this import run (see :ref:`duplicate_track_resolution`).
-
-        This lets the track-level duplicate check catch tracks imported earlier
-        in the *same* run before they reach the database, which matters under
-        the default threaded import where a later task may be checked before an
-        earlier one has been added.
-        """
-        return key in self._seen_track_keys
-
-    def remember_track_key(self, key: tuple[Any, ...]) -> None:
-        """Record a per-track duplicate ``key`` claimed by the current task.
-
-        Only ever called from the single-threaded ``resolve_track_duplicates``
-        pipeline stage, so the shared set needs no locking.
-        """
-        self._seen_track_keys.add(key)
 
     def is_resuming(self, toppath: PathBytes) -> bool:
         """Return `True` if user wants to resume import of this path.
