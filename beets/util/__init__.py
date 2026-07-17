@@ -809,7 +809,7 @@ def plurality(objs: Iterable[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def get_most_common_tags(items: Sequence[Item]) -> dict[str, Any]:
+def get_most_common_tags(items: Sequence[Item]) -> Likelies:
     """Extract the most common value for each field given a list of items."""
     assert items  # Must be nonempty.
 
@@ -837,7 +837,7 @@ def get_most_common_tags(items: Sequence[Item]) -> dict[str, Any]:
     if len({i.albumartist for i in items}) == 1 and likelies["albumartist"]:
         likelies["artist"] = likelies["albumartist"]
 
-    return likelies
+    return Likelies(likelies)
 
 
 # stdout and stderr as bytes
@@ -1238,3 +1238,21 @@ class AttrDict(dict[str, T]):
 
     def __hash__(self) -> int:  # type: ignore[override]
         return id(self)
+
+
+class Likelies(AttrDict[Any]):
+    """A dictionary of the most common tags in a list of items."""
+
+    artist: str
+    album: str
+    albumartist: str
+    year: int
+    disctotal: int
+    mb_albumid: str
+    label: str
+    barcode: str
+    catalognum: str
+    country: str
+    media: str
+    albumdisambig: str
+    data_source: str
