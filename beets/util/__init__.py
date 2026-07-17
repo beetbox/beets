@@ -174,7 +174,7 @@ def normpath(path: PathLike) -> bytes:
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
-    str_path = syspath(path, prefix=False)
+    str_path = os.fsdecode(path)
     str_path = os.path.normpath(os.path.abspath(os.path.expanduser(str_path)))
     return bytestring_path(str_path)
 
@@ -416,12 +416,10 @@ def displayable_path(
     return os.fsdecode(path)
 
 
-def syspath(path: PathLike, prefix: bool = True) -> str:
+def syspath(path: PathLike) -> str:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
-    to Unicode before they are sent to the OS. To disable the magic
-    prefix on Windows, set `prefix` to False---but only do this if you
-    *really* know what you're doing.
+    to Unicode before they are sent to the OS.
     """
     str_path = os.fsdecode(path)
     # Don't do anything if we're not on windows
@@ -430,7 +428,7 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
 
     # Add the magic prefix if it isn't already there.
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-    if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
+    if not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
             str_path = f"UNC{str_path[1:]}"

@@ -171,10 +171,7 @@ class IPFSPlugin(BeetsPlugin):
             lib, loghandler=None, query=None, paths=[_hash]
         )
         imp.run()
-        # This uses a relative path, hence we cannot use util.syspath(_hash,
-        # prefix=True). However, that should be fine since the hash will not
-        # exceed MAX_PATH.
-        shutil.rmtree(util.syspath(_hash, prefix=False))
+        shutil.rmtree(_hash)
         return None
 
     def ipfs_publish(self, lib):
