@@ -29,6 +29,13 @@ _p = pytest.param
     "str_value, list_value, expected_warning, expected_list_value",
     [
         _p(
+            "",
+            None,
+            str_field_deprecation,
+            None,
+            id="empty str value should become None, warning raised",
+        ),
+        _p(
             "value",
             None,
             str_field_deprecation,
