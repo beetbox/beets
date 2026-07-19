@@ -509,12 +509,7 @@ class CommonOptionsParser(argparse.ArgumentParser):
         )
         self._album_flags = set(flags)
 
-    def _set_format(
-        self,
-        namespace,
-        value,
-        target=None,
-    ):
+    def _set_format(self, namespace, value, target=None):
         """Set the format in argparse's namespace and beets' config."""
         if target:
             config[target._format_config_key].set(value)
@@ -568,11 +563,7 @@ class CommonOptionsParser(argparse.ArgumentParser):
             if isinstance(target, str):
                 target = {"item": library.Item, "album": library.Album}[target]
         kwargs["target"] = target
-        self.add_argument(
-            *flags,
-            **kwargs,
-            help="print with custom format",
-        )
+        self.add_argument(*flags, **kwargs, help="print with custom format")
 
     def add_all_common_options(self):
         """Add album, path and format options."""
@@ -873,10 +864,7 @@ def _raw_main(args: list[str] | None) -> None:
         help="show this help message and exit",
     )
     parser.add_argument(
-        "--version",
-        dest="version",
-        action="store_true",
-        help=argparse.SUPPRESS,
+        "--version", dest="version", action="store_true", help=argparse.SUPPRESS
     )
 
     options, subargs = parser.parse_global_options(args)
@@ -917,7 +905,9 @@ def _raw_main(args: list[str] | None) -> None:
     return None
 
 
-def _bootstrap_config(options: argparse.Namespace) -> confuse.ConfigError | None:
+def _bootstrap_config(
+    options: argparse.Namespace,
+) -> confuse.ConfigError | None:
     """Apply CLI to config, return error as value if any."""
 
     deferred_error: confuse.ConfigError | None = None

@@ -21,6 +21,8 @@ def list_func(lib, opts, args):
 
 list_cmd = ui.Subcommand("list", help="query the library", aliases=("ls",))
 # argparse renders description between generated usage and options.
-list_cmd.parser.description = "Example: %(prog)s -f '$album: $title' artist:beatles"
+list_cmd.parser.description = (
+    "Example: %(prog)s -f '$album: $title' artist:beatles"
+)
 list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
