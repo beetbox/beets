@@ -74,10 +74,10 @@ def remove_func(lib, opts, args):
 remove_cmd = ui.Subcommand(
     "remove", help="remove matching items from the library", aliases=("rm",)
 )
-remove_cmd.parser.add_option(
+remove_cmd.parser.add_argument(
     "-d", "--delete", action="store_true", help="also remove files from disk"
 )
-remove_cmd.parser.add_option(
+remove_cmd.parser.add_argument(
     "-f", "--force", action="store_true", help="do not ask when removing items"
 )
 remove_cmd.parser.add_album_option()

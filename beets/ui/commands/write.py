@@ -45,13 +45,13 @@ def write_func(lib, opts, args):
 
 
 write_cmd = ui.Subcommand("write", help="write tag information to files")
-write_cmd.parser.add_option(
+write_cmd.parser.add_argument(
     "-p",
     "--pretend",
     action="store_true",
     help="show all changes but do nothing",
 )
-write_cmd.parser.add_option(
+write_cmd.parser.add_argument(
     "-f",
     "--force",
     action="store_true",

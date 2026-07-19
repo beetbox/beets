@@ -153,27 +153,27 @@ update_cmd = ui.Subcommand(
 )
 update_cmd.parser.add_album_option()
 update_cmd.parser.add_format_option()
-update_cmd.parser.add_option(
+update_cmd.parser.add_argument(
     "-m",
     "--move",
     action="store_true",
     dest="move",
     help="move files in the library directory",
 )
-update_cmd.parser.add_option(
+update_cmd.parser.add_argument(
     "-M",
     "--nomove",
     action="store_false",
     dest="move",
     help="don't move files in library",
 )
-update_cmd.parser.add_option(
+update_cmd.parser.add_argument(
     "-p",
     "--pretend",
     action="store_true",
     help="show all changes but do nothing",
 )
-update_cmd.parser.add_option(
+update_cmd.parser.add_argument(
     "-F",
     "--field",
     default=None,
@@ -181,7 +181,7 @@ update_cmd.parser.add_option(
     dest="fields",
     help="list of fields to update",
 )
-update_cmd.parser.add_option(
+update_cmd.parser.add_argument(
     "-e",
     "--exclude-field",
     default=None,

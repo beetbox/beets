@@ -68,25 +68,25 @@ def config_edit(cli_options):
 
 
 config_cmd = ui.Subcommand("config", help="show or edit the user configuration")
-config_cmd.parser.add_option(
+config_cmd.parser.add_argument(
     "-p",
     "--paths",
     action="store_true",
     help="show files that configuration was loaded from",
 )
-config_cmd.parser.add_option(
+config_cmd.parser.add_argument(
     "-e",
     "--edit",
     action="store_true",
     help="edit user configuration with $VISUAL (or $EDITOR)",
 )
-config_cmd.parser.add_option(
+config_cmd.parser.add_argument(
     "-d",
     "--defaults",
     action="store_true",
     help="include the default configuration",
 )
-config_cmd.parser.add_option(
+config_cmd.parser.add_argument(
     "-c",
     "--clear",
     action="store_false",

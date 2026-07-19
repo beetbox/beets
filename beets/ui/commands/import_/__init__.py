@@ -1,5 +1,6 @@
 """The `import` command: import new music into the library."""
 
+import argparse
 import os
 
 from beets import config, logging, plugins, ui
@@ -132,198 +133,203 @@ def import_func(lib, opts, args: list[str]):
     import_files(lib, byte_paths, query)
 
 
-def _store_dict(option, opt_str, value, parser):
+class _StoreDictAction(argparse.Action):
     """Custom action callback to parse options which have ``key=value``
     pairs as values. All such pairs passed for this option are
     aggregated into a dictionary.
     """
-    dest = option.dest
-    option_values = getattr(parser.values, dest, None)
 
-    if option_values is None:
-        # This is the first supplied ``key=value`` pair of option.
-        # Initialize empty dictionary and get a reference to it.
-        setattr(parser.values, dest, {})
-        option_values = getattr(parser.values, dest)
+    def __call__(self, parser, namespace, value, option_string=None):
+        dest = self.dest
+        option_values = getattr(namespace, dest, None)
 
-    try:
-        key, value = value.split("=", 1)
-        if not (key and value):
-            raise ValueError
-    except ValueError:
-        raise UserError(
-            f"supplied argument `{value}' is not of the form `key=value'"
-        )
+        if option_values is None:
+            # This is the first supplied ``key=value`` pair of option.
+            # Initialize empty dictionary and get a reference to it.
+            setattr(namespace, dest, {})
+            option_values = getattr(namespace, dest)
 
-    option_values[key] = value
+        try:
+            key, value = value.split("=", 1)
+            if not (key and value):
+                raise ValueError
+        except ValueError:
+            raise UserError(
+                f"supplied argument `{value}` is not of the form `key=value`"
+            )
+
+        option_values[key] = value
+
+
+_store_dict = _StoreDictAction
 
 
 import_cmd = ui.Subcommand(
     "import", help="import new music", aliases=("imp", "im")
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-c",
     "--copy",
     action="store_true",
     default=None,
     help="copy tracks into library directory (default)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-C",
     "--nocopy",
     action="store_false",
     dest="copy",
     help="don't copy tracks (opposite of -c)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-m",
     "--move",
     action="store_true",
     dest="move",
     help="move tracks into the library (overrides -c)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-M",
     "--nomove",
     action="store_false",
     dest="move",
     help="don't move tracks into the library (overrides -m)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-w",
     "--write",
     action="store_true",
     default=None,
     help="write new metadata to files' tags (default)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-W",
     "--nowrite",
     action="store_false",
     dest="write",
     help="don't write metadata (opposite of -w)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-a",
     "--autotag",
     action="store_true",
     dest="autotag",
     help="infer tags for imported files (default)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-A",
     "--noautotag",
     action="store_false",
     dest="autotag",
     help="don't infer tags for imported files (opposite of -a)",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-p",
     "--resume",
     action="store_true",
     default=None,
     help="resume importing if interrupted",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-P",
     "--noresume",
     action="store_false",
     dest="resume",
     help="do not try to resume importing",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-q",
     "--quiet",
     action="store_true",
     dest="quiet",
     help="never prompt for input: skip albums instead",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "--quiet-fallback",
-    type="string",
+    type=str,
     dest="quiet_fallback",
     help="decision in quiet mode when no strong match: skip or asis",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-l",
     "--log",
     dest="log",
     help="file to log untaggable albums for later review",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-s",
     "--singletons",
     action="store_true",
     help="import individual tracks instead of full albums",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-t",
     "--timid",
     dest="timid",
     action="store_true",
     help="always confirm all actions",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-L",
     "--library",
     dest="library",
     action="store_true",
     help="retag items matching a query",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-i",
     "--incremental",
     dest="incremental",
     action="store_true",
     help="skip already-imported directories",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-I",
     "--noincremental",
     dest="incremental",
     action="store_false",
     help="do not skip already-imported directories",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-R",
     "--incremental-skip-later",
     action="store_true",
     dest="incremental_skip_later",
     help="do not record skipped files during incremental import",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-r",
     "--noincremental-skip-later",
     action="store_false",
     dest="incremental_skip_later",
     help="record skipped files during incremental import",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "--from-scratch",
     dest="from_scratch",
     action="store_true",
     help="erase existing metadata before applying new metadata",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "--flat",
     dest="flat",
     action="store_true",
     help="import an entire tree as a single album",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-g",
     "--group-albums",
     dest="group_albums",
     action="store_true",
     help="group tracks in a folder into separate albums",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "--pretend",
     dest="pretend",
     action="store_true",
     help="just print the files to import",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "-S",
     "--search-id",
     dest="search_ids",
@@ -331,18 +337,17 @@ import_cmd.parser.add_option(
     metavar="ID",
     help="restrict matching to a specific metadata backend ID",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "--from-logfile",
     dest="from_logfiles",
     action="append",
     metavar="PATH",
     help="read skipped paths from an existing logfile",
 )
-import_cmd.parser.add_option(
+import_cmd.parser.add_argument(
     "--set",
     dest="set_fields",
-    action="callback",
-    callback=_store_dict,
+    action=_store_dict,
     metavar="FIELD=VALUE",
     help="set the given fields to the supplied values",
 )

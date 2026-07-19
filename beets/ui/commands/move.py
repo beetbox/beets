@@ -167,31 +167,31 @@ def move_func(lib, opts, args):
 
 
 move_cmd = ui.Subcommand("move", help="move or copy items", aliases=("mv",))
-move_cmd.parser.add_option(
+move_cmd.parser.add_argument(
     "-d", "--dest", metavar="DIR", dest="dest", help="destination directory"
 )
-move_cmd.parser.add_option(
+move_cmd.parser.add_argument(
     "-c",
     "--copy",
     default=False,
     action="store_true",
     help="copy instead of moving",
 )
-move_cmd.parser.add_option(
+move_cmd.parser.add_argument(
     "-p",
     "--pretend",
     default=False,
     action="store_true",
     help="show how files would be moved, but don't touch anything",
 )
-move_cmd.parser.add_option(
+move_cmd.parser.add_argument(
     "-t",
     "--timid",
     dest="timid",
     action="store_true",
     help="always confirm all actions",
 )
-move_cmd.parser.add_option(
+move_cmd.parser.add_argument(
     "-e",
     "--export",
     default=False,

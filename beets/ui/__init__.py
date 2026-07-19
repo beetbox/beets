@@ -6,7 +6,7 @@ CLI commands are implemented in the ui.commands module.
 from __future__ import annotations
 
 import errno
-import optparse
+import argparse
 import os.path
 import shutil
 import sqlite3
@@ -437,7 +437,31 @@ def show_model_changes(
 # Helper functions for option parsing.
 
 
-class CommonOptionsParser(optparse.OptionParser):
+def _parser_kwargs(kwargs):
+    """Add Python 3.14's colored argparse help when it is available."""
+    if sys.version_info >= (3, 14):
+        kwargs.setdefault("color", True)
+    return kwargs
+
+
+class _FormatAction(argparse.Action):
+    """Apply beets' format options while argparse parses them."""
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        self.fmt = kwargs.pop("fmt", None)
+        self.store_true = kwargs.pop("store_true", False)
+        self.target = kwargs.pop("target", None)
+        super().__init__(option_strings, dest, nargs=nargs, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if self.store_true:
+            setattr(namespace, self.dest, True)
+        value = self.fmt or values or ""
+        setattr(namespace, "format", value)
+        parser._set_format(namespace, value, self.target)
+
+
+class CommonOptionsParser(argparse.ArgumentParser):
     """Offers a simple way to add common formatting options.
 
     Options available include:
@@ -454,11 +478,21 @@ class CommonOptionsParser(optparse.OptionParser):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **_parser_kwargs(kwargs))
         self._album_flags = False
         # this serves both as an indicator that we offer the feature AND allows
         # us to check whether it has been specified on the CLI - bypassing the
         # fact that arguments may be in any order
+
+    def add_argument(self, *args, **kwargs):
+        # Preserve None for boolean options that were not supplied. Keep
+        # that distinction because beets uses it to select config defaults.
+        if (
+            kwargs.get("action") in {"store_true", "store_false"}
+            and "default" not in kwargs
+        ):
+            kwargs["default"] = None
+        return super().add_argument(*args, **kwargs)
 
     def add_album_option(self, flags=("-a", "--album")):
         """Add a -a/--album option to match albums instead of tracks.
@@ -467,44 +501,29 @@ class CommonOptionsParser(optparse.OptionParser):
         the format for items or albums.
         Sets the album property on the options extracted from the CLI.
         """
-        album = optparse.Option(
-            *flags, action="store_true", help="match albums instead of tracks"
+        self.add_argument(
+            *flags,
+            action="store_true",
+            default=None,
+            help="match albums instead of tracks",
         )
-        self.add_option(album)
         self._album_flags = set(flags)
 
     def _set_format(
         self,
-        option,
-        opt_str,
+        namespace,
         value,
-        parser,
         target=None,
-        fmt=None,
-        store_true=False,
     ):
-        """Internal callback that sets the correct format while parsing CLI
-        arguments.
-        """
-        if store_true:
-            setattr(parser.values, option.dest, True)
-
-        # Use the explicitly specified format, or the string from the option.
-        value = fmt or value or ""
-        parser.values.format = value
-
+        """Set the format in argparse's namespace and beets' config."""
         if target:
             config[target._format_config_key].set(value)
         else:
             if self._album_flags:
-                if parser.values.album:
+                if namespace.album:
                     target = library.Album
                 else:
-                    # the option is either missing either not parsed yet
-                    if self._album_flags & set(parser.rargs):
-                        target = library.Album
-                    else:
-                        target = library.Item
+                    target = library.Item
                 config[target._format_config_key].set(value)
             else:
                 config[library.Item._format_config_key].set(value)
@@ -520,15 +539,14 @@ class CommonOptionsParser(optparse.OptionParser):
         Sets the format property to '$path' on the options extracted from the
         CLI.
         """
-        path = optparse.Option(
+        self.add_argument(
             *flags,
+            action=_FormatAction,
             nargs=0,
-            action="callback",
-            callback=self._set_format,
-            callback_kwargs={"fmt": "$path", "store_true": True},
+            fmt="$path",
+            store_true=True,
             help="print paths for matched items or albums",
         )
-        self.add_option(path)
 
     def add_format_option(self, flags=("-f", "--format"), target=None):
         """Add -f/--format option to print some LibModel instances with a
@@ -545,20 +563,16 @@ class CommonOptionsParser(optparse.OptionParser):
 
         Sets the format property on the options extracted from the CLI.
         """
-        kwargs = {}
+        kwargs = {"action": _FormatAction}
         if target:
             if isinstance(target, str):
                 target = {"item": library.Item, "album": library.Album}[target]
-            kwargs["target"] = target
-
-        opt = optparse.Option(
+        kwargs["target"] = target
+        self.add_argument(
             *flags,
-            action="callback",
-            callback=self._set_format,
-            callback_kwargs=kwargs,
+            **kwargs,
             help="print with custom format",
         )
-        self.add_option(opt)
 
     def add_all_common_options(self):
         """Add album, path and format options."""
@@ -569,24 +583,17 @@ class CommonOptionsParser(optparse.OptionParser):
 
 # Subcommand parsing infrastructure.
 #
-# This is a fairly generic subcommand parser for optparse. It is
-# maintained externally here:
-# https://gist.github.com/462717
-# There you will also find a better description of the code and a more
-# succinct example program.
-
-
 class Subcommand:
     """A subcommand of a root command-line application that may be
     invoked by a SubcommandOptionParser.
     """
 
-    func: Callable[[library.Library, optparse.Values, list[str]], Any]
+    func: Callable[[library.Library, argparse.Namespace, list[str]], Any]
 
     def __init__(self, name, parser=None, help="", aliases=(), hide=False):  # noqa: A002
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an
-        OptionParser responsible for parsing the subcommand's options.
+        ArgumentParser responsible for parsing the subcommand's options.
         help is a short description of the command. If no parser is
         given, it defaults to a new, empty CommonOptionsParser.
         """
@@ -601,7 +608,7 @@ class Subcommand:
         self.parser.print_help()
 
     def parse_args(self, args):
-        return self.parser.parse_args(args)
+        return self.parser.parse_known_args(args)
 
     @property
     def root_parser(self):
@@ -610,33 +617,28 @@ class Subcommand:
     @root_parser.setter
     def root_parser(self, root_parser):
         self._root_parser = root_parser
-        self.parser.prog = (
-            f"{as_string(root_parser.get_prog_name())} {self.name}"
-        )
+        self.parser.prog = f"{as_string(root_parser.prog)} {self.name}"
 
 
 class SubcommandsOptionParser(CommonOptionsParser):
-    """A variant of OptionParser that parses subcommands and their
+    """A variant of ArgumentParser that parses subcommands and their
     arguments.
     """
 
     def __init__(self, *args, **kwargs):
         """Create a new subcommand-aware option parser. All of the
-        options to OptionParser.__init__ are supported in addition
+        options to ArgumentParser.__init__ are supported in addition
         to subcommands, a sequence of Subcommand objects.
         """
         # A more helpful default usage.
         if "usage" not in kwargs:
-            kwargs["usage"] = """
-  %prog COMMAND [ARGS...]
-  %prog help COMMAND"""
-        kwargs["add_help_option"] = False
+            kwargs["usage"] = (
+                "%(prog)s COMMAND [ARGS...]\n%(prog)s help COMMAND"
+            )
+        kwargs["add_help"] = False
 
         # Super constructor.
         super().__init__(*args, **kwargs)
-
-        # Our root parser needs to stop on the first unrecognized argument.
-        self.disable_interspersed_args()
 
         self.subcommands = []
 
@@ -647,16 +649,9 @@ class SubcommandsOptionParser(CommonOptionsParser):
             self.subcommands.append(cmd)
 
     # Add the list of subcommands to the help message.
-    def format_help(self, formatter=None):
-        # Get the original help message, to which we will append.
-        out = super().format_help(formatter)
-        if formatter is None:
-            formatter = self.formatter
-
-        # Subcommands header.
-        result = ["\n"]
-        result.append(formatter.format_heading("Commands"))
-        formatter.indent()
+    def format_help(self):
+        out = super().format_help()
+        result = ["\n", colorize("text_warning", "Commands:") + "\n"]
 
         # Generate the display names (including aliases).
         # Also determine the help position.
@@ -671,29 +666,35 @@ class SubcommandsOptionParser(CommonOptionsParser):
             disp_names.append(name)
 
             # Set the help position based on the max width.
-            proposed_help_position = len(name) + formatter.current_indent + 2
-            if proposed_help_position <= formatter.max_help_position:
+            proposed_help_position = len(name) + 2
+            if proposed_help_position <= 30:
                 help_position = max(help_position, proposed_help_position)
 
         # Add each subcommand to the output.
         for subcommand, name in zip(subcommands, disp_names):
-            # Lifted directly from optparse.py.
-            name_width = help_position - formatter.current_indent - 2
+            name_width = max(help_position - 2, 1)
             if len(name) > name_width:
-                name = f"{' ' * formatter.current_indent}{name}\n"
+                name = f"  {colorize('action', name)}\n"
                 indent_first = help_position
             else:
-                name = f"{' ' * formatter.current_indent}{name:<{name_width}}  "
+                name = (
+                    f"  {colorize('action', name)}"
+                    f"{' ' * (name_width - len(name))}  "
+                )
                 indent_first = 0
             result.append(name)
-            help_width = formatter.width - help_position
+            help_width = max(
+                shutil.get_terminal_size().columns - help_position, 1
+            )
             help_lines = textwrap.wrap(subcommand.help, help_width)
             help_line = help_lines[0] if help_lines else ""
-            result.append(f"{' ' * indent_first}{help_line}\n")
+            result.append(f"{' ' * (indent_first + 2)}{help_line}\n")
             result.extend(
-                [f"{' ' * help_position}{line}\n" for line in help_lines[1:]]
+                [
+                    f"{' ' * (help_position + 2)}{line}\n"
+                    for line in help_lines[1:]
+                ]
             )
-        formatter.dedent()
 
         # Concatenate the original help message with the subcommand
         # list.
@@ -713,7 +714,27 @@ class SubcommandsOptionParser(CommonOptionsParser):
         """Parse options up to the subcommand argument. Returns a tuple
         of the options object and the remaining arguments.
         """
-        options, subargs = self.parse_args(args)
+        args = list(sys.argv[1:] if args is None else args)
+        split_at = len(args)
+        index = 0
+        while index < len(args):
+            arg = args[index]
+            if arg == "--":
+                split_at = index + 1
+                break
+            if not arg.startswith("-") or arg == "-":
+                split_at = index
+                break
+
+            option = arg.split("=", 1)[0]
+            action = self._option_string_actions.get(option)
+            if action is not None and "=" not in arg:
+                if action.nargs is None or action.nargs == 1:
+                    index += 1
+            index += 1
+
+        options = self.parse_args(args[:split_at])
+        subargs = args[split_at:]
 
         # Force the help command
         if options.help:
@@ -738,9 +759,6 @@ class SubcommandsOptionParser(CommonOptionsParser):
 
         suboptions, subargs = subcommand.parse_args(args)
         return subcommand, suboptions, subargs
-
-
-optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 
 
 # The main entry point and bootstrapping.
@@ -809,64 +827,56 @@ def _raw_main(args: list[str] | None) -> None:
     parser = SubcommandsOptionParser()
     parser.add_format_option(flags=("--format-item",), target=library.Item)
     parser.add_format_option(flags=("--format-album",), target=library.Album)
-    parser.add_option(
+    parser.add_argument(
         "-l", "--library", dest="library", help="library database file to use"
     )
-    parser.add_option(
+    parser.add_argument(
         "-d",
         "--directory",
         dest="directory",
         help="destination music directory",
     )
-    parser.add_option(
+    parser.add_argument(
         "-v",
         "--verbose",
         dest="verbose",
         action="count",
         help="log more details (use twice for even more)",
     )
-    parser.add_option(
+    parser.add_argument(
         "-c", "--config", dest="config", help="path to configuration file"
     )
 
-    def parse_csl_callback(
-        option: optparse.Option, _, value: str, parser: SubcommandsOptionParser
-    ):
+    def parse_csl(value: str):
         """Parse a comma-separated list of values."""
-        setattr(
-            parser.values,
-            option.dest,  # type: ignore[arg-type]
-            list(filter(None, value.split(","))),
-        )
+        return list(filter(None, value.split(",")))
 
-    parser.add_option(
+    parser.add_argument(
         "-p",
         "--plugins",
         dest="plugins",
-        action="callback",
-        callback=parse_csl_callback,
+        type=parse_csl,
         help="a comma-separated list of plugins to load",
     )
-    parser.add_option(
+    parser.add_argument(
         "-P",
         "--disable-plugins",
         dest="disabled_plugins",
-        action="callback",
-        callback=parse_csl_callback,
+        type=parse_csl,
         help="a comma-separated list of plugins to disable",
     )
-    parser.add_option(
+    parser.add_argument(
         "-h",
         "--help",
         dest="help",
         action="store_true",
         help="show this help message and exit",
     )
-    parser.add_option(
+    parser.add_argument(
         "--version",
         dest="version",
         action="store_true",
-        help=optparse.SUPPRESS_HELP,
+        help=argparse.SUPPRESS,
     )
 
     options, subargs = parser.parse_global_options(args)
@@ -907,7 +917,7 @@ def _raw_main(args: list[str] | None) -> None:
     return None
 
 
-def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
+def _bootstrap_config(options: argparse.Namespace) -> confuse.ConfigError | None:
     """Apply CLI to config, return error as value if any."""
 
     deferred_error: confuse.ConfigError | None = None

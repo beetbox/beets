@@ -172,28 +172,28 @@ def modify_func(lib, opts, args):
 modify_cmd = ui.Subcommand(
     "modify", help="change metadata fields", aliases=("mod",)
 )
-modify_cmd.parser.add_option(
+modify_cmd.parser.add_argument(
     "-m",
     "--move",
     action="store_true",
     dest="move",
     help="move files in the library directory",
 )
-modify_cmd.parser.add_option(
+modify_cmd.parser.add_argument(
     "-M",
     "--nomove",
     action="store_false",
     dest="move",
     help="don't move files in library",
 )
-modify_cmd.parser.add_option(
+modify_cmd.parser.add_argument(
     "-w",
     "--write",
     action="store_true",
     default=None,
     help="write new metadata to files' tags (default)",
 )
-modify_cmd.parser.add_option(
+modify_cmd.parser.add_argument(
     "-W",
     "--nowrite",
     action="store_false",
@@ -202,10 +202,10 @@ modify_cmd.parser.add_option(
 )
 modify_cmd.parser.add_album_option()
 modify_cmd.parser.add_format_option(target="item")
-modify_cmd.parser.add_option(
+modify_cmd.parser.add_argument(
     "-y", "--yes", action="store_true", help="skip confirmation"
 )
-modify_cmd.parser.add_option(
+modify_cmd.parser.add_argument(
     "-I",
     "--noinherit",
     action="store_false",
