@@ -5,8 +5,8 @@ CLI commands are implemented in the ui.commands module.
 
 from __future__ import annotations
 
-import errno
 import argparse
+import errno
 import os.path
 import shutil
 import sqlite3
@@ -579,7 +579,9 @@ class Subcommand:
     invoked by a SubcommandOptionParser.
     """
 
-    func: Callable[[library.Library, argparse.Namespace, list[str]], Any]
+    # Plugin callbacks still use the historical Values annotation. Both
+    # parser namespaces expose the same option attributes at runtime.
+    func: Callable[..., Any]
 
     def __init__(self, name, parser=None, help="", aliases=(), hide=False):  # noqa: A002
         """Creates a new subcommand. name is the primary way to invoke

@@ -239,7 +239,7 @@ class Candidate:
         """
         # validate the candidate in case it hasn't been done yet
         current_check = self.validate(plugin)
-        checks_performed = []
+        checks_performed: list[ImageAction] = []
 
         # we don't want to resize the image if it's valid or bad
         while current_check not in [ImageAction.BAD, ImageAction.EXACT]:

@@ -482,7 +482,8 @@ class PytestTestHelper(TestHelper):
     """Same as the BeetsTestCase unittest setup but for pytest."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> Iterator[None]:
+    def setup(self, request: pytest.FixtureRequest) -> Iterator[None]:
+        self.request = request
         self.setup_beets()
         try:
             yield
