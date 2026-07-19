@@ -168,7 +168,6 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         )
         spl_update.parser.add_argument(
             "--output",
-            type="choice",
             choices=["m3u", "extm3u"],
             default=self.config["output"].get(),
             help="specify the playlist format: m3u|extm3u.",

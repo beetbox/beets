@@ -458,7 +458,17 @@ class _FormatAction(argparse.Action):
             setattr(namespace, self.dest, True)
         value = self.fmt or values or ""
         setattr(namespace, "format", value)
-        parser._set_format(namespace, value, self.target)
+        formats = getattr(namespace, "_formats", [])
+        formats.append((value, self.target))
+        setattr(namespace, "_formats", formats)
+
+
+class _Options(dict[str, Any]):
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name) from None
 
 
 class CommonOptionsParser(argparse.ArgumentParser):
@@ -493,6 +503,31 @@ class CommonOptionsParser(argparse.ArgumentParser):
         ):
             kwargs["default"] = None
         return super().add_argument(*args, **kwargs)
+
+    def format_usage(self):
+        return super().format_usage().replace("usage:", "Usage:", 1)
+
+    def format_help(self):
+        return super().format_help().replace("usage:", "Usage:", 1)
+
+    def set_usage(self, usage):
+        if usage.startswith("Usage:"):
+            usage = usage[len("Usage:") :].lstrip()
+        self.usage = usage.replace("%prog", "%(prog)s")
+
+    def parse_known_args(self, args=None, namespace=None):
+        if args is not None:
+            args = [os.fsdecode(arg) for arg in args]
+        options, extras = super().parse_known_args(args, namespace)
+        for value, target in getattr(options, "_formats", ()):
+            self._set_format(options, value, target)
+        if hasattr(options, "_formats"):
+            del options._formats
+        return options, extras
+
+    def parse_args(self, args=None, namespace=None):
+        options, extras = self.parse_known_args(args, namespace)
+        return _Options(vars(options)), extras
 
     def add_album_option(self, flags=("-a", "--album")):
         """Add a -a/--album option to match albums instead of tracks.
@@ -659,7 +694,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
             disp_names.append(name)
 
             # Set the help position based on the max width.
-            proposed_help_position = len(name) + 2
+            proposed_help_position = len(name)
             if proposed_help_position <= 30:
                 help_position = max(help_position, proposed_help_position)
 
@@ -726,7 +761,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
                     index += 1
             index += 1
 
-        options = self.parse_args(args[:split_at])
+        options, _ = self.parse_known_args(args[:split_at])
         subargs = args[split_at:]
 
         # Force the help command

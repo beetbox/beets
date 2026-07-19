@@ -117,7 +117,7 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None):
             logger.error("Error with ffprobe\n", err)
     for line in out.split("\n"):
         if line.startswith("format_name="):
-            formats = line.split("=")[1].split(",")
+            formats = [f.strip() for f in line.split("=", 1)[1].split(",")]
     detected_format = ""
     # The first format from ffprobe that is on this list is taken
     for f in formats:

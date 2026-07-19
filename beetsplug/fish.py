@@ -66,7 +66,6 @@ class FishPlugin(BeetsPlugin):
             "-e",
             "--extravalues",
             action="append",
-            type="choice",
             choices=list(library.Item.all_keys() | library.Album.all_keys()),
             help="include specified field *values* in completions",
         )
