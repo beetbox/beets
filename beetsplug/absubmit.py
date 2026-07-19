@@ -91,7 +91,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         cmd = ui.Subcommand(
             "absubmit", help="calculate and submit AcousticBrainz analysis"
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--force",
             dest="force_refetch",
@@ -99,7 +99,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             default=False,
             help="re-download data when already present",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-p",
             "--pretend",
             dest="pretend_fetch",

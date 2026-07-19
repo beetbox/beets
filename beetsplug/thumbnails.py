@@ -35,7 +35,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         thumbnails_command = Subcommand(
             "thumbnails", help="Create album thumbnails"
         )
-        thumbnails_command.parser.add_option(
+        thumbnails_command.parser.add_argument(
             "-f",
             "--force",
             dest="force",
@@ -44,7 +44,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             help="force regeneration of thumbnails deemed fine (existing & "
             "recent enough)",
         )
-        thumbnails_command.parser.add_option(
+        thumbnails_command.parser.add_argument(
             "--dolphin",
             dest="dolphin",
             action="store_true",

@@ -70,7 +70,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         lbupdate_cmd = ui.Subcommand(
             "lbimport", help="Import ListenBrainz history"
         )
-        lbupdate_cmd.parser.add_option(
+        lbupdate_cmd.parser.add_argument(
             "-f",
             "--export-file",
             dest="export_file",
@@ -81,10 +81,10 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 " (instead of fetching from the API)"
             ),
         )
-        lbupdate_cmd.parser.add_option(
+        lbupdate_cmd.parser.add_argument(
             "--max",
             dest="max_listens",
-            type="int",
+            type=int,
             default=None,
             help=(
                 "maximum number of listens to fetch via the API (default: all)."

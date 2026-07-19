@@ -639,55 +639,55 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def commands(self) -> list[ui.Subcommand]:
         lastgenre_cmd = ui.Subcommand("lastgenre", help="fetch genres")
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-p",
             "--pretend",
             action="store_true",
             help="show actions but do nothing",
         )
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-f",
             "--force",
             dest="force",
             action="store_true",
             help="modify existing genres",
         )
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-F",
             "--no-force",
             dest="force",
             action="store_false",
             help="don't modify existing genres",
         )
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-k",
             "--keep-existing",
             dest="keep_existing",
             action="store_true",
             help="combine with existing genres when modifying",
         )
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-K",
             "--no-keep-existing",
             dest="keep_existing",
             action="store_false",
             help="don't combine with existing genres when modifying",
         )
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-s",
             "--source",
             dest="source",
-            type="string",
+            type=str,
             help="genre source: artist, album, or track",
         )
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-A",
             "--items",
             action="store_false",
             dest="album",
             help="match items instead of albums",
         )
-        lastgenre_cmd.parser.add_option(
+        lastgenre_cmd.parser.add_argument(
             "-a",
             "--albums",
             action="store_true",

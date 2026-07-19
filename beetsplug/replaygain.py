@@ -1604,7 +1604,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Return the "replaygain" ui subcommand."""
         cmd = ui.Subcommand("replaygain", help="analyze for ReplayGain")
         cmd.parser.add_album_option()
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-t",
             "--threads",
             dest="threads",
@@ -1614,7 +1614,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 " processors"
             ),
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--force",
             dest="force",
@@ -1625,14 +1625,14 @@ class ReplayGainPlugin(BeetsPlugin):
                 " ReplayGain metadata"
             ),
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-w",
             "--write",
             default=None,
             action="store_true",
             help="write new metadata to files' tags",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-W",
             "--nowrite",
             dest="write",

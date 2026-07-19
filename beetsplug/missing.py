@@ -115,21 +115,21 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         self.album_template_fields["missing"] = _missing_count
 
         self._command = Subcommand("missing", help=__doc__, aliases=["miss"])
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-c",
             "--count",
             dest="count",
             action="store_true",
             help="count missing tracks per album",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-t",
             "--total",
             dest="total",
             action="store_true",
             help="count total of missing tracks",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-a",
             "--album",
             dest="album",
@@ -139,7 +139,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 "Defaults to only releases of type 'album'"
             ),
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "--release-types",
             action="append",
             dest="release_types",

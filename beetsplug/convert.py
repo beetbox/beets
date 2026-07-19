@@ -116,25 +116,25 @@ class ConvertPlugin(BeetsPlugin):
 
     def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("convert", help="convert to external location")
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-p",
             "--pretend",
             action="store_true",
             default=self.config["pretend"].get(),
             help="show actions but do nothing",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-t",
             "--threads",
             action="store",
-            type="int",
+            type=int,
             default=self.config["threads"].get(),
             help=(
                 "change the number of threads, defaults to maximum available"
                 " processors"
             ),
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-r",
             "--refresh",
             action="store_true",
@@ -142,7 +142,7 @@ class ConvertPlugin(BeetsPlugin):
             default=self.config["refresh"].get(),
             help="reconvert if original file is newer than converted file",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-k",
             "--keep-new",
             action="store_true",
@@ -150,34 +150,34 @@ class ConvertPlugin(BeetsPlugin):
             default=self.config["keep_new"].get(),
             help="keep only the converted and move the old files",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-d",
             "--dest",
             action="store",
             default=self.config["dest"].get(),
             help="set the destination directory",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--format",
             action="store",
             default=self.config["format"].get(),
             help="set the target format of the tracks",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-y",
             "--yes",
             action="store_true",
             help="do not ask for confirmation",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-l",
             "--link",
             action="store_true",
             default=self.config["link"].get(),
             help="symlink files that do not need transcoding.",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-H",
             "--hardlink",
             action="store_true",
@@ -186,7 +186,7 @@ class ConvertPlugin(BeetsPlugin):
                 "hardlink files that do not need transcoding. Overrides --link."
             ),
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-m",
             "--playlist",
             action="store",
@@ -200,7 +200,7 @@ class ConvertPlugin(BeetsPlugin):
                 " relative paths pointing to media files will be used."
             ),
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-F",
             "--force",
             action="store_true",

@@ -13,27 +13,27 @@ class MBSyncPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand("mbsync", help="update metadata from musicbrainz")
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-p",
             "--pretend",
             action="store_true",
             help="show all changes but do nothing",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-m",
             "--move",
             action="store_true",
             dest="move",
             help="move files in the library directory",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-M",
             "--nomove",
             action="store_false",
             dest="move",
             help="don't move files in library",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-W",
             "--nowrite",
             action="store_false",

@@ -45,7 +45,7 @@ class ScrubPlugin(BeetsPlugin):
                 self._scrub_item(item, opts.write)
 
         scrub_cmd = ui.Subcommand("scrub", help="clean audio tags")
-        scrub_cmd.parser.add_option(
+        scrub_cmd.parser.add_argument(
             "-W",
             "--nowrite",
             dest="write",

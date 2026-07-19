@@ -43,7 +43,7 @@ class AutoBPMPlugin(BeetsPlugin):
         cmd = Subcommand(
             "autobpm", help="detect and add bpm from audio using Librosa"
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--force",
             dest="force",
@@ -51,7 +51,7 @@ class AutoBPMPlugin(BeetsPlugin):
             default=False,
             help="Overwrite existing BPM values",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-q",
             "--quiet",
             dest="quiet",

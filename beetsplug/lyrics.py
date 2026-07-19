@@ -1098,14 +1098,14 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand("lyrics", help="fetch song lyrics")
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-p",
             "--print",
             action="store_true",
             default=self.config["print"].get(),
             help="print lyrics to console",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-r",
             "--write-rest",
             dest="rest_directory",
@@ -1114,27 +1114,27 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             metavar="dir",
             help="write lyrics to given directory as ReST files",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--force",
             action="store_true",
             default=self.config["force"].get(),
             help="always re-download lyrics",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "--keep-synced",
             action="store_true",
             default=self.config["keep_synced"].get(),
             help="skip items that already have synced lyrics",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "--no-keep-synced",
             action="store_false",
             dest="keep_synced",
             default=self.config["keep_synced"].get(),
             help="do not skip items that already have synced lyrics",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-l",
             "--local",
             action="store_true",

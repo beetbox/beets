@@ -66,13 +66,13 @@ class MetaSyncPlugin(BeetsPlugin):
         cmd = ui.Subcommand(
             "metasync", help="update metadata from music player libraries"
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-p",
             "--pretend",
             action="store_true",
             help="show all changes but do nothing",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-s",
             "--source",
             default=[],

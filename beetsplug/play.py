@@ -74,19 +74,19 @@ class PlayPlugin(BeetsPlugin):
             "play", help="send music to a player as a playlist"
         )
         play_command.parser.add_album_option()
-        play_command.parser.add_option(
+        play_command.parser.add_argument(
             "-A",
             "--args",
             action="store",
             help="add additional arguments to the command",
         )
-        play_command.parser.add_option(
+        play_command.parser.add_argument(
             "-R",
             "--randomize",
             action="store_true",
             help="randomize the order of playlist entries",
         )
-        play_command.parser.add_option(
+        play_command.parser.add_argument(
             "-y",
             "--yes",
             action="store_true",

@@ -584,7 +584,7 @@ class TidalPlugin(MetadataSourcePlugin):
         tidal_cmd = ui.Subcommand(
             "tidal", help="Tidal metadata plugin commands"
         )
-        tidal_cmd.parser.add_option(
+        tidal_cmd.parser.add_argument(
             "-a",
             "--auth",
             action="store_true",
@@ -610,7 +610,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
         tidalsync_cmd = ui.Subcommand("tidalsync", help=sync_help)
         tidalsync_cmd.parser.add_album_option()
-        tidalsync_cmd.parser.add_option(
+        tidalsync_cmd.parser.add_argument(
             "-f",
             "--force",
             action="store_true",
@@ -620,7 +620,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 "re-fetch popularity even if already present (default: False)"
             ),
         )
-        tidalsync_cmd.parser.add_option(
+        tidalsync_cmd.parser.add_argument(
             "-w",
             "--write",
             action="store_true",

@@ -56,8 +56,8 @@ class BareascPlugin(BeetsPlugin):
         cmd = ui.Subcommand(
             "bareasc", help="unidecode version of beet list command"
         )
-        cmd.parser.usage += (
-            "\nExample: %prog -f '$album: $title' artist:beatles"
+        cmd.parser.description = (
+            "Example: %(prog)s -f '$album: $title' artist:beatles"
         )
         cmd.parser.add_all_common_options()
         cmd.func = self.unidecode_list

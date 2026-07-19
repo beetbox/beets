@@ -534,7 +534,7 @@ class SpotifyPlugin(
         spotify_cmd = ui.Subcommand(
             "spotify", help=f"build a {self.data_source} playlist"
         )
-        spotify_cmd.parser.add_option(
+        spotify_cmd.parser.add_argument(
             "-m",
             "--mode",
             action="store",
@@ -543,7 +543,7 @@ class SpotifyPlugin(
                 '"list" to print (default)'
             ),
         )
-        spotify_cmd.parser.add_option(
+        spotify_cmd.parser.add_argument(
             "-f",
             "--show-failures",
             action="store_true",
@@ -556,7 +556,7 @@ class SpotifyPlugin(
         sync_cmd = ui.Subcommand(
             "spotifysync", help="fetch track attributes from Spotify"
         )
-        sync_cmd.parser.add_option(
+        sync_cmd.parser.add_argument(
             "-f",
             "--force",
             dest="force_refetch",

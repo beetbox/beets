@@ -85,7 +85,7 @@ class BenchmarkPlugin(BeetsPlugin):
         aunique_bench_cmd = ui.Subcommand(
             "bench_aunique", help="benchmark for %aunique{}"
         )
-        aunique_bench_cmd.parser.add_option(
+        aunique_bench_cmd.parser.add_argument(
             "-p",
             "--profile",
             action="store_true",
@@ -99,14 +99,14 @@ class BenchmarkPlugin(BeetsPlugin):
         match_bench_cmd = ui.Subcommand(
             "bench_match", help="benchmark for track matching"
         )
-        match_bench_cmd.parser.add_option(
+        match_bench_cmd.parser.add_argument(
             "-p",
             "--profile",
             action="store_true",
             default=False,
             help="performance profiling",
         )
-        match_bench_cmd.parser.add_option(
+        match_bench_cmd.parser.add_argument(
             "-i", "--id", default=None, help="album ID to match against"
         )
         match_bench_cmd.func = lambda lib, opts, args: match_benchmark(

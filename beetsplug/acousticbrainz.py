@@ -94,7 +94,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         cmd = ui.Subcommand(
             "acousticbrainz", help="fetch metadata from AcousticBrainz"
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--force",
             dest="force_refetch",

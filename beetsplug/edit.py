@@ -160,14 +160,14 @@ class EditPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         edit_command = ui.Subcommand("edit", help="interactively edit metadata")
-        edit_command.parser.add_option(
+        edit_command.parser.add_argument(
             "-f",
             "--field",
             metavar="FIELD",
             action="append",
             help="edit this field also",
         )
-        edit_command.parser.add_option(
+        edit_command.parser.add_argument(
             "--all", action="store_true", dest="all", help="edit all fields"
         )
         edit_command.parser.add_album_option()

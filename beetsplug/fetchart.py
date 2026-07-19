@@ -1531,7 +1531,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     # Manual album art fetching.
     def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("fetchart", help="download album art")
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--force",
             dest="force",
@@ -1539,7 +1539,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             default=False,
             help="re-download art when already present",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-q",
             "--quiet",
             dest="quiet",

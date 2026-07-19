@@ -43,7 +43,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             "parentwork", help="fetch parent works, composers and dates"
         )
 
-        command.parser.add_option(
+        command.parser.add_argument(
             "-f",
             "--force",
             dest="force",

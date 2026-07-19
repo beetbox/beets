@@ -948,7 +948,7 @@ class AURAPlugin(BeetsPlugin):
             )
 
         run_aura_cmd = Subcommand("aura", help="run an AURA server")
-        run_aura_cmd.parser.add_option(
+        run_aura_cmd.parser.add_argument(
             "-d",
             "--debug",
             action="store_true",

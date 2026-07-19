@@ -102,29 +102,29 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
             help="update the smart playlists. Playlist names may be "
             "passed as arguments.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "-p",
             "--pretend",
             action="store_true",
             help="display query results but don't write playlist files.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "-f",
             "--format",
-            type="string",
+            type=str,
             default=self.config["format"].get(),
             help="print per-track log lines with custom format",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "-d",
             "--playlist-dir",
             dest="playlist_dir",
             metavar="PATH",
-            type="string",
+            type=str,
             default=self.config["playlist_dir"].get(),
             help="directory to write the generated playlist files to.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "--dest-regen",
             action="store_true",
             dest="dest_regen",
@@ -132,41 +132,41 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
             help="regenerate the destination path as 'move' or 'convert' "
             "commands would do.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "--relative-to",
             dest="relative_to",
             metavar="PATH",
-            type="string",
+            type=str,
             default=self.config["relative_to"].get(),
             help="generate playlist item paths relative to this path.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "--prefix",
-            type="string",
+            type=str,
             default=self.config["prefix"].get(),
             help="prepend string to every path in the playlist file.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "--forward-slash",
             action="store_true",
             dest="forward_slash",
             default=self.config["forward_slash"].get(bool),
             help="force forward slash in paths within playlists.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "--urlencode",
             action="store_true",
             default=self.config["urlencode"].get(bool),
             help="URL-encode all paths.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "--uri-format",
             dest="uri_format",
-            type="string",
+            type=str,
             default=self.config["uri_format"].get(),
             help="playlist item URI template, e.g. http://beets:8337/item/$id/file.",
         )
-        spl_update.parser.add_option(
+        spl_update.parser.add_argument(
             "--output",
             type="choice",
             choices=["m3u", "extm3u"],

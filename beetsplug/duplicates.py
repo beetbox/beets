@@ -44,14 +44,14 @@ class DuplicatesPlugin(BeetsPlugin):
         )
 
         self._command = Subcommand("duplicates", help=__doc__, aliases=["dup"])
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-c",
             "--count",
             dest="count",
             action="store_true",
             help="show duplicate counts",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-C",
             "--checksum",
             dest="checksum",
@@ -59,28 +59,28 @@ class DuplicatesPlugin(BeetsPlugin):
             metavar="PROG",
             help="report duplicates based on arbitrary command",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-d",
             "--delete",
             dest="delete",
             action="store_true",
             help="delete items from library and disk",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-F",
             "--full",
             dest="full",
             action="store_true",
             help="show all versions of duplicate tracks or albums",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-s",
             "--strict",
             dest="strict",
             action="store_true",
             help="report duplicates only if all attributes are set",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-k",
             "--key",
             dest="keys",
@@ -88,14 +88,14 @@ class DuplicatesPlugin(BeetsPlugin):
             metavar="KEY",
             help="report duplicates based on keys (use multiple times)",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-M",
             "--merge",
             dest="merge",
             action="store_true",
             help="merge duplicate items",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-m",
             "--move",
             dest="move",
@@ -103,7 +103,7 @@ class DuplicatesPlugin(BeetsPlugin):
             metavar="DEST",
             help="move items to dest",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-o",
             "--copy",
             dest="copy",
@@ -111,14 +111,14 @@ class DuplicatesPlugin(BeetsPlugin):
             metavar="DEST",
             help="copy items to dest",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-t",
             "--tag",
             dest="tag",
             action="store",
             help="tag matched items with 'k=v' attribute",
         )
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-r",
             "--remove",
             dest="remove",

@@ -12,7 +12,7 @@ class TestPlugin(BeetsPlugin):
         test.func = lambda *args: None
 
         # Used in CompletionTest
-        test.parser.add_option("-o", "--option", dest="my_opt")
+        test.parser.add_argument("-o", "--option", dest="my_opt")
 
         plugin = ui.Subcommand("plugin")
         plugin.func = lambda *args: None

@@ -171,7 +171,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
     def commands(self):
         mbupdate = Subcommand("mbupdate", help="Update MusicBrainz collection")
-        mbupdate.parser.add_option(
+        mbupdate.parser.add_argument(
             "-r",
             "--remove",
             action="store_true",

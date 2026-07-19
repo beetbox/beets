@@ -233,7 +233,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             "ftintitle", help="move featured artists to the title field"
         )
 
-        self._command.parser.add_option(
+        self._command.parser.add_argument(
             "-d",
             "--drop",
             dest="drop",

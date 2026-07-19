@@ -332,22 +332,22 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         cmd = ui.Subcommand(
             "mpdstats", help="run a MPD client to gather play statistics"
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "--host",
             dest="host",
-            type="string",
+            type=str,
             help="set the hostname of the server to connect to",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "--port",
             dest="port",
-            type="int",
+            type=int,
             help="set the port of the MPD server to connect to",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "--password",
             dest="password",
-            type="string",
+            type=str,
             help="set the password of the MPD server to connect to",
         )
 

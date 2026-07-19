@@ -68,25 +68,25 @@ class ExportPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand("export", help="export data from beets")
         cmd.func = self.run
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-l",
             "--library",
             action="store_true",
             help="show library fields instead of tags",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-a",
             "--album",
             action="store_true",
             help='show album fields instead of tracks (implies "--library")',
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "--append",
             action="store_true",
             default=False,
             help="if should append data to the file",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-i",
             "--include-keys",
             default=[],
@@ -94,12 +94,12 @@ class ExportPlugin(BeetsPlugin):
             dest="included_keys",
             help="comma separated list of keys to show",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-o",
             "--output",
             help="path for the output file. If not given, will print the data",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--format",
             default="json",

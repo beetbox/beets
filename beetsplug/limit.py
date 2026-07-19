@@ -39,12 +39,12 @@ def lslimit(lib, opts, args):
 
 lslimit_cmd = Subcommand("lslimit", help="query with optional head or tail")
 
-lslimit_cmd.parser.add_option(
-    "--head", action="store", type="int", default=None
+lslimit_cmd.parser.add_argument(
+    "--head", action="store", type=int, default=None
 )
 
-lslimit_cmd.parser.add_option(
-    "--tail", action="store", type="int", default=None
+lslimit_cmd.parser.add_argument(
+    "--tail", action="store", type=int, default=None
 )
 
 lslimit_cmd.parser.add_all_common_options()

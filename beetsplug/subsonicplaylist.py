@@ -126,7 +126,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         subsonicplaylist_cmds = Subcommand(
             "subsonicplaylist", help="import a subsonic playlist"
         )
-        subsonicplaylist_cmds.parser.add_option(
+        subsonicplaylist_cmds.parser.add_argument(
             "-d",
             "--delete",
             action="store_true",

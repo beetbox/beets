@@ -32,31 +32,31 @@ def random_func(lib: Library, opts: optparse.Values, args: list[str]):
 
 
 random_cmd = Subcommand("random", help="choose a random track or album")
-random_cmd.parser.add_option(
+random_cmd.parser.add_argument(
     "-n",
     "--number",
     action="store",
-    type="int",
+    type=int,
     help="number of objects to choose",
     default=1,
 )
-random_cmd.parser.add_option(
+random_cmd.parser.add_argument(
     "-e",
     "--equal-chance",
     action="store_true",
     help="each field has the same chance",
 )
-random_cmd.parser.add_option(
+random_cmd.parser.add_argument(
     "-t",
     "--time",
     action="store",
-    type="float",
+    type=float,
     help="total length in minutes of objects to choose",
 )
-random_cmd.parser.add_option(
+random_cmd.parser.add_argument(
     "--field",
     action="store",
-    type="string",
+    type=str,
     default="albumartist",
     help="field to use for equal chance sampling (default: albumartist)",
 )

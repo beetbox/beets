@@ -437,7 +437,7 @@ class WebPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand("web", help="start a Web interface")
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-d",
             "--debug",
             action="store_true",

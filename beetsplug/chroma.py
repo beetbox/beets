@@ -282,14 +282,14 @@ class AcoustidPlugin(MetadataSourcePlugin):
         )
         cmd.parser.add_path_option()
         cmd.parser.add_format_option()
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-s",
             "--search",
             dest="search",
             action="store",
             help="Fingerprint to search for (from the output of fpcalc -plain)",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-c",
             "--count",
             dest="count",
@@ -298,13 +298,13 @@ class AcoustidPlugin(MetadataSourcePlugin):
             type=int,
             help="Number of items in result",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "--full",
             dest="full",
             action="store_true",
             help="Don't stop searching once we found an exact match",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-w",
             "--write",
             dest="write",

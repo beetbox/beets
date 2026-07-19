@@ -135,25 +135,25 @@ class InfoPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand("info", help="show file metadata")
         cmd.func = self.run
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-l",
             "--library",
             action="store_true",
             help="show library fields instead of tags",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-a",
             "--album",
             action="store_true",
             help='show album fields instead of tracks (implies "--library")',
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-s",
             "--summarize",
             action="store_true",
             help="summarize the tags of all files",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-i",
             "--include-keys",
             default=[],
@@ -161,7 +161,7 @@ class InfoPlugin(BeetsPlugin):
             dest="included_keys",
             help="comma separated list of keys to show",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-k", "--keys-only", action="store_true", help="show only the keys"
         )
         cmd.parser.add_format_option(target="item")

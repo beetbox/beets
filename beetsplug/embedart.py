@@ -78,15 +78,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd = ui.Subcommand(
             "embedart", help="embed image files into file metadata"
         )
-        embed_cmd.parser.add_option(
+        embed_cmd.parser.add_argument(
             "-f", "--file", metavar="PATH", help="the image file to embed"
         )
 
-        embed_cmd.parser.add_option(
+        embed_cmd.parser.add_argument(
             "-y", "--yes", action="store_true", help="skip confirmation"
         )
 
-        embed_cmd.parser.add_option(
+        embed_cmd.parser.add_argument(
             "-u",
             "--url",
             metavar="URL",
@@ -182,15 +182,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         extract_cmd = ui.Subcommand(
             "extractart", help="extract an image from file metadata"
         )
-        extract_cmd.parser.add_option(
+        extract_cmd.parser.add_argument(
             "-o", dest="outpath", help="image output file"
         )
-        extract_cmd.parser.add_option(
+        extract_cmd.parser.add_argument(
             "-n",
             dest="filename",
             help="image filename to create for all matched albums",
         )
-        extract_cmd.parser.add_option(
+        extract_cmd.parser.add_argument(
             "-a",
             dest="associate",
             action="store_true",
@@ -226,7 +226,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         clear_cmd = ui.Subcommand(
             "clearart", help="remove images from file metadata"
         )
-        clear_cmd.parser.add_option(
+        clear_cmd.parser.add_argument(
             "-y", "--yes", action="store_true", help="skip confirmation"
         )
 

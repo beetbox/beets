@@ -249,7 +249,7 @@ class BadFiles(BeetsPlugin):
         bad_command = Subcommand(
             "bad", help="check for corrupt or missing files"
         )
-        bad_command.parser.add_option(
+        bad_command.parser.add_argument(
             "-v",
             "--verbose",
             action="store_true",

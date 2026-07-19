@@ -55,14 +55,14 @@ class FishPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand("fish", help="generate Fish shell tab completions")
         cmd.func = self.run
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-f",
             "--noFields",
             action="store_true",
             default=False,
             help="omit album/track field completions",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-e",
             "--extravalues",
             action="append",
@@ -70,7 +70,7 @@ class FishPlugin(BeetsPlugin):
             choices=list(library.Item.all_keys() | library.Album.all_keys()),
             help="include specified field *values* in completions",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-o",
             "--output",
             default="~/.config/fish/completions/beet.fish",

@@ -19,34 +19,34 @@ class IPFSPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand("ipfs", help="interact with ipfs")
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-a", "--add", dest="add", action="store_true", help="Add to ipfs"
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-g", "--get", dest="get", action="store_true", help="Get from ipfs"
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-p",
             "--publish",
             dest="publish",
             action="store_true",
             help="Publish local library to ipfs",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-i",
             "--import",
             dest="_import",
             action="store_true",
             help="Import remote library from ipfs",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-l",
             "--list",
             dest="_list",
             action="store_true",
             help="Query imported libraries",
         )
-        cmd.parser.add_option(
+        cmd.parser.add_argument(
             "-m",
             "--play",
             dest="play",
