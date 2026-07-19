@@ -586,10 +586,19 @@ class Model(ABC, Generic[D]):
         if fields is None:
             fields = self._fields
 
+        # Separate the requested fields into fixed (real columns in the main
+        # table) and flexible (persisted via ``_flex_table``). Callers such as
+        # ``beet update`` may pass a flex attribute through ``fields=`` -- for
+        # example, when a plugin registers it via both ``item_types`` and
+        # ``add_media_field``. Treating a flex attribute as a column here used
+        # to build ``UPDATE <table> SET <flex>=?`` and crash with
+        # ``sqlite3.OperationalError: no such column: <flex>`` (see #5580).
+        column_fields = [f for f in fields if f in self._fields]
+
         # Build assignments for query.
         assignments = []
         subvars: list[SQLiteType] = []
-        for key in fields:
+        for key in column_fields:
             if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
                 assignments.append(f"{key}=?")

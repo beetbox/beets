@@ -58,6 +58,13 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Fixed a ``sqlite3.OperationalError: no such column`` crash in ``Model.store``
+  when a field passed via the ``fields`` argument was a flexible attribute
+  rather than a fixed column. The fields set is now filtered to fixed columns
+  for the main-table ``UPDATE``; flexible attributes continue to be persisted
+  via the ``_flex_table`` path. This affected plugins that register fields via
+  both ``item_types`` and ``add_media_field`` and were later updated with
+  ``beet update``. :bug:`5580`
 - :doc:`plugins/edit`: Preserve missing album art paths when editing album
   metadata, instead of turning ``artpath: null`` into a path ending in ``None``.
   :bug:`2438`

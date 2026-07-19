@@ -281,6 +281,27 @@ class ModelTest(unittest.TestCase):
         other_model = self.db._get(ModelFixture1, model.id)
         assert other_model.foo == "bar"
 
+    def test_store_with_flex_field_in_fields_argument(self):
+        """A flex attribute passed via ``fields=`` must not crash.
+
+        Regression test for #5580: when a plugin registers a typed flex
+        attribute (via ``item_types``) and a caller such as ``beet update``
+        passes its name through ``fields=`` to ``Model.store()``, the store
+        loop used to build ``UPDATE <table> SET <flex_field>=?`` and crash
+        with ``sqlite3.OperationalError: no such column: <flex_field>``.
+        Flex attributes have no column in the main table; they live in the
+        ``_flex_table`` and must be persisted via the INSERT path.
+        """
+        model = ModelFixture1()
+        model.add(self.db)
+        model.field_one = 42
+        model.some_float_field = 1.5
+        model.store(fields=["field_one", "some_float_field"])
+
+        other_model = self.db._get(ModelFixture1, model.id)
+        assert other_model.field_one == 42
+        assert other_model.some_float_field == 1.5
+
     def test_delete_flexattr(self):
         model = ModelFixture1()
         model["foo"] = "bar"
