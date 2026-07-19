@@ -58,6 +58,12 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`/plugins/embedart`: Fixed "Error while checking art similarity;
+  skipping" being logged on every track on ImageMagick ≥7.1.1-44. When the
+  ``phash:colorspaces=sRGB,HCLp`` define (added for score determinism) makes
+  ``magick compare -metric PHASH`` emit empty stdout+stderr, beets now retries
+  the compare without the define, trading determinism for a usable score.
+  :bug:`6348`
 - Fixed a ``sqlite3.OperationalError: no such column`` crash in ``Model.store``
   when a field passed via the ``fields`` argument was a flexible attribute
   rather than a fixed column. The fields set is now filtered to fixed columns
