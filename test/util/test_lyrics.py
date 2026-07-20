@@ -16,6 +16,15 @@ class TestLyrics:
         assert lyrics.language is None
         assert lyrics.translation_language is None
 
+    def test_none_text(self):
+        lyrics = Lyrics(None)
+
+        assert lyrics.text == ""
+        assert not lyrics.synced
+        assert lyrics.full_text == ""
+        assert lyrics.sylt == []
+        assert lyrics.text_lines == []
+
     def test_from_legacy_text(self, is_importable):
         text = textwrap.dedent("""
         [00:00.00] Some synced lyrics / Quelques paroles synchronisées
