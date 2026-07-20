@@ -58,6 +58,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
+  ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
+  enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
 - :doc:`plugins/edit`: Preserve missing album art paths when editing album
   metadata, instead of turning ``artpath: null`` into a path ending in ``None``.
   :bug:`2438`
