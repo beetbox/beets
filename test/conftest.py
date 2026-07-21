@@ -1,14 +1,22 @@
+from __future__ import annotations
+
 import inspect
 import os
+import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
+from beets import logging
 from beets.autotag import Distance
 from beets.dbcore.query import Query
 from beets.test._common import DummyIO
 from beets.test.helper import RUNNING_IN_CI, ConfigMixin, TestHelper
 from beets.test.helper import is_importable as check_import
 from beets.util import cached_classproperty
+
+if TYPE_CHECKING:
+    from typing import TextIO
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -90,6 +98,40 @@ def pytest_assertrepr_compare(op, left, right):
     if isinstance(left, Distance) or isinstance(right, Distance):
         return [f"Comparing Distance: {float(left)} {op} {float(right)}"]
     return None
+
+
+class _CurrentStderrHandler(logging.StreamHandler):  # type: ignore[type-arg]
+    """Write CLI logs to the active standard error stream.
+
+    Logging is bootstrapped when the CLI runs instead of when this module is
+    imported. That startup can happen while callers have temporarily replaced
+    ``sys.stderr`` for capture or redirection, such as pytest's per-test capture
+    streams. The handler must not retain the stream that happened to be active
+    during the first command invocation because that stream may later be closed.
+    Resolving the stream for each record keeps logs attached to the current CLI
+    environment.
+    """
+
+    @property
+    def stream(self) -> TextIO:
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, stream: TextIO) -> None:
+        pass
+
+
+@pytest.fixture(autouse=True)
+def patch_logging_handler(monkeypatch):
+    """Ensure that beets logs are captured by pytest's capture system."""
+    monkeypatch.setattr(
+        "beets.ui._get_logging_handler", lambda: _CurrentStderrHandler()
+    )
+
+
+@pytest.fixture(autouse=True)
+def do_not_log_sources(monkeypatch):
+    monkeypatch.setattr("beets.config.log_sources", lambda _: None)
 
 
 @pytest.fixture(autouse=True)
