@@ -6,6 +6,7 @@ import re
 import time
 import typing
 from abc import ABC
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 import beets
@@ -374,6 +375,9 @@ class BasePathType(Type[bytes, N]):
         return util.normpath(string)
 
     def normalize(self, value: Any) -> bytes | N:
+        if isinstance(value, Path):
+            value = str(value)
+
         if isinstance(value, str):
             # Paths stored internally as encoded bytes.
             return util.bytestring_path(value)

@@ -12,10 +12,10 @@ from beets.util import syspath
 
 
 class QueryTest(BeetsTestCase):
-    def add_item(self, filename=b"srcfile", templatefile=b"full.mp3"):
-        itempath = os.path.join(self.libdir, filename)
+    def add_item(self):
+        itempath = self.lib_path / "srcfile"
         shutil.copy(
-            syspath(os.path.join(_common.RSRC, templatefile)), syspath(itempath)
+            syspath(os.path.join(_common.RSRC, b"full.mp3")), syspath(itempath)
         )
         item = library.Item.from_path(itempath)
         self.lib.add(item)
