@@ -214,19 +214,19 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         item = album.items()[0]
         self.io.addinput("y")
         self.run_command("embedart", "-f", self.small_artpath)
-        embedded_time = os.path.getmtime(syspath(item.path))
+        embedded_time = item.filepath.stat().st_mtime
 
         self.io.addinput("y")
         self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
-        clear_time = os.path.getmtime(syspath(item.path))
+        clear_time = item.filepath.stat().st_mtime
         assert clear_time > embedded_time
 
         # A run on a file without an image should not be modified
         self.io.addinput("y")
         self.run_command("clearart")
-        no_clear_time = os.path.getmtime(syspath(item.path))
+        no_clear_time = item.filepath.stat().st_mtime
         assert no_clear_time == clear_time
 
     def test_clear_art_with_no_input(self):
@@ -295,7 +295,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
             importer.run()
 
         item = self.lib.items()[0]
-        assert MediaFile(os.path.join(item.path)).images
+        assert MediaFile(item.filepath).images
 
     @NEEDS_FFPROBE
     def test_clearart_on_import_enabled(self):
@@ -310,7 +310,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
             importer.run()
 
         item = self.lib.items()[0]
-        assert not MediaFile(os.path.join(item.path)).images
+        assert not MediaFile(item.filepath).images
 
 
 class DummyArtResizer(ArtResizer):

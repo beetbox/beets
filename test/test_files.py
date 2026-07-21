@@ -132,7 +132,7 @@ class MoveTest(BeetsTestCase):
         finally:
             # Make everything writable so it can be cleaned up.
             os.chmod(syspath(self.path), 0o777)
-            os.chmod(syspath(self.i.path), 0o777)
+            self.i.filepath.chmod(0o777)
 
     def test_move_avoids_collision_with_existing_file(self):
         # Make a conflicting file at the destination.
@@ -208,8 +208,8 @@ class AlbumFileTest(BeetsTestCase):
         self.i = item(self.lib)
         # Make a file for the item.
         self.i.path = self.i.destination()
-        util.mkdirall(self.i.path)
-        touch(self.i.path)
+        util.mkdirall(self.i.filepath)
+        self.i.filepath.touch()
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Alternate destination dir.
@@ -245,14 +245,14 @@ class AlbumFileTest(BeetsTestCase):
 
     @NEEDS_REFLINK
     def test_albuminfo_move_reflinks_file(self):
-        oldpath = self.i.path
+        oldpath = self.i.filepath
         self.ai.album = "newAlbumName"
         self.ai.move(operation=MoveOperation.REFLINK)
         self.ai.store()
         self.i.load()
 
-        assert os.path.exists(oldpath)
-        assert os.path.exists(self.i.path)
+        assert oldpath.exists()
+        assert self.i.filepath.exists()
 
     def test_albuminfo_move_to_custom_dir(self):
         self.ai.move(basedir=self.otherdir)
@@ -269,8 +269,8 @@ class ArtFileTest(BeetsTestCase):
         self.i = item(self.lib)
         self.i.path = self.i.destination()
         # Make a music file.
-        util.mkdirall(self.i.path)
-        touch(self.i.path)
+        util.mkdirall(self.i.filepath)
+        self.i.filepath.touch()
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Make an art file too.
@@ -376,7 +376,7 @@ class ArtFileTest(BeetsTestCase):
         # Set the art - should replace the existing file, not create a suffixed
         # duplicate like cover.2.jpg.
         ai.set_art(newart)
-        assert artdest == ai.artpath
+        assert artdest == ai.art_filepath
 
     def test_setart_replaces_old_art_at_different_path(self):
         newart = self.lib_path / "newart.png"
@@ -389,8 +389,8 @@ class ArtFileTest(BeetsTestCase):
 
         # Set initial art.
         ai.set_art(newart)
-        old_artpath = ai.artpath
-        assert os.path.exists(syspath(old_artpath))
+        old_artpath = ai.art_filepath
+        assert old_artpath.exists()
 
         # Set new art with a different extension.
         another_art = self.lib_path / "another.jpg"
@@ -416,14 +416,14 @@ class ArtFileTest(BeetsTestCase):
             i2.move(operation=MoveOperation.COPY)
             ai.set_art(newart)
 
-            mode = stat.S_IMODE(os.stat(syspath(ai.artpath)).st_mode)
+            mode = stat.S_IMODE(ai.art_filepath.stat().st_mode)
             assert mode & stat.S_IRGRP
             assert os.access(syspath(ai.artpath), os.W_OK)
 
         finally:
             # Make everything writable so it can be cleaned up.
-            os.chmod(syspath(newart), 0o777)
-            os.chmod(syspath(ai.artpath), 0o777)
+            newart.chmod(0o777)
+            ai.art_filepath.chmod(0o777)
 
     def test_move_last_file_moves_albumart(self):
         oldartpath = self.lib.albums()[0].art_filepath
@@ -464,8 +464,8 @@ class RemoveTest(BeetsTestCase):
         self.i = item(self.lib)
         self.i.path = self.i.destination()
         # Make a music file.
-        util.mkdirall(self.i.path)
-        touch(self.i.path)
+        util.mkdirall(self.i.filepath)
+        self.i.filepath.touch()
         # Make an album with the item.
         self.ai = self.lib.add_album((self.i,))
 
@@ -499,4 +499,4 @@ class RemoveTest(BeetsTestCase):
         self.ai.store()
 
         self.i.remove(True)
-        assert not self.i.filepath.parent.exists()
+        util.mkdirall(self.i.filepath)

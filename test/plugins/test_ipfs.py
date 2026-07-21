@@ -1,7 +1,7 @@
-import os
+from pathlib import Path
 from unittest.mock import Mock, patch
 
-from beets import library, util
+from beets import library
 from beets.test import _common
 from beets.test.helper import PluginTestCase
 from beetsplug.ipfs import IPFSPlugin
@@ -22,11 +22,9 @@ class IPFSPluginTest(PluginTestCase):
             want_item = test_album.items()[2]
             for check_item in added_album.items():
                 if check_item.get("ipfs", with_album=False):
-                    ipfs_item = os.fsdecode(os.path.basename(want_item.path))
-                    want_path = util.normpath(
-                        os.path.join("/ipfs", test_album.ipfs, ipfs_item)
-                    )
-                    assert check_item.path == want_path
+                    ipfs_item = want_item.filepath.name
+                    want_path = Path("/ipfs") / test_album.ipfs / ipfs_item
+                    assert check_item.filepath == want_path
                     assert (
                         check_item.get("ipfs", with_album=False)
                         == want_item.ipfs

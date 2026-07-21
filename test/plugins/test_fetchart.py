@@ -1,5 +1,4 @@
 import ctypes
-import os
 import sys
 from typing import Any, ClassVar
 from unittest import mock
@@ -71,14 +70,15 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
         self.config["fetchart"]["cover_names"] = "c\xc3\xb6ver.jpg"
         self.config["art_filename"] = "mycover"
         self.album = self.add_album()
+        self.album.filepath.mkdir(parents=True)
 
     def cover_path(self, ext: str = "jpg"):
-        return os.path.join(self.album.path, f"mycover.{ext}".encode())
+        return self.album.filepath / f"mycover.{ext}"
 
     def check_cover_is_stored(self, ext: str = "jpg"):
-        assert self.album["artpath"] == self.cover_path(ext)
-        with open(util.syspath(self.cover_path(ext))) as f:
-            assert f.read() == "IMAGE"
+        cover_path = self.cover_path(ext)
+        assert cover_path == self.album.art_filepath
+        assert cover_path.read_text() == "IMAGE"
 
     def hide_file_windows(self, path: bytes) -> None:
         if sys.platform == "win32":
@@ -88,7 +88,7 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
             )
 
     def test_set_art_from_folder(self):
-        self.touch(b"c\xc3\xb6ver.jpg", dir_=self.album.path, content="IMAGE")
+        (self.album.filepath / "c\xc3\xb6ver.jpg").write_text("IMAGE")
 
         self.run_command("fetchart")
 
@@ -96,27 +96,28 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
         self.check_cover_is_stored()
 
     def test_filesystem_does_not_pick_up_folder(self):
-        os.makedirs(os.path.join(self.album.path, b"mycover.jpg"))
+        (self.album.filepath / "mycover.jpg").mkdir(parents=True)
         self.run_command("fetchart")
         self.album.load()
         assert self.album["artpath"] is None
 
     def test_filesystem_does_not_pick_up_ignored_file(self):
-        self.touch(b"co_ver.jpg", dir_=self.album.path, content="IMAGE")
+        (self.album.filepath / "co_ver.jpg").write_text("IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
         assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_ignored_file(self):
-        self.touch(b"cover.jpg", dir_=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.jpg").write_text("IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
 
     def test_filesystem_does_not_pick_up_hidden_file(self):
-        path = self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
+        path = self.album.filepath / ".cover.jpg"
+        path.write_text("IMAGE")
         self.hide_file_windows(path)
         self.config["ignore"] = []  # By default, ignore includes '.*'.
         self.config["ignore_hidden"] = True
@@ -125,14 +126,15 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
         assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_hidden_file(self):
-        self.touch(b"cover.jpg", dir_=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.jpg").write_text("IMAGE")
         self.config["ignore_hidden"] = True
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
 
     def test_filesystem_picks_up_hidden_file(self):
-        path = self.touch(b".cover.jpg", dir_=self.album.path, content="IMAGE")
+        path = self.album.filepath / ".cover.jpg"
+        path.write_text("IMAGE")
         self.hide_file_windows(path)
         self.config["ignore"] = []  # By default, ignore includes '.*'.
         self.config["ignore_hidden"] = False
@@ -141,13 +143,13 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
         self.check_cover_is_stored()
 
     def test_filesystem_picks_up_webp_file(self):
-        self.touch(b"cover.webp", dir_=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.webp").write_text("IMAGE")
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored("webp")
 
     def test_filesystem_picks_up_png_file(self):
-        self.touch(b"cover.png", dir_=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.png").write_text("IMAGE")
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored("png")
@@ -161,7 +163,7 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
         """OSError (e.g. PermissionError) in set_art is logged as a warning,
         not an unhandled crash. Regression test for #6193.
         """
-        self.touch(b"c\xc3\xb6ver.jpg", dir_=self.album.path, content="IMAGE")
+        (self.album.filepath / "c\xc3\xb6ver.jpg").write_text("IMAGE")
         with mock.patch(
             "beets.library.Album.set_art",
             side_effect=PermissionError("[WinError 32] file in use"),

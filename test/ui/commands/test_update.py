@@ -1,5 +1,3 @@
-import os
-
 from mediafile import MediaFile
 
 from beets import library
@@ -164,7 +162,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf.save()
 
         # Make in-memory mtime match on-disk mtime.
-        self.i.mtime = os.path.getmtime(syspath(self.i.path))
+        self.i.mtime = self.i.filepath.stat().st_mtime
         self.i.store()
 
         self._update(reset_mtime=False)

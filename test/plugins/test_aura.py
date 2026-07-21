@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import os
 from http import HTTPStatus
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -93,7 +91,7 @@ class TestAuraResponse:
                 "album": item.album,
                 "albumartist": item.albumartist,
                 "artist": item.artist,
-                "size": Path(os.fsdecode(item.path)).stat().st_size,
+                "size": item.filepath.stat().st_size,
                 "title": item.title,
                 "track": 1,
             },
