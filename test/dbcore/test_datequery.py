@@ -239,6 +239,14 @@ class DateQueryConstructTest(unittest.TestCase):
             with pytest.raises(InvalidQueryArgumentValueError):
                 DateQuery("added", q)
 
+    def test_reversed_date_range(self):
+        # A range whose start lies after its end (e.g. `added:2024..2020`)
+        # must raise a clean InvalidQueryArgumentValueError rather than an
+        # uncaught ValueError from the interval check.
+        for q in ["2024..2020", "2024-05..2024-01", "2d..-2d"]:
+            with pytest.raises(InvalidQueryArgumentValueError):
+                DateQuery("added", q)
+
     def test_datetime_uppercase_t_separator(self):
         date_query = DateQuery("added", "2000-01-01T12")
         assert date_query.interval.start == datetime(2000, 1, 1, 12)

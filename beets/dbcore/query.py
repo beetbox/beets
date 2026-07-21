@@ -849,7 +849,13 @@ class DateQuery(FieldQuery[str]):
     ) -> None:
         super().__init__(field_name, pattern, fast)
         start, end = _parse_periods(pattern)
-        self.interval = DateInterval.from_periods(start, end)
+        try:
+            self.interval = DateInterval.from_periods(start, end)
+        except ValueError as exc:
+            # e.g. a reversed date range such as `2024..2020`.
+            raise InvalidQueryArgumentValueError(
+                pattern, "a valid date interval", format(exc)
+            )
 
     def match(self, obj: Model) -> bool:
         if self.field_name not in obj:

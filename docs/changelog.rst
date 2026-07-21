@@ -95,6 +95,9 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- A date range query whose start lies after its end (for example
+  ``added:2024..2020``) now raises a clean "a valid date interval" query error
+  instead of crashing with an uncaught ``ValueError``.
 
 ..
     For plugin developers
