@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import os
-import os.path
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -22,7 +22,7 @@ from beets.test.helper import (
     IOMixin,
     PluginMixin,
 )
-from beets.util import bytestring_path, displayable_path, syspath
+from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug._utils import art
 
@@ -74,8 +74,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
     def _setup_data(self, artpath=None):
         if not artpath:
             artpath = self.small_artpath
-        with open(syspath(artpath), "rb") as f:
-            self.image_data = f.read()
+        self.image_data = artpath.read_bytes()
 
     def test_embed_art_from_file_with_yes_input(self):
         self._setup_data()
@@ -121,7 +120,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
-        tmp_path = bytestring_path(tmp_path)
+        tmp_path = Path(tmp_path)
         os.write(handle, self.image_data)
         os.close(handle)
 
@@ -131,11 +130,9 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         config["embedart"]["remove_art_file"] = True
         self.run_command("embedart", "-y")
 
-        if os.path.isfile(syspath(tmp_path)):
-            os.remove(syspath(tmp_path))
-            pytest.fail(
-                f"Artwork file {displayable_path(tmp_path)} was not deleted"
-            )
+        if tmp_path.is_file():
+            tmp_path.unlink()
+            pytest.fail(f"Artwork file {tmp_path} was not deleted")
 
     def test_art_file_missing(self):
         self.add_album_fixture()
@@ -148,14 +145,14 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
-        tmp_path = bytestring_path(tmp_path)
+        tmp_path = Path(tmp_path)
         os.write(handle, b"I am not an image.")
         os.close(handle)
 
         try:
             self.run_command("embedart", "-y", "-f", tmp_path)
         finally:
-            os.remove(syspath(tmp_path))
+            tmp_path.unlink()
 
         mediafile = MediaFile(syspath(album.items()[0].path))
         assert not mediafile.images  # No image added.
@@ -214,19 +211,19 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         item = album.items()[0]
         self.io.addinput("y")
         self.run_command("embedart", "-f", self.small_artpath)
-        embedded_time = os.path.getmtime(syspath(item.path))
+        embedded_time = item.filepath.stat().st_mtime
 
         self.io.addinput("y")
         self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
         assert not mediafile.images
-        clear_time = os.path.getmtime(syspath(item.path))
+        clear_time = item.filepath.stat().st_mtime
         assert clear_time > embedded_time
 
         # A run on a file without an image should not be modified
         self.io.addinput("y")
         self.run_command("clearart")
-        no_clear_time = os.path.getmtime(syspath(item.path))
+        no_clear_time = item.filepath.stat().st_mtime
         assert no_clear_time == clear_time
 
     def test_clear_art_with_no_input(self):
@@ -295,7 +292,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
             importer.run()
 
         item = self.lib.items()[0]
-        assert MediaFile(os.path.join(item.path)).images
+        assert MediaFile(item.filepath).images
 
     @NEEDS_FFPROBE
     def test_clearart_on_import_enabled(self):
@@ -310,7 +307,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
             importer.run()
 
         item = self.lib.items()[0]
-        assert not MediaFile(os.path.join(item.path)).images
+        assert not MediaFile(item.filepath).images
 
 
 class DummyArtResizer(ArtResizer):

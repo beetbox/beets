@@ -268,10 +268,14 @@ def path_as_posix(path: bytes) -> bytes:
     return path.replace(b"\\", b"/")
 
 
-def mkdirall(path: AnyStr) -> None:
+def mkdirall(path: AnyStr | Path) -> None:
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
+    if isinstance(path, Path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return
+
     for ancestor in ancestry(path):
         if not os.path.isdir(syspath(ancestor)):
             try:

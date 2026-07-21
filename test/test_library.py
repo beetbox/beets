@@ -376,7 +376,7 @@ class TestDestination(PytestItemHelper):
 
     def test_get_formatted_does_not_replace_separators(self, item_in_db):
         with _common.platform_posix():
-            name = os.path.join("a", "b")
+            name = str(Path("a") / "b")
             item_in_db.title = name
             newname = item_in_db.formatted().get("title")
         assert name == newname
@@ -441,7 +441,7 @@ class TestDestination(PytestItemHelper):
 
     def test_unicode_extension_in_fragment(self, item_in_db):
         self.lib.path_formats = [("default", "foo")]
-        item_in_db.path = util.bytestring_path("bar.caf\xe9")
+        item_in_db.path = Path("bar.caf\xe9")
         with patch("sys.platform", "linux"):
             dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
@@ -1237,8 +1237,7 @@ class TestWrite(TestHelper):
 
     def test_no_write_permission(self):
         item = self.add_item_fixture()
-        path = syspath(item.path)
-        os.chmod(path, stat.S_IRUSR)
+        item.filepath.chmod(stat.S_IRUSR)
 
         try:
             with pytest.raises(beets.library.WriteError) as exc_info:
@@ -1247,7 +1246,7 @@ class TestWrite(TestHelper):
 
         finally:
             # Restore write permissions so the file can be cleaned up.
-            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+            item.filepath.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
@@ -1340,18 +1339,17 @@ class TestFilesize(TestHelper):
 class TestItemPruneDirsClutter(TestHelper):
     """Regression tests: prune_dirs respects config["clutter"] during move/remove."""
 
-    def _drop_clutter(self, directory, filename=b"unwanted.log"):
+    def _drop_clutter(self, directory: Path) -> Path:
         """Create a clutter file in *directory* (bytes path)."""
-        path = os.path.join(directory, filename)
-        with open(syspath(path), "w"):
-            pass
+        path = directory / "unwanted.log"
+        path.touch()
         return path
 
     def test_move_prunes_dir_with_config_clutter(self):
         """After moving an item, old dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         # Change artist so the destination path differs, forcing a real move.
@@ -1359,18 +1357,18 @@ class TestItemPruneDirsClutter(TestHelper):
         item.store()
         item.move()
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
     def test_remove_prunes_dir_with_config_clutter(self):
         """After deleting an item, its dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         item.remove(delete=True)
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
 
 class TestParseQuery:

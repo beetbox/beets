@@ -49,7 +49,7 @@ class TestDuplicatesPlugin(PluginMixin, TestHelper, IOMixin):
         self.create_dups(2)
         out = self.run_cmd(path=True)
 
-        assert self.dup_item.path.decode() in out
+        assert str(self.dup_item.filepath) in out
 
     def test_duplicate_with_count(self):
         self.create_dups(4)
@@ -64,5 +64,5 @@ class TestDuplicatesPlugin(PluginMixin, TestHelper, IOMixin):
         self.create_dups(6)
         out = self.run_cmd(count=True, path=True)
 
-        assert self.dup_item.path.decode() in out
+        assert str(self.dup_item.filepath) in out
         assert out.endswith("5")

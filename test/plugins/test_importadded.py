@@ -1,17 +1,24 @@
 """Tests for the `importadded` plugin."""
 
+from __future__ import annotations
+
 import os
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from beets import importer
 from beets.test.helper import AutotagImportTestCase, PluginMixin
-from beets.util import displayable_path, syspath
+from beets.util import syspath
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
-def modify_mtimes(paths, offset=-60000):
+def modify_mtimes(paths: Iterable[Path], offset=-60000):
     for i, path in enumerate(paths, start=1):
-        mstat = os.stat(path)
+        mstat = path.stat()
         os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
@@ -25,10 +32,9 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         self.prepare_album_for_import(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
-        modify_mtimes(mfile.path for mfile in self.import_media)
-        self.min_mtime = min(
-            os.path.getmtime(mfile.path) for mfile in self.import_media
-        )
+        paths = [Path(mfile.path) for mfile in self.import_media]
+        modify_mtimes(paths)
+        self.min_mtime = min(p.stat().st_mtime for p in paths)
         self.importer = self.setup_importer()
         self.importer.add_choice(importer.Action.APPLY)
 
@@ -37,9 +43,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         for m in self.import_media:
             if m.title.replace("Tag", "Applied") == item.title:
                 return m
-        raise AssertionError(
-            f"No MediaFile found for Item {displayable_path(item.path)}"
-        )
+        raise AssertionError(f"No MediaFile found for Item {item.filepath}")
 
     def test_import_album_with_added_dates(self):
         self.importer.run()
@@ -68,7 +72,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
             assert item.added == pytest.approx(self.min_mtime, rel=1e-4)
             mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
             assert item.mtime == pytest.approx(mediafile_mtime, rel=1e-4)
-            assert os.path.getmtime(item.path) == pytest.approx(
+            assert item.filepath.stat().st_mtime == pytest.approx(
                 mediafile_mtime, rel=1e-4
             )
 
@@ -77,7 +81,9 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         self.importer.run()
         album = self.lib.albums().get()
         album_added_before = album.added
-        items_added_before = {item.path: item.added for item in album.items()}
+        items_added_before = {
+            item.filepath: item.added for item in album.items()
+        }
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
@@ -86,11 +92,13 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         # Verify the reimported items
         album = self.lib.albums().get()
         assert album.added == pytest.approx(album_added_before, rel=1e-4)
-        items_added_after = {item.path: item.added for item in album.items()}
+        items_added_after = {
+            item.filepath: item.added for item in album.items()
+        }
         for item_path, added_after in items_added_after.items():
             assert items_added_before[item_path] == pytest.approx(
                 added_after, rel=1e-4
-            ), f"reimport modified Item.added for {displayable_path(item_path)}"
+            ), f"reimport modified Item.added for {item_path}"
 
     def test_import_singletons_with_added_dates(self):
         self.config["import"]["singletons"] = True
@@ -109,7 +117,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
             mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
             assert item.added == pytest.approx(mediafile_mtime, rel=1e-4)
             assert item.mtime == pytest.approx(mediafile_mtime, rel=1e-4)
-            assert os.path.getmtime(item.path) == pytest.approx(
+            assert item.filepath.stat().st_mtime == pytest.approx(
                 mediafile_mtime, rel=1e-4
             )
 
@@ -118,7 +126,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         # Import and record the original added dates
         self.importer.run()
         items_added_before = {
-            item.path: item.added for item in self.lib.items()
+            item.filepath: item.added for item in self.lib.items()
         }
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
@@ -126,8 +134,10 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         self.setup_importer(import_dir=self.lib_path, singletons=True)
         self.importer.run()
         # Verify the reimported items
-        items_added_after = {item.path: item.added for item in self.lib.items()}
+        items_added_after = {
+            item.filepath: item.added for item in self.lib.items()
+        }
         for item_path, added_after in items_added_after.items():
             assert items_added_before[item_path] == pytest.approx(
                 added_after, rel=1e-4
-            ), f"reimport modified Item.added for {displayable_path(item_path)}"
+            ), f"reimport modified Item.added for {item_path}"

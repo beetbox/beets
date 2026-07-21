@@ -1,10 +1,11 @@
 """Tests for the 'web' plugin"""
 
 import json
-import os.path
+import os
 import platform
 import shutil
 from collections import Counter
+from pathlib import Path
 
 import pytest
 
@@ -44,36 +45,28 @@ class WebPluginMixin(PluginMixin):
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3
-        path1 = (
-            self.path_prefix + os.sep + os.path.join(b"path_1").decode("utf-8")
-        )
+        self.path1 = self.path_prefix / Path(os.sep) / "path_1"
         self.lib.add(
-            Item(title="title", path=path1, album_id=2, artist="AAA Singers")
+            Item(
+                title="title", path=self.path1, album_id=2, artist="AAA Singers"
+            )
         )
-        path2 = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere", b"a").decode("utf-8")
-        )
+        self.path2 = self.path_prefix / Path(os.sep) / "somewhere" / "a"
         self.lib.add(
-            Item(title="another title", path=path2, artist="AAA Singers")
+            Item(title="another title", path=self.path2, artist="AAA Singers")
         )
-        path3 = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere", b"abc").decode("utf-8")
-        )
+        self.path3 = self.path_prefix / Path(os.sep) / "somewhere" / "abc"
         self.lib.add(
-            Item(title="and a third", testattr="ABC", path=path3, album_id=2)
+            Item(
+                title="and a third", testattr="ABC", path=self.path3, album_id=2
+            )
         )
         # The following adds will create albums #1 and #2
         self.lib.add(Album(album="album", albumtest="xyz"))
-        path4 = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere2", b"art_path_2").decode("utf-8")
+        self.path4 = (
+            self.path_prefix / Path(os.sep) / "somewhere2" / "art_path_2"
         )
-        self.lib.add(Album(album="other album", artpath=path4))
+        self.lib.add(Album(album="other album", artpath=self.path4))
 
         return
 
@@ -85,12 +78,8 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         web.app.config["INCLUDE_PATHS"] = True
         response = self.client.get("/item/1")
         res_json = json.loads(response.data.decode("utf-8"))
-        expected_path = (
-            self.path_prefix + os.sep + os.path.join(b"path_1").decode("utf-8")
-        )
-
         assert response.status_code == 200
-        assert res_json["path"] == expected_path
+        assert res_json["path"] == str(self.path1)
 
         web.app.config["INCLUDE_PATHS"] = False
 
@@ -98,14 +87,9 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         web.app.config["INCLUDE_PATHS"] = True
         response = self.client.get("/album/2")
         res_json = json.loads(response.data.decode("utf-8"))
-        expected_path = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere2", b"art_path_2").decode("utf-8")
-        )
 
         assert response.status_code == 200
-        assert res_json["artpath"] == expected_path
+        assert res_json["artpath"] == str(self.path4)
 
         web.app.config["INCLUDE_PATHS"] = False
 
@@ -226,7 +210,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         """ Note: filesystem separators in the query must be '\' """
 
         response = self.client.get(
-            "/item/query/path:" + self.path_prefix + "\\somewhere\\a"
+            f"/item/query/path:{self.path_prefix}\\somewhere\\a"
         )
         res_json = json.loads(response.data.decode("utf-8"))
 

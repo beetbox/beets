@@ -14,7 +14,6 @@ import beets.library
 # Make sure the development versions of the plugins are used
 from beets import importer, logging
 from beets.ui import commands
-from beets.util import syspath
 
 if TYPE_CHECKING:
     import pytest
@@ -137,13 +136,6 @@ class DummyIO:
         """
         # Using capteesys allows you to see output in the console if the test fails
         return self._capteesys.readouterr().out
-
-
-# Utility.
-
-
-def touch(path):
-    open(syspath(path), "a").close()
 
 
 # Platform mocking.

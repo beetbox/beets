@@ -930,7 +930,7 @@ class TestArtImporter(UseThePlugin):
             config["import"]["move"] = prev_move
 
     def test_do_not_delete_original_if_already_in_place(self):
-        artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
+        artdest = self.i.filepath.parent / "cover.jpg"
         shutil.copyfile(self.art_file, syspath(artdest))
         self.afa_response = fetchart.Candidate(
             logger, source_name="test", path=artdest
