@@ -20,7 +20,7 @@ class MoveTest(BeetsTestCase):
         self.album = self.lib.add_album([self.i])
 
         # Alternate destination directory.
-        self.otherdir = self.temp_dir_path / "testotherdir"
+        self.otherdir = self.temp_path / "testotherdir"
 
     def _move(
         self,
@@ -127,7 +127,7 @@ class MoveTest(BeetsTestCase):
         self.i.load()
         i2.load()
         assert self.i.path == old_i_path
-        assert i2.path.startswith(self.libdir)
+        assert i2.filepath.is_relative_to(self.lib_path)
         assert i2.filepath.exists()
 
     def test_move_item_skips_missing_file(self):

@@ -91,7 +91,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
         mb_albumid = album.mb_albumid
 
         # Reimport from library
-        reimporter = self.setup_importer(import_dir=self.libdir)
+        reimporter = self.setup_importer(import_dir=self.lib_path)
         reimporter.add_choice(importer.Action.APPLY)
         reimporter.run()
 
