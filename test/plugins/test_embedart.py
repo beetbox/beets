@@ -349,14 +349,32 @@ class ArtSimilarityTest(unittest.TestCase):
         compare_stdout=b"",
         compare_stderr=b"",
         convert_status=0,
+        # When the first compare call produces empty/unparseable output,
+        # compare() retries without the phash:colorspaces define. These
+        # args configure that retry call (used by the #6348 regression
+        # tests). If None, no retry is mocked (legacy behavior).
+        retry_status=None,
+        retry_stdout=b"",
+        retry_stderr=b"",
+        retry_convert_status=0,
     ):
         mock_extract.return_value = b"extracted_path"
-        mock_subprocess.Popen.side_effect = [
+        popens = [
             # The `convert` call.
             self._popen(convert_status),
             # The `compare` call.
             self._popen(compare_status, compare_stdout, compare_stderr),
         ]
+        if retry_status is not None:
+            # The retry path runs a second convert + compare (without the
+            # phash:colorspaces define).
+            popens.extend(
+                [
+                    self._popen(retry_convert_status),
+                    self._popen(retry_status, retry_stdout, retry_stderr),
+                ]
+            )
+        mock_subprocess.Popen.side_effect = popens
 
     def test_compare_success_similar(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 0, b"10", b"err")
@@ -386,6 +404,59 @@ class ArtSimilarityTest(unittest.TestCase):
         self, mock_extract, mock_subprocess
     ):
         self._mock_popens(mock_extract, mock_subprocess, 1, b"foo", b"bar")
+        assert self._similarity(20) is None
+
+    def test_compare_empty_output_triggers_retry(
+        self, mock_extract, mock_subprocess
+    ):
+        """Reproduces #6348: ImageMagick ≥7.1.1-44 sometimes emits empty
+        stdout+stderr when invoked with the `phash:colorspaces=sRGB,HCLp`
+        define. compare() should retry the pipeline without the define
+        rather than returning None silently.
+        """
+        # First call: empty stdout+stderr (the #6348 regression).
+        # Retry: a parseable score on stdout.
+        self._mock_popens(
+            mock_extract,
+            mock_subprocess,
+            compare_status=0,
+            compare_stdout=b"",
+            compare_stderr=b"",
+            retry_status=0,
+            retry_stdout=b"10",
+            retry_stderr=b"",
+        )
+        # Score 10 vs threshold 20 → similar (within threshold).
+        assert self._similarity(20)
+        # And the threshold comparison actually fires in the other direction.
+        self._mock_popens(
+            mock_extract,
+            mock_subprocess,
+            compare_status=0,
+            compare_stdout=b"",
+            compare_stderr=b"",
+            retry_status=0,
+            retry_stdout=b"10",
+            retry_stderr=b"",
+        )
+        assert not self._similarity(5)
+
+    def test_compare_empty_output_retry_also_fails(
+        self, mock_extract, mock_subprocess
+    ):
+        """If both the define-based and the no-define retries produce no
+        parseable output, compare() returns None (same as a parse error).
+        """
+        self._mock_popens(
+            mock_extract,
+            mock_subprocess,
+            compare_status=0,
+            compare_stdout=b"",
+            compare_stderr=b"",
+            retry_status=0,
+            retry_stdout=b"",
+            retry_stderr=b"",
+        )
         assert self._similarity(20) is None
 
     def test_convert_failure(self, mock_extract, mock_subprocess):

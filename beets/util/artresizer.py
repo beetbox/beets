@@ -11,6 +11,7 @@ import re
 import subprocess
 from abc import ABC, abstractmethod
 from contextlib import suppress
+from dataclasses import dataclass
 from enum import Enum
 from itertools import chain
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -25,7 +26,7 @@ from beets.util import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Mapping, Sequence
 
 PROXY_URL = "https://images.weserv.nl/"
 
@@ -46,6 +47,21 @@ def resize_url(url: str, maxwidth: int, quality: int = 0) -> str:
 
 class LocalBackendNotAvailableError(Exception):
     pass
+
+
+@dataclass
+class CompareResult:
+    """Outcome of a single PHASH compare pipeline run.
+
+    `score` is None when no parseable PHASH score was produced. The
+    `empty_output` flag distinguishes the #6348 case (ImageMagick ≥7.1.1-44
+    emits empty stdout+stderr with the `phash:colorspaces` define) from a
+    genuine parse error or subprocess failure — only the empty-output
+    case warrants a retry without the define.
+    """
+
+    score: float | None
+    empty_output: bool = False
 
 
 # Singleton pattern that the typechecker understands:
@@ -373,6 +389,15 @@ class IMBackend(LocalBackend):
             "gray",
             "MIFF:-",
         ]
+
+        # The `phash:colorspaces=sRGB,HCLp` define was added in a873a191b
+        # to make PHASH scores deterministic. ImageMagick ≥7.1.1-44
+        # sometimes emits empty stdout+stderr when this define is passed
+        # (see ImageMagick/ImageMagick#5191), which beets interpreted as
+        # a parse error and surfaced to users as "Error while checking
+        # art similarity; skipping" on every track (#6348). We try the
+        # deterministic pipeline first; on empty output we retry without
+        # the define, trading determinism for a usable score.
         compare_cmd = [
             *self.compare_cmd,
             "-define",
@@ -382,6 +407,76 @@ class IMBackend(LocalBackend):
             "-",
             "null:",
         ]
+        result = self._run_compare_pipeline(
+            convert_cmd, compare_cmd, im1, im2, is_windows
+        )
+        if result.empty_output:
+            log.debug(
+                "ImageMagick produced no output with phash:colorspaces "
+                "define; retrying without it (see #6348)"
+            )
+            retry_compare_cmd = [
+                *self.compare_cmd,
+                "-metric",
+                "PHASH",
+                "-",
+                "null:",
+            ]
+            result = self._run_compare_pipeline(
+                convert_cmd, retry_compare_cmd, im1, im2, is_windows
+            )
+
+        if result.score is None:
+            return None
+
+        log.debug("ImageMagick compare score: {}", result.score)
+        return result.score <= compare_threshold
+
+    @staticmethod
+    def _parse_compare_output(
+        returncode: int, stdout: bytes, stderr: bytes
+    ) -> float | None:
+        """Parse the output of `compare -metric PHASH` into a score.
+
+        ImageMagick writes the score to stdout when the images are
+        identical (exit 0) and to stderr when they differ (exit 1). Any
+        other exit code, or output that is not parseable as a float
+        after the IM 7.1.1-44 "(diff)" paren extraction, returns None.
+        """
+        if returncode:
+            if returncode != 1:
+                return None
+            out_str = stderr
+        else:
+            out_str = stdout
+
+        # ImageMagick 7.1.1-44 outputs in a different format.
+        if b"(" in out_str and out_str.endswith(b")"):
+            # Extract diff from "... (diff)".
+            out_str = out_str[out_str.index(b"(") + 1 : -1]
+
+        try:
+            return float(out_str)
+        except ValueError:
+            log.debug("IM output is not a number: {0!r}", out_str)
+            return None
+
+    def _run_compare_pipeline(
+        self,
+        convert_cmd: Sequence[bytes | str],
+        compare_cmd: Sequence[bytes | str],
+        im1: bytes,
+        im2: bytes,
+        is_windows: bool,
+    ) -> CompareResult:
+        """Run the convert | compare pipeline once.
+
+        Returns a `CompareResult` whose `score` is None when no parseable
+        PHASH score was produced, and whose `empty_output` flag indicates
+        whether the compare subprocess itself ran cleanly (exit 0 or 1)
+        but produced no usable output — the #6348 case, which warrants a
+        retry without the colorspaces define.
+        """
         log.debug(
             "comparing images with pipeline {} | {}", convert_cmd, compare_cmd
         )
@@ -415,35 +510,32 @@ class IMBackend(LocalBackend):
                 convert_proc,
                 convert_stderr,
             )
-            return None
+            return CompareResult(None, empty_output=False)
 
         # Check the compare output.
         stdout, stderr = compare_proc.communicate()
-        if compare_proc.returncode:
-            if compare_proc.returncode != 1:
-                log.debug(
-                    "ImageMagick compare failed: {}, {}",
-                    displayable_path(im2),
-                    displayable_path(im1),
-                )
-                return None
-            out_str = stderr
-        else:
-            out_str = stdout
+        if compare_proc.returncode and compare_proc.returncode != 1:
+            log.debug(
+                "ImageMagick compare failed: {}, {}",
+                displayable_path(im2),
+                displayable_path(im1),
+            )
+            return CompareResult(None, empty_output=False)
 
-        # ImageMagick 7.1.1-44 outputs in a different format.
-        if b"(" in out_str and out_str.endswith(b")"):
-            # Extract diff from "... (diff)".
-            out_str = out_str[out_str.index(b"(") + 1 : -1]
-
-        try:
-            phash_diff = float(out_str)
-        except ValueError:
-            log.debug("IM output is not a number: {0!r}", out_str)
-            return None
-
-        log.debug("ImageMagick compare score: {}", phash_diff)
-        return phash_diff <= compare_threshold
+        score = self._parse_compare_output(
+            compare_proc.returncode, stdout, stderr
+        )
+        # Detect the #6348 case: compare exited 0/1 but emitted no
+        # parseable bytes on the stream we read. We only treat the case
+        # where BOTH streams are empty as retry-worthy — non-empty but
+        # unparseable output is a genuine parse error.
+        empty_output = (
+            score is None
+            and compare_proc.returncode in (0, 1)
+            and not stdout.strip()
+            and not stderr.strip()
+        )
+        return CompareResult(score, empty_output=empty_output)
 
     @property
     def can_write_metadata(self) -> bool:
