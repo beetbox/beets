@@ -16,7 +16,7 @@ class ImportFeedsTest(PluginTestCase):
     def setUp(self):
         super().setUp()
         self.importfeeds = ImportFeedsPlugin()
-        self.feeds_dir = self.temp_dir_path / "importfeeds"
+        self.feeds_dir = self.temp_path / "importfeeds"
         self.config["importfeeds"]["dir"] = str(self.feeds_dir)
 
     def test_multi_format_album_playlist(self):

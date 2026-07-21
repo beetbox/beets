@@ -32,7 +32,7 @@ class ConvertPluginHelper(IOMixin, PluginTestHelper):
 
     def setup_beets(self):
         super().setup_beets()
-        self.convert_dest = self.temp_dir_path / "convert_dest"
+        self.convert_dest = self.temp_path / "convert_dest"
         self.config["convert"] = {"dest": str(self.convert_dest)}
 
     def tagged_copy_cmd(self, tag):

@@ -36,8 +36,8 @@ class IPFSPluginTest(PluginTestCase):
             assert found
 
     def test_get_remote_lib_accepts_library_path(self):
-        self.lib.path = self.temp_dir_path / "library.db"
-        remote_dir = self.temp_dir_path / "remotes"
+        self.lib.path = self.temp_path / "library.db"
+        remote_dir = self.temp_path / "remotes"
         remote_dir.mkdir()
 
         remote_lib = library.Library(remote_dir / "joined.db")
