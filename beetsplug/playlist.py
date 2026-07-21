@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import beets
+from beets.dbcore import pathutils
 from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
 
@@ -59,13 +60,16 @@ class PlaylistQuery(InQuery[bytes]):
             relative_to_bytes = beets.util.bytestring_path(relative_to)
 
             for line in f:
-                if line[0] == "#":
-                    # ignore comments, and extm3u extension
+                line = line.rstrip(b"\r\n")
+                if not line or line.startswith(b"#"):
+                    # ignore blank lines, comments, and extm3u extension
                     continue
 
                 paths.append(
-                    beets.util.normpath(
-                        os.path.join(relative_to_bytes, line.rstrip())
+                    pathutils.normalize_path_for_db(
+                        beets.util.normpath(
+                            os.path.join(relative_to_bytes, line)
+                        )
                     )
                 )
             f.close()
