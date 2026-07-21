@@ -16,15 +16,15 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
             if k in os.environ:
                 del os.environ[k]
 
-        temp_dir = self.temp_dir.decode()
+        temp_dir = self.temp_path
 
-        self.config_path = os.path.join(temp_dir, "config.yaml")
+        self.config_path = str(temp_dir / "config.yaml")
         with open(self.config_path, "w") as file:
             file.write("library: lib\n")
             file.write("option: value\n")
             file.write("password: password_value")
 
-        self.cli_config_path = os.path.join(temp_dir, "cli_config.yaml")
+        self.cli_config_path = str(temp_dir / "cli_config.yaml")
         with open(self.cli_config_path, "w") as file:
             file.write("option: cli overwrite")
 
