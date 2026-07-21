@@ -29,6 +29,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -124,6 +125,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -204,6 +206,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -281,6 +284,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -357,6 +361,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -430,6 +435,7 @@ Other changes
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -478,6 +484,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -535,6 +542,7 @@ Other changes
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -564,6 +572,7 @@ Other changes
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -623,6 +632,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -743,6 +753,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -796,6 +807,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -897,6 +909,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -1017,6 +1030,7 @@ Other changes
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -1054,6 +1068,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -1138,6 +1153,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -1181,6 +1197,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -1407,6 +1424,7 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
@@ -1627,6 +1645,7 @@ Other new things
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
 
 - Remove deprecated :doc:`plugins/acousticbrainz`, :doc:`plugins/absubmit`, and :doc:`plugins/beatport` plugin documentation. The AcousticBrainz service has been permanently shut down. :bug:`5780`
 
