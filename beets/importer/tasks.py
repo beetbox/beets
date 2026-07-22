@@ -119,19 +119,24 @@ def resolve_upgrade(
     Returns `(kept_new_items, superseded_old_items)`. New items with no
     matching old item are always kept (they aren't duplicates of
     anything). New items matching an old item are kept only if their
-    bitrate is higher than the old item's; otherwise they're dropped
-    and the old item is left untouched.
+    bitrate is higher than every old item's with the same key;
+    otherwise they're dropped and the old items are left untouched.
+    When multiple old items share a key, all of them are superseded
+    when the new item is better.
     """
-    by_key = {_item_dup_key(i, keys): i for i in old_items}
+    by_key: dict[tuple[Any, ...], list[library.Item]] = defaultdict(list)
+    for item in old_items:
+        by_key[_item_dup_key(item, keys)].append(item)
+
     kept = []
     superseded = []
     for new in new_items:
-        old = by_key.get(_item_dup_key(new, keys))
-        if old is None:
+        old_group = by_key.get(_item_dup_key(new, keys))
+        if old_group is None:
             kept.append(new)
-        elif new.bitrate > old.bitrate:
+        elif new.bitrate > max(o.bitrate for o in old_group):
             kept.append(new)
-            superseded.append(old)
+            superseded.extend(old_group)
     return kept, superseded
 
 

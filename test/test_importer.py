@@ -1365,6 +1365,26 @@ class ResolveUpgradeTest(unittest.TestCase):
         assert kept == [new_a, new_b]
         assert superseded == [old_a]
 
+    def test_duplicate_keys_all_old_superseded_when_new_is_best(self):
+        """When multiple old items share a key and the new item beats
+        all of them, every old copy should be superseded."""
+        old_a = self._item(bitrate=128000)
+        old_b = self._item(bitrate=96000)
+        new = self._item(bitrate=320000)
+        kept, superseded = resolve_upgrade([new], [old_a, old_b], DUP_KEYS)
+        assert kept == [new]
+        assert sorted(superseded, key=lambda i: i.bitrate) == [old_b, old_a]
+
+    def test_duplicate_keys_rejected_when_new_is_not_best(self):
+        """When an old item with the same key has bitrate >= the new
+        item, the new item should be dropped to prevent a downgrade."""
+        old_a = self._item(bitrate=128000)
+        old_b = self._item(bitrate=320000)
+        new = self._item(bitrate=256000)
+        kept, superseded = resolve_upgrade([new], [old_a, old_b], DUP_KEYS)
+        assert kept == []
+        assert superseded == []
+
 
 @patch(
     "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
