@@ -1,7 +1,6 @@
 import importlib
 import itertools
 import logging
-import os
 import pkgutil
 import sys
 from typing import ClassVar
@@ -101,7 +100,7 @@ class TestEvents(PluginImportHelper):
             if not msg.startswith("Sending event:")
         ]
         assert logs == [
-            f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
+            f"Album: {self.import_path / 'album'}",
             f"  {displayable_path(self.import_media[0].path)}",
             f"  {displayable_path(self.import_media[1].path)}",
         ]

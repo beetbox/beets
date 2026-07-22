@@ -935,9 +935,13 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
     return deferred_error
 
 
+def _get_logging_handler() -> logging.Handler:
+    return logging.StreamHandler()
+
+
 def _bootstrap_logging() -> None:
     if not log.handlers:
-        handler = logging.StreamHandler()
+        handler = _get_logging_handler()
         handler.setFormatter(
             logging.LegacyFormatter("%(legacy_prefix)s%(message)s")
         )

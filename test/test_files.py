@@ -21,7 +21,7 @@ class MoveTest(BeetsTestCase):
 
         # make a temporary file
         self.temp_music_file_name = "temp.mp3"
-        self.path = self.temp_dir_path / self.temp_music_file_name
+        self.path = self.temp_path / self.temp_music_file_name
         shutil.copy(self.resource_path, self.path)
 
         # add it to a temporary library
@@ -37,7 +37,7 @@ class MoveTest(BeetsTestCase):
         self.i.title = "three"
         self.dest = self.lib_path / "one" / "two" / "three.mp3"
 
-        self.otherdir = self.temp_dir_path / "testotherdir"
+        self.otherdir = self.temp_path / "testotherdir"
 
     def test_move_arrives(self):
         self.i.move()
@@ -184,14 +184,13 @@ class MoveTest(BeetsTestCase):
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_from_symlink(self):
-        link_path = join(self.temp_dir, b"temp_link.mp3")
-        link_source = join("./", self.temp_music_file_name)
-        os.symlink(syspath(link_source), syspath(link_path))
+        link_path = self.temp_path / "temp_link.mp3"
+        link_path.symlink_to(self.temp_music_file_name)
         self.i.path = link_path
         self.i.move(operation=MoveOperation.HARDLINK)
 
-        s1 = os.stat(syspath(self.path))
-        s2 = os.stat(syspath(self.dest))
+        s1 = self.path.stat()
+        s2 = self.dest.stat()
         assert (s1[stat.ST_INO], s1[stat.ST_DEV]) == (
             s2[stat.ST_INO],
             s2[stat.ST_DEV],
@@ -214,7 +213,7 @@ class AlbumFileTest(BeetsTestCase):
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Alternate destination dir.
-        self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
+        self.otherdir = os.fsencode(self.temp_path / "testotherdir")
 
     def test_albuminfo_move_changes_paths(self):
         self.ai.album = "newAlbumName"
@@ -281,7 +280,7 @@ class ArtFileTest(BeetsTestCase):
         self.ai.artpath = art_bytes
         self.ai.store()
         # Alternate destination dir.
-        self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
+        self.otherdir = os.fsencode(self.temp_path / "testotherdir")
 
     def test_art_deleted_when_items_deleted(self):
         assert self.art.exists()
@@ -315,8 +314,8 @@ class ArtFileTest(BeetsTestCase):
     def test_setart_copies_image(self):
         util.remove(self.art)
 
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -331,8 +330,8 @@ class ArtFileTest(BeetsTestCase):
         util.remove(self.art)
 
         # Original art.
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -345,8 +344,8 @@ class ArtFileTest(BeetsTestCase):
         assert ai.art_filepath.exists()
 
     def test_setart_to_existing_but_unset_art_works(self):
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -362,8 +361,8 @@ class ArtFileTest(BeetsTestCase):
         assert ai.art_filepath.exists()
 
     def test_setart_to_conflicting_file_replaces_it(self):
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -380,8 +379,8 @@ class ArtFileTest(BeetsTestCase):
         assert artdest == ai.artpath
 
     def test_setart_replaces_old_art_at_different_path(self):
-        newart = os.path.join(self.libdir, b"newart.png")
-        touch(newart)
+        newart = self.lib_path / "newart.png"
+        newart.touch()
         i2 = item()
         i2.path = self.i.path
         i2.artist = "someArtist"
@@ -394,8 +393,8 @@ class ArtFileTest(BeetsTestCase):
         assert os.path.exists(syspath(old_artpath))
 
         # Set new art with a different extension.
-        another_art = os.path.join(self.libdir, b"another.jpg")
-        touch(another_art)
+        another_art = self.lib_path / "another.jpg"
+        another_art.touch()
         ai.set_art(another_art)
 
         # Old art should be removed.
@@ -405,9 +404,9 @@ class ArtFileTest(BeetsTestCase):
     def test_setart_sets_permissions(self):
         util.remove(self.art)
 
-        newart = os.path.join(self.libdir, b"newart.jpg")
-        touch(newart)
-        os.chmod(syspath(newart), 0o400)  # read-only
+        newart = self.lib_path / "newart.jpg"
+        newart.touch()
+        newart.chmod(0o400)  # read-only
 
         try:
             i2 = item()
@@ -494,8 +493,8 @@ class RemoveTest(BeetsTestCase):
         assert self.lib_path.exists()
 
     def test_removing_last_item_in_album_with_albumart_prunes_dir(self):
-        artfile = os.path.join(self.temp_dir, b"testart.jpg")
-        touch(artfile)
+        artfile = self.temp_path / "testart.jpg"
+        artfile.touch()
         self.ai.set_art(artfile)
         self.ai.store()
 
