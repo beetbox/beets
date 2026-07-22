@@ -942,15 +942,45 @@ class ArchiveImportTask(SentinelImportTask):
 
             # Adjust the files' mtimes to match the information from the
             # archive. Inspired by: https://stackoverflow.com/q/9813243
-            for f in archive.infolist():
-                # The date_time will need to adjusted otherwise
-                # the item will have the current date_time of extraction.
-                # The (0, 0, -1) is added to date_time because the
-                # function time.mktime expects a 9-element tuple.
-                # The -1 indicates that the DST flag is unknown.
-                date_time = time.mktime((*f.date_time, 0, 0, -1))
-                fullpath = os.path.join(extract_to, f.filename)
-                os.utime(fullpath, (date_time, date_time))
+            #
+            # tarfile.TarFile and py7zr.SevenZipFile don't implement
+            # infolist()/.date_time (those are zipfile.ZipInfo-specific
+            # attributes; the ZipFileCompat shim that used to provide
+            # them on TarFile was removed). Handle their own member-
+            # listing APIs instead; ZipFile and RarFile (whose
+            # infolist() is intentionally zipfile-compatible) keep
+            # using the existing path. See GH #5664.
+            import tarfile
+
+            try:
+                from py7zr import SevenZipFile
+            except ImportError:
+                SevenZipFile = None
+
+            if isinstance(archive, tarfile.TarFile):
+                for member in archive.getmembers():
+                    # TarInfo.mtime is already a Unix timestamp, unlike
+                    # ZipInfo.date_time's 6-element tuple.
+                    fullpath = os.path.join(extract_to, member.name)
+                    os.utime(fullpath, (member.mtime, member.mtime))
+            elif SevenZipFile is not None and isinstance(archive, SevenZipFile):
+                for info in archive.list():
+                    # FileInfo.creationtime is a timezone-aware
+                    # datetime, unlike ZipInfo.date_time's 6-element
+                    # tuple.
+                    mtime = info.creationtime.timestamp()
+                    fullpath = os.path.join(extract_to, info.filename)
+                    os.utime(fullpath, (mtime, mtime))
+            else:
+                for f in archive.infolist():
+                    # The date_time will need to adjusted otherwise
+                    # the item will have the current date_time of extraction.
+                    # The (0, 0, -1) is added to date_time because the
+                    # function time.mktime expects a 9-element tuple.
+                    # The -1 indicates that the DST flag is unknown.
+                    date_time = time.mktime((*f.date_time, 0, 0, -1))
+                    fullpath = os.path.join(extract_to, f.filename)
+                    os.utime(fullpath, (date_time, date_time))
 
         finally:
             archive.close()

@@ -222,8 +222,11 @@ class TestRmTemp(TestHelper):
 
 
 class TestImportZip(AsIsImporterMixin, ImportHelper):
+    def create_archive(self):
+        return create_archive(self)
+
     def test_import_zip(self):
-        zip_path = create_archive(self)
+        zip_path = self.create_archive()
         assert len(self.lib.items()) == 0
         assert len(self.lib.albums()) == 0
 
