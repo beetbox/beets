@@ -237,3 +237,27 @@ ca8e9f69a8a0254aa767dc86f6d808d02f6af05d
 b1701c2e12b2de8e5462affe46ecc6816a5fc508
 # typing: type beets.dbcore.types
 ea3d6af6169d33be009b86bf5607baae7cf9652a
+# Fix #6177, remove derived types, refactor coalesce tracks
+9efe87101ce03706660129633e03147a222765cf
+# typing: type beets.library.exceptions
+fcee48fb0a11003afab1f4eb7334dca1e4842606
+# typing: type beets.library.queries
+c6b87e869e44bd53fccc9603b682351c96612583
+# dbcore: rename Database._fetch to Database.get_results
+856087258b3466f09d557a054e4b7cc4cdc25638
+# typing: type beets.library.library
+f167dc29e41439e342c04c073758102b2a2e1af8
+# typing: add return types to beets.library.models
+8949562ef8f4e83ef281674c6125b041991d3d26
+# typing: type models in beets.library.models
+9b375d0b2d2dc9388892f1b901aae67ab0ad8290
+# typing: type the rest of beets.library.models
+9022cb5ed7fddf60c1156dc3ca7e3a540dc8f7f2
+# Replace ImporterMixin.import_dir attribute with ImporterMixin.import_path
+7970a90214fcd64ab5fef1c71b7bf1413ad6ce86
+# Replace TestHelper.libdir attribute with TestHelper.lib_path
+dc2826fa4b32b625eb4ac9d71934176edde2443e
+# Replace PathsMixin.temp_dir attribute with PathsMixin.temp_dir_path
+2e9ace7b20e776ad10127b2f6ac76791e2a19704
+# Rename PathsMixin.temp_dir_path to PathsMixin.temp_path for consistency
+d24c0d341ec6074c343cd8054083fe358da8fa14

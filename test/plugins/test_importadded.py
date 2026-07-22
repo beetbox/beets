@@ -81,7 +81,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
-        self.setup_importer(import_dir=self.libdir)
+        self.setup_importer(import_dir=self.lib_path)
         self.importer.run()
         # Verify the reimported items
         album = self.lib.albums().get()
@@ -123,7 +123,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
-        self.setup_importer(import_dir=self.libdir, singletons=True)
+        self.setup_importer(import_dir=self.lib_path, singletons=True)
         self.importer.run()
         # Verify the reimported items
         items_added_after = {item.path: item.added for item in self.lib.items()}

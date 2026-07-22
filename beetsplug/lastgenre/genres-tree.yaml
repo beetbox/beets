@@ -267,7 +267,7 @@
     - disco:
         - cosmic disco
         - disco polo
-            - euro disco
+        - euro disco
         - italo disco
         - nu disco
         - space disco
@@ -629,7 +629,7 @@
         - deep funk
         - go-go
         - p-funk
-        - synth funk
+        - synth funk:
             - minneapolis sound
     - soul:
         - blue-eyed soul

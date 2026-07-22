@@ -200,8 +200,7 @@ class IPFSPlugin(BeetsPlugin):
             lib_name = args[1]
         else:
             lib_name = _hash
-        lib_root = os.path.dirname(lib.path)
-        remote_libs = os.path.join(lib_root, b"remotes")
+        remote_libs = self._remote_libs_path(lib)
         if not os.path.exists(remote_libs):
             try:
                 os.makedirs(remote_libs)
@@ -255,9 +254,12 @@ class IPFSPlugin(BeetsPlugin):
         rlib = self.get_remote_lib(lib)
         return rlib.albums(args)
 
+    def _remote_libs_path(self, lib):
+        lib_root = os.path.dirname(os.fsencode(lib.path))
+        return os.path.join(lib_root, b"remotes")
+
     def get_remote_lib(self, lib):
-        lib_root = os.path.dirname(lib.path)
-        remote_libs = os.path.join(lib_root, b"remotes")
+        remote_libs = self._remote_libs_path(lib)
         path = os.path.join(remote_libs, b"joined.db")
         if not os.path.isfile(path):
             raise OSError

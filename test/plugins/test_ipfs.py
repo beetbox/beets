@@ -1,7 +1,7 @@
 import os
 from unittest.mock import Mock, patch
 
-from beets import util
+from beets import library, util
 from beets.test import _common
 from beets.test.helper import PluginTestCase
 from beetsplug.ipfs import IPFSPlugin
@@ -34,6 +34,21 @@ class IPFSPluginTest(PluginTestCase):
                     assert check_item.title == want_item.title
                     found = True
             assert found
+
+    def test_get_remote_lib_accepts_library_path(self):
+        self.lib.path = self.temp_path / "library.db"
+        remote_dir = self.temp_path / "remotes"
+        remote_dir.mkdir()
+
+        remote_lib = library.Library(remote_dir / "joined.db")
+        remote_lib._close()
+
+        ipfs = IPFSPlugin()
+        added_lib = ipfs.get_remote_lib(self.lib)
+        try:
+            assert added_lib.path == remote_dir / "joined.db"
+        finally:
+            added_lib._close()
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(3)]
