@@ -9,7 +9,7 @@ import time
 from collections import defaultdict
 from collections.abc import Callable
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Any, AnyStr
+from typing import TYPE_CHECKING, Any, AnyStr, Protocol, cast
 
 import mediafile
 
@@ -814,7 +814,39 @@ class SentinelImportTask(ImportTask):
         pass
 
 
-ArchiveHandler = tuple[Callable[[util.StrPath], bool], Callable[..., Any]]
+class ArchiveMember(Protocol):
+    """The subset of ``zipfile.ZipInfo`` that
+    :meth:`ArchiveImportTask.extract` reads from each archive member.
+
+    Declared as read-only properties so the protocol is covariant: a member
+    exposing a narrower ``date_time`` (e.g. ``ZipInfo``'s six-int tuple) still
+    conforms.
+    """
+
+    @property
+    def filename(self) -> str: ...
+
+    @property
+    def date_time(self) -> tuple[int, ...]: ...
+
+
+class Archive(Protocol):
+    """The ``zipfile.ZipFile``-compatible interface that every archive handler
+    must expose for :meth:`ArchiveImportTask.extract`.
+
+    Typing the handler this way (rather than ``Any``) lets mypy verify each
+    registered handler still provides ``extractall``/``infolist``/``close`` —
+    an early warning if an upstream archive API changes.
+    """
+
+    def extractall(self, path: util.StrPath) -> None: ...
+
+    def infolist(self) -> Sequence[ArchiveMember]: ...
+
+    def close(self) -> None: ...
+
+
+ArchiveHandler = tuple[Callable[[util.StrPath], bool], Callable[..., Archive]]
 
 
 class _TarMemberInfo:
@@ -834,6 +866,13 @@ class TarArchive(tarfile.TarFile):
     handlers. ``TarFile.infolist`` existed in Python 2 via ``ZipFileCompat``
     but was removed in Python 3.
     """
+
+    @classmethod
+    def open(cls, *args: Any, **kwargs: Any) -> TarArchive:
+        # ``TarFile.open`` builds an instance of ``cls`` at runtime, so this
+        # really returns a ``TarArchive``; typeshed annotates it as the base
+        # ``TarFile`` (which lacks ``infolist``), so narrow it back here.
+        return cast(TarArchive, super().open(*args, **kwargs))
 
     def infolist(self) -> list[_TarMemberInfo]:
         return [_TarMemberInfo(m) for m in self.getmembers() if m.isfile()]
@@ -922,8 +961,9 @@ class ArchiveImportTask(SentinelImportTask):
 
         Each handler is a `(path_test, ArchiveClass)` tuple. `path_test`
         is a function that returns `True` if the given path can be
-        handled by `ArchiveClass`. `ArchiveClass` is a class that
-        implements the same interface as `tarfile.TarFile`.
+        handled by `ArchiveClass`. `ArchiveClass` is a callable that opens
+        the archive and returns an object conforming to the `Archive`
+        protocol (`extractall`/`infolist`/`close`).
         """
         _handlers: list[ArchiveHandler] = []
         from zipfile import ZipFile, is_zipfile
@@ -1003,10 +1043,14 @@ class ArchiveImportTask(SentinelImportTask):
             for f in archive.infolist():
                 # The date_time will need to adjusted otherwise
                 # the item will have the current date_time of extraction.
-                # The (0, 0, -1) is added to date_time because the
-                # function time.mktime expects a 9-element tuple.
-                # The -1 indicates that the DST flag is unknown.
-                date_time = time.mktime((*f.date_time, 0, 0, -1))
+                # date_time is (year, month, day, hour, minute, second); the
+                # trailing (0, 0, -1) pads it to the 9-element tuple
+                # time.mktime expects. The -1 indicates the DST flag is
+                # unknown.
+                year, month, day, hour, minute, second = f.date_time
+                date_time = time.mktime(
+                    (year, month, day, hour, minute, second, 0, 0, -1)
+                )
                 fullpath = os.path.join(extract_to, f.filename)
                 os.utime(fullpath, (date_time, date_time))
 
