@@ -174,7 +174,16 @@ class IPFSPlugin(BeetsPlugin):
         # This uses a relative path, hence we cannot use util.syspath(_hash,
         # prefix=True). However, that should be fine since the hash will not
         # exceed MAX_PATH.
-        shutil.rmtree(util.syspath(_hash, prefix=False))
+        download_path = util.syspath(_hash, prefix=False)
+        # `ipfs get` produces a directory for a multi-file IPFS object,
+        # but a plain file for a single-file one -- which one depends
+        # entirely on what was originally added to IPFS at that hash,
+        # not something this plugin controls or can predict beforehand.
+        # rmtree() only handles the directory case. See GH #2555.
+        if os.path.isdir(download_path):
+            shutil.rmtree(download_path)
+        else:
+            os.remove(download_path)
         return None
 
     def ipfs_publish(self, lib):

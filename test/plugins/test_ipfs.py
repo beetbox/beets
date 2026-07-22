@@ -35,6 +35,39 @@ class IPFSPluginTest(PluginTestCase):
                     found = True
             assert found
 
+    def test_get_from_hash_cleans_up_single_file_download(self):
+        """
+        Regression test for
+        https://github.com/beetbox/beets/issues/2555
+
+        `ipfs get <hash>` produces a plain file (not a directory) for
+        a single-file IPFS object; which one it produces depends on
+        what was originally added to IPFS at that hash. Cleanup must
+        not assume it's always a directory and unconditionally call
+        shutil.rmtree(), which raises OSError: Not a directory on a
+        plain file, as in the issue's traceback.
+        """
+        test_hash = "QmTestHashForASingleFileDownload"
+        cwd = os.getcwd()
+        os.chdir(self.temp_path)
+        try:
+            # Simulate what `ipfs get` (mocked out above) would have
+            # produced on disk for a single-file IPFS object: a plain
+            # file named after the hash, not a directory.
+            with open(test_hash, "w") as f:
+                f.write("fake downloaded content")
+
+            ipfs = IPFSPlugin()
+            with patch(
+                "beetsplug.ipfs.ui.commands.TerminalImportSession"
+            ) as mock_session_cls:
+                mock_session_cls.return_value.run = Mock()
+                ipfs.ipfs_get_from_hash(self.lib, test_hash)
+
+            assert not os.path.exists(test_hash)
+        finally:
+            os.chdir(cwd)
+
     def test_get_remote_lib_accepts_library_path(self):
         self.lib.path = self.temp_path / "library.db"
         remote_dir = self.temp_path / "remotes"
