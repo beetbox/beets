@@ -113,9 +113,9 @@ get it right:
     beets in a terminal emulator such as `Windows Terminal`_ or cmder_, or in a
     Unix-like shell such as Git Bash.
 
-.. _windows terminal: https://aka.ms/terminal
-
 .. _cmder: https://cmder.app/
+
+.. _windows terminal: https://aka.ms/terminal
 
 **Bonus: Windows Context Menu Integration**
 
