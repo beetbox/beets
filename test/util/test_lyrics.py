@@ -1,5 +1,6 @@
 import textwrap
 
+from beets.library import Item
 from beets.util.lyrics import Lyrics
 
 
@@ -16,8 +17,10 @@ class TestLyrics:
         assert lyrics.language is None
         assert lyrics.translation_language is None
 
-    def test_none_text(self):
-        lyrics = Lyrics(None)
+    def test_from_item_without_lyrics(self):
+        item = Item(lyrics=None)
+
+        lyrics = Lyrics.from_item(item)
 
         assert lyrics.text == ""
         assert not lyrics.synced
