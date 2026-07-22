@@ -169,6 +169,14 @@ def input_(prompt=None):
         resp = input()
     except EOFError:
         raise UserError("stdin stream ended while input required")
+    except UnicodeDecodeError:
+        # Can happen with malformed terminal input bytes (e.g. an
+        # invalid partial UTF-8 sequence from a terminal/paste glitch).
+        # Exit cleanly via UserError instead of propagating an
+        # unhandled UnicodeDecodeError, which aborts the whole import
+        # session with a raw traceback rather than a readable message.
+        # See GH #3651.
+        raise UserError("input could not be decoded as UTF-8")
 
     return resp
 

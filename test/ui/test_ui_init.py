@@ -4,6 +4,7 @@ import unittest
 from copy import deepcopy
 from pathlib import Path
 from random import random
+from unittest import mock
 
 import pytest
 
@@ -18,6 +19,28 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
 
     def _print_helper2(self, s, prefix):
         print(prefix, s)
+
+    def test_input_unicode_decode_error_raises_user_error(self):
+        """
+        Regression test for
+        https://github.com/beetbox/beets/issues/3651
+
+        Malformed terminal input bytes (e.g. from a terminal/paste
+        glitch) can make the builtin input() raise UnicodeDecodeError.
+        This must be converted to a clean UserError -- matching the
+        existing handling for EOFError just above it -- rather than
+        propagating an unhandled UnicodeDecodeError and crashing the
+        whole import session.
+        """
+
+        def raise_unicode_decode_error(*args, **kwargs):
+            raise UnicodeDecodeError(
+                "utf-8", b"\xe3\x81\x82\x82", 3, 4, "invalid continuation byte"
+            )
+
+        with mock.patch("builtins.input", side_effect=raise_unicode_decode_error):
+            with pytest.raises(UserError):
+                ui.input_("Artist:")
 
     def test_input_select_objects(self):
         full_items = ["1", "2", "3", "4", "5"]
