@@ -88,26 +88,6 @@ def _dup_items(obj: library.Album | library.Item) -> list[library.Item]:
     return [obj]
 
 
-def _dup_album_ids(
-    found_duplicates: Iterable[library.Album | library.Item],
-) -> list[int]:
-    """IDs of the existing albums implicated by a set of found duplicates.
-
-    For album-level duplicates, that's the album itself; for
-    singleton-level duplicates, it's the album the matched item
-    belongs to (if any). Used so an upgrade keeps folding kept items
-    into the album that was actually detected as a duplicate, even
-    when none of its individual tracks end up superseded (e.g. the
-    new import only adds tracks that had no old counterpart).
-    """
-    ids = []
-    for d in found_duplicates:
-        album_id = d.id if isinstance(d, library.Album) else d.album_id
-        if album_id:
-            ids.append(album_id)
-    return list(dict.fromkeys(ids))
-
-
 def resolve_upgrade(
     new_items: list[library.Item],
     old_items: list[library.Item],
@@ -138,6 +118,45 @@ def resolve_upgrade(
             kept.append(new)
             superseded.extend(old_group)
     return kept, superseded
+
+
+def resolve_upgrade_target(
+    new_items: list[library.Item],
+    found_duplicates: Iterable[library.Album | library.Item],
+    keys: list[str],
+) -> tuple[list[library.Item], list[library.Item], list[int]]:
+    """Resolve an upgrade against each duplicate album independently
+    and pick a single target to graft the result into.
+
+    A new item can only ever join one physical album, so when
+    `found_duplicates` implicates more than one distinct old album
+    (e.g. two existing, differently-encoded copies of the same
+    release), we can't merge the decisions: comparing a new track
+    against the *best* candidate across every duplicate album, as
+    `resolve_upgrade` does for a single old-item pool, would silently
+    attribute a supersession to the wrong album. Instead each
+    duplicate album is evaluated on its own, as if it were the only
+    duplicate, and only the one it overlaps with the most (by
+    superseded-track count, then kept-track count, then lowest album
+    id for a deterministic tie-break) is used; every other candidate
+    album is left completely untouched.
+
+    Returns `(kept, superseded, old_album_ids)` for the chosen target
+    album alone.
+    """
+    best_rank: tuple[int, int, int] | None = None
+    best: tuple[list[library.Item], list[library.Item], int | None] = ([], [], None)
+    for dup in found_duplicates:
+        old_items = _dup_items(dup)
+        kept, superseded = resolve_upgrade(new_items, old_items, keys)
+        album_id = dup.id if isinstance(dup, library.Album) else dup.album_id
+        rank = (len(superseded), len(kept), -(album_id or 0))
+        if best_rank is None or rank > best_rank:
+            best_rank = rank
+            best = (kept, superseded, album_id)
+
+    kept, superseded, album_id = best
+    return kept, superseded, [album_id] if album_id else []
 
 
 class BaseImportTask:

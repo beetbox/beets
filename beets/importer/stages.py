@@ -14,9 +14,7 @@ from .tasks import (
     ImportTaskFactory,
     SentinelImportTask,
     SingletonImportTask,
-    _dup_album_ids,
-    _dup_items,
-    resolve_upgrade,
+    resolve_upgrade_target,
 )
 
 if TYPE_CHECKING:
@@ -354,18 +352,15 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
                     # too. `_apply_choice` re-applies it later, which is
                     # harmless (metadata application is idempotent).
                     task.apply_metadata()
-                old_items = [i for d in found_duplicates for i in _dup_items(d)]
                 keys = config["import"]["duplicate_keys"]["item"].as_str_seq()
-                kept, superseded = resolve_upgrade(
-                    task.imported_items(), old_items, keys
+                kept, superseded, old_album_ids = resolve_upgrade_target(
+                    task.imported_items(), found_duplicates, keys
                 )
                 if not kept:
                     log.debug("upgrade: no track was an improvement, declining")
                     task.duplicate_action = DuplicateAction.SKIP
                 else:
-                    task.apply_upgrade(
-                        kept, superseded, _dup_album_ids(found_duplicates)
-                    )
+                    task.apply_upgrade(kept, superseded, old_album_ids)
 
             session.log_choice(task, True)
 
