@@ -21,9 +21,8 @@ New features
 - :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
   specifying a reStructuredText output directory, semantically equivalent to
   ``-r, --write-rest``. :bug:`2806`
-- A database backup is now automatically created before running schema
-  migrations. Control with the ``create_backup_before_migrations`` option
-  (default: yes).
+- A database backup is now automatically created before running schema (default:
+  yes).
 - :doc:`plugins/tidal`: Add cover art support. Album metadata now includes
   ``cover_art_url`` from Tidal's ``coverArt`` relationship, which the
   :doc:`plugins/fetchart` plugin can retrieve.
@@ -54,6 +53,14 @@ New features
   various other sources.
 - :doc:`plugins/replaygain`: Add a ``metaflac`` backend that computes ReplayGain
   for FLAC files using the ``metaflac`` command-line tool. :bug:`1203`
+- :ref:`duplicate_tracks`: When enabled, each track of an album import is
+  checked against the library using the chosen candidate's metadata and the
+  :ref:`duplicate_keys` ``item`` fields, and matches are resolved together with
+  the whole-album duplicate check via the :ref:`duplicate_tracks_action` option
+  (falling back to :ref:`duplicate_action` when unset), including per-track
+  decisions. ``skip`` drops already-imported tracks and adds the remaining new
+  tracks to the existing album, completing a partially-imported album. Disabled
+  by default.
 
 Bug fixes
 ~~~~~~~~~

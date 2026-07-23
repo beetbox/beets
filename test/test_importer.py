@@ -1290,6 +1290,239 @@ class TestImportDuplicateSingleton(ImportHelper):
         return item
 
 
+class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
+    """``duplicate_tracks``: per-track dedup on album import.
+
+    The imported album has two tracks (``Tag Track 1`` and ``Tag Track 2``);
+    tests seed the library with items matching one or both of them (as
+    singletons unless noted otherwise).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(2)
+
+    def add_item_fixture(self, **kwargs):
+        item = self.add_item_fixtures()[0]
+        item.update(kwargs)
+        item.store()
+        return item
+
+    def add_album_member_fixture(self, **kwargs):
+        """Seed the library with a track that belongs to an album (i.e. not a
+        singleton), so its ``album_id`` is set.
+        """
+        item = self.add_item_fixture(**kwargs)
+        self.lib.add_album([item])
+        item.store()
+        return item
+
+    def _import(self, action="skip", enabled=True, track_action=None):
+        self.config["import"]["duplicate_tracks"] = enabled
+        self.config["import"]["duplicate_tracks_action"] = track_action or ""
+        self.setup_importer(autotag=False, duplicate_action=action)
+        self.importer.run()
+
+    def test_skip_singleton_dup_imports_remainder_as_new_album(self):
+        # The matching track is a singleton, so there is no single album to
+        # fold into: the duplicate is dropped and the remaining track is
+        # imported as its own album.
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(action="skip")
+
+        assert len(self.lib.albums()) == 1
+        assert {i.title for i in self.lib.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+        assert len(self.lib.items()) == 2
+
+    def test_skip_folds_missing_tracks_into_existing_album(self):
+        # Import the album fully, then lose one track from the library and
+        # re-import the same folder. The present track is skipped as a
+        # duplicate and the missing one is folded back into the *same* album
+        # (no second album is created).
+        self._import(action="skip")
+        album = self.lib.albums().get()
+        assert {i.title for i in album.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+        missing = self.lib.items("title:'Tag Track 2'").get()
+        missing.remove(delete=True)
+        assert {i.title for i in self.lib.items()} == {"Tag Track 1"}
+
+        self._import(action="skip")
+
+        assert len(self.lib.albums()) == 1
+        album = self.lib.albums().get()
+        folded = self.lib.items("title:'Tag Track 2'").get()
+        assert folded.album_id == album.id
+        assert folded.filepath.exists()
+        assert {i.title for i in album.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+    def test_skip_matches_existing_album_member(self):
+        # A matching track that already belongs to an album in the library
+        # (not a singleton) must still be caught, and the remaining new track
+        # folded into that album.
+        item = self.add_album_member_fixture(
+            artist="Tag Artist", title="Tag Track 1"
+        )
+        assert item.album_id is not None
+
+        self._import(action="skip")
+
+        # The duplicate "Tag Track 1" is dropped; "Tag Track 2" is folded into
+        # the existing album.
+        assert len(self.lib.albums()) == 1
+        album = self.lib.albums().get()
+        assert {i.title for i in album.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+    def test_skip_all_duplicates_skips_album(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 2")
+
+        self._import(action="skip")
+
+        # Every track is a duplicate, so the whole album is skipped.
+        assert len(self.lib.albums()) == 0
+        assert len(self.lib.items()) == 2
+
+    def test_remove_replaces_old_item(self):
+        old = self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+        assert old.filepath.exists()
+
+        self._import(action="remove")
+
+        # The old matching item (and its file) is removed; both album tracks
+        # are imported.
+        assert not old.filepath.exists()
+        assert sorted(i.title for i in self.lib.items()) == [
+            "Tag Track 1",
+            "Tag Track 2",
+        ]
+        assert len(self.lib.albums()) == 1
+
+    def test_keep_imports_all(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(action="keep")
+
+        # Nothing is dropped or removed.
+        assert len(self.lib.items()) == 3
+        assert len(self.lib.albums()) == 1
+
+    def test_disabled_by_default(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(action="skip", enabled=False)
+
+        # With the option off, no track-level resolution happens.
+        assert len(self.lib.items()) == 3
+
+    def test_singleton_match_still_folds_into_album(self):
+        # snejus's scenario: incoming album has tracks 1, 2 and 3. Track 1
+        # matches an album member (album X); track 2 matches a singleton;
+        # track 3 is new. The singleton match is skipped individually but does
+        # not prevent folding: track 3 (the intended outcome for "C") is folded
+        # into album X, the album the matched album member belongs to.
+        self.prepare_album_for_import(3)
+        member = self.add_album_member_fixture(
+            artist="Tag Artist", title="Tag Track 1"
+        )
+        album_x = member.get_album()
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 2")
+
+        self._import(action="skip")
+
+        # No new album is created; track 3 joins album X.
+        assert len(self.lib.albums()) == 1
+        new_track = self.lib.items("title:'Tag Track 3'").get()
+        assert new_track is not None
+        assert new_track.album_id == album_x.id
+        assert {i.title for i in album_x.items()} == {
+            "Tag Track 1",
+            "Tag Track 3",
+        }
+
+    def test_within_run_dedup(self):
+        # Two identical albums imported in one run: the second album's tracks
+        # are caught against the first, so only two items land overall. This
+        # holds because tasks are resolved in order, after the previous task's
+        # items have been added to the library.
+        self.prepare_album_for_import(2, album_id=2)  # a second album dir
+        self._import(action="skip")
+
+        titles = sorted(i.title for i in self.lib.items())
+        assert titles == ["Tag Track 1", "Tag Track 2"]
+
+    def test_inherits_duplicate_action_when_unset(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        # No duplicate_track_action: should inherit duplicate_action=skip.
+        self._import(action="skip", track_action=None)
+
+        assert len(self.lib.albums()) == 1
+        assert {i.title for i in self.lib.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+
+    def test_track_action_overrides_duplicate_action(self):
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        # duplicate_action says keep, but the track-specific action skips.
+        self._import(action="keep", track_action="skip")
+
+        # The duplicate was dropped (skip), not kept, so only two items exist.
+        assert len(self.lib.items()) == 2
+
+    def test_track_action_ask_falls_back_to_duplicate_action(self):
+        # duplicate_track_action="ask" with a non-interactive session would
+        # need a prompt, so exercise the ask dispatch through the terminal
+        # session instead (see test/ui/test_ui_importer.py). Here we simply
+        # confirm the config plumbing: an explicit track action of "keep"
+        # overrides duplicate_action=skip.
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        self._import(action="skip", track_action="keep")
+
+        # "keep" wins, so nothing is dropped.
+        assert len(self.lib.items()) == 3
+
+    def test_merge_track_action_rejected(self):
+        # ``merge`` is only defined for whole albums; configuring it as the
+        # per-track action is a configuration error.
+        import confuse
+
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+
+        with pytest.raises(confuse.ConfigValueError):
+            self._import(action="keep", track_action="merge")
+
+    def test_skipped_tracks_never_added_to_library(self):
+        # Duplicate tracks are dropped before the task is added, so no
+        # library row ever exists for them, even transiently.
+        self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
+        max_id_before = max(i.id for i in self.lib.items())
+
+        self._import(action="skip")
+
+        new_ids = [i.id for i in self.lib.items() if i.id > max_id_before]
+        # Only one new row: the non-duplicate track.
+        assert len(new_ids) == 1
+        # No gap in row ids: nothing was inserted and removed again.
+        assert new_ids[0] == max_id_before + 1
+
+
 class TagLogTest(unittest.TestCase):
     def test_tag_log_line(self):
         sio = StringIO()

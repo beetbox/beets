@@ -828,6 +828,79 @@ track) will be skipped; "keep" means keep both old and new items; "remove" means
 remove old item; "merge" means merge into one album; "ask" means the user should
 be prompted for the action each time. The default is ``ask``.
 
+.. _duplicate_tracks:
+
+duplicate_tracks
+~~~~~~~~~~~~~~~~
+
+Whether album imports also check each *individual track* against the library, in
+addition to the whole-album duplicate check. This catches the case where some
+tracks of an album are already in your library even though the album itself is
+not (for example, previously imported as singletons or as part of a partial
+album import).
+
+Both checks are resolved at the same decision point during import. When only
+*some* of the incoming tracks duplicate existing items (a partial overlap, e.g.
+completing a partially-imported album), per-track resolution applies and the
+whole-album :ref:`duplicate_action` is not triggered. When *every* track is
+already present, the import is a whole-album duplicate and the
+:ref:`duplicate_action` decision applies. Tracks are compared *after* tagging
+metadata has been chosen, using the fields listed in :ref:`duplicate_keys`
+``item`` (by default ``artist`` and ``title``; set it to e.g. ``mb_trackid`` to
+match on the MusicBrainz track ID, which is reliable when autotagging). Matching
+considers all library items, whether they were imported as singletons or as part
+of another album.
+
+Tracks found to be duplicates are resolved according to
+:ref:`duplicate_tracks_action`.
+
+Default: ``no``.
+
+.. _duplicate_tracks_action:
+
+duplicate_tracks_action
+~~~~~~~~~~~~~~~~~~~~~~~
+
+How to resolve individual album tracks that already exist in the library. The
+available actions are:
+
+- ``skip`` drops the duplicate tracks and adds the remaining *new* tracks to the
+  existing album they belong to, instead of importing them as a separate album.
+  Use this to complete a partially-imported album. If every track is already
+  present, the whole album is skipped. A track matching an existing *singleton*
+  is skipped individually but does not affect where the new tracks go, so a mix
+  of album-member and singleton matches still completes the album. The new
+  tracks are imported as their own album only when the matched album members
+  span more than one album, or when none of the matches belong to an album.
+- ``remove`` removes the matching old items from the library.
+- ``keep`` imports everything, keeping both old and new items.
+- ``ask`` prompts you to choose one of the above for all duplicate tracks at
+  once, or to decide for each track individually.
+
+Unlike :ref:`duplicate_action`, ``merge`` is not available: merging is defined
+for whole albums only.
+
+When left empty, this falls back to :ref:`duplicate_action` (where a configured
+``merge`` behaves like ``keep`` for tracks).
+
+Default: empty (inherit :ref:`duplicate_action`).
+
+A typical configuration for completing partially-imported albums while
+autotagging looks like this:
+
+.. code-block:: yaml
+
+    import:
+        duplicate_tracks: yes           # default: no
+        duplicate_tracks_action: skip   # default: '' -- inherit duplicate_action
+        duplicate_action: ask           # default -- whole-album duplicates
+        duplicate_keys:
+            item: mb_trackid   # default: artist title -- stable id, recommended when autotagging
+
+If some of your files are missing ``mb_trackid`` but are otherwise correctly
+tagged, keep the default ``item`` keys instead, so tracks are matched on their
+names rather than an ID that may be absent.
+
 .. _duplicate_verbose_prompt:
 
 duplicate_verbose_prompt

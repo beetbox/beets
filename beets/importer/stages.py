@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING, TypeAlias
 
 from beets import config, plugins
+from beets.autotag import AlbumMatch
 from beets.util import MoveOperation, displayable_path, pipeline
 
 from .actions import Action, DuplicateAction
@@ -274,6 +275,7 @@ def manipulate_files(session: ImportSession, task: ImportTask) -> None:
     if not task.skip:
         if task.duplicate_action is DuplicateAction.REMOVE:
             task.remove_duplicates(session.lib)
+        task.remove_track_duplicates(session.lib)
 
         if session.config["move"]:
             operation = MoveOperation.MOVE
@@ -311,12 +313,22 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
     if task.skip:
         return
 
+    # Drop tracks resolved as duplicates before anything is added to the
+    # library; this may skip the whole task.
+    _apply_track_duplicate_skips(task)
+    if task.skip:
+        return
+
     # Change metadata.
     if task.apply:
         task.apply_metadata()
         plugins.send("import_task_apply", session=session, task=task)
 
     task.add(session.lib)
+
+    # When duplicate tracks were skipped, complete the existing album with
+    # the remaining new tracks instead of keeping them as a new album.
+    _fold_into_existing_album(session, task)
 
     # If ``set_fields`` is set, set those fields to the
     # configured values.
@@ -330,17 +342,106 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
 def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
+
+    For album tasks with ``import.duplicate_tracks`` enabled, individual
+    tracks that duplicate existing library items are detected here as well,
+    so both levels are decided at a single point before anything is added
+    to the library.
     """
-    if task.choice_flag in (Action.ASIS, Action.APPLY, Action.RETAG):
-        found_duplicates = task.find_duplicates(session.lib)
-        if found_duplicates:
-            log.debug("found duplicates: {}", [o.id for o in found_duplicates])
+    if task.choice_flag not in (Action.ASIS, Action.APPLY, Action.RETAG):
+        return
 
-            task.duplicate_action = session.get_duplicate_action(
-                task, found_duplicates
-            )
+    found_duplicates = task.find_duplicates(session.lib)
 
-            session.log_choice(task, True)
+    track_duplicates: dict[library.Item, list[library.Item]] = {}
+    if task.is_album and session.config["duplicate_tracks"].get(bool):
+        track_duplicates = task.find_track_duplicates(session.lib)
+
+    if not found_duplicates and not track_duplicates:
+        return
+
+    if found_duplicates:
+        log.debug("found duplicates: {}", [o.id for o in found_duplicates])
+    if track_duplicates:
+        log.debug(
+            "found track duplicates: {}",
+            [o.id for matches in track_duplicates.values() for o in matches],
+        )
+
+    task.track_duplicates = track_duplicates
+    session.resolve_duplicates(task, found_duplicates, track_duplicates)
+    session.log_choice(task, True)
+
+
+def _apply_track_duplicate_skips(task: ImportTask) -> None:
+    """Drop items whose per-track duplicate action is SKIP from the task,
+    before anything is added to the library. If no items remain, skip the
+    whole task.
+    """
+    skipped = [
+        item
+        for item, action in task.track_duplicate_actions.items()
+        if action is DuplicateAction.SKIP
+    ]
+    if not skipped:
+        return
+
+    for item in skipped:
+        log.info("Skipping duplicate track: {}", displayable_path(item.path))
+        if item in task.items:
+            task.items.remove(item)
+        if isinstance(task.match, AlbumMatch):
+            task.match.mapping.pop(item, None)
+
+    if not task.imported_items():
+        log.info(
+            "Skipping album, all tracks are duplicates: {}", skipped[0].album
+        )
+        task.set_choice(Action.SKIP)
+
+
+def _fold_into_existing_album(session: ImportSession, task: ImportTask) -> None:
+    """After skipping duplicate tracks, fold the newly added tracks into the
+    existing album the skipped tracks' duplicates belong to.
+
+    Matched *singletons* have no ``album_id`` and do not affect the fold
+    target, so a mix of album-member and singleton matches still completes
+    the album. Only when the matched album members span more than one album
+    -- or none of the matches belong to an album at all -- do the new tracks
+    stay in their own album.
+    """
+    skipped = [
+        item
+        for item, action in task.track_duplicate_actions.items()
+        if action is DuplicateAction.SKIP
+    ]
+    if not skipped or task.skip or not task.is_album:
+        return
+
+    album_ids = {
+        match.album_id
+        for item in skipped
+        for match in task.track_duplicates.get(item, [])
+        if match.album_id is not None
+    }
+    existing_album = (
+        session.lib.get_album(album_ids.pop()) if len(album_ids) == 1 else None
+    )
+    if existing_album is None:
+        log.warning(
+            "cannot fold tracks into a single existing album; "
+            "keeping them as a new album"
+        )
+        return
+
+    new_album = task.album
+    for item in task.imported_items():
+        item.album_id = existing_album.id
+        item.store()
+    task.album = existing_album
+    if new_album is not None and new_album.id != existing_album.id:
+        # The freshly created album container is now empty.
+        new_album.remove(with_items=False)
 
 
 def _freshen_items(items: Iterable[library.Item]) -> None:
