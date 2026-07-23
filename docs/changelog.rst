@@ -105,6 +105,9 @@ Other changes
 
 - :doc:`/guides/installation` Add Homebrew to the list of supported package
   managers in the installation guide.
+- :doc:`/guides/installation`: Note that Windows users should run beets in a
+  terminal emulator (such as Windows Terminal or cmder) for output to display
+  correctly. :bug:`2848`
 - :doc:`contributing`: The project now uses ``uv`` for packaging, virtual
   environment, and dependency management, replacing ``poetry``. The build
   backend has changed from ``poetry-core`` to ``hatchling``. Please see updates
