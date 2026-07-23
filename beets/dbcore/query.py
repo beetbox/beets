@@ -472,6 +472,12 @@ class NumericQuery(FieldQuery[str]):
 
         if self.point is not None:
             return value == self.point
+        if value is None:
+            # Nullable types (``NullInteger``/``NullFloat``) use ``None`` as
+            # their null value, so the field may be missing on some objects.
+            # ``col_clause`` compares against NULL in SQL, which is never true,
+            # so a range never matches a null value.
+            return False
         if self.rangemin is not None and value < self.rangemin:
             return False
         if self.rangemax is not None and value > self.rangemax:
