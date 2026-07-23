@@ -145,7 +145,11 @@ def resolve_upgrade_target(
     album alone.
     """
     best_rank: tuple[int, int, int] | None = None
-    best: tuple[list[library.Item], list[library.Item], int | None] = ([], [], None)
+    best: tuple[list[library.Item], list[library.Item], int | None] = (
+        [],
+        [],
+        None,
+    )
     for dup in found_duplicates:
         old_items = _dup_items(dup)
         kept, superseded = resolve_upgrade(new_items, old_items, keys)
