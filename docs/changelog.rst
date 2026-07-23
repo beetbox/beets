@@ -95,6 +95,9 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- Fix word wrapping of colored diff output for a word containing two or more
+  separately-highlighted spans, which was incorrectly split into two words at
+  the second highlighted span.
 
 ..
     For plugin developers
