@@ -28,6 +28,7 @@ from beets.importer.tasks import (
     ImportTaskFactory,
     albums_in_dir,
     resolve_upgrade,
+    resolve_upgrade_target,
 )
 from beets.library import Item
 from beets.test import _common
@@ -1385,6 +1386,75 @@ class ResolveUpgradeTest(unittest.TestCase):
         kept, superseded = resolve_upgrade([new], [old_a, old_b], DUP_KEYS)
         assert kept == []
         assert superseded == []
+
+
+class ResolveUpgradeTargetTest(TestHelper):
+    """Unit tests for `resolve_upgrade_target`: when `found_duplicates`
+    implicates more than one distinct old album, only the one it
+    overlaps with the most should be treated as the upgrade target,
+    and every other candidate album must be left untouched.
+
+    Regression coverage for
+    https://github.com/beetbox/beets/pull/6842#discussion_r3635292074:
+    comparing new tracks against the *best* old candidate pooled
+    across every duplicate album could silently attribute a
+    supersession to the wrong album (or decline an upgrade that only
+    looked bad because of an unrelated album's better copy).
+    """
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def _item(self, title, bitrate):
+        return self.add_item_fixture(
+            artist="Tag Artist",
+            albumartist="Tag Artist",
+            album="Tag Album",
+            title=title,
+            bitrate=bitrate,
+        )
+
+    def test_targets_album_with_most_overlap(self):
+        # Album A: a high-bitrate track (never worth upgrading) plus a
+        # low-bitrate one; Album B: both tracks low-bitrate.
+        a_t1 = self._item("T1", 1400000)
+        a_t2 = self._item("T2", 320000)
+        album_a = self.lib.add_album([a_t1, a_t2])
+
+        b_t1 = self._item("T1", 320000)
+        b_t2 = self._item("T2", 320000)
+        album_b = self.lib.add_album([b_t1, b_t2])
+
+        new_t1 = Item(artist="Tag Artist", title="T1", bitrate=900000)
+        new_t2 = Item(artist="Tag Artist", title="T2", bitrate=900000)
+
+        kept, superseded, old_album_ids = resolve_upgrade_target(
+            [new_t1, new_t2], [album_a, album_b], DUP_KEYS
+        )
+
+        # Album B overlaps on both tracks and is chosen as the sole
+        # target; Album A (and its higher-bitrate T1) is never touched.
+        assert old_album_ids == [album_b.id]
+        assert kept == [new_t1, new_t2]
+        assert superseded == [b_t1, b_t2]
+        assert a_t1 not in superseded
+        assert a_t2 not in superseded
+
+    def test_single_duplicate_album_behaves_as_before(self):
+        old_t1 = self._item("T1", 128000)
+        album = self.lib.add_album([old_t1])
+        new_t1 = Item(artist="Tag Artist", title="T1", bitrate=320000)
+
+        kept, superseded, old_album_ids = resolve_upgrade_target(
+            [new_t1], [album], DUP_KEYS
+        )
+
+        assert kept == [new_t1]
+        assert superseded == [old_t1]
+        assert old_album_ids == [album.id]
 
 
 @patch(
