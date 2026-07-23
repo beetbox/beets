@@ -420,6 +420,10 @@ By default, beets writes MP3 tags using the ID3v2.4 standard, the latest version
 of ID3. Enable this option to instead use the older ID3v2.3 standard, which is
 preferred by certain older software such as Windows Media Player.
 
+Saving a file is what converts its tags to ID3v2.3, so beets saves your MP3s
+every time it writes them while this option is enabled, even the ones that
+already hold the tags it is writing.
+
 .. _va_name:
 
 va_name

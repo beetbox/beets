@@ -931,11 +931,42 @@ class Item(LibModel):
 
         self.path = read_path
 
+    @staticmethod
+    def _read_tags(
+        mediafile: MediaFile, fields: Iterable[str]
+    ) -> dict[str, Any]:
+        """Read `fields` back from `mediafile`.
+
+        Reading the values back is what makes them comparable with the ones
+        about to be written, since a file only keeps what it can represent. It
+        rounds `rg_track_peak` to six decimal places, for instance.
+        """
+
+        def value(field: str) -> Any:
+            value = getattr(mediafile, field)
+            if isinstance(value, list):
+                # An absent list of tags reads back as an empty one from some
+                # formats. The values themselves are kept, empty ones
+                # included, so that dropping one shows.
+                return value or None
+
+            if isinstance(value, float):
+                # A gain of zero decibels is a value, not the lack of one.
+                return value
+
+            # Formats differ on whether they keep a tag holding the null of its
+            # type, an empty string or a zero. Report it as no tag at all.
+            return value or None
+
+        return {f: value(f) for f in fields}
+
     def write(
         self,
         path: bytes | None = None,
         tags: Mapping[str, Any] | None = None,
         id3v23: bool | None = None,
+        *,
+        force: bool = False,
     ) -> None:
         """Write the item's metadata to a media file.
 
@@ -950,6 +981,12 @@ class Item(LibModel):
 
         `id3v23` will override the global `id3v23` config option if it is
         set to something other than `None`.
+
+        Unless `force` is set, the item's own file is not saved when reading it
+        back already gives the tags to be written. Saving it would give it a new
+        mtime without changing any of its tags. A file whose tags still need
+        converting to another ID3 version is saved either way, since saving is
+        what converts them.
 
         Can raise either a `ReadError` or a `WriteError`.
         """
@@ -970,14 +1007,50 @@ class Item(LibModel):
             item_tags.update(tags)
         plugins.send("write", item=self, path=path, tags=item_tags)
 
+        # The mtime of the file the tags are about to be read from. A save
+        # skipped below records this one, so a change landing once the file
+        # is read stays newer than the database and still shows.
+        mtime = 0
+        if path == self.path:
+            with suppress(OSError):
+                mtime = self.current_mtime()
+
         # Open the file.
         try:
             mediafile = MediaFile(syspath(path), id3v23=id3v23)
         except UnreadableFileError as exc:
             raise ReadError(path, exc)
 
+        # The tags the update below is going to write. Writing an image
+        # replaces the whole list of them, which none of the fields here would
+        # show, so a write that carries one is saved without comparing anything.
+        written = set(item_tags) & set(mediafile.fields())
+        compare = (
+            not force
+            # Saving is what converts the tags to ID3v2.3, and the conversion
+            # loses what the older version cannot hold, so a file written that
+            # way is saved every time. `MediaFile` sets this for MP3s only.
+            and not mediafile.id3v23
+            # Saving is also what converts older ID3 tags to the default
+            # v2.4. Reading translates them in memory, and `MediaFile` does
+            # not expose the version the file holds, hence mutagen's.
+            and getattr(mediafile.mgfile.tags, "version", (2, 4)) >= (2, 4)
+            and path == self.path
+            and written.isdisjoint(("art", "images"))
+        )
+        old_tags = self._read_tags(mediafile, written) if compare else None
+
         # Write the tags to the file.
         mediafile.update(item_tags)
+
+        if compare and self._read_tags(mediafile, written) == old_tags:
+            # The file already holds these tags. Saving it would only give it a
+            # new mtime, which makes tools that sync the library copy the file
+            # again for nothing.
+            log.debug("no tags to write to {.filepath}", self)
+            self.mtime = mtime
+            return
+
         try:
             mediafile.save()
         except UnreadableFileError as exc:
@@ -993,6 +1066,8 @@ class Item(LibModel):
         path: bytes | None = None,
         tags: Mapping[str, Any] | None = None,
         id3v23: bool | None = None,
+        *,
+        force: bool = False,
     ) -> bool:
         """Call `write()` but catch and log `FileOperationError`
         exceptions.
@@ -1000,28 +1075,34 @@ class Item(LibModel):
         Return `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(path=path, tags=tags, id3v23=id3v23)
+            self.write(path=path, tags=tags, id3v23=id3v23, force=force)
             return True
         except FileOperationError as exc:
             log.error("{}", exc)
             return False
 
     def try_sync(
-        self, write: bool, move: bool, with_album: bool = True
+        self,
+        write: bool,
+        move: bool,
+        with_album: bool = True,
+        *,
+        force_write: bool = False,
     ) -> None:
         """Synchronize the item with the database and, possibly, update its
         tags on disk and its path (by moving the file).
 
-        `write` indicates whether to write new tags into the file. Similarly,
-        `move` controls whether the path should be updated. In the
-        latter case, files are *only* moved when they are inside their
+        `write` indicates whether to write new tags into the file, and
+        `force_write` whether to do so even when the file already contains
+        them. Similarly, `move` controls whether the path should be updated.
+        In the latter case, files are *only* moved when they are inside their
         library's directory (if any).
 
         Similar to calling :meth:`write`, :meth:`move`, and :meth:`store`
         (conditionally).
         """
         if write:
-            self.try_write()
+            self.try_write(force=force_write)
         if move:
             # Check whether this file is inside the library directory.
             if self._db and self._db.directory in util.ancestry(self.path):

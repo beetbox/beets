@@ -1,9 +1,21 @@
+import os
+
 from beets.test.helper import BeetsTestCase, IOMixin
+from beets.util import syspath
 
 
 class WriteTest(IOMixin, BeetsTestCase):
     def write_cmd(self, *args):
         return self.run_with_output("write", *args)
+
+    def test_force_write_file_with_the_tags(self):
+        item = self.add_item_fixture()
+        item.write()
+        os.utime(syspath(item.path), (1000000000, 1000000000))
+
+        self.write_cmd("-f")
+
+        assert item.current_mtime() != 1000000000
 
     def test_update_mtime(self):
         item = self.add_item_fixture()
