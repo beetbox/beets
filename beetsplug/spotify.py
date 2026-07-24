@@ -290,14 +290,11 @@ class SpotifyPlugin(
                     method, url, params=params, retry_count=retry_count + 1
                 )
             if e.response.status_code == 503:
-                seconds = e.response.headers.get(
-                    "Retry-After", DEFAULT_WAITING_TIME
-                )
                 self._log.debug(
                     "Service Unavailable. Retrying after {} seconds.",
-                    seconds,
+                    DEFAULT_WAITING_TIME,
                 )
-                time.sleep(int(seconds) + 1)
+                time.sleep(DEFAULT_WAITING_TIME + 1)
                 return self._handle_response(
                     method,
                     url,
