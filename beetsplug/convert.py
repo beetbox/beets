@@ -394,8 +394,18 @@ class ConvertPlugin(BeetsPlugin):
         return self.fmt != item.format.lower()
 
     def get_item_destination(self, item: Item) -> bytes:
+        extension = (
+            os.fsdecode(self.command.ext)
+            if (
+                self.should_transcode(item)
+                and not self.config["keep_new"].get(bool)
+            )
+            else None
+        )
         return item.destination(
-            basedir=self.dest, path_formats=self.path_formats
+            basedir=self.dest,
+            path_formats=self.path_formats,
+            extension=extension,
         )
 
     @pipeline.mutator_stage
