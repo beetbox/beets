@@ -14,8 +14,8 @@ class UpdateTest(IOMixin, BeetsTestCase):
         super().setUp()
 
         # Copy a file into the library.
-        item_path = os.path.join(_common.RSRC, b"full.mp3")
-        item_path_two = os.path.join(_common.RSRC, b"full.flac")
+        item_path = _common.RSRC / "full.mp3"
+        item_path_two = _common.RSRC / "full.flac"
         self.i = library.Item.from_path(item_path)
         self.i2 = library.Item.from_path(item_path_two)
         self.lib.add(self.i)

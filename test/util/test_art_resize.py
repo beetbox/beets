@@ -17,7 +17,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
 
     modules = (IMBackend.__module__,)
 
-    IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
+    IMG_225x225 = _common.RSRC / "abbey.jpg"
 
     def _test_img_resize(self, backend):
         """Test resizing based on file size, given a resize_func."""

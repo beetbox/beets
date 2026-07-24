@@ -862,9 +862,7 @@ class TestArtImporter(UseThePlugin):
         # Test library.
         (self.lib_path / "album").mkdir()
         itempath = self.lib_path / "album" / "test.mp3"
-        shutil.copyfile(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")), syspath(itempath)
-        )
+        shutil.copyfile(syspath(_common.RSRC / "full.mp3"), syspath(itempath))
         self.i = _common.item()
         self.i.path = itempath
         self.album = self.lib.add_album([self.i])
@@ -961,8 +959,8 @@ class AlbumArtOperationMixin(UseThePlugin):
     up a mock filesystem source that returns a predefined test image.
     """
 
-    IMAGE_PATH = os.path.join(_common.RSRC, b"abbey-similar.jpg")
-    IMAGE_FILESIZE = os.stat(util.syspath(IMAGE_PATH)).st_size
+    IMAGE_PATH = _common.RSRC / "abbey-similar.jpg"
+    IMAGE_FILESIZE = IMAGE_PATH.stat().st_size
     IMAGE_WIDTH = 500
     IMAGE_HEIGHT = 490
     IMAGE_WIDTH_HEIGHT_DIFF = IMAGE_WIDTH - IMAGE_HEIGHT
