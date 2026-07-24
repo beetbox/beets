@@ -635,6 +635,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 id="plain by default",
             ),
             pytest.param(
+                [lyrics_match(syncedLyrics=None, plainLyrics=None)],
+                None,
+                id="no lyrics when both fields are null",
+            ),
+            pytest.param(
                 [
                     lyrics_match(
                         duration=ITEM_DURATION,
