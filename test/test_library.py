@@ -112,9 +112,7 @@ class TestAdd(PytestItemHelper):
         assert new_grouping == item.grouping
 
     def test_library_add_path_inserts_row(self):
-        item = beets.library.Item.from_path(
-            os.path.join(_common.RSRC, b"full.mp3")
-        )
+        item = beets.library.Item.from_path(_common.RSRC / "full.mp3")
         self.lib.add(item)
         new_grouping = (
             self.lib._connection()
@@ -1151,10 +1149,7 @@ class TestMtime(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
         self.ipath = self.temp_path / "testfile.mp3"
-        shutil.copy(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")),
-            syspath(self.ipath),
-        )
+        shutil.copy(syspath(_common.RSRC / "full.mp3"), syspath(self.ipath))
         item = beets.library.Item.from_path(self.ipath)
         self.lib.add(item)
         yield item
@@ -1226,9 +1221,7 @@ class TestTemplate(PytestItemHelper):
 
 class TestUnicodePath(PytestItemHelper):
     def test_unicode_path(self, item_in_db):
-        item_in_db.path = os.path.join(
-            _common.RSRC, "unicode\u2019d.mp3".encode()
-        )
+        item_in_db.path = _common.RSRC / "unicode\u2019d.mp3"
         # If there are any problems with unicode paths, we will raise
         # here and fail.
         item_in_db.read()
@@ -1305,7 +1298,7 @@ class TestWrite(TestHelper):
 
 class TestItemRead(PytestItemHelper):
     def test_unreadable_raise_read_error(self, item_in_db):
-        unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
+        unreadable = _common.RSRC / "image-2x3.png"
         with pytest.raises(beets.library.ReadError) as exc_info:
             item_in_db.read(unreadable)
         assert isinstance(exc_info.value.reason, UnreadableFileError)
@@ -1315,7 +1308,7 @@ class TestItemRead(PytestItemHelper):
             item_in_db.read("/thisfiledoesnotexist")
 
     def test_read_error_str_includes_reason(self, item_in_db):
-        unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
+        unreadable = _common.RSRC / "image-2x3.png"
         with pytest.raises(beets.library.ReadError) as exc_info:
             item_in_db.read(unreadable)
         message = str(exc_info.value)

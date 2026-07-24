@@ -44,9 +44,9 @@ def require_artresizer_compare(test):
         # handle that in ArtResizer.IMBackend.{can_compare,compare}.
         # Skipping the tests as below is a quick fix to CI, but users may
         # still see unexpected behaviour.
-        abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
-        abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
-        abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
+        abbey_artpath = _common.RSRC / "abbey.jpg"
+        abbey_similarpath = _common.RSRC / "abbey-similar.jpg"
+        abbey_differentpath = _common.RSRC / "abbey-different.jpg"
         compare_threshold = 20
 
         similar_compares_ok = ArtResizer.shared.compare(
@@ -66,10 +66,10 @@ def require_artresizer_compare(test):
 
 class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
     plugin = "embedart"
-    small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
-    abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
-    abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
-    abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
+    small_artpath = _common.RSRC / "image-2x3.jpg"
+    abbey_artpath = _common.RSRC / "abbey.jpg"
+    abbey_similarpath = _common.RSRC / "abbey-similar.jpg"
+    abbey_differentpath = _common.RSRC / "abbey-different.jpg"
 
     def _setup_data(self, artpath=None):
         if not artpath:
@@ -171,7 +171,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         mediafile = MediaFile(syspath(item.path))
 
         assert mediafile.images[0].data == self.image_data, (
-            f"Image written is not {displayable_path(self.abbey_artpath)}"
+            f"Image written is not {self.abbey_artpath}"
         )
 
     @require_artresizer_compare
@@ -185,11 +185,11 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         mediafile = MediaFile(syspath(item.path))
 
         assert mediafile.images[0].data == self.image_data, (
-            f"Image written is not {displayable_path(self.abbey_similarpath)}"
+            f"Image written is not {self.abbey_similarpath}"
         )
 
     def test_non_ascii_album_path(self):
-        resource_path = os.path.join(_common.RSRC, b"image.mp3")
+        resource_path = _common.RSRC / "image.mp3"
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
         shutil.copy(syspath(resource_path), syspath(trackpath))
@@ -199,7 +199,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         assert (album.filepath / "extracted.png").exists()
 
     def test_extracted_extension(self):
-        resource_path = os.path.join(_common.RSRC, b"image-jpeg.mp3")
+        resource_path = _common.RSRC / "image-jpeg.mp3"
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
         shutil.copy(syspath(resource_path), syspath(trackpath))

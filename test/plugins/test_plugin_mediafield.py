@@ -1,6 +1,5 @@
 """Tests the facility that lets plugins add custom field to MediaFile."""
 
-import os
 import shutil
 
 import mediafile
@@ -30,7 +29,7 @@ list_field_extension = mediafile.ListMediaField(
 class ExtendedFieldTestMixin(BeetsTestCase):
     def _mediafile_fixture(self, name, extension="mp3"):
         name = f"{name}.{extension}"
-        src = os.path.join(os.fsdecode(_common.RSRC), name)
+        src = _common.RSRC / name
         target = self.temp_path / name
         shutil.copy(syspath(src), syspath(target))
         return mediafile.MediaFile(target)
