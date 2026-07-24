@@ -822,11 +822,22 @@ Default:
 duplicate_action
 ~~~~~~~~~~~~~~~~
 
-Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``. Controls how
-duplicates are treated in import task. "skip" means that new item(album or
-track) will be skipped; "keep" means keep both old and new items; "remove" means
-remove old item; "merge" means merge into one album; "ask" means the user should
-be prompted for the action each time. The default is ``ask``.
+Either ``skip``, ``keep``, ``remove``, ``merge``, ``upgrade`` or ``ask``.
+Controls how duplicates are treated in import task. "skip" means that new
+item(album or track) will be skipped; "keep" means keep both old and new items;
+"remove" means remove old item; "merge" means merge into one album; "ask" means
+the user should be prompted for the action each time. The default is ``ask``.
+
+"upgrade" compares each newly-imported track against any existing duplicate with
+the same :ref:`duplicate_keys`: a track only replaces its old counterpart if it
+has a higher bitrate, and tracks with no old counterpart are always added. The
+rest of the existing album is left untouched, and the kept tracks are added to
+that same album rather than a new one. If the import matches more than one
+existing album (e.g. two differently-encoded copies of the same release already
+in the library), only the album it overlaps with the most is upgraded; every
+other candidate album is left completely untouched, since a track can only ever
+be added to one album. Unlike the other options, "upgrade" is config-only and is
+not offered when ``duplicate_action`` is ``ask``.
 
 .. _duplicate_verbose_prompt:
 

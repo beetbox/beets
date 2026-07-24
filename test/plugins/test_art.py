@@ -845,7 +845,6 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
 class TestArtImporter(UseThePlugin):
     @pytest.fixture(autouse=True)
     def _setup(self, setup_plugin):
-
         # Mock the album art fetcher to always return our test file.
         self.art_file = self.temp_path / "tmpcover.jpg"
         self.art_file.touch()

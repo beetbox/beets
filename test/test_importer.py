@@ -9,6 +9,7 @@ import stat
 import sys
 import unicodedata
 import unittest
+from contextlib import contextmanager
 from functools import cached_property
 from io import StringIO
 from pathlib import Path
@@ -23,7 +24,13 @@ from mediafile import MediaFile
 
 from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
-from beets.importer.tasks import albums_in_dir
+from beets.importer.tasks import (
+    ImportTaskFactory,
+    albums_in_dir,
+    resolve_upgrade,
+    resolve_upgrade_target,
+)
+from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
     NEEDS_FFPROBE,
@@ -1288,6 +1295,322 @@ class TestImportDuplicateSingleton(ImportHelper):
         item.update(kwargs)
         item.store()
         return item
+
+
+@contextmanager
+def bitrate_overrides(bitrates_by_title):
+    """Force specific per-title bitrates on newly-read import items.
+
+    The test mp3 fixtures all share one real bitrate, so this patches
+    `ImportTaskFactory.read_item` to simulate different-quality
+    encodes without needing distinct binary fixtures.
+    """
+    original = ImportTaskFactory.read_item
+
+    def patched(self, path):
+        item = original(self, path)
+        if item is not None and item.title in bitrates_by_title:
+            item.bitrate = bitrates_by_title[item.title]
+        return item
+
+    with patch.object(ImportTaskFactory, "read_item", patched):
+        yield
+
+
+DUP_KEYS = ["artist", "title"]
+
+
+class ResolveUpgradeTest(unittest.TestCase):
+    """Unit tests for `resolve_upgrade`, the per-track decision
+    algorithm behind `duplicate_action: upgrade`.
+    """
+
+    def _item(self, artist="artist", title="title", bitrate=128000):
+        return Item(artist=artist, title=title, bitrate=bitrate)
+
+    def test_matched_better_bitrate_replaces_old(self):
+        old = self._item(bitrate=128000)
+        new = self._item(bitrate=320000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == [new]
+        assert superseded == [old]
+
+    def test_matched_worse_bitrate_keeps_old(self):
+        old = self._item(bitrate=320000)
+        new = self._item(bitrate=128000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == []
+        assert superseded == []
+
+    def test_matched_equal_bitrate_keeps_old(self):
+        old = self._item(bitrate=128000)
+        new = self._item(bitrate=128000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == []
+        assert superseded == []
+
+    def test_unmatched_new_item_always_kept(self):
+        old = self._item(title="old title", bitrate=320000)
+        new = self._item(title="new title", bitrate=64000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == [new]
+        assert superseded == []
+
+    def test_mixed_batch(self):
+        old_a = self._item(title="A", bitrate=128000)
+        old_d = self._item(title="D", bitrate=128000)
+        new_a = self._item(title="A", bitrate=320000)  # upgrade, wins
+        new_b = self._item(title="B", bitrate=64000)  # no old counterpart
+        kept, superseded = resolve_upgrade(
+            [new_a, new_b], [old_a, old_d], DUP_KEYS
+        )
+        assert kept == [new_a, new_b]
+        assert superseded == [old_a]
+
+    def test_duplicate_keys_all_old_superseded_when_new_is_best(self):
+        """When multiple old items share a key and the new item beats
+        all of them, every old copy should be superseded."""
+        old_a = self._item(bitrate=128000)
+        old_b = self._item(bitrate=96000)
+        new = self._item(bitrate=320000)
+        kept, superseded = resolve_upgrade([new], [old_a, old_b], DUP_KEYS)
+        assert kept == [new]
+        assert sorted(superseded, key=lambda i: i.bitrate) == [old_b, old_a]
+
+    def test_duplicate_keys_rejected_when_new_is_not_best(self):
+        """When an old item with the same key has bitrate >= the new
+        item, the new item should be dropped to prevent a downgrade."""
+        old_a = self._item(bitrate=128000)
+        old_b = self._item(bitrate=320000)
+        new = self._item(bitrate=256000)
+        kept, superseded = resolve_upgrade([new], [old_a, old_b], DUP_KEYS)
+        assert kept == []
+        assert superseded == []
+
+
+class ResolveUpgradeTargetTest(TestHelper):
+    """Unit tests for `resolve_upgrade_target`: when `found_duplicates`
+    implicates more than one distinct old album, only the one it
+    overlaps with the most should be treated as the upgrade target,
+    and every other candidate album must be left untouched.
+
+    Regression coverage for
+    https://github.com/beetbox/beets/pull/6842#discussion_r3635292074:
+    comparing new tracks against the *best* old candidate pooled
+    across every duplicate album could silently attribute a
+    supersession to the wrong album (or decline an upgrade that only
+    looked bad because of an unrelated album's better copy).
+    """
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def _item(self, title, bitrate):
+        return self.add_item_fixture(
+            artist="Tag Artist",
+            albumartist="Tag Artist",
+            album="Tag Album",
+            title=title,
+            bitrate=bitrate,
+        )
+
+    def test_targets_album_with_most_overlap(self):
+        # Album A: a high-bitrate track (never worth upgrading) plus a
+        # low-bitrate one; Album B: both tracks low-bitrate.
+        a_t1 = self._item("T1", 1400000)
+        a_t2 = self._item("T2", 320000)
+        album_a = self.lib.add_album([a_t1, a_t2])
+
+        b_t1 = self._item("T1", 320000)
+        b_t2 = self._item("T2", 320000)
+        album_b = self.lib.add_album([b_t1, b_t2])
+
+        new_t1 = Item(artist="Tag Artist", title="T1", bitrate=900000)
+        new_t2 = Item(artist="Tag Artist", title="T2", bitrate=900000)
+
+        kept, superseded, old_album_ids = resolve_upgrade_target(
+            [new_t1, new_t2], [album_a, album_b], DUP_KEYS
+        )
+
+        # Album B overlaps on both tracks and is chosen as the sole
+        # target; Album A (and its higher-bitrate T1) is never touched.
+        assert old_album_ids == [album_b.id]
+        assert kept == [new_t1, new_t2]
+        assert superseded == [b_t1, b_t2]
+        assert a_t1 not in superseded
+        assert a_t2 not in superseded
+
+    def test_single_duplicate_album_behaves_as_before(self):
+        old_t1 = self._item("T1", 128000)
+        album = self.lib.add_album([old_t1])
+        new_t1 = Item(artist="Tag Artist", title="T1", bitrate=320000)
+
+        kept, superseded, old_album_ids = resolve_upgrade_target(
+            [new_t1], [album], DUP_KEYS
+        )
+
+        assert kept == [new_t1]
+        assert superseded == [old_t1]
+        assert old_album_ids == [album.id]
+
+
+@patch(
+    "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
+)
+class TestImportDuplicateAlbumUpgrade(PluginMixin, ImportHelper):
+    """Album-level `duplicate_action: upgrade`, full track-for-track
+    overlap (the whole album is either replaced or left alone).
+    """
+
+    plugin = "musicbrainz"
+
+    def setup_beets(self):
+        super().setup_beets()
+        # Existing album with one track, matching what the incoming
+        # import will be tagged as (see `album_candidates_mock`).
+        self.old_item = self.add_item_fixture(
+            artist="artist",
+            albumartist="artist",
+            album="album",
+            title="new title",
+            mb_trackid="old trackid",
+            bitrate=128000,
+        )
+        self.old_album = self.lib.add_album([self.old_item])
+
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "albumartist album"}
+        )
+        self.config["import"]["duplicate_action"] = "upgrade"
+
+    def test_upgrade_replaces_lower_quality_duplicate(self):
+        with bitrate_overrides({"Tag Track 1": 320000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.title == "new title"
+        assert item.bitrate == 320000
+        assert self.lib.get_item(self.old_item.id) is None
+
+    def test_upgrade_skips_lower_quality_new_copy(self):
+        with bitrate_overrides({"Tag Track 1": 64000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.id == self.old_item.id
+        assert item.bitrate == 128000
+        assert self.old_item.filepath.exists()
+
+
+class TestImportDuplicateAlbumUpgradeMixed(ImportHelper):
+    """Album-level `duplicate_action: upgrade` where the new import
+    mixes a genuine quality upgrade of one existing track with tracks
+    that have no old counterpart at all (e.g. filling in a
+    previously-incomplete album). The surviving old tracks and the
+    kept new tracks must end up in the same album.
+    """
+
+    def setup_beets(self):
+        super().setup_beets()
+        self.old_track1 = self.add_item_fixture(
+            artist="Tag Artist",
+            albumartist="Tag Artist",
+            album="Tag Album",
+            title="Tag Track 1",
+            bitrate=64000,
+        )
+        self.old_track4 = self.add_item_fixture(
+            artist="Tag Artist",
+            albumartist="Tag Artist",
+            album="Tag Album",
+            title="Tag Track 4",
+            bitrate=64000,
+        )
+        self.old_album = self.lib.add_album([self.old_track1, self.old_track4])
+
+        self.prepare_album_for_import(3)  # Tag Track 1, 2, 3
+        self.importer = self.setup_importer(autotag=False)
+        self.config["import"]["duplicate_action"] = "upgrade"
+
+    def test_upgrade_and_new_tracks_join_existing_album(self):
+        with bitrate_overrides({"Tag Track 1": 320000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        items = list(self.lib.items())
+        assert len(items) == 4
+        by_title = {i.title: i for i in items}
+        assert by_title["Tag Track 1"].bitrate == 320000
+        assert by_title["Tag Track 4"].bitrate == 64000
+        assert "Tag Track 2" in by_title
+        assert "Tag Track 3" in by_title
+        assert all(i.album_id == self.old_album.id for i in items)
+        assert self.lib.get_item(self.old_track1.id) is None
+        # Untouched old track keeps its original row and file.
+        assert by_title["Tag Track 4"].id == self.old_track4.id
+        assert self.old_track4.filepath.exists()
+
+    def test_rejected_upgrade_still_adds_new_tracks(self):
+        with bitrate_overrides({"Tag Track 1": 40000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        items = list(self.lib.items())
+        assert len(items) == 4
+        by_title = {i.title: i for i in items}
+        assert by_title["Tag Track 1"].id == self.old_track1.id
+        assert by_title["Tag Track 1"].bitrate == 64000
+        assert "Tag Track 2" in by_title
+        assert "Tag Track 3" in by_title
+        assert all(i.album_id == self.old_album.id for i in items)
+        assert self.old_track1.filepath.exists()
+
+
+@patch(
+    "beets.metadata_plugins.item_candidates",
+    Mock(side_effect=item_candidates_mock),
+)
+class TestImportDuplicateSingletonUpgrade(ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
+        self.old_item = self.add_item_fixture(
+            artist="artist",
+            title="title",
+            mb_trackid="old trackid",
+            bitrate=128000,
+        )
+
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_singleton_importer()
+        self.config["import"]["duplicate_action"] = "upgrade"
+
+    def test_upgrade_replaces_lower_quality_duplicate(self):
+        with bitrate_overrides({"Tag Track 1": 320000}):
+            self.importer.run()
+
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.mb_trackid == "new trackid"
+        assert item.bitrate == 320000
+        assert self.lib.get_item(self.old_item.id) is None
+
+    def test_upgrade_skips_lower_quality_new_copy(self):
+        with bitrate_overrides({"Tag Track 1": 64000}):
+            self.importer.run()
+
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.id == self.old_item.id
+        assert item.mb_trackid == "old trackid"
+        assert self.old_item.filepath.exists()
 
 
 class TagLogTest(unittest.TestCase):
