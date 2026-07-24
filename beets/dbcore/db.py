@@ -814,8 +814,26 @@ class Results(Generic[AnyModel]):
         """
         if self.sort:
             # Slow sort. Must build the full list first.
-            objects = self.sort.sort(list(self._get_objects()))
-            return iter(objects)
+            # When a slow query is also present (e.g., HeadQuery),
+            # apply it AFTER sorting: slow queries may be order-sensitive
+            # (HeadQuery counts items and stops at N),
+            # so limiting before sorting would produce wrong results.
+            # Temporarily suppress the slow query to materialize all rows,
+            # sort them, then filter.
+            if self.query:
+                slow_query = self.query
+                self.query = None
+                try:
+                    all_objects = list(self._get_objects())
+                finally:
+                    self.query = slow_query
+                sorted_objects = self.sort.sort(all_objects)
+                return iter(
+                    obj for obj in sorted_objects if slow_query.match(obj)
+                )
+            else:
+                objects = self.sort.sort(list(self._get_objects()))
+                return iter(objects)
 
         # Objects are pre-sorted (i.e., by the database).
         return self._get_objects()
