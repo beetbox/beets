@@ -91,7 +91,7 @@ class Candidate:
     def _validate(
         self,
         plugin: FetchArtPlugin,
-        skip_check_for: None | list[ImageAction] = None,
+        skip_check_for: None | Sequence[ImageAction] = None,
     ) -> ImageAction:
         """Determine whether the candidate artwork is valid based on
         its dimensions (width and ratio).
@@ -227,7 +227,7 @@ class Candidate:
     def validate(
         self,
         plugin: FetchArtPlugin,
-        skip_check_for: None | list[ImageAction] = None,
+        skip_check_for: None | Sequence[ImageAction] = None,
     ) -> ImageAction:
         self._check = self._validate(plugin, skip_check_for)
         return self._check
