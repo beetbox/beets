@@ -877,6 +877,123 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", i1)
 
 
+class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
+    @pytest.fixture(autouse=True)
+    def items(self, setup):
+        self.lib.directory = b"/base"
+        self.lib.path_formats = [("default", "path")]
+
+        i1 = item()
+        i1.title = "Common Title"
+        i1.track = 7
+        i1.disc = 1
+        i1.artist = "Some Artist"
+        i2 = item()
+        i2.title = "Common Title"
+        i2.track = 11
+        i2.disc = 1
+        i2.artist = "Some Artist"
+        self.lib.add_album([i1, i2])
+        self.lib._connection().commit()
+
+        self._setf("$title%tunique{title,track}")
+        return i1, i2
+
+    def test_tunique_expands_to_disambiguating_track(self, items):
+        i1, i2 = items
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest(b"/base/Common Title [11]", i2)
+
+    def test_tunique_with_default_arguments_uses_track(self, items):
+        i1, i2 = items
+        self._setf("$title%tunique{}")
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest(b"/base/Common Title [11]", i2)
+
+    def test_tunique_expands_to_nothing_for_unique_titles(self, items):
+        i1, i2 = items
+        i2.title = "Different"
+        i2.store()
+
+        self._assert_dest(b"/base/Common Title", i1)
+
+    def test_tunique_does_not_match_singletons(self, items):
+        i1, _i2 = items
+        i3 = item()
+        i3.title = "Common Title"
+        self.lib.add(i3)
+
+        # i1 still needs disambiguation from i2 in the same album
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        # Singleton should NOT get track disambiguation
+        self._assert_dest(b"/base/Common Title", i3)
+
+    def test_tunique_does_not_match_cross_album(self, items):
+        i1, _i2 = items
+        i3 = item()
+        i3.title = "Common Title"
+        i3.track = 7
+        self.lib.add_album([i3])
+
+        # i1 still needs disambiguation from i2 in the same album
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        # Other album's tracks should NOT be matched
+        self._assert_dest(b"/base/Common Title", i3)
+
+    def test_tunique_use_fallback_numbers_when_identical(self, items):
+        i1, i2 = items
+        i2.track = i1.track
+        i2.disc = i1.disc
+        i2.artist = i1.artist
+        i2.store()
+
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    def test_tunique_falls_back_to_second_distinguishing_field(self, items):
+        i1, i2 = items
+        i2.track = i1.track
+        i2.disc = 2
+        i2.store()
+
+        self._setf("$title%tunique{title,track disc}")
+        self._assert_dest(b"/base/Common Title [01]", i1)
+        self._assert_dest(b"/base/Common Title [02]", i2)
+
+    def test_tunique_expands_to_disambiguating_disc(self, items):
+        i1, i2 = items
+        i2.track = i1.track
+        i2.disc = 2
+        i2.store()
+
+        self._setf("$title%tunique{title,disc}")
+        self._assert_dest(b"/base/Common Title [01]", i1)
+        self._assert_dest(b"/base/Common Title [02]", i2)
+
+    def test_tunique_change_brackets(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,()}")
+        self._assert_dest(b"/base/Common Title (07)", i1)
+
+    def test_tunique_remove_brackets(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,}")
+        self._assert_dest(b"/base/Common Title 07", i1)
+
+    def test_tunique_drop_empty_disambig(self, items):
+        i1, i2 = items
+        i1.trackdisambig = "live version"
+        i2.trackdisambig = None
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,trackdisambig}")
+        # i1 has trackdisambig, so gets suffixed
+        self._assert_dest(b"/base/Common Title [live version]", i1)
+        # i2 has no trackdisambig, so no suffix
+        self._assert_dest(b"/base/Common Title", i2)
+
+
 class TestPluginDestination(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
