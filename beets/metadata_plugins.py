@@ -12,17 +12,12 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import cache, cached_property, wraps
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    Literal,
-    NamedTuple,
-    TypedDict,
-    TypeVar,
-)
+from operator import itemgetter
+from typing import TYPE_CHECKING, Generic, Literal, NamedTuple, TypeVar
 
 import unidecode
 from confuse import NotFoundError
+from typing_extensions import TypedDict
 
 from beets import config, logging
 from beets.util import cached_classproperty
@@ -388,21 +383,24 @@ class SearchApiMetadataSourcePlugin(
         """
 
     @abc.abstractmethod
-    def get_search_response(self, params: SearchParams) -> Sequence[R]:
+    def get_search_response(
+        self, params: SearchParams
+    ) -> tuple[int, Iterable[R]]:
         """Fetch raw search results for a provider request.
 
         Implementations should return records containing source IDs so shared
         candidate resolution can perform ID-based album and track lookups.
 
         :param params: :py:namedtuple:`~SearchParams` named tuple
-        :return: Sequence of IDResponse dicts containing at least an "id" key for each
+        :return: Tuple of (``total`` number of results, ``results`` Iterable of
+        IDResponse dicts containing at least an "id" key for each)
         """
 
         raise NotImplementedError
 
     def _search_api(
         self, query_type: QueryType, query: str, filters: dict[str, str]
-    ) -> Sequence[R]:
+    ) -> tuple[int, Iterable[R]]:
         """Run shared provider search orchestration and return ID-bearing results.
 
         This path applies optional query normalization and default limits, then
@@ -417,36 +415,52 @@ class SearchApiMetadataSourcePlugin(
 
         self._log.debug("Searching for '{}' with {}", query, filters)
         try:
-            response_data = self.get_search_response(params)
+            total, response_data = self.get_search_response(params)
         except Exception as e:
             if config["raise_on_error"].get(bool):
                 raise
             self._log.error(
                 "Error searching {.data_source}: {}", self, e, exc_info=True
             )
-            return ()
+            return 0, ()
 
-        self._log.debug("Found {} result(s)", len(response_data))
-        return response_data
+        self._log.debug("Found {} result(s)", total)
+        return total, response_data
 
     def _get_candidates(
         self, query_type: QueryType, *args, **kwargs
-    ) -> Sequence[R]:
+    ) -> Iterable[R]:
         """Resolve query hooks and execute one provider search request."""
 
         return self._search_api(
             query_type,
             *self.get_search_query_with_filters(query_type, *args, **kwargs),
+        )[1]
+
+    def get_candidates_from_results(
+        self, results: Iterable[R]
+    ) -> Iterable[AlbumInfo]:
+        """Convert results of album search queries to AlbumInfo objects"""
+        yield from filter(
+            None, self.albums_for_ids(map(itemgetter("id"), results))
+        )
+
+    def get_item_candidates_from_results(
+        self, results: Iterable[R]
+    ) -> Iterable[TrackInfo]:
+        """Convert results of track search queries to TrackInfo objects"""
+        yield from filter(
+            None, self.tracks_for_ids(map(itemgetter("id"), results))
         )
 
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
         results = self._get_candidates("album", items, artist, album, va_likely)
-        return filter(None, self.albums_for_ids(r["id"] for r in results))
+        yield from self.get_candidates_from_results(results)
 
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
         results = self._get_candidates("track", [item], artist, title, False)
-        return filter(None, self.tracks_for_ids(r["id"] for r in results))
+        yield from self.get_item_candidates_from_results(results)
