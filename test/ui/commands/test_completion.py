@@ -51,8 +51,8 @@ class CompletionTest(IOMixin, TestPluginTestCase):
         tester.stdin.writelines(completion_script.splitlines(True))
 
         # Load test suite.
-        test_script_name = os.path.join(_common.RSRC, b"test_completion.sh")
-        with open(test_script_name, "rb") as test_script_file:
+        test_script_name = _common.RSRC / "test_completion.sh"
+        with test_script_name.open("rb") as test_script_file:
             tester.stdin.writelines(test_script_file)
         out, _ = tester.communicate()
         assert tester.returncode == 0

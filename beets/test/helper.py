@@ -168,7 +168,7 @@ class IOMixin(RunMixin):
 
 
 class PathsMixin:
-    resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
+    resource_path = _common.RSRC / "full.mp3"
 
     @cached_property
     def temp_path(self) -> Path:
@@ -329,9 +329,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         """Add an item with an actual audio file to the library."""
         item = self.create_item(**values)
         extension = item["format"].lower()
-        item["path"] = os.path.join(
-            _common.RSRC, util.bytestring_path(f"min.{extension}")
-        )
+        item["path"] = _common.RSRC / f"min.{extension}"
         item.add(self.lib)
         item.move(operation=MoveOperation.COPY)
         item.store()
@@ -345,7 +343,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         """Add a number of items with files to the database."""
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
+        path = _common.RSRC / f"full.{ext}"
         for i in range(count):
             item = Item.from_path(path)
             item.album = f"\u00e4lbum {i}"  # Check unicode paths
@@ -367,9 +365,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
     ) -> Album:
         """Add an album with files to the database."""
         items = []
-        path = os.path.join(
-            _common.RSRC, util.bytestring_path(f"{fname}.{ext}")
-        )
+        path = _common.RSRC / f"{fname}.{ext}"
         for discnumber in range(1, disc_count + 1):
             for i in range(track_count):
                 item = Item.from_path(path)
@@ -398,7 +394,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         """
         if not target_dir:
             target_dir = self.temp_path
-        src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
+        src = _common.RSRC / f"full.{ext}"
         handle, path = mkstemp(dir=target_dir)
         path = bytestring_path(path)
         os.close(handle)
@@ -408,9 +404,8 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
             mediafile = MediaFile(path)
             imgs = []
             for img_ext in images:
-                file = util.bytestring_path(f"image-2x3.{img_ext}")
-                img_path = os.path.join(_common.RSRC, file)
-                with open(img_path, "rb") as f:
+                img_path = _common.RSRC / f"image-2x3.{img_ext}"
+                with img_path.open("rb") as f:
                     imgs.append(Image(f.read()))
             mediafile.images = imgs
             mediafile.save()

@@ -161,19 +161,19 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response.status_code == 404
 
     def test_get_single_item_by_path(self):
-        data_path = os.path.join(_common.RSRC, b"full.mp3")
+        data_path = _common.RSRC / "full.mp3"
         self.lib.add(Item.from_path(data_path))
-        response = self.client.get(f"/item/path/{data_path.decode('utf-8')}")
+        response = self.client.get(f"/item/path/{data_path}")
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
         assert res_json["title"] == "full"
 
     def test_get_single_item_by_path_not_found_if_not_in_library(self):
-        data_path = os.path.join(_common.RSRC, b"full.mp3")
+        data_path = _common.RSRC / "full.mp3"
         # data_path points to a valid file, but we have not added the file
         # to the library.
-        response = self.client.get(f"/item/path/{data_path.decode('utf-8')}")
+        response = self.client.get(f"/item/path/{data_path}")
 
         assert response.status_code == 404
 
@@ -353,7 +353,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         # Create an item with a file
         ipath = self.temp_path / "testfile1.mp3"
-        shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
+        shutil.copy(_common.RSRC / "full.mp3", ipath)
         assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
@@ -381,7 +381,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         # Create an item with a file
         ipath = self.temp_path / "testfile2.mp3"
-        shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
+        shutil.copy(_common.RSRC / "full.mp3", ipath)
         assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
@@ -688,7 +688,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
     def test_get_item_file(self):
         ipath = self.temp_path / "testfile2.mp3"
-        shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
+        shutil.copy(_common.RSRC / "full.mp3", ipath)
         assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
