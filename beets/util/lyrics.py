@@ -93,11 +93,12 @@ class Lyrics:
     @classmethod
     def from_item(cls, item: Item) -> Lyrics:
         """Build lyrics from an item's canonical text and flexible metadata."""
-        data = {"text": item.lyrics}
+        data: dict[str, Any] = {}
         for key in ("backend", "url", "language", "translation_language"):
             data[key] = item.get(f"lyrics_{key}", with_album=False)
 
-        return cls(**data)
+        # ``item.lyrics`` is ``None`` for a track without stored lyrics.
+        return cls(text=item.lyrics or "", **data)
 
     @cached_property
     def original_text(self) -> str:
