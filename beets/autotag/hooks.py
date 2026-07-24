@@ -249,7 +249,7 @@ class Info(AttrDict[Any]):
                 f"'{list_field}' (list)",
                 stacklevel=3,
             )
-            if not list_value:
+            if str_value and not list_value:
                 try:
                     sep = next(s for s in ["; ", ", ", " / "] if s in str_value)
                 except StopIteration:

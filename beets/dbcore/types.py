@@ -6,6 +6,7 @@ import re
 import time
 import typing
 from abc import ABC
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 import beets
@@ -25,7 +26,7 @@ class ModelType(typing.Protocol):
     given type.
     """
 
-    def __init__(self, value: Any = None): ...
+    def __init__(self, value: Any = None) -> None: ...
 
 
 # Generic type variables, used for the value type T and null type N (if
@@ -139,7 +140,7 @@ class Default(Type[str, None]):
     model_type = str
 
     @property
-    def null(self):
+    def null(self) -> None:
         return None
 
 
@@ -176,7 +177,7 @@ class BasePaddedInt(BaseInteger[N]):
     padded with zeroes.
     """
 
-    def __init__(self, digits: int):
+    def __init__(self, digits: int) -> None:
         self.digits = digits
 
     def format(self, value: int | N) -> str:
@@ -192,7 +193,7 @@ class ScaledInt(Integer):
     constant and adds a suffix. Good for units with large magnitudes.
     """
 
-    def __init__(self, unit: int, suffix: str = ""):
+    def __init__(self, unit: int, suffix: str = "") -> None:
         self.unit = unit
         self.suffix = suffix
 
@@ -209,7 +210,7 @@ class Id(NullInteger):
     def null(self) -> None:
         return None
 
-    def __init__(self, primary: bool = True):
+    def __init__(self, primary: bool = True) -> None:
         if primary:
             self.sql = "INTEGER PRIMARY KEY"
 
@@ -223,7 +224,7 @@ class BaseFloat(Type[float, N]):
     query: query.FieldQueryType = query.NumericQuery
     model_type = float
 
-    def __init__(self, digits: int = 1):
+    def __init__(self, digits: int = 1) -> None:
         self.digits = digits
 
     def format(self, value: float | N) -> str:
@@ -277,13 +278,13 @@ class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
     model_type = list
     fmt_delimiter = "; "
 
-    def __init__(self, db_delimiter: str):
+    def __init__(self, db_delimiter: str) -> None:
         self.db_delimiter = db_delimiter
 
-    def format(self, value: list[str]):
+    def format(self, value: list[str]) -> str:
         return self.fmt_delimiter.join(value)
 
-    def parse(self, string: str):
+    def parse(self, string: str) -> list[str]:
         if not string:
             return []
 
@@ -317,7 +318,7 @@ class DelimitedString(BaseString[list, list]):  # type: ignore[type-arg]
             return self.parse(value)
         return self.model_type(value)
 
-    def to_sql(self, model_value: list[str]):
+    def to_sql(self, model_value: list[str]) -> str:
         return self.db_delimiter.join(model_value)
 
 
@@ -340,12 +341,12 @@ class DateType(Float):
     # TODO distinguish between date and time types
     query = query.DateQuery
 
-    def format(self, value):
+    def format(self, value: float) -> str:
         return time.strftime(
             beets.config["time_format"].as_str(), time.localtime(value or 0)
         )
 
-    def parse(self, string):
+    def parse(self, string: str) -> float | N:
         try:
             # Try a formatted date string.
             return time.mktime(
@@ -374,6 +375,9 @@ class BasePathType(Type[bytes, N]):
         return util.normpath(string)
 
     def normalize(self, value: Any) -> bytes | N:
+        if isinstance(value, Path):
+            value = str(value)
+
         if isinstance(value, str):
             # Paths stored internally as encoded bytes.
             return util.bytestring_path(value)
@@ -384,8 +388,11 @@ class BasePathType(Type[bytes, N]):
 
         return value
 
-    def from_sql(self, sql_value):
-        return pathutils.expand_path_from_db(self.normalize(sql_value))
+    def from_sql(self, sql_value: SQLiteType) -> bytes | N:
+        value = self.normalize(sql_value)
+        if isinstance(value, bytes):
+            return pathutils.expand_path_from_db(value)
+        return value
 
     def to_sql(self, value: pathutils.MaybeBytes) -> BLOB_TYPE | None:
         value = pathutils.normalize_path_for_db(value)
@@ -429,7 +436,7 @@ class MusicalKey(String):
 
     null = None
 
-    def parse(self, key):
+    def parse(self, key: str) -> str | None:
         key = key.lower()
         for flat, sharp in self.ENHARMONIC.items():
             key = re.sub(flat, sharp, key)
@@ -437,7 +444,7 @@ class MusicalKey(String):
         key = re.sub(r"[\W\s]+major", "", key)
         return key.capitalize()
 
-    def normalize(self, key):
+    def normalize(self, key: Any) -> str | None:
         if key is None:
             return None
         return self.parse(key)
@@ -448,12 +455,12 @@ class DurationType(Float):
 
     query = query.DurationQuery
 
-    def format(self, value):
+    def format(self, value: float) -> str:
         if not beets.config["format_raw_length"].get(bool):
             return human_seconds_short(value or 0.0)
-        return value
+        return str(value)
 
-    def parse(self, string):
+    def parse(self, string: str) -> float | N:
         try:
             # Try to format back hh:ss to seconds.
             return raw_seconds_short(string)

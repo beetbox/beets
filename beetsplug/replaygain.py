@@ -653,6 +653,101 @@ class CommandBackend(Backend):
         return out
 
 
+# metaflac CLI tool backend.
+
+
+class MetaflacBackend(Backend):
+    """A replaygain backend using the ``metaflac`` command-line tool."""
+
+    NAME = "metaflac"
+    do_parallel = True
+
+    SUPPORTED_FORMATS: ClassVar[set[str]] = {"FLAC"}
+
+    def __init__(self, config: ConfigView, log: Logger):
+        super().__init__(config, log)
+        config.add({"metaflac": "metaflac"})
+
+        command = config["metaflac"].as_str()
+        path = shutil.which(command)
+        if path is None:
+            raise FatalReplayGainError(
+                f"replaygain metaflac command not found: {command!r}"
+            )
+        self.command = path
+
+    def format_supported(self, item: Item) -> bool:
+        """Return whether metaflac can process this item."""
+        return item.format in self.SUPPORTED_FORMATS
+
+    def compute_track_gain(self, task: AnyRgTask) -> AnyRgTask:
+        """Compute the track gain for each FLAC item in the task."""
+        track_gains = []
+        for item in filter(self.format_supported, task.items):
+            self._add_replay_gain([item])
+            track_gains.append(
+                self._read_gain(item, "TRACK", task.target_level)
+            )
+        task.track_gains = track_gains
+        return task
+
+    def compute_album_gain(self, task: AnyRgTask) -> AnyRgTask:
+        """Compute the album gain and per-track gains for the FLAC items."""
+        items = list(task.items)
+        if not items or not all(self.format_supported(i) for i in items):
+            task.album_gain = None
+            task.track_gains = None
+            return task
+
+        self._add_replay_gain(items)
+        task.track_gains = [
+            self._read_gain(item, "TRACK", task.target_level) for item in items
+        ]
+        task.album_gain = self._read_gain(items[0], "ALBUM", task.target_level)
+        return task
+
+    def _add_replay_gain(self, items: Sequence[Item]) -> None:
+        """Run ``metaflac --add-replay-gain`` on the given files."""
+        paths = [str(item.filepath) for item in items]
+        call([self.command, "--add-replay-gain", *paths], self._log)
+
+    def _read_gain(self, item: Item, kind: str, target_level: float) -> Gain:
+        """Read the REPLAYGAIN gain and peak tags back from a file."""
+        gain_tag = f"REPLAYGAIN_{kind}_GAIN"
+        peak_tag = f"REPLAYGAIN_{kind}_PEAK"
+        command = [
+            self.command,
+            f"--show-tag={gain_tag}",
+            f"--show-tag={peak_tag}",
+            str(item.filepath),
+        ]
+        tags = self._parse_tags(call(command, self._log).stdout)
+        try:
+            gain = self._parse_gain(tags[gain_tag])
+            peak = float(tags[peak_tag])
+        except (KeyError, IndexError, ValueError) as exc:
+            raise ReplayGainError(
+                f"could not read metaflac replaygain tags for {item}: {exc!r}"
+            )
+        # metaflac uses an 89 dB reference, like the other backends
+        return Gain(gain=gain + (target_level - 89.0), peak=peak)
+
+    @staticmethod
+    def _parse_tags(output: bytes) -> dict[str, str]:
+        """Turn metaflac's NAME=VALUE output into a dict."""
+        tags: dict[str, str] = {}
+        for line in output.decode("utf-8", "ignore").splitlines():
+            name, sep, value = line.partition("=")
+            if sep:
+                tags[name.strip().upper()] = value.strip()
+        return tags
+
+    @staticmethod
+    def _parse_gain(value: str) -> float:
+        """Turn a '-7.89 dB' tag value into a float."""
+        return float(value.split()[0])
+
+
 # GStreamer-based backend.
 
 
@@ -1146,6 +1241,7 @@ class ExceptionWatcher(Thread):
 
 BACKEND_CLASSES: list[type[Backend]] = [
     CommandBackend,
+    MetaflacBackend,
     GStreamerBackend,
     AudioToolsBackend,
     FfmpegBackend,
@@ -1319,7 +1415,7 @@ class ReplayGainPlugin(BeetsPlugin):
                     discs[item.disc] = []
                 discs[item.disc].append(item)
         else:
-            discs[1] = album.items()
+            discs[1] = list(album.items())
 
         def store_cb(task: RgTask):
             task.store(write)

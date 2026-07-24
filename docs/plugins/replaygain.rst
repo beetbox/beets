@@ -10,9 +10,10 @@ Installation
 ------------
 
 This plugin can use one of many backends to compute the ReplayGain values:
-GStreamer, mp3gain (and its cousins, aacgain and mp3rgain), Python Audio Tools
-or ffmpeg. ffmpeg and mp3gain can be easier to install. mp3gain supports fewer
-audio formats than the other backends.
+GStreamer, mp3gain (and its cousins, aacgain and mp3rgain), Python Audio Tools,
+ffmpeg or metaflac. ffmpeg and mp3gain can be easier to install. mp3gain
+supports fewer audio formats than the other backends, and metaflac only supports
+FLAC.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -139,6 +140,24 @@ file.
 
 .. _ffmpeg: https://ffmpeg.org
 
+metaflac
+~~~~~~~~
+
+This backend uses the metaflac_ command-line tool (part of the FLAC tools) to
+compute ReplayGain values for FLAC files. It only supports FLAC; files in other
+formats are skipped. To use it, install the ``flac`` package, which provides
+``metaflac``, and select the ``metaflac`` backend in your configuration file:
+
+.. code-block:: yaml
+
+    replaygain:
+        backend: metaflac
+
+metaflac scans every file of an album in a single pass, so the files of an album
+need to share the same sample rate and channel layout.
+
+.. _metaflac: https://xiph.org/flac/documentation_tools_metaflac.html
+
 Configuration
 -------------
 
@@ -154,7 +173,7 @@ file. The available options are:
   write`` after importing to actually write to the imported files. Default:
   ``no``
 - **backend**: The analysis backend; either ``gstreamer``, ``command``,
-  ``audiotools`` or ``ffmpeg``. Default: ``command``.
+  ``audiotools``, ``ffmpeg`` or ``metaflac``. Default: ``command``.
 - **overwrite**: On import, re-analyze files that already have ReplayGain tags.
   Note that, for historical reasons, the name of this option is somewhat
   unfortunate: It does not decide whether tags are written to the files (which
@@ -182,6 +201,11 @@ This option only works with the "ffmpeg" backend:
 
 - **peak**: Either ``true`` (the default) or ``sample``. ``true`` is more
   accurate but slower.
+
+This option only works with the "metaflac" backend:
+
+- **metaflac**: Name or path to the ``metaflac`` executable. Default:
+  ``metaflac``.
 
 Manual Analysis
 ---------------

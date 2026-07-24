@@ -264,7 +264,7 @@ class BPDTestHelper(PluginTestCase):
         """
         # Create a config file:
         config = {
-            "pluginpath": [str(self.temp_dir_path)],
+            "pluginpath": [str(self.temp_path)],
             "plugins": "bpd",
             # use port 0 to let the OS choose a free port
             "bpd": {"host": host, "port": 0, "control_port": 0},
@@ -272,7 +272,7 @@ class BPDTestHelper(PluginTestCase):
         if password:
             config["bpd"]["password"] = password
         config_file = tempfile.NamedTemporaryFile(
-            mode="wb", dir=str(self.temp_dir_path), suffix=".yaml", delete=False
+            mode="wb", dir=str(self.temp_path), suffix=".yaml", delete=False
         )
         config_file.write(
             yaml.dump(config, Dumper=confuse.Dumper, encoding="utf-8")
@@ -288,7 +288,7 @@ class BPDTestHelper(PluginTestCase):
                     "--library",
                     self.config["library"].as_filename(),
                     "--directory",
-                    os.fsdecode(self.libdir),
+                    str(self.lib_path),
                     "--config",
                     os.fsdecode(config_file.name),
                     "bpd",

@@ -56,8 +56,8 @@ def test_durationtype():
     assert t.null == t.parse("not61.23")
     # config format_raw_length
     beets.config["format_raw_length"] = True
-    assert 61.23 == t.format(61.23)
-    assert 3601.23 == t.format(3601.23)
+    assert "61.23" == t.format(61.23)
+    assert "3601.23" == t.format(3601.23)
 
 
 @pytest.mark.parametrize(

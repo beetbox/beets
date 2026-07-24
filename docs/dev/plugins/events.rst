@@ -65,6 +65,11 @@ registration process in this case:
     :Description: Called every time an album is removed from the library (even
         when its files are not deleted from disk).
 
+``art_set``
+    :Parameters: ``album`` (|Album|)
+    :Description: Called after cover art is copied or moved into place for an
+        album.
+
 ``item_copied``
     :Parameters: ``item`` (|Item|), ``source`` (path), ``destination`` (path)
     :Description: Called whenever an item file is copied.

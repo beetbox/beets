@@ -52,6 +52,8 @@ New features
   :bug:`6466`
 - :doc:`plugins/lyrics`: Add ``lrcmux`` backend, which aggregates lyrics from
   various other sources.
+- :doc:`plugins/replaygain`: Add a ``metaflac`` backend that computes ReplayGain
+  for FLAC files using the ``metaflac`` command-line tool. :bug:`1203`
 
 Bug fixes
 ~~~~~~~~~
@@ -88,6 +90,11 @@ Bug fixes
 - :doc:`plugins/smartplaylist`: ``splupdate`` no longer crashes with
   ``TypeError: unhashable type: 'list'`` when a playlist configuration includes
   a ``playlist:`` query. :bug:`5354`
+- A date query containing a stray ``|`` (for example ``added:2000|2001``, as
+  might be typed by a user expecting ``|`` to mean "or") now raises a clean "a
+  valid date/time string" error instead of crashing with an uncaught
+  ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
+  regular expression character-class typo.
 
 ..
     For plugin developers
@@ -98,6 +105,9 @@ Other changes
 
 - :doc:`/guides/installation` Add Homebrew to the list of supported package
   managers in the installation guide.
+- :doc:`/guides/installation`: Note that Windows users should run beets in a
+  terminal emulator (such as Windows Terminal or cmder) for output to display
+  correctly. :bug:`2848`
 - :doc:`contributing`: The project now uses ``uv`` for packaging, virtual
   environment, and dependency management, replacing ``poetry``. The build
   backend has changed from ``poetry-core`` to ``hatchling``. Please see updates

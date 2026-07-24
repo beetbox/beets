@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -20,13 +21,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import TestHelper
-from beets.util import (
-    as_string,
-    bytestring_path,
-    normpath,
-    path_as_posix,
-    syspath,
-)
+from beets.util import as_string, bytestring_path, normpath, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -136,9 +131,7 @@ class TestAdd(PytestItemHelper):
     ):
         """Test library.add emits only one database_change event."""
 
-        item.path = beets.util.normpath(
-            os.path.join(self.temp_dir, b"a", b"b.mp3")
-        )
+        item.path = beets.util.normpath(self.temp_path / "a" / "b.mp3")
         item.album = "a"
         item.title = "b"
 
@@ -1076,18 +1069,18 @@ class TestPathString(PytestItemHelper):
         assert isinstance(self.get_first_item().path, bytes)
 
     def test_special_chars_preserved_in_database(self, item_in_db):
-        path = "b\xe1r".encode()
+        path = Path("b\xe1r")
         item_in_db.path = path
         item_in_db.store()
-        assert self.get_first_item().path == os.path.join(self.libdir, path)
+        assert self.get_first_item().filepath == self.lib_path / path
 
     def test_special_char_path_added_to_database(self, item, item_in_db):
         item_in_db.remove()
-        path = "b\xe1r".encode()
+        path = Path("b\xe1r")
         item = _common.item()
         item.path = path
         self.lib.add(item)
-        assert self.get_first_item().path == os.path.join(self.libdir, path)
+        assert self.get_first_item().filepath == self.lib_path / path
 
     def test_destination_returns_bytestring(self, item_in_db):
         item_in_db.artist = "b\xe1r"
@@ -1101,7 +1094,7 @@ class TestPathString(PytestItemHelper):
         assert isinstance(dest, bytes)
 
     def test_artpath_stores_special_chars(self, item_in_db):
-        path = bytestring_path("b\xe1r")
+        path = Path("b\xe1r")
         alb = self.lib.add_album([item_in_db])
         alb.artpath = path
         alb.store()
@@ -1111,8 +1104,8 @@ class TestPathString(PytestItemHelper):
             .fetchone()[0]
         )
         alb = self.lib.get_album(item_in_db)
-        assert stored_path == path
-        assert alb.artpath == os.path.join(self.libdir, path)
+        assert stored_path == os.fsencode(path)
+        assert alb.art_filepath == self.lib_path / path
 
     def test_sanitize_path_with_special_chars(self):
         path = "b\xe1r?"
@@ -1138,8 +1131,8 @@ class TestPathString(PytestItemHelper):
         assert isinstance(alb.artpath, bytes)
 
     def test_relative_path_is_stored(self, item_in_db):
-        relative_path = os.path.join(b"abc", b"foo.mp3")
-        absolute_path = os.path.join(self.libdir, relative_path)
+        relative_path = Path("abc") / "foo.mp3"
+        absolute_path = self.lib_path / relative_path
         item_in_db.path = absolute_path
         item_in_db.store()
         stored_path = (
@@ -1149,15 +1142,15 @@ class TestPathString(PytestItemHelper):
         )
         album = self.lib.add_album([item_in_db])
 
-        assert item_in_db.path == absolute_path
-        assert stored_path == path_as_posix(relative_path)
-        assert album.path == os.path.dirname(absolute_path)
+        assert item_in_db.filepath == absolute_path
+        assert stored_path == util.path_as_posix(os.fsencode(relative_path))
+        assert album.filepath == absolute_path.parent
 
 
 class TestMtime(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
-        self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
+        self.ipath = self.temp_path / "testfile.mp3"
         shutil.copy(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
             syspath(self.ipath),
@@ -1165,11 +1158,11 @@ class TestMtime(TestHelper):
         item = beets.library.Item.from_path(self.ipath)
         self.lib.add(item)
         yield item
-        if os.path.exists(self.ipath):
-            os.remove(self.ipath)
+        if self.ipath.exists():
+            self.ipath.unlink()
 
     def _mtime(self):
-        return int(os.path.getmtime(self.ipath))
+        return int(self.ipath.stat().st_mtime)
 
     def test_mtime_initially_up_to_date(self, item):
         assert item.mtime >= self._mtime()
@@ -1265,7 +1258,7 @@ class TestWrite(TestHelper):
 
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
-        custom_path = os.path.join(self.temp_dir, b"custom.mp3")
+        custom_path = self.temp_path / "custom.mp3"
         shutil.copy(syspath(item.path), syspath(custom_path))
 
         item["artist"] = "new artist"

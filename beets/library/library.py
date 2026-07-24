@@ -3,12 +3,14 @@ from __future__ import annotations
 import re
 from contextlib import contextmanager
 from functools import cached_property
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, TypeVar
 
 import platformdirs
 
 import beets
 from beets import config, context, dbcore
+from beets.dbcore.query import Query
 from beets.dbcore.sort import NullSort
 from beets.exceptions import UserError
 from beets.util import normpath
@@ -19,9 +21,15 @@ from .models import Album, Item
 from .queries import parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
-    from beets.dbcore import Results
-    from beets.util import Replacements
+    from collections.abc import Iterator, Sequence
+
+    from beets.dbcore.sort import Sort
+    from beets.util import PathLike, Replacements
     from beets.util.pathformats import PathFormat
+
+    from .models import LibModel
+
+    LM = TypeVar("LM", bound=LibModel)
 
 
 class Library(dbcore.Database):
@@ -39,6 +47,9 @@ class Library(dbcore.Database):
         (migrations.RemoveInheritedArtpathMigration, (Item,)),
         (migrations.InstrumentalLyricsInFlexFieldMigration, (Item,)),
     )
+
+    # Used for template substitution performance.
+    _memotable: dict[tuple[str | None, str | None, str | None, int | None], str]
     replacements: Replacements
 
     @cached_property
@@ -61,10 +72,10 @@ class Library(dbcore.Database):
 
     def __init__(
         self,
-        path="library.blb",
+        path: PathLike = Path("library.blb"),
         directory: str | None = None,
         set_music_dir: bool = True,
-    ):
+    ) -> None:
         self.directory = normpath(directory or platformdirs.user_music_path())
         if set_music_dir:
             context.set_music_dir(self.directory)
@@ -72,19 +83,17 @@ class Library(dbcore.Database):
         super().__init__(path, timeout=beets.config["timeout"].as_number())
 
         self.replacements = self.get_replacements()
-
-        # Used for template substitution performance.
-        self._memotable: dict[tuple[str, ...], str] = {}
+        self._memotable = {}
 
     @contextmanager
-    def music_dir_context(self):
+    def music_dir_context(self) -> Iterator[Library]:
         """Temporarily bind this library's directory to path conversion."""
         with context.music_dir(self.directory):
             yield self
 
     # Adding objects to the database.
 
-    def add(self, obj):
+    def add(self, obj: LibModel) -> int | None:
         """Add the :class:`Item` or :class:`Album` object to the library
         database.
 
@@ -94,7 +103,7 @@ class Library(dbcore.Database):
         self._memotable = {}
         return obj.id
 
-    def add_album(self, items):
+    def add_album(self, items: list[Item]) -> Album:
         """Create a new album consisting of a list of items.
 
         The items are added to the database if they don't yet have an
@@ -123,22 +132,34 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort=None):
+    def _fetch(
+        self,
+        model_cls: type[LM],
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+    ) -> dbcore.Results[LM]:
         """Parse a query and fetch.
 
         If an order specification is present in the query string
         the `sort` argument is ignored.
         """
         # Parse the query, if necessary.
+        parsed_sort = None
+        parsed_query = None
         try:
-            parsed_sort = None
             # Query parsing needs the library root, but keeping it scoped here
             # avoids leaking one Library's directory into another's work.
             with context.music_dir(self.directory):
+                if isinstance(query, Query):
+                    parsed_query = query
                 if isinstance(query, str):
-                    query, parsed_sort = parse_query_string(query, model_cls)
+                    parsed_query, parsed_sort = parse_query_string(
+                        query, model_cls
+                    )
                 elif isinstance(query, (list, tuple)):
-                    query, parsed_sort = parse_query_parts(query, model_cls)
+                    parsed_query, parsed_sort = parse_query_parts(
+                        query, model_cls
+                    )
         except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
 
@@ -147,27 +168,35 @@ class Library(dbcore.Database):
         if parsed_sort and not isinstance(parsed_sort, NullSort):
             sort = parsed_sort
 
-        return super()._fetch(model_cls, query, sort)
+        return super()._get_results(model_cls, parsed_query, sort)
 
     @staticmethod
-    def get_default_album_sort():
+    def get_default_album_sort() -> Sort:
         """Get a :class:`Sort` object for albums from the config option."""
         return dbcore.sort_from_strings(
             Album, beets.config["sort_album"].as_str_seq()
         )
 
     @staticmethod
-    def get_default_item_sort():
+    def get_default_item_sort() -> Sort:
         """Get a :class:`Sort` object for items from the config option."""
         return dbcore.sort_from_strings(
             Item, beets.config["sort_item"].as_str_seq()
         )
 
-    def albums(self, query=None, sort=None) -> Results[Album]:
+    def albums(
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+    ) -> dbcore.Results[Album]:
         """Get :class:`Album` objects matching the query."""
         return self._fetch(Album, query, sort or self.get_default_album_sort())
 
-    def items(self, query=None, sort=None) -> Results[Item]:
+    def items(
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+    ) -> dbcore.Results[Item]:
         """Get :class:`Item` objects matching the query."""
         return self._fetch(Item, query, sort or self.get_default_item_sort())
 

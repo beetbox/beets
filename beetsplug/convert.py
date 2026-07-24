@@ -10,7 +10,7 @@ import tempfile
 import threading
 from functools import cached_property
 from string import Template
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Literal, NamedTuple
 
 import mediafile
 from confuse import ConfigTypeError, Optional
@@ -527,7 +527,9 @@ class ConvertPlugin(BeetsPlugin):
         if pretend:
             return
 
-        id3v23 = self.config["id3v23"].as_choice([True, False, "inherit"])
+        id3v23: bool | Literal["inherit"] | None = self.config[
+            "id3v23"
+        ].as_choice([True, False, "inherit"])
         if id3v23 == "inherit":
             id3v23 = None
 
