@@ -109,8 +109,8 @@ Other changes
   section to guide users in picking the right approach across genre fetching,
   filtering, and normalization.
 - :doc:`plugins/spotify`: Retry on ``503 Service Unavailable`` responses from
-  the Spotify API (with ``Retry-After`` backoff) instead of immediately
-  aborting, matching the existing ``429`` rate-limit retry behavior.
+  the Spotify API instead of immediately aborting, matching the existing ``429``
+  rate-limit retry behavior.
 
 2.12.0 (June 22, 2026)
 ----------------------
