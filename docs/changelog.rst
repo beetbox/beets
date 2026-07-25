@@ -95,6 +95,9 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- ``remux_mp3_in_wav`` no longer deletes the imported file when a
+  MPEGLAYER3 WAV is named ``.mp3``: the remuxed stream was written back to the
+  same path and then removed as if it were a leftover original. :bug:`6748`
 
 ..
     For plugin developers
