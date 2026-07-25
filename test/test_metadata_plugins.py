@@ -127,6 +127,14 @@ class TestSearchApiMetadataSourcePlugin(PluginMixin):
         with pytest.raises(ValueError, match="Search failure"):
             search_plugin._search_api("track", "query", {})
 
+    def test_search_api_skips_request_without_query_and_filters(
+        self, config, search_plugin
+    ):
+        """Empty searches are rejected by APIs, so do not send them."""
+        config["raise_on_error"] = True
+
+        assert search_plugin._search_api("track", "", {}) == ()
+
 
 def test_albums_for_ids_calls_each_plugin_once(monkeypatch):
     start_workers = Event()

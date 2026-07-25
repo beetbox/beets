@@ -156,6 +156,10 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- Metadata source searches with neither a query nor any filters (for example
+  items with no artist and title tags) no longer hit the API, which rejected
+  them with an error such as MusicBrainz' ``400 Bad Request``. Such searches
+  now report no candidates instead. :bug:`6862`
 
 ..
     For plugin developers
