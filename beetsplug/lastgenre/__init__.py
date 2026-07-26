@@ -510,11 +510,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # returned as-is.
             return genres, "keep any, no-force"
 
-        if self.config["force"]:
-            # Force doesn't keep any unless keep_existing is set.
-            # Whitelist validation is handled in _resolve_genres.
-            if self.config["keep_existing"]:
-                keep_genres = [g.lower() for g in genres]
+        keep_genres = (
+            [g.lower() for g in genres]
+            if self.config["keep_existing"] and self.config["force"]
+            else []
+        )
 
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
