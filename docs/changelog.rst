@@ -125,6 +125,10 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- Deduplicating a file whose name already ends in a counter of two or more
+  digits no longer restarts the numbering: ``track.10.mp3`` now yields
+  ``track.11.mp3`` instead of ``track.1.mp3``. The counter was matched with
+  ``\.(\d)+$``, which captures only the final digit.
 
 ..
     For plugin developers
