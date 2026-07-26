@@ -290,8 +290,14 @@ class SpotifyPlugin(
                     method, url, params=params, retry_count=retry_count + 1
                 )
             if e.response.status_code == 503:
-                self._log.error("Service Unavailable.")
-                raise APIError("Service Unavailable.")
+                self._log.debug(
+                    "Service Unavailable. Retrying after {} seconds.",
+                    DEFAULT_WAITING_TIME,
+                )
+                time.sleep(DEFAULT_WAITING_TIME + 1)
+                return self._handle_response(
+                    method, url, params=params, retry_count=retry_count + 1
+                )
             if e.response.status_code == 502:
                 self._log.error("Bad Gateway.")
                 raise APIError("Bad Gateway.")
