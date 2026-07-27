@@ -201,6 +201,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
+
 
 - :doc:`plugins/lyrics`: Add rate limiting and exponential backoff to HTTP
   requests to prevent ``429 Too Many Requests`` errors from lyrics sources
