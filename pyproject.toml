@@ -101,7 +101,7 @@ dev = [
 # inline comments note required external / non-python dependencies
 absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
 aura = ["flask", "flask-cors", "Pillow"]
-autobpm = ["librosa>=0.11", "resampy>=0.4.3"]
+autobpm = ["librosa>=0.11", "resampy>=0.4.3", "numba>=0.65.1"]
 # badfiles # mp3val and flac
 beatport = ["requests-oauthlib>=0.6.1"]
 bpd = [
