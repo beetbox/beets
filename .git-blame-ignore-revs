@@ -261,3 +261,5 @@ dc2826fa4b32b625eb4ac9d71934176edde2443e
 2e9ace7b20e776ad10127b2f6ac76791e2a19704
 # Rename PathsMixin.temp_dir_path to PathsMixin.temp_path for consistency
 d24c0d341ec6074c343cd8054083fe358da8fa14
+# Fix yoda typedefs
+5dcc35112d17976a11ffc468cf436bc3e2342e54
