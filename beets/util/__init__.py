@@ -939,9 +939,13 @@ def editor_command() -> str:
 
     """
     from beets import config
+
     return (
-        config["editor"].get(str) if config["editor"].exists() else None
-    ) or os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
+        (config["editor"].get(str) if config["editor"].exists() else None)
+        or os.environ.get("VISUAL")
+        or os.environ.get("EDITOR")
+        or open_anything()
+    )
 
 
 def interactive_open(targets: Sequence[str], command: str) -> None:
@@ -1202,4 +1206,3 @@ def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield list(lst[i : i + n])
-
