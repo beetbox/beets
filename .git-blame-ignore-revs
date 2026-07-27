@@ -263,3 +263,11 @@ dc2826fa4b32b625eb4ac9d71934176edde2443e
 d24c0d341ec6074c343cd8054083fe358da8fa14
 # Fix yoda typedefs
 5dcc35112d17976a11ffc468cf436bc3e2342e54
+# Replace item.path with item.filepath in tests
+04c2304879d088ea9be1fad475caf022608a3145
+# Use pathlib.Path wherever possible in tests
+951e32a852b48f87e3dd2ccf71753ee8f7ac2e34
+# Remove syspath
+b2f52ac12443c102712b735e456fd07a6525786b
+# Return Path from TestHelper.create_mediafile_fixture
+bb66b0c378e9bf7d97622a1582d93c4dfcf20fdd
