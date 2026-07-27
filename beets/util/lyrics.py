@@ -94,7 +94,13 @@ class Lyrics:
     def from_item(cls, item: Item) -> Lyrics:
         """Build lyrics from an item's canonical text and flexible metadata."""
         data: dict[str, Any] = {}
-        for key in ("backend", "url", "language", "translation_language"):
+        for key in (
+            "backend",
+            "url",
+            "instrumental",
+            "language",
+            "translation_language",
+        ):
             data[key] = item.get(f"lyrics_{key}", with_album=False)
 
         # ``item.lyrics`` is ``None`` for a track without stored lyrics.
