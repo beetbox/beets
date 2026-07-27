@@ -56,7 +56,7 @@ class DummyRemoteArtSource(fetchart.RemoteArtSource):
         self,
         album,
         plugin: fetchart.FetchArtPlugin,
-        paths: None | Sequence[bytes],
+        paths: Sequence[bytes] | None,
     ) -> Iterator[fetchart.Candidate]:
         return iter(())
 

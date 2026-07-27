@@ -443,7 +443,7 @@ class SpotifyPlugin(
             data_url=track_data["external_urls"]["spotify"],
         )
 
-    def track_for_id(self, track_id: str) -> None | TrackInfo:
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
         """Fetch a track by its Spotify ID or URL.
 
         Returns a TrackInfo object or None if the track is not found.
