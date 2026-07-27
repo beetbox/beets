@@ -29,6 +29,8 @@ New features
 
 Bug fixes
 ~~~~~~~~~
+- Add ``editor`` config option to allow users to permanently set their preferred editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables. :bug:`6641`
+
 
 - :ref:`import-cmd`: Fix duplicate album merge during import when running in
   threaded mode. The merge action no longer creates a duplicate folder or
