@@ -454,7 +454,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         new_genres: list[str],
         artist: str | None = None,
     ) -> tuple[list[str], str] | None:
-        """Try to resolve genres for a given stage and log the result."""
+        """Try to resolve genres for a given stage and log the result.
+
+        If any newly fetched genres and/or existing genres are resolved, return
+        a tuple of the resolved genres and a label describing the source and
+        filtering applied. Otherwise, return ``None``.
+        """
         resolved_genres = self._combine_resolve_and_log(
             keep_genres, new_genres, artist=artist
         )
