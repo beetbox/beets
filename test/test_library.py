@@ -1237,8 +1237,7 @@ class TestWrite(TestHelper):
 
     def test_no_write_permission(self):
         item = self.add_item_fixture()
-        path = syspath(item.path)
-        os.chmod(path, stat.S_IRUSR)
+        item.filepath.chmod(stat.S_IRUSR)
 
         try:
             with pytest.raises(beets.library.WriteError) as exc_info:
@@ -1247,32 +1246,32 @@ class TestWrite(TestHelper):
 
         finally:
             # Restore write permissions so the file can be cleaned up.
-            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+            item.filepath.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
         custom_path = self.temp_path / "custom.mp3"
-        shutil.copy(syspath(item.path), syspath(custom_path))
+        shutil.copy(item.filepath, syspath(custom_path))
 
         item["artist"] = "new artist"
         assert MediaFile(syspath(custom_path)).artist != "new artist"
-        assert MediaFile(syspath(item.path)).artist != "new artist"
+        assert MediaFile(item.filepath).artist != "new artist"
 
         item.write(custom_path)
         assert MediaFile(syspath(custom_path)).artist == "new artist"
-        assert MediaFile(syspath(item.path)).artist != "new artist"
+        assert MediaFile(item.filepath).artist != "new artist"
 
     def test_write_custom_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artist": "new artist"})
         assert item.artist != "new artist"
-        assert MediaFile(syspath(item.path)).artist == "new artist"
+        assert MediaFile(item.filepath).artist == "new artist"
 
     def test_write_multi_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artists": ["old artist", "another artist"]})
 
-        assert MediaFile(syspath(item.path)).artists == [
+        assert MediaFile(item.filepath).artists == [
             "old artist",
             "another artist",
         ]
@@ -1283,9 +1282,7 @@ class TestWrite(TestHelper):
             tags={"artists": ["old artist", "another artist"]}, id3v23=True
         )
 
-        assert MediaFile(syspath(item.path)).artists == [
-            "old artist/another artist"
-        ]
+        assert MediaFile(item.filepath).artists == ["old artist/another artist"]
 
     def test_write_date_field(self):
         # Since `date` is not a MediaField, this should do nothing.
@@ -1293,7 +1290,7 @@ class TestWrite(TestHelper):
         clean_year = item.year
         item.date = "foo"
         item.write()
-        assert MediaFile(syspath(item.path)).year == clean_year
+        assert MediaFile(item.filepath).year == clean_year
 
 
 class TestItemRead(PytestItemHelper):
@@ -1340,18 +1337,17 @@ class TestFilesize(TestHelper):
 class TestItemPruneDirsClutter(TestHelper):
     """Regression tests: prune_dirs respects config["clutter"] during move/remove."""
 
-    def _drop_clutter(self, directory, filename=b"unwanted.log"):
+    def _drop_clutter(self, directory: Path) -> Path:
         """Create a clutter file in *directory* (bytes path)."""
-        path = os.path.join(directory, filename)
-        with open(syspath(path), "w"):
-            pass
+        path = directory / "unwanted.log"
+        path.touch()
         return path
 
     def test_move_prunes_dir_with_config_clutter(self):
         """After moving an item, old dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         # Change artist so the destination path differs, forcing a real move.
@@ -1359,18 +1355,18 @@ class TestItemPruneDirsClutter(TestHelper):
         item.store()
         item.move()
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
     def test_remove_prunes_dir_with_config_clutter(self):
         """After deleting an item, its dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         item.remove(delete=True)
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
 
 class TestParseQuery:

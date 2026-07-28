@@ -21,7 +21,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         with self.configure_plugin({"fields": ["comments", "month"]}):
             item.write()
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.comments is None
         assert mf.month is None
         assert mf.title == "Title"
@@ -36,7 +36,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         ):
             item.write()
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.comments is None
 
     def test_pattern_nomatch(self):
@@ -48,7 +48,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         ):
             item.write()
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.comments == "recorded at place"
 
     def test_do_not_change_database(self):
@@ -105,7 +105,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
             self.io.addinput("y")
             self.run_command("zero")
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         item = self.lib.get_item(item_id)
 
         assert item["year"] == 2016
@@ -126,7 +126,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
             self.io.addinput("y")
             self.run_command("zero")
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         item = self.lib.get_item(item_id)
 
         assert item["year"] == 2016
@@ -146,7 +146,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         ):
             self.run_command("zero", "year: 2016")
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
 
         assert mf.year == 2016
         assert mf.comments is None
@@ -163,7 +163,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         ):
             self.run_command("zero", "year: 0000")
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
 
         assert mf.year == 2016
         assert mf.comments == "test comment"
@@ -171,7 +171,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
     def test_no_fields(self):
         item = self.add_item_fixture(year=2016)
         item.write()
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.year == 2016
 
         item_id = item.id
@@ -188,7 +188,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
     def test_whitelist_and_blacklist(self):
         item = self.add_item_fixture(year=2016)
         item.write()
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.year == 2016
 
         item_id = item.id
@@ -244,7 +244,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         ):
             item.write()
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.comments is None
         assert mf.disc is None
         assert mf.disctotal is None
@@ -259,7 +259,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         ):
             item.write()
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.comments is None
         assert mf.disc == 1
         assert mf.disctotal == 4
@@ -271,7 +271,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         with self.configure_plugin({"omit_single_disc": True}):
             item.write()
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.disc is None
         assert mf.disctotal is None
 
@@ -282,7 +282,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         with self.configure_plugin({"omit_single_disc": True}):
             item.write()
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         assert mf.disc == 1
         assert mf.disctotal == 4
 
@@ -298,7 +298,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
             self.io.addinput("n")
             self.run_command("zero")
 
-        mf = MediaFile(syspath(item.path))
+        mf = MediaFile(item.filepath)
         item = self.lib.get_item(item_id)
 
         assert item["year"] == 2016

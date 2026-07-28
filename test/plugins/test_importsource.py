@@ -5,7 +5,6 @@ import time
 
 from beets import importer, plugins
 from beets.test.helper import AutotagImportTestCase, IOMixin, PluginMixin
-from beets.util import syspath
 
 
 class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
@@ -26,7 +25,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
     def interact(self, stdin: list[str]):
         for char in stdin:
             self.io.addinput(char)
-        self.run_command("remove", f"path:{syspath(self.item_to_remove.path)}")
+        self.run_command("remove", f"path:{self.item_to_remove.filepath}")
 
     def test_do_nothing(self):
         self.interact(["N"])

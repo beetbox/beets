@@ -1,10 +1,8 @@
-import os
 import shutil
 
 from beets import library
 from beets.test.helper import BeetsTestCase
 from beets.ui.commands.move import move_items
-from beets.util import syspath
 
 
 class MoveTest(BeetsTestCase):
@@ -105,16 +103,16 @@ class MoveTest(BeetsTestCase):
 
     def test_move_missing_singleton_continues(self):
         self.i.load()
-        old_path = self.i.path
-        os.remove(syspath(old_path))
+        old_path = self.i.filepath
+        old_path.unlink()
         self._move()
         self.i.load()
-        assert self.i.path == old_path
+        assert self.i.filepath == old_path
 
     def test_move_album_with_missing_track(self):
         self.i.load()
-        old_i_path = self.i.path
-        os.remove(syspath(old_i_path))
+        old_i_path = self.i.filepath
+        old_i_path.unlink()
 
         i2_path = self.lib_path / "srcfile2"
         shutil.copy(self.resource_path, i2_path)
@@ -126,13 +124,13 @@ class MoveTest(BeetsTestCase):
         self._move(album=True)
         self.i.load()
         i2.load()
-        assert self.i.path == old_i_path
+        assert self.i.filepath == old_i_path
         assert i2.filepath.is_relative_to(self.lib_path)
         assert i2.filepath.exists()
 
     def test_move_item_skips_missing_file(self):
         self.i.load()
-        old_path = self.i.path
-        os.remove(syspath(old_path))
+        old_path = self.i.filepath
+        old_path.unlink()
         self.i.move()
-        assert self.i.path == old_path
+        assert self.i.filepath == old_path
