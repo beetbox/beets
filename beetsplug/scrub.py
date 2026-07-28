@@ -2,11 +2,19 @@
 automatically whenever tags are written.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import mediafile
 import mutagen
 
 from beets import config, ui, util
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+
 
 _MUTAGEN_FORMATS = {
     "asf": "ASF",
@@ -30,7 +38,7 @@ _MUTAGEN_FORMATS = {
 class ScrubPlugin(BeetsPlugin):
     """Removes extraneous metadata from files' tags."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"auto": True})
 
@@ -126,7 +134,9 @@ class ScrubPlugin(BeetsPlugin):
                 except mediafile.UnreadableFileError as exc:
                     self._log.error("could not write tags: {}", exc)
 
-    def import_task_files(self, session, task):
+    def import_task_files(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         """Automatically scrub imported files."""
         for item in task.imported_items():
             self._log.debug("auto-scrubbing {.filepath}", item)

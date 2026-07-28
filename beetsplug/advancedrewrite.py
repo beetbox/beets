@@ -43,12 +43,12 @@ def rewriter(field, simple_rules, advanced_rules):
 class AdvancedRewritePlugin(BeetsPlugin):
     """Plugin to rewrite fields based on a given query."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Parse configuration and register template fields for rewriting."""
         super().__init__()
         self.register_listener("pluginload", self.loaded)
 
-    def loaded(self):
+    def loaded(self) -> None:
         template = confuse.Sequence(
             confuse.OneOf(
                 [
@@ -73,7 +73,7 @@ class AdvancedRewritePlugin(BeetsPlugin):
 
         # Gather all the rewrite rules for each field.
         class RulesContainer:
-            def __init__(self):
+            def __init__(self) -> None:
                 self.simple = []
                 self.advanced = []
 

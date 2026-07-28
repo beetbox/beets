@@ -7,7 +7,10 @@ implemented by MusicBrainz yet.
 [1] https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 """
 
+from __future__ import annotations
+
 import subprocess
+from typing import TYPE_CHECKING
 
 from beets import ui
 from beets.autotag import Recommendation
@@ -15,9 +18,12 @@ from beets.plugins import BeetsPlugin
 from beets.util import PromptChoice, displayable_path
 from beetsplug.info import print_data
 
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+
 
 class MBSubmitPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -42,7 +48,9 @@ class MBSubmitPlugin(BeetsPlugin):
             "before_choose_candidate", self.before_choose_candidate_event
         )
 
-    def before_choose_candidate_event(self, session, task):
+    def before_choose_candidate_event(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         if task.rec <= self.threshold:
             return [
                 PromptChoice("p", "Print tracks", self.print_tracks),

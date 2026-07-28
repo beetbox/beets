@@ -141,7 +141,7 @@ def apply_(obj, data):
 
 
 class EditPlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -327,7 +327,9 @@ class EditPlugin(plugins.BeetsPlugin):
 
     # Methods for interactive importer execution.
 
-    def before_choose_candidate_listener(self, session, task):
+    def before_choose_candidate_listener(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         """Append an "Edit" choice and an "edit Candidates" choice (if
         there are candidates) to the interactive importer prompt.
         """
