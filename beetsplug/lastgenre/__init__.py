@@ -517,8 +517,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         new_genres = []
         genres = self._get_existing_genres(obj)
 
-        if result := self._try_resolve_existing_genres(obj, genres):
-            return result
+        if resolved := self._try_resolve_existing_genres(obj, genres):
+            return resolved
 
         keep_genres = (
             [g.lower() for g in genres]
@@ -530,17 +530,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # album artist, or most popular track genre.
         if isinstance(obj, library.Item) and "track" in self.sources:
             if new_genres := self.client.fetch("track", obj):
-                if result := self._try_resolve_stage(
+                if resolved := self._try_resolve_stage(
                     "track", keep_genres, new_genres, artist=obj.artist
                 ):
-                    return result
+                    return resolved
 
         if "album" in self.sources:
             if new_genres := self.client.fetch("album", obj):
-                if result := self._try_resolve_stage(
+                if resolved := self._try_resolve_stage(
                     "album", keep_genres, new_genres, artist=obj.albumartist
                 ):
-                    return result
+                    return resolved
 
         if "artist" in self.sources:
             new_genres = []
@@ -594,10 +594,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     )
 
             if new_genres:
-                if result := self._try_resolve_stage(
+                if resolved := self._try_resolve_stage(
                     stage_label, keep_genres, new_genres, artist=stage_artist
                 ):
-                    return result
+                    return resolved
 
         # Nothing found, leave original if configured and valid.
         if genres and self.config["keep_existing"].get():
@@ -606,10 +606,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 return valid_genres, "original fallback"
             # If the original genre doesn't match a whitelisted genre, check
             # if we can canonicalize it to find a matching, whitelisted genre!
-            if result := self._try_resolve_stage(
+            if resolved := self._try_resolve_stage(
                 "original fallback", keep_genres, [], artist=artist
             ):
-                return result
+                return resolved
 
         return self._configured_fallback()
 
