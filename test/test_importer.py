@@ -150,7 +150,7 @@ def create_archive(session):
     path = bytestring_path(path)
     os.close(handle)
     archive = ZipFile(os.fsdecode(path), mode="w")
-    archive.write(syspath(_common.RSRC / "full.mp3"), "full.mp3")
+    archive.write(_common.RSRC / "full.mp3", "full.mp3")
     archive.close()
     return bytestring_path(path)
 
@@ -182,7 +182,7 @@ class TestRmTemp(TestHelper):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
-        for root, _, files in os.walk(syspath(archive_task.toppath)):
+        for root, _, files in os.walk(archive_task.toppath):
             for f in files:
                 os.remove(os.path.join(root, f))
         assert Path(os.fsdecode(zip_path)).exists()
@@ -238,7 +238,7 @@ class TestImportTar(TestImportZip):
         path = bytestring_path(path)
         os.close(handle)
         archive = TarFile(os.fsdecode(path), mode="w")
-        archive.add(syspath(_common.RSRC / "full.mp3"), "full.mp3")
+        archive.add(_common.RSRC / "full.mp3", "full.mp3")
         archive.close()
         return path
 
@@ -1382,7 +1382,7 @@ class TestIncrementalImport(AsIsImporterMixin, ImportHelper):
 
 
 def _mkmp3(path):
-    shutil.copyfile(syspath(_common.RSRC / "min.mp3"), syspath(path))
+    shutil.copyfile(_common.RSRC / "min.mp3", path)
 
 
 class AlbumsInDirTest(BeetsTestCase):
@@ -1474,7 +1474,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
             path.mkdir()
         if files:
             for path in self.files:
-                _mkmp3(syspath(path))
+                _mkmp3(path)
 
         self.dirs = list(map(str, self.dirs))
         self.files = list(map(str, self.files))
@@ -1884,7 +1884,7 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     def test_remux_mpeglayer3_wav(self):
         src = _common.RSRC / "mpeglayer3.wav"
         dest = self.temp_path / "mpeglayer3.wav"
-        shutil.copy(syspath(src), syspath(dest))
+        shutil.copy(src, syspath(dest))
 
         mp3_path = remux_mpeglayer3_wav(dest)
 
@@ -1898,7 +1898,7 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
         self.config["import"]["remux_mp3_in_wav"] = False
         src = _common.RSRC / "mpeglayer3.wav"
         dest = self.import_path / "mpeglayer3.wav"
-        shutil.copy(syspath(src), syspath(dest))
+        shutil.copy(src, syspath(dest))
 
         self.run_asis_importer()
         assert dest.exists()

@@ -15,7 +15,6 @@ from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import _open_library, commands
-from beets.util import syspath
 
 
 class PrintTest(IOMixin, unittest.TestCase):
@@ -98,7 +97,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
     def tearDown(self):
         self.env_patcher.stop()
         commands.default_commands.pop()
-        os.chdir(syspath(self._orig_cwd))
+        os.chdir(self._orig_cwd)
         super().tearDown()
 
     def _make_test_cmd(self):
@@ -230,7 +229,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
     def test_command_line_option_relative_to_working_dir(self):
         config.read()
-        os.chdir(syspath(self.temp_path))
+        os.chdir(self.temp_path)
         self.run_command("--library", "foo.db", "test")
         assert config["library"].as_path() == Path.cwd() / "foo.db"
 

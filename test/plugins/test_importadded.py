@@ -10,7 +10,6 @@ import pytest
 
 from beets import importer
 from beets.test.helper import AutotagImportTestCase, PluginMixin
-from beets.util import syspath
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -19,7 +18,7 @@ if TYPE_CHECKING:
 def modify_mtimes(paths: Iterable[Path], offset=-60000):
     for i, path in enumerate(paths, start=1):
         mstat = path.stat()
-        os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
+        os.utime(path, (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
 class ImportAddedTest(PluginMixin, AutotagImportTestCase):

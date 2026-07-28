@@ -22,7 +22,6 @@ from beets.test.helper import (
     IOMixin,
     PluginMixin,
 )
-from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug._utils import art
 
@@ -189,7 +188,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         resource_path = _common.RSRC / "image.mp3"
         album = self.add_album_fixture()
         trackpath = album.items()[0].filepath
-        shutil.copy(syspath(resource_path), trackpath)
+        shutil.copy(resource_path, trackpath)
 
         self.run_command("extractart", "-n", "extracted")
 
@@ -199,7 +198,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         resource_path = _common.RSRC / "image-jpeg.mp3"
         album = self.add_album_fixture()
         trackpath = album.items()[0].filepath
-        shutil.copy(syspath(resource_path), trackpath)
+        shutil.copy(resource_path, trackpath)
 
         self.run_command("extractart", "-n", "extracted")
 

@@ -4,7 +4,6 @@ from mediafile import MediaFile
 
 from beets.library import Item
 from beets.test.helper import IOMixin, PluginTestCase
-from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
 
@@ -78,7 +77,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         with self.configure_plugin({"fields": ["images"]}):
             item.write()
 
-        mf = MediaFile(syspath(path))
+        mf = MediaFile(path)
         assert not mf.images
 
     def test_auto_false(self):
@@ -313,7 +312,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         with self.configure_plugin({"fields": None, "keep_fields": ["images"]}):
             item.write()
 
-        mf = MediaFile(syspath(path))
+        mf = MediaFile(path)
         assert mf.images, (
             "images should be preserved when 'images' is in keep_fields"
         )

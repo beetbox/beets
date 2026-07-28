@@ -353,7 +353,7 @@ class ArtFileTest(BeetsTestCase):
 
         # Copy the art to the destination.
         artdest = ai.art_destination(newart)
-        shutil.copy(syspath(newart), syspath(artdest))
+        shutil.copy(newart, syspath(artdest))
 
         # Set the art again.
         ai.set_art(artdest)

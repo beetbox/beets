@@ -21,7 +21,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import TestHelper
-from beets.util import as_string, bytestring_path, normpath, syspath
+from beets.util import as_string, bytestring_path, normpath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -1149,7 +1149,7 @@ class TestMtime(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
         self.ipath = self.temp_path / "testfile.mp3"
-        shutil.copy(syspath(_common.RSRC / "full.mp3"), syspath(self.ipath))
+        shutil.copy(_common.RSRC / "full.mp3", self.ipath)
         item = beets.library.Item.from_path(self.ipath)
         self.lib.add(item)
         yield item
@@ -1251,14 +1251,14 @@ class TestWrite(TestHelper):
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
         custom_path = self.temp_path / "custom.mp3"
-        shutil.copy(item.filepath, syspath(custom_path))
+        shutil.copy(item.filepath, custom_path)
 
         item["artist"] = "new artist"
-        assert MediaFile(syspath(custom_path)).artist != "new artist"
+        assert MediaFile(custom_path).artist != "new artist"
         assert MediaFile(item.filepath).artist != "new artist"
 
         item.write(custom_path)
-        assert MediaFile(syspath(custom_path)).artist == "new artist"
+        assert MediaFile(custom_path).artist == "new artist"
         assert MediaFile(item.filepath).artist != "new artist"
 
     def test_write_custom_tags(self):
@@ -1317,7 +1317,7 @@ class TestItemReadGenre(TestHelper):
     def test_read_semicolon_delimited_genres(self):
         """Semicolon-delimited genre tags are split into individual genres on read."""
         path = self.create_mediafile_fixture()
-        mf = MediaFile(syspath(path))
+        mf = MediaFile(path)
         mf.genres = ["Jazz; Funk; Soul"]
         mf.save()
         item = beets.library.Item.from_path(path)

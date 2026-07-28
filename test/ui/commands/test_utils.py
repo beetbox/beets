@@ -7,13 +7,12 @@ from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 from beets.ui.commands.utils import do_query
-from beets.util import syspath
 
 
 class QueryTest(BeetsTestCase):
     def add_item(self):
         itempath = self.lib_path / "srcfile"
-        shutil.copy(_common.RSRC / "full.mp3", syspath(itempath))
+        shutil.copy(_common.RSRC / "full.mp3", itempath)
         item = library.Item.from_path(itempath)
         self.lib.add(item)
         return item

@@ -22,7 +22,7 @@ from beets.test.helper import (
     has_program,
     is_importable,
 )
-from beets.util import clean_module_tempdir, syspath
+from beets.util import clean_module_tempdir
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
 
@@ -862,7 +862,7 @@ class TestArtImporter(UseThePlugin):
         # Test library.
         (self.lib_path / "album").mkdir()
         itempath = self.lib_path / "album" / "test.mp3"
-        shutil.copyfile(syspath(_common.RSRC / "full.mp3"), syspath(itempath))
+        shutil.copyfile(_common.RSRC / "full.mp3", itempath)
         self.i = _common.item()
         self.i.path = itempath
         self.album = self.lib.add_album([self.i])
@@ -931,7 +931,7 @@ class TestArtImporter(UseThePlugin):
 
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = self.i.filepath.parent / "cover.jpg"
-        shutil.copyfile(self.art_file, syspath(artdest))
+        shutil.copyfile(self.art_file, artdest)
         self.afa_response = fetchart.Candidate(
             logger, source_name="test", path=artdest
         )
