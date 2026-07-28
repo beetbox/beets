@@ -184,8 +184,8 @@ class SpotifyPlugin(
 
     def _authenticate(self) -> None:
         """Request an access token via the Client Credentials Flow: https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow"""
-        c_id: str = self.config["client_id"].as_str()
-        c_secret: str = self.config["client_secret"].as_str()
+        c_id = self.config["client_id"].as_str()
+        c_secret = self.config["client_secret"].as_str()
 
         headers = {
             "Authorization": (
