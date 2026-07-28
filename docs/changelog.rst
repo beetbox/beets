@@ -9,9 +9,12 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
+  duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
+  new tracks, and keeps the album together rather than splitting it. :bug:`4471`
 
 ..
     Bug fixes
@@ -73,9 +76,6 @@ New features
   various other sources.
 - :doc:`plugins/replaygain`: Add a ``metaflac`` backend that computes ReplayGain
   for FLAC files using the ``metaflac`` command-line tool. :bug:`1203`
-- :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
-  duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
-  new tracks, and keeps the album together rather than splitting it. :bug:`4471`
 
 Bug fixes
 ~~~~~~~~~
