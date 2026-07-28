@@ -537,7 +537,7 @@ class CommandBackend(Backend):
         super().__init__(config, log)
         config.add({"command": "", "noclip": True})
 
-        cmd_path: Path = Path(config["command"].as_str())
+        cmd_path = Path(config["command"].as_str())
         supported_tools = set(self.SUPPORTED_FORMATS_BY_TOOL)
 
         if (cmd_name := cmd_path.name) not in supported_tools:

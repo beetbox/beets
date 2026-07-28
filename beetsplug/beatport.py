@@ -319,8 +319,8 @@ class BeatportPlugin(MetadataSourcePlugin):
         return self._client
 
     def setup(self, session: ImportSession) -> None:
-        c_key: str = self.config["apikey"].as_str()
-        c_secret: str = self.config["apisecret"].as_str()
+        c_key = self.config["apikey"].as_str()
+        c_secret = self.config["apisecret"].as_str()
 
         # Get the OAuth token from a file or log in.
         try:
