@@ -4,20 +4,27 @@ you've removed the album from the library.
 
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from shutil import rmtree
+from typing import TYPE_CHECKING
 
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import input_options
 from beets.util.color import colorize
 
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
+
 
 class ImportSourcePlugin(BeetsPlugin):
     """Main plugin class."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the plugin and read configuration."""
         super().__init__()
         self.config.add({"suggest_removal": False})
@@ -34,7 +41,9 @@ class ImportSourcePlugin(BeetsPlugin):
             "import_task_choice", self.prevent_suggest_removal
         )
 
-    def prevent_suggest_removal(self, session, task):
+    def prevent_suggest_removal(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         if task.skip:
             return
         for item in task.imported_items():
@@ -54,7 +63,7 @@ class ImportSourcePlugin(BeetsPlugin):
             item["source_path"] = item.path
             item.try_sync(write=False, move=False)
 
-    def suggest_removal(self, item):
+    def suggest_removal(self, item: Item) -> None:
         """Prompts the user to delete the original path the item was imported from."""
         if (
             not self.config["suggest_removal"]

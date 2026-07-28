@@ -1,11 +1,13 @@
 """Use command-line tools to check for audio file corruption."""
 
+from __future__ import annotations
+
 import errno
 import os
 import shlex
 import sys
 from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import confuse
 
@@ -14,6 +16,9 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
 from beets.util.color import colorize
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
 
 
 class CheckerCommandError(Exception):
@@ -26,7 +31,7 @@ class CheckerCommandError(Exception):
         msg: Message from the checker execution error.
     """
 
-    def __init__(self, cmd, oserror):
+    def __init__(self, cmd, oserror) -> None:
         self.checker = cmd[0]
         self.path = cmd[-1]
         self.errno = oserror.errno
@@ -34,7 +39,7 @@ class CheckerCommandError(Exception):
 
 
 class BadFiles(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.verbose = False
 
@@ -146,7 +151,9 @@ class BadFiles(BeetsPlugin):
 
         return error_lines
 
-    def on_import_task_start(self, task, session):
+    def on_import_task_start(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
         if not self.config["check_on_import"].get(False):
             return
 
@@ -180,7 +187,9 @@ class BadFiles(BeetsPlugin):
             return importer.Action.SKIP
         return None
 
-    def on_import_task_before_choice(self, task, session):
+    def on_import_task_before_choice(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
         if hasattr(task, "_badfiles_checks_failed"):
             actions = confuse.Choice(["ask", "abort", "skip", "continue"])
             warning_action = self.config["import_action_on_warning"].get(

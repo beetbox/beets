@@ -43,7 +43,9 @@ class BeatportAPIError(Exception):
 class BeatportClient:
     _api_base = "https://oauth-api.beatport.com"
 
-    def __init__(self, c_key, c_secret, auth_key=None, auth_secret=None):
+    def __init__(
+        self, c_key, c_secret, auth_key=None, auth_secret=None
+    ) -> None:
         """Initiate the client with OAuth information.
 
         For the initial authentication with the backend `auth_key` and
@@ -208,7 +210,7 @@ class BeatportObject:
     artists: list[tuple[str, str]] | None = None
     # tuple of artist id and artist name
 
-    def __init__(self, data: JSONDict):
+    def __init__(self, data: JSONDict) -> None:
         self.beatport_id = str(data["id"])  # given as int in the response
         self.name = str(data["name"])
         if "releaseDate" in data:
@@ -243,7 +245,7 @@ class BeatportRelease(BeatportObject):
 
     tracks: list[BeatportTrack] | None = None
 
-    def __init__(self, data: JSONDict):
+    def __init__(self, data: JSONDict) -> None:
         super().__init__(data)
 
         self.catalog_number = data.get("catalogNumber")
@@ -271,7 +273,7 @@ class BeatportTrack(BeatportObject):
     bpm: str | None
     initial_key: str | None
 
-    def __init__(self, data: JSONDict):
+    def __init__(self, data: JSONDict) -> None:
         super().__init__(data)
         if "title" in data:
             self.title = str(data["title"])
@@ -294,7 +296,7 @@ class BeatportTrack(BeatportObject):
 class BeatportPlugin(MetadataSourcePlugin):
     _client: BeatportClient | None = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         deprecate_for_user(self._log, "The 'beatport' plugin")
         self.config.add(
@@ -316,7 +318,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             )
         return self._client
 
-    def setup(self, session: ImportSession):
+    def setup(self, session: ImportSession) -> None:
         c_key: str = self.config["apikey"].as_str()
         c_secret: str = self.config["apisecret"].as_str()
 

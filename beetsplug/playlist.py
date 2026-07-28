@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.dbcore.query import FieldQueryType
+    from beets.library import Item, Library
 
 
 def is_m3u_file(path: str) -> bool:
@@ -26,7 +27,7 @@ class PlaylistQuery(InQuery[bytes]):
     def subvals(self) -> Sequence[BLOB_TYPE]:
         return [BLOB_TYPE(p) for p in self.pattern]
 
-    def __init__(self, _, pattern: str, __):
+    def __init__(self, _, pattern: str, __) -> None:
         config = beets.config["playlist"]
 
         # Get the full path to the playlist
@@ -78,7 +79,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
         "playlist": PlaylistQuery
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -108,14 +109,14 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             self.register_listener("item_removed", self.item_removed)
             self.register_listener("cli_exit", self.cli_exit)
 
-    def item_moved(self, item, source, destination):
+    def item_moved(self, item: Item, source: bytes, destination: bytes) -> None:
         self.changes[source] = destination
 
-    def item_removed(self, item):
+    def item_removed(self, item: Item) -> None:
         if not os.path.exists(beets.util.syspath(item.path)):
             self.changes[item.path] = None
 
-    def cli_exit(self, lib):
+    def cli_exit(self, lib: Library) -> None:
         for playlist in self.find_playlists():
             self._log.info("Updating playlist: {}", playlist)
             base_dir = beets.util.bytestring_path(

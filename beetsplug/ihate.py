@@ -1,8 +1,16 @@
 """Warns you about things you hate (or even blocks import)."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from beets.importer import Action
 from beets.library import Album, Item, parse_query_string
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+
 
 __author__ = "baobab@heresiarch.info"
 __version__ = "2.0"
@@ -18,7 +26,7 @@ def summary(task):
 
 
 class IHatePlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.register_listener(
             "import_task_choice", self.import_task_choice_event
@@ -39,7 +47,9 @@ class IHatePlugin(BeetsPlugin):
                     return True
         return False
 
-    def import_task_choice_event(self, session, task):
+    def import_task_choice_event(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         skip_queries = self.config["skip"].as_str_seq()
         warn_queries = self.config["warn"].as_str_seq()
 

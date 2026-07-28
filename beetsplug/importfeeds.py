@@ -3,9 +3,12 @@ music player. Also allow printing the new file locations to stdout in case
 one wants to manually add music to a player by its path.
 """
 
+from __future__ import annotations
+
 import datetime
 import os
 import re
+from typing import TYPE_CHECKING
 
 from beets import config
 from beets.plugins import BeetsPlugin
@@ -17,6 +20,11 @@ from beets.util import (
     normpath,
     syspath,
 )
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession
+    from beets.library import Album, Item, Library
+
 
 M3U_DEFAULT_NAME = "imported.m3u"
 
@@ -54,7 +62,7 @@ def _write_m3u(m3u_path, items_paths):
 
 
 class ImportFeedsPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -132,13 +140,13 @@ class ImportFeedsPlugin(BeetsPlugin):
             for path in paths:
                 self._log.info("  {}", path)
 
-    def album_imported(self, lib, album):
+    def album_imported(self, lib: Library, album: Album) -> None:
         self._record_items(lib, album.album, album.items())
 
-    def item_imported(self, lib, item):
+    def item_imported(self, lib: Library, item: Item) -> None:
         self._record_items(lib, item.title, [item])
 
-    def import_begin(self, session):
+    def import_begin(self, session: ImportSession) -> None:
         formats = self.config["formats"].as_str_seq()
         if "m3u_session" in formats:
             self.m3u_session = _build_m3u_session_filename(

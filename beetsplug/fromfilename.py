@@ -2,11 +2,18 @@
 (possibly also extract track and artist)
 """
 
+from __future__ import annotations
+
 import os
 import re
+from typing import TYPE_CHECKING
 
 from beets import plugins
 from beets.util import displayable_path
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+
 
 # Filename field extraction patterns.
 PATTERNS = [
@@ -119,11 +126,11 @@ def apply_matches(d, log):
 
 
 class FromFilenamePlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.register_listener("import_task_start", self.filename_task)
 
-    def filename_task(self, task, session):
+    def filename_task(self, task: ImportTask, session: ImportSession) -> None:
         """Examine each item in the task to see if we can extract a title
         from the filename. Try to match all filenames to a number of
         regexps, starting with the most complex patterns and successively

@@ -6,12 +6,18 @@ like the following in your config.yaml to configure:
             dir: 755
 """
 
+from __future__ import annotations
+
 import os
 import stat
+from typing import TYPE_CHECKING
 
 from beets import config
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry, displayable_path, syspath
+
+if TYPE_CHECKING:
+    from beets.library import Album, Item, Library
 
 
 def convert_perm(perm):
@@ -53,7 +59,7 @@ def dirs_in_library(library, item):
 
 
 class Permissions(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Adding defaults.
@@ -63,7 +69,7 @@ class Permissions(BeetsPlugin):
         self.register_listener("album_imported", self.fix)
         self.register_listener("art_set", self.fix_art)
 
-    def fix(self, lib, item=None, album=None):
+    def fix(self, lib: Library, item: Item = None, album: Album = None) -> None:
         """Fix the permissions for an imported Item or Album."""
         files = []
         dirs = set()
@@ -76,7 +82,7 @@ class Permissions(BeetsPlugin):
                 dirs.update(dirs_in_library(lib.directory, album_item.path))
         self.set_permissions(files=files, dirs=dirs)
 
-    def fix_art(self, album):
+    def fix_art(self, album: Album) -> None:
         """Fix the permission for Album art file."""
         if album.artpath:
             self.set_permissions(files=[album.artpath])
