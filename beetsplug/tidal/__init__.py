@@ -23,9 +23,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
     from beets.autotag import Info
-    from beets.dbcore.db import Results
     from beets.importer import ImportSession
-    from beets.library import Library
+    from beets.library import LibModel, Library
     from beets.library.models import Album, Item
 
     from .api_types import (
@@ -530,7 +529,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
-        self, results: Results[Item], write: bool, force: bool = False
+        self, results: Sequence[Item], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library items."""
         self._sync_popularity(
@@ -544,7 +543,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def sync_album_popularity(
-        self, results: Results[Album], write: bool, force: bool = False
+        self, results: Sequence[Album], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library albums."""
         self._sync_popularity(
@@ -560,7 +559,7 @@ class TidalPlugin(MetadataSourcePlugin):
     def _sync_popularity(
         self,
         *,
-        results: Results[Item] | Results[Album],
+        results: Sequence[LibModel],
         write: bool,
         force: bool,
         id_field: str,
