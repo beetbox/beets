@@ -28,6 +28,14 @@ New features
     Other changes
     ~~~~~~~~~~~~~
 
+2.13.1 (July 29, 2026)
+----------------------
+
+Bug fixes
+~~~~~~~~~
+
+- Fixed source distributions not including the bundled man pages. :bug:`6882`
+
 2.13.0 (July 27, 2026)
 ----------------------
 

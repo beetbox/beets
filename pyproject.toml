@@ -1,6 +1,6 @@
 [project]
 name = "beets"
-version = "2.13.0"
+version = "2.13.1"
 description = "music tagger and library organizer"
 authors = [{ name = "Adrian Sampson", email = "adrian@radbox.org" }]
 maintainers = [{ name = "Serene-Arc" }]
@@ -147,6 +147,11 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+artifacts = [
+    "man/**"
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["beets", "beetsplug"]
