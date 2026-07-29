@@ -9,22 +9,10 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
-
 Bug fixes
 ~~~~~~~~~
 
 - Fixed source distributions not including the bundled man pages. :bug:`6882`
-
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
-
-..
-    Other changes
-    ~~~~~~~~~~~~~
 
 2.13.0 (July 27, 2026)
 ----------------------
