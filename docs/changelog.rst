@@ -9,6 +9,25 @@ below!
 Unreleased
 ----------
 
+..
+    New features
+    ~~~~~~~~~~~~
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.13.1 (July 29, 2026)
+----------------------
+
 Bug fixes
 ~~~~~~~~~
 

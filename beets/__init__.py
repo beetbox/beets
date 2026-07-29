@@ -10,7 +10,7 @@ from .util.deprecation import deprecate_imports
 if TYPE_CHECKING:
     from .logging import Logger
 
-__version__ = "2.13.0"
+__version__ = "2.13.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
 
 
