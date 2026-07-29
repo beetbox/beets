@@ -148,6 +148,11 @@ Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+artifacts = [
+    "man/**"
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["beets", "beetsplug"]
 
