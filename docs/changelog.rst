@@ -13,9 +13,10 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Fixed source distributions not including the bundled man pages. :bug:`6882`
 
 ..
     For plugin developers
