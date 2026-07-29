@@ -31,6 +31,7 @@ jobs:
         with:
           files: |
             docs/**
+            uv.lock
       - name: Get changed python files
         id: raw-changed-python-files
         uses: tj-actions/changed-files@v46
