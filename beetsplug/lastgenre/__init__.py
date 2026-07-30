@@ -514,6 +514,27 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 return resolved
         return None
 
+    def _try_resolve_original_fallback(
+        self, obj: LibModel, genres: list[str], keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Attempt to fall back to existing original genres if configured.
+
+        ``genres`` are the original unchanged values and are checked as-is
+        first, then ``keep_genres`` are used for a lowercased canonicalization
+        retry.
+        """
+        if genres and self.config["keep_existing"].get():
+            artist = self._artist_for_filter(obj)
+            if valid_genres := self._filter_valid(genres, artist=artist):
+                return valid_genres, "original fallback"
+            # If the original genre doesn't match a whitelisted genre, check
+            # if we can canonicalize it to find a matching, whitelisted genre!
+            if resolved := self._try_resolve_stage(
+                "original fallback", keep_genres, [], artist=artist
+            ):
+                return resolved
+        return None
+
     def _fetch_va_genres(self, album: Album) -> list[str]:
         """Fetch the most popular track or artist genre for a Various Artists album."""
         item_genres = []
