@@ -13,7 +13,8 @@ from urllib.request import pathname2url
 import confuse
 
 from beets import plugins, ui
-from beets.dbcore.query import ParsingError, Query
+from beets.dbcore import Query
+from beets.dbcore.query import ParsingError
 from beets.dbcore.sort import Sort
 from beets.exceptions import UserError
 from beets.library import Album, Item, parse_query_string
