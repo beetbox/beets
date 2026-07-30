@@ -40,3 +40,19 @@ class TestLyrics:
             "FR" if langdetect_available else None
         )
         assert not lyrics.instrumental
+
+    def test_none_text(self):
+        """Lyrics with None text should not crash when accessing synced properties.
+
+        Regression test for https://github.com/beetbox/beets/issues/5583
+        where LRCLib returns an empty JSON response, leading to text=None
+        and an AttributeError on .splitlines().
+        """
+        lyrics = Lyrics(text=None, backend="lrclib")
+
+        assert lyrics.text is None
+        assert not lyrics.synced
+        assert lyrics.timestamps == []
+        assert lyrics.text_lines == []
+        assert lyrics.sylt == []
+        assert not lyrics.translated
