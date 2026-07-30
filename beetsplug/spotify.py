@@ -27,6 +27,7 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util import chunks
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Sequence
 
     from beets.library import Item, Library
@@ -530,7 +531,9 @@ class SpotifyPlugin(
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
-        def queries(lib, opts, args):
+        def queries(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             success = self._parse_opts(opts)
             if success:
                 results = self._match_library_tracks(lib, args)
@@ -570,7 +573,7 @@ class SpotifyPlugin(
             help="re-download data when already present",
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             items = lib.items(args)
             self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 

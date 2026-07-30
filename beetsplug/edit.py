@@ -21,7 +21,10 @@ from beets.ui.commands.utils import do_query
 from beets.util import PromptChoice
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -174,7 +177,9 @@ class EditPlugin(plugins.BeetsPlugin):
         edit_command.func = self._edit_command
         return [edit_command]
 
-    def _edit_command(self, lib, opts, args):
+    def _edit_command(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         """The CLI command function for the `beet edit` command."""
         # Get the objects to edit.
         items, albums = do_query(lib, args, opts.album, False)

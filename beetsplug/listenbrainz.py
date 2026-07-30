@@ -21,7 +21,10 @@ from ._utils.playcount import update_play_counts
 from ._utils.requests import TimeoutAndRetrySession
 
 if TYPE_CHECKING:
+    import optparse
     from pathlib import Path
+
+    from beets.library import Library
 
     from ._utils.playcount import Track
 
@@ -93,7 +96,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             ),
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self._lbupdate(
                 lib, export_file=opts.export_file, max_listens=opts.max_listens
             )

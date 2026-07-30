@@ -27,6 +27,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Mapping
 
     from beets.dbcore.query import SQLiteType
@@ -931,7 +932,9 @@ class AURAPlugin(BeetsPlugin):
     def commands(self):
         """Add subcommand used to run the AURA server."""
 
-        def run_aura(lib, opts, args):
+        def run_aura(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             """Run the application using Flask's built in-server.
 
             Args:

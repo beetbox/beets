@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 import time
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import mpd
 
@@ -9,6 +11,12 @@ from beets.dbcore import types
 from beets.dbcore.query import PathQuery
 from beets.exceptions import UserError
 from beets.util import displayable_path
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 # If we lose the connection, how many times do we want to retry and how
 # much time should we wait between retries?
@@ -351,7 +359,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             help="set the password of the MPD server to connect to",
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             mpd_config.set_args(opts)
 
             try:

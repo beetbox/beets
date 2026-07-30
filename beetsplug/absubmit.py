@@ -1,5 +1,7 @@
 """Calculate acoustic information and submit to AcousticBrainz."""
 
+from __future__ import annotations
+
 import errno
 import hashlib
 import json
@@ -7,11 +9,18 @@ import os
 import shutil
 import subprocess
 import tempfile
+from typing import TYPE_CHECKING
 
 import requests
 
 from beets import plugins, ui, util
 from beets.exceptions import UserError
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 # We use this field to check whether AcousticBrainz info is present.
 PROBE_FIELD = "mood_acoustic"
@@ -113,7 +122,9 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         cmd.func = self.command
         return [cmd]
 
-    def command(self, lib, opts, args):
+    def command(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         if not self.url:
             raise UserError(
                 "This plugin is deprecated since AcousticBrainz no longer "

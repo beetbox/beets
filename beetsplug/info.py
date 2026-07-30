@@ -1,6 +1,9 @@
 """Shows file metadata."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 import mediafile
 
@@ -8,6 +11,11 @@ from beets import ui
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
 
 
 def tag_data(lib, args, album=False):
@@ -167,7 +175,7 @@ class InfoPlugin(BeetsPlugin):
         cmd.parser.add_format_option(target="item")
         return [cmd]
 
-    def run(self, lib, opts, args):
+    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
         """Print tag info or library data for each file referenced by args.
 
         Main entry point for the `beet info ARGS...` command.

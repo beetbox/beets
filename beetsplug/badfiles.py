@@ -18,7 +18,10 @@ from beets.util import displayable_path, par_map
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 ImportAction = Literal["abort", "skip", "continue"]
 
@@ -249,7 +252,9 @@ class BadFiles(BeetsPlugin):
             raise Exception(f"Unexpected selection: {sel}")
         return None
 
-    def command(self, lib, opts, args):
+    def command(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         # Get items from arguments
         items = lib.items(args)
         self.verbose = opts.verbose

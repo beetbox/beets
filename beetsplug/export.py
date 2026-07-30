@@ -1,10 +1,13 @@
 """Exports data from beets"""
 
+from __future__ import annotations
+
 import codecs
 import csv
 import json
 import sys
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 from xml.etree import ElementTree
 
 import mediafile
@@ -12,6 +15,11 @@ import mediafile
 from beets import ui, util
 from beets.plugins import BeetsPlugin
 from beetsplug.info import library_data, tag_data
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
 
 
 class ExportEncoder(json.JSONEncoder):
@@ -107,7 +115,7 @@ class ExportPlugin(BeetsPlugin):
         )
         return [cmd]
 
-    def run(self, lib, opts, args):
+    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
         file_path = opts.output
         file_mode = "a" if opts.append else "w"
         file_format = opts.format or self.config["default_format"].get(str)

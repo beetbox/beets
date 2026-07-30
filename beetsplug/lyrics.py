@@ -35,6 +35,7 @@ from ._utils.requests import (
 )
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Callable, Iterable, Iterator
 
     import confuse
@@ -1142,7 +1143,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             help="do not fetch missing lyrics",
         )
 
-        def func(lib: Library, opts, args) -> None:
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             # The "write to files" option corresponds to the
             # import_write config value.
             self.config.set(vars(opts))

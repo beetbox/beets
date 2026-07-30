@@ -16,7 +16,10 @@ from beets.util import PromptChoice, get_temp_filename
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 
 # Indicate where arguments should be inserted into the command string.
@@ -102,7 +105,9 @@ class PlayPlugin(BeetsPlugin):
         play_command.func = self._play_command
         return [play_command]
 
-    def _play_command(self, lib, opts, args):
+    def _play_command(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         """The CLI command function for `beet play`. Create a list of paths
         from query, determine if tracks or albums are to be played.
         """

@@ -1,13 +1,21 @@
 """The 'config' command: show and edit user configuration."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from beets import config, ui
 from beets.exceptions import UserError
 from beets.util import displayable_path, editor_command, interactive_open
 
+if TYPE_CHECKING:
+    import optparse
 
-def config_func(lib, opts, args):
+    from beets.library import Library
+
+
+def config_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     # Make sure lazy configuration is loaded
     config.resolve()
 

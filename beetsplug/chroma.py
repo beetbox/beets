@@ -20,10 +20,12 @@ from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Iterable, Iterator
 
     from beets.autotag import TrackInfo
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
     from beets.library.models import Item
     from beetsplug.musicbrainz import MusicBrainzPlugin
 
@@ -258,7 +260,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             "submit", help="submit Acoustid fingerprints"
         )
 
-        def submit_cmd_func(lib, opts, args):
+        def submit_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             try:
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
@@ -271,7 +275,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             "fingerprint", help="generate fingerprints for items without them"
         )
 
-        def fingerprint_cmd_func(lib, opts, args):
+        def fingerprint_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             for item in lib.items(args):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
@@ -315,7 +321,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             help="Write computed fingerprints to files",
         )
 
-        def search_cmd_func(lib, opts, args):
+        def search_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             if not opts.search:
                 raise UserError("no --search provided")
             if opts.count <= 0:

@@ -4,12 +4,21 @@
 
 """Provides a bare-ASCII matching query."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from unidecode import unidecode
 
 from beets import ui
 from beets.dbcore.query import StringFieldQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import print_
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
 
 
 class BareascQuery(StringFieldQuery[str]):
@@ -63,7 +72,9 @@ class BareascPlugin(BeetsPlugin):
         cmd.func = self.unidecode_list
         return [cmd]
 
-    def unidecode_list(self, lib, opts, args):
+    def unidecode_list(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         """Emulate normal 'list' command but with unidecode output."""
         album = opts.album
         # Copied from commands.py - list_items

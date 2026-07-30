@@ -1,9 +1,12 @@
 """A Web interface to beets."""
 
+from __future__ import annotations
+
 import base64
 import json
 import os
 import typing as t
+from typing import TYPE_CHECKING
 
 import flask
 from flask import jsonify
@@ -14,6 +17,12 @@ import beets.library
 from beets import ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 # Type checking hacks
 
@@ -445,7 +454,7 @@ class WebPlugin(BeetsPlugin):
             help="debug mode",
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             args = args
             if args:
                 self.config["host"] = args.pop(0)
