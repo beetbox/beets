@@ -156,10 +156,12 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
-- Metadata source searches with neither a query nor any filters (for example
-  items with no artist and title tags) no longer hit the API, which rejected
-  them with an error such as MusicBrainz' ``400 Bad Request``. Such searches
-  now report no candidates instead. :bug:`6862`
+- Plugins built on ``SearchApiMetadataSourcePlugin`` (:doc:`plugins/musicbrainz`,
+  :doc:`plugins/spotify`, :doc:`plugins/deezer` and :doc:`plugins/discogs`) no
+  longer send a search request when both the query text and the filters are
+  empty, as happens for items with no artist and title tags. Such a request
+  cannot match anything and MusicBrainz rejects it with ``400 Bad Request``;
+  these searches now report no candidates instead. :bug:`6862`
 
 ..
     For plugin developers
