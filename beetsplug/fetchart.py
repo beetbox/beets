@@ -1598,7 +1598,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cmd.func = func
         return [cmd]
 
-    def album_has_art(self, album: Album):
+    def album_has_art(self, album: Album) -> bool:
         if album.artpath and os.path.isfile(syspath(album.artpath)):
             self._log.debug("skipping {}: has stored artwork", album)
             return True
