@@ -114,7 +114,7 @@ def import_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             raise UserError("no path specified")
 
         byte_paths = [os.fsencode(p) for p in paths]
-        paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
+        byte_paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
 
         # Check the user-specified directories.
         for path in byte_paths:
@@ -127,7 +127,7 @@ def import_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
         # case those paths don't exist. Maybe some of those paths have already
         # been imported and moved separately, so logging a warning should
         # suffice.
-        for path in paths_from_logfiles:
+        for path in byte_paths_from_logfiles:
             if not os.path.exists(syspath(normpath(path))):
                 log.warning(
                     "No such file or directory: {}", displayable_path(path)
@@ -154,7 +154,7 @@ def _store_dict(
     pairs as values. All such pairs passed for this option are
     aggregated into a dictionary.
     """
-    dest = option.dest
+    dest: str = option.dest  # type: ignore[assignment]
     option_values = getattr(parser.values, dest, None)
 
     if option_values is None:

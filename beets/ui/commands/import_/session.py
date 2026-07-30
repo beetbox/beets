@@ -12,7 +12,7 @@ from beets.autotag import (
     tag_album,
     tag_item,
 )
-from beets.importer import DuplicateAction, Proposal, SingletonImportTask
+from beets.importer import DuplicateAction, SingletonImportTask
 from beets.library import Album
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
@@ -23,7 +23,7 @@ from .display import show_change, show_item_change
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.autotag import Source
+    from beets.autotag import Proposal, Source
     from beets.importer import ImportSession, ImportTask
     from beets.library import AnyLibModel, Item
     from beets.util import PathBytes
@@ -65,9 +65,14 @@ class TerminalImportSession(importer.ImportSession):
             )
 
         # Take immediate action if appropriate.
+        # TODO: introduce beets.autotag.Candidates to remove these assertions
+        assert task.rec is not None
+        assert task.candidates is not None
         action = _summary_judgment(task.rec)
         if action == importer.Action.APPLY:
             match = task.candidates[0]
+            # TODO: introduce AlbumImportTask to remove this assertion
+            assert isinstance(match, AlbumMatch)
             show_change(task.source, match)
             return match
         if action is not None:
@@ -81,26 +86,28 @@ class TerminalImportSession(importer.ImportSession):
             # `PromptChoice`.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                task.candidates, task.rec, task.source, choices=choices
+                # TODO: introduce AlbumImportTask to remove this ignore
+                task.candidates,  # type: ignore[arg-type]
+                task.rec,
+                task.source,
+                choices=choices,
             )
 
-            # Basic choices that require no more action here.
-            if choice in (importer.Action.SKIP, importer.Action.ASIS):
+            # We have a specific match selection.
+            # or, basic choices that require no more action here.
+            if isinstance(choice, AlbumMatch) or (
+                isinstance(choice, importer.Action)
+                and choice in (importer.Action.SKIP, importer.Action.ASIS)
+            ):
                 # Pass selection to main control flow.
                 return choice
 
             # Plugin-provided choices. We invoke the associated callback
             # function.
-            if choice in choices:
+            if isinstance(choice, PromptChoice) and choice.callback:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                if isinstance(post_choice, Proposal):
-                    # Use the new candidates and continue around the loop.
-                    task.candidates = post_choice.candidates
-                    task.rec = post_choice.recommendation
-
-            # Otherwise, we have a specific match selection.
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
@@ -115,12 +122,16 @@ class TerminalImportSession(importer.ImportSession):
         """
         ui.print_()
         ui.print_(displayable_path(task.item.path))
-        candidates, rec = task.candidates, task.rec
 
         # Take immediate action if appropriate.
+        # TODO: introduce beets.autotag.Candidates to remove these assertions
+        assert task.rec is not None
+        assert task.candidates is not None
         action = _summary_judgment(task.rec)
         if action == importer.Action.APPLY:
-            match = candidates[0]
+            match = task.candidates[0]
+            # TODO: introduce AlbumImportTask to remove this assertion
+            assert isinstance(match, TrackMatch)
             show_item_change(task.source, match)
             return match
         if action is not None:
@@ -130,24 +141,28 @@ class TerminalImportSession(importer.ImportSession):
             # Ask for a choice.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                candidates, rec, task.source, choices=choices
+                # TODO: introduce AlbumImportTask to remove this ignore
+                task.candidates,  # type: ignore[arg-type]
+                task.rec,
+                task.source,
+                choices=choices,
             )
 
-            if choice in (importer.Action.SKIP, importer.Action.ASIS):
+            # We have a specific match selection.
+            # or, basic choices that require no more action here.
+            if isinstance(choice, TrackMatch) or (
+                isinstance(choice, importer.Action)
+                and choice in (importer.Action.SKIP, importer.Action.ASIS)
+            ):
+                # Pass selection to main control flow.
                 return choice
 
-            if choice in choices:
+            # Plugin-provided choices. We invoke the associated callback
+            # function.
+            if isinstance(choice, PromptChoice) and choice.callback:
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-                if isinstance(post_choice, Proposal):
-                    candidates = post_choice.candidates
-                    rec = post_choice.recommendation
-
-            else:
-                # Chose a candidate.
-                assert isinstance(choice, TrackMatch)
-                return choice
 
     def _report_item_summary(
         self, prefix: Literal["Old", "New"], items: list[Item], is_album: bool
@@ -235,8 +250,11 @@ class TerminalImportSession(importer.ImportSession):
                 ),
             ]
         choices += [
-            PromptChoice("e", "Enter search", manual_search),
-            PromptChoice("i", "enter Id", manual_id),
+            # TODO: introduce beets.autotag.Candidates to remove these ignores
+            #  context: Candidates is a Sequence which will be updated in place
+            #  by manual_search and manual_id, with return types as None.
+            PromptChoice("e", "Enter search", manual_search),  # type: ignore[arg-type]
+            PromptChoice("i", "enter Id", manual_id),  # type: ignore[arg-type]
             PromptChoice("b", "aBort", abort_action),
         ]
 
@@ -252,7 +270,7 @@ class TerminalImportSession(importer.ImportSession):
         # Add a "dummy" choice for the other baked-in option, for
         # duplicate checking.
         all_choices = [
-            PromptChoice("a", "Apply", None),
+            PromptChoice("a", "Apply", lambda s, t: importer.Action.APPLY),
             *choices,
             *extra_choices,
         ]
@@ -291,7 +309,7 @@ def summarize_items(items: list[Item], singleton: bool) -> str:
     if not singleton:
         summary_parts.append(f"{len(items)} items")
 
-    format_counts = {}
+    format_counts: dict[str, int] = {}
     for item in items:
         format_counts[item.format] = format_counts.get(item.format, 0) + 1
     if len(format_counts) == 1:
@@ -455,10 +473,11 @@ def choose_candidate(
         bypass_candidates = False
 
         # Show what we're about to do.
+        # TODO: introduce AlbumImportTask to remove these ignores
         if source.type == "track":
-            show_item_change(source, match)
+            show_item_change(source, match)  # type: ignore[arg-type]
         else:
-            show_change(source, match)
+            show_change(source, match)  # type: ignore[arg-type]
 
         # Exact match => tag automatically if we're not in timid mode.
         if rec == Recommendation.strong and not config["import"]["timid"]:
