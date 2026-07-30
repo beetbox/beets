@@ -122,7 +122,7 @@ class UtilTest(unittest.TestCase):
 class PathConversionTest(unittest.TestCase):
     def test_syspath_windows_format(self):
         with _common.platform_windows():
-            path = os.path.join("a", "b", "c")
+            path = Path("a") / "b" / "c"
             outpath = util.syspath(path)
         assert isinstance(outpath, str)
         assert outpath.startswith("\\\\?\\")
@@ -138,7 +138,7 @@ class PathConversionTest(unittest.TestCase):
 
     def test_syspath_posix_unchanged(self):
         with _common.platform_posix():
-            path = os.path.join("a", "b", "c")
+            path = str(Path("a") / "b" / "c")
             outpath = util.syspath(path)
         assert path == outpath
 
@@ -427,6 +427,11 @@ class UniquePathTest(BeetsTestCase):
     def test_conflicting_file_with_number_increases_number(self):
         path = util.unique_path(self.base / "x.1.mp3")
         assert path == str(self.base / "x.3.mp3")
+
+    def test_conflicting_file_with_multi_digit_number_increases_number(self):
+        (self.base / "w.10.mp3").touch()
+        path = util.unique_path(self.base / "w.10.mp3")
+        assert path == str(self.base / "w.11.mp3")
 
 
 class MkDirAllTest(BeetsTestCase):

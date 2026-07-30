@@ -31,7 +31,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
         name = f"{name}.{extension}"
         src = _common.RSRC / name
         target = self.temp_path / name
-        shutil.copy(syspath(src), syspath(target))
+        shutil.copy(src, syspath(target))
         return mediafile.MediaFile(target)
 
     def test_extended_field_write(self):

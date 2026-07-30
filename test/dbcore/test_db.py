@@ -105,7 +105,7 @@ class TestDatabasePath:
 
     def test_bytes_filesystem_path_opens_decoded_path(self, tmp_path):
         db_path = tmp_path / "library.db"
-        db = DatabaseFixture1(os.fsencode(db_path))
+        db = DatabaseFixture1(db_path)
         try:
             assert db.path == db_path
             assert db_path.exists()
@@ -126,7 +126,8 @@ class MigrationTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        handle, cls.orig_libfile = mkstemp("orig_db")
+        handle, orig_libfile = mkstemp("orig_db")
+        cls.orig_libfile = Path(orig_libfile)
         os.close(handle)
         # Set up a database with the two-field schema.
         old_lib = DatabaseFixture2(cls.orig_libfile)
@@ -141,15 +142,16 @@ class MigrationTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove(cls.orig_libfile)
+        cls.orig_libfile.unlink()
 
     def setUp(self):
-        handle, self.libfile = mkstemp("db")
+        handle, libfile = mkstemp("db")
+        self.libfile = Path(libfile)
         os.close(handle)
         shutil.copyfile(self.orig_libfile, self.libfile)
 
     def tearDown(self):
-        os.remove(self.libfile)
+        self.libfile.unlink()
 
     def test_open_with_same_fields_leaves_untouched(self):
         new_lib = DatabaseFixture2(self.libfile)

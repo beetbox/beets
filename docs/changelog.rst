@@ -16,9 +16,23 @@ New features
   duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
   new tracks, and keeps the album together rather than splitting it. :bug:`4471`
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- A date range query written back to front (for example ``added:2024..2020``) no
+  longer crashes with an uncaught ``ValueError``. The endpoints are now swapped,
+  so such a range means the same as ``added:2020..2024``.
+- Deduplicating a file whose name already ends in a counter of two or more
+  digits no longer restarts the numbering: ``track.10.mp3`` now yields
+  ``track.11.mp3`` instead of ``track.1.mp3``. The counter was matched with
+  ``\.(\d)+$``, which captures only the final digit.
+- Autotagging distance calculations no longer treat ordinary words containing
+  "ft" (such as "draft", "left", "gift", "craft") as a "featuring artist"
+  suffix, which was silently making genuinely different titles/artists score as
+  near-identical matches.
+- :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
+  ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
+  enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
 
 ..
     For plugin developers
