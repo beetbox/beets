@@ -46,6 +46,8 @@ class Lyrics:
 
     def __post_init__(self) -> None:
         """Normalize lyrics metadata and infer missing language information."""
+        if self.text is None:
+            self.text = ""
         self.handle_instrumental()
 
         try:
@@ -112,8 +114,6 @@ class Lyrics:
         Timestamps, when present, are kept separate so callers can translate or
         normalize text without losing synced timing information.
         """
-        if self.text is None:
-            return []
         return [
             (m[1], m[2]) if (m := self.LINE_PARTS_PAT.match(line)) else ("", "")
             for line in self.text.splitlines()
