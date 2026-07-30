@@ -19,6 +19,10 @@ Bug fixes
 - A date range query written back to front (for example ``added:2024..2020``) no
   longer crashes with an uncaught ``ValueError``. The endpoints are now swapped,
   so such a range means the same as ``added:2020..2024``.
+- Deduplicating a file whose name already ends in a counter of two or more
+  digits no longer restarts the numbering: ``track.10.mp3`` now yields
+  ``track.11.mp3`` instead of ``track.1.mp3``. The counter was matched with
+  ``\.(\d)+$``, which captures only the final digit.
 
 ..
     For plugin developers

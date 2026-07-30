@@ -428,6 +428,11 @@ class UniquePathTest(BeetsTestCase):
         path = util.unique_path(self.base / "x.1.mp3")
         assert path == str(self.base / "x.3.mp3")
 
+    def test_conflicting_file_with_multi_digit_number_increases_number(self):
+        (self.base / "w.10.mp3").touch()
+        path = util.unique_path(self.base / "w.10.mp3")
+        assert path == str(self.base / "w.11.mp3")
+
 
 class MkDirAllTest(BeetsTestCase):
     def test_mkdirall(self):

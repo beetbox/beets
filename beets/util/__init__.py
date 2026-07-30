@@ -644,7 +644,7 @@ def unique_path(path: AnyStr) -> AnyStr:
 
     byte_path = os.fsencode(path)
     base, ext = os.path.splitext(byte_path)
-    match = re.search(rb"\.(\d)+$", base)
+    match = re.search(rb"\.(\d+)$", base)
     if match:
         num = int(match.group(1))
         base = base[: match.start()]
