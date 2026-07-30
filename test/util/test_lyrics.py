@@ -50,7 +50,7 @@ class TestLyrics:
         """
         lyrics = Lyrics(text=None, backend="lrclib")
 
-        assert lyrics.text is None
+        assert lyrics.text == ""
         assert not lyrics.synced
         assert lyrics.timestamps == []
         assert lyrics.text_lines == []
