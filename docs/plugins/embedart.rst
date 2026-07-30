@@ -25,7 +25,8 @@ This behavior can be disabled with the ``auto`` config option (see below).
 Extracting Art Automatically
 ----------------------------
 
-See the ``embedded`` source of the :doc:`/plugins/fetchart`.
+See the :ref:`embedded <embedded-art-source>` source of the
+:doc:`/plugins/fetchart`.
 
 .. _image-similarity-check:
 
