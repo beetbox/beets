@@ -118,6 +118,7 @@ timeout: 5.0
 
 verbose: 0
 terminal_encoding:
+editor:
 
 ui:
     terminal_width: 80

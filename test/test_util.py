@@ -497,3 +497,32 @@ class TestAsciifyPath:
         monkeypatch.setattr("beets.util.os.altsep", "\\")
 
         assert util.asciify_path("caf\xe9\\na\xefve") == "cafe/naive"
+
+
+class TestEditorCommand:
+    @pytest.fixture(autouse=True)
+    def _setup(self, config, monkeypatch):
+        monkeypatch.delenv("VISUAL", raising=False)
+        monkeypatch.delenv("EDITOR", raising=False)
+        monkeypatch.setattr("beets.util.open_anything", lambda: "fallback")
+
+    @pytest.mark.parametrize(
+        "configured, visual, editor, expected",
+        [
+            _p("nano", "vim", "emacs", "nano", id="config-beats-env"),
+            _p("nano", None, None, "nano", id="config-only"),
+            _p(None, "vim", "emacs", "vim", id="visual-beats-editor"),
+            _p(None, None, "emacs", "emacs", id="editor"),
+            _p("", "", "", "fallback", id="empty-values-ignored"),
+            _p(None, None, None, "fallback", id="nothing-configured"),
+        ],
+    )
+    def test_precedence(
+        self, config, monkeypatch, configured, visual, editor, expected
+    ):
+        config["editor"] = configured
+        for name, value in (("VISUAL", visual), ("EDITOR", editor)):
+            if value is not None:
+                monkeypatch.setenv(name, value)
+
+        assert util.editor_command() == expected

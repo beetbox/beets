@@ -54,8 +54,8 @@ def config_edit(cli_options):
 
     if not editor:
         raise UserError(
-            "Please set the VISUAL or EDITOR environment variable to edit"
-            " configuration."
+            "Please set the `editor` configuration option or the VISUAL or"
+            " EDITOR environment variable to edit configuration."
         )
     try:
         if not os.path.isfile(path):
@@ -78,7 +78,7 @@ config_cmd.parser.add_option(
     "-e",
     "--edit",
     action="store_true",
-    help="edit user configuration with $VISUAL (or $EDITOR)",
+    help="edit user configuration with the configured editor, $VISUAL, or $EDITOR",
 )
 config_cmd.parser.add_option(
     "-d",

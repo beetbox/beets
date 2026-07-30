@@ -136,3 +136,16 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
         execlp.assert_called_once_with(
             "myeditor", "myeditor", self.cli_config_path
         )
+
+    def test_edit_config_prefers_configured_editor(self):
+        with Path(self.config_path).open("a") as file:
+            file.write("\neditor: myconfigeditor")
+        config.clear()
+        config._materialized = False
+
+        os.environ["EDITOR"] = "myeditor"
+        with patch("os.execlp") as execlp:
+            self.run_command("config", "-e")
+        execlp.assert_called_once_with(
+            "myconfigeditor", "myconfigeditor", self.config_path
+        )

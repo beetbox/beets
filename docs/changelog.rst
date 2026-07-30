@@ -9,9 +9,12 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- Add a global ``editor`` configuration option, taking precedence over the
+  ``$VISUAL`` and ``$EDITOR`` environment variables, to choose the text editor
+  used by :ref:`config-cmd` and :doc:`/plugins/edit`. :bug:`6641`
 
 Bug fixes
 ~~~~~~~~~

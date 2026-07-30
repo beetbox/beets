@@ -389,6 +389,19 @@ for messages printed to the standard output. It's also used to read messages
 from the standard input. By default, this is determined automatically from the
 locale environment variables.
 
+.. _editor:
+
+editor
+~~~~~~
+
+The command beets uses to open a text editor, for example for :ref:`config-cmd`
+with the ``--edit`` option or for the :doc:`/plugins/edit` plugin. When this
+option is not set, beets uses the ``$VISUAL`` and ``$EDITOR`` environment
+variables instead, falling back to the platform's default file handler.
+
+Set this option if the environment variables do not reach beets, for instance
+when beets runs from an isolated virtual environment.
+
 .. _clutter:
 
 clutter
