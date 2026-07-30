@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
@@ -91,7 +92,7 @@ class TestHookCommand(HookTestCase):
                     plugins.send(event, path=path)
                 else:
                     plugins.send(event)
-                assert os.path.isfile(path)
+                assert Path(os.fsdecode(path)).is_file()
 
     @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_no_arguments(self):

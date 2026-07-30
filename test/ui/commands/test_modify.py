@@ -5,7 +5,6 @@ from beets import logging
 from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase, IOMixin, TestHelper
 from beets.ui.commands.modify import ModifyOperation, modify_parse_args
-from beets.util import syspath
 
 _p = pytest.param
 
@@ -181,7 +180,7 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
     def test_write_initial_key_tag(self):
         self.modify("initial_key=C#m")
         item = self.lib.items().get()
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key == "C#m"
 
     def test_set_flexattr(self):
@@ -204,11 +203,11 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
         item.write()
         item.store()
 
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key == "C#m"
 
         self.modify("initial_key!")
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key is None
 
     def test_arg_parsing_colon_query(self):

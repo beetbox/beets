@@ -239,7 +239,7 @@ class IMBackend(LocalBackend):
         # it here for the sake of explicitness.
         cmd: list[str] = [
             *self.convert_cmd,
-            syspath(path_in, prefix=False),
+            os.fsdecode(path_in),
             "-resize",
             f"{maxwidth}x>",
             "-interlace",
@@ -254,7 +254,7 @@ class IMBackend(LocalBackend):
         if max_filesize > 0:
             cmd += ["-define", f"jpeg:extent={max_filesize}b"]
 
-        cmd.append(syspath(path_out, prefix=False))
+        cmd.append(os.fsdecode(path_out))
 
         try:
             util.command_output(cmd)
@@ -272,7 +272,7 @@ class IMBackend(LocalBackend):
             *self.identify_cmd,
             "-format",
             "%w %h",
-            syspath(path_in, prefix=False),
+            os.fsdecode(path_in),
         ]
 
         try:
@@ -307,10 +307,10 @@ class IMBackend(LocalBackend):
 
         cmd = [
             *self.convert_cmd,
-            syspath(path_in, prefix=False),
+            os.fsdecode(path_in),
             "-interlace",
             "none",
-            syspath(path_out, prefix=False),
+            os.fsdecode(path_out),
         ]
 
         try:
@@ -363,12 +363,10 @@ class IMBackend(LocalBackend):
         # Converting images to grayscale tends to minimize the weight
         # of colors in the diff score. So we first convert both images
         # to grayscale and then pipe them into the `compare` command.
-        # On Windows, ImageMagick doesn't support the magic \\?\ prefix
-        # on paths, so we pass `prefix=False` to `syspath`.
         convert_cmd = [
             *self.convert_cmd,
-            syspath(im2, prefix=False),
-            syspath(im1, prefix=False),
+            os.fsdecode(im2),
+            os.fsdecode(im1),
             "-colorspace",
             "gray",
             "MIFF:-",

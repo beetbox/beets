@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -18,15 +19,14 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
 
         temp_dir = self.temp_path
 
-        self.config_path = str(temp_dir / "config.yaml")
-        with open(self.config_path, "w") as file:
-            file.write("library: lib\n")
-            file.write("option: value\n")
-            file.write("password: password_value")
+        config_path = temp_dir / "config.yaml"
+        lines = ["library: lib", "option: value", "password: password_value"]
+        config_path.write_text("\n".join(lines))
+        self.config_path = str(config_path)
 
-        self.cli_config_path = str(temp_dir / "cli_config.yaml")
-        with open(self.cli_config_path, "w") as file:
-            file.write("option: cli overwrite")
+        cli_config_path = temp_dir / "cli_config.yaml"
+        cli_config_path.write_text("option: cli overwrite")
+        self.cli_config_path = str(cli_config_path)
 
         config.clear()
         config["password"].redact = True
@@ -120,8 +120,7 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
             self.run_command("config", "-e")
 
     def test_edit_invalid_config_file(self):
-        with open(self.config_path, "w") as file:
-            file.write("invalid: [")
+        Path(self.config_path).write_text("invalid: [")
         config.clear()
         config._materialized = False
 
