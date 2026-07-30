@@ -597,13 +597,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
 
         keep_genres = []
-        genres = self._get_existing_genres(obj)
+        existing_genres = self._get_existing_genres(obj)
 
-        if resolved := self._try_resolve_existing_genres(obj, genres):
+        if resolved := self._try_resolve_existing_genres(obj, existing_genres):
             return resolved
 
         keep_genres = (
-            [g.lower() for g in genres]
+            [g.lower() for g in existing_genres]
             if self.config["keep_existing"] and self.config["force"]
             else []
         )
@@ -635,7 +635,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     return resolved
 
         if resolved := self._try_resolve_original_fallback(
-            obj, genres, keep_genres
+            obj, existing_genres, keep_genres
         ):
             return resolved
 
