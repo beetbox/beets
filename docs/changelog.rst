@@ -30,6 +30,13 @@ Bug fixes
 - :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
   ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
   enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
+- :doc:`plugins/deezer`: Singleton searches now use plain free text rather than
+  ``<title> artist:"<artist>"``. Deezer discards unquoted free text as soon as a
+  query contains any ``field:"value"`` filter, so the old query was evaluated as
+  ``artist:"<artist>"`` alone -- every track by the artist, in Deezer's own
+  relevance order and truncated to ``search_limit``. For artists with more
+  releases than that window, the track being imported was never among the
+  candidates offered.
 
 ..
     For plugin developers

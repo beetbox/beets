@@ -215,9 +215,20 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         name: str,
         va_likely: bool,
     ) -> tuple[str, dict[str, str]]:
-        query = f'album:"{name}"' if query_type == "album" else name
-        if query_type == "track" or not va_likely:
-            query += f' artist:"{artist}"'
+        if query_type == "album":
+            query = f'album:"{name}"'
+            if not va_likely:
+                query += f' artist:"{artist}"'
+        else:
+            # Deezer drops unquoted free text as soon as the query carries any
+            # field:"value" filter, so `<title> artist:"<artist>"` degenerated
+            # into "every track by this artist", truncated to `search_limit`.
+            # The wanted track routinely fell outside that window. Filtering on
+            # the title instead is no better, because `artist:` is fuzzy enough
+            # to match unrelated artists ("Pan Da Punk" for "Daft Punk"), so the
+            # two filters can intersect to nothing even for a well-tagged file.
+            # Plain free text lets Deezer's own relevance ranking do the work.
+            query = f"{name} {artist}".strip()
 
         return query, {}
 
