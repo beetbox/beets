@@ -24,8 +24,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import Info
     from beets.importer import ImportSession
-    from beets.library import LibModel, Library
-    from beets.library.models import Album, Item
+    from beets.library import Album, Item, LibModel, Library
 
     from .api_types import (
         AlbumAttributes,

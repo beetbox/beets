@@ -10,8 +10,8 @@ from typing import ClassVar
 import pytest
 
 from beets import dbcore
-from beets.dbcore import query, sort, types
-from beets.dbcore.db import DBCustomFunctionError, Index
+from beets.dbcore import Index, query, sort, types
+from beets.dbcore.db import DBCustomFunctionError
 from beets.library import Album, Item
 from beets.test.fixtures import ModelFixture1
 
