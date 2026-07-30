@@ -52,7 +52,7 @@ class ImportSession:
         lib: library.Library,
         loghandler: logging.Handler | None,
         paths: Sequence[PathBytes] | None,
-        query: dbcore.Query | None,
+        query: str | Sequence[str] | dbcore.Query | None = None,
     ) -> None:
         """Create a session.
 

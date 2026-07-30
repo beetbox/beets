@@ -7,13 +7,12 @@ from typing import TYPE_CHECKING, Literal
 from beets import config, importer, logging, plugins, ui
 from beets.autotag import (
     AlbumMatch,
-    Proposal,
     Recommendation,
     TrackMatch,
     tag_album,
     tag_item,
 )
-from beets.importer import DuplicateAction, SingletonImportTask
+from beets.importer import DuplicateAction, Proposal, SingletonImportTask
 from beets.library import Album
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
@@ -22,9 +21,12 @@ from beets.util.units import human_bytes, human_seconds_short
 from .display import show_change, show_item_change
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.autotag import Source
     from beets.importer import ImportSession, ImportTask
     from beets.library import AnyLibModel, Item
+    from beets.util import PathBytes
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -33,7 +35,7 @@ log = logging.getLogger("beets")
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal."""
 
-    def choose_match(self, task):
+    def choose_match(self, task: ImportTask) -> AlbumMatch | importer.Action:
         """Given an initial autotagging of items, go through an interactive
         dance with the user to ask for a choice of metadata. Returns an
         AlbumMatch object, ASIS, or SKIP.
@@ -105,7 +107,9 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, AlbumMatch)
                 return choice
 
-    def choose_item(self, task):
+    def choose_item(
+        self, task: SingletonImportTask
+    ) -> TrackMatch | importer.Action:
         """Ask the user for a choice about tagging a single item. Returns
         either an action constant or a TrackMatch object.
         """
@@ -194,13 +198,13 @@ class TerminalImportSession(importer.ImportSession):
 
         return action
 
-    def should_resume(self, path):
+    def should_resume(self, path: PathBytes) -> bool:
         return ui.input_yn(
             f"Import of the directory:\n{displayable_path(path)}\n"
             "was interrupted. Resume (Y/n)?"
         )
 
-    def _get_choices(self, task):
+    def _get_choices(self, task: ImportTask) -> list[PromptChoice]:
         """Get the list of prompt choices that should be presented to the
         user. This consists of both built-in choices and ones provided by
         plugins.
@@ -275,7 +279,7 @@ class TerminalImportSession(importer.ImportSession):
         return choices + extra_choices
 
 
-def summarize_items(items, singleton):
+def summarize_items(items: list[Item], singleton: bool) -> str:
     """Produces a brief summary line describing a set of items. Used for
     manually resolving duplicates during import.
 
@@ -353,7 +357,12 @@ def _summary_judgment(rec: Recommendation) -> importer.Action | None:
     return action
 
 
-def choose_candidate(candidates, rec, source: Source, choices=[]):
+def choose_candidate(
+    candidates: Sequence[AlbumMatch | TrackMatch],
+    rec: Recommendation,
+    source: Source,
+    choices: list[PromptChoice] = [],
+) -> AlbumMatch | TrackMatch | PromptChoice:
     """Ask the user for a selection of which candidate to use.
 
     Applies to both full albums and singletons (tracks). Candidates are either
@@ -500,6 +509,6 @@ def manual_id(session: ImportSession, task: ImportTask) -> Proposal:
     return method(task.source, search_ids=search_id.split())
 
 
-def abort_action(session, task):
+def abort_action(session: ImportSession, task: ImportTask) -> None:
     """A prompt choice callback that aborts the importer."""
     raise importer.ImportAbortError()
