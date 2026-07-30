@@ -412,35 +412,6 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         return path
 
-    # Safe file operations
-
-    def touch(
-        self,
-        path: util.PathLike,
-        dir_: util.PathLike | None = None,
-        content: str = "",
-    ) -> bytes:
-        """Create a file at `path` with given content.
-
-        If `dir_` is given, it is prepended to `path`. After that, if the
-        path is relative, it is resolved with respect to
-        `self.temp_path`.
-        """
-        bytes_path = os.fsencode(path)
-        if dir_:
-            bytes_path = os.path.join(os.fsencode(dir_), bytes_path)
-
-        if not os.path.isabs(bytes_path):
-            bytes_path = os.path.join(os.fsencode(self.temp_path), bytes_path)
-
-        parent = os.path.dirname(bytes_path)
-        if not os.path.isdir(syspath(parent)):
-            os.makedirs(syspath(parent))
-
-        with open(syspath(bytes_path), "a+") as f:
-            f.write(content)
-        return bytes_path
-
 
 # A test harness for all beets tests.
 # Provides temporary, isolated configuration.

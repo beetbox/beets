@@ -91,7 +91,7 @@ class UseThePlugin(TestHelper):
     @pytest.fixture
     def dpath(self) -> bytes:
         dpath = self.temp_path / "arttest"
-        os.mkdir(syspath(dpath))
+        dpath.mkdir()
         return os.fsencode(dpath)
 
 

@@ -1,7 +1,8 @@
+import os
+
 from mediafile import MediaFile
 
 from beets.test.helper import IOMixin, PluginTestCase
-from beets.util import displayable_path
 
 
 class InfoTest(IOMixin, PluginTestCase):
@@ -18,7 +19,7 @@ class InfoTest(IOMixin, PluginTestCase):
         mediafile.save()
 
         out = self.run_with_output("info", path)
-        assert displayable_path(path) in out
+        assert os.fsdecode(path) in out
         assert "albumartist: AAA" in out
         assert "disctitle: DDD" in out
         assert "genres: a; b; c" in out

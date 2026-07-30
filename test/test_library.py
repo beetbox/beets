@@ -376,7 +376,7 @@ class TestDestination(PytestItemHelper):
 
     def test_get_formatted_does_not_replace_separators(self, item_in_db):
         with _common.platform_posix():
-            name = os.path.join("a", "b")
+            name = str(Path("a") / "b")
             item_in_db.title = name
             newname = item_in_db.formatted().get("title")
         assert name == newname
@@ -441,7 +441,7 @@ class TestDestination(PytestItemHelper):
 
     def test_unicode_extension_in_fragment(self, item_in_db):
         self.lib.path_formats = [("default", "foo")]
-        item_in_db.path = util.bytestring_path("bar.caf\xe9")
+        item_in_db.path = Path("bar.caf\xe9")
         with patch("sys.platform", "linux"):
             dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"

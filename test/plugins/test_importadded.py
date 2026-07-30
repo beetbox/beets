@@ -1,6 +1,10 @@
 """Tests for the `importadded` plugin."""
 
+from __future__ import annotations
+
 import os
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -8,10 +12,13 @@ from beets import importer
 from beets.test.helper import AutotagImportTestCase, PluginMixin
 from beets.util import syspath
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
-def modify_mtimes(paths, offset=-60000):
+
+def modify_mtimes(paths: Iterable[Path], offset=-60000):
     for i, path in enumerate(paths, start=1):
-        mstat = os.stat(path)
+        mstat = path.stat()
         os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
@@ -25,18 +32,17 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         self.prepare_album_for_import(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
-        modify_mtimes(mfile.path for mfile in self.import_media)
-        self.min_mtime = min(
-            os.path.getmtime(mfile.path) for mfile in self.import_media
-        )
+        paths = [Path(mfile.path) for mfile in self.import_media]
+        modify_mtimes(paths)
+        self.min_mtime = min(p.stat().st_mtime for p in paths)
         self.importer = self.setup_importer()
         self.importer.add_choice(importer.Action.APPLY)
 
-    def find_media_file(self, item):
+    def find_media_file_mtime(self, item) -> float:
         """Find the pre-import MediaFile for an Item"""
         for m in self.import_media:
             if m.title.replace("Tag", "Applied") == item.title:
-                return m
+                return Path(m.path).stat().st_mtime
         raise AssertionError(f"No MediaFile found for Item {item.filepath}")
 
     def test_import_album_with_added_dates(self):
@@ -64,7 +70,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         assert album.added == self.min_mtime
         for item in album.items():
             assert item.added == pytest.approx(self.min_mtime, rel=1e-4)
-            mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
+            mediafile_mtime = self.find_media_file_mtime(item)
             assert item.mtime == pytest.approx(mediafile_mtime, rel=1e-4)
             assert item.filepath.stat().st_mtime == pytest.approx(
                 mediafile_mtime, rel=1e-4
@@ -98,9 +104,8 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         self.config["import"]["singletons"] = True
         self.importer.run()
         for item in self.lib.items():
-            mfile = self.find_media_file(item)
             assert item.added == pytest.approx(
-                os.path.getmtime(mfile.path), rel=1e-4
+                self.find_media_file_mtime(item), rel=1e-4
             )
 
     def test_import_singletons_with_preserved_mtimes(self):
@@ -108,7 +113,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         self.config["importadded"]["preserve_mtimes"] = True
         self.importer.run()
         for item in self.lib.items():
-            mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
+            mediafile_mtime = self.find_media_file_mtime(item)
             assert item.added == pytest.approx(mediafile_mtime, rel=1e-4)
             assert item.mtime == pytest.approx(mediafile_mtime, rel=1e-4)
             assert item.filepath.stat().st_mtime == pytest.approx(

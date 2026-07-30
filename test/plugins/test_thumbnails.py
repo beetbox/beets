@@ -1,12 +1,10 @@
 import os.path
-from shutil import rmtree
-from tempfile import mkdtemp
 from unittest.mock import Mock, call, patch
 
 import pytest
 
 from beets.test.helper import BeetsTestCase
-from beets.util import bytestring_path, syspath
+from beets.util import syspath
 from beetsplug.thumbnails import (
     LARGE_DIR,
     NORMAL_DIR,
@@ -139,25 +137,18 @@ class ThumbnailsTest(BeetsTestCase):
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     def test_make_dolphin_cover_thumbnail(self):
         plugin = ThumbnailsPlugin()
-        tmp = bytestring_path(mkdtemp())
-        album = Mock(path=tmp, artpath=os.path.join(tmp, b"cover.jpg"))
+        tmp = self.temp_path
+        album = Mock(
+            path=os.fsencode(tmp), artpath=os.fsencode(tmp / "cover.jpg")
+        )
         plugin.make_dolphin_cover_thumbnail(album)
-        with open(os.path.join(tmp, b".directory"), "rb") as f:
-            assert f.read().splitlines() == [
-                b"[Desktop Entry]",
-                b"Icon=./cover.jpg",
-            ]
+        filename = tmp / ".directory"
+        assert filename.read_text() == "[Desktop Entry]\nIcon=./cover.jpg"
 
         # not rewritten when it already exists (yup that's a big limitation)
         album.artpath = b"/my/awesome/art.tiff"
         plugin.make_dolphin_cover_thumbnail(album)
-        with open(os.path.join(tmp, b".directory"), "rb") as f:
-            assert f.read().splitlines() == [
-                b"[Desktop Entry]",
-                b"Icon=./cover.jpg",
-            ]
-
-        rmtree(syspath(tmp))
+        assert filename.read_text() == "[Desktop Entry]\nIcon=./cover.jpg"
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.ArtResizer")
