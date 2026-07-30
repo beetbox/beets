@@ -78,6 +78,25 @@ class TestDateInterval:
         interval = DateInterval.from_periods(start, end)
         assert interval.contains(datetime.fromisoformat(datestr)) == include
 
+    @pytest.mark.parametrize(
+        "reversed_pattern, forward_pattern",
+        [
+            ("2001..2000", "2000..2001"),
+            ("2000-02..1999-12", "1999-12..2000-02"),
+            ("2000-01-01T13..2000-01-01T12", "2000-01-01T12..2000-01-01T13"),
+            # Mixed precision.
+            ("2001..2000-06", "2000-06..2001"),
+        ],
+    )
+    def test_reversed_interval_is_normalised(
+        self, reversed_pattern, forward_pattern
+    ):
+        """A range given back to front means the same as the forward one."""
+        reversed_ = DateInterval.from_periods(*_parse_periods(reversed_pattern))
+        forward = DateInterval.from_periods(*_parse_periods(forward_pattern))
+
+        assert (reversed_.start, reversed_.end) == (forward.start, forward.end)
+
 
 def _parsetime(s):
     return time.mktime(datetime.strptime(s, "%Y-%m-%d %H:%M").timetuple())
@@ -114,6 +133,20 @@ class DateQueryTest(ItemInDBTestCase):
 
     def test_single_day_nonmatch_fast(self):
         query = DateQuery("added", "2013-03-31")
+        matched = self.lib.items(query)
+        assert len(matched) == 0
+
+    def test_reversed_range_match_fast(self):
+        query = DateQuery("added", "2014..2013")
+        matched = self.lib.items(query)
+        assert len(matched) == 1
+
+    def test_reversed_range_match_slow(self):
+        query = DateQuery("added", "2014..2013")
+        assert query.match(self.i)
+
+    def test_reversed_range_nonmatch_fast(self):
+        query = DateQuery("added", "2012..2011")
         matched = self.lib.items(query)
         assert len(matched) == 0
 
@@ -206,6 +239,13 @@ class DateQueryTestRelativeMore(ItemInDBTestCase):
             matched = self.lib.items(query)
             assert len(matched) == 0
 
+    def test_relative_reversed(self):
+        # `+4d..-4d` is normalised to `-4d..+4d`.
+        for timespan in ["d", "w", "m", "y"]:
+            query = DateQuery("added", f"+4{timespan}..-4{timespan}")
+            matched = self.lib.items(query)
+            assert len(matched) == 1
+
 
 class DateQueryConstructTest(unittest.TestCase):
     def test_long_numbers(self):
@@ -238,6 +278,14 @@ class DateQueryConstructTest(unittest.TestCase):
         for q in ["2000|2001", "1|", "5|3d"]:
             with pytest.raises(InvalidQueryArgumentValueError):
                 DateQuery("added", q)
+
+    def test_reversed_date_range(self):
+        # A range whose start lies after its end (e.g. `added:2024..2020`)
+        # is accepted and read as the equivalent forward range, instead of
+        # blowing up with an uncaught ValueError from the interval check.
+        date_query = DateQuery("added", "2024..2020")
+        assert date_query.interval.start == datetime(2020, 1, 1)
+        assert date_query.interval.end == datetime(2025, 1, 1)
 
     def test_datetime_uppercase_t_separator(self):
         date_query = DateQuery("added", "2000-01-01T12")

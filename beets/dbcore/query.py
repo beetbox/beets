@@ -818,7 +818,19 @@ class DateInterval:
     def from_periods(
         cls, start: Period | None, end: Period | None
     ) -> DateInterval:
-        """Create an interval with two Periods as the endpoints."""
+        """Create an interval with two Periods as the endpoints.
+
+        A reversed range, whose start period lies entirely after its end
+        period (e.g. ``2024..2020``), is normalised by swapping the two
+        periods, so it means the same as ``2020..2024``.
+        """
+        if (
+            start is not None
+            and end is not None
+            and start.date >= end.open_right_endpoint()
+        ):
+            start, end = end, start
+
         end_date = end.open_right_endpoint() if end is not None else None
         start_date = start.date if start is not None else None
         return cls(start_date, end_date)
