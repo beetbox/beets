@@ -1304,7 +1304,7 @@ class Embedded(LocalArtSource):
         self,
         album: Album,
         plugin: FetchArtPlugin,
-        paths: None | Sequence[bytes],
+        paths: Sequence[bytes] | None,
     ) -> Iterator[Candidate]:
         filename = get_temp_filename(__name__)
         for item in album.items():
