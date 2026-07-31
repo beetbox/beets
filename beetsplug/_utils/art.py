@@ -144,9 +144,7 @@ def resize_image(
         maxwidth,
         quality,
     )
-    return ArtResizer.shared.resize(
-        maxwidth, syspath(imagepath), quality=quality
-    )
+    return ArtResizer.shared.resize(maxwidth, imagepath, quality=quality)
 
 
 def check_art_similarity(

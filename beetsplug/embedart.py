@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import os.path
+import os
 import tempfile
 from mimetypes import guess_extension
 from typing import TYPE_CHECKING
@@ -147,7 +147,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     self._log.error("Invalid image file")
                     return
                 file = f"image{extension}"
-                tempimg = os.path.join(tempfile.gettempdir(), file)
+                tempimg = os.fsencode(os.path.join(tempfile.gettempdir(), file))
                 try:
                     with open(tempimg, "wb") as f:
                         f.write(response.content)
@@ -226,11 +226,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     )
                     return
                 for album in lib.albums(args):
-                    artpath = normpath(os.path.join(album.path, filename))
-                    artpath = art.extract_first(
-                        self._log, artpath, album.items()
-                    )
-                    if artpath and opts.associate:
+                    if opts.associate and (
+                        artpath := art.extract_first(
+                            self._log,
+                            normpath(os.path.join(album.path, filename)),
+                            album.items(),
+                        )
+                    ):
                         album.set_art(artpath)
                         album.store()
 
