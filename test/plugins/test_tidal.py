@@ -673,6 +673,66 @@ class TestCandidates(TidalPluginTest):
         assert candidates[0].album == "Query Album"
 
 
+class TestSearchLimit(TidalPluginTest):
+    """Tests for Tidal search_limit handling."""
+
+    def test_candidates_respect_search_limit_across_album_queries(self):
+        """Album candidates are capped and interleaved across queries."""
+        items = [Item(title="Song", artist="Artist", album="Album")]
+        self.tidal.config["search_limit"] = 2
+        self.tidal._album_queries = Mock(return_value=["query a", "query b"])
+
+        def search_albums(query):
+            yield f"{query} first"
+            yield f"{query} second"
+
+        self.tidal.search_albums_by_query = Mock(side_effect=search_albums)
+
+        candidates = list(
+            self.tidal.candidates(items, "Artist", "Album", False)
+        )
+
+        assert candidates == ["query a first", "query b first"]
+
+    def test_candidates_stop_before_later_album_queries_at_limit(self):
+        """Album candidate collection stops before resolving unneeded queries."""
+        items = [Item(title="Song", artist="Artist", album="Album")]
+        resolved_queries = []
+        self.tidal.config["search_limit"] = 1
+        self.tidal._album_queries = Mock(return_value=["query a", "query b"])
+
+        def search_albums(query):
+            resolved_queries.append(query)
+            yield f"{query} first"
+
+        self.tidal.search_albums_by_query = Mock(side_effect=search_albums)
+
+        candidates = list(
+            self.tidal.candidates(items, "Artist", "Album", False)
+        )
+
+        assert candidates == ["query a first"]
+        assert resolved_queries == ["query a"]
+
+    def test_item_candidates_respect_search_limit_across_item_queries(self):
+        """Item candidates are capped and avoid resolving later queries."""
+        item = Item(title="Song", artist="Artist")
+        resolved_queries = []
+        self.tidal.config["search_limit"] = 1
+        self.tidal._item_queries = Mock(return_value=["Song", "Artist Song"])
+
+        def search_tracks(query):
+            resolved_queries.append(query)
+            yield f"{query} first"
+
+        self.tidal.search_tracks_by_query = Mock(side_effect=search_tracks)
+
+        candidates = list(self.tidal.item_candidates(item, "Artist", "Song"))
+
+        assert candidates == ["Song first"]
+        assert resolved_queries == ["Song"]
+
+
 class TestItemCandidates(TidalPluginTest):
     """Tests for item_candidates method."""
 

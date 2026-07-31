@@ -5,7 +5,7 @@ import os
 import re
 import time
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, TypeVar, overload
 
 import confuse
 
@@ -39,6 +39,8 @@ if TYPE_CHECKING:
 
 
 log = getLogger("beets.tidal")
+
+_Candidate = TypeVar("_Candidate")
 
 
 class TidalPlugin(MetadataSourcePlugin):
@@ -129,8 +131,13 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return candidates
 
-        for query in self._album_queries(items):
-            candidates += self.search_albums_by_query(query)
+        candidates = self._limited_round_robin(
+            (
+                self.search_albums_by_query(query)
+                for query in self._album_queries(items)
+            ),
+            self.config["search_limit"].get(int),
+        )
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
@@ -148,10 +155,36 @@ class TidalPlugin(MetadataSourcePlugin):
             ):
                 return candidates
 
-        for query in self._item_queries(item):
-            candidates += self.search_tracks_by_query(query)
+        candidates = self._limited_round_robin(
+            (
+                self.search_tracks_by_query(query)
+                for query in self._item_queries(item)
+            ),
+            self.config["search_limit"].get(int),
+        )
 
         log.debug("Found {0} candidates", len(candidates))
+        return candidates
+
+    @staticmethod
+    def _limited_round_robin(
+        iterables: Iterable[Iterable[_Candidate]], limit: int
+    ) -> list[_Candidate]:
+        candidates: list[_Candidate] = []
+        iterators = [iter(iterable) for iterable in iterables]
+
+        while iterators and len(candidates) < limit:
+            active_iterators = []
+            for iterator in iterators:
+                if len(candidates) >= limit:
+                    break
+                try:
+                    candidates.append(next(iterator))
+                except StopIteration:
+                    continue
+                active_iterators.append(iterator)
+            iterators = active_iterators
+
         return candidates
 
     @staticmethod
