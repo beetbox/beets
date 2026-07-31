@@ -9,6 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.library.models import Item
 from beets.test.helper import PluginTestHelper
 from beetsplug.tidal import TidalPlugin
@@ -26,6 +27,19 @@ if TYPE_CHECKING:
     )
 
 CURRENT_TS = 150000000
+
+
+def _album_info(album_id: str | None, album: str) -> AlbumInfo:
+    return AlbumInfo(
+        data_source="Tidal",
+        album_id=album_id,
+        album=album,
+        tracks=[TrackInfo(data_source="Tidal", track_id=f"{album}-track")],
+    )
+
+
+def _track_info(track_id: str | None, title: str) -> TrackInfo:
+    return TrackInfo(data_source="Tidal", track_id=track_id, title=title)
 
 
 def _make_artwork(id_: str, href: str = "") -> TidalArtwork:
@@ -683,8 +697,8 @@ class TestSearchLimit(TidalPluginTest):
         self.tidal._album_queries = Mock(return_value=["query a", "query b"])
 
         def search_albums(query):
-            yield f"{query} first"
-            yield f"{query} second"
+            yield _album_info(f"{query} first", f"{query} first")
+            yield _album_info(f"{query} second", f"{query} second")
 
         self.tidal.search_albums_by_query = Mock(side_effect=search_albums)
 
@@ -692,7 +706,10 @@ class TestSearchLimit(TidalPluginTest):
             self.tidal.candidates(items, "Artist", "Album", False)
         )
 
-        assert candidates == ["query a first", "query b first"]
+        assert [candidate.album for candidate in candidates] == [
+            "query a first",
+            "query b first",
+        ]
 
     def test_candidates_stop_before_later_album_queries_at_limit(self):
         """Album candidate collection stops before resolving unneeded queries."""
@@ -703,7 +720,7 @@ class TestSearchLimit(TidalPluginTest):
 
         def search_albums(query):
             resolved_queries.append(query)
-            yield f"{query} first"
+            yield _album_info(f"{query} first", f"{query} first")
 
         self.tidal.search_albums_by_query = Mock(side_effect=search_albums)
 
@@ -711,8 +728,88 @@ class TestSearchLimit(TidalPluginTest):
             self.tidal.candidates(items, "Artist", "Album", False)
         )
 
-        assert candidates == ["query a first"]
+        assert [candidate.album for candidate in candidates] == [
+            "query a first"
+        ]
         assert resolved_queries == ["query a"]
+
+    def test_candidates_count_distinct_album_ids_toward_search_limit(self):
+        """Album duplicates do not consume search_limit slots."""
+        items = [Item(title="Song", artist="Artist", album="Album")]
+        resolved_queries = []
+        consumed = []
+        self.tidal.config["search_limit"] = 4
+        self.tidal._album_queries = Mock(
+            return_value=["query a", "query b", "query c"]
+        )
+
+        albums_by_query = {
+            "query a": [
+                _album_info("1", "duplicate from a"),
+                _album_info("3", "unique from a"),
+            ],
+            "query b": [
+                _album_info("1", "duplicate from b"),
+                _album_info("4", "unique from b"),
+            ],
+            "query c": [
+                _album_info("2", "unique from c"),
+                _album_info("5", "unneeded from c"),
+            ],
+        }
+
+        def search_albums(query):
+            resolved_queries.append(query)
+            for album in albums_by_query[query]:
+                consumed.append(album.album)
+                yield album
+
+        self.tidal.search_albums_by_query = Mock(side_effect=search_albums)
+
+        candidates = list(
+            self.tidal.candidates(items, "Artist", "Album", False)
+        )
+
+        assert [candidate.album_id for candidate in candidates] == [
+            "1",
+            "2",
+            "3",
+            "4",
+        ]
+        assert [candidate.album for candidate in candidates] == [
+            "duplicate from a",
+            "unique from c",
+            "unique from a",
+            "unique from b",
+        ]
+        assert resolved_queries == ["query a", "query b", "query c"]
+        assert consumed == [
+            "duplicate from a",
+            "duplicate from b",
+            "unique from c",
+            "unique from a",
+            "unique from b",
+        ]
+
+    def test_candidates_keep_album_candidates_without_ids_distinct(self):
+        """Album candidates without IDs match downstream duplicate behavior."""
+        items = [Item(title="Song", artist="Artist", album="Album")]
+        self.tidal.config["search_limit"] = 2
+        self.tidal._album_queries = Mock(return_value=["query a", "query b"])
+
+        def search_albums(query):
+            yield _album_info(None, f"{query} missing id")
+
+        self.tidal.search_albums_by_query = Mock(side_effect=search_albums)
+
+        candidates = list(
+            self.tidal.candidates(items, "Artist", "Album", False)
+        )
+
+        assert [candidate.album for candidate in candidates] == [
+            "query a missing id",
+            "query b missing id",
+        ]
 
     def test_item_candidates_respect_search_limit_across_item_queries(self):
         """Item candidates are capped and avoid resolving later queries."""
@@ -723,14 +820,134 @@ class TestSearchLimit(TidalPluginTest):
 
         def search_tracks(query):
             resolved_queries.append(query)
-            yield f"{query} first"
+            yield _track_info(f"{query} first", f"{query} first")
 
         self.tidal.search_tracks_by_query = Mock(side_effect=search_tracks)
 
         candidates = list(self.tidal.item_candidates(item, "Artist", "Song"))
 
-        assert candidates == ["Song first"]
+        assert [candidate.title for candidate in candidates] == ["Song first"]
         assert resolved_queries == ["Song"]
+
+    def test_item_candidates_count_distinct_track_ids_toward_search_limit(self):
+        """Track duplicates do not consume search_limit slots."""
+        item = Item(title="Song", artist="Artist")
+        resolved_queries = []
+        consumed = []
+        self.tidal.config["search_limit"] = 4
+        self.tidal._item_queries = Mock(
+            return_value=["Song", "Artist Song", "Remix Song"]
+        )
+
+        tracks_by_query = {
+            "Song": [
+                _track_info("1", "duplicate from title"),
+                _track_info("3", "unique from title"),
+            ],
+            "Artist Song": [
+                _track_info("1", "duplicate from artist/title"),
+                _track_info("4", "unique from artist/title"),
+            ],
+            "Remix Song": [
+                _track_info("2", "unique from remix"),
+                _track_info("5", "unneeded from remix"),
+            ],
+        }
+
+        def search_tracks(query):
+            resolved_queries.append(query)
+            for track in tracks_by_query[query]:
+                consumed.append(track.title)
+                yield track
+
+        self.tidal.search_tracks_by_query = Mock(side_effect=search_tracks)
+
+        candidates = list(self.tidal.item_candidates(item, "Artist", "Song"))
+
+        assert [candidate.track_id for candidate in candidates] == [
+            "1",
+            "2",
+            "3",
+            "4",
+        ]
+        assert [candidate.title for candidate in candidates] == [
+            "duplicate from title",
+            "unique from remix",
+            "unique from title",
+            "unique from artist/title",
+        ]
+        assert resolved_queries == ["Song", "Artist Song", "Remix Song"]
+        assert consumed == [
+            "duplicate from title",
+            "duplicate from artist/title",
+            "unique from remix",
+            "unique from title",
+            "unique from artist/title",
+        ]
+
+    def test_search_limits_do_not_consume_generators_when_not_positive(self):
+        """Zero and negative search limits avoid advancing result generators."""
+        items = [Item(title="Song", artist="Artist", album="Album")]
+        item = Item(title="Song", artist="Artist")
+        consumed = []
+
+        self.tidal._album_queries = Mock(return_value=["album query"])
+        self.tidal._item_queries = Mock(return_value=["track query"])
+
+        def search_albums(query):
+            consumed.append(query)
+            yield _album_info("1", "album")
+
+        def search_tracks(query):
+            consumed.append(query)
+            yield _track_info("1", "track")
+
+        self.tidal.search_albums_by_query = Mock(side_effect=search_albums)
+        self.tidal.search_tracks_by_query = Mock(side_effect=search_tracks)
+
+        self.tidal.config["search_limit"] = 0
+        assert (
+            list(self.tidal.candidates(items, "Artist", "Album", False)) == []
+        )
+
+        self.tidal.config["search_limit"] = -1
+        assert list(self.tidal.item_candidates(item, "Artist", "Song")) == []
+
+        assert consumed == []
+
+    def test_item_candidates_collapse_track_candidates_without_ids(self):
+        """Track candidates without IDs match downstream duplicate behavior."""
+        item = Item(title="Song", artist="Artist")
+        consumed = []
+        self.tidal.config["search_limit"] = 2
+        self.tidal._item_queries = Mock(
+            return_value=["Song", "Artist Song", "Remix Song"]
+        )
+
+        tracks_by_query = {
+            "Song": [_track_info(None, "missing id from title")],
+            "Artist Song": [_track_info(None, "missing id from artist/title")],
+            "Remix Song": [_track_info("2", "unique from remix")],
+        }
+
+        def search_tracks(query):
+            for track in tracks_by_query[query]:
+                consumed.append(track.title)
+                yield track
+
+        self.tidal.search_tracks_by_query = Mock(side_effect=search_tracks)
+
+        candidates = list(self.tidal.item_candidates(item, "Artist", "Song"))
+
+        assert [candidate.title for candidate in candidates] == [
+            "missing id from title",
+            "unique from remix",
+        ]
+        assert consumed == [
+            "missing id from title",
+            "missing id from artist/title",
+            "unique from remix",
+        ]
 
 
 class TestItemCandidates(TidalPluginTest):

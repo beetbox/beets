@@ -20,7 +20,7 @@ from .api import TidalAPI
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Hashable, Iterable, Sequence
 
     from beets.autotag import Info
     from beets.dbcore.db import Results
@@ -137,6 +137,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 for query in self._album_queries(items)
             ),
             self.config["search_limit"].get(int),
+            self._album_candidate_key,
         )
 
         log.debug("Found {0} candidates", len(candidates))
@@ -161,6 +162,7 @@ class TidalPlugin(MetadataSourcePlugin):
                 for query in self._item_queries(item)
             ),
             self.config["search_limit"].get(int),
+            self._track_candidate_key,
         )
 
         log.debug("Found {0} candidates", len(candidates))
@@ -168,9 +170,12 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @staticmethod
     def _limited_round_robin(
-        iterables: Iterable[Iterable[_Candidate]], limit: int
+        iterables: Iterable[Iterable[_Candidate]],
+        limit: int,
+        candidate_key: Callable[[_Candidate], Hashable | None],
     ) -> list[_Candidate]:
         candidates: list[_Candidate] = []
+        seen: set[Hashable] = set()
         iterators = [iter(iterable) for iterable in iterables]
 
         while iterators and len(candidates) < limit:
@@ -179,13 +184,28 @@ class TidalPlugin(MetadataSourcePlugin):
                 if len(candidates) >= limit:
                     break
                 try:
-                    candidates.append(next(iterator))
+                    candidate = next(iterator)
                 except StopIteration:
                     continue
+                key = candidate_key(candidate)
+                if key is None or key not in seen:
+                    candidates.append(candidate)
+                    if key is not None:
+                        seen.add(key)
                 active_iterators.append(iterator)
             iterators = active_iterators
 
         return candidates
+
+    @staticmethod
+    def _album_candidate_key(candidate: AlbumInfo) -> Info.Identifier | None:
+        if candidate.album_id:
+            return candidate.identifier
+        return None
+
+    @staticmethod
+    def _track_candidate_key(candidate: TrackInfo) -> Info.Identifier:
+        return candidate.identifier
 
     @staticmethod
     def _item_queries(item: Item) -> Iterable[str]:
