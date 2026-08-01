@@ -4,8 +4,9 @@ import itertools
 import os
 import re
 import time
+from collections import deque
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, TypeVar, overload
 
 import confuse
 
@@ -20,7 +21,7 @@ from .api import TidalAPI
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
     from beets.autotag import Info
     from beets.dbcore.db import Results
@@ -39,6 +40,20 @@ if TYPE_CHECKING:
 
 
 log = getLogger("beets.tidal")
+
+T = TypeVar("T")
+
+
+def round_robin(iterables: Iterable[Iterable[T]]) -> Iterator[T]:
+    """Yield one element from each iterable in turn until all are exhausted."""
+    iterators = deque(map(iter, iterables))
+    while iterators:
+        try:
+            yield next(iterators[0])
+        except StopIteration:
+            iterators.popleft()
+        else:
+            iterators.rotate(-1)
 
 
 class TidalPlugin(MetadataSourcePlugin):
@@ -132,27 +147,9 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return candidates
 
-        candidates = list(
-            itertools.islice(
-                (
-                    candidate
-                    for candidate in itertools.chain.from_iterable(
-                        itertools.zip_longest(
-                            *(
-                                self.search_albums_by_query(query)
-                                for query in self._album_queries(items)
-                            ),
-                            fillvalue=None,
-                        )
-                    )
-                    if candidate is not None
-                ),
-                self.search_limit,
-            )
+        return self._search_by_queries(
+            self.search_albums_by_query, self._album_queries(items)
         )
-
-        log.debug("Found {0} candidates", len(candidates))
-        return candidates
 
     def item_candidates(
         self, item: Item, artist: str, title: str
@@ -166,25 +163,24 @@ class TidalPlugin(MetadataSourcePlugin):
             ):
                 return candidates
 
-        candidates = list(
-            itertools.islice(
-                (
-                    candidate
-                    for candidate in itertools.chain.from_iterable(
-                        itertools.zip_longest(
-                            *(
-                                self.search_tracks_by_query(query)
-                                for query in self._item_queries(item)
-                            ),
-                            fillvalue=None,
-                        )
-                    )
-                    if candidate is not None
-                ),
-                self.search_limit,
-            )
+        return self._search_by_queries(
+            self.search_tracks_by_query, self._item_queries(item)
         )
 
+    def _search_by_queries(
+        self, search: Callable[[str], Iterable[T]], queries: Iterable[str]
+    ) -> list[T]:
+        """Return up to ``search_limit`` results for the given queries.
+
+        Results are interleaved so that the best match of every query is
+        considered before the limit is reached, rather than letting the
+        first query use up the entire budget.
+        """
+        candidates = list(
+            itertools.islice(
+                round_robin(map(search, queries)), self.search_limit
+            )
+        )
         log.debug("Found {0} candidates", len(candidates))
         return candidates
 
