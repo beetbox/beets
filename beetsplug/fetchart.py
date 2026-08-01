@@ -1307,22 +1307,22 @@ class Embedded(LocalArtSource):
         paths: Sequence[bytes] | None,
     ) -> Iterator[Candidate]:
         filename = get_temp_filename(__name__)
-        for item in album.items():
-            if extracted_path := art.extract(self._log, filename, item):
-                yield self._candidate(
-                    path=extracted_path, match=MetadataMatch.EXACT
-                )
-                break
-        else:
-            self._log.debug("embedded: art not found for {}", album)
-
         try:
+            for item in album.items():
+                if extracted_path := art.extract(self._log, filename, item):
+                    yield self._candidate(
+                        path=extracted_path, match=MetadataMatch.EXACT
+                    )
+                    break
+            else:
+                self._log.debug("embedded: art not found for {}", album)
+        finally:
             # Always remove tempfile because art.extract will have created a new
             # file with the same basename but correct file extension added
-            util.remove(path=filename)
-        except util.FilesystemError as exc:
-            self._log.debug("error cleaning up tempfile: {}", exc)
-        return
+            try:
+                util.remove(path=filename)
+            except util.FilesystemError as exc:
+                self._log.debug("error cleaning up tempfile: {}", exc)
 
 
 # All art sources. The order they will be tried in is specified by the config.
