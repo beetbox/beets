@@ -189,7 +189,7 @@ class BadFiles(BeetsPlugin):
 
     def on_import_task_before_choice(
         self, task: ImportTask, session: ImportSession
-    ) -> None:
+    ) -> importer.Action | None:
         if hasattr(task, "_badfiles_checks_failed"):
             actions = confuse.Choice(["ask", "abort", "skip", "continue"])
             warning_action = self.config["import_action_on_warning"].get(

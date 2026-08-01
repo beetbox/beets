@@ -77,4 +77,4 @@ class HookPlugin(BeetsPlugin):
             except OSError as exc:
                 self._log.error("hook for {} failed: {}", event, exc)
 
-        self.register_listener(event, hook_function)
+        self.register_listener(event, hook_function)  # type: ignore[arg-type]

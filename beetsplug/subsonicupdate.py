@@ -96,7 +96,7 @@ class SubsonicUpdate(BeetsPlugin):
 
         return f"{url}/rest/{endpoint}"
 
-    def start_scan(self) -> None:
+    def start_scan(self, lib: Library) -> None:
         user = self.config["user"].as_str()
         auth = self.config["auth"].as_str()
         url = self.__format_url("startScan")

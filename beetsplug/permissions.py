@@ -65,21 +65,21 @@ class Permissions(BeetsPlugin):
         # Adding defaults.
         self.config.add({"file": "644", "dir": "755"})
 
-        self.register_listener("item_imported", self.fix)
-        self.register_listener("album_imported", self.fix)
+        self.register_listener("item_imported", self.fix_item)
+        self.register_listener("album_imported", self.fix_album)
         self.register_listener("art_set", self.fix_art)
 
-    def fix(self, lib: Library, item: Item = None, album: Album = None) -> None:
-        """Fix the permissions for an imported Item or Album."""
+    def fix_item(self, lib: Library, item: Item) -> None:
+        self.set_permissions(
+            files=[item.path], dirs=dirs_in_library(lib.directory, item.path)
+        )
+
+    def fix_album(self, lib: Library, album: Album) -> None:
         files = []
         dirs = set()
-        if item:
+        for item in album.items():
             files.append(item.path)
             dirs.update(dirs_in_library(lib.directory, item.path))
-        elif album:
-            for album_item in album.items():
-                files.append(album_item.path)
-                dirs.update(dirs_in_library(lib.directory, album_item.path))
         self.set_permissions(files=files, dirs=dirs)
 
     def fix_art(self, album: Album) -> None:

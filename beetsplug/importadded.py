@@ -44,8 +44,11 @@ class ImportAddedPlugin(BeetsPlugin):
         register("item_imported", self.update_item_times)
         register("after_write", self.update_after_write_time)
 
-    def check_config(self, task: ImportTask, session: ImportSession) -> None:
+    def check_config(
+        self, task: ImportTask, session: ImportSession
+    ) -> list[ImportTask] | None:
         self.config["preserve_mtimes"].get(bool)
+        return None
 
     def reimported_item(self, item):
         return item.id in self.reimported_item_ids
@@ -55,7 +58,7 @@ class ImportAddedPlugin(BeetsPlugin):
 
     def record_if_inplace(
         self, task: ImportTask, session: ImportSession
-    ) -> None:
+    ) -> list[ImportTask] | None:
         if not (
             session.config["copy"]
             or session.config["move"]
@@ -73,6 +76,8 @@ class ImportAddedPlugin(BeetsPlugin):
             )
             for item in items:
                 self.record_import_mtime(item, item.path, item.path)
+
+        return None
 
     def record_reimported(
         self, task: ImportTask, session: ImportSession
