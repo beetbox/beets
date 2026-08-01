@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 
 
 class ImportAddedPlugin(BeetsPlugin):
+    item_mtime: dict[bytes, float]
+    reimported_item_ids: set[int | None]
+    replaced_album_paths: set[bytes]
+
     def __init__(self) -> None:
         super().__init__()
         self.config.add(
@@ -25,9 +29,9 @@ class ImportAddedPlugin(BeetsPlugin):
         )
 
         # item.id for new items that were reimported
-        self.reimported_item_ids = None
+        self.reimported_item_ids = set()
         # album.path for old albums that were replaced by a reimported album
-        self.replaced_album_paths = None
+        self.replaced_album_paths = set()
         # item path in the library to the mtime of the source file
         self.item_mtime = {}
 

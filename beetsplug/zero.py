@@ -24,6 +24,8 @@ ARTWORK_FIELDS = {"images", "art"}
 
 
 class ZeroPlugin(BeetsPlugin):
+    fields_to_progs: dict[str, list[re.Pattern[str]]]
+
     def __init__(self) -> None:
         super().__init__()
 

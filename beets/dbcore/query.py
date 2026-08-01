@@ -119,6 +119,7 @@ class Query(ABC):
 SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 FieldQueryType = type["FieldQuery"]
+AnyCollectionQuery = TypeVar("AnyCollectionQuery", bound="CollectionQuery")
 
 
 class FieldQuery(Query, Generic[P]):

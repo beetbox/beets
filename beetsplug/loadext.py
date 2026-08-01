@@ -26,7 +26,7 @@ class LoadExtPlugin(BeetsPlugin):
         self.register_listener("library_opened", self.library_opened)
 
     def library_opened(self, lib: Library) -> None:
-        for v in self.config:
+        for v in self.config.sequence():
             ext = v.as_filename()
 
             self._log.debug("loading extension {}", ext)
