@@ -329,7 +329,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
     def before_choose_candidate_listener(
         self, session: ImportSession, task: ImportTask
-    ) -> None:
+    ) -> list[PromptChoice]:
         """Append an "Edit" choice and an "edit Candidates" choice (if
         there are candidates) to the interactive importer prompt.
         """

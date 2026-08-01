@@ -38,7 +38,7 @@ class FileFilterPlugin(BeetsPlugin):
 
     def import_task_created_event(
         self, session: ImportSession, task: ImportTask
-    ) -> None:
+    ) -> list[ImportTask] | None:
         if task.items and len(task.items) > 0:
             items_to_import = []
             for item in task.items:

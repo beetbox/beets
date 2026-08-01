@@ -224,7 +224,7 @@ class PlayPlugin(BeetsPlugin):
 
     def before_choose_candidate_listener(
         self, session: ImportSession, task: ImportTask
-    ) -> None:
+    ) -> list[PromptChoice]:
         """Append a "Play" choice to the interactive importer prompt."""
         return [PromptChoice("y", "plaY", self.importer_play)]
 
