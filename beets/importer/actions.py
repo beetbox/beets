@@ -34,7 +34,10 @@ class DuplicateAction(str, Enum):
 
     @classmethod
     def strict_options(cls) -> list[str]:
-        return [d.text for d in set(cls) - {DuplicateAction.ASK}]
+        return [
+            d.text
+            for d in set(cls) - {DuplicateAction.ASK, DuplicateAction.UPGRADE}
+        ]
 
     @classmethod
     def choices(cls) -> dict[str, str]:
@@ -45,3 +48,7 @@ class DuplicateAction(str, Enum):
     REMOVE = "r", "Remove old"
     KEEP = "k", "Keep all"
     ASK = "a", "Ask"
+    # Config-only: not offered in the interactive `ask` prompt (see
+    # `strict_options`). Resolved to SKIP or applied per-track by
+    # `beets.importer.stages._resolve_duplicates`.
+    UPGRADE = "u", "Upgrade"
