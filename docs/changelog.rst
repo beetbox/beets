@@ -260,6 +260,10 @@ Bug fixes
   queries.
 - :doc:`plugins/tidal`: Fix auth URL not printed in environments without a
   configured browser :bug:`6710`
+- :doc:`plugins/deezer`: Detect compilations that Deezer credits to a single
+  "main" artist instead of "Various Artists", so they are tagged as such
+  rather than getting every track artist in the album artist field.
+  :bug:`4057`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

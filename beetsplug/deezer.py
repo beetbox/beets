@@ -111,7 +111,14 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         for track in tracks:
             track.medium_total = medium_totals[track.medium]
 
-        is_va = str(album_data["artist"]["id"]) == str(VARIOUS_ARTISTS_ID)
+        album_artist_id = str(album_data["artist"]["id"])
+        # Deezer assigns some compilations a single "main" artist instead of
+        # the Various Artists entity, leaving them undetected. Treat a release
+        # as VA when its album artist performs on a minority of the tracks.
+        is_va = album_artist_id == str(VARIOUS_ARTISTS_ID) or (
+            sum(t.artist_id == album_artist_id for t in tracks) * 2
+            < len(tracks)
+        )
         if is_va:
             va_name = config["va_name"].as_str()
             artist = va_name
