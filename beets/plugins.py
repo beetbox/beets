@@ -10,10 +10,18 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    TypedDict,
+    TypeVar,
+    overload,
+)
 
 import mediafile
-from typing_extensions import ParamSpec
+from typing_extensions import Never, ParamSpec, Unpack
 
 import beets
 from beets import logging
@@ -21,15 +29,18 @@ from beets.util import unique_list
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 
     from confuse import Subview
 
+    from beets.autotag import AlbumInfo, TrackInfo
+    from beets.autotag.match import AlbumMatch
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
-    from beets.importer import ImportSession, ImportTask
-    from beets.library import Album, Item, Library
+    from beets.importer import Action, ImportSession, ImportTask
+    from beets.library import Album, Item, LibModel, Library
     from beets.ui import Subcommand
+    from beets.util import PromptChoice
 
     # TYPE_CHECKING guard is needed for any derived type
     # which uses an import from `beets.library` and `beets.imported`
@@ -50,43 +61,146 @@ PLUGIN_NAMESPACE = "beetsplug"
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = "2dc3914abf35f0d9c92d97d8f8e42b43"
 
-EventType = Literal[
-    "after_write",
-    "album_imported",
-    "album_removed",
-    "albuminfo_received",
-    "album_matched",
-    "art_set",
-    "before_choose_candidate",
+AfterWriteEventType = Literal["after_write"]
+ItemPathEventType = Literal[
     "before_item_moved",
-    "cli_exit",
-    "database_change",
-    "import",
-    "import_begin",
-    "import_task_apply",
-    "import_task_before_choice",
-    "import_task_choice",
-    "import_task_created",
-    "import_task_files",
-    "import_task_start",
     "item_copied",
     "item_hardlinked",
-    "item_imported",
     "item_linked",
     "item_moved",
     "item_reflinked",
-    "item_removed",
-    "library_opened",
-    "mb_album_extract",
-    "mb_track_extract",
-    "pluginload",
-    "trackinfo_received",
-    "write",
-    # convert plugin
-    "after_convert",
-    # smartplaylist plugin
-    "smartplaylist_update",
 ]
+BeforeChooseCandidateEventType = Literal["before_choose_candidate"]
+ImportTaskBeforeChoiceEventType = Literal["import_task_before_choice"]
+ImportTaskCreatedEventType = Literal["import_task_created"]
+ImportTaskEventType = Literal[
+    "import_task_apply",
+    "import_task_choice",
+    "import_task_files",
+    "import_task_start",
+]
+ImportEventType = Literal["import"]
+AlbumImportedEventType = Literal["album_imported"]
+AlbumEventType = Literal["album_removed", "art_set"]
+AlbumInfoReceivedEventType = Literal["albuminfo_received"]
+TrackInfoReceivedEventType = Literal["trackinfo_received"]
+MetadataReceivedEventType = (
+    AlbumInfoReceivedEventType | TrackInfoReceivedEventType
+)
+AlbumMatchedEventType = Literal["album_matched"]
+LibraryEventType = Literal["cli_exit", "library_opened"]
+DatabaseChangeEventType = Literal["database_change"]
+ImportBeginEventType = Literal["import_begin"]
+ItemImportedEventType = Literal["item_imported"]
+ItemEventType = Literal["item_removed"]
+WriteEventType = Literal["write"]
+MusicBrainzExtractEventType = Literal["mb_album_extract", "mb_track_extract"]
+NoArgsEventType = Literal["pluginload", "smartplaylist_update"]
+AfterConvertEventType = Literal["after_convert"]
+EventType = (
+    AfterWriteEventType
+    | ItemPathEventType
+    | BeforeChooseCandidateEventType
+    | ImportTaskBeforeChoiceEventType
+    | ImportTaskCreatedEventType
+    | ImportTaskEventType
+    | ImportEventType
+    | AlbumImportedEventType
+    | AlbumEventType
+    | MetadataReceivedEventType
+    | AlbumMatchedEventType
+    | LibraryEventType
+    | DatabaseChangeEventType
+    | ImportBeginEventType
+    | ItemImportedEventType
+    | ItemEventType
+    | WriteEventType
+    | MusicBrainzExtractEventType
+    | NoArgsEventType
+    | AfterConvertEventType
+)
+
+
+class AfterWriteEventArgs(TypedDict):
+    item: Item
+    path: bytes
+
+
+class ItemPathEventArgs(TypedDict):
+    item: Item
+    source: bytes
+    destination: bytes
+
+
+class ImportTaskEventArgs(TypedDict):
+    session: ImportSession
+    task: ImportTask
+
+
+class ImportEventArgs(TypedDict):
+    lib: Library
+    paths: list[bytes]
+
+
+class AlbumImportedEventArgs(TypedDict):
+    lib: Library
+    album: Album
+
+
+class AlbumEventArgs(TypedDict):
+    album: Album
+
+
+class AlbumInfoReceivedEventArgs(TypedDict):
+    info: AlbumInfo
+
+
+class TrackInfoReceivedEventArgs(TypedDict):
+    info: TrackInfo
+
+
+class AlbumMatchedEventArgs(TypedDict):
+    match: AlbumMatch
+
+
+class LibraryEventArgs(TypedDict):
+    lib: Library
+
+
+class DatabaseChangeEventArgs(TypedDict):
+    lib: Library
+    model: LibModel
+
+
+class ImportBeginEventArgs(TypedDict):
+    session: ImportSession
+
+
+class ItemImportedEventArgs(TypedDict):
+    lib: Library
+    item: Item
+
+
+class ItemEventArgs(TypedDict):
+    item: Item
+
+
+class WriteEventArgs(TypedDict):
+    item: Item
+    path: bytes
+    tags: dict[str, Any]
+
+
+class MusicBrainzExtractEventArgs(TypedDict):
+    data: Mapping[str, Any]
+
+
+class AfterConvertEventArgs(TypedDict):
+    item: Item
+    dest: bytes
+    keepnew: bool
+
+
 # Global logger.
 log = logging.getLogger("beets")
 
@@ -326,6 +440,130 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
+    @overload
+    def register_listener(
+        self,
+        event: AfterWriteEventType,
+        func: Callable[[Unpack[AfterWriteEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ItemPathEventType,
+        func: Callable[[Unpack[ItemPathEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: BeforeChooseCandidateEventType,
+        func: Callable[[Unpack[ImportTaskEventArgs]], list[PromptChoice]],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ImportTaskBeforeChoiceEventType,
+        func: Callable[[Unpack[ImportTaskEventArgs]], Action | None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ImportTaskCreatedEventType,
+        func: Callable[[Unpack[ImportTaskEventArgs]], list[ImportTask] | None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ImportTaskEventType,
+        func: Callable[[Unpack[ImportTaskEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ImportEventType,
+        func: Callable[[Unpack[ImportEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: AlbumImportedEventType,
+        func: Callable[[Unpack[AlbumImportedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: AlbumEventType,
+        func: Callable[[Unpack[AlbumEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: AlbumInfoReceivedEventType,
+        func: Callable[[Unpack[AlbumInfoReceivedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: TrackInfoReceivedEventType,
+        func: Callable[[Unpack[TrackInfoReceivedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: AlbumMatchedEventType,
+        func: Callable[[Unpack[AlbumMatchedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: LibraryEventType,
+        func: Callable[[Unpack[LibraryEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: DatabaseChangeEventType,
+        func: Callable[[Unpack[DatabaseChangeEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ImportBeginEventType,
+        func: Callable[[Unpack[ImportBeginEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ItemImportedEventType,
+        func: Callable[[Unpack[ItemImportedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: ItemEventType,
+        func: Callable[[Unpack[ItemEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: WriteEventType,
+        func: Callable[[Unpack[WriteEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: MusicBrainzExtractEventType,
+        func: Callable[[Unpack[MusicBrainzExtractEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self, event: NoArgsEventType, func: Callable[[], None]
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: AfterConvertEventType,
+        func: Callable[[Unpack[AfterConvertEventArgs]], None],
+    ) -> None: ...
     def register_listener(self, event: EventType, func: Listener) -> None:
         """Add a function as a listener for the specified event."""
         if func not in self._raw_listeners[event]:
@@ -510,8 +748,20 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
     }
 
 
+@overload
 def notify_info_yielded(
-    event: EventType,
+    event: AlbumInfoReceivedEventType,
+) -> Callable[
+    [Callable[P, Iterable[AlbumInfo]]], Callable[P, Iterator[AlbumInfo]]
+]: ...
+@overload
+def notify_info_yielded(
+    event: TrackInfoReceivedEventType,
+) -> Callable[
+    [Callable[P, Iterable[TrackInfo]]], Callable[P, Iterator[TrackInfo]]
+]: ...
+def notify_info_yielded(
+    event: MetadataReceivedEventType,
 ) -> Callable[[Callable[P, Iterable[Ret]]], Callable[P, Iterator[Ret]]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
@@ -526,7 +776,7 @@ def notify_info_yielded(
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
             for v in func(*args, **kwargs):
-                send(event, info=v)
+                send(event, info=v)  # type: ignore[call-overload]
                 yield v
 
         return wrapper
@@ -605,12 +855,91 @@ def album_field_getters() -> TFuncMap[Album]:
 
 @overload
 def send(
-    event: Literal["import_task_created"], **arguments: Any
-) -> list[list[ImportTask]]: ...
-
-
+    event: AfterWriteEventType, **arguments: Unpack[AfterWriteEventArgs]
+) -> list[Never]: ...
 @overload
-def send(event: EventType, **arguments: Any) -> list[Any]: ...
+def send(
+    event: ItemPathEventType, **arguments: Unpack[ItemPathEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: BeforeChooseCandidateEventType,
+    **arguments: Unpack[ImportTaskEventArgs],
+) -> list[list[PromptChoice]]: ...
+@overload
+def send(
+    event: ImportTaskBeforeChoiceEventType,
+    **arguments: Unpack[ImportTaskEventArgs],
+) -> list[Action]: ...
+@overload
+def send(
+    event: ImportTaskCreatedEventType, **arguments: Unpack[ImportTaskEventArgs]
+) -> list[list[ImportTask]]: ...
+@overload
+def send(
+    event: ImportTaskEventType, **arguments: Unpack[ImportTaskEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: ImportEventType, **arguments: Unpack[ImportEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: AlbumImportedEventType, **arguments: Unpack[AlbumImportedEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: AlbumEventType, **arguments: Unpack[AlbumEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: AlbumInfoReceivedEventType,
+    **arguments: Unpack[AlbumInfoReceivedEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: TrackInfoReceivedEventType,
+    **arguments: Unpack[TrackInfoReceivedEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: AlbumMatchedEventType, **arguments: Unpack[AlbumMatchedEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: LibraryEventType, **arguments: Unpack[LibraryEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: DatabaseChangeEventType, **arguments: Unpack[DatabaseChangeEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: ImportBeginEventType, **arguments: Unpack[ImportBeginEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: ItemImportedEventType, **arguments: Unpack[ItemImportedEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: ItemEventType, **arguments: Unpack[ItemEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: WriteEventType, **arguments: Unpack[WriteEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: MusicBrainzExtractEventType,
+    **arguments: Unpack[MusicBrainzExtractEventArgs],
+) -> list[dict[str, Any]]: ...
+@overload
+def send(event: NoArgsEventType) -> list[Never]: ...
+@overload
+def send(
+    event: AfterConvertEventType, **arguments: Unpack[AfterConvertEventArgs]
+) -> list[Never]: ...
 def send(event: EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
