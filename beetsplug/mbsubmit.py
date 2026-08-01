@@ -51,7 +51,7 @@ class MBSubmitPlugin(BeetsPlugin):
     def before_choose_candidate_event(
         self, session: ImportSession, task: ImportTask
     ) -> list[PromptChoice]:
-        if task.rec <= self.threshold:
+        if task.rec and task.rec <= self.threshold:
             return [
                 PromptChoice("p", "Print tracks", self.print_tracks),
                 PromptChoice("o", "Open files with Picard", self.picard),

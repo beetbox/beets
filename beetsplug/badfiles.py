@@ -20,6 +20,8 @@ from beets.util.color import colorize
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
 
+ImportAction = Literal["abort", "skip", "continue"]
+
 
 class CheckerCommandError(Exception):
     """Raised when running a checker failed.
@@ -44,7 +46,11 @@ class BadFiles(BeetsPlugin):
         self.verbose = False
 
         self.config.add(
-            {"import_action_on_warning": "ask", "import_action_on_error": "ask"}
+            {
+                "check_on_import": False,
+                "import_action_on_warning": "ask",
+                "import_action_on_error": "ask",
+            }
         )
 
         self.register_listener("import_task_start", self.on_import_task_start)
@@ -154,7 +160,7 @@ class BadFiles(BeetsPlugin):
     def on_import_task_start(
         self, task: ImportTask, session: ImportSession
     ) -> None:
-        if not self.config["check_on_import"].get(False):
+        if not self.config["check_on_import"].get(bool):
             return
 
         checks_failed = []
@@ -165,12 +171,10 @@ class BadFiles(BeetsPlugin):
                 checks_failed.append(error_lines)
 
         if checks_failed:
-            task._badfiles_checks_failed = checks_failed
+            task._badfiles_checks_failed = checks_failed  # type: ignore[attr-defined]
 
     def handle_import_action(
-        self,
-        action: Literal["abort", "skip", "continue"],
-        failure_type: Literal["error", "warning"],
+        self, action: ImportAction, failure_type: Literal["error", "warning"]
     ) -> importer.Action | None:
         action_name_by_action = {
             "abort": "Aborting",
@@ -191,7 +195,9 @@ class BadFiles(BeetsPlugin):
         self, task: ImportTask, session: ImportSession
     ) -> importer.Action | None:
         if hasattr(task, "_badfiles_checks_failed"):
-            actions = confuse.Choice(["ask", "abort", "skip", "continue"])
+            actions = confuse.Choice[ImportAction | Literal["ask"]](
+                ["ask", "abort", "skip", "continue"]
+            )
             warning_action = self.config["import_action_on_warning"].get(
                 actions
             )

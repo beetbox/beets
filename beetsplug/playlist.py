@@ -3,7 +3,9 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal
+
+import confuse
 
 import beets
 from beets.dbcore.query import BLOB_TYPE, InQuery
@@ -79,6 +81,8 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
         "playlist": PlaylistQuery
     }
 
+    changes: dict[bytes, bytes | None]
+
     def __init__(self) -> None:
         super().__init__()
         self.config.add(
@@ -93,16 +97,22 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
         self.playlist_dir = self.config["playlist_dir"].as_filename()
         self.changes = {}
 
-        if self.config["relative_to"].get() == "library":
-            self.relative_to = beets.util.bytestring_path(
-                beets.config["directory"].as_filename()
+        relative_to_val: Literal["library", "playlist"] | Path = self.config[
+            "relative_to"
+        ].get(
+            confuse.OneOf(
+                [confuse.Choice(["library", "playlist"]), confuse.Path()]
             )
-        elif self.config["relative_to"].get() != "playlist":
-            self.relative_to = beets.util.bytestring_path(
-                self.config["relative_to"].as_filename()
-            )
+        )
+        if relative_to_val == "playlist":
+            relative_to = None
         else:
-            self.relative_to = None
+            if relative_to_val == "library":
+                relative_to_filename = beets.config["directory"].as_filename()
+            else:
+                relative_to_filename = self.config["relative_to"].as_filename()
+            relative_to = beets.util.bytestring_path(relative_to_filename)
+        self.relative_to = relative_to
 
         if self.config["auto"]:
             self.register_listener("item_moved", self.item_moved)

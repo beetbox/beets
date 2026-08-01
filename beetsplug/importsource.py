@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 class ImportSourcePlugin(BeetsPlugin):
     """Main plugin class."""
 
+    stop_suggestions_for_albums: set[str]
+
     def __init__(self) -> None:
         """Initialize the plugin and read configuration."""
         super().__init__()
@@ -130,14 +132,14 @@ class ImportSourcePlugin(BeetsPlugin):
 
             source_dir_query = PathQuery(
                 "source_path",
-                srcpath.parent,
+                os.fsencode(srcpath.parent),
                 # The "source_path" attribute may not be present in all
                 # items of the library, so we avoid errors with this:
                 fast=False,
             )
 
             print("Doing so will delete the following items' sources as well:")
-            for searched_item in item._db.items(source_dir_query):
+            for searched_item in item.db.items(source_dir_query):
                 print(colorize("text_warning", searched_item.filepath))
 
             print("Would you like to continue?")
