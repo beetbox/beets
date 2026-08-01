@@ -4,8 +4,9 @@ import itertools
 import os
 import re
 import time
+from collections import deque
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, TypeVar, overload
 
 import confuse
 
@@ -20,7 +21,7 @@ from .api import TidalAPI
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
     from beets.autotag import Info
     from beets.dbcore.db import Results
@@ -39,6 +40,20 @@ if TYPE_CHECKING:
 
 
 log = getLogger("beets.tidal")
+
+T = TypeVar("T")
+
+
+def round_robin(iterables: Iterable[Iterable[T]]) -> Iterator[T]:
+    """Yield one element from each iterable in turn until all are exhausted."""
+    iterators = deque(map(iter, iterables))
+    while iterators:
+        try:
+            yield next(iterators[0])
+        except StopIteration:
+            iterators.popleft()
+        else:
+            iterators.rotate(-1)
 
 
 class TidalPlugin(MetadataSourcePlugin):
@@ -74,6 +89,10 @@ class TidalPlugin(MetadataSourcePlugin):
             client_id=self.config["client_id"].as_str(),
             token_path=self._tokenfile(),
         )
+
+    @cached_property
+    def search_limit(self) -> int:
+        return self.config["search_limit"].get(int)
 
     def _tokenfile(self) -> str:
         """Return the configured path to the token file in the app directory."""
@@ -115,7 +134,6 @@ class TidalPlugin(MetadataSourcePlugin):
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterable[AlbumInfo]:
-        candidates: list[AlbumInfo] = []
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
@@ -129,16 +147,13 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return candidates
 
-        for query in self._album_queries(items):
-            candidates += self.search_albums_by_query(query)
-
-        log.debug("Found {0} candidates", len(candidates))
-        return candidates
+        return self._search_by_queries(
+            self.search_albums_by_query, self._album_queries(items)
+        )
 
     def item_candidates(
         self, item: Item, artist: str, title: str
     ) -> Iterable[TrackInfo]:
-        candidates: list[TrackInfo] = []
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
@@ -148,9 +163,24 @@ class TidalPlugin(MetadataSourcePlugin):
             ):
                 return candidates
 
-        for query in self._item_queries(item):
-            candidates += self.search_tracks_by_query(query)
+        return self._search_by_queries(
+            self.search_tracks_by_query, self._item_queries(item)
+        )
 
+    def _search_by_queries(
+        self, search: Callable[[str], Iterable[T]], queries: Iterable[str]
+    ) -> list[T]:
+        """Return up to ``search_limit`` results for the given queries.
+
+        Results are interleaved so that the best match of every query is
+        considered before the limit is reached, rather than letting the
+        first query use up the entire budget.
+        """
+        candidates = list(
+            itertools.islice(
+                round_robin(map(search, queries)), self.search_limit
+            )
+        )
         log.debug("Found {0} candidates", len(candidates))
         return candidates
 
