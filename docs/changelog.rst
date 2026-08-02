@@ -159,9 +159,7 @@ Bug fixes
 - Plugins built on ``SearchApiMetadataSourcePlugin`` (:doc:`plugins/musicbrainz`,
   :doc:`plugins/spotify`, :doc:`plugins/deezer` and :doc:`plugins/discogs`) no
   longer send a search request when both the query text and the filters are
-  empty, as happens for items with no artist and title tags. Such a request
-  cannot match anything and MusicBrainz rejects it with ``400 Bad Request``;
-  these searches now report no candidates instead. :bug:`6862`
+  empty. :bug:`6862`
 
 ..
     For plugin developers

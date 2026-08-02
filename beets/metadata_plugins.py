@@ -413,9 +413,6 @@ class SearchApiMetadataSourcePlugin(
             query = unidecode.unidecode(query)
 
         if not query and not filters:
-            # Items without usable metadata produce an empty search request,
-            # which APIs reject (e.g. MusicBrainz answers with a 400). Report
-            # no candidates instead of making a doomed request.
             self._log.debug("Skipping search with empty query and filters")
             return ()
 
