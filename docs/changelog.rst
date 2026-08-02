@@ -19,6 +19,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Add ``editor`` config option to allow users to permanently set their preferred
+  editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables.
+  :bug:`6641`
 - A date range query written back to front (for example ``added:2024..2020``) no
   longer crashes with an uncaught ``ValueError``. The endpoints are now swapped,
   so such a range means the same as ``added:2020..2024``.
@@ -202,9 +205,6 @@ New features
 Bug fixes
 ~~~~~~~~~
 
-- Add ``editor`` config option to allow users to permanently set their preferred
-  editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables.
-  :bug:`6641`
 - :doc:`plugins/lyrics`: Add rate limiting and exponential backoff to HTTP
   requests to prevent ``429 Too Many Requests`` errors from lyrics sources
   during bulk imports. :bug:`6728`
