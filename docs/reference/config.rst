@@ -63,9 +63,11 @@ library. Defaults to a folder called ``Music`` in your home directory.
 editor
 ~~~~~~
 
-The text editor to use when editing configuration files (e.g., via ``beet
-config -e``). Overrides the ``$VISUAL`` and ``$EDITOR`` environment variables.
-If none of these are set, beets falls back to the platform default. Example::
+The text editor to use when editing configuration files (e.g., via ``beet config
+-e``). Overrides the ``$VISUAL`` and ``$EDITOR`` environment variables. If none
+of these are set, beets falls back to the platform default. Example:
+
+::
 
     editor: nano
 
