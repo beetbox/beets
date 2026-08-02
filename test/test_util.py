@@ -511,7 +511,7 @@ class EditorCommandTest(unittest.TestCase):
 
     def test_editor_command_falls_back_to_visual(self):
         """Falls back to $VISUAL when no editor config is set."""
-        with patch.dict(os.environ, {"VISUAL": "vim"}, clear=True):
+        with patch.dict(os.environ, {"VISUAL": "vim", "EDITOR": "emacs"}, clear=True):
             assert util.editor_command() == "vim"
 
     def test_editor_command_falls_back_to_editor_env(self):
