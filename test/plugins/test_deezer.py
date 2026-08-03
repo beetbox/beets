@@ -6,13 +6,15 @@ from beets.test.helper import PluginTestCase
 from beetsplug import deezer
 
 
-def _album_payload(album_artist_id, track_artist_ids):
+def _album_payload(album_artist_id, track_artist_ids, contributor_ids=None):
     """Build minimal Deezer album and tracks payloads.
 
     ``album_artist_id`` is the release's "main" artist; ``track_artist_ids``
-    lists the primary artist of each track.
+    lists the primary artist of each track. ``contributor_ids`` overrides the
+    album-level contributors, which otherwise cover every artist involved.
     """
-    contributor_ids = dict.fromkeys([album_artist_id, *track_artist_ids])
+    if contributor_ids is None:
+        contributor_ids = dict.fromkeys([album_artist_id, *track_artist_ids])
     album = {
         "title": "Some Album",
         "link": "https://www.deezer.com/album/1",
@@ -77,6 +79,23 @@ class DeezerPluginTest(PluginTestCase):
         assert album_info is not None
         assert album_info.va is True
         assert album_info.artist == "Various Artists"
+
+    @responses.activate
+    def test_plurality_artist_album_not_va(self):
+        # Album whose main artist performs on 2 of 5 tracks (40%) is above
+        # the importer's single-artist threshold and stays single-artist.
+        album, tracks = _album_payload(
+            album_artist_id=100,
+            track_artist_ids=[100, 100, 200, 300, 400],
+            contributor_ids=[100],
+        )
+        self._mock_album("1", album, tracks)
+
+        album_info = self.deezer.album_for_id("1")
+
+        assert album_info is not None
+        assert album_info.va is False
+        assert album_info.artist == "Artist 100"
 
     @responses.activate
     def test_single_artist_album_not_va(self):
