@@ -33,48 +33,7 @@ if TYPE_CHECKING:
     from beets.ui import Subcommand
     from beets.util import PromptChoice
 
-    from .events import (
-        AfterConvertEventArgs,
-        AfterConvertEventType,
-        AfterWriteEventArgs,
-        AfterWriteEventType,
-        AlbumEventArgs,
-        AlbumEventType,
-        AlbumImportedEventArgs,
-        AlbumImportedEventType,
-        AlbumInfoReceivedEventArgs,
-        AlbumInfoReceivedEventType,
-        AlbumMatchedEventArgs,
-        AlbumMatchedEventType,
-        BeforeChooseCandidateEventType,
-        DatabaseChangeEventArgs,
-        DatabaseChangeEventType,
-        EventType,
-        ImportBeginEventArgs,
-        ImportBeginEventType,
-        ImportEventArgs,
-        ImportEventType,
-        ImportTaskBeforeChoiceEventType,
-        ImportTaskCreatedEventType,
-        ImportTaskEventArgs,
-        ImportTaskEventType,
-        ItemEventArgs,
-        ItemEventType,
-        ItemImportedEventArgs,
-        ItemImportedEventType,
-        ItemPathEventArgs,
-        ItemPathEventType,
-        LibraryEventArgs,
-        LibraryEventType,
-        MetadataReceivedEventType,
-        MusicBrainzExtractEventArgs,
-        MusicBrainzExtractEventType,
-        NoArgsEventType,
-        TrackInfoReceivedEventArgs,
-        TrackInfoReceivedEventType,
-        WriteEventArgs,
-        WriteEventType,
-    )
+    from . import events
 
     # TYPE_CHECKING guard is needed for any derived type
     # which uses an import from `beets.library` and `beets.imported`
@@ -133,10 +92,12 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
     the abstract methods defined here.
     """
 
-    _raw_listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(
+    _raw_listeners: ClassVar[dict[events.EventType, list[Listener]]] = (
+        defaultdict(list)
+    )
+    listeners: ClassVar[dict[events.EventType, list[Listener]]] = defaultdict(
         list
     )
-    listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
 
     template_funcs: TFuncMap[str]
     template_fields: TFuncMap[Item]
@@ -337,128 +298,134 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
     @overload
     def register_listener(
         self,
-        event: AfterWriteEventType,
-        func: Callable[[Unpack[AfterWriteEventArgs]], None],
+        event: events.AfterWriteEventType,
+        func: Callable[[Unpack[events.AfterWriteEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ItemPathEventType,
-        func: Callable[[Unpack[ItemPathEventArgs]], None],
+        event: events.ItemPathEventType,
+        func: Callable[[Unpack[events.ItemPathEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: BeforeChooseCandidateEventType,
-        func: Callable[[Unpack[ImportTaskEventArgs]], list[PromptChoice]],
+        event: events.BeforeChooseCandidateEventType,
+        func: Callable[
+            [Unpack[events.ImportTaskEventArgs]], list[PromptChoice]
+        ],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ImportTaskBeforeChoiceEventType,
-        func: Callable[[Unpack[ImportTaskEventArgs]], Action | None],
+        event: events.ImportTaskBeforeChoiceEventType,
+        func: Callable[[Unpack[events.ImportTaskEventArgs]], Action | None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ImportTaskCreatedEventType,
-        func: Callable[[Unpack[ImportTaskEventArgs]], list[ImportTask] | None],
+        event: events.ImportTaskCreatedEventType,
+        func: Callable[
+            [Unpack[events.ImportTaskEventArgs]], list[ImportTask] | None
+        ],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ImportTaskEventType,
-        func: Callable[[Unpack[ImportTaskEventArgs]], None],
+        event: events.ImportTaskEventType,
+        func: Callable[[Unpack[events.ImportTaskEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ImportEventType,
-        func: Callable[[Unpack[ImportEventArgs]], None],
+        event: events.ImportEventType,
+        func: Callable[[Unpack[events.ImportEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: AlbumImportedEventType,
-        func: Callable[[Unpack[AlbumImportedEventArgs]], None],
+        event: events.AlbumImportedEventType,
+        func: Callable[[Unpack[events.AlbumImportedEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: AlbumEventType,
-        func: Callable[[Unpack[AlbumEventArgs]], None],
+        event: events.AlbumEventType,
+        func: Callable[[Unpack[events.AlbumEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: AlbumInfoReceivedEventType,
-        func: Callable[[Unpack[AlbumInfoReceivedEventArgs]], None],
+        event: events.AlbumInfoReceivedEventType,
+        func: Callable[[Unpack[events.AlbumInfoReceivedEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: TrackInfoReceivedEventType,
-        func: Callable[[Unpack[TrackInfoReceivedEventArgs]], None],
+        event: events.TrackInfoReceivedEventType,
+        func: Callable[[Unpack[events.TrackInfoReceivedEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: AlbumMatchedEventType,
-        func: Callable[[Unpack[AlbumMatchedEventArgs]], None],
+        event: events.AlbumMatchedEventType,
+        func: Callable[[Unpack[events.AlbumMatchedEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: LibraryEventType,
-        func: Callable[[Unpack[LibraryEventArgs]], None],
+        event: events.LibraryEventType,
+        func: Callable[[Unpack[events.LibraryEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: DatabaseChangeEventType,
-        func: Callable[[Unpack[DatabaseChangeEventArgs]], None],
+        event: events.DatabaseChangeEventType,
+        func: Callable[[Unpack[events.DatabaseChangeEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ImportBeginEventType,
-        func: Callable[[Unpack[ImportBeginEventArgs]], None],
+        event: events.ImportBeginEventType,
+        func: Callable[[Unpack[events.ImportBeginEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ItemImportedEventType,
-        func: Callable[[Unpack[ItemImportedEventArgs]], None],
+        event: events.ItemImportedEventType,
+        func: Callable[[Unpack[events.ItemImportedEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: ItemEventType,
-        func: Callable[[Unpack[ItemEventArgs]], None],
+        event: events.ItemEventType,
+        func: Callable[[Unpack[events.ItemEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: WriteEventType,
-        func: Callable[[Unpack[WriteEventArgs]], None],
+        event: events.WriteEventType,
+        func: Callable[[Unpack[events.WriteEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: MusicBrainzExtractEventType,
-        func: Callable[[Unpack[MusicBrainzExtractEventArgs]], None],
+        event: events.MusicBrainzExtractEventType,
+        func: Callable[[Unpack[events.MusicBrainzExtractEventArgs]], None],
     ) -> None: ...
     @overload
     def register_listener(
-        self, event: NoArgsEventType, func: Callable[[], None]
+        self, event: events.NoArgsEventType, func: Callable[[], None]
     ) -> None: ...
     @overload
     def register_listener(
         self,
-        event: AfterConvertEventType,
-        func: Callable[[Unpack[AfterConvertEventArgs]], None],
+        event: events.AfterConvertEventType,
+        func: Callable[[Unpack[events.AfterConvertEventArgs]], None],
     ) -> None: ...
-    def register_listener(self, event: EventType, func: Listener) -> None:
+    def register_listener(
+        self, event: events.EventType, func: Listener
+    ) -> None:
         """Add a function as a listener for the specified event."""
         if func not in self._raw_listeners[event]:
             self._raw_listeners[event].append(func)
@@ -644,18 +611,18 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
 
 @overload
 def notify_info_yielded(
-    event: AlbumInfoReceivedEventType,
+    event: events.AlbumInfoReceivedEventType,
 ) -> Callable[
     [Callable[P, Iterable[AlbumInfo]]], Callable[P, Iterator[AlbumInfo]]
 ]: ...
 @overload
 def notify_info_yielded(
-    event: TrackInfoReceivedEventType,
+    event: events.TrackInfoReceivedEventType,
 ) -> Callable[
     [Callable[P, Iterable[TrackInfo]]], Callable[P, Iterator[TrackInfo]]
 ]: ...
 def notify_info_yielded(
-    event: MetadataReceivedEventType,
+    event: events.MetadataReceivedEventType,
 ) -> Callable[[Callable[P, Iterable[Ret]]], Callable[P, Iterator[Ret]]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
@@ -749,92 +716,102 @@ def album_field_getters() -> TFuncMap[Album]:
 
 @overload
 def send(
-    event: AfterWriteEventType, **arguments: Unpack[AfterWriteEventArgs]
+    event: events.AfterWriteEventType,
+    **arguments: Unpack[events.AfterWriteEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: ItemPathEventType, **arguments: Unpack[ItemPathEventArgs]
+    event: events.ItemPathEventType,
+    **arguments: Unpack[events.ItemPathEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: BeforeChooseCandidateEventType,
-    **arguments: Unpack[ImportTaskEventArgs],
+    event: events.BeforeChooseCandidateEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
 ) -> list[list[PromptChoice]]: ...
 @overload
 def send(
-    event: ImportTaskBeforeChoiceEventType,
-    **arguments: Unpack[ImportTaskEventArgs],
+    event: events.ImportTaskBeforeChoiceEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
 ) -> list[Action]: ...
 @overload
 def send(
-    event: ImportTaskCreatedEventType, **arguments: Unpack[ImportTaskEventArgs]
+    event: events.ImportTaskCreatedEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
 ) -> list[list[ImportTask]]: ...
 @overload
 def send(
-    event: ImportTaskEventType, **arguments: Unpack[ImportTaskEventArgs]
+    event: events.ImportTaskEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: ImportEventType, **arguments: Unpack[ImportEventArgs]
+    event: events.ImportEventType, **arguments: Unpack[events.ImportEventArgs]
 ) -> list[Never]: ...
 @overload
 def send(
-    event: AlbumImportedEventType, **arguments: Unpack[AlbumImportedEventArgs]
+    event: events.AlbumImportedEventType,
+    **arguments: Unpack[events.AlbumImportedEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: AlbumEventType, **arguments: Unpack[AlbumEventArgs]
+    event: events.AlbumEventType, **arguments: Unpack[events.AlbumEventArgs]
 ) -> list[Never]: ...
 @overload
 def send(
-    event: AlbumInfoReceivedEventType,
-    **arguments: Unpack[AlbumInfoReceivedEventArgs],
+    event: events.AlbumInfoReceivedEventType,
+    **arguments: Unpack[events.AlbumInfoReceivedEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: TrackInfoReceivedEventType,
-    **arguments: Unpack[TrackInfoReceivedEventArgs],
+    event: events.TrackInfoReceivedEventType,
+    **arguments: Unpack[events.TrackInfoReceivedEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: AlbumMatchedEventType, **arguments: Unpack[AlbumMatchedEventArgs]
+    event: events.AlbumMatchedEventType,
+    **arguments: Unpack[events.AlbumMatchedEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: LibraryEventType, **arguments: Unpack[LibraryEventArgs]
+    event: events.LibraryEventType, **arguments: Unpack[events.LibraryEventArgs]
 ) -> list[Never]: ...
 @overload
 def send(
-    event: DatabaseChangeEventType, **arguments: Unpack[DatabaseChangeEventArgs]
+    event: events.DatabaseChangeEventType,
+    **arguments: Unpack[events.DatabaseChangeEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: ImportBeginEventType, **arguments: Unpack[ImportBeginEventArgs]
+    event: events.ImportBeginEventType,
+    **arguments: Unpack[events.ImportBeginEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: ItemImportedEventType, **arguments: Unpack[ItemImportedEventArgs]
+    event: events.ItemImportedEventType,
+    **arguments: Unpack[events.ItemImportedEventArgs],
 ) -> list[Never]: ...
 @overload
 def send(
-    event: ItemEventType, **arguments: Unpack[ItemEventArgs]
+    event: events.ItemEventType, **arguments: Unpack[events.ItemEventArgs]
 ) -> list[Never]: ...
 @overload
 def send(
-    event: WriteEventType, **arguments: Unpack[WriteEventArgs]
+    event: events.WriteEventType, **arguments: Unpack[events.WriteEventArgs]
 ) -> list[Never]: ...
 @overload
 def send(
-    event: MusicBrainzExtractEventType,
-    **arguments: Unpack[MusicBrainzExtractEventArgs],
+    event: events.MusicBrainzExtractEventType,
+    **arguments: Unpack[events.MusicBrainzExtractEventArgs],
 ) -> list[dict[str, Any]]: ...
 @overload
-def send(event: NoArgsEventType) -> list[Never]: ...
+def send(event: events.NoArgsEventType) -> list[Never]: ...
 @overload
 def send(
-    event: AfterConvertEventType, **arguments: Unpack[AfterConvertEventArgs]
+    event: events.AfterConvertEventType,
+    **arguments: Unpack[events.AfterConvertEventArgs],
 ) -> list[Never]: ...
-def send(event: EventType, **arguments: Any) -> list[Any]:
+def send(event: events.EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
     `event` is the name of  the event to send, all other named arguments
