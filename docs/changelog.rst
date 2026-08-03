@@ -33,6 +33,9 @@ Bug fixes
 - :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
   ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
   enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
+- :doc:`plugins/deezer`: Detect compilations that Deezer credits to a single
+  "main" artist instead of "Various Artists", so they are tagged as such rather
+  than getting every track artist in the album artist field. :bug:`4057`
 
 ..
     For plugin developers
