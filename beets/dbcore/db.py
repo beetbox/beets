@@ -462,6 +462,13 @@ class Model(ABC, Generic[D]):
             return self._type(key).null
         if key in self._values_flex:  # Flexible.
             return self._values_flex[key]
+        # Field names are lowercased when queries are parsed, while flexible
+        # attributes are stored with their case preserved, so fall back to a
+        # case-insensitive lookup.
+        lower_key = key.lower()
+        for flex_key in self._values_flex:
+            if flex_key.lower() == lower_key:
+                return self._values_flex[flex_key]
         if raise_:
             raise KeyError(key)
         return default
