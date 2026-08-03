@@ -260,7 +260,7 @@ class LRCLyrics:
     id: int
     duration: float
     instrumental: bool
-    plain: str
+    plain: str | None
     synced: str | None
 
     def __le__(self, other: LRCLyrics) -> bool:
@@ -306,13 +306,28 @@ class LRCLyrics:
         return abs(self.duration - self.target_duration)
 
     @cached_property
+    def has_text(self) -> bool:
+        """Return whether this candidate can supply any lyrics.
+
+        LRCLib entries carry track metadata independently of the lyrics
+        themselves, so a record may have neither ``plainLyrics`` nor
+        ``syncedLyrics`` while ``instrumental`` is still False: the lyrics
+        simply have not been contributed. Such a candidate has nothing to
+        offer, in contrast to an instrumental track, for which "no lyrics" is
+        itself the answer.
+        """
+        return bool(self.instrumental or self.plain or self.synced)
+
+    @cached_property
     def is_valid(self) -> bool:
         """Return whether the lyrics item is valid.
         Lyrics duration must be within the tolerance defined by
-        :attr:`DURATION_DIFF_TOLERANCE`.
+        :attr:`DURATION_DIFF_TOLERANCE`, and the item must be able to supply
+        lyrics at all.
         """
         return (
-            self.duration_dist
+            self.has_text
+            and self.duration_dist
             <= self.target_duration * self.DURATION_DIFF_TOLERANCE
         )
 
@@ -329,15 +344,30 @@ class LRCLyrics:
         """
         return not self.synced, self.duration_dist
 
+    @staticmethod
+    def _format_synced(synced: str) -> str:
+        return "\n".join(map(str.strip, synced.splitlines()))
+
     def get_text(self, want_synced: bool) -> str:
         """Return the preferred text form for this candidate."""
         if self.instrumental:
             return INSTRUMENTAL_LYRICS
 
         if want_synced and self.synced:
-            return "\n".join(map(str.strip, self.synced.splitlines()))
+            return self._format_synced(self.synced)
 
-        return self.plain
+        if self.plain:
+            return self.plain
+
+        # 'plainLyrics' may be null while synced lyrics are available, so
+        # prefer those over returning nothing.
+        if self.synced:
+            return self._format_synced(self.synced)
+
+        # Unreachable for a candidate that passed :attr:`is_valid`, which
+        # requires some lyrics to be available. Kept so that this method always
+        # returns a string.
+        return INSTRUMENTAL_LYRICS
 
 
 class LRCLib(Backend):
