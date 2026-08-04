@@ -50,6 +50,12 @@ Bug fixes
   relevance order and truncated to ``search_limit``. For artists with more
   releases than that window, the track being imported was never among the
   candidates offered.
+- :doc:`plugins/musicbrainz`: Composer and lyricist names now respect the
+  ``import.languages`` preferred-alias setting, the same way artist names
+  already did. Unlike artist credits, MusicBrainz's API doesn't include alias
+  data on composer/lyricist relations, so this requires an extra, cached,
+  per-artist lookup; it only runs for users who've configured
+  ``import.languages``. :bug:`5885`
 
 ..
     For plugin developers

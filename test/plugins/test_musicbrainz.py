@@ -11,6 +11,7 @@ import requests
 from beets.library import Item
 from beets.test.helper import PluginMixin
 from beetsplug import musicbrainz
+from beetsplug._utils.requests import HTTPNotFoundError
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 from .factories import musicbrainz as factories
@@ -280,6 +281,138 @@ class TestParseRecording(MusicBrainzPluginTestMixin):
             "work": "WORK TITLE",
             "work_disambig": None,
         }
+
+    def test_composer_lyricist_fetches_alias_when_not_inline(self, config, mb):
+        """The real-world case: MusicBrainz doesn't include alias data on
+        work-relation artists, so beets must fetch it separately, once per
+        distinct artist ID (cached), and only when languages are actually
+        configured.
+        """
+        config["import"]["languages"] = ["en"]
+
+        # Same artist (index=6) credited as both composer and lyricist, to
+        # verify the fetch is cached rather than repeated per relation.
+        recording = recording_factory(
+            work_relations=[
+                {
+                    "type": "performance",
+                    "work": {
+                        "id": "WORK ID",
+                        "title": "WORK TITLE",
+                        "artist_relations": [
+                            artist_relation_factory(
+                                type="composer",
+                                artist__index=6,
+                                artist__name="Recording Composer",
+                                artist__aliases=[],
+                            ),
+                            artist_relation_factory(
+                                type="lyricist",
+                                artist__index=6,
+                                artist__name="Recording Composer",
+                                artist__aliases=[],
+                            ),
+                        ],
+                    },
+                }
+            ]
+        )
+
+        fetched_ids = []
+
+        def fake_get_artist(artist_id, **kwargs):
+            fetched_ids.append(artist_id)
+            return {
+                "id": artist_id,
+                "name": "Recording Composer",
+                "sort_name": "Composer, Recording",
+                "aliases": [
+                    alias_factory(
+                        prefix="Recording Composer", locale="en", primary=True
+                    )
+                ],
+            }
+
+        mb.mb_api.get_artist = fake_get_artist
+
+        d = mb.track_info(recording)
+
+        assert d["composers"] == ["Recording Composer Alias en"]
+        assert d["composer_sort"] == "Recording Composer Alias en, The"
+        assert d["lyricists"] == ["Recording Composer Alias en"]
+        # Same artist ID for both relations -> fetched once, not twice.
+        assert fetched_ids == ["00000000-0000-0000-0000-000000000006"]
+
+    def test_composer_lyricist_alias_fetch_skipped_without_languages(self, mb):
+        """No import.languages configured -> no alias lookup is attempted
+        at all, not even a wasted network call.
+        """
+        recording = recording_factory(
+            work_relations=[
+                {
+                    "type": "performance",
+                    "work": {
+                        "id": "WORK ID",
+                        "title": "WORK TITLE",
+                        "artist_relations": [
+                            artist_relation_factory(
+                                type="composer",
+                                artist__index=6,
+                                artist__name="Recording Composer",
+                                artist__aliases=[],
+                            )
+                        ],
+                    },
+                }
+            ]
+        )
+
+        def fail_get_artist(*args, **kwargs):
+            raise AssertionError(
+                "get_artist should not be called without import.languages"
+            )
+
+        mb.mb_api.get_artist = fail_get_artist
+
+        d = mb.track_info(recording)
+
+        assert d["composers"] == ["Recording Composer"]
+
+    def test_composer_lyricist_alias_fetch_not_found(self, config, mb):
+        """A 404 while fetching a composer's aliases (e.g. an artist merged
+        or removed on MusicBrainz) falls back to the raw name instead of
+        failing the import.
+        """
+        config["import"]["languages"] = ["en"]
+
+        recording = recording_factory(
+            work_relations=[
+                {
+                    "type": "performance",
+                    "work": {
+                        "id": "WORK ID",
+                        "title": "WORK TITLE",
+                        "artist_relations": [
+                            artist_relation_factory(
+                                type="composer",
+                                artist__index=6,
+                                artist__name="Recording Composer",
+                                artist__aliases=[],
+                            )
+                        ],
+                    },
+                }
+            ]
+        )
+
+        def raise_not_found(*args, **kwargs):
+            raise HTTPNotFoundError()
+
+        mb.mb_api.get_artist = raise_not_found
+
+        d = mb.track_info(recording)
+
+        assert d["composers"] == ["Recording Composer"]
 
 
 class TestParseMedia(MusicBrainzPluginTestMixin):
