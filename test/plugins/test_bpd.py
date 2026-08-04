@@ -206,6 +206,84 @@ def implements(commands, fail=False):
     return unittest.expectedFailure(_test) if fail else _test
 
 
+class MemoryStreamWriter:
+    """Capture writes and optionally hold them at the drain boundary."""
+
+    def __init__(self, block_drain=False):
+        self.data = bytearray()
+        self.drain_started = asyncio.Event()
+        self.can_drain = asyncio.Event()
+        if not block_drain:
+            self.can_drain.set()
+
+    def get_extra_info(self, name):
+        return ("localhost", 6600) if name == "peername" else None
+
+    def write(self, data):
+        self.data.extend(data)
+
+    async def drain(self):
+        self.drain_started.set()
+        await self.can_drain.wait()
+
+
+class AsyncServerTest(unittest.TestCase):
+    def test_dispatch_events_sends_one_notification_at_a_time(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            writer = MemoryStreamWriter(block_drain=True)
+            conn = bpd.MPDConnection(server, asyncio.StreamReader(), writer)
+            conn.notifications.add("player")
+            conn.idle_subscriptions.add("player")
+            server.connect(conn)
+
+            server.dispatch_events()
+            await writer.drain_started.wait()
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            tasks = tuple(server._notification_tasks.values())
+
+            writer.can_drain.set()
+            await asyncio.gather(*tasks)
+
+            assert bytes(writer.data) == b"changed: player\nOK\n"
+
+        asyncio.run(exercise())
+
+    def test_dispatch_events_sends_event_queued_while_task_finishes(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            writer = MemoryStreamWriter()
+            conn = bpd.MPDConnection(server, asyncio.StreamReader(), writer)
+            conn.idle_subscriptions.add("player")
+            server.connect(conn)
+
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            conn.notify("player")
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            await asyncio.gather(*server._notification_tasks.values())
+
+            assert bytes(writer.data) == b"changed: player\nOK\n"
+
+        asyncio.run(exercise())
+
+    def test_idle_error_disconnects_client(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            reader = asyncio.StreamReader()
+            reader.feed_data(b"idle\nnotacommand\n")
+            reader.feed_eof()
+            conn = bpd.MPDConnection(server, reader, MemoryStreamWriter())
+
+            await conn.run()
+
+            assert conn not in server.connections
+
+        asyncio.run(exercise())
+
+
 asyncio_start_server = asyncio.start_server
 
 
