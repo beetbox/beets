@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import Proposal, Source
     from beets.importer import ImportSession, ImportTask
-    from beets.library import AnyLibModel, Item
+    from beets.library import AlbumOrItem, Item
     from beets.util import PathBytes
 
 # Global logger.
@@ -173,7 +173,7 @@ class TerminalImportSession(importer.ImportSession):
                 print(f"  {dup}")
 
     def _get_duplicate_action_from_user(
-        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+        self, task: importer.ImportTask, found_duplicates: list[AlbumOrItem]
     ) -> str:
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
@@ -203,7 +203,7 @@ class TerminalImportSession(importer.ImportSession):
         return ui.input_options(DuplicateAction.strict_options())
 
     def get_duplicate_action(
-        self, task: importer.ImportTask, found_duplicates: list[AnyLibModel]
+        self, task: importer.ImportTask, found_duplicates: list[AlbumOrItem]
     ) -> DuplicateAction:
         action = super().get_duplicate_action(task, found_duplicates)
         if action is DuplicateAction.ASK:
