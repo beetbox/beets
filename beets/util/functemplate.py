@@ -19,6 +19,10 @@ import dis
 import re
 import types
 from functools import lru_cache
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping, Sequence
 
 SYMBOL_DELIM = "$"
 FUNC_DELIM = "%"
@@ -36,7 +40,11 @@ class Environment:
     template.
     """
 
-    def __init__(self, values, functions):
+    def __init__(
+        self,
+        values: Mapping[str, str] = {},
+        functions: Mapping[str, Callable[[str], str]] = {},
+    ) -> None:
         self.values = values
         self.functions = functions
 
@@ -44,19 +52,19 @@ class Environment:
 # Code generation helpers.
 
 
-def ex_rvalue(name):
+def ex_rvalue(name: str) -> ast.Name:
     """A variable store expression."""
     return ast.Name(name, ast.Load())
 
 
-def ex_literal(val):
+def ex_literal(val: str | bytes | bool | float | None) -> ast.Constant:
     """An int, float, long, bool, string, or None literal with the given
     value.
     """
     return ast.Constant(val)
 
 
-def ex_call(func, args):
+def ex_call(func: str | ast.expr, args: Sequence[ast.expr]) -> ast.Call:
     """A function-call expression with only positional parameters. The
     function may be an expression or the name of a function. Each
     argument may be an expression or a value to be used as a literal.
@@ -72,7 +80,12 @@ def ex_call(func, args):
     return ast.Call(func, args, [])
 
 
-def compile_func(arg_names, statements, name="_the_func", debug=False):
+def compile_func(
+    arg_names: list[str],
+    statements: list[ast.stmt],
+    name: str = "_the_func",
+    debug: bool = False,
+) -> Callable[..., list[str]]:
     """Compile a list of statements as the body of a function and return
     the resulting Python function. If `debug`, then print out the
     bytecode of the compiled function.
@@ -114,14 +127,14 @@ def compile_func(arg_names, statements, name="_the_func", debug=False):
 class Symbol:
     """A variable-substitution symbol in a template."""
 
-    def __init__(self, ident, original):
+    def __init__(self, ident: str, original: str) -> None:
         self.ident = ident
         self.original = original
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Symbol({self.ident!r})"
 
-    def evaluate(self, env):
+    def evaluate(self, env: Environment) -> str:
         """Evaluate the symbol in the environment, returning a Unicode
         string.
         """
@@ -131,7 +144,7 @@ class Symbol:
         # Keep original text.
         return self.original
 
-    def translate(self):
+    def translate(self) -> tuple[list[ast.expr], set[str], set[str]]:
         """Compile the variable lookup."""
         ident = self.ident
         expr = ex_rvalue(f"{VARIABLE_PREFIX}{ident}")
@@ -141,15 +154,17 @@ class Symbol:
 class Call:
     """A function call in a template."""
 
-    def __init__(self, ident, args, original):
+    def __init__(
+        self, ident: str, args: list[Expression], original: str
+    ) -> None:
         self.ident = ident
         self.args = args
         self.original = original
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Call({self.ident!r}, {self.args!r}, {self.original!r})"
 
-    def evaluate(self, env):
+    def evaluate(self, env: Environment) -> str:
         """Evaluate the function call in the environment, returning a
         Unicode string.
         """
@@ -164,7 +179,7 @@ class Call:
             return str(out)
         return self.original
 
-    def translate(self):
+    def translate(self) -> tuple[list[ast.expr], set[str], set[str]]:
         """Compile the function call."""
         varnames = set()
         funcnames = {self.ident}
@@ -201,13 +216,13 @@ class Expression:
     Symbols, and Calls.
     """
 
-    def __init__(self, parts):
+    def __init__(self, parts: list[Part]) -> None:
         self.parts = parts
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Expression({self.parts!r})"
 
-    def evaluate(self, env):
+    def evaluate(self, env: Environment) -> str:
         """Evaluate the entire expression in the environment, returning
         a Unicode string.
         """
@@ -219,7 +234,7 @@ class Expression:
                 out.append(part.evaluate(env))
         return "".join(map(str, out))
 
-    def translate(self):
+    def translate(self) -> tuple[list[ast.expr], set[str], set[str]]:
         """Compile the expression to a list of Python AST expressions, a
         set of variable names used, and a set of function names.
         """
@@ -258,7 +273,7 @@ class Parser:
     generator, etc.).
     """
 
-    def __init__(self, string, in_argument=False):
+    def __init__(self, string: str, in_argument: bool = False) -> None:
         """Create a new parser.
         :param in_arguments: boolean that indicates the parser is to be
         used for parsing function arguments, ie. considering commas
@@ -280,7 +295,7 @@ class Parser:
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
     terminator_chars = (GROUP_CLOSE,)
 
-    def parse_expression(self):
+    def parse_expression(self) -> None:
         """Parse a template expression starting at ``pos``. Resulting
         components (Unicode strings, Symbols, and Calls) are added to
         the ``parts`` field, a list.  The ``pos`` field is updated to be
@@ -357,7 +372,7 @@ class Parser:
         if text_parts:
             self.parts.append("".join(text_parts))
 
-    def parse_symbol(self):
+    def parse_symbol(self) -> None:
         """Parse a variable reference (like ``$foo`` or ``${foo}``)
         starting at ``pos``. Possibly appends a Symbol object (or,
         failing that, text) to the ``parts`` field and updates ``pos``.
@@ -403,7 +418,7 @@ class Parser:
                 # A standalone $.
                 self.parts.append(SYMBOL_DELIM)
 
-    def parse_call(self):
+    def parse_call(self) -> None:
         """Parse a function call (like ``%foo{bar,baz}``) starting at
         ``pos``.  Possibly appends a Call object to ``parts`` and update
         ``pos``. The character at ``pos`` must be ``%``.
@@ -441,7 +456,7 @@ class Parser:
         self.pos += 1  # Move past closing brace.
         self.parts.append(Call(ident, args, self.string[start_pos : self.pos]))
 
-    def parse_argument_list(self):
+    def parse_argument_list(self) -> list[Expression]:
         """Parse a list of arguments starting at ``pos``, returning a
         list of Expression objects. Does not modify ``parts``. Should
         leave ``pos`` pointing to a } character or the end of the
@@ -472,7 +487,7 @@ class Parser:
 
         return expressions
 
-    def _parse_ident(self):
+    def _parse_ident(self) -> str:
         """Parse an identifier and return it (possibly an empty string).
         Updates ``pos``.
         """
@@ -482,7 +497,7 @@ class Parser:
         return ident
 
 
-def _parse(template):
+def _parse(template: str) -> Expression:
     """Parse a top-level template string Expression. Any extraneous text
     is considered literal text.
     """
@@ -505,15 +520,19 @@ def get_template(fmt: str) -> Template:
 class Template:
     """A string template, including text, Symbols, and Calls."""
 
-    def __init__(self, template):
+    def __init__(self, template: str) -> None:
         self.expr = _parse(template)
         self.original = template
         self.compiled = self.translate()
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return self.original == other.original
 
-    def interpret(self, values={}, functions={}):
+    def interpret(
+        self,
+        values: Mapping[str, str] = {},
+        functions: Mapping[str, Callable[[str], str]] = {},
+    ) -> str:
         """Like `substitute`, but forces the interpreter (rather than
         the compiled version) to be used. The interpreter includes
         exception-handling code for missing variables and buggy template
@@ -521,7 +540,11 @@ class Template:
         """
         return self.expr.evaluate(Environment(values, functions))
 
-    def substitute(self, values={}, functions={}):
+    def substitute(
+        self,
+        values: Mapping[str, str] = {},
+        functions: Mapping[str, Callable[[str], str]] = {},
+    ) -> str:
         """Evaluate the template given the values and functions."""
         try:
             res = self.compiled(values, functions)
@@ -530,7 +553,7 @@ class Template:
 
         return res
 
-    def translate(self):
+    def translate(self) -> Callable[..., str]:
         """Compile the template to a Python function."""
         expressions, varnames, funcnames = self.expr.translate()
 
@@ -544,7 +567,10 @@ class Template:
             argnames, [ast.Return(ast.List(expressions, ast.Load()))]
         )
 
-        def wrapper_func(values={}, functions={}):
+        def wrapper_func(
+            values: Mapping[str, str] = {},
+            functions: Mapping[str, Callable[[str], str]] = {},
+        ) -> str:
             args = {}
             for varname in varnames:
                 args[f"{VARIABLE_PREFIX}{varname}"] = values[varname]
