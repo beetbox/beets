@@ -933,13 +933,18 @@ def open_anything() -> str:
 def editor_command() -> str:
     """Get a command for opening a text file.
 
-    First try environment variable `VISUAL` followed by `EDITOR`. As last resort
-    fall back to `open_anything()`, the platform-specific tool for opening files
-    in general.
+    First checks the `editor` config option, then tries environment variable
+    `VISUAL` followed by `EDITOR`. As last resort fall back to `open_anything()`,
+    the platform-specific tool for opening files in general.
 
     """
+    from beets import config
+
     return (
-        os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
+        (config["editor"].get(str) if config["editor"].exists() else None)
+        or os.environ.get("VISUAL")
+        or os.environ.get("EDITOR")
+        or open_anything()
     )
 
 

@@ -67,6 +67,102 @@ class ImportAbortError(Exception):
     """Raised when the user aborts the tagging operation."""
 
 
+def _item_dup_key(item: library.Item, keys: list[str]) -> tuple[Any, ...]:
+    """Identity key for matching a track across old/new copies.
+
+    Uses the same `duplicate_keys.item` fields that duplicate
+    *detection* already relies on (`ImportTask.find_duplicates` /
+    `SingletonImportTask.find_duplicates`), so per-track matching can't
+    disagree with what got flagged as a duplicate in the first place.
+    `mb_trackid` is deliberately not preferred here: a re-ripped
+    duplicate commonly gets matched to a different MusicBrainz track
+    ID than the old copy, which would otherwise cause false negatives.
+    """
+    return tuple(item.get(k) for k in keys)
+
+
+def _dup_items(obj: library.Album | library.Item) -> list[library.Item]:
+    """Flatten a found-duplicate (`Album` or `Item`) into its items."""
+    if isinstance(obj, library.Album):
+        return list(obj.items())
+    return [obj]
+
+
+def resolve_upgrade(
+    new_items: list[library.Item],
+    old_items: list[library.Item],
+    keys: list[str],
+) -> tuple[list[library.Item], list[library.Item]]:
+    """Decide, per track, which new items to keep and which old items
+    they supersede.
+
+    Returns `(kept_new_items, superseded_old_items)`. New items with no
+    matching old item are always kept (they aren't duplicates of
+    anything). New items matching an old item are kept only if their
+    bitrate is higher than every old item's with the same key;
+    otherwise they're dropped and the old items are left untouched.
+    When multiple old items share a key, all of them are superseded
+    when the new item is better.
+    """
+    by_key: dict[tuple[Any, ...], list[library.Item]] = defaultdict(list)
+    for item in old_items:
+        by_key[_item_dup_key(item, keys)].append(item)
+
+    kept = []
+    superseded = []
+    for new in new_items:
+        old_group = by_key.get(_item_dup_key(new, keys))
+        if old_group is None:
+            kept.append(new)
+        elif new.bitrate > max(o.bitrate for o in old_group):
+            kept.append(new)
+            superseded.extend(old_group)
+    return kept, superseded
+
+
+def resolve_upgrade_target(
+    new_items: list[library.Item],
+    found_duplicates: Iterable[library.Album | library.Item],
+    keys: list[str],
+) -> tuple[list[library.Item], list[library.Item], list[int]]:
+    """Resolve an upgrade against each duplicate album independently
+    and pick a single target to graft the result into.
+
+    A new item can only ever join one physical album, so when
+    `found_duplicates` implicates more than one distinct old album
+    (e.g. two existing, differently-encoded copies of the same
+    release), we can't merge the decisions: comparing a new track
+    against the *best* candidate across every duplicate album, as
+    `resolve_upgrade` does for a single old-item pool, would silently
+    attribute a supersession to the wrong album. Instead each
+    duplicate album is evaluated on its own, as if it were the only
+    duplicate, and only the one it overlaps with the most (by
+    superseded-track count, then kept-track count, then lowest album
+    id for a deterministic tie-break) is used; every other candidate
+    album is left completely untouched.
+
+    Returns `(kept, superseded, old_album_ids)` for the chosen target
+    album alone.
+    """
+    best_rank: tuple[int, int, int] | None = None
+    best: tuple[list[library.Item], list[library.Item], int | None] = (
+        [],
+        [],
+        None,
+    )
+    for dup in found_duplicates:
+        old_items = _dup_items(dup)
+        kept, superseded = resolve_upgrade(new_items, old_items, keys)
+        album_id = dup.id if isinstance(dup, library.Album) else dup.album_id
+        rank = (len(superseded), len(kept), -(album_id or 0))
+        if best_rank is None or rank > best_rank:
+            best_rank = rank
+            best = (kept, superseded, album_id)
+
+    kept, superseded, album_id = best
+    return kept, superseded, [album_id] if album_id else []
+
+
 class BaseImportTask:
     """An abstract base class for importer tasks.
 
@@ -139,12 +235,21 @@ class ImportTask(BaseImportTask):
     choice_flag: Action | None = None
     match: AlbumMatch | TrackMatch | None = None
 
+    # Set by `add()`; only valid afterwards (see class docstring).
+    album: library.Album
+
     # Keep track of the current task item
     cur_album: str | None = None
     cur_artist: str | None = None
     candidates: Sequence[AlbumMatch | TrackMatch] | None = None
     rec: Recommendation | None = None
     duplicate_action: DuplicateAction | None = None
+
+    # Set by `apply_upgrade` when `duplicate_action` is UPGRADE; consumed
+    # by `remove_duplicates` to know which old items to remove and which
+    # old albums to graft the kept new items onto.
+    _upgrade_superseded: list[library.Item] | None = None
+    _upgrade_old_albums: list[int] | None = None
 
     def __init__(
         self,
@@ -232,6 +337,34 @@ class ImportTask(BaseImportTask):
             return self.match.items
         return []
 
+    def apply_upgrade(
+        self,
+        kept: list[library.Item],
+        superseded: list[library.Item],
+        old_album_ids: list[int],
+    ) -> None:
+        """Narrow this task's items down to `kept`, so `add()` only
+        commits tracks that improve on (or have no) existing duplicate.
+
+        Called by `_resolve_duplicates`, before `add()` runs, when
+        `duplicate_action` is UPGRADE. Stashes `superseded` and
+        `old_album_ids` for `remove_duplicates` to consume later, once
+        `self.album` exists.
+        """
+        kept_ids = {id(i) for i in kept}
+        if self.choice_flag in (Action.ASIS, Action.RETAG):
+            self.items = kept
+        elif self.choice_flag == Action.APPLY and isinstance(
+            self.match, AlbumMatch
+        ):
+            self.match.mapping = {
+                item: track
+                for item, track in self.match.mapping.items()
+                if id(item) in kept_ids
+            }
+        self._upgrade_superseded = superseded
+        self._upgrade_old_albums = old_album_ids
+
     def apply_metadata(self) -> None:
         """Copy metadata from match info to the items."""
         if self.match:  # TODO: redesign to remove the conditional
@@ -244,6 +377,10 @@ class ImportTask(BaseImportTask):
         return duplicate_items
 
     def remove_duplicates(self, lib: library.Library) -> None:
+        if self._upgrade_superseded is not None:
+            self._remove_upgrade_duplicates(lib)
+            return
+
         duplicate_albums = self.find_duplicates(lib)
         log.debug("removing {} old duplicate albums", len(duplicate_albums))
 
@@ -271,6 +408,61 @@ class ImportTask(BaseImportTask):
                     lib.directory,
                     clutter=config["clutter"].as_str_seq(),
                 )
+
+    def _remove_upgrade_duplicates(self, lib: library.Library) -> None:
+        """Remove only the old items superseded by an upgrade.
+
+        Unlike plain `remove`, this never deletes tracks that weren't
+        actually replaced: if any of an old duplicate album's items
+        survive, the newly-kept items are folded into that album (so
+        the album stays as one row) instead of being left in the
+        fresh album `add()` created for them. Only when an old album
+        is left with no surviving items is it deleted outright.
+        """
+        superseded = self._upgrade_superseded or []
+        log.debug("upgrade: removing {} superseded item(s)", len(superseded))
+        for item in superseded:
+            item.remove(with_album=False)
+            if lib.directory in util.ancestry(item.path):
+                log.debug("deleting superseded {.filepath}", item)
+                util.remove(item.path)
+                util.prune_dirs(
+                    os.path.dirname(item.path),
+                    lib.directory,
+                    clutter=config["clutter"].as_str_seq(),
+                )
+
+        grafted = False
+        for album_id in self._upgrade_old_albums or []:
+            old_album = lib.get_album(album_id)
+            if old_album is None:
+                continue
+
+            surviving = list(old_album.items())
+            if not surviving:
+                artpath = old_album.artpath
+                old_album.remove(with_items=False)
+                if artpath and lib.directory in util.ancestry(artpath):
+                    log.debug("deleting duplicate album art {}", artpath)
+                    util.remove(artpath)
+                    util.prune_dirs(
+                        os.path.dirname(artpath),
+                        lib.directory,
+                        clutter=config["clutter"].as_str_seq(),
+                    )
+            elif not grafted:
+                # Partial overlap: keep the album together by moving the
+                # kept new items onto the surviving old album, rather than
+                # leaving them split across two Album rows.
+                for item in self.imported_items():
+                    item.album_id = old_album.id
+                    item.store()
+                self.album.remove(with_items=False)
+                self.album = old_album
+                grafted = True
+            # else: a second old album also has survivors; an item can
+            # only belong to one album, so leave it untouched rather than
+            # arbitrarily choosing between two candidates.
 
     def set_fields(self, lib: library.Library) -> None:
         """Sets the fields given at CLI or configuration to the specified
@@ -685,6 +877,24 @@ class SingletonImportTask(ImportTask):
     def imported_items(self) -> list[library.Item]:
         return [self.item]
 
+    def apply_upgrade(
+        self,
+        kept: list[library.Item],
+        superseded: list[library.Item],
+        old_album_ids: list[int],
+    ) -> None:
+        """Stash the superseded old item for `remove_duplicates`.
+
+        `kept` is always `[self.item]` here: a singleton task has
+        exactly one item, and the caller only invokes this method when
+        that item was kept (otherwise the task is routed to SKIP).
+        `old_album_ids` is unused: `Item.duplicates_query` restricts
+        singleton duplicate detection to other singletons (items with
+        no album), so a matched duplicate never has an old album to
+        preserve.
+        """
+        self._upgrade_superseded = superseded
+
     def _emit_imported(self, lib: library.Library) -> None:
         for item in self.imported_items():
             plugins.send("item_imported", lib=lib, item=item)
@@ -716,12 +926,36 @@ class SingletonImportTask(ImportTask):
     duplicate_items = find_duplicates
 
     def remove_duplicates(self, lib: library.Library) -> None:
+        if self._upgrade_superseded is not None:
+            self._remove_upgrade_duplicates(lib)
+            return
+
         duplicate_items = self.find_duplicates(lib)
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
                 log.debug("deleting duplicate {.filepath}", item)
+                util.remove(item.path)
+                util.prune_dirs(
+                    os.path.dirname(item.path),
+                    lib.directory,
+                    clutter=config["clutter"].as_str_seq(),
+                )
+
+    def _remove_upgrade_duplicates(self, lib: library.Library) -> None:
+        """Remove the superseded old item(s).
+
+        Singleton duplicate detection only ever matches other
+        singletons (see `find_duplicates`), so there's never an old
+        album to preserve here, unlike the `ImportTask` version.
+        """
+        superseded = self._upgrade_superseded or []
+        log.debug("upgrade: removing {} superseded item(s)", len(superseded))
+        for item in superseded:
+            item.remove()
+            if lib.directory in util.ancestry(item.path):
+                log.debug("deleting superseded {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
                     os.path.dirname(item.path),

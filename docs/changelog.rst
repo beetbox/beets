@@ -9,13 +9,21 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
+  duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
+  new tracks, and keeps the album together rather than splitting it. :bug:`4471`
 
 Bug fixes
 ~~~~~~~~~
 
+- Add ``editor`` config option to allow users to permanently set their preferred
+  editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables.
+  :bug:`6641`
+- ``beet update`` no longer crashes when a plugin-added media field is stored as
+  a flexible attribute. :bug:`5580`
 - A date range query written back to front (for example ``added:2024..2020``) no
   longer crashes with an uncaught ``ValueError``. The endpoints are now swapped,
   so such a range means the same as ``added:2020..2024``.
@@ -30,6 +38,11 @@ Bug fixes
 - :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
   ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
   enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
+- Flexible attributes whose names contain uppercase characters (for example
+  ``beet import --set Tag_With_Uppercase=true``) can now be found by queries.
+  Field names are lowercased when a query is parsed, so such attributes could
+  never be matched; flexible attribute lookups now fall back to a
+  case-insensitive key match. :bug:`4565`
 - :doc:`plugins/deezer`: Singleton searches now use plain free text rather than
   ``<title> artist:"<artist>"``. Deezer discards unquoted free text as soon as a
   query contains any ``field:"value"`` filter, so the old query was evaluated as

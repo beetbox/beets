@@ -497,3 +497,25 @@ class TestAsciifyPath:
         monkeypatch.setattr("beets.util.os.altsep", "\\")
 
         assert util.asciify_path("caf\xe9\\na\xefve") == "cafe/naive"
+
+
+class EditorCommandTest(unittest.TestCase):
+    def test_editor_command_from_config(self):
+        """editor config option takes priority over environment variables."""
+        from beets import config
+
+        config.set({"editor": "nano"})
+        with patch.dict(os.environ, {"VISUAL": "vim", "EDITOR": "emacs"}):
+            assert util.editor_command() == "nano"
+
+    def test_editor_command_falls_back_to_visual(self):
+        """Falls back to $VISUAL when no editor config is set."""
+        with patch.dict(
+            os.environ, {"VISUAL": "vim", "EDITOR": "emacs"}, clear=True
+        ):
+            assert util.editor_command() == "vim"
+
+    def test_editor_command_falls_back_to_editor_env(self):
+        """Falls back to $EDITOR when no editor config or $VISUAL is set."""
+        with patch.dict(os.environ, {"EDITOR": "emacs"}, clear=True):
+            assert util.editor_command() == "emacs"
