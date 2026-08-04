@@ -1,5 +1,6 @@
 """Tests for BPD's implementation of the MPD protocol."""
 
+import asyncio
 import multiprocessing as mp
 import os
 import socket
@@ -16,7 +17,6 @@ import pytest
 import yaml
 
 from beets.test.helper import PluginTestCase
-from beets.util import bluelet
 
 bpd = pytest.importorskip("beetsplug.bpd", exc_type=ImportError)
 
@@ -206,24 +206,23 @@ def implements(commands, fail=False):
     return unittest.expectedFailure(_test) if fail else _test
 
 
-bluelet_listener = bluelet.Listener
+asyncio_start_server = asyncio.start_server
 
 
-@patch("beets.util.bluelet.Listener")
-def start_server(args, assigned_port, listener_patch):
+@patch("beetsplug.bpd.asyncio.start_server")
+def start_server(args, assigned_port, start_server_patch):
     """Start the bpd server, writing the port to `assigned_port`."""
 
-    def listener_wrap(host, port):
-        """Wrap `bluelet.Listener`, writing the port to `assigend_port`."""
-        # `bluelet.Listener` has previously been saved to
-        # `bluelet_listener` as this function will replace it at its
-        # original location.
-        listener = bluelet_listener(host, port)
-        # read port assigned by OS
-        assigned_port.put_nowait(listener.sock.getsockname()[1])
-        return listener
+    async def start_server_wrap(callback, host, port, **kwargs):
+        """Start an asyncio server and report its assigned port."""
+        # `asyncio.start_server` has previously been saved because this
+        # function replaces it at its original location.
+        server = await asyncio_start_server(callback, host, port, **kwargs)
+        # Read the port assigned by the OS.
+        assigned_port.put_nowait(server.sockets[0].getsockname()[1])
+        return server
 
-    listener_patch.side_effect = listener_wrap
+    start_server_patch.side_effect = start_server_wrap
 
     import beets.ui
 
