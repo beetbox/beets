@@ -466,9 +466,9 @@ class Model(ABC, Generic[D]):
         # attributes are stored with their case preserved, so fall back to a
         # case-insensitive lookup.
         lower_key = key.lower()
-        for flex_key in self._values_flex:
-            if flex_key.lower() == lower_key:
-                return self._values_flex[flex_key]
+        flex_keys = {k.lower(): k for k in self._values_flex}
+        if lower_key in flex_keys:
+            return self._values_flex[flex_keys[lower_key]]
         if raise_:
             raise KeyError(key)
         return default
