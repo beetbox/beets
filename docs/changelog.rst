@@ -50,6 +50,8 @@ Bug fixes
   relevance order and truncated to ``search_limit``. For artists with more
   releases than that window, the track being imported was never among the
   candidates offered.
+- Fixed convert plugin not taking into account the new format when determining
+  the target path. :bug:`1360`
 
 ..
     For plugin developers
