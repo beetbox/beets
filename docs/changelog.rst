@@ -43,6 +43,13 @@ Bug fixes
   Field names are lowercased when a query is parsed, so such attributes could
   never be matched; flexible attribute lookups now fall back to a
   case-insensitive key match. :bug:`4565`
+- :doc:`plugins/deezer`: Singleton searches now use plain free text rather than
+  ``<title> artist:"<artist>"``. Deezer discards unquoted free text as soon as a
+  query contains any ``field:"value"`` filter, so the old query was evaluated as
+  ``artist:"<artist>"`` alone -- every track by the artist, in Deezer's own
+  relevance order and truncated to ``search_limit``. For artists with more
+  releases than that window, the track being imported was never among the
+  candidates offered.
 
 ..
     For plugin developers
