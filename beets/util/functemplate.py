@@ -380,8 +380,13 @@ class Parser:
             # A symbol like ${this}.
             self.pos += 1  # Skip opening.
             closer = self.string.find(GROUP_CLOSE, self.pos)
-            if closer == -1 or closer == self.pos:
-                # No closing brace found or identifier is empty.
+            if closer == -1:
+                # No closing brace found.
+                self.parts.append(self.string[start_pos : self.pos])
+            elif closer == self.pos:
+                # Empty identifier: consume through the closing brace so it
+                # cannot be mistaken for an enclosing call's terminator.
+                self.pos = closer + 1
                 self.parts.append(self.string[start_pos : self.pos])
             else:
                 # Closer found.
