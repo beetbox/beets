@@ -223,7 +223,7 @@ class BaseServer:
 
         # Current connections
         self.connections = set()
-        self._notification_tasks: set[asyncio.Task[None]] = set()
+        self._notification_tasks: dict[MPDConnection, asyncio.Task[None]] = {}
 
         # Object for random numbers generation
         self.random_obj = random.Random()
@@ -267,9 +267,27 @@ class BaseServer:
         # We need a copy of `self.connections` here since clients might
         # disconnect once we try and send to them, changing `self.connections`.
         for conn in list(self.connections):
-            task = asyncio.create_task(conn.send_notifications())
-            self._notification_tasks.add(task)
-            task.add_done_callback(self._notification_tasks.discard)
+            self._dispatch_connection_events(conn)
+
+    def _dispatch_connection_events(self, conn) -> None:
+        """Start sending queued events unless this connection is busy."""
+        if conn in self._notification_tasks:
+            return
+        task = asyncio.create_task(conn.send_notifications())
+        self._notification_tasks[conn] = task
+        task.add_done_callback(lambda task: self._notification_done(conn, task))
+
+    def _notification_done(self, conn, task) -> None:
+        """Release a connection after its queued events have been sent."""
+        del self._notification_tasks[conn]
+        if task.cancelled():
+            return
+        if error := task.exception():
+            self._log.error("Could not send BPD notifications: {}", error)
+            return
+        pending = conn.notifications.intersection(conn.idle_subscriptions)
+        if conn in self.connections and pending:
+            self._dispatch_connection_events(conn)
 
     def _ctrl_send(self, message):
         """Send some data over the control socket.
