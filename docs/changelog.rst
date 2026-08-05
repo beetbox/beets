@@ -38,6 +38,12 @@ Bug fixes
 - :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
   ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
   enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
+- :doc:`plugins/lyrics`: LRCLib serves records that carry neither plain nor
+  synced lyrics without flagging them as instrumental. Such a record was
+  accepted as a match and produced lyrics whose body was ``None``, crashing the
+  importer with ``AttributeError: 'NoneType' object has no attribute
+  'splitlines'``. These records are now rejected as matches, so the search falls
+  through to the remaining candidates. :bug:`6888`
 - Flexible attributes whose names contain uppercase characters (for example
   ``beet import --set Tag_With_Uppercase=true``) can now be found by queries.
   Field names are lowercased when a query is parsed, so such attributes could

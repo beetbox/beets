@@ -18,7 +18,7 @@ class LRCLibAPI:
         albumName: str
         duration: float | None
         instrumental: bool
-        plainLyrics: str
+        plainLyrics: str | None
         syncedLyrics: str | None
 
 

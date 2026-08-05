@@ -260,7 +260,7 @@ class LRCLyrics:
     id: int
     duration: float
     instrumental: bool
-    plain: str
+    plain: str | None
     synced: str | None
 
     def __le__(self, other: LRCLyrics) -> bool:
@@ -308,13 +308,16 @@ class LRCLyrics:
     @cached_property
     def is_valid(self) -> bool:
         """Return whether the lyrics item is valid.
+
         Lyrics duration must be within the tolerance defined by
-        :attr:`DURATION_DIFF_TOLERANCE`.
+        :attr:`DURATION_DIFF_TOLERANCE`, and the item must carry some usable
+        text: LRCLib serves records that have neither plain nor synced lyrics
+        without flagging them as instrumental, and those match nothing.
         """
         return (
             self.duration_dist
             <= self.target_duration * self.DURATION_DIFF_TOLERANCE
-        )
+        ) and bool(self.instrumental or self.plain or self.synced)
 
     @cached_property
     def dist(self) -> tuple[bool, float]:
@@ -337,7 +340,7 @@ class LRCLyrics:
         if want_synced and self.synced:
             return "\n".join(map(str.strip, self.synced.splitlines()))
 
-        return self.plain
+        return self.plain or ""
 
 
 class LRCLib(Backend):

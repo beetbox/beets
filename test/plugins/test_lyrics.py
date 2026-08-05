@@ -630,6 +630,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 [lyrics_match(instrumental=True)], "", id="instrumental track"
             ),
             pytest.param(
+                [lyrics_match(plainLyrics=None, syncedLyrics=None)],
+                None,
+                id="none: no lyrics and not flagged instrumental",
+            ),
+            pytest.param(
                 [lyrics_match(syncedLyrics=None)],
                 "plain",
                 id="plain by default",
