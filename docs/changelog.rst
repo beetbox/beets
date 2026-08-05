@@ -54,6 +54,8 @@ Bug fixes
   copyright/rights-statement text verbatim. It's now normalized to a concise
   label name, stripping copyright markers, years, and corporate, licensing, and
   territorial boilerplate. Affects both album and track metadata. :bug:`6796`
+- :doc:`plugins/discogs`: Retry a search once when Discogs returns an invalid
+  JSON response instead of immediately discarding all Discogs candidates.
 
 ..
     For plugin developers

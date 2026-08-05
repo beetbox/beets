@@ -292,9 +292,19 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
         """Search Discogs releases and return raw result mappings with IDs."""
-        results = self.discogs_client.search(params.query, **params.filters)
-        results.per_page = params.limit
-        return [r.data for r in results.page(1)]
+
+        def search() -> list[IDResponse]:
+            results = self.discogs_client.search(params.query, **params.filters)
+            results.per_page = params.limit
+            return [r.data for r in results.page(1)]
+
+        try:
+            return search()
+        except json.JSONDecodeError:
+            self._log.debug(
+                "Discogs returned an invalid JSON search response; retrying"
+            )
+            return search()
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:
