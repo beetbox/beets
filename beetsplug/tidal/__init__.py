@@ -4,7 +4,7 @@ import itertools
 import os
 import re
 import time
-from functools import cached_property
+from functools import cached_property, partial
 from typing import TYPE_CHECKING, ClassVar, Literal, overload
 
 import confuse
@@ -15,6 +15,7 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
+from beetsplug._utils.func import apply_transforms
 
 from .api import TidalAPI
 
@@ -39,6 +40,19 @@ if TYPE_CHECKING:
 
 
 log = getLogger("beets.tidal")
+
+_remove_leading = partial(
+    re.compile(r"^(?:(?:©|℗|\([cp]\)) *)?(?:\d{4} +)?", re.IGNORECASE).sub, ""
+)
+_remove_license = partial(
+    re.compile(r".* under exclusive licen[sc]e to ", re.IGNORECASE).sub, ""
+)
+_remove_trailing_clause = partial(
+    re.compile(r"(?:, a| for the united states and) .*", re.IGNORECASE).sub, ""
+)
+_remove_legal_suffix = partial(
+    re.compile(r",? (?:inc|llc|ltd|co)\.?$", re.IGNORECASE).sub, ""
+)
 
 
 class TidalPlugin(MetadataSourcePlugin):
@@ -394,50 +408,15 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @staticmethod
     def _normalize_label(text: str) -> str:
-        """Normalize label from Tidal copyright text by stripping markers/years
-        and known corporate/licensing/territorial boilerplate."""
-        text = text.strip()
-
-        # Leading copyright markers
-        for marker in ("©", "℗", "(C)", "(P)", "(c)", "(p)"):
-            if text.startswith(marker):
-                text = text[len(marker) :].strip()
-                break
-
-        # Leading year
-        first, _, rest = text.partition(" ")
-        if len(first) == 4 and first.isdigit():
-            text = rest.lstrip()
-
-        # "under exclusive license to"
-        phrase = "under exclusive license to"
-        phrase_alt = "under exclusive licence to"
-
-        lower = text.lower()
-        for p in (phrase, phrase_alt):
-            if p in lower:
-                idx = lower.index(p)
-                text = text[idx + len(p) :]
-                break
-
-        # ", a "
-        lower = text.lower()
-        if ", a " in lower:
-            text = text[: lower.index(", a ")]
-
-        # Territorial boilerplate
-        phrase = " for the united states and "
-        lower = text.lower()
-        if phrase in lower:
-            text = text[: lower.index(phrase)]
-
-        # Trailing company suffixes
-        for suffix in (" inc.", " inc", " llc", " ltd.", " ltd", " co.", " co"):
-            if text.lower().endswith(suffix):
-                text = text[: -len(suffix)].rstrip(", ")
-                break
-
-        return text.strip()
+        return apply_transforms(
+            text,
+            [
+                _remove_leading,
+                _remove_license,
+                _remove_trailing_clause,
+                _remove_legal_suffix,
+            ],
+        )
 
     @staticmethod
     def _parse_artwork_url(
