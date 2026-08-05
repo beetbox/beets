@@ -267,6 +267,26 @@ class MusicBrainzPlugin(
     def aliases_as_credits(self) -> bool:
         return self.config["aliases_as_credits"].get(bool)
 
+    @cached_property
+    def _artist_alias_cache(self) -> dict[str, Alias | None]:
+        return {}
+
+    def _fetch_artist_alias(self, artist_id: str) -> Alias | None:
+        """Look up an artist's preferred alias via a dedicated API call.
+
+        Composer/lyricist relations don't carry alias data inline the way
+        artist-credits do. This fetches that info with a separate artist
+        lookup. Results are cached per artist ID.
+        """
+        if artist_id not in self._artist_alias_cache:
+            alias = None
+            with suppress(HTTPNotFoundError):
+                artist = self.mb_api.get_artist(artist_id)
+                alias = _preferred_alias(artist.get("aliases", []))
+            self._artist_alias_cache[artist_id] = alias
+
+        return self._artist_alias_cache[artist_id]
+
     def __init__(self) -> None:
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
@@ -356,21 +376,27 @@ class MusicBrainzPlugin(
             "artists_credit": artists_credit,
         }
 
-    @staticmethod
     def _parse_work_relations(
-        relations: list[WorkRelation],
+        self, relations: list[WorkRelation]
     ) -> WorkRelationsInfo:
         """Extract composer and lyricist credits from work relations.
 
         Traverses performance-type relations to collect associated artist
         credits, separating them into composers and lyricists along with
         their MusicBrainz IDs and sort names.
+
+        MusicBrainz's API doesn't expose alias data on relation targets
+        (unlike artist-credits), so when the user has configured preferred
+        languages, a dedicated per-artist lookup (cached, see
+        `_fetch_artist_alias`) fills that gap.
         """
         lyricists: list[str] = []
         lyricists_ids: list[str] = []
         composers: list[str] = []
         composers_ids: list[str] = []
         composer_sort: list[str] = []
+
+        languages = config["import"]["languages"].as_str_seq()
 
         artist_relations = [
             ar
@@ -379,14 +405,20 @@ class MusicBrainzPlugin(
             for ar in r["work"].get("artist_relations", [])
         ]
         for artist_relation in artist_relations:
+            artist = artist_relation["artist"]
+            alias = _preferred_alias(artist.get("aliases", []))
+            if not alias and languages:
+                alias = self._fetch_artist_alias(artist["id"])
+            artist_object = alias or artist
+
             rel_type = artist_relation["type"]
             if rel_type == "lyricist":
-                lyricists.append(artist_relation["artist"]["name"])
-                lyricists_ids.append(artist_relation["artist"]["id"])
+                lyricists.append(artist_object["name"])
+                lyricists_ids.append(artist["id"])
             elif rel_type == "composer":
-                composers.append(artist_relation["artist"]["name"])
-                composers_ids.append(artist_relation["artist"]["id"])
-                composer_sort.append(artist_relation["artist"]["sort_name"])
+                composers.append(artist_object["name"])
+                composers_ids.append(artist["id"])
+                composer_sort.append(artist_object["sort_name"])
 
         return {
             # TODO: double-check if we should really use the last work here
