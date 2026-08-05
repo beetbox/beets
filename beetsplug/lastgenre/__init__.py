@@ -507,7 +507,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         artist = self._artist_for_filter(obj)
 
-        # We do not run through try_resolve_stage yet because count could drop
+        # We do not run through _try_resolve_stage yet because count could drop
         # existing genres, but we still apply aliases before whitelist
         # filtering.
         normalized = [
