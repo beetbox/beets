@@ -18,11 +18,13 @@ import ast
 import dis
 import re
 import types
-from functools import lru_cache
-from typing import TYPE_CHECKING
+from functools import cached_property, lru_cache
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
+
+Part: TypeAlias = "str | Symbol | Call"
 
 SYMBOL_DELIM = "$"
 FUNC_DELIM = "%"
@@ -72,12 +74,11 @@ def ex_call(func: str | ast.expr, args: Sequence[ast.expr]) -> ast.Call:
     if isinstance(func, str):
         func = ex_rvalue(func)
 
-    args = list(args)
-    for i in range(len(args)):
-        if not isinstance(args[i], ast.expr):
-            args[i] = ex_literal(args[i])
-
-    return ast.Call(func, args, [])
+    return ast.Call(
+        func,
+        [(a if isinstance(a, ast.expr) else ex_literal(a)) for a in args],
+        [],
+    )
 
 
 def compile_func(
@@ -90,17 +91,16 @@ def compile_func(
     the resulting Python function. If `debug`, then print out the
     bytecode of the compiled function.
     """
-    args_fields = {
-        "args": [ast.arg(arg=n, annotation=None) for n in arg_names],
-        "kwonlyargs": [],
-        "kw_defaults": [],
-        "defaults": [ex_literal(None) for _ in arg_names],
-    }
-    args_fields["posonlyargs"] = []
-    args = ast.arguments(**args_fields)
+    ast_args = ast.arguments(
+        args=[ast.arg(arg=n, annotation=None) for n in arg_names],
+        kwonlyargs=[],
+        kw_defaults=[],
+        defaults=[ex_literal(None) for _ in arg_names],
+        posonlyargs=[],
+    )
 
     func_def = ast.FunctionDef(
-        name=name, args=args, body=statements, decorator_list=[]
+        name=name, args=ast_args, body=statements, decorator_list=[]
     )
 
     mod = ast.Module([func_def], [])
@@ -116,7 +116,7 @@ def compile_func(
             if isinstance(const, types.CodeType):
                 dis.dis(const)
 
-    the_locals = {}
+    the_locals: dict[str, Any] = {}
     exec(prog, {}, the_locals)
     return the_locals[name]
 
@@ -216,6 +216,8 @@ class Expression:
     Symbols, and Calls.
     """
 
+    parts: list[Part]
+
     def __init__(self, parts: list[Part]) -> None:
         self.parts = parts
 
@@ -238,7 +240,7 @@ class Expression:
         """Compile the expression to a list of Python AST expressions, a
         set of variable names used, and a set of function names.
         """
-        expressions = []
+        expressions: list[ast.expr] = []
         varnames = set()
         funcnames = set()
         for part in self.parts:
@@ -273,6 +275,8 @@ class Parser:
     generator, etc.).
     """
 
+    parts: list[Part]
+
     def __init__(self, string: str, in_argument: bool = False) -> None:
         """Create a new parser.
         :param in_arguments: boolean that indicates the parser is to be
@@ -284,16 +288,30 @@ class Parser:
         self.pos = 0
         self.parts = []
 
-    # Common parsing resources.
-    special_chars = (
-        SYMBOL_DELIM,
-        FUNC_DELIM,
-        GROUP_OPEN,
-        GROUP_CLOSE,
-        ESCAPE_CHAR,
-    )
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
     terminator_chars = (GROUP_CLOSE,)
+
+    @cached_property
+    def extra_special_chars(self) -> tuple[str, ...]:
+        return (ARG_SEP,) if self.in_argument else ()
+
+    @cached_property
+    def special_chars(self) -> tuple[str, ...]:
+        """Common parsing resources."""
+        return (
+            SYMBOL_DELIM,
+            FUNC_DELIM,
+            GROUP_OPEN,
+            GROUP_CLOSE,
+            ESCAPE_CHAR,
+            *self.extra_special_chars,
+        )
+
+    @cached_property
+    def special_char_re(self) -> re.Pattern[str]:
+        return re.compile(
+            rf"[{''.join(map(re.escape, self.special_chars))}]|\Z"
+        )
 
     def parse_expression(self) -> None:
         """Parse a template expression starting at ``pos``. Resulting
@@ -303,40 +321,32 @@ class Parser:
         """
         # Append comma (ARG_SEP) to the list of special characters only when
         # parsing function arguments.
-        extra_special_chars = (ARG_SEP,) if self.in_argument else ()
-        special_chars = (*self.special_chars, *extra_special_chars)
-        special_char_re = re.compile(
-            rf"[{''.join(map(re.escape, special_chars))}]|\Z"
-        )
-
         text_parts = []
 
         while self.pos < len(self.string):
             char = self.string[self.pos]
 
-            if char not in special_chars:
+            if char not in self.special_chars:
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
-                next_pos = (
-                    special_char_re.search(self.string[self.pos :]).start()
-                    + self.pos
-                )
-                text_parts.append(self.string[self.pos : next_pos])
-                self.pos = next_pos
-                continue
+                if m := self.special_char_re.search(self.string[self.pos :]):
+                    next_pos = m.start() + self.pos
+                    text_parts.append(self.string[self.pos : next_pos])
+                    self.pos = next_pos
+                    continue
 
             if self.pos == len(self.string) - 1:
                 # The last character can never begin a structure, so we
                 # just interpret it as a literal character (unless it
                 # terminates the expression, as with , and }).
-                if char not in self.terminator_chars + extra_special_chars:
+                if char not in self.terminator_chars + self.extra_special_chars:
                     text_parts.append(char)
                     self.pos += 1
                 break
 
             next_char = self.string[self.pos + 1]
             if char == ESCAPE_CHAR and next_char in (
-                self.escapable_chars + extra_special_chars
+                self.escapable_chars + self.extra_special_chars
             ):
                 # An escaped special character ($$, $}, etc.). Note that
                 # ${ is not an escape sequence: this is ambiguous with
@@ -357,7 +367,7 @@ class Parser:
             elif char == FUNC_DELIM:
                 # Parse a function call.
                 self.parse_call()
-            elif char in self.terminator_chars + extra_special_chars:
+            elif char in self.terminator_chars + self.extra_special_chars:
                 # Template terminated.
                 break
             elif char == GROUP_OPEN:
@@ -408,11 +418,10 @@ class Parser:
 
         else:
             # A bare-word symbol.
-            ident = self._parse_ident()
-            if ident:
+            if _ident := self._parse_ident():
                 # Found a real symbol.
                 self.parts.append(
-                    Symbol(ident, self.string[start_pos : self.pos])
+                    Symbol(_ident, self.string[start_pos : self.pos])
                 )
             else:
                 # A standalone $.
@@ -487,14 +496,17 @@ class Parser:
 
         return expressions
 
-    def _parse_ident(self) -> str:
+    def _parse_ident(self) -> str | None:
         """Parse an identifier and return it (possibly an empty string).
         Updates ``pos``.
         """
         remainder = self.string[self.pos :]
-        ident = re.match(r"\w*", remainder).group(0)
-        self.pos += len(ident)
-        return ident
+        if m := re.match(r"\w*", remainder):
+            ident = m.group(0)
+            self.pos += len(ident)
+            return ident
+
+        return None
 
 
 def _parse(template: str) -> Expression:
@@ -526,7 +538,7 @@ class Template:
         self.compiled = self.translate()
 
     def __eq__(self, other: object) -> bool:
-        return self.original == other.original
+        return type(self) is type(other) and self.original == other.original
 
     def interpret(
         self,
@@ -571,7 +583,7 @@ class Template:
             values: Mapping[str, str] = {},
             functions: Mapping[str, Callable[[str], str]] = {},
         ) -> str:
-            args = {}
+            args: dict[str, str | Callable[[str], str]] = {}
             for varname in varnames:
                 args[f"{VARIABLE_PREFIX}{varname}"] = values[varname]
             for funcname in funcnames:
