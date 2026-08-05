@@ -39,7 +39,6 @@ from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
 from beets.util import MoveOperation, clean_module_tempdir, syspath
-from beets.util.functemplate import template
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -614,12 +613,9 @@ class ImportHelper(TestHelper, ImporterMixin):
         super().setup_beets()
         self.import_media = []
         self.lib.path_formats = [
-            ("default", template(os.path.join("$artist", "$album", "$title"))),
-            ("singleton:true", template(os.path.join("singletons", "$title"))),
-            (
-                "comp:true",
-                template(os.path.join("compilations", "$album", "$title")),
-            ),
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
         ]
 
 
