@@ -278,7 +278,7 @@ lyrics_pages = [
         url_title="Lady Madonna - The Beatles - LETRAS.MUS.BR",
     ),
     LyricsPage.make(
-        "https://lrclib.net/api/get/19648857",
+        "https://lrclib.net/api/get/23863037",
         """
         [00:08.35] Lady Madonna, children at your feet
         [00:12.85] Wonder how you manage to make ends meet
