@@ -684,6 +684,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
         self.io = kwargs.pop("io")
         super().__init__(*args, **kwargs)
         self._choices = []
+        self._duplicate_actions = []
 
     default_choice = importer.Action.APPLY
 
@@ -692,6 +693,17 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
     def clear_choices(self) -> None:
         self._choices = []
+        self._duplicate_actions = []
+
+    def add_duplicate_action(self, action: importer.DuplicateAction) -> None:
+        self._duplicate_actions.append(action)
+
+    def _get_duplicate_action_from_user(
+        self, task: importer.ImportTask, found_duplicates: list[Any]
+    ) -> str:
+        if self._duplicate_actions:
+            self.io.addinput(self._duplicate_actions.pop(0).value)
+        return super()._get_duplicate_action_from_user(task, found_duplicates)
 
     def choose_match(
         self, task: importer.ImportTask
