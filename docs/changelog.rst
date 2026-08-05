@@ -19,6 +19,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/tidal`: The ``search_limit`` option is now honored when
+  searching for albums and tracks; search candidates are capped at the
+  configured limit instead of returning the full result set. :bug:`6770`
 - Add ``editor`` config option to allow users to permanently set their preferred
   editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables.
   :bug:`6641`

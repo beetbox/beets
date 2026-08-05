@@ -725,6 +725,85 @@ class TestItemCandidates(TidalPluginTest):
         assert results[0].title == "Query Track"
 
 
+class TestSearchLimit(TidalPluginTest):
+    """Tests for the ``search_limit`` configuration."""
+
+    def test_tracks_by_query_respects_search_limit(self):
+        search_doc = {
+            "data": {
+                "relationships": {
+                    "tracks": {
+                        "data": [
+                            {"id": "1", "type": "tracks"},
+                            {"id": "2", "type": "tracks"},
+                            {"id": "3", "type": "tracks"},
+                        ]
+                    }
+                }
+            },
+            "included": [
+                _make_track("1", "Track One", "PT3M", "ISRC001", ["1001"]),
+                _make_track("2", "Track Two", "PT3M", "ISRC002", ["1001"]),
+                _make_track("3", "Track Three", "PT3M", "ISRC003", ["1001"]),
+                _make_artist("1001", "Query Artist"),
+            ],
+        }
+        self.tidal.api.search_results = Mock(return_value=search_doc)
+
+        with self.configure_plugin({"search_limit": 1}):
+            results = list(self.tidal.search_tracks_by_query("Query Song"))
+
+        assert len(results) == 1
+        assert results[0].title == "Track One"
+
+    def test_albums_by_query_respects_search_limit(self):
+        tracks = [
+            _make_track("101", "Album Track", "PT3M", "ISRC001", ["1001"]),
+            _make_track("102", "Album Track", "PT3M", "ISRC002", ["1001"]),
+            _make_track("103", "Album Track", "PT3M", "ISRC003", ["1001"]),
+        ]
+        albums = [
+            _make_album("1", "Album One", [tracks[0]], ["1001"]),
+            _make_album("2", "Album Two", [tracks[1]], ["1001"]),
+            _make_album("3", "Album Three", [tracks[2]], ["1001"]),
+        ]
+        search_doc = {
+            "data": {
+                "relationships": {
+                    "albums": {
+                        "data": [
+                            {"id": "1", "type": "albums"},
+                            {"id": "2", "type": "albums"},
+                            {"id": "3", "type": "albums"},
+                        ]
+                    }
+                }
+            }
+        }
+        self.tidal.api.search_results = Mock(return_value=search_doc)
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album for album, _, _ in albums],
+                "included": [
+                    *tracks,
+                    *[
+                        artist
+                        for _, _, artist_lookup in albums
+                        for artist in artist_lookup.values()
+                    ],
+                ],
+            }
+        )
+
+        with self.configure_plugin({"search_limit": 1}):
+            results = list(self.tidal.search_albums_by_query("Query Album"))
+
+        assert len(results) == 1
+        assert results[0].album == "Album One"
+        # Only the first album ID should be resolved from the search results.
+        assert self.tidal.api.get_albums.call_args.kwargs["ids"] == ["1"]
+
+
 class TestStaticHelpers:
     """Tests for static helper methods."""
 
