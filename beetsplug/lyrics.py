@@ -28,6 +28,7 @@ from beets.library import Item, parse_query_string
 from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
+from ._utils.func import apply_transforms
 from ._utils.requests import (
     HTTPNotFoundError,
     RequestHandler,
@@ -35,7 +36,7 @@ from ._utils.requests import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Iterable, Iterator
 
     import confuse
 
@@ -50,8 +51,6 @@ if TYPE_CHECKING:
         LRCLibAPI,
         TranslatorAPI,
     )
-
-    HtmlTransformer = Callable[[str], str]
 
 
 class CaptchaError(requests.exceptions.HTTPError):
@@ -439,13 +438,6 @@ class MusiXmatch(Backend):
         if "Lyrics | Musixmatch" in lyrics:
             return None
         return Lyrics(lyrics, self.__class__.name, url)
-
-
-def apply_transforms(html: str, methods: Iterable[HtmlTransformer]) -> str:
-    for method in methods:
-        html = method(html)
-
-    return html
 
 
 class Html:
