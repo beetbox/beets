@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, NamedTuple
 from beets import library, ui
 from beets.dbcore import types
 from beets.exceptions import UserError
-from beets.util import functemplate
 from beets.util.deprecation import maybe_replace_legacy_field
 
 from .utils import do_query
@@ -69,16 +68,15 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     # objects.
     ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
     changed = []
-    templates = {}
-    for key, mod in mods.items():
-        templates[key] = functemplate.template(mod.value)
     for obj in objs:
-        obj_mods = {}
-        for key, mod in mods.items():
-            parsed_value = model_cls._parse(
-                key, obj.evaluate_template(templates[key])
+        obj_mods = {
+            key: mod.apply(
+                obj,
+                key,
+                model_cls._parse(key, obj.evaluate_template(mod.value)),
             )
-            obj_mods[key] = mod.apply(obj, key, parsed_value)
+            for key, mod in mods.items()
+        }
         if print_and_modify(obj, obj_mods, dels) and obj not in changed:
             changed.append(obj)
 
