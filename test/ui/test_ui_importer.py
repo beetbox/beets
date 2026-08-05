@@ -63,6 +63,4 @@ class TestImportDuplicateAlbumUpgrade(
     def setup_beets(self):
         super().setup_beets()
         self.config["import"]["duplicate_action"] = "ask"
-        self.importer.add_duplicate_action(importer.DuplicateAction.KEEP)
-        self.importer.clear_choices()
         self.importer.add_duplicate_action(importer.DuplicateAction.UPGRADE)
