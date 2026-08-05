@@ -16,9 +16,9 @@ from __future__ import annotations
 
 import ast
 import dis
-import functools
 import re
 import types
+from functools import lru_cache
 
 SYMBOL_DELIM = "$"
 FUNC_DELIM = "%"
@@ -496,8 +496,8 @@ def _parse(template):
     return Expression(parts)
 
 
-@functools.lru_cache(maxsize=128)
-def template(fmt) -> Template:
+@lru_cache(maxsize=128)
+def get_template(fmt: str) -> Template:
     return Template(fmt)
 
 
