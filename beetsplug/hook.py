@@ -6,9 +6,12 @@ import os
 import shlex
 import string
 import subprocess
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.events import EventType
 
 
 class BytesToStrFormatter(string.Formatter):
@@ -45,8 +48,8 @@ class HookPlugin(BeetsPlugin):
 
             self.create_and_register_hook(hook_event, hook_command)
 
-    def create_and_register_hook(self, event, command):
-        def hook_function(**kwargs):
+    def create_and_register_hook(self, event: EventType, command):
+        def hook_function(**kwargs) -> None:
             if command is None or len(command) == 0:
                 self._log.error('invalid command "{}"', command)
                 return
@@ -74,4 +77,4 @@ class HookPlugin(BeetsPlugin):
             except OSError as exc:
                 self._log.error("hook for {} failed: {}", event, exc)
 
-        self.register_listener(event, hook_function)
+        self.register_listener(event, hook_function)  # type: ignore[arg-type]

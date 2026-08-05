@@ -15,20 +15,27 @@ is not supported, use password instead:
         auth: pass
 """
 
+from __future__ import annotations
+
 import hashlib
 import random
 import string
 from binascii import hexlify
+from typing import TYPE_CHECKING
 
 import requests
 
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
+
+
 __author__ = "https://github.com/maffo999"
 
 
 class SubsonicUpdate(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("subsonic")
         # Set default configuration values
         self.config.add(
@@ -44,10 +51,10 @@ class SubsonicUpdate(BeetsPlugin):
         self.register_listener("database_change", self.db_change)
         self.register_listener("smartplaylist_update", self.spl_update)
 
-    def db_change(self, lib, model):
+    def db_change(self, lib: Library, model: LibModel) -> None:
         self.register_listener("cli_exit", self.start_scan)
 
-    def spl_update(self):
+    def spl_update(self) -> None:
         self.register_listener("cli_exit", self.start_scan)
 
     def __create_token(self):
@@ -89,7 +96,7 @@ class SubsonicUpdate(BeetsPlugin):
 
         return f"{url}/rest/{endpoint}"
 
-    def start_scan(self):
+    def start_scan(self, lib: Library) -> None:
         user = self.config["user"].as_str()
         auth = self.config["auth"].as_str()
         url = self.__format_url("startScan")

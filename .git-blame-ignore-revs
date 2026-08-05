@@ -271,3 +271,11 @@ d24c0d341ec6074c343cd8054083fe358da8fa14
 b2f52ac12443c102712b735e456fd07a6525786b
 # Return Path from TestHelper.create_mediafile_fixture
 bb66b0c378e9bf7d97622a1582d93c4dfcf20fdd
+# typing: type handlers and listeners explicitly
+6dbdb58464a875eb3c429a913aeeb7fc1b8eea21
+# typing: Define events in a separate module, import explicitly
+8c6f137a3f9764e371eac461b34e3f4ea4c7e935
+# typing: Import events module instead
+de8899efa1c42c319d1e58c1f30bac92b6b28838
+# typing: add types to event handlers
+301a8791a066f1776e9ab58cfed70283a08f8ce3

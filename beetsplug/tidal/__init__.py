@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import Info
     from beets.dbcore.db import Results
+    from beets.importer import ImportSession
     from beets.library import Library
     from beets.library.models import Album, Item
 
@@ -79,7 +80,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-    def require_authentication(self) -> None:
+    def require_authentication(self, session: ImportSession) -> None:
         if not os.path.isfile(self._tokenfile()):
             raise UserError(
                 "Please login to TIDAL"

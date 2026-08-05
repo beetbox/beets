@@ -79,7 +79,7 @@ class Candidate:
         url: str | None = None,
         match: MetadataMatch | None = None,
         size: tuple[int, int] | None = None,
-    ):
+    ) -> None:
         self._log = log
         self.path = path
         self.url = url
@@ -639,7 +639,7 @@ class GoogleImages(RemoteArtSource):
     ID = "google"
     URL = "https://www.googleapis.com/customsearch/v1"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.key = (self._config["google_key"].get(),)
         self.cx = (self._config["google_engine"].get(),)
@@ -717,7 +717,7 @@ class FanartTV(RemoteArtSource):
     API_ALBUMS = f"{API_URL}music/albums/"
     PROJECT_KEY = "61a7d0ab4e67162b7a0c7c35915cd48e"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.client_key = self._config["fanarttv_key"].get()
 
@@ -1513,7 +1513,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         return True
 
     # Synchronous; after music files are put in place.
-    def assign_art(self, session: ImportSession, task: ImportTask):
+    def assign_art(self, session: ImportSession, task: ImportTask) -> None:
         """Place the discovered art in the filesystem."""
         if task in self.art_candidates:
             candidate = self.art_candidates.pop(task)
