@@ -14,7 +14,9 @@ New features
 
 - :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
   duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
-  new tracks, and keeps the album together rather than splitting it. :bug:`4471`
+  new tracks, and keeps the album together rather than splitting it. The option
+  is available both through configuration and from the interactive duplicate
+  prompt. :bug:`4471`
 
 Bug fixes
 ~~~~~~~~~
