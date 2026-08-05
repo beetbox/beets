@@ -392,48 +392,52 @@ class TidalPlugin(MetadataSourcePlugin):
             tidal_updated=time.time(),
         )
 
-    # Leading marker & year
-    _LEADING_MARKER_RE = re.compile(
-        r"^\s*(?:©|℗|\(C\)|\(P\))\s*", re.IGNORECASE
-    )
-    _LEADING_YEAR_RE = re.compile(r"^\s*\d{4}\s*")
-
-    # Matches ", a"
-    _CORPORATE_RE = re.compile(r",\s+a\s+", re.IGNORECASE)
-
-    # Matches "under exclusive license to"
-    _LICENSE_TO_RE = re.compile(
-        r"\bunder\s+exclusive\s+licen[cs]e\s+to\s+", re.IGNORECASE
-    )
-
-    # inc, llc, ltd, co suffixes
-    _TRAILING_SUFFIX_RE = re.compile(
-        r",?\s+(?:Inc|LLC|Ltd|Co)\.?$", re.IGNORECASE
-    )
-
-    # For the United States...
-    _TERRITORIAL_RE = re.compile(
-        r"\s+for\s+the\s+United\s+States\s+and\s+", re.IGNORECASE
-    )
-
     @staticmethod
     def _normalize_label(text: str) -> str:
-        """Removes leading copyright markers, years, and trims corporate boilerplate
-        from Tidal copyright text.
-        """
-        text = TidalPlugin._LEADING_MARKER_RE.sub("", text, count=1)
-        text = TidalPlugin._LEADING_YEAR_RE.sub("", text, count=1)
+        """Normalize label from Tidal copyright text by stripping markers/years
+        and known corporate/licensing/territorial boilerplate."""
+        text = text.strip()
 
-        if match := TidalPlugin._CORPORATE_RE.search(text):
-            text = text[: match.start()]
+        # Leading copyright markers
+        for marker in ("©", "℗", "(C)", "(P)", "(c)", "(p)"):
+            if text.startswith(marker):
+                text = text[len(marker) :].strip()
+                break
 
-        if match := TidalPlugin._LICENSE_TO_RE.search(text):
-            text = text[match.end() :]
+        # Leading year
+        first, _, rest = text.partition(" ")
+        if len(first) == 4 and first.isdigit():
+            text = rest.lstrip()
 
-        if match := TidalPlugin._TERRITORIAL_RE.search(text):
-            text = text[: match.start()]
+        # "under exclusive license to"
+        phrase = "under exclusive license to"
+        phrase_alt = "under exclusive licence to"
 
-        return TidalPlugin._TRAILING_SUFFIX_RE.sub("", text)
+        lower = text.lower()
+        for p in (phrase, phrase_alt):
+            if p in lower:
+                idx = lower.index(p)
+                text = text[idx + len(p) :]
+                break
+
+        # ", a "
+        lower = text.lower()
+        if ", a " in lower:
+            text = text[: lower.index(", a ")]
+
+        # Territorial boilerplate
+        phrase = " for the united states and "
+        lower = text.lower()
+        if phrase in lower:
+            text = text[: lower.index(phrase)]
+
+        # Trailing company suffixes
+        for suffix in (" inc.", " inc", " llc", " ltd.", " ltd", " co.", " co"):
+            if text.lower().endswith(suffix):
+                text = text[: -len(suffix)].rstrip(", ")
+                break
+
+        return text.strip()
 
     @staticmethod
     def _parse_artwork_url(
