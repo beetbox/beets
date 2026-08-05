@@ -332,13 +332,27 @@ class LRCLyrics:
         """
         return not self.synced, self.duration_dist
 
+    @staticmethod
+    def remove_timestamps(synced: str) -> str:
+        """Return synced lyrics with their LRC timestamps removed."""
+        return "\n".join(
+            m[2]
+            for line in synced.splitlines()
+            if (m := Lyrics.LINE_PARTS_PAT.match(line))
+        )
+
     def get_text(self, want_synced: bool) -> str:
         """Return the preferred text form for this candidate."""
         if self.instrumental:
             return INSTRUMENTAL_LYRICS
 
-        if want_synced and self.synced:
-            return "\n".join(map(str.strip, self.synced.splitlines()))
+        if self.synced:
+            if want_synced:
+                return "\n".join(map(str.strip, self.synced.splitlines()))
+
+            # A record may carry synced lyrics without the plain variant.
+            if not self.plain:
+                return self.remove_timestamps(self.synced)
 
         return self.plain or ""
 

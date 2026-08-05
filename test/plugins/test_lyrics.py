@@ -619,6 +619,20 @@ class TestLRCLibLyrics(LyricsBackendTest):
         assert lyrics.backend == backend_name
 
     @pytest.mark.parametrize(
+        "response_data", [[lyrics_match(plainLyrics=None)]]
+    )
+    @pytest.mark.parametrize("plugin_config", [{"synced": False}])
+    def test_plain_lyrics_derived_from_synced(self, fetch_lyrics):
+        """Derive plain lyrics from the synced text when the record omits them.
+
+        Returning nothing here would hide lyrics the match actually carries.
+        """
+        lyrics = fetch_lyrics()
+
+        assert lyrics
+        assert lyrics.text == "synced"
+
+    @pytest.mark.parametrize(
         "response_data, expected_lyrics",
         [
             pytest.param([], None, id="handle non-matching lyrics"),

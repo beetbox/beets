@@ -43,7 +43,9 @@ Bug fixes
   accepted as a match and produced lyrics whose body was ``None``, crashing the
   importer with ``AttributeError: 'NoneType' object has no attribute
   'splitlines'``. These records are now rejected as matches, so the search falls
-  through to the remaining candidates. :bug:`6888`
+  through to the remaining candidates. Relatedly, a record that carries only
+  synced lyrics now yields the plain variant with timestamps removed, rather
+  than nothing, when ``synced`` is disabled. :bug:`6888`
 - Flexible attributes whose names contain uppercase characters (for example
   ``beet import --set Tag_With_Uppercase=true``) can now be found by queries.
   Field names are lowercased when a query is parsed, so such attributes could
