@@ -707,6 +707,40 @@ def test_get_genre(
     assert plugin._get_genre(item) == expected_result
 
 
+class TestTryResolveAlbumStage:
+    """Direct tests for `_try_resolve_album_stage`.
+
+    `test_get_genre` mocks `LastFmClient.fetch` with a fixed 3-arg lambda that
+    can't distinguish per-albumartist calls, and its items never populate
+    `albumartists`, so the multi-valued albumartists fallback is never
+    exercised there. These tests target `_try_resolve_album_stage` directly.
+    """
+
+    def _make_plugin(self):
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.config.set({"whitelist": False})
+        plugin.setup()
+        return plugin
+
+    @pytest.mark.usefixtures("config")
+    def test_falls_back_to_multi_valued_albumartists(self):
+        """No genre for main albumartist; a secondary albumartist has one."""
+        plugin = self._make_plugin()
+        item = _common.item(albumartists=["Artist A", "Artist B"])
+
+        def fetch(kind, obj, *args):
+            if args == ("Artist B", item.album):
+                return ["Rock"]
+            return []
+
+        plugin.client.fetch = Mock(side_effect=fetch)
+
+        assert plugin._try_resolve_album_stage(item, []) == (
+            ["Rock"],
+            "multi-valued albumartist album, any",
+        )
+
+
 class TestIgnorelist:
     """Ignorelist pattern matching tests independent of resolve_genres."""
 
