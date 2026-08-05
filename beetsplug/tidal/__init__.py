@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import os
 import re
 import time
@@ -129,8 +128,12 @@ class TidalPlugin(MetadataSourcePlugin):
         ):
             return candidates
 
-        for query in self._album_queries(items):
-            candidates += self.search_albums_by_query(query)
+        query = (
+            album.strip()
+            if va_likely
+            else f"{artist.strip()} {album.strip()}".strip()
+        )
+        candidates += self.search_albums_by_query(query)
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
@@ -148,29 +151,15 @@ class TidalPlugin(MetadataSourcePlugin):
             ):
                 return candidates
 
-        for query in self._item_queries(item):
-            candidates += self.search_tracks_by_query(query)
+        query = (
+            f"{artist.strip()} {title.strip()}"
+            if artist.strip()
+            else title.strip()
+        )
+        candidates += self.search_tracks_by_query(query)
 
         log.debug("Found {0} candidates", len(candidates))
         return candidates
-
-    @staticmethod
-    def _item_queries(item: Item) -> Iterable[str]:
-        """Search queries for items."""
-        yield item.title
-
-        if item.artist:
-            yield f"{item.artist} {item.title}"
-
-    @staticmethod
-    def _album_queries(items: Sequence[Item]) -> Iterable[str]:
-        """Search queries for albums."""
-
-        album_names = set(i.album for i in items)
-        artist_names = set(i.artist for i in items)
-
-        for album, artist in itertools.product(album_names, artist_names):
-            yield f"{artist} {album}"
 
     def search_tracks_by_query(self, query: str) -> Iterable[TrackInfo]:
         """Search for tracks given a string query."""
