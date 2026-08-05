@@ -868,7 +868,7 @@ is applied, which would, considering the default, look like this:
     New: 2 items, MP3, 320kbps, 7:18, 17.1 MiB
       Artist Name - Album Name - First Track Title
       Artist Name - Album Name - Second Track Title
-    [S]kip new, Keep all, Remove old, Merge all?
+    [S]kip new, Merge all, Remove old, Keep all, Upgrade?
 
 Default: ``no``.
 

@@ -693,6 +693,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
     def clear_choices(self) -> None:
         self._choices = []
+        self._duplicate_actions = []
 
     def add_duplicate_action(self, action: importer.DuplicateAction) -> None:
         self._duplicate_actions.append(action)
