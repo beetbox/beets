@@ -156,6 +156,10 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
+- Plugins built on ``SearchApiMetadataSourcePlugin``
+  (:doc:`plugins/musicbrainz`, :doc:`plugins/spotify`, :doc:`plugins/deezer` and
+  :doc:`plugins/discogs`) no longer send a search request when both the query
+  text and the filters are empty. :bug:`6862`
 
 ..
     For plugin developers
