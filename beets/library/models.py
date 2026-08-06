@@ -26,7 +26,6 @@ from beets.util import (
     syspath,
 )
 from beets.util.deprecation import maybe_replace_legacy_field
-from beets.util.functemplate import Template, template
 from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
@@ -102,10 +101,9 @@ class LibModel(dbcore.Model["Library"]):
         super().add(lib)
 
     def __format__(self, spec: str) -> str:
-        if not spec:
-            spec = beets.config[self._format_config_key].as_str()
-        assert isinstance(spec, str)
-        return self.evaluate_template(spec)
+        return self.evaluate_template(
+            spec or beets.config[self._format_config_key].as_str()
+        )
 
     def __str__(self) -> str:
         return format(self)
@@ -546,8 +544,8 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = template(beets.config["art_filename"].as_str())
-        subpath = self.evaluate_template(filename_tmpl, True)
+        filename_tmpl = beets.config["art_filename"].as_str()
+        subpath = self.evaluate_template(filename_tmpl, for_path=True)
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
         subpath = util.sanitize_path(subpath, replacements=self.db.replacements)
@@ -1250,13 +1248,8 @@ class Item(LibModel):
                     break
             else:
                 assert False, "no default path format"
-        if isinstance(path_format, Template):
-            subpath_tmpl = path_format
-        else:
-            subpath_tmpl = template(path_format)
-
         # Evaluate the selected template.
-        subpath = self.evaluate_template(subpath_tmpl, True)
+        subpath = self.evaluate_template(path_format, for_path=True)
 
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
