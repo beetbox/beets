@@ -55,9 +55,13 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/duplicates`: Improve the documentation of the ``checksum``
+  option: explain how the external command is run, remove the broken ``md5sum
+  {file}`` example and show how to use such commands through a wrapper script.
+  :bug:`3979`
 
 2.13.1 (July 29, 2026)
 ----------------------
