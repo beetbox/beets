@@ -4,7 +4,7 @@ import itertools
 import os
 import re
 import time
-from functools import cached_property, partial
+from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, Literal, overload
 
 import confuse
@@ -15,7 +15,6 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.metadata_plugins import MetadataSourcePlugin
-from beetsplug._utils.func import apply_transforms
 
 from .api import TidalAPI
 
@@ -41,17 +40,17 @@ if TYPE_CHECKING:
 
 log = getLogger("beets.tidal")
 
-_remove_leading = partial(
-    re.compile(r"^(?:(?:©|℗|\([cp]\)) *)?(?:\d{4} +)?", re.IGNORECASE).sub, ""
-)
-_remove_license = partial(
-    re.compile(r".* under exclusive licen[sc]e to ", re.IGNORECASE).sub, ""
-)
-_remove_trailing_clause = partial(
-    re.compile(r"(?:, a| for the united states and) .*", re.IGNORECASE).sub, ""
-)
-_remove_legal_suffix = partial(
-    re.compile(r",? (?:inc|llc|ltd|co)\.?$", re.IGNORECASE).sub, ""
+_normalize_label_re = re.compile(
+    r"""
+    ^(?:.*(?:©|℗|\([cp]\))\s*)?          # optional text through last marker
+    (?:\d{4}\s+)?                            # optional year
+    (?:.*?\ under\ exclusive\ licen[sc]e\ to\ )?  # optional license prefix
+    (.*?)                                    # text to keep
+    (?:,?\ (?:inc|llc|ltd|co)\.?)?           # optional legal suffix
+    (?:,\ a\ .*)?                            # optional corporate clause
+    (?:,?\ for\ the\ united\ states\ and\ .*)?  # optional territorial clause
+    $""",
+    re.IGNORECASE | re.VERBOSE,
 )
 
 
@@ -408,15 +407,10 @@ class TidalPlugin(MetadataSourcePlugin):
 
     @staticmethod
     def _normalize_label(text: str) -> str:
-        return apply_transforms(
-            text,
-            [
-                _remove_leading,
-                _remove_license,
-                _remove_trailing_clause,
-                _remove_legal_suffix,
-            ],
-        )
+        """Reduce a raw copyright string to a concise label name."""
+        if match := _normalize_label_re.match(text):
+            return match.group(1)
+        return text
 
     @staticmethod
     def _parse_artwork_url(
