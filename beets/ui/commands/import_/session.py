@@ -201,6 +201,57 @@ class TerminalImportSession(importer.ImportSession):
 
         return action
 
+    def get_track_duplicate_actions(
+        self,
+        task: importer.ImportTask,
+        track_duplicates: dict[Item, list[Item]],
+    ) -> dict[Item, DuplicateAction]:
+        actions = super().get_track_duplicate_actions(task, track_duplicates)
+        if DuplicateAction.ASK not in actions.values():
+            return actions
+
+        log.warning(
+            "Some tracks ({} of {}) are already in the library!",
+            len(track_duplicates),
+            len(task.imported_items()),
+        )
+        if config["import"]["quiet"]:
+            # In quiet mode, don't prompt -- just skip the duplicate tracks.
+            log.info("Skipping duplicate tracks.")
+            return dict.fromkeys(track_duplicates, DuplicateAction.SKIP)
+
+        # Print some detail about the existing and new items so the user
+        # can make an informed decision.
+        existing = [
+            item for matches in track_duplicates.values() for item in matches
+        ]
+        self._report_item_summary("Old", existing, is_album=True)
+        self._report_item_summary("New", list(track_duplicates), is_album=True)
+
+        choice = ui.input_options(
+            [*DuplicateAction.track_options(), "sElect per track"]
+        )
+        if choice != "e":
+            return dict.fromkeys(
+                track_duplicates,
+                DuplicateAction(choice),  # type: ignore[call-arg]
+            )
+
+        # Ask for each duplicate track individually.
+        return {
+            item: self._get_single_track_duplicate_action(item, matches)
+            for item, matches in track_duplicates.items()
+        }
+
+    def _get_single_track_duplicate_action(
+        self, item: Item, matches: list[Item]
+    ) -> DuplicateAction:
+        self._report_item_summary("Old", matches, is_album=False)
+        self._report_item_summary("New", [item], is_album=False)
+        return DuplicateAction(
+            ui.input_options(DuplicateAction.track_options())
+        )  # type: ignore[call-arg]
+
     def should_resume(self, path):
         return ui.input_yn(
             f"Import of the directory:\n{displayable_path(path)}\n"
