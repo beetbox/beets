@@ -51,7 +51,7 @@ Bug fixes
   releases than that window, the track being imported was never among the
   candidates offered.
 - :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
-  files. :bug:`6916`
+  files. :bug:`6915`
 
 ..
     For plugin developers
