@@ -4,6 +4,7 @@ from typing import Any, ClassVar
 import pytest
 from mediafile import MediaFile
 
+from beets.library import Item
 from beets.test.helper import (
     AsIsImporterMixin,
     ImportHelper,
@@ -14,6 +15,7 @@ from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
     MetaflacBackend,
+    RgTask,
 )
 
 try:
@@ -408,8 +410,8 @@ class TestReplayGainMetaflacCli(
 
 def test_metaflac_backend_parses_output():
     output = (
-        "01.flac: -1.234567 1.234567 1.987654 -1.987654\n"
-        "02.flac: -1.234567 1.234567 -1.987654 1.987654\n"
+        "01.flac: -1.234567 1.234567 1.987654 0.123456\n"
+        "02.flac: -1.234567 1.234567 -1.987654 0.987654\n"
     )
 
     results = MetaflacBackend._parse_output(output)
@@ -425,9 +427,22 @@ def test_metaflac_backend_parses_output():
 
     # ...but each file keeps its own distinct track gain/peak.
     assert track_gain_1 == pytest.approx(1.987654)
+    assert track_peak_1 == pytest.approx(0.123456)
+
     assert track_gain_2 == pytest.approx(-1.987654)
-    assert track_peak_1 == pytest.approx(-1.987654)
-    assert track_peak_2 == pytest.approx(1.987654)
+    assert track_peak_2 == pytest.approx(0.987654)
+
+
+def test_metaflac_backend_cannot_compute_album_gain_with_mixed_formats():
+    backend = MetaflacBackend.__new__(MetaflacBackend)
+
+    items = [Item(format="FLAC"), Item(format="MP3"), Item(format="FLAC")]
+    task = RgTask(items, None, 89.0, None, "metaflac", None)
+
+    result = backend.compute_album_gain(task)
+
+    assert result.track_gains == None
+    assert result.album_gain == None
 
 
 class ImportTest(AsIsImporterMixin):

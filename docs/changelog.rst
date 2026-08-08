@@ -50,6 +50,8 @@ Bug fixes
   relevance order and truncated to ``search_limit``. For artists with more
   releases than that window, the track being imported was never among the
   candidates offered.
+- :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
+  files. :bug:`6916`
 
 ..
     For plugin developers
