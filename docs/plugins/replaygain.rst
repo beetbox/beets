@@ -145,8 +145,9 @@ metaflac
 
 This backend uses the metaflac_ command-line tool (part of the FLAC tools) to
 compute ReplayGain values for FLAC files. It only supports FLAC; files in other
-formats are skipped. To use it, install the ``flac`` package, which provides
-``metaflac``, and select the ``metaflac`` backend in your configuration file:
+formats are skipped. To use it, install the ``flac`` package (version >= 1.3.2
+is required), which provides ``metaflac``, and select the ``metaflac`` backend
+in your configuration file:
 
 .. code-block:: yaml
 
