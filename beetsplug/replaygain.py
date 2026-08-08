@@ -733,7 +733,8 @@ class MetaflacBackend(Backend):
             ).stdout.decode("utf-8", "ignore")
         except ReplayGainError as exc:
             raise FatalReplayGainError(
-                f"metaflac --scan-replay-gain failed (you might need to update metaflac): {exc!r}"
+                f"metaflac --scan-replay-gain failed"
+                f" (you might need to update metaflac): {exc!r}"
             )
 
         gain_by_path = self._parse_output(output)
