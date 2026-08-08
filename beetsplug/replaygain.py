@@ -684,10 +684,11 @@ class MetaflacBackend(Backend):
         """Compute the track gain for each FLAC item in the task."""
         track_gains = []
         for item in filter(self.format_supported, task.items):
-            self._add_replay_gain([item])
-            track_gains.append(
-                self._read_gain(item, "TRACK", task.target_level)
-            )
+            result = self._read_gain([item], task.target_level)
+
+            track_gain_value = result[item][1]
+            track_gains.append(track_gain_value)
+
         task.track_gains = track_gains
         return task
 
@@ -699,53 +700,70 @@ class MetaflacBackend(Backend):
             task.track_gains = None
             return task
 
-        self._add_replay_gain(items)
-        task.track_gains = [
-            self._read_gain(item, "TRACK", task.target_level) for item in items
-        ]
-        task.album_gain = self._read_gain(items[0], "ALBUM", task.target_level)
+        results = self._read_gain(items, task.target_level)
+
+        album_gain = results[items[0]][0]
+
+        track_gains = []
+        for item in items:
+            track_gain_value = results[item][1]
+            track_gains.append(track_gain_value)
+
+        task.album_gain = album_gain
+        task.track_gains = track_gains
         return task
 
-    def _add_replay_gain(self, items: Sequence[Item]) -> None:
-        """Run ``metaflac --add-replay-gain`` on the given files."""
+    def _read_gain(
+        self, items: Sequence[Item], target_level: float
+    ) -> dict[Item, tuple[Gain, Gain]]:
+        """Run ``metaflac --scan-replay-gain`` on the given files"""
         paths = [str(item.filepath) for item in items]
-        call([self.command, "--add-replay-gain", *paths], self._log)
+        output = call(
+            [self.command, "--scan-replay-gain", *paths], self._log
+        ).stdout.decode("utf-8", "ignore")
 
-    def _read_gain(self, item: Item, kind: str, target_level: float) -> Gain:
-        """Read the REPLAYGAIN gain and peak tags back from a file."""
-        gain_tag = f"REPLAYGAIN_{kind}_GAIN"
-        peak_tag = f"REPLAYGAIN_{kind}_PEAK"
-        command = [
-            self.command,
-            f"--show-tag={gain_tag}",
-            f"--show-tag={peak_tag}",
-            str(item.filepath),
-        ]
-        tags = self._parse_tags(call(command, self._log).stdout)
-        try:
-            gain = self._parse_gain(tags[gain_tag])
-            peak = float(tags[peak_tag])
-        except (KeyError, IndexError, ValueError) as exc:
-            raise ReplayGainError(
-                f"could not read metaflac replaygain tags for {item}: {exc!r}"
+        gain_by_path = self._parse_output(output)
+
+        results: dict[Item, tuple[Gain, Gain]] = {}
+        for item in items:
+            path = str(item.filepath)
+
+            album_gain, album_peak, track_gain, track_peak = gain_by_path[path]
+
+            # metaflac uses an 89 dB reference, like the other backends
+            offset = target_level - 89.0
+
+            results[item] = (
+                Gain(gain=album_gain + offset, peak=album_peak),
+                Gain(gain=track_gain + offset, peak=track_peak),
             )
-        # metaflac uses an 89 dB reference, like the other backends
-        return Gain(gain=gain + (target_level - 89.0), peak=peak)
+        return results
 
     @staticmethod
-    def _parse_tags(output: bytes) -> dict[str, str]:
-        """Turn metaflac's NAME=VALUE output into a dict."""
-        tags: dict[str, str] = {}
-        for line in output.decode("utf-8", "ignore").splitlines():
-            name, sep, value = line.partition("=")
-            if sep:
-                tags[name.strip().upper()] = value.strip()
-        return tags
+    def _parse_output(
+        text: str,
+    ) -> dict[str, tuple[float, float, float, float]]:
+        """Parse the output of ``metaflac --scan-replay-gain``."""
+        out: dict[str, tuple[float, float, float, float]] = {}
 
-    @staticmethod
-    def _parse_gain(value: str) -> float:
-        """Turn a '-7.89 dB' tag value into a float."""
-        return float(value.split()[0])
+        for line in text.splitlines():
+            path, sep, values = line.partition(": ")
+
+            if not sep:
+                continue
+
+            try:
+                album_gain, album_peak, track_gain, track_peak = (
+                    float(v) for v in values.split()
+                )
+            except ValueError as exc:
+                raise ReplayGainError(
+                    f"could not parse metaflac output for file {path!r}: {exc!r}"
+                )
+
+            out[path] = (album_gain, album_peak, track_gain, track_peak)
+
+        return out
 
 
 # GStreamer-based backend.

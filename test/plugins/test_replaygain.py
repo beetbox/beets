@@ -406,16 +406,28 @@ class TestReplayGainMetaflacCli(
         return super()._add_album(*args, **kwargs)
 
 
-def test_metaflac_backend_parses_replaygain_tags():
+def test_metaflac_backend_parses_output():
     output = (
-        b"REPLAYGAIN_TRACK_GAIN=-11.55 dB\nREPLAYGAIN_TRACK_PEAK=0.99998772\n"
+        "01.flac: -1.234567 1.234567 1.987654 -1.987654\n"
+        "02.flac: -1.234567 1.234567 -1.987654 1.987654\n"
     )
-    tags = MetaflacBackend._parse_tags(output)
-    assert MetaflacBackend._parse_gain(tags["REPLAYGAIN_TRACK_GAIN"]) == (
-        pytest.approx(-11.55)
-    )
-    assert float(tags["REPLAYGAIN_TRACK_PEAK"]) == pytest.approx(0.99998772)
-    assert MetaflacBackend._parse_gain("+4.56 dB") == pytest.approx(4.56)
+
+    results = MetaflacBackend._parse_output(output)
+
+    assert set(results) == {"01.flac", "02.flac"}
+
+    album_gain_1, album_peak_1, track_gain_1, track_peak_1 = results["01.flac"]
+    album_gain_2, album_peak_2, track_gain_2, track_peak_2 = results["02.flac"]
+
+    # Album gain/peak is shared across every file in the batch...
+    assert album_gain_1 == pytest.approx(album_gain_2)
+    assert album_peak_1 == pytest.approx(album_peak_2)
+
+    # ...but each file keeps its own distinct track gain/peak.
+    assert track_gain_1 == pytest.approx(1.987654)
+    assert track_gain_2 == pytest.approx(-1.987654)
+    assert track_peak_1 == pytest.approx(-1.987654)
+    assert track_peak_2 == pytest.approx(1.987654)
 
 
 class ImportTest(AsIsImporterMixin):
