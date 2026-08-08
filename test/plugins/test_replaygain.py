@@ -397,8 +397,8 @@ def test_metaflac_backend_cannot_compute_album_gain_with_mixed_formats():
 
     result = backend.compute_album_gain(task)
 
-    assert result.track_gains == None
-    assert result.album_gain == None
+    assert result.track_gains is None
+    assert result.album_gain is None
 
 
 class CountingQueue(queue.Queue[BaseException]):
