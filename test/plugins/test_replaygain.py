@@ -410,8 +410,8 @@ class TestReplayGainMetaflacCli(
 
 def test_metaflac_backend_parses_output():
     output = (
-        "01.flac: -1.234567 1.234567 1.987654 0.123456\n"
-        "02.flac: -1.234567 1.234567 -1.987654 0.987654\n"
+        "01.flac: -1.234567 0.123456 1.987654 0.456789\n"
+        "02.flac: -1.234567 0.123456 -1.987654 0.987654\n"
     )
 
     results = MetaflacBackend._parse_output(output)
@@ -427,7 +427,7 @@ def test_metaflac_backend_parses_output():
 
     # ...but each file keeps its own distinct track gain/peak.
     assert track_gain_1 == pytest.approx(1.987654)
-    assert track_peak_1 == pytest.approx(0.123456)
+    assert track_peak_1 == pytest.approx(0.456789)
 
     assert track_gain_2 == pytest.approx(-1.987654)
     assert track_peak_2 == pytest.approx(0.987654)
