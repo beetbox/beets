@@ -13,6 +13,7 @@ from beets import config, library, ui
 from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase, IOMixin
 
+
 class InputMethodsTest(IOMixin, unittest.TestCase):
     def _print_helper(self, s):
         print(s)
