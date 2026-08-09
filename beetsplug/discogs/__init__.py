@@ -294,7 +294,10 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         """Search Discogs releases and return raw result mappings with IDs."""
         results = self.discogs_client.search(params.query, **params.filters)
         results.per_page = params.limit
-        return [r.data for r in results.page(1)]
+        try:
+            return [r.data for r in results.page(1)]
+        except json.JSONDecodeError:
+            return [r.data for r in results.page(1)]
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:
