@@ -50,6 +50,8 @@ Bug fixes
   relevance order and truncated to ``search_limit``. For artists with more
   releases than that window, the track being imported was never among the
   candidates offered.
+- :doc:`reference/cli`: The ``beet list`` query reference now uses clearer link
+  text in the generated man page. :bug:`3203`
 
 ..
     For plugin developers
