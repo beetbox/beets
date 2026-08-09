@@ -134,10 +134,9 @@ class LibModel(dbcore.Model["Library"]):
         return sort_cls(field, is_ascending, case_insensitive)
 
     @classmethod
-    def field_query(
+    def fixup_query_params(
         cls, field: str, pattern: str, query_cls: FieldQueryType
-    ) -> FieldQuery:
-        """Get a `FieldQuery` for the given field on this model."""
+    ) -> tuple[str, str, bool]:
         field = maybe_replace_legacy_field(field, cls is Album)
 
         fast = field in cls.all_db_fields
@@ -158,7 +157,24 @@ class LibModel(dbcore.Model["Library"]):
             # Using an explicit table name resolves this.
             field = f"{cls._table}.{field}"
 
-        return query_cls(field, pattern, fast)
+        return (field, pattern, fast)
+
+    @classmethod
+    def field_query(
+        cls, field: str, pattern: str, query_cls: FieldQueryType
+    ) -> FieldQuery:
+        return query_cls(*cls.fixup_query_params(field, pattern, query_cls))
+
+    @classmethod
+    def regexp_replace_query(
+        cls, field: str, pattern: str, replacements: util.Replacements
+    ) -> FieldQuery:
+        field, pattern, fast = cls.fixup_query_params(
+            field, pattern, dbcore.query.RegexpReplaceQuery
+        )
+        return dbcore.query.RegexpReplaceQuery(
+            field, pattern, replacements, fast
+        )
 
     @classmethod
     def any_field_query(
@@ -177,11 +193,16 @@ class LibModel(dbcore.Model["Library"]):
             [cls.field_query(f, pattern, query_cls) for f in fields]
         )
 
-    def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
+    def duplicates_query(
+        self, fields: list[str], replacements: util.Replacements | None = None
+    ) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
+
         return dbcore.AndQuery(
             [
-                self.field_query(f, self.get(f), dbcore.MatchQuery)
+                self.regexp_replace_query(f, self.get(f), replacements)
+                if isinstance(self.get(f), str) and replacements
+                else self.field_query(f, self.get(f), dbcore.MatchQuery)
                 for f in fields
             ]
         )
@@ -814,11 +835,13 @@ class Item(LibModel):
             "has_cover_art": Item.has_cover_art,
         }
 
-    def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
+    def duplicates_query(
+        self, fields: list[str], replacements: util.Replacements | None = None
+    ) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
-        return super().duplicates_query(fields) & dbcore.query.NoneQuery(
-            "album_id"
-        )
+        return super().duplicates_query(
+            fields, replacements
+        ) & dbcore.query.NoneQuery("album_id")
 
     @classmethod
     def from_path(cls, path: util.PathLike) -> Self:
@@ -1623,7 +1646,9 @@ class DefaultTemplateFunctions:
         # Raw duplicate queries must stay separate even when paths normalize
         # to the same value. Track queries share the entire album scope.
         query_identity = (
-            db_item.duplicates_query(keys_list) if query is None else None
+            db_item.duplicates_query(keys_list, lib.replacements)
+            if query is None
+            else None
         )
         groupkey = (name, keys, disam, scope_id, query_identity, key_values)
         if (group := lib._group_memotable.get(groupkey)) is None:
