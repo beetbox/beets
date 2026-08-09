@@ -72,6 +72,7 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
         )
         assert items == ["1", "3"]
 
+
 class ParentalDirCreation(IOMixin, BeetsTestCase):
     def test_memory_path_skips_creation_prompt(self):
         ui._ensure_db_directory_exists(Path(":memory:"))
@@ -97,6 +98,7 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
         with pytest.raises(UserError):
             ui._open_library(test_config)
         assert not non_exist_path_parent.exists()
+
 
 class DatabaseErrorTest(BeetsTestCase):
     """Test database error handling with improved error messages."""
