@@ -1,0 +1,40 @@
+name: Close stale issues and PRs
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ github.token }}
+          days-before-close: 7
+          stale-issue-label: stale
+          stale-pr-label: stale
+          only-issue-labels: needinfo
+          days-before-issue-stale: 60
+          stale-issue-message: >
+            Is this still relevant? If so, what is blocking it?
+            Is there anything you can do to help move it forward?
+
+
+            This issue has been automatically marked as stale because it has not had
+            recent activity. It will be closed if no further activity occurs. Thank you
+            for your contributions.
+          days-before-pr-stale: 120
+          stale-pr-message: >
+            Is this still relevant? If so, what is blocking it?
+            Is there anything you can do to help move it forward?
+
+
+            This pull request has been automatically marked as stale because it has not had
+            recent activity. It will be closed if no further activity occurs. Thank you
+            for your contributions.
