@@ -9,10 +9,9 @@ from unittest import mock
 
 import pytest
 
-from beets import config, ui
+from beets import config, library, ui
 from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase, IOMixin
-
 
 class InputMethodsTest(IOMixin, unittest.TestCase):
     def _print_helper(self, s):
@@ -72,7 +71,6 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
             "Prompt", full_items, self._print_helper
         )
         assert items == ["1", "3"]
-
 
 class ParentalDirCreation(IOMixin, BeetsTestCase):
     def test_memory_path_skips_creation_prompt(self):
