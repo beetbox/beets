@@ -700,6 +700,11 @@ class MusicBrainzAPI(RequestHandler):
         """Retrieve a work by its MusicBrainz ID."""
         return self._lookup("work", id_, **kwargs)
 
+    def get_artist(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> Artist:
+        """Retrieve an artist by its MusicBrainz ID."""
+        kwargs.setdefault("includes", ["aliases"])
+        return self._lookup("artist", id_, **kwargs)
+
     @require_one_of("artist", "collection", "release", "work")
     def browse_recordings(
         self, **kwargs: Unpack[BrowseRecordingsKwargs]
