@@ -13,8 +13,6 @@ from beetsplug.fromfilename import FilenameMatch, FromFilenamePlugin
 class Session:
     """Mock session, not used by the plugin."""
 
-    pass
-
 
 def mock_item(**kwargs):
     """Mock item with blank defaults."""
@@ -738,20 +736,22 @@ class TestFromFilename(PluginMixin):
     def test_singleton_flag_import(self):
         """If the import task is a singleton, assert that
         the plugin does not guess from the folder."""
-        return
+        raise NotImplementedError
 
     def test_group_album_flag_import(self):
         """If the group albums flag is thrown, assert
         that the plugin does not guess from the folder."""
-        return
+        raise NotImplementedError
 
     def test_import_split_by_group(self):
         """Asser that an initial run without group by album, and an inaccurate
         album guess, results in a run omitting it with the group album flag."""
-        return
+        raise NotImplementedError
 
     def test_config_sanity_check(self):
         """Assert that the sanity check can be disabled in the config."""
+        raise NotImplementedError
 
     def test_sanity_check_no_album(self):
         """Assert that sanity check can function with no album match."""
+        raise NotImplementedError
