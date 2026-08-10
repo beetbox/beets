@@ -123,6 +123,8 @@ class DatabaseErrorTest(BeetsTestCase):
             assert "directory" in error_message.lower()
             assert "writable" in error_message.lower()
             assert "permissions" in error_message.lower()
+            assert isinstance(cm.value.__cause__, sqlite3.OperationalError)
+            assert "unable to open" in str(cm.value.__cause__).lower()
 
     def test_database_error_fallback(self):
         """Test fallback error message for other database errors."""
@@ -141,3 +143,5 @@ class DatabaseErrorTest(BeetsTestCase):
             assert "could not be opened" in error_message
             assert "disk I/O error" in error_message
             assert "permissions" not in error_message.lower()
+            assert isinstance(cm.value.__cause__, sqlite3.OperationalError)
+            assert "disk I/O error" in str(cm.value.__cause__)
