@@ -24,8 +24,6 @@ class Event:
     and communicate with the scheduler.
     """
 
-    pass
-
 
 class WaitableEvent(Event):
     """A waitable event is one encapsulating an action that can be
@@ -45,7 +43,6 @@ class WaitableEvent(Event):
         """Called when an associated file descriptor becomes ready
         (i.e., is returned from a select() call).
         """
-        pass
 
 
 class ValueEvent(Event):
@@ -455,8 +452,7 @@ class Connection:
             out = self._buf[:size]
             self._buf = self._buf[size:]
             return ValueEvent(out)
-        else:
-            return ReceiveEvent(self, size)
+        return ReceiveEvent(self, size)
 
     def send(self, data):
         """Sends data on the socket, returning the number of bytes
@@ -541,8 +537,7 @@ class SendEvent(WaitableEvent):
     def fire(self):
         if self.sendall:
             return self.conn.sock.sendall(self.data)
-        else:
-            return self.conn.sock.send(self.data)
+        return self.conn.sock.send(self.data)
 
 
 # Public interface for threads; each returns an event object that
@@ -595,8 +590,7 @@ def read(fd, bufsize=None):
 
         return DelegationEvent(reader())
 
-    else:
-        return ReadEvent(fd, bufsize)
+    return ReadEvent(fd, bufsize)
 
 
 def write(fd, data):

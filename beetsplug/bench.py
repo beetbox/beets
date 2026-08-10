@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Some simple performance benchmarks for beets."""
 
 import cProfile
@@ -20,7 +6,6 @@ import timeit
 from beets import importer, plugins, ui
 from beets.autotag import tag_album
 from beets.plugins import BeetsPlugin
-from beets.util.functemplate import Template
 from beets.util.pathformats import PF_KEY_DEFAULT
 from beetsplug._utils import vfs
 
@@ -31,10 +16,7 @@ def aunique_benchmark(lib, prof):
 
     # Measure path generation performance with %aunique{} included.
     lib.path_formats = [
-        (
-            PF_KEY_DEFAULT,
-            Template("$albumartist/$album%aunique{}/$track $title"),
-        )
+        (PF_KEY_DEFAULT, "$albumartist/$album%aunique{}/$track $title")
     ]
     if prof:
         cProfile.runctx(
@@ -49,7 +31,7 @@ def aunique_benchmark(lib, prof):
 
     # And with %aunique replaced with a "cheap" no-op function.
     lib.path_formats = [
-        (PF_KEY_DEFAULT, Template("$albumartist/$album%lower{}/$track $title"))
+        (PF_KEY_DEFAULT, "$albumartist/$album%lower{}/$track $title")
     ]
     if prof:
         cProfile.runctx(

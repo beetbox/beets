@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2020, David Swarbrick.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for image resizing based on filesize."""
 
 import os
@@ -20,32 +6,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 from beets.test import _common
+from beets.test.fixtures import DummyIMBackend
 from beets.test.helper import BeetsTestCase, CleanupModulesMixin
-from beets.util import command_output, syspath
+from beets.util import command_output
 from beets.util.artresizer import IMBackend, PILBackend
-
-
-class DummyIMBackend(IMBackend):
-    """An `IMBackend` which pretends that ImageMagick is available.
-
-    The version is sufficiently recent to support image comparison.
-    """
-
-    def __init__(self):
-        """Init a dummy backend class for mocked ImageMagick tests."""
-        self.version = (7, 0, 0)
-        self.legacy = False
-        self.convert_cmd = ["magick"]
-        self.identify_cmd = ["magick", "identify"]
-        self.compare_cmd = ["magick", "compare"]
-
-
-class DummyPILBackend(PILBackend):
-    """An `PILBackend` which pretends that PIL is available."""
-
-    def __init__(self):
-        """Init a dummy backend class for mocked PIL tests."""
-        pass
 
 
 class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
@@ -53,8 +17,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
 
     modules = (IMBackend.__module__,)
 
-    IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
-    IMG_225x225_SIZE = os.stat(syspath(IMG_225x225)).st_size
+    IMG_225x225 = _common.RSRC / "abbey.jpg"
 
     def _test_img_resize(self, backend):
         """Test resizing based on file size, given a resize_func."""
@@ -70,14 +33,11 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             225,
             self.IMG_225x225,
             quality=95,
-            max_filesize=0.9 * os.stat(syspath(im_95_qual)).st_size,
+            max_filesize=0.9 * os.stat(im_95_qual).st_size,
         )
         assert Path(os.fsdecode(im_a)).exists()
         # target size was achieved
-        assert (
-            os.stat(syspath(im_a)).st_size
-            < os.stat(syspath(im_95_qual)).st_size
-        )
+        assert os.stat(im_a).st_size < os.stat(im_95_qual).st_size
 
         # Attempt with lower initial quality
         im_75_qual = backend.resize(
@@ -89,14 +49,11 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             225,
             self.IMG_225x225,
             quality=95,
-            max_filesize=0.9 * os.stat(syspath(im_75_qual)).st_size,
+            max_filesize=0.9 * os.stat(im_75_qual).st_size,
         )
         assert Path(os.fsdecode(im_b)).exists()
         # Check high (initial) quality still gives a smaller filesize
-        assert (
-            os.stat(syspath(im_b)).st_size
-            < os.stat(syspath(im_75_qual)).st_size
-        )
+        assert os.stat(im_b).st_size < os.stat(im_75_qual).st_size
 
     @unittest.skipUnless(PILBackend.available(), "PIL not available")
     def test_pil_file_resize(self):
@@ -130,12 +87,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         """
         im = IMBackend()
         path = im.deinterlace(self.IMG_225x225)
-        cmd = [
-            *im.identify_cmd,
-            "-format",
-            "%[interlace]",
-            syspath(path, prefix=False),
-        ]
+        cmd = [*im.identify_cmd, "-format", "%[interlace]", os.fsdecode(path)]
         out = command_output(cmd).stdout
         assert out == b"None"
 

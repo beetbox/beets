@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Fabrice Laporte.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Provides the %bucket{} function for path formatting."""
 
 import re
@@ -216,14 +202,13 @@ class BucketPlugin(plugins.BeetsPlugin):
             if ys["from"] <= int(year) <= ys["to"]:
                 if "str" in ys:
                     return ys["str"]
-                else:
-                    return format_span(
-                        self.ys_repr_mode["fmt"],
-                        ys["from"],
-                        ys["to"],
-                        self.ys_repr_mode["fromnchars"],
-                        self.ys_repr_mode["tonchars"],
-                    )
+                return format_span(
+                    self.ys_repr_mode["fmt"],
+                    ys["from"],
+                    ys["to"],
+                    self.ys_repr_mode["fromnchars"],
+                    self.ys_repr_mode["tonchars"],
+                )
         return year
 
     def find_bucket_alpha(self, s):

@@ -1,21 +1,7 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
 from __future__ import annotations
 
 import fnmatch
-import os.path
-import re
+import os
 import shlex
 import sys
 from typing import TYPE_CHECKING
@@ -46,20 +32,15 @@ class ConvertPluginHelper(IOMixin, PluginTestHelper):
 
     def setup_beets(self):
         super().setup_beets()
-        self.convert_dest = self.temp_dir_path / "convert_dest"
+        self.convert_dest = self.temp_path / "convert_dest"
         self.config["convert"] = {"dest": str(self.convert_dest)}
 
     def tagged_copy_cmd(self, tag):
         """Return a conversion command that copies files and appends
         `tag` to the copy.
         """
-        if re.search("[^a-zA-Z0-9]", tag):
-            raise ValueError(
-                f"tag '{tag}' must only contain letters and digits"
-            )
-
         # A Python script that copies the file and appends a tag.
-        stub = os.path.join(_common.RSRC, b"convert_stub.py").decode("utf-8")
+        stub = str(_common.RSRC / "convert_stub.py")
         return f"{shlex.quote(sys.executable)} {shlex.quote(stub)} $source $dest {tag}"
 
     def file_endswith(self, path: Path, tag: str):
@@ -170,23 +151,37 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
 
     def test_embed_album_art(self):
         self.config["convert"]["embed"] = True
-        image_path = os.path.join(_common.RSRC, b"image-2x3.jpg")
+        image_path = _common.RSRC / "image-2x3.jpg"
         self.album.artpath = image_path
         self.album.store()
-        with open(os.path.join(image_path), "rb") as f:
-            image_data = f.read()
+        image_data = image_path.read_bytes()
 
         self.io.addinput("y")
         self.run_convert()
         mediafile = MediaFile(self.converted_mp3)
         assert mediafile.images[0].data == image_data
 
+    def test_copy_album_art_missing_source(self, caplog):
+        # A missing/stale art source should be skipped instead of crashing
+        # the conversion (see #4692).
+        self.config["convert"]["copy_album_art"] = True
+        self.album.artpath = _common.RSRC / "nonexistent.jpg"
+        self.album.store()
+
+        with caplog.at_level("INFO", logger="beets.convert"):
+            self.run_command("convert", "-a", "--yes")
+
+        assert any(
+            "source file not found" in message for message in caplog.messages
+        )
+        assert self.file_endswith(self.converted_mp3, "mp3")
+
     def test_skip_existing(self):
         converted = self.converted_mp3
-        self.touch(converted, content="XXX")
+        util.mkdirall(converted)
+        converted.write_text("XXX")
         self.run_convert("--yes")
-        with open(converted) as f:
-            assert f.read() == "XXX"
+        assert converted.read_text() == "XXX"
 
     def test_pretend(self):
         self.run_convert("--pretend")
@@ -195,7 +190,7 @@ class TestConvertCli(ConvertPluginHelper, ConvertCommand):
     def test_empty_query(self, caplog):
         with caplog.at_level("INFO", logger="beets.convert"):
             self.run_convert("An impossible query")
-        assert caplog.messages[0] == "convert: Empty query result."
+        assert caplog.messages[0] == "Empty query result."
 
     @pytest.mark.parametrize(
         "max_bitrate,convert_format,args,should_transcode",

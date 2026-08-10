@@ -1,16 +1,3 @@
-# This file is part of beets.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Exports data from beets"""
 
 import codecs
@@ -128,8 +115,7 @@ class ExportPlugin(BeetsPlugin):
         format_options = self.config[file_format]["formatting"].get(dict)
 
         export_format = ExportFormat.factory(
-            file_type=file_format,
-            **{"file_path": file_path, "file_mode": file_mode},
+            file_type=file_format, file_path=file_path, file_mode=file_mode
         )
 
         if opts.library or opts.album:
@@ -180,12 +166,11 @@ class ExportFormat:
     def factory(cls, file_type, **kwargs):
         if file_type in ["json", "jsonlines"]:
             return JsonFormat(**kwargs)
-        elif file_type == "csv":
+        if file_type == "csv":
             return CSVFormat(**kwargs)
-        elif file_type == "xml":
+        if file_type == "xml":
             return XMLFormat(**kwargs)
-        else:
-            raise NotImplementedError()
+        raise NotImplementedError()
 
     def export(self, data, **kwargs):
         raise NotImplementedError()

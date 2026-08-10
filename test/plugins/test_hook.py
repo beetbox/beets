@@ -1,22 +1,8 @@
-# This file is part of beets.
-# Copyright 2015, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
@@ -49,7 +35,7 @@ class TestHookLogs(HookTestCase):
         with caplog.at_level("DEBUG"):
             self._configure_hook("")
 
-        assert 'hook: invalid command ""' in caplog.messages
+        assert 'invalid command ""' in caplog.messages
 
     # FIXME: fails on windows
     @pytest.mark.skipif(sys.platform == "win32", reason="win32")
@@ -57,15 +43,12 @@ class TestHookLogs(HookTestCase):
         with caplog.at_level("DEBUG"):
             self._configure_hook('sh -c "exit 1"')
 
-        assert (
-            f"hook: hook for {self.HOOK} exited with status 1"
-            in caplog.messages
-        )
+        assert f"hook for {self.HOOK} exited with status 1" in caplog.messages
 
     def test_hook_non_existent_command(self, caplog: pytest.LogCaptureFixture):
         with caplog.at_level("DEBUG"):
             self._configure_hook("non-existent-command")
-        assert f"hook: hook for {self.HOOK} failed: " in caplog.text
+        assert f"hook for {self.HOOK} failed: " in caplog.text
         # The error message is different for each OS. Unfortunately the text is
         # different in each case, where the only shared text is the string
         # 'file' and substring 'Err'
@@ -78,7 +61,7 @@ class TestHookCommand(HookTestCase):
 
     @pytest.fixture(autouse=True)
     def setUp(self):
-        self.paths = [str(self.temp_dir_path / e) for e in self.EVENTS]
+        self.paths = [str(self.temp_path / e) for e in self.EVENTS]
 
     def _test_command(
         self,
@@ -109,7 +92,7 @@ class TestHookCommand(HookTestCase):
                     plugins.send(event, path=path)
                 else:
                     plugins.send(event)
-                assert os.path.isfile(path)
+                assert Path(os.fsdecode(path)).is_file()
 
     @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_no_arguments(self):

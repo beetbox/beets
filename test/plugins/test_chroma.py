@@ -1,17 +1,3 @@
-# This file is part of beets.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,8 +5,9 @@ import pytest
 from beets import metadata_plugins
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
-from beets.test.helper import ImportTestCase, IOMixin, PluginMixin
-from beetsplug import chroma
+from beets.test.helper import ImportHelper, IOMixin, PluginMixin
+
+chroma = pytest.importorskip("beetsplug.chroma", exc_type=ImportError)
 
 TEST_TITLE_1 = "TEST_TITLE_1"
 TEST_TITLE_2 = "TEST_TITLE_2"
@@ -30,7 +17,7 @@ FINGERPRINT_2 = "FP_2"
 
 
 @patch("acoustid.compare_fingerprints")
-class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
+class TestChroma(IOMixin, PluginMixin, ImportHelper):
     plugin = "chroma"
 
     def setup_lib(self):
@@ -49,9 +36,9 @@ class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
     def run_search(self, fp):
         return self.run_with_output("chromasearch", "-s", fp, "-f", "$title")
 
-    def line_count(self, str):
+    def line_count(self, str_):
         return len(
-            [line for line in str.split("\n") if line.strip(" \n") != ""]
+            [line for line in str_.split("\n") if line.strip(" \n") != ""]
         )
 
     def compare_fingerprints(self, *args, **kwargs):
@@ -84,18 +71,12 @@ class ChromaTest(IOMixin, PluginMixin, ImportTestCase):
         assert TEST_TITLE_1 in output.split("\n")[0]
 
 
-def _seed_acoustid_match(
-    item_path: bytes = b"/fake/path.mp3",
-    recording_ids: list[str] | None = None,
-    release_ids: list[str] | None = None,
-) -> Item:
+def _seed_acoustid_match(item_path: bytes = b"/fake/path.mp3") -> Item:
     """Seed the chroma module-level match cache as if acoustid had run."""
-    if recording_ids is None:
-        recording_ids = ["rec-id-1"]
-    if release_ids is None:
-        release_ids = ["rel-id-1", "rel-id-1", "rel-id-1"]
-
-    chroma._matches[item_path] = (recording_ids, release_ids)
+    chroma._matches[item_path] = (
+        ["rec-id-1"],
+        ["rel-id-1", "rel-id-1", "rel-id-1"],
+    )
     return Item(path=item_path)
 
 

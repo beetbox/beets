@@ -1,12 +1,12 @@
-import os
-
+import mediafile
 from mediafile import MediaFile
 
 from beets import library
+from beets.plugins import BeetsPlugin
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.update import update_items
-from beets.util import MoveOperation, remove, syspath
+from beets.util import MoveOperation, remove
 
 
 class UpdateTest(IOMixin, BeetsTestCase):
@@ -14,8 +14,8 @@ class UpdateTest(IOMixin, BeetsTestCase):
         super().setUp()
 
         # Copy a file into the library.
-        item_path = os.path.join(_common.RSRC, b"full.mp3")
-        item_path_two = os.path.join(_common.RSRC, b"full.flac")
+        item_path = _common.RSRC / "full.mp3"
+        item_path_two = _common.RSRC / "full.flac"
         self.i = library.Item.from_path(item_path)
         self.i2 = library.Item.from_path(item_path_two)
         self.lib.add(self.i)
@@ -25,11 +25,11 @@ class UpdateTest(IOMixin, BeetsTestCase):
         self.album = self.lib.add_album([self.i, self.i2])
 
         # Album art.
-        artfile = os.path.join(self.temp_dir, b"testart.jpg")
-        _common.touch(artfile)
+        artfile = self.temp_path / "testart.jpg"
+        artfile.touch()
         self.album.set_art(artfile)
         self.album.store()
-        remove(artfile)
+        artfile.unlink()
 
     def _update(
         self,
@@ -77,15 +77,38 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert not art_filepath.exists()
 
     def test_modified_metadata_detected(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.save()
         self._update()
         item = self.lib.items().get()
         assert item.title == "differentTitle"
 
+    def test_modified_plugin_media_field_detected(self):
+        plugin = BeetsPlugin()
+        plugin.add_media_field(
+            "customtag",
+            mediafile.MediaField(
+                mediafile.MP3DescStorageStyle("customtag"),
+                mediafile.StorageStyle("customtag"),
+            ),
+        )
+
+        try:
+            mf = MediaFile(self.i.filepath)
+            mf.customtag = "F#"
+            mf.save()
+
+            self._update()
+
+            item = self.lib.get_item(self.i.id)
+            assert item["customtag"] == "F#"
+        finally:
+            delattr(mediafile.MediaFile, "customtag")
+            library.Item._media_fields.remove("customtag")
+
     def test_modified_metadata_moved(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.save()
         self._update(move=True)
@@ -93,7 +116,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert b"differentTitle" in item.path
 
     def test_modified_metadata_not_moved(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.save()
         self._update(move=False)
@@ -101,7 +124,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert b"differentTitle" not in item.path
 
     def test_selective_modified_metadata_moved(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.genres = ["differentGenre"]
         mf.save()
@@ -111,7 +134,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert item.genres != ["differentGenre"]
 
     def test_selective_modified_metadata_not_moved(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.genres = ["differentGenre"]
         mf.save()
@@ -121,7 +144,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert item.genres != ["differentGenre"]
 
     def test_modified_album_metadata_moved(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.album = "differentAlbum"
         mf.save()
         self._update(move=True)
@@ -130,7 +153,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
 
     def test_modified_album_metadata_art_moved(self):
         artpath = self.album.artpath
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.album = "differentAlbum"
         mf.save()
         self._update(move=True)
@@ -139,7 +162,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert album.artpath is not None
 
     def test_selective_modified_album_metadata_moved(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.album = "differentAlbum"
         mf.genres = ["differentGenre"]
         mf.save()
@@ -149,7 +172,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert item.genres != ["differentGenre"]
 
     def test_selective_modified_album_metadata_not_moved(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.album = "differentAlbum"
         mf.genres = ["differentGenre"]
         mf.save()
@@ -159,12 +182,12 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert item.genres == ["differentGenre"]
 
     def test_mtime_match_skips_update(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.save()
 
         # Make in-memory mtime match on-disk mtime.
-        self.i.mtime = os.path.getmtime(syspath(self.i.path))
+        self.i.mtime = self.i.filepath.stat().st_mtime
         self.i.store()
 
         self._update(reset_mtime=False)
@@ -197,7 +220,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert album.albumtypes == correct_albumtypes
 
     def test_modified_metadata_excluded(self):
-        mf = MediaFile(syspath(self.i.path))
+        mf = MediaFile(self.i.filepath)
         mf.lyrics = "new lyrics"
         mf.save()
         self._update(exclude_fields=["lyrics"])

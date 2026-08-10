@@ -12,22 +12,13 @@ from beetsplug._utils.playcount import (
 LOGGER_NAME = "beets.test_playcount"
 
 
-@pytest.fixture
-def helper(request):
-    helper = TestHelper()
-    helper.setup_beets()
+class TestPlayCount(TestHelper):
+    @pytest.fixture
+    def log(self):
+        log = logging.getLogger(LOGGER_NAME)
+        log.set_global_level(logging.DEBUG)
+        return log
 
-    request.instance.lib = helper.lib
-    request.instance.log = logging.getLogger(LOGGER_NAME)
-    request.instance.log.set_global_level(logging.DEBUG)
-
-    yield helper
-
-    helper.teardown_beets()
-
-
-@pytest.mark.usefixtures("helper")
-class TestPlayCount:
     def track(self, **overrides):
         return {
             "mbid": "",
@@ -96,19 +87,17 @@ class TestPlayCount:
         ],
     )
     def test_get_items_matches_supported_query_paths(
-        self, item_kwargs, track_kwargs
+        self, log, item_kwargs, track_kwargs
     ):
         item = self.add_item(**item_kwargs)
         matched_ids = [
             matched.id
-            for matched in get_items(
-                self.lib, self.track(**track_kwargs), self.log
-            )
+            for matched in get_items(self.lib, self.track(**track_kwargs), log)
         ]
 
         assert matched_ids == [item.id]
 
-    def test_process_track_updates_every_matching_song(self):
+    def test_process_track_updates_every_matching_song(self, log):
         first = self.add_item(
             title="Song", artist="Artist", album="First Album", play_count=1
         )
@@ -117,14 +106,14 @@ class TestPlayCount:
         )
 
         assert (
-            process_track(self.lib, self.track(playcount=0), self.log, "lastfm")
+            process_track(self.lib, self.track(playcount=0), log, "lastfm")
             is True
         )
 
         assert self.get_playcount(first.id) == 0
         assert self.get_playcount(second.id) == 0
 
-    def test_process_track_returns_false_when_nothing_matches(self):
+    def test_process_track_returns_false_when_nothing_matches(self, log):
         assert (
             process_track(
                 self.lib,
@@ -134,22 +123,19 @@ class TestPlayCount:
                     album="Missing Album",
                     playcount=4,
                 ),
-                self.log,
+                log,
                 "lastfm",
             )
             is False
         )
 
-    def test_process_track_updates_requested_source_field(self):
+    def test_process_track_updates_requested_source_field(self, log):
         new_count = 6
         item = self.add_item(play_count=1, source="lastfm")
 
         assert (
             process_track(
-                self.lib,
-                self.track(playcount=new_count),
-                self.log,
-                "listenbrainz",
+                self.lib, self.track(playcount=new_count), log, "listenbrainz"
             )
             is True
         )
@@ -179,6 +165,7 @@ class TestPlayCount:
     )
     def test_update_play_counts_counts_and_logs_summary(
         self,
+        log,
         tracks,
         expected_counts,
         expected_summary,
@@ -192,7 +179,7 @@ class TestPlayCount:
                 update_play_counts(
                     self.lib,
                     [self.track(**track) for track in tracks],
-                    self.log,
+                    log,
                     "lastfm",
                 )
                 == expected_counts

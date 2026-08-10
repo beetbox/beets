@@ -1,22 +1,6 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 import importlib
 import itertools
 import logging
-import os
 import pkgutil
 import sys
 from typing import ClassVar
@@ -27,14 +11,10 @@ from mediafile import MediaFile
 
 from beets import config, plugins, ui
 from beets.dbcore import types
-from beets.importer import (
-    Action,
-    ArchiveImportTask,
-    SentinelImportTask,
-    SingletonImportTask,
-)
+from beets.importer import Action, SingletonImportTask
 from beets.library import Item
 from beets.test.helper import (
+    RUNNING_IN_CI,
     AutotagStub,
     ImportHelper,
     IOMixin,
@@ -42,7 +22,7 @@ from beets.test.helper import (
     PluginTestHelper,
     TerminalImportMixin,
 )
-from beets.util import PromptChoice, displayable_path, syspath
+from beets.util import PromptChoice, displayable_path
 
 
 class TestPluginRegistration(IOMixin, PluginTestHelper):
@@ -86,7 +66,7 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
 
         item.write()
 
-        assert MediaFile(syspath(item.path)).artist == "YYY"
+        assert MediaFile(item.filepath).artist == "YYY"
 
     def test_multi_value_flex_field_type(self):
         item = Item(path="apath", artist="aaa")
@@ -97,21 +77,13 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
         assert out == "one; two; three\n"
 
 
-class PytestImportHelper(ImportHelper, PluginTestHelper):
-    @pytest.fixture(autouse=True)
-    def setup_import_helper(self, setup):
-        self.import_media = []
-        self.lib.path_formats = [
-            ("default", os.path.join("$artist", "$album", "$title")),
-            ("singleton:true", os.path.join("singletons", "$title")),
-            ("comp:true", os.path.join("compilations", "$album", "$title")),
-        ]
-
-        #
+class PluginImportHelper(PluginMixin, ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(2)
 
 
-class TestEvents(PytestImportHelper):
+class TestEvents(PluginImportHelper):
     def test_import_task_created(self, caplog):
         self.importer = self.setup_importer(pretend=True)
 
@@ -128,7 +100,7 @@ class TestEvents(PytestImportHelper):
             if not msg.startswith("Sending event:")
         ]
         assert logs == [
-            f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
+            f"Album: {self.import_path / 'album'}",
             f"  {displayable_path(self.import_media[0].path)}",
             f"  {displayable_path(self.import_media[1].path)}",
         ]
@@ -143,18 +115,9 @@ class TestEvents(PytestImportHelper):
                 )
 
             def import_task_created_event(self, session, task):
-                if (
-                    isinstance(task, SingletonImportTask)
-                    or isinstance(task, SentinelImportTask)
-                    or isinstance(task, ArchiveImportTask)
-                ):
-                    return task
-
-                new_tasks = []
-                for item in task.items:
-                    new_tasks.append(SingletonImportTask(task.toppath, item))
-
-                return new_tasks
+                return [
+                    SingletonImportTask(task.toppath, i) for i in task.items
+                ]
 
         to_singleton_plugin = ToSingletonPlugin
         self.register_plugin(to_singleton_plugin)
@@ -281,7 +244,7 @@ class TestListeners(PluginTestHelper):
         plugins.send("event9", foo=5)
 
 
-class TestPromptChoices(TerminalImportMixin, PytestImportHelper):
+class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
     @pytest.fixture(autouse=True)
     def setup_prompt_choice(self, io):
         self.setup_importer()
@@ -532,7 +495,7 @@ class TestImportPlugin(PluginMixin):
         self.unload_plugins()
 
     @pytest.mark.skipif(
-        os.environ.get("GITHUB_ACTIONS") != "true",
+        not RUNNING_IN_CI,
         reason=(
             "Requires all dependencies to be installed, which we can't"
             " guarantee in the local environment."

@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2025, Stig Inge Lea Bjornsen.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 """Tests for the `importsource` plugin."""
 
 import os
@@ -20,18 +5,6 @@ import time
 
 from beets import importer, plugins
 from beets.test.helper import AutotagImportTestCase, IOMixin, PluginMixin
-from beets.util import syspath
-from beetsplug.importsource import ImportSourcePlugin
-
-_listeners = ImportSourcePlugin.listeners
-
-
-def preserve_plugin_listeners():
-    """Preserve the initial plugin listeners as they would otherwise be
-    deleted after the first setup / tear down cycle.
-    """
-    if not ImportSourcePlugin.listeners:
-        ImportSourcePlugin.listeners = _listeners
 
 
 class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
@@ -39,7 +12,6 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
     preload_plugin = False
 
     def setUp(self):
-        preserve_plugin_listeners()
         super().setUp()
         self.config[self.plugin]["suggest_removal"] = True
         self.load_plugins()
@@ -53,7 +25,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
     def interact(self, stdin: list[str]):
         for char in stdin:
             self.io.addinput(char)
-        self.run_command("remove", f"path:{syspath(self.item_to_remove.path)}")
+        self.run_command("remove", f"path:{self.item_to_remove.filepath}")
 
     def test_do_nothing(self):
         self.interact(["N"])
@@ -93,9 +65,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
         import_paths = self.prepare_album_for_import(
             2, album_path=test_album_path
         )
-        original_mtimes = {
-            path: os.stat(path).st_mtime for path in import_paths
-        }
+        original_mtimes = {p: p.stat().st_mtime for p in import_paths}
 
         # Small delay to detect timestamp changes
         time.sleep(0.1)
@@ -107,7 +77,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
 
         # Verify timestamps haven't changed
         for path, original_mtime in original_mtimes.items():
-            current_mtime = os.stat(path).st_mtime
+            current_mtime = path.stat().st_mtime
             assert current_mtime == original_mtime, (
                 f"Source file timestamp changed: {path}"
             )
@@ -118,7 +88,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
         mb_albumid = album.mb_albumid
 
         # Reimport from library
-        reimporter = self.setup_importer(import_dir=self.libdir)
+        reimporter = self.setup_importer(import_dir=self.lib_path)
         reimporter.add_choice(importer.Action.APPLY)
         reimporter.run()
 
@@ -135,9 +105,6 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
 
         class MockTask:
             skip = True
-
-            def imported_items(self):
-                return "whatever"
 
         plugin = plugins._instances[0]
         mock_task = MockTask()

@@ -11,6 +11,8 @@ from beets.util.id_extractors import extract_release_id
         ("spotify", "39WqpoPgZxygo6YQjehLJJ", "39WqpoPgZxygo6YQjehLJJ"),
         ("spotify", "blah blah", None),
         ("spotify", "https://open.spotify.com/album/39WqpoPgZxygo6YQjehLJJ", "39WqpoPgZxygo6YQjehLJJ"),
+        ("spotify", "spotify:album:39WqpoPgZxygo6YQjehLJJ", "39WqpoPgZxygo6YQjehLJJ"),
+        ("spotify", "spotify:track:39WqpoPgZxygo6YQjehLJJ", "39WqpoPgZxygo6YQjehLJJ"),
         ("deezer", "176356382", "176356382"),
         ("deezer", "blah blah", None),
         ("deezer", "https://www.deezer.com/album/176356382", "176356382"),

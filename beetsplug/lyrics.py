@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Fetches, embeds, and displays lyrics."""
 
 from __future__ import annotations
@@ -31,6 +17,7 @@ from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from confuse import Optional
 from unidecode import unidecode
 
 from beets import plugins, ui
@@ -41,7 +28,11 @@ from beets.library import Item, parse_query_string
 from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
-from ._utils.requests import HTTPNotFoundError, RequestHandler
+from ._utils.requests import (
+    HTTPNotFoundError,
+    RequestHandler,
+    TimeoutAndRetrySession,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
@@ -167,6 +158,10 @@ def slug(text: str) -> str:
 
 class LyricsRequestHandler(RequestHandler):
     _log: Logger
+
+    def create_session(self) -> TimeoutAndRetrySession:
+        """Return a rate-limited session for lyrics HTTP requests."""
+        return TimeoutAndRetrySession()
 
     def status_to_error(self, code: int) -> type[requests.HTTPError] | None:
         if err := super().status_to_error(code):
@@ -902,6 +897,42 @@ class Translator(LyricsRequestHandler):
         return lyrics
 
 
+class LRCMux(Backend):
+    """Fetch lyrics from the lrcmux API."""
+
+    DEFAULT_URL = "https://api.lrcmux.dev"
+
+    @cached_property
+    def url(self) -> str:
+        base = self.config["lrcmux"]["url"].get(str)
+        return f"{base.rstrip('/')}/get"
+
+    def fetch(
+        self, artist: str, title: str, album: str, length: int
+    ) -> Lyrics | None:
+        synced = self.config["synced"].get(bool)
+        sources = self.config["lrcmux"]["sources"].as_str_seq()
+
+        params: JSONDict = {
+            "artist": artist,
+            "title": title,
+            "duration": int(length),
+            "format": "lrc" if synced else "txt",
+            "level": "line" if synced else "none",
+        }
+        if album:
+            params["album"] = album
+        if sources:
+            params["sources"] = ",".join(sources)
+
+        full_url = self.format_url(self.url, params)
+        with suppress(HTTPNotFoundError):
+            if text := self.get_text(self.url, params=params).strip():
+                return Lyrics(text, self.__class__.name, full_url)
+
+        return None
+
+
 @dataclass
 class RestFiles:
     # The content for the base index.rst generated in ReST mode.
@@ -939,9 +970,9 @@ class RestFiles:
 
     @cached_property
     def artists_dir(self) -> Path:
-        dir = self.directory / "artists"
-        dir.mkdir(parents=True, exist_ok=True)
-        return dir
+        dir_ = self.directory / "artists"
+        dir_.mkdir(parents=True, exist_ok=True)
+        return dir_
 
     def write_indexes(self) -> None:
         """Write conf.py and index.rst files necessary for Sphinx
@@ -991,13 +1022,14 @@ class RestFiles:
 
 
 BACKEND_BY_NAME = {
-    b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
+    b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch, LRCMux]
 }
 
 
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "lyrics_url": types.STRING,
+        "lyrics_instrumental": types.BOOLEAN,
         "lyrics_backend": types.STRING,
         "lyrics_language": types.STRING,
         "lyrics_translation_language": types.STRING,
@@ -1039,11 +1071,13 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                     "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
                     "76V-uFL5jks5dNvcGCdarqFjDhP9c"
                 ),
+                "lrcmux": {"url": LRCMux.DEFAULT_URL, "sources": []},
                 "fallback": None,
                 "force": False,
                 "keep_synced": False,
                 "local": False,
                 "print": False,
+                "rest_directory": None,
                 "synced": False,
                 # Musixmatch and Tekstowo are disabled by default as they
                 # currently block requests with the beets user agent.
@@ -1076,7 +1110,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             "--write-rest",
             dest="rest_directory",
             action="store",
-            default=None,
+            default=self.config["rest_directory"].get(Optional(str)),
             metavar="dir",
             help="write lyrics to given directory as ReST files",
         )
@@ -1091,7 +1125,14 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             "--keep-synced",
             action="store_true",
             default=self.config["keep_synced"].get(),
-            help="re-download only unsynced lyrics",
+            help="skip items that already have synced lyrics",
+        )
+        cmd.parser.add_option(
+            "--no-keep-synced",
+            action="store_false",
+            dest="keep_synced",
+            default=self.config["keep_synced"].get(),
+            help="do not skip items that already have synced lyrics",
         )
         cmd.parser.add_option(
             "-l",
@@ -1114,7 +1155,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             if opts.rest_directory and (
                 items := [i for i in items if i.lyrics]
             ):
-                RestFiles(Path(opts.rest_directory)).write(items)
+                RestFiles(Path(opts.rest_directory).expanduser()).write(items)
 
         cmd.func = func
         return [cmd]
@@ -1170,9 +1211,15 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 )
                 return
 
-            for key in ("backend", "url", "language", "translation_language"):
+            for key in (
+                "backend",
+                "url",
+                "instrumental",
+                "language",
+                "translation_language",
+            ):
                 item_key = f"lyrics_{key}"
-                if value := getattr(new_lyrics, key):
+                if (value := getattr(new_lyrics, key)) is not None:
                     item[item_key] = value
                 elif item_key in item:
                     del item[item_key]

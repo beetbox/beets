@@ -1,23 +1,8 @@
-# This file is part of beets.
-# Copyright 2016, Bruno Cauet.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 # TODO: Tests in this fire are very bad. Stop using Mocks in this module.
+from __future__ import annotations
 
 import os
-from pathlib import Path
-from shutil import rmtree
-from tempfile import mkdtemp
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 import pytest
@@ -26,15 +11,24 @@ from beets import config
 from beets.dbcore.sort import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test._common import item
-from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
+from beets.test.helper import BeetsTestCase, IOMixin, PathsMixin, PluginTestCase
 from beets.ui import UserError
-from beets.util import CHAR_REPLACE, syspath
+from beets.util import CHAR_REPLACE
 from beetsplug.smartplaylist import SmartPlaylistPlugin
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _p = pytest.param
 
 
-class SmartPlaylistTest(BeetsTestCase):
+class PlaylistDirMixin(PathsMixin):
+    @property
+    def playlist_dir(self) -> Path:
+        return self.temp_path / "playlists"
+
+
+class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
     def test_build_queries(self):
         spl = SmartPlaylistPlugin()
         assert spl._matched_playlists == set()
@@ -174,7 +168,7 @@ class SmartPlaylistTest(BeetsTestCase):
         spl = SmartPlaylistPlugin()
 
         i = Mock(path=b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+        i.evaluate_template.side_effect = lambda pl, **__: os.fsdecode(
             pl
         ).replace("$title", "ta:ga:da")
 
@@ -188,22 +182,16 @@ class SmartPlaylistTest(BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        dir = mkdtemp()
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
+        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
+        spl.update_playlists(lib)
 
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        m3u_filepath = self.playlist_dir / "ta_ga_da-my_playlist_.m3u"
         assert m3u_filepath.exists()
         content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
 
         assert content == b"/tagada.mp3\n"
 
@@ -215,7 +203,7 @@ class SmartPlaylistTest(BeetsTestCase):
         type(i).title = PropertyMock(return_value="fake title")
         type(i).length = PropertyMock(return_value=300.123)
         type(i).path = PropertyMock(return_value=b"/tagada.mp3")
-        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+        i.evaluate_template.side_effect = lambda pl, **__: os.fsdecode(
             pl
         ).replace("$title", "ta:ga:da")
 
@@ -229,24 +217,18 @@ class SmartPlaylistTest(BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["prefix"] = "http://beets:8337/files"
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
+        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
+        spl.update_playlists(lib)
 
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        m3u_filepath = self.playlist_dir / "ta_ga_da-my_playlist_.m3u"
         assert m3u_filepath.exists()
         content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
 
         assert content == (
             b"#EXTM3U\n"
@@ -264,7 +246,7 @@ class SmartPlaylistTest(BeetsTestCase):
         type(i).path = PropertyMock(return_value=b"/tagada.mp3")
         a = {"id": 456, "genres": ["Rock", "Pop"]}
         i.__getitem__.side_effect = a.__getitem__
-        i.evaluate_template.side_effect = lambda pl, *_: os.fsdecode(
+        i.evaluate_template.side_effect = lambda pl, **__: os.fsdecode(
             pl
         ).replace("$title", "ta:ga:da")
 
@@ -278,24 +260,18 @@ class SmartPlaylistTest(BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        dir = mkdtemp()
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(dir)
+        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
         config["smartplaylist"]["fields"] = ["id", "genres"]
-        try:
-            spl.update_playlists(lib)
-        except Exception:
-            rmtree(syspath(dir))
-            raise
+        spl.update_playlists(lib)
 
         lib.items.assert_called_once_with(q, None)
         lib.albums.assert_called_once_with(a_q, None)
 
-        m3u_filepath = Path(dir, "ta_ga_da-my_playlist_.m3u")
+        m3u_filepath = self.playlist_dir / "ta_ga_da-my_playlist_.m3u"
         assert m3u_filepath.exists()
         content = m3u_filepath.read_bytes()
-        rmtree(syspath(dir))
 
         assert content == (
             b"#EXTM3U\n"
@@ -322,10 +298,6 @@ class SmartPlaylistTest(BeetsTestCase):
 
 
 class TestGetItemURI:
-    @pytest.fixture
-    def plugin_config(self):
-        return {}
-
     @pytest.fixture
     def plugin(self, config, plugin_config):
         plugin_config = {"prefix": "http://beets:8337/files", **plugin_config}
@@ -374,7 +346,7 @@ class TestGetItemURI:
         assert plugin.get_item_uri(item) == expected_uri
 
 
-class SmartPlaylistCLITest(IOMixin, PluginTestCase):
+class SmartPlaylistCLITest(PlaylistDirMixin, IOMixin, PluginTestCase):
     plugin = "smartplaylist"
 
     def setUp(self):
@@ -387,26 +359,27 @@ class SmartPlaylistCLITest(IOMixin, PluginTestCase):
                 {"name": "all.m3u", "query": ""},
             ]
         )
-        config["smartplaylist"]["playlist_dir"].set(str(self.temp_dir_path))
+        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
 
     def test_splupdate(self):
         with pytest.raises(UserError):
             self.run_with_output("splupdate", "tagada")
 
         self.run_with_output("splupdate", "my_playlist")
-        m3u_path = self.temp_dir_path / "my_playlist.m3u"
+        m3u_path = self.playlist_dir / "my_playlist.m3u"
         assert m3u_path.exists()
         assert m3u_path.read_bytes() == self.item.path + b"\n"
-        os.remove(syspath(m3u_path))
+        m3u_path.unlink()
 
         self.run_with_output("splupdate", "my_playlist.m3u")
         assert m3u_path.read_bytes() == self.item.path + b"\n"
-        os.remove(syspath(m3u_path))
+        m3u_path.unlink()
 
         self.run_with_output("splupdate")
-        for name in (b"my_playlist.m3u", b"all.m3u"):
-            with open(os.path.join(self.temp_dir, name), "rb") as f:
-                assert f.read() == self.item.path + b"\n"
+        for name in ("my_playlist.m3u", "all.m3u"):
+            assert (
+                self.playlist_dir / name
+            ).read_bytes() == self.item.path + b"\n"
 
     def test_splupdate_unknown_playlist_error_is_sorted_and_quoted(self):
         config["smartplaylist"]["playlists"].set(

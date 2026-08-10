@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2019, Carl Suster
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Test the beets.export utilities associated with the export plugin."""
 
 import json
@@ -31,10 +17,9 @@ class ExportPluginTest(IOMixin, PluginTestCase):
 
     def execute_command(self, format_type, artist):
         query = ",".join(self.test_values.keys())
-        out = self.run_with_output(
+        return self.run_with_output(
             "export", "-f", format_type, "-i", query, artist
         )
-        return out
 
     def create_item(self):
         (item,) = self.add_item_fixtures()

@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Pieter Mulder.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Calculate acoustic information and submit to AcousticBrainz."""
 
 import errno
@@ -97,7 +83,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     "AcousticBrainz server base URL must start "
                     "with an HTTP scheme"
                 )
-            elif base_url[-1] != "/":
+            if base_url[-1] != "/":
                 base_url = f"{base_url}/"
             self.url = f"{base_url}{{mbid}}/low-level"
 
@@ -134,11 +120,10 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 "accepts new submissions. See the base_url configuration "
                 "option."
             )
-        else:
-            # Get items from arguments
-            items = lib.items(args)
-            self.opts = opts
-            util.par_map(self.analyze_submit, items)
+        # Get items from arguments
+        items = lib.items(args)
+        self.opts = opts
+        util.par_map(self.analyze_submit, items)
 
     def analyze_submit(self, item):
         analysis = self._get_analysis(item)

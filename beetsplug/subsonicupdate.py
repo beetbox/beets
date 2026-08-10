@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Updates Subsonic library on Beets import
 Your Beets configuration file should contain
 a "subsonic" section like the following:
@@ -135,7 +121,18 @@ class SubsonicUpdate(BeetsPlugin):
         try:
             response = requests.get(url, params=payload, timeout=10)
             json = response.json()
-
+        except requests.exceptions.JSONDecodeError:
+            self._log.error(
+                "Subsonic server returned a non-JSON response from {} "
+                "(HTTP {})",
+                url,
+                response.status_code,
+            )
+            return
+        except requests.exceptions.RequestException as error:
+            self._log.error("Error connecting to Subsonic server: {}", error)
+            return
+        try:
             if (
                 response.status_code == 200
                 and json["subsonic-response"]["status"] == "ok"

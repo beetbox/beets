@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import os
 import string
-import sys
 import time
-import unicodedata
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from mediafile import MediaFile, UnreadableFileError
+from typing_extensions import Self
 
 import beets
 from beets import dbcore, logging, plugins, util
@@ -27,7 +26,6 @@ from beets.util import (
     syspath,
 )
 from beets.util.deprecation import maybe_replace_legacy_field
-from beets.util.functemplate import Template, template
 from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
@@ -35,14 +33,18 @@ from .fields import TYPE_BY_FIELD
 from .queries import parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView
+    from collections.abc import Callable, Iterable, Iterator, KeysView, Mapping
 
+    from beets.dbcore import Results
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort
+    from beets.util.pathformats import PathFormat
 
-    from .library import Library  # noqa: F401
+    from .library import Library
 
 log = logging.getLogger("beets")
+
+AnyLibModel = TypeVar("AnyLibModel", "Album", "Item")
 
 
 class LibModel(dbcore.Model["Library"]):
@@ -80,34 +82,33 @@ class LibModel(dbcore.Model["Library"]):
         """The path to the entity as pathlib.Path."""
         return Path(os.fsdecode(self.path))
 
-    def _template_funcs(self):
+    def _template_funcs(self) -> Mapping[str, Callable[[str], str]]:
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
         return funcs
 
-    def store(self, fields=None):
+    def store(self, fields: Iterable[str] | None = None) -> None:
         super().store(fields)
-        plugins.send("database_change", lib=self._db, model=self)
+        plugins.send("database_change", lib=self.db, model=self)
 
-    def remove(self):
+    def remove(self) -> None:
         super().remove()
-        plugins.send("database_change", lib=self._db, model=self)
+        plugins.send("database_change", lib=self.db, model=self)
 
-    def add(self, lib=None):
+    def add(self, lib: Library | None = None) -> None:
         # super().add() calls self.store(), which sends `database_change`,
         # so don't do it here
         super().add(lib)
 
-    def __format__(self, spec):
-        if not spec:
-            spec = beets.config[self._format_config_key].as_str()
-        assert isinstance(spec, str)
-        return self.evaluate_template(spec)
+    def __format__(self, spec: str) -> str:
+        return self.evaluate_template(
+            spec or beets.config[self._format_config_key].as_str()
+        )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return format(self)
 
-    def __bytes__(self):
+    def __bytes__(self) -> bytes:
         return self.__str__().encode("utf-8")
 
     # Convenient queries.
@@ -140,16 +141,20 @@ class LibModel(dbcore.Model["Library"]):
         return query_cls(field, pattern, fast)
 
     @classmethod
-    def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+    def any_field_query(
+        cls, pattern: str, query_cls: FieldQueryType
+    ) -> dbcore.OrQuery:
         return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
+            [cls.field_query(f, pattern, query_cls) for f in cls._search_fields]
         )
 
     @classmethod
-    def any_writable_media_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+    def any_writable_media_field_query(
+        cls, pattern: str, query_cls: FieldQueryType
+    ) -> dbcore.OrQuery:
         fields = cls.writable_media_fields
         return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in fields]
+            [cls.field_query(f, pattern, query_cls) for f in fields]
         )
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
@@ -189,41 +194,40 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         self.item = item
 
     @cached_property
-    def all_keys(self):
+    def all_keys(self) -> set[str]:
         return set(self.model_keys).union(self.album_keys)
 
     @cached_property
-    def album_keys(self):
+    def album_keys(self) -> list[str]:
         album_keys = []
         if self.album:
-            if self.included_keys == self.ALL_KEYS:
+            if isinstance(self.included_keys, list):
+                album_keys = self.included_keys
+            else:
                 # Performance note: this triggers a database query.
                 for key in self.album.keys(computed=True):
                     if key in Album.item_keys or key not in self.item._fields:
                         album_keys.append(key)
-            else:
-                album_keys = self.included_keys
         return album_keys
 
     @property
-    def album(self):
+    def album(self) -> Album | None:
         return self.item._cached_album
 
-    def _get(self, key):
+    def _get(self, key: str) -> str:
         """Get the value for a key, either from the album or the item.
 
         Raise a KeyError for invalid keys.
         """
-        if self.for_path and key in self.album_keys:
+        if self.album and self.for_path and key in self.album_keys:
             return self._get_formatted(self.album, key)
-        elif key in self.model_keys:
+        if key in self.model_keys:
             return self._get_formatted(self.model, key)
-        elif key in self.album_keys:
+        if self.album and key in self.album_keys:
             return self._get_formatted(self.album, key)
-        else:
-            raise KeyError(key)
+        raise KeyError(key)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> str:
         """Get the value for a key.
 
         `artist` and `albumartist` are fallback values for each other
@@ -237,17 +241,17 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         try:
             if key == "artist" and not value:
                 return self._get("albumartist")
-            elif key == "albumartist" and not value:
+            if key == "albumartist" and not value:
                 return self._get("artist")
         except KeyError:
             pass
 
         return value
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.all_keys)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.all_keys)
 
 
@@ -258,7 +262,7 @@ class Album(LibModel):
     Reflects the library's "albums" table, including album art.
     """
 
-    artpath: bytes
+    artpath: bytes | None
 
     _table = "albums"
     _flex_table = "album_attributes"
@@ -349,15 +353,16 @@ class Album(LibModel):
         return Path(os.fsdecode(self.artpath)) if self.artpath else None
 
     @classmethod
-    def _getters(cls):
+    def _getters(cls) -> dict[str, Callable[[Self], object]]:
         # In addition to plugin-provided computed fields, also expose
         # the album's directory as `path`.
-        getters = plugins.album_field_getters()
-        getters["path"] = Album.item_dir
-        getters["albumtotal"] = Album._albumtotal
-        return getters
+        return {
+            **plugins.album_field_getters(),
+            "path": Album.item_dir,
+            "albumtotal": Album._albumtotal,
+        }
 
-    def items(self):
+    def items(self) -> Results[Item]:  # type: ignore[override]
         """Return an iterable over the items associated with this
         album.
 
@@ -366,9 +371,12 @@ class Album(LibModel):
         Since :meth:`Album.items` predates these methods, and is
         likely to be used by plugins, we keep this interface as-is.
         """
+        if self._db is None:
+            raise AttributeError(f"{type(self).__name__} has no database")
+
         return self._db.items(dbcore.MatchQuery("album_id", self.id))
 
-    def remove(self, delete=False, with_items=True):
+    def remove(self, delete: bool = False, with_items: bool = True) -> None:
         """Remove this album and all its associated items from the
         library.
 
@@ -394,12 +402,20 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, operation=MoveOperation.MOVE):
+    def move_art(
+        self,
+        operation: MoveOperation = MoveOperation.MOVE,
+        item_dir: bytes | None = None,
+    ) -> None:
         """Move, copy, link or hardlink (depending on `operation`) any
         existing album art so that it remains in the same directory as
         the items.
 
         `operation` should be an instance of `util.MoveOperation`.
+
+        `item_dir` may be provided to specify the target directory for
+        the art. If not provided, the directory of the album's first
+        item is used.
         """
         old_art = self.artpath
         if not old_art:
@@ -413,7 +429,7 @@ class Album(LibModel):
             self.artpath = None
             return
 
-        new_art = self.art_destination(old_art)
+        new_art = self.art_destination(old_art, item_dir=item_dir)
         if new_art == old_art:
             return
 
@@ -427,7 +443,7 @@ class Album(LibModel):
             util.move(old_art, new_art)
             util.prune_dirs(
                 os.path.dirname(old_art),
-                self._db.directory,
+                self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
         elif operation == MoveOperation.COPY:
@@ -444,7 +460,12 @@ class Album(LibModel):
             assert False, "unknown MoveOperation"
         self.artpath = new_art
 
-    def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
+    def move(
+        self,
+        operation: MoveOperation = MoveOperation.MOVE,
+        basedir: bytes | None = None,
+        store: bool = True,
+    ) -> None:
         """Move, copy, link or hardlink (depending on `operation`)
         all items to their destination. Any album art moves along with them.
 
@@ -457,7 +478,7 @@ class Album(LibModel):
         the album is not stored automatically, and it will have to be manually
         stored after invoking this method.
         """
-        basedir = basedir or self._db.directory
+        basedir = basedir or self.db.directory
 
         # Ensure new metadata is available to items for destination
         # computation.
@@ -466,15 +487,19 @@ class Album(LibModel):
 
         # Move items.
         items = list(self.items())
+        moved_item_dir = None
         for item in items:
+            old_path = item.path
             item.move(operation, basedir=basedir, with_album=False, store=store)
+            if moved_item_dir is None and item.path != old_path:
+                moved_item_dir = os.path.dirname(item.path)
 
         # Move art.
-        self.move_art(operation)
+        self.move_art(operation, item_dir=moved_item_dir)
         if store:
             self.store()
 
-    def item_dir(self):
+    def item_dir(self) -> bytes:
         """Return the directory containing the album's first item,
         provided that such an item exists.
         """
@@ -483,7 +508,7 @@ class Album(LibModel):
             raise ValueError(f"empty album for album id {self.id}")
         return os.path.dirname(item.path)
 
-    def _albumtotal(self):
+    def _albumtotal(self) -> int:
         """Return the total number of tracks on all discs on the album."""
         if self.disctotal == 1 or not beets.config["per_disc_numbering"]:
             return self.items()[0].tracktotal
@@ -503,7 +528,9 @@ class Album(LibModel):
 
         return total
 
-    def art_destination(self, image, item_dir=None):
+    def art_destination(
+        self, image: bytes, item_dir: bytes | None = None
+    ) -> bytes:
         """Return a path to the destination for the album art image
         for the album.
 
@@ -517,23 +544,19 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = template(beets.config["art_filename"].as_str())
-        subpath = self.evaluate_template(filename_tmpl, True)
+        filename_tmpl = beets.config["art_filename"].as_str()
+        subpath = self.evaluate_template(filename_tmpl, for_path=True)
         if beets.config["asciify_paths"]:
-            subpath = util.asciify_path(
-                subpath, beets.config["path_sep_replace"].as_str()
-            )
-        subpath = util.sanitize_path(
-            subpath, replacements=self._db.replacements
-        )
-        subpath = bytestring_path(subpath)
+            subpath = util.asciify_path(subpath)
+        subpath = util.sanitize_path(subpath, replacements=self.db.replacements)
+        subpath_bytes = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
-        dest = os.path.join(item_dir, subpath + ext)
+        dest = os.path.join(item_dir, subpath_bytes + ext)
 
         return bytestring_path(dest)
 
-    def set_art(self, path, copy=True):
+    def set_art(self, path: bytes, copy: bool = True) -> None:
         """Set the album's cover art to the image at the given path.
 
         The image is copied (or moved) into place, replacing any
@@ -548,7 +571,7 @@ class Album(LibModel):
         if oldart and samefile(path, oldart):
             # Art already set.
             return
-        elif samefile(path, artdest):
+        if samefile(path, artdest):
             # Art already in place.
             self.artpath = path
             return
@@ -565,7 +588,9 @@ class Album(LibModel):
 
         plugins.send("art_set", album=self)
 
-    def store(self, fields=None, inherit=True):
+    def store(
+        self, fields: Iterable[str] | None = None, inherit: bool = True
+    ) -> None:
         """Update the database with the album information.
 
         `fields` represents the fields to be stored. If not specified,
@@ -580,14 +605,16 @@ class Album(LibModel):
         track_deletes = set()
         for key in self._dirty:
             if inherit:
-                if key in self.item_keys:  # is a fixed attribute
+                if key in self.item_keys:  # is an inheritable fixed attribute
                     track_updates[key] = self[key]
-                elif key not in self:  # is a fixed or a flexible attribute
+                elif key in self._fields:  # excluded fixed attr (artpath, id)
+                    continue
+                elif key not in self:  # is a removed flexible attribute
                     track_deletes.add(key)
-                elif key != "id":  # is a flexible attribute
+                else:  # is a flexible attribute
                     track_updates[key] = self[key]
 
-        with self._db.transaction():
+        with self.db.transaction():
             super().store(fields)
             if track_updates:
                 for item in self.items():
@@ -601,7 +628,7 @@ class Album(LibModel):
                             del item[key]
                     item.store()
 
-    def try_sync(self, write, move, inherit=True):
+    def try_sync(self, write: bool, move: bool, inherit: bool = True) -> None:
         """Synchronize the album and its items with the database.
         Optionally, also write any new tags into the files and update
         their paths.
@@ -737,7 +764,7 @@ class Item(LibModel):
         )
 
     @property
-    def _cached_album(self):
+    def _cached_album(self) -> Album | None:
         """The Album object that this item belongs to, if any, or
         None if the item is a singleton or is not associated with a
         library.
@@ -753,16 +780,17 @@ class Item(LibModel):
         return self.__album
 
     @_cached_album.setter
-    def _cached_album(self, album):
+    def _cached_album(self, album: Album | None) -> None:
         self.__album = album
 
     @classmethod
-    def _getters(cls):
-        getters = plugins.item_field_getters()
-        getters["singleton"] = lambda i: i.album_id is None
-        getters["filesize"] = Item.try_filesize  # In bytes.
-        getters["has_cover_art"] = Item.has_cover_art
-        return getters
+    def _getters(cls) -> dict[str, Callable[[Self], object]]:
+        return {
+            **plugins.item_field_getters(),
+            "singleton": lambda i: i.album_id is None,
+            "filesize": Item.try_filesize,  # In bytes.
+            "has_cover_art": Item.has_cover_art,
+        }
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
@@ -771,7 +799,7 @@ class Item(LibModel):
         )
 
     @classmethod
-    def from_path(cls, path):
+    def from_path(cls, path: util.PathLike) -> Self:
         """Create a new item from the media file at the specified path."""
         # Initiate with values that aren't read from files.
         i = cls(album_id=None)
@@ -779,7 +807,7 @@ class Item(LibModel):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
         if key == "path":
@@ -795,7 +823,7 @@ class Item(LibModel):
         if changed and key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         """Get the value for a field, falling back to the album if
         necessary.
 
@@ -808,7 +836,7 @@ class Item(LibModel):
                 return self._cached_album[key]
             raise
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # This must not use `with_album=True`, because that might access
         # the database. When debugging, that is not guaranteed to succeed, and
         # can even deadlock due to the database lock.
@@ -817,18 +845,22 @@ class Item(LibModel):
             f"({', '.join(f'{k}={self[k]!r}' for k in self.keys(with_album=False))})"
         )
 
-    def keys(self, computed=False, with_album=True) -> KeysView[str]:
+    def keys(
+        self, computed: bool = False, with_album: bool = True
+    ) -> KeysView[str]:
         """Get a list of available field names.
 
         `with_album` controls whether the album's fields are included.
         """
-        keys = super().keys(computed=computed)
+        keys: set[str] = set(super().keys(computed=computed))
         if with_album and self._cached_album:
             keys |= self._cached_album.keys(computed=computed)
 
         return dict.fromkeys(keys).keys()
 
-    def get(self, key, default=None, with_album=True):
+    def get(
+        self, key: str, default: Any = None, with_album: bool = True
+    ) -> Any:
         """Get the value for a given key or `default` if it does not
         exist.
 
@@ -841,7 +873,7 @@ class Item(LibModel):
                 return self._cached_album.get(key, default)
             return default
 
-    def update(self, values):
+    def update(self, values: Mapping[str, Any]) -> None:
         """Set all key/value pairs in the mapping.
 
         If mtime is specified, it is not reset (as it might otherwise be).
@@ -850,12 +882,12 @@ class Item(LibModel):
         if self.mtime == 0 and "mtime" in values:
             self.mtime = values["mtime"]
 
-    def clear(self):
+    def clear(self) -> None:
         """Set all key/value pairs to None."""
         for key in self._media_tag_fields:
             setattr(self, key, None)
 
-    def get_album(self):
+    def get_album(self) -> Album | None:
         """Get the Album object that this item belongs to, if any, or
         None if the item is a singleton or is not associated with a
         library.
@@ -866,7 +898,7 @@ class Item(LibModel):
 
     # Interaction with file metadata.
 
-    def read(self, read_path=None):
+    def read(self, read_path: util.PathLike | None = None) -> None:
         """Read the metadata from the associated file.
 
         If `read_path` is specified, read metadata from that file
@@ -897,7 +929,12 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self, path=None, tags=None, id3v23=None):
+    def write(
+        self,
+        path: bytes | None = None,
+        tags: Mapping[str, Any] | None = None,
+        id3v23: bool | None = None,
+    ) -> None:
         """Write the item's metadata to a media file.
 
         All fields in `_media_fields` are written to disk according to
@@ -949,20 +986,27 @@ class Item(LibModel):
             self.mtime = self.current_mtime()
         plugins.send("after_write", item=self, path=path)
 
-    def try_write(self, *args, **kwargs):
+    def try_write(
+        self,
+        path: bytes | None = None,
+        tags: Mapping[str, Any] | None = None,
+        id3v23: bool | None = None,
+    ) -> bool:
         """Call `write()` but catch and log `FileOperationError`
         exceptions.
 
         Return `False` an exception was caught and `True` otherwise.
         """
         try:
-            self.write(*args, **kwargs)
+            self.write(path=path, tags=tags, id3v23=id3v23)
             return True
         except FileOperationError as exc:
             log.error("{}", exc)
             return False
 
-    def try_sync(self, write, move, with_album=True):
+    def try_sync(
+        self, write: bool, move: bool, with_album: bool = True
+    ) -> None:
         """Synchronize the item with the database and, possibly, update its
         tags on disk and its path (by moving the file).
 
@@ -985,7 +1029,9 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move_file(self, dest, operation=MoveOperation.MOVE):
+    def move_file(
+        self, dest: bytes, operation: MoveOperation = MoveOperation.MOVE
+    ) -> None:
         """Move, copy, link or hardlink the item depending on `operation`,
         updating the path value if the move succeeds.
 
@@ -1037,13 +1083,13 @@ class Item(LibModel):
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
 
-    def current_mtime(self):
+    def current_mtime(self) -> int:
         """Return the current mtime of the file, rounded to the nearest
         integer.
         """
         return int(os.path.getmtime(syspath(self.path)))
 
-    def try_filesize(self):
+    def try_filesize(self) -> int:
         """Get the size of the underlying file in bytes.
 
         If the file is missing, return 0 (and log a warning).
@@ -1054,7 +1100,7 @@ class Item(LibModel):
             log.warning("could not get filesize: {}", exc)
             return 0
 
-    def has_cover_art(self):
+    def has_cover_art(self) -> bool:
         """Check if item has embedded cover art.
 
         Return True if images embedded in file, False otherwise.
@@ -1067,7 +1113,7 @@ class Item(LibModel):
 
     # Model methods.
 
-    def remove(self, delete=False, with_album=True):
+    def remove(self, delete: bool = False, with_album: bool = True) -> None:
         """Remove the item.
 
         If `delete`, then the associated file is removed from disk.
@@ -1091,19 +1137,19 @@ class Item(LibModel):
             util.remove(self.path)
             util.prune_dirs(
                 os.path.dirname(self.path),
-                self._db.directory,
+                self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
 
-        self._db._memotable = {}
+        self.db._memotable = {}
 
     def move(
         self,
-        operation=MoveOperation.MOVE,
-        basedir=None,
-        with_album=True,
-        store=True,
-    ):
+        operation: MoveOperation = MoveOperation.MOVE,
+        basedir: bytes | None = None,
+        with_album: bool = True,
+        store: bool = True,
+    ) -> None:
         """Move the item to its designated location within the library
         directory (provided by destination()).
 
@@ -1127,6 +1173,22 @@ class Item(LibModel):
         """
         dest = self.destination(basedir=basedir)
 
+        # If the source file is missing, skip the move.
+        if not self.filepath.exists():
+            log.warning(
+                "{}: file not found at {.filepath}, skipping",
+                {
+                    MoveOperation.MOVE: "Moving",
+                    MoveOperation.COPY: "Copying",
+                    MoveOperation.LINK: "Linking",
+                    MoveOperation.HARDLINK: "Hardlinking",
+                    MoveOperation.REFLINK: "Reflinking",
+                    MoveOperation.REFLINK_AUTO: "Reflinking",
+                }[operation],
+                self,
+            )
+            return
+
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
 
@@ -1148,14 +1210,17 @@ class Item(LibModel):
         if operation == MoveOperation.MOVE:
             util.prune_dirs(
                 os.path.dirname(old_path),
-                self._db.directory,
+                self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
 
     # Templating.
 
     def destination(
-        self, relative_to_libdir=False, basedir=None, path_formats=None
+        self,
+        relative_to_libdir: bool = False,
+        basedir: bytes | None = None,
+        path_formats: list[PathFormat] | None = None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1168,41 +1233,26 @@ class Item(LibModel):
         basedir = basedir or self.db.directory
         path_formats = path_formats or self.db.path_formats
 
-        # Use a path format based on a query, falling back on the
-        # default.
-        for query, path_format in path_formats:
-            if query == PF_KEY_DEFAULT:
+        for query_str, path_format in path_formats:
+            if query_str == PF_KEY_DEFAULT:
                 continue
-            query, _ = parse_query_string(query, type(self))
+            query, _ = parse_query_string(query_str, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
                 break
         else:
             # No query matched; fall back to default.
-            for query, path_format in path_formats:
-                if query == PF_KEY_DEFAULT:
+            for query_str, path_format in path_formats:
+                if query_str == PF_KEY_DEFAULT:
                     break
             else:
                 assert False, "no default path format"
-        if isinstance(path_format, Template):
-            subpath_tmpl = path_format
-        else:
-            subpath_tmpl = template(path_format)
-
         # Evaluate the selected template.
-        subpath = self.evaluate_template(subpath_tmpl, True)
-
-        # Prepare path for output: normalize Unicode characters.
-        if sys.platform == "darwin":
-            subpath = unicodedata.normalize("NFD", subpath)
-        else:
-            subpath = unicodedata.normalize("NFC", subpath)
+        subpath = self.evaluate_template(path_format, for_path=True)
 
         if beets.config["asciify_paths"]:
-            subpath = util.asciify_path(
-                subpath, beets.config["path_sep_replace"].as_str()
-            )
+            subpath = util.asciify_path(subpath)
 
         lib_path_str, fallback = util.legalize_path(
             subpath, self.db.replacements, self.filepath.suffix
@@ -1224,7 +1274,7 @@ class Item(LibModel):
         return normpath(os.path.join(basedir, lib_path_bytes))
 
 
-def _int_arg(s):
+def _int_arg(s: str) -> int:
     """Convert a string argument to an integer for use in a template
     function.
 
@@ -1249,7 +1299,7 @@ class DefaultTemplateFunctions:
         """Names of tmpl_* functions in this class."""
         return [s for s in dir(cls) if s.startswith(cls._prefix)]
 
-    def __init__(self, item=None, lib=None):
+    def __init__(self, item: LibModel, lib: Library | None) -> None:
         """Parametrize the functions.
 
         If `item` or `lib` is None, then some functions (namely, ``aunique``)
@@ -1258,7 +1308,7 @@ class DefaultTemplateFunctions:
         self.item = item
         self.lib = lib
 
-    def functions(self):
+    def functions(self) -> dict[str, Callable[..., str]]:
         """Return a dictionary containing the functions defined in this
         object.
 
@@ -1271,65 +1321,66 @@ class DefaultTemplateFunctions:
         return out
 
     @staticmethod
-    def tmpl_lower(s):
+    def tmpl_lower(s: str) -> str:
         """Convert a string to lower case."""
         return s.lower()
 
     @staticmethod
-    def tmpl_upper(s):
+    def tmpl_upper(s: str) -> str:
         """Convert a string to upper case."""
         return s.upper()
 
     @staticmethod
-    def tmpl_capitalize(s):
+    def tmpl_capitalize(s: str) -> str:
         """Converts to a capitalized string."""
         return s.capitalize()
 
     @staticmethod
-    def tmpl_title(s):
+    def tmpl_title(s: str) -> str:
         """Convert a string to title case."""
         return string.capwords(s)
 
     @staticmethod
-    def tmpl_left(s, chars):
+    def tmpl_left(s: str, chars: str) -> str:
         """Get the leftmost characters of a string."""
         return s[0 : _int_arg(chars)]
 
     @staticmethod
-    def tmpl_right(s, chars):
+    def tmpl_right(s: str, chars: str) -> str:
         """Get the rightmost characters of a string."""
         return s[-_int_arg(chars) :]
 
     @staticmethod
-    def tmpl_if(condition, trueval, falseval=""):
+    def tmpl_if(condition: str, trueval: str, falseval: str = "") -> str:
         """If ``condition`` is nonempty and nonzero, emit ``trueval``;
         otherwise, emit ``falseval`` (if provided).
         """
+        _condition: str | int = condition
         try:
-            int_condition = _int_arg(condition)
+            _condition = _int_arg(condition)
         except ValueError:
             if condition.lower() == "false":
                 return falseval
-        else:
-            condition = int_condition
 
-        if condition:
-            return trueval
-        else:
-            return falseval
+        return trueval if _condition else falseval
 
     @staticmethod
-    def tmpl_asciify(s):
+    def tmpl_asciify(s: str) -> str:
         """Translate non-ASCII characters to their ASCII equivalents."""
-        return util.asciify_path(s, beets.config["path_sep_replace"].as_str())
+        return util.asciify_path(s)
 
     @staticmethod
-    def tmpl_time(s, fmt):
+    def tmpl_time(s: str, fmt: str) -> str:
         """Format a time value using `strftime`."""
         cur_fmt = beets.config["time_format"].as_str()
         return time.strftime(fmt, time.strptime(s, cur_fmt))
 
-    def tmpl_aunique(self, keys=None, disam=None, bracket=None):
+    def tmpl_aunique(
+        self,
+        keys: str | None = None,
+        disam: str | None = None,
+        bracket: str | None = None,
+    ) -> str:
         """Generate a string that is guaranteed to be unique among all
         albums in the library who share the same set of keys.
 
@@ -1357,7 +1408,7 @@ class DefaultTemplateFunctions:
         if memoval is not None:
             return memoval
 
-        album = self.lib.get_album(album_id)
+        album: Album = self.lib.get_album(album_id)  # type: ignore[assignment]
 
         return self._tmpl_unique(
             "aunique",
@@ -1366,12 +1417,16 @@ class DefaultTemplateFunctions:
             bracket,
             album_id,
             album,
-            album.item_keys,
             # Do nothing for singletons.
             lambda a: a is None,
         )
 
-    def tmpl_sunique(self, keys=None, disam=None, bracket=None):
+    def tmpl_sunique(
+        self,
+        keys: str | None = None,
+        disam: str | None = None,
+        bracket: str | None = None,
+    ) -> str:
         """Generate a string that is guaranteed to be unique among all
         singletons in the library who share the same set of keys.
 
@@ -1401,20 +1456,32 @@ class DefaultTemplateFunctions:
             bracket,
             item_id,
             self.item,
-            Item.all_keys(),
             # Do nothing for non singletons.
             lambda i: i.album_id is not None,
         )
 
-    def _tmpl_unique_memokey(self, name, keys, disam, item_id):
+    def _tmpl_unique_memokey(
+        self,
+        name: str | None,
+        keys: str | None,
+        disam: str | None,
+        item_id: int | None,
+    ) -> tuple[str | None, str | None, str | None, int | None]:
         """Get the memokey for the unique template named "name" for the
         specific parameters.
         """
         return (name, keys, disam, item_id)
 
     def _tmpl_unique(
-        self, name, keys, disam, bracket, item_id, db_item, item_keys, skip_item
-    ):
+        self,
+        name: str,
+        keys: str | None,
+        disam: str | None,
+        bracket: str | None,
+        item_id: int,
+        db_item: LibModel,
+        skip_item: Callable[[LibModel], bool],
+    ) -> str:
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
 
@@ -1435,21 +1502,25 @@ class DefaultTemplateFunctions:
         "initial_subqueries" is a list of subqueries that should be included
         in the query to find the ambiguous items.
         """
+        lib = self.lib
+        if lib is None:
+            return ""
+
         memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
-        memoval = self.lib._memotable.get(memokey)
+        memoval = lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
 
         if skip_item(db_item):
-            self.lib._memotable[memokey] = ""
+            lib._memotable[memokey] = ""
             return ""
 
         keys = keys or beets.config[name]["keys"].as_str()
         disam = disam or beets.config[name]["disambiguators"].as_str()
         if bracket is None:
             bracket = beets.config[name]["bracket"].as_str()
-        keys = keys.split()
-        disam = disam.split()
+        keys_list = keys.split()
+        disam_list = disam.split()
 
         # Assign a left and right bracket or leave blank if argument is empty.
         if len(bracket) == 2:
@@ -1460,21 +1531,19 @@ class DefaultTemplateFunctions:
             bracket_r = ""
 
         # Find matching items to disambiguate with.
-        query = db_item.duplicates_query(keys)
+        query = db_item.duplicates_query(keys_list)
         ambigous_items = (
-            self.lib.items(query)
-            if isinstance(db_item, Item)
-            else self.lib.albums(query)
+            lib.items(query) if isinstance(db_item, Item) else lib.albums(query)
         )
 
         # If there's only one item to matching these details, then do
         # nothing.
         if len(ambigous_items) == 1:
-            self.lib._memotable[memokey] = ""
+            lib._memotable[memokey] = ""
             return ""
 
         # Find the first disambiguator that distinguishes the items.
-        for disambiguator in disam:
+        for disambiguator in disam_list:
             # Get the value for each item for the current field.
             disam_values = {s.get(disambiguator, "") for s in ambigous_items}
 
@@ -1486,7 +1555,7 @@ class DefaultTemplateFunctions:
         else:
             # No disambiguator distinguished all fields.
             res = f" {bracket_l}{item_id}{bracket_r}"
-            self.lib._memotable[memokey] = res
+            lib._memotable[memokey] = res
             return res
 
         # Flatten disambiguation value into a string.
@@ -1498,11 +1567,17 @@ class DefaultTemplateFunctions:
         else:
             res = ""
 
-        self.lib._memotable[memokey] = res
+        lib._memotable[memokey] = res
         return res
 
     @staticmethod
-    def tmpl_first(s, count=1, skip=0, sep="; ", join_str="; "):
+    def tmpl_first(
+        s: str,
+        count: int = 1,
+        skip: int = 0,
+        sep: str = "; ",
+        join_str: str = "; ",
+    ) -> str:
         """Get the item(s) from x to y in a string separated by something
         and join then with something.
 
@@ -1517,7 +1592,9 @@ class DefaultTemplateFunctions:
         count = skip + int(count)
         return join_str.join(s.split(sep)[skip:count])
 
-    def tmpl_ifdef(self, field, trueval="", falseval=""):
+    def tmpl_ifdef(
+        self, field: str, trueval: str = "", falseval: str = ""
+    ) -> str:
         """If field exists return trueval or the field (default)
         otherwise, emit return falseval (if provided).
 
@@ -1531,5 +1608,4 @@ class DefaultTemplateFunctions:
         """
         if field in self.item:
             return trueval if trueval else self.item.formatted().get(field)
-        else:
-            return falseval
+        return falseval

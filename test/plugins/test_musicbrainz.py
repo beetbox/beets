@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for MusicBrainz API wrapper."""
 
 from __future__ import annotations
@@ -49,10 +35,6 @@ def artist_relation_factory(**kwargs) -> mb.ArtistRelation:
 
 def label_info_factory(**kwargs) -> mb.LabelInfo:
     return factories.LabelInfoFactory.build(**kwargs)
-
-
-def release_group_factory(**kwargs) -> mb.ReleaseGroup:
-    return factories.ReleaseGroupFactory.build(**kwargs)
 
 
 def recording_factory(**kwargs) -> mb.Recording:
@@ -922,7 +904,7 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
         assert excinfo.value is error
 
     @pytest.mark.parametrize(
-        "input,expected",
+        "input_,expected",
         [
             ("??-??-??", (None, None, None)),
             ("??-01-??", (None, 1, None)),
@@ -935,5 +917,5 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
             ("2010-01-02", (2010, 1, 2)),
         ],
     )
-    def test_get_date(self, input, expected):
-        assert musicbrainz._get_date(input) == expected
+    def test_get_date(self, input_, expected):
+        assert musicbrainz._get_date(input_) == expected

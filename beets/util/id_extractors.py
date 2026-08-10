@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Helpers around the extraction of album/track ID's from metadata sources."""
 
 from __future__ import annotations
@@ -24,7 +10,11 @@ log = logging.getLogger("beets")
 
 
 PATTERN_BY_SOURCE = {
-    "spotify": re.compile(r"(?:^|open\.spotify\.com/[^/]+/)([0-9A-Za-z]{22})"),
+    # Accepts the raw ID, open.spotify.com URLs, and native URIs.
+    # (ex.: "spotify:album:<id>", "spotify:track:<id>").
+    "spotify": re.compile(
+        r"(?:^|open\.spotify\.com/[^/]+/|spotify:[a-z]+:)([0-9A-Za-z]{22})"
+    ),
     "deezer": re.compile(r"(?:^|deezer\.com/)(?:[a-z]*/)?(?:[^/]+/)?(\d+)"),
     "beatport": re.compile(r"(?:^|beatport\.com/release/.+/)(\d+)$"),
     "musicbrainz": re.compile(r"(\w{8}(?:-\w{4}){3}-\w{12})"),

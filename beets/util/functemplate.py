@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """This module implements a string formatter based on the standard PEP
 292 string.Template class extended with function calls. Variables, as
 with string.Template, are indicated with $ and functions are delimited
@@ -26,11 +12,13 @@ This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
 
+from __future__ import annotations
+
 import ast
 import dis
-import functools
 import re
 import types
+from functools import lru_cache
 
 SYMBOL_DELIM = "$"
 FUNC_DELIM = "%"
@@ -140,9 +128,8 @@ class Symbol:
         if self.ident in env.values:
             # Substitute for a value.
             return env.values[self.ident]
-        else:
-            # Keep original text.
-            return self.original
+        # Keep original text.
+        return self.original
 
     def translate(self):
         """Compile the variable lookup."""
@@ -175,8 +162,7 @@ class Call:
                 # the exception will help debug.
                 return f"<{exc}>"
             return str(out)
-        else:
-            return self.original
+        return self.original
 
     def translate(self):
         """Compile the function call."""
@@ -510,8 +496,8 @@ def _parse(template):
     return Expression(parts)
 
 
-@functools.lru_cache(maxsize=128)
-def template(fmt):
+@lru_cache(maxsize=128)
+def get_template(fmt: str) -> Template:
     return Template(fmt)
 
 

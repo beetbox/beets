@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 """Tests for the general importer functionality."""
 
 from __future__ import annotations
@@ -24,11 +9,13 @@ import stat
 import sys
 import unicodedata
 import unittest
+from contextlib import contextmanager
 from functools import cached_property
 from io import StringIO
 from pathlib import Path
 from tarfile import TarFile
 from tempfile import mkstemp
+from typing import Literal
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
@@ -37,21 +24,28 @@ from mediafile import MediaFile
 
 from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
-from beets.importer.tasks import albums_in_dir
+from beets.importer.tasks import (
+    ImportTaskFactory,
+    albums_in_dir,
+    resolve_upgrade,
+    resolve_upgrade_target,
+)
+from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
+    NEEDS_FFPROBE,
     NEEDS_REFLINK,
     AsIsImporterMixin,
+    AutotagImportHelper,
     AutotagImportTestCase,
     AutotagStub,
     BeetsTestCase,
-    ImportTestCase,
-    IOMixin,
+    ImportHelper,
     PluginMixin,
-    capture_log,
+    TestHelper,
     has_program,
 )
-from beets.util import bytestring_path, displayable_path, syspath
+from beets.util import bytestring_path, syspath
 from beets.util.extension import remux_mpeglayer3_wav
 
 
@@ -71,7 +65,7 @@ class PathsMixin:
         return self.lib_path / "Tag Artist" / "Tag Album" / "Tag Track 1.mp3"
 
 
-class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
+class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
     db_on_disk = True
 
     def test_album_created_with_track_artist(self):
@@ -125,7 +119,7 @@ class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
         album = self.lib.albums()[0]
         assert album.mb_albumartistids == album.items()[0].mb_albumartistids
 
-    @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
+    @pytest.mark.skipif(not _common.HAVE_SYMLINK, reason="need symlinks")
     def test_import_link_arrives(self):
         self.run_asis_importer(link=True)
 
@@ -133,7 +127,7 @@ class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
         assert self.track_lib_path.is_symlink()
         assert self.track_lib_path.resolve() == self.track_import_path.resolve()
 
-    @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
+    @pytest.mark.skipif(not _common.HAVE_HARDLINK, reason="need hardlinks")
     def test_import_hardlink_arrives(self):
         self.run_asis_importer(hardlink=True)
 
@@ -159,23 +153,22 @@ class NonAutotaggedImportTest(PathsMixin, AsIsImporterMixin, ImportTestCase):
 
 
 def create_archive(session):
-    handle, path = mkstemp(dir=session.temp_dir_path)
+    handle, path = mkstemp(dir=session.temp_path)
     path = bytestring_path(path)
     os.close(handle)
     archive = ZipFile(os.fsdecode(path), mode="w")
-    archive.write(syspath(os.path.join(_common.RSRC, b"full.mp3")), "full.mp3")
+    archive.write(_common.RSRC / "full.mp3", "full.mp3")
     archive.close()
-    path = bytestring_path(path)
-    return path
+    return bytestring_path(path)
 
 
-class RmTempTest(BeetsTestCase):
+class TestRmTemp(TestHelper):
     """Tests that temporarily extracted archives are properly removed
     after usage.
     """
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.want_resume = False
         self.config["incremental"] = False
         self.config["copy"] = False
@@ -196,7 +189,7 @@ class RmTempTest(BeetsTestCase):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
-        for root, _, files in os.walk(syspath(archive_task.toppath)):
+        for root, _, files in os.walk(archive_task.toppath):
             for f in files:
                 os.remove(os.path.join(root, f))
         assert Path(os.fsdecode(zip_path)).exists()
@@ -235,7 +228,7 @@ class RmTempTest(BeetsTestCase):
             )
 
 
-class ImportZipTest(AsIsImporterMixin, ImportTestCase):
+class TestImportZip(AsIsImporterMixin, ImportHelper):
     def test_import_zip(self):
         zip_path = create_archive(self)
         assert len(self.lib.items()) == 0
@@ -246,34 +239,32 @@ class ImportZipTest(AsIsImporterMixin, ImportTestCase):
         assert len(self.lib.albums()) == 1
 
 
-class ImportTarTest(ImportZipTest):
+class TestImportTar(TestImportZip):
     def create_archive(self):
-        (handle, path) = mkstemp(dir=syspath(self.temp_dir))
+        (handle, path) = mkstemp(dir=self.temp_path)
         path = bytestring_path(path)
         os.close(handle)
         archive = TarFile(os.fsdecode(path), mode="w")
-        archive.add(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")), "full.mp3"
-        )
+        archive.add(_common.RSRC / "full.mp3", "full.mp3")
         archive.close()
         return path
 
 
-@unittest.skipIf(not has_program("unrar"), "unrar program not found")
-class ImportRarTest(ImportZipTest):
+@pytest.mark.skipif(not has_program("unrar"), reason="unrar program not found")
+class TestImportRar(TestImportZip):
     def create_archive(self):
-        return os.path.join(_common.RSRC, b"archive.rar")
+        return _common.RSRC / "archive.rar"
 
 
-class Import7zTest(ImportZipTest):
+class TestImport7z(TestImportZip):
     def create_archive(self):
-        return os.path.join(_common.RSRC, b"archive.7z")
+        return _common.RSRC / "archive.7z"
 
 
-@unittest.skip("Implement me!")
-class ImportPasswordRarTest(ImportZipTest):
+@pytest.mark.skip(reason="Implement me!")
+class TestImportPasswordRar(TestImportZip):
     def create_archive(self):
-        return os.path.join(_common.RSRC, b"password.rar")
+        return _common.RSRC / "password.rar"
 
 
 class ImportSingletonTest(AutotagImportTestCase):
@@ -330,13 +321,13 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert len(self.lib.items()) == 1
 
     def test_import_single_files(self):
-        resource_path = os.path.join(_common.RSRC, b"empty.mp3")
-        single_path = os.path.join(self.import_dir, b"track_2.mp3")
+        resource_path = _common.RSRC / "empty.mp3"
+        single_path = self.import_path / "track_2.mp3"
 
         util.copy(resource_path, single_path)
-        import_files = [os.path.join(self.import_dir, b"album"), single_path]
+        import_files = [self.import_path / "album", single_path]
         self.setup_importer()
-        self.importer.paths = import_files
+        self.importer.paths = list(map(os.fsencode, import_files))
 
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.add_choice(importer.Action.ASIS)
@@ -386,66 +377,70 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]), "need ffprobe for format recognition"
+    not has_program("ffprobe", ["-L"]),
+    reason="need ffprobe for format recognition",
 )
-class ImportFormatTest:
+class TestImportFormat(ImportHelper):
     """Test fix_extension during import."""
 
     def test_recognize_format(self):
-        resource_src = os.path.join(_common.RSRC, b"no_ext")
-        resource_path = os.path.join(self.import_dir, b"no_ext")
+        resource_src = _common.RSRC / "no_ext"
+        resource_path = self.import_path / "no_ext"
         util.copy(resource_src, resource_path)
-        self.setup_importer()
-        self.importer.paths = [resource_path]
+        self.setup_importer(autotag=False)
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
         assert self.lib.items().get().path.endswith(b".mp3")
 
-    def test_recognize_format_already_exist(self):
-        resource_path = os.path.join(_common.RSRC, b"no_ext")
-        temp_resource_path = os.path.join(self.temp_dir, b"no_ext")
+    def test_recognize_format_already_exist(self, caplog):
+        resource_path = _common.RSRC / "no_ext"
+        temp_resource_path = self.temp_path / "no_ext"
         util.copy(resource_path, temp_resource_path)
-        new_path = os.path.join(self.temp_dir, b"no_ext.mp3")
+        new_path = self.temp_path / "no_ext.mp3"
         util.copy(temp_resource_path, new_path)
-        self.setup_importer()
-        self.importer.paths = [temp_resource_path]
-        with capture_log() as logs:
+        self.setup_importer(autotag=False)
+        self.importer.paths = [os.fsencode(temp_resource_path)]
+        with caplog.at_level("DEBUG"):
             self.importer.run()
-        assert "Import file with matching format to original target" in logs
+        assert (
+            "Import file with matching format to original target"
+            in caplog.messages
+        )
         assert self.lib.items().get().path.endswith(b".mp3")
 
     def test_recognize_format_not_music(self):
-        resource_path = os.path.join(_common.RSRC, b"no_ext_not_music")
-        self.setup_importer()
-        self.importer.paths = [resource_path]
+        resource_path = _common.RSRC / "no_ext_not_music"
+        self.setup_importer(autotag=False)
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
         assert len(self.lib.items()) == 0
 
     def test_recognize_format_change_original(self):
         config["import"]["fix_ext_inplace"] = True
-        resource_src = os.path.join(_common.RSRC, b"no_ext")
-        resource_path = os.path.join(self.temp_dir, b"no_ext")
+        resource_src = _common.RSRC / "no_ext"
+        resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
-        self.setup_importer()
-        self.importer.paths = [resource_path]
+        self.setup_importer(autotag=False)
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
-        assert not Path(os.path.join(self.temp_dir_path, "no_ext")).exists()
+        assert not Path(self.temp_path / "no_ext").exists()
 
     def test_recognize_format_keep_original(self):
         config["import"]["fix_ext_inplace"] = False
-        resource_src = os.path.join(_common.RSRC, b"no_ext")
-        resource_path = os.path.join(self.temp_dir, b"no_ext")
+        resource_src = _common.RSRC / "no_ext"
+        resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
-        self.setup_importer()
-        self.importer.paths = [resource_path]
+        self.setup_importer(autotag=False)
+        self.importer.paths = [os.fsencode(resource_path)]
         self.importer.run()
-        assert Path(os.path.join(self.temp_dir_path, "no_ext")).exists()
+        assert Path(self.temp_path / "no_ext").exists()
 
 
-class ImportTest(PathsMixin, AutotagImportTestCase):
+class TestImport(PathsMixin, AutotagImportHelper):
     """Test APPLY, ASIS and SKIP choices."""
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(1)
         self.setup_importer()
 
@@ -517,9 +512,10 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
 
         assert not self.lib.items()
 
+    @NEEDS_FFPROBE
     def test_skip_non_album_dirs(self):
         assert (self.import_path / "album").exists()
-        self.touch(b"cruft", dir=self.import_dir)
+        (self.import_path / "cruft").touch()
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -532,25 +528,27 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         self.importer.run()
         assert len(self.lib.items()) == 1
 
-    def test_empty_directory_warning(self):
-        import_dir = os.path.join(self.temp_dir, b"empty")
-        self.touch(b"non-audio", dir=import_dir)
+    @NEEDS_FFPROBE
+    def test_empty_directory_warning(self, caplog):
+        import_dir = self.temp_path / "empty"
+        import_dir.mkdir()
+        (import_dir / "non-audio").touch()
         self.setup_importer(import_dir=import_dir)
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
-        import_dir = displayable_path(import_dir)
-        assert f"No files imported from {import_dir}" in logs
+        assert f"No files imported from {import_dir}" in caplog.messages
 
-    def test_empty_directory_singleton_warning(self):
-        import_dir = os.path.join(self.temp_dir, b"empty")
-        self.touch(b"non-audio", dir=import_dir)
+    @NEEDS_FFPROBE
+    def test_empty_directory_singleton_warning(self, caplog):
+        import_dir = self.temp_path / "empty"
+        import_dir.mkdir()
+        (import_dir / "non-audio").touch()
         self.setup_singleton_importer(import_dir=import_dir)
-        with capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
-        import_dir = displayable_path(import_dir)
-        assert f"No files imported from {import_dir}" in logs
+        assert f"No files imported from {import_dir}" in caplog.messages
 
     def test_asis_no_data_source(self):
         assert self.lib.items().get() is None
@@ -753,7 +751,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         super().setUp()
         self.prepare_album_for_import(1)
 
-        self.reimporter = self.setup_importer(import_dir=self.libdir)
+        self.reimporter = self.setup_importer(import_dir=self.lib_path)
         self.importer = self.setup_importer()
 
     def tearDown(self):
@@ -1023,12 +1021,11 @@ def album_candidates_mock(*args, **kwargs):
 @patch(
     "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
 )
-class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
+class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
     plugin = "musicbrainz"
 
-    def setUp(self):
-        super().setUp()
-
+    def setup_beets(self):
+        super().setup_beets()
         # Original album
         self.add_album_fixture(albumartist="artist", album="album")
 
@@ -1043,7 +1040,7 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         assert item.title == "t\xeftle 0"
         assert item.filepath.exists()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         assert not item.filepath.exists()
@@ -1054,14 +1051,14 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
 
     def test_remove_duplicate_album_deletes_art(self):
         album = self.lib.albums().get()
-        art_source = os.path.join(_common.RSRC, b"abbey.jpg")
+        art_source = _common.RSRC / "abbey.jpg"
         album.set_art(art_source)
         album.store()
         old_artpath = album.art_filepath
 
         assert old_artpath.exists()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         assert not old_artpath.exists()
@@ -1087,7 +1084,7 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         import_file.title = "new title"
         import_file.save()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         # Old duplicate should be removed, new one imported
@@ -1097,7 +1094,7 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         assert self.lib.items().get().title == "new title"
 
     def test_keep_duplicate_album(self):
-        self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
+        self.config["import"]["duplicate_action"] = "keep"
         self.importer.run()
 
         assert len(self.lib.albums()) == 2
@@ -1107,7 +1104,7 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         item = self.lib.items().get()
         assert item.title == "t\xeftle 0"
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.albums()) == 1
@@ -1116,13 +1113,13 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         assert item.title == "t\xeftle 0"
 
     def test_merge_duplicate_album(self):
-        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.config["import"]["duplicate_action"] = "merge"
         self.importer.run()
 
         assert len(self.lib.albums()) == 1
 
     def test_twice_in_import_dir(self):
-        self.skipTest("write me")
+        pytest.skip(reason="write me")
 
     def test_keep_when_extra_key_is_different(self):
         config["import"]["duplicate_keys"]["album"] = "albumartist album flex"
@@ -1137,7 +1134,7 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
         import_file.title = item["title"]
         import_file.flex = "different"
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.albums()) == 2
@@ -1154,7 +1151,7 @@ class ImportDuplicateAlbumTest(PluginMixin, ImportTestCase):
 @patch(
     "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
 )
-class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
+class TestImportDuplicateAlbumThreaded(PluginMixin, ImportHelper):
     """Regression test for #6601: threaded merge must propagate context vars."""
 
     plugin = "musicbrainz"
@@ -1162,8 +1159,8 @@ class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
     # empty DB, so we need a real file that all threads share.
     db_on_disk = True
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.add_album_fixture(albumartist="artist", album="album")
         self.prepare_album_for_import(1)
         self.importer = self.setup_importer(
@@ -1178,7 +1175,7 @@ class ImportDuplicateAlbumThreadedTest(PluginMixin, ImportTestCase):
 
     def test_merge_duplicate_album_threaded(self):
         self.config["threaded"] = True
-        self.importer.default_resolution = self.importer.Resolution.MERGE
+        self.config["import"]["duplicate_action"] = "merge"
         self.importer.run()
 
         assert len(self.lib.albums()) == 1
@@ -1203,10 +1200,9 @@ def item_candidates_mock(*args, **kwargs):
     "beets.metadata_plugins.item_candidates",
     Mock(side_effect=item_candidates_mock),
 )
-class ImportDuplicateSingletonTest(ImportTestCase):
-    def setUp(self):
-        super().setUp()
-
+class TestImportDuplicateSingleton(ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
         # Original file in library
         self.add_item_fixture(
             artist="artist", title="title", mb_trackid="old trackid"
@@ -1223,7 +1219,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         assert item.mb_trackid == "old trackid"
         assert item.filepath.exists()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         assert not item.filepath.exists()
@@ -1234,7 +1230,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
     def test_keep_duplicate(self):
         assert len(self.lib.items()) == 1
 
-        self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
+        self.config["import"]["duplicate_action"] = "keep"
         self.importer.run()
 
         assert len(self.lib.items()) == 2
@@ -1243,7 +1239,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         item = self.lib.items().get()
         assert item.mb_trackid == "old trackid"
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.items()) == 1
@@ -1257,7 +1253,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         item.store()
         assert len(self.lib.items()) == 1
 
-        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.config["import"]["duplicate_action"] = "skip"
         self.importer.run()
 
         assert len(self.lib.items()) == 2
@@ -1280,7 +1276,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         import_file.mb_trackid = "new trackid"
         import_file.save()
 
-        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
 
         # Old duplicate should be removed, new one imported
@@ -1289,7 +1285,7 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         assert self.lib.items().get().mb_trackid == "new trackid"
 
     def test_twice_in_import_dir(self):
-        self.skipTest("write me")
+        pytest.skip(reason="write me")
 
     def add_item_fixture(self, **kwargs):
         # Move this to TestHelper
@@ -1297,6 +1293,322 @@ class ImportDuplicateSingletonTest(ImportTestCase):
         item.update(kwargs)
         item.store()
         return item
+
+
+@contextmanager
+def bitrate_overrides(bitrates_by_title):
+    """Force specific per-title bitrates on newly-read import items.
+
+    The test mp3 fixtures all share one real bitrate, so this patches
+    `ImportTaskFactory.read_item` to simulate different-quality
+    encodes without needing distinct binary fixtures.
+    """
+    original = ImportTaskFactory.read_item
+
+    def patched(self, path):
+        item = original(self, path)
+        if item is not None and item.title in bitrates_by_title:
+            item.bitrate = bitrates_by_title[item.title]
+        return item
+
+    with patch.object(ImportTaskFactory, "read_item", patched):
+        yield
+
+
+DUP_KEYS = ["artist", "title"]
+
+
+class ResolveUpgradeTest(unittest.TestCase):
+    """Unit tests for `resolve_upgrade`, the per-track decision
+    algorithm behind `duplicate_action: upgrade`.
+    """
+
+    def _item(self, artist="artist", title="title", bitrate=128000):
+        return Item(artist=artist, title=title, bitrate=bitrate)
+
+    def test_matched_better_bitrate_replaces_old(self):
+        old = self._item(bitrate=128000)
+        new = self._item(bitrate=320000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == [new]
+        assert superseded == [old]
+
+    def test_matched_worse_bitrate_keeps_old(self):
+        old = self._item(bitrate=320000)
+        new = self._item(bitrate=128000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == []
+        assert superseded == []
+
+    def test_matched_equal_bitrate_keeps_old(self):
+        old = self._item(bitrate=128000)
+        new = self._item(bitrate=128000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == []
+        assert superseded == []
+
+    def test_unmatched_new_item_always_kept(self):
+        old = self._item(title="old title", bitrate=320000)
+        new = self._item(title="new title", bitrate=64000)
+        kept, superseded = resolve_upgrade([new], [old], DUP_KEYS)
+        assert kept == [new]
+        assert superseded == []
+
+    def test_mixed_batch(self):
+        old_a = self._item(title="A", bitrate=128000)
+        old_d = self._item(title="D", bitrate=128000)
+        new_a = self._item(title="A", bitrate=320000)  # upgrade, wins
+        new_b = self._item(title="B", bitrate=64000)  # no old counterpart
+        kept, superseded = resolve_upgrade(
+            [new_a, new_b], [old_a, old_d], DUP_KEYS
+        )
+        assert kept == [new_a, new_b]
+        assert superseded == [old_a]
+
+    def test_duplicate_keys_all_old_superseded_when_new_is_best(self):
+        """When multiple old items share a key and the new item beats
+        all of them, every old copy should be superseded."""
+        old_a = self._item(bitrate=128000)
+        old_b = self._item(bitrate=96000)
+        new = self._item(bitrate=320000)
+        kept, superseded = resolve_upgrade([new], [old_a, old_b], DUP_KEYS)
+        assert kept == [new]
+        assert sorted(superseded, key=lambda i: i.bitrate) == [old_b, old_a]
+
+    def test_duplicate_keys_rejected_when_new_is_not_best(self):
+        """When an old item with the same key has bitrate >= the new
+        item, the new item should be dropped to prevent a downgrade."""
+        old_a = self._item(bitrate=128000)
+        old_b = self._item(bitrate=320000)
+        new = self._item(bitrate=256000)
+        kept, superseded = resolve_upgrade([new], [old_a, old_b], DUP_KEYS)
+        assert kept == []
+        assert superseded == []
+
+
+class ResolveUpgradeTargetTest(TestHelper):
+    """Unit tests for `resolve_upgrade_target`: when `found_duplicates`
+    implicates more than one distinct old album, only the one it
+    overlaps with the most should be treated as the upgrade target,
+    and every other candidate album must be left untouched.
+
+    Regression coverage for
+    https://github.com/beetbox/beets/pull/6842#discussion_r3635292074:
+    comparing new tracks against the *best* old candidate pooled
+    across every duplicate album could silently attribute a
+    supersession to the wrong album (or decline an upgrade that only
+    looked bad because of an unrelated album's better copy).
+    """
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def _item(self, title, bitrate):
+        return self.add_item_fixture(
+            artist="Tag Artist",
+            albumartist="Tag Artist",
+            album="Tag Album",
+            title=title,
+            bitrate=bitrate,
+        )
+
+    def test_targets_album_with_most_overlap(self):
+        # Album A: a high-bitrate track (never worth upgrading) plus a
+        # low-bitrate one; Album B: both tracks low-bitrate.
+        a_t1 = self._item("T1", 1400000)
+        a_t2 = self._item("T2", 320000)
+        album_a = self.lib.add_album([a_t1, a_t2])
+
+        b_t1 = self._item("T1", 320000)
+        b_t2 = self._item("T2", 320000)
+        album_b = self.lib.add_album([b_t1, b_t2])
+
+        new_t1 = Item(artist="Tag Artist", title="T1", bitrate=900000)
+        new_t2 = Item(artist="Tag Artist", title="T2", bitrate=900000)
+
+        kept, superseded, old_album_ids = resolve_upgrade_target(
+            [new_t1, new_t2], [album_a, album_b], DUP_KEYS
+        )
+
+        # Album B overlaps on both tracks and is chosen as the sole
+        # target; Album A (and its higher-bitrate T1) is never touched.
+        assert old_album_ids == [album_b.id]
+        assert kept == [new_t1, new_t2]
+        assert superseded == [b_t1, b_t2]
+        assert a_t1 not in superseded
+        assert a_t2 not in superseded
+
+    def test_single_duplicate_album_behaves_as_before(self):
+        old_t1 = self._item("T1", 128000)
+        album = self.lib.add_album([old_t1])
+        new_t1 = Item(artist="Tag Artist", title="T1", bitrate=320000)
+
+        kept, superseded, old_album_ids = resolve_upgrade_target(
+            [new_t1], [album], DUP_KEYS
+        )
+
+        assert kept == [new_t1]
+        assert superseded == [old_t1]
+        assert old_album_ids == [album.id]
+
+
+@patch(
+    "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
+)
+class TestImportDuplicateAlbumUpgrade(PluginMixin, ImportHelper):
+    """Album-level `duplicate_action: upgrade`, full track-for-track
+    overlap (the whole album is either replaced or left alone).
+    """
+
+    plugin = "musicbrainz"
+
+    def setup_beets(self):
+        super().setup_beets()
+        # Existing album with one track, matching what the incoming
+        # import will be tagged as (see `album_candidates_mock`).
+        self.old_item = self.add_item_fixture(
+            artist="artist",
+            albumartist="artist",
+            album="album",
+            title="new title",
+            mb_trackid="old trackid",
+            bitrate=128000,
+        )
+        self.old_album = self.lib.add_album([self.old_item])
+
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "albumartist album"}
+        )
+        self.config["import"]["duplicate_action"] = "upgrade"
+
+    def test_upgrade_replaces_lower_quality_duplicate(self):
+        with bitrate_overrides({"Tag Track 1": 320000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.title == "new title"
+        assert item.bitrate == 320000
+        assert self.lib.get_item(self.old_item.id) is None
+
+    def test_upgrade_skips_lower_quality_new_copy(self):
+        with bitrate_overrides({"Tag Track 1": 64000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.id == self.old_item.id
+        assert item.bitrate == 128000
+        assert self.old_item.filepath.exists()
+
+
+class TestImportDuplicateAlbumUpgradeMixed(ImportHelper):
+    """Album-level `duplicate_action: upgrade` where the new import
+    mixes a genuine quality upgrade of one existing track with tracks
+    that have no old counterpart at all (e.g. filling in a
+    previously-incomplete album). The surviving old tracks and the
+    kept new tracks must end up in the same album.
+    """
+
+    def setup_beets(self):
+        super().setup_beets()
+        self.old_track1 = self.add_item_fixture(
+            artist="Tag Artist",
+            albumartist="Tag Artist",
+            album="Tag Album",
+            title="Tag Track 1",
+            bitrate=64000,
+        )
+        self.old_track4 = self.add_item_fixture(
+            artist="Tag Artist",
+            albumartist="Tag Artist",
+            album="Tag Album",
+            title="Tag Track 4",
+            bitrate=64000,
+        )
+        self.old_album = self.lib.add_album([self.old_track1, self.old_track4])
+
+        self.prepare_album_for_import(3)  # Tag Track 1, 2, 3
+        self.importer = self.setup_importer(autotag=False)
+        self.config["import"]["duplicate_action"] = "upgrade"
+
+    def test_upgrade_and_new_tracks_join_existing_album(self):
+        with bitrate_overrides({"Tag Track 1": 320000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        items = list(self.lib.items())
+        assert len(items) == 4
+        by_title = {i.title: i for i in items}
+        assert by_title["Tag Track 1"].bitrate == 320000
+        assert by_title["Tag Track 4"].bitrate == 64000
+        assert "Tag Track 2" in by_title
+        assert "Tag Track 3" in by_title
+        assert all(i.album_id == self.old_album.id for i in items)
+        assert self.lib.get_item(self.old_track1.id) is None
+        # Untouched old track keeps its original row and file.
+        assert by_title["Tag Track 4"].id == self.old_track4.id
+        assert self.old_track4.filepath.exists()
+
+    def test_rejected_upgrade_still_adds_new_tracks(self):
+        with bitrate_overrides({"Tag Track 1": 40000}):
+            self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        items = list(self.lib.items())
+        assert len(items) == 4
+        by_title = {i.title: i for i in items}
+        assert by_title["Tag Track 1"].id == self.old_track1.id
+        assert by_title["Tag Track 1"].bitrate == 64000
+        assert "Tag Track 2" in by_title
+        assert "Tag Track 3" in by_title
+        assert all(i.album_id == self.old_album.id for i in items)
+        assert self.old_track1.filepath.exists()
+
+
+@patch(
+    "beets.metadata_plugins.item_candidates",
+    Mock(side_effect=item_candidates_mock),
+)
+class TestImportDuplicateSingletonUpgrade(ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
+        self.old_item = self.add_item_fixture(
+            artist="artist",
+            title="title",
+            mb_trackid="old trackid",
+            bitrate=128000,
+        )
+
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_singleton_importer()
+        self.config["import"]["duplicate_action"] = "upgrade"
+
+    def test_upgrade_replaces_lower_quality_duplicate(self):
+        with bitrate_overrides({"Tag Track 1": 320000}):
+            self.importer.run()
+
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.mb_trackid == "new trackid"
+        assert item.bitrate == 320000
+        assert self.lib.get_item(self.old_item.id) is None
+
+    def test_upgrade_skips_lower_quality_new_copy(self):
+        with bitrate_overrides({"Tag Track 1": 64000}):
+            self.importer.run()
+
+        assert len(self.lib.items()) == 1
+        item = self.lib.items().get()
+        assert item.id == self.old_item.id
+        assert item.mb_trackid == "old trackid"
+        assert self.old_item.filepath.exists()
 
 
 class TagLogTest(unittest.TestCase):
@@ -1315,7 +1627,7 @@ class TagLogTest(unittest.TestCase):
         assert "status caf\xe9" in sio.getvalue()
 
 
-class ResumeImportTest(ImportTestCase):
+class TestResumeImport(ImportHelper):
     @patch("beets.plugins.send")
     def test_resume_album(self, plugins_send):
         self.prepare_albums_for_import(2)
@@ -1361,7 +1673,7 @@ class ResumeImportTest(ImportTestCase):
         assert self.lib.items("title:'Track 1'").get() is not None
 
 
-class IncrementalImportTest(AsIsImporterMixin, ImportTestCase):
+class TestIncrementalImport(AsIsImporterMixin, ImportHelper):
     def test_incremental_album(self):
         importer = self.run_asis_importer(incremental=True)
 
@@ -1387,16 +1699,13 @@ class IncrementalImportTest(AsIsImporterMixin, ImportTestCase):
         assert len(self.lib.items()) == 2
 
     def test_invalid_state_file(self):
-        with open(self.config["statefile"].as_filename(), "wb") as f:
-            f.write(b"000")
+        self.config["statefile"].as_path().write_bytes(b"000")
         self.run_asis_importer(incremental=True)
         assert len(self.lib.albums()) == 1
 
 
 def _mkmp3(path):
-    shutil.copyfile(
-        syspath(os.path.join(_common.RSRC, b"min.mp3")), syspath(path)
-    )
+    shutil.copyfile(_common.RSRC / "min.mp3", path)
 
 
 class AlbumsInDirTest(BeetsTestCase):
@@ -1404,20 +1713,24 @@ class AlbumsInDirTest(BeetsTestCase):
         super().setUp()
 
         # create a directory structure for testing
-        self.base = os.path.abspath(os.path.join(self.temp_dir, b"tempdir"))
-        os.mkdir(syspath(self.base))
+        base = (self.temp_path / "tempdir").resolve()
+        base.mkdir()
 
-        os.mkdir(syspath(os.path.join(self.base, b"album1")))
-        os.mkdir(syspath(os.path.join(self.base, b"album2")))
-        os.mkdir(syspath(os.path.join(self.base, b"more")))
-        os.mkdir(syspath(os.path.join(self.base, b"more", b"album3")))
-        os.mkdir(syspath(os.path.join(self.base, b"more", b"album4")))
+        album1_dir = base / "album1"
+        album2_dir = base / "album2"
+        album3_dir = base / "more" / "album3"
+        album4_dir = base / "more" / "album4"
+        album1_dir.mkdir()
+        album2_dir.mkdir()
+        album3_dir.mkdir(parents=True)
+        album4_dir.mkdir(parents=True)
 
-        _mkmp3(os.path.join(self.base, b"album1", b"album1song1.mp3"))
-        _mkmp3(os.path.join(self.base, b"album1", b"album1song2.mp3"))
-        _mkmp3(os.path.join(self.base, b"album2", b"album2song.mp3"))
-        _mkmp3(os.path.join(self.base, b"more", b"album3", b"album3song.mp3"))
-        _mkmp3(os.path.join(self.base, b"more", b"album4", b"album4song.mp3"))
+        _mkmp3(album1_dir / "album1song1.mp3")
+        _mkmp3(album1_dir / "album1song2.mp3")
+        _mkmp3(album2_dir / "album2song.mp3")
+        _mkmp3(album3_dir / "album3song.mp3")
+        _mkmp3(album4_dir / "album4song.mp3")
+        self.base = str(base)
 
     def test_finds_all_albums(self):
         albums = list(albums_in_dir(self.base))
@@ -1426,90 +1739,78 @@ class AlbumsInDirTest(BeetsTestCase):
     def test_separates_contents(self):
         found = []
         for _, album in albums_in_dir(self.base):
-            found.append(re.search(rb"album(.)song", album[0]).group(1))
-        assert b"1" in found
-        assert b"2" in found
-        assert b"3" in found
-        assert b"4" in found
+            found.append(re.search(r"album(.)song", album[0]).group(1))
+        assert "1" in found
+        assert "2" in found
+        assert "3" in found
+        assert "4" in found
 
     def test_finds_multiple_songs(self):
         for _, album in albums_in_dir(self.base):
-            n = re.search(rb"album(.)song", album[0]).group(1)
-            if n == b"1":
+            n = re.search(r"album(.)song", album[0]).group(1)
+            if n == "1":
                 assert len(album) == 2
             else:
                 assert len(album) == 1
 
 
 class MultiDiscAlbumsInDirTest(BeetsTestCase):
-    def create_music(self, files=True, ascii=True):
+    def create_music(self, files=True, ascii_=True):
         """Create some music in multiple album directories.
 
         `files` indicates whether to create the files (otherwise, only
-        directories are made). `ascii` indicates ACII-only filenames;
+        directories are made). `ascii_` indicates ACII-only filenames;
         otherwise, we use Unicode names.
         """
-        self.base = os.path.abspath(os.path.join(self.temp_dir, b"tempdir"))
-        os.mkdir(syspath(self.base))
+        self.base = (self.temp_path / "tempdir").resolve()
+        self.base.mkdir()
 
-        name = b"CAT" if ascii else util.bytestring_path("C\xc1T")
-        name_alt_case = b"CAt" if ascii else util.bytestring_path("C\xc1t")
+        name = "CAT" if ascii_ else "C\xc1T"
+        name_alt_case = "CAt" if ascii_ else "C\xc1t"
 
         self.dirs = [
             # Nested album, multiple subdirs.
             # Also, false positive marker in root dir, and subtitle for disc 3.
-            os.path.join(self.base, b"ABCD1234"),
-            os.path.join(self.base, b"ABCD1234", b"cd 1"),
-            os.path.join(self.base, b"ABCD1234", b"cd 3 - bonus"),
+            self.base / "ABCD1234",
+            self.base / "ABCD1234" / "cd 1",
+            self.base / "ABCD1234" / "cd 3 - bonus",
             # Nested album, single subdir.
             # Also, punctuation between marker and disc number.
-            os.path.join(self.base, b"album"),
-            os.path.join(self.base, b"album", b"cd _ 1"),
+            self.base / "album",
+            self.base / "album" / "cd _ 1",
             # Flattened album, case typo.
             # Also, false positive marker in parent dir.
-            os.path.join(self.base, b"artist [CD5]"),
-            os.path.join(self.base, b"artist [CD5]", name + b" disc 1"),
-            os.path.join(
-                self.base, b"artist [CD5]", name_alt_case + b" disc 2"
-            ),
+            self.base / "artist [CD5]",
+            self.base / "artist [CD5]" / f"{name} disc 1",
+            self.base / "artist [CD5]" / f"{name_alt_case} disc 2",
             # Single disc album, sorted between CAT discs.
-            os.path.join(self.base, b"artist [CD5]", name + b"S"),
+            self.base / "artist [CD5]" / f"{name} S",
         ]
-        self.files = [
-            os.path.join(self.base, b"ABCD1234", b"cd 1", b"song1.mp3"),
-            os.path.join(self.base, b"ABCD1234", b"cd 3 - bonus", b"song2.mp3"),
-            os.path.join(self.base, b"ABCD1234", b"cd 3 - bonus", b"song3.mp3"),
-            os.path.join(self.base, b"album", b"cd _ 1", b"song4.mp3"),
-            os.path.join(
-                self.base, b"artist [CD5]", name + b" disc 1", b"song5.mp3"
-            ),
-            os.path.join(
-                self.base,
-                b"artist [CD5]",
-                name_alt_case + b" disc 2",
-                b"song6.mp3",
-            ),
-            os.path.join(self.base, b"artist [CD5]", name + b"S", b"song7.mp3"),
-        ]
+        deep_dirs = [*self.dirs[:3], self.dirs[4], *self.dirs[6:]]
+        self.files = [d / f"song{i}.mp3" for i, d in enumerate(deep_dirs)]
 
-        if not ascii:
+        if not ascii_:
             self.dirs = [self._normalize_path(p) for p in self.dirs]
             self.files = [self._normalize_path(p) for p in self.files]
 
         for path in self.dirs:
-            os.mkdir(syspath(path))
+            path.mkdir()
         if files:
             for path in self.files:
-                _mkmp3(util.syspath(path))
+                _mkmp3(path)
 
-    def _normalize_path(self, path):
+        self.dirs = list(map(str, self.dirs))
+        self.files = list(map(str, self.files))
+        self.base = str(self.base)
+
+    def _normalize_path(self, path: Path) -> Path:
         """Normalize a path's Unicode combining form according to the
         platform.
         """
-        path = path.decode("utf-8")
-        norm_form = "NFD" if sys.platform == "darwin" else "NFC"
-        path = unicodedata.normalize(norm_form, path)
-        return path.encode("utf-8")
+        norm_form: Literal["NFD", "NFC"] = (
+            "NFD" if sys.platform == "darwin" else "NFC"
+        )
+        return Path(unicodedata.normalize(norm_form, str(path)))
 
     def test_coalesce_nested_album_multiple_subdirs(self):
         self.create_music()
@@ -1546,14 +1847,14 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         assert len(albums) == 0
 
     def test_single_disc_unicode(self):
-        self.create_music(ascii=False)
+        self.create_music(ascii_=False)
         albums = list(albums_in_dir(self.base))
         root, items = albums[3]
         assert root == self.dirs[8:]
         assert len(items) == 1
 
     def test_coalesce_multiple_unicode(self):
-        self.create_music(ascii=False)
+        self.create_music(ascii_=False)
         albums = list(albums_in_dir(self.base))
         assert len(albums) == 4
         root, items = albums[0]
@@ -1563,33 +1864,31 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
     def test_coalesce_markers(self):
         for i, (marker, suffix1, suffix2) in enumerate(
             [
-                (b"Disc", b" 1", b" 02"),  # titlecase, space-separated
-                (b"disk 757", b" 1", b" 02"),  # lowercase, numerical suffix
-                (b"CD", b"01", b"02"),  # uppercase, no space (e.g. CD01)
-                (b"disc", b"_1", b"_2"),  # underscore separator (e.g. disc_1)
-                (b"cAsSeTtE", b" 1", b" 02"),  # mixed case
-                (b"Digital   Media", b" 1", b" 02"),  # multiple spaces
-                (b"vinyl", b" 1", b" 02"),  # lowercase
-                (b"12 vinyl", b" 1", b" 02"),  # common prefix
+                ("Disc", " 1", " 02"),  # titlecase, space-separated
+                ("disk 757", " 1", " 02"),  # lowercase, numerical suffix
+                ("CD", "01", "02"),  # uppercase, no space (e.g. CD01)
+                ("disc", "_1", "_2"),  # underscore separator (e.g. disc_1)
+                ("cAsSeTtE", " 1", " 02"),  # mixed case
+                ("Digital   Media", " 1", " 02"),  # multiple spaces
+                ("vinyl", " 1", " 02"),  # lowercase
+                ("12 vinyl", " 1", " 02"),  # common prefix
             ]
         ):
             with self.subTest(marker=marker, suffix1=suffix1, suffix2=suffix2):
-                base = os.path.abspath(
-                    os.path.join(self.temp_dir, b"marker_" + str(i).encode())
-                )
-                os.mkdir(syspath(base))
+                base = self.temp_path / f"marker_{i}"
+                base.mkdir()
 
-                album_dir = os.path.join(base, b"Album Name")
-                os.mkdir(syspath(album_dir))
+                album_dir = base / "Album Name"
+                album_dir.mkdir()
 
                 discs = []
                 for suffix in (suffix1, suffix2):
-                    disc = os.path.join(album_dir, marker + suffix)
-                    os.mkdir(syspath(disc))
-                    _mkmp3(syspath(os.path.join(disc, b"song.mp3")))
-                    discs.append(disc)
+                    disc = album_dir / f"{marker}{suffix}"
+                    disc.mkdir()
+                    _mkmp3(disc / "song.mp3")
+                    discs.append(str(disc))
 
-                albums = list(albums_in_dir(base))
+                albums = list(albums_in_dir(str(base)))
                 assert len(albums) == 1
                 root, items = albums[0]
                 for disc in discs:
@@ -1599,18 +1898,18 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
     def test_no_coalesce_mismatched_prefixes(self):
         # "CD 02" and "Enhanced CD 01" share the "cd" marker but have
         # different prefixes, so they should not be collapsed.
-        base = os.path.abspath(os.path.join(self.temp_dir, b"mismatched"))
-        os.mkdir(syspath(base))
+        base = self.temp_path / "mismatched"
+        base.mkdir()
 
-        album_dir = os.path.join(base, b"Album Name")
-        os.mkdir(syspath(album_dir))
+        album_dir = base / "Album Name"
+        album_dir.mkdir()
 
-        for subdir in (b"CD 02", b"Enhanced CD 01"):
-            d = os.path.join(album_dir, subdir)
-            os.mkdir(syspath(d))
-            _mkmp3(syspath(os.path.join(d, b"song.mp3")))
+        for subdir in ("CD 02", "Enhanced CD 01"):
+            d = album_dir / subdir
+            d.mkdir()
+            _mkmp3(d / "song.mp3")
 
-        albums = list(albums_in_dir(base))
+        albums = list(albums_in_dir(str(base)))
         assert len(albums) == 2
 
 
@@ -1640,7 +1939,7 @@ class ReimportTest(AutotagImportTestCase):
         item.store()
 
     def _setup_session(self, singletons=False):
-        self.setup_importer(import_dir=self.libdir, singletons=singletons)
+        self.setup_importer(import_dir=self.lib_path, singletons=singletons)
         self.importer.add_choice(importer.Action.APPLY)
 
     def _album(self):
@@ -1693,7 +1992,7 @@ class ReimportTest(AutotagImportTestCase):
 
     def test_reimported_item_preserves_art(self):
         self._setup_session()
-        art_source = os.path.join(_common.RSRC, b"abbey.jpg")
+        art_source = _common.RSRC / "abbey.jpg"
         replaced_album = self._album()
         replaced_album.set_art(art_source)
         replaced_album.store()
@@ -1719,46 +2018,51 @@ class ReimportTest(AutotagImportTestCase):
         assert self._album().data_source == "match_source"
 
 
-class ImportPretendTest(IOMixin, AutotagImportTestCase):
-    """Test the pretend commandline option"""
+class TestImportPretend(ImportHelper):
+    """Test the pretend commandline option."""
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.album_track_path = self.prepare_album_for_import(1)[0]
         self.single_path = self.prepare_track_for_import(2, self.import_path)
         self.album_path = self.album_track_path.parent
 
-    def __run(self, importer):
-        with capture_log() as logs:
+    def _run(self, importer, caplog):
+        with caplog.at_level("DEBUG"):
             importer.run()
-
         assert len(self.lib.items()) == 0
         assert len(self.lib.albums()) == 0
+        return [
+            r.message
+            for r in caplog.records
+            if not r.message.startswith("Sending event:")
+        ]
 
-        return [line for line in logs if not line.startswith("Sending event:")]
-        assert self._album().data_source == "original_source"
-
-    def test_import_singletons_pretend(self):
-        assert self.__run(self.setup_singleton_importer(pretend=True)) == [
+    def test_import_singletons_pretend(self, caplog):
+        assert self._run(
+            self.setup_singleton_importer(pretend=True), caplog
+        ) == [
             f"Singleton: {self.single_path}",
             f"Singleton: {self.album_track_path}",
         ]
 
-    def test_import_album_pretend(self):
-        assert self.__run(self.setup_importer(pretend=True)) == [
+    def test_import_album_pretend(self, caplog):
+        assert self._run(self.setup_importer(pretend=True), caplog) == [
             f"Album: {self.import_path}",
             f"  {self.single_path}",
             f"Album: {self.album_path}",
             f"  {self.album_track_path}",
         ]
 
-    def test_import_pretend_empty(self):
-        empty_path = self.temp_dir_path / "empty"
+    def test_import_pretend_empty(self, caplog):
+        empty_path = self.temp_path / "empty"
         empty_path.mkdir()
 
         importer = self.setup_importer(pretend=True, import_dir=empty_path)
 
-        assert self.__run(importer) == [f"No files imported from {empty_path}"]
+        assert self._run(importer, caplog) == [
+            f"No files imported from {empty_path}"
+        ]
 
 
 def mocked_get_albums_by_ids(ids):
@@ -1770,8 +2074,8 @@ def mocked_get_albums_by_ids(ids):
     """
     # Map IDs to (release title, artist), so the distances are different.
     album_artist_map = {
-        ImportIdTest.ID_RELEASE_0: ("VALID_RELEASE_0", "TAG ARTIST"),
-        ImportIdTest.ID_RELEASE_1: ("VALID_RELEASE_1", "DISTANT_MATCH"),
+        TestImportId.ID_RELEASE_0: ("VALID_RELEASE_0", "TAG ARTIST"),
+        TestImportId.ID_RELEASE_1: ("VALID_RELEASE_1", "DISTANT_MATCH"),
     }
 
     for id_ in ids:
@@ -1805,8 +2109,8 @@ def mocked_get_tracks_by_ids(ids):
     """
     # Map IDs to (recording title, artist), so the distances are different.
     title_artist_map = {
-        ImportIdTest.ID_RECORDING_0: ("VALID_RECORDING_0", "TAG ARTIST"),
-        ImportIdTest.ID_RECORDING_1: ("VALID_RECORDING_1", "DISTANT_MATCH"),
+        TestImportId.ID_RECORDING_0: ("VALID_RECORDING_0", "TAG ARTIST"),
+        TestImportId.ID_RECORDING_1: ("VALID_RECORDING_1", "DISTANT_MATCH"),
     }
 
     for id_ in ids:
@@ -1828,14 +2132,14 @@ def mocked_get_tracks_by_ids(ids):
     "beets.metadata_plugins.albums_for_ids",
     Mock(side_effect=mocked_get_albums_by_ids),
 )
-class ImportIdTest(ImportTestCase):
+class TestImportId(ImportHelper):
     ID_RELEASE_0 = "00000000-0000-0000-0000-000000000000"
     ID_RELEASE_1 = "11111111-1111-1111-1111-111111111111"
     ID_RECORDING_0 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     ID_RECORDING_1 = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(1)
 
     def test_one_mbid_one_album(self):
@@ -1873,7 +2177,9 @@ class ImportIdTest(ImportTestCase):
     def test_candidates_album(self):
         """Test directly ImportTask.lookup_candidates()."""
         task = importer.ImportTask(
-            paths=self.import_dir, toppath="top path", items=[_common.item()]
+            paths=os.fsencode(self.import_path),
+            toppath="top path",
+            items=[_common.item()],
         )
 
         task.lookup_candidates([self.ID_RELEASE_0, self.ID_RELEASE_1])
@@ -1895,27 +2201,27 @@ class ImportIdTest(ImportTestCase):
         }
 
 
-class MpeglayerWavImportTest(AsIsImporterMixin, ImportTestCase):
+class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
 
     def test_remux_mpeglayer3_wav(self):
-        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
-        dest = os.path.join(self.temp_dir, b"mpeglayer3.wav")
-        shutil.copy(syspath(src), syspath(dest))
+        src = _common.RSRC / "mpeglayer3.wav"
+        dest = self.temp_path / "mpeglayer3.wav"
+        shutil.copy(src, syspath(dest))
 
         mp3_path = remux_mpeglayer3_wav(dest)
 
         assert mp3_path is not None
-        assert mp3_path.endswith(b".mp3")
-        assert os.path.exists(mp3_path)
-        assert not os.path.exists(dest)
+        assert mp3_path.suffix == ".mp3"
+        assert mp3_path.exists()
+        assert not dest.exists()
 
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""
         self.config["import"]["remux_mp3_in_wav"] = False
-        src = os.path.join(_common.RSRC, b"mpeglayer3.wav")
-        dest = os.path.join(self.import_dir, b"mpeglayer3.wav")
-        shutil.copy(syspath(src), syspath(dest))
+        src = _common.RSRC / "mpeglayer3.wav"
+        dest = self.import_path / "mpeglayer3.wav"
+        shutil.copy(src, syspath(dest))
 
         self.run_asis_importer()
-        assert os.path.exists(dest)
+        assert dest.exists()

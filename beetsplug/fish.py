@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2015, winters jean-marie.
-# Copyright 2020, Justin Mayer <https://justinmayer.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """This plugin generates tab completions for Beets commands for the Fish shell
 <https://fishshell.com/>, including completions for Beets commands, plugin
 commands, and option flags. Also generated are completions for all the album
@@ -82,7 +67,7 @@ class FishPlugin(BeetsPlugin):
             "--extravalues",
             action="append",
             type="choice",
-            choices=library.Item.all_keys() | library.Album.all_keys(),
+            choices=list(library.Item.all_keys() | library.Album.all_keys()),
             help="include specified field *values* in completions",
         )
         cmd.parser.add_option(
@@ -179,7 +164,7 @@ def get_set_of_values_for_field(lib, fields):
 
 
 def get_basic_beet_options():
-    word = (
+    return (
         BL_NEED2.format("-l format-item", "-f -d 'print with custom format'")
         + BL_NEED2.format("-l format-album", "-f -d 'print with custom format'")
         + BL_NEED2.format(
@@ -198,7 +183,6 @@ def get_basic_beet_options():
             "-s  h  -l help", "-f -d 'print this help message and exit'"
         )
     )
-    return word
 
 
 def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):

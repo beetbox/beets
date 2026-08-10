@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Various tests for querying the library database."""
 
 import logging
@@ -29,6 +15,7 @@ from beets.dbcore.query import (
     BooleanQuery,
     DateQuery,
     FalseQuery,
+    InQuery,
     MatchQuery,
     NoneQuery,
     NotQuery,
@@ -44,7 +31,6 @@ from beets.dbcore.query import (
 )
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import TestHelper
 
 # Because the absolute path begins with something like C:, we
 # can't disambiguate it from an ordinary query.
@@ -54,13 +40,13 @@ _p = pytest.param
 
 
 @pytest.fixture(scope="class")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
+def helper(class_helper):
+    """Use class scope because each query class owns a library shape.
 
-    yield helper
-
-    helper.teardown_beets()
+    Class fixtures add rows, albums, flex types, paths, or media files and then
+    query whole collections, so sibling class data would change expectations.
+    """
+    return class_helper
 
 
 class TestGet:
@@ -100,6 +86,7 @@ class TestGet:
             comp=False,
             genres=["Hard Rock"],
             comments="caf\xe9",
+            Flex_Attr="flex",
         )
 
         return helper.lib
@@ -129,6 +116,8 @@ class TestGet:
             ("comments:caf\xe9", ["third"]),
             ("comp:true", ["first", "second"]),
             ("comp:false", ["third"]),
+            ("flex_attr:flex", ["third"]),
+            ("Flex_Attr:flex", ["third"]),
             ("genres:=rock", ["first"]),
             ("genres:=Rock", ["second"]),
             ('genres:="Hard Rock"', ["third"]),
@@ -484,6 +473,12 @@ class TestQuery:
     @pytest.mark.parametrize("query_class", [MatchQuery, StringFieldQuery])
     def test_equality(self, query_class):
         assert query_class("foo", "bar") == query_class("foo", "bar")
+
+    def test_in_query_hashable(self):
+        # smartplaylist puts queries in a set; an InQuery whose pattern is a
+        # list used to raise `unhashable type: 'list'`. See #5354.
+        query = InQuery("field", [1, 2, 3])
+        assert query in {query}
 
     @pytest.mark.parametrize(
         "make_q, expected_msg",

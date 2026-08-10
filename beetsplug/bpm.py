@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, aroquen
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Determine BPM by pressing a key to the rhythm."""
 
 import time
@@ -40,8 +26,7 @@ def bpm(max_strokes):
 
     # Return average BPM
     # bpm = (max_strokes-1) / sum(dt) * 60
-    ave = sum([1.0 / dti * 60 for dti in dt]) / len(dt)
-    return ave
+    return sum([1.0 / dti * 60 for dti in dt]) / len(dt)
 
 
 class BPMPlugin(BeetsPlugin):

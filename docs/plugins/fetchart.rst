@@ -38,6 +38,9 @@ file. The available options are:
   ``cover front art album folder``.
 - **fallback**: Path to a fallback album art file if no album art was found
   otherwise. Default: ``None`` (disabled).
+- **fetch_for_asis**: Fetch album art from online sources during import, even
+  when the as-is option is selected in the Auto-Tagger. When ``no``, only local
+  filesystem sources of art are considered for as-is imports. Default: ``no``.
 - **minwidth**: Only images with a width bigger or equal to ``minwidth`` are
   considered as valid album art candidates. Default: 0.
 - **maxwidth**: A maximum image width to downscale fetched images if they are
@@ -221,7 +224,7 @@ To use the google image search backend you need to `register for a Google API
 key`_. Set the ``google_key`` configuration option to your key, then add
 ``google`` to the list of sources in your configuration.
 
-.. _register for a google api key: https://console.developers.google.com.
+.. _register for a google api key: https://console.cloud.google.com/apis/credentials
 
 Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine`` configuration option. The default

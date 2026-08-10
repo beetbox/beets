@@ -159,6 +159,8 @@ c46069654628040316dea9db85d01b263db3ba9e
 bc71ec308eb938df1d349f6857634ddf2a82e339
 
 # 2026
+# Move changelog note under Unreleased section
+1fe5bad4b27d2845aad16f0afae91fe389f299fb
 # Replace http URLs with https
 3d0d032987c4c2e9550529fd25e79581b06ade73
 # Fix broken URLs
@@ -197,3 +199,75 @@ adfb73b66dba0fc799880af176ef6f9ac0a7ee68
 ca8544d4bcab503e1e4c2cd6688655c8211aa7a1
 # Fix autobpm tests
 5804a21620098e8da78b1f4a5f85063033586632
+# Enable and fix flake8-pie
+3a419c6a347803fc962f018f5ad027b5399ab3ae
+# Enable and fix flake8-return
+d0dc5f86a626765c86cdadc348595429f4c6e6ef
+# Enable and fix flake8-builtins
+b7974ace83ab193b6417bdcecaf68a742bf5a1a8
+# Preserve importer config views
+c9ad80dad2528af67cdb76c35d7ba5e4824b7600
+# Type _reduce_and_log
+c070b29e14cd06419e129b76a6d42a82fe51e190
+# Add missing types to importer
+e4baceae1fa03dfd6db9e0bab88ddd2812963ad3
+# Add missing types to beets.util.pipeline
+f0105bef73053098f8755376c88f38cc90d9b23f
+# Rip out util tests from test_files
+b1ae461723316b738f301406198382913207e100
+# Rip out queryparse tests away from test_dbcore
+88202493adb769e667f64a96a3ec0270f46ca60e
+# Define DB fixtures in a shared place
+816cddbfd5d0976a31e9d0788db0944c62ad16db
+# Move test modules under folders that they belong to
+900543baca4cf5fa4dbe52dbe748f98a0371d0ed
+# Move DummyIMBackend to fixtures
+aef9c64cb07c8f828d0dd6e69a5485abf2c43396
+# typing: add types to beets.util
+94ef7d8d1f37d87268abed6a4bd5df054912092f
+# typing: make path utils more flexible re path types
+1418a80e0531fba1e01d0ad2a4decdefaed6b365
+# typing: add types to beets.test.helper
+29c887db5bff1cfc4c6ea60505636742fa41cccf
+# typing: type beets.dbcore.db
+8d03803fcf1b18385e477cb9273553e2431447ce
+# typing: type beets.dbcore.sort
+ca8e9f69a8a0254aa767dc86f6d808d02f6af05d
+# typing: type beets.dbcore.query
+b1701c2e12b2de8e5462affe46ecc6816a5fc508
+# typing: type beets.dbcore.types
+ea3d6af6169d33be009b86bf5607baae7cf9652a
+# Fix #6177, remove derived types, refactor coalesce tracks
+9efe87101ce03706660129633e03147a222765cf
+# typing: type beets.library.exceptions
+fcee48fb0a11003afab1f4eb7334dca1e4842606
+# typing: type beets.library.queries
+c6b87e869e44bd53fccc9603b682351c96612583
+# dbcore: rename Database._fetch to Database.get_results
+856087258b3466f09d557a054e4b7cc4cdc25638
+# typing: type beets.library.library
+f167dc29e41439e342c04c073758102b2a2e1af8
+# typing: add return types to beets.library.models
+8949562ef8f4e83ef281674c6125b041991d3d26
+# typing: type models in beets.library.models
+9b375d0b2d2dc9388892f1b901aae67ab0ad8290
+# typing: type the rest of beets.library.models
+9022cb5ed7fddf60c1156dc3ca7e3a540dc8f7f2
+# Replace ImporterMixin.import_dir attribute with ImporterMixin.import_path
+7970a90214fcd64ab5fef1c71b7bf1413ad6ce86
+# Replace TestHelper.libdir attribute with TestHelper.lib_path
+dc2826fa4b32b625eb4ac9d71934176edde2443e
+# Replace PathsMixin.temp_dir attribute with PathsMixin.temp_dir_path
+2e9ace7b20e776ad10127b2f6ac76791e2a19704
+# Rename PathsMixin.temp_dir_path to PathsMixin.temp_path for consistency
+d24c0d341ec6074c343cd8054083fe358da8fa14
+# Fix yoda typedefs
+5dcc35112d17976a11ffc468cf436bc3e2342e54
+# Replace item.path with item.filepath in tests
+04c2304879d088ea9be1fad475caf022608a3145
+# Use pathlib.Path wherever possible in tests
+951e32a852b48f87e3dd2ccf71753ee8f7ac2e34
+# Remove syspath
+b2f52ac12443c102712b735e456fd07a6525786b
+# Return Path from TestHelper.create_mediafile_fixture
+bb66b0c378e9bf7d97622a1582d93c4dfcf20fdd

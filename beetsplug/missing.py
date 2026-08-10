@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Pedro Silva.
-# Copyright 2017, Quentin Young.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """List missing tracks."""
 
 from __future__ import annotations
@@ -24,7 +9,7 @@ import requests
 
 from beets import config, metadata_plugins
 from beets.dbcore import types
-from beets.library import Item
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
@@ -33,7 +18,7 @@ from ._utils.musicbrainz import MusicBrainzAPIMixin
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from beets.library import Album, Library
+    from beets.library import Library
 
 # Valid MusicBrainz release types for filtering release groups
 VALID_RELEASE_TYPES = [
@@ -74,41 +59,39 @@ def _item(track_info, album_info, album_id):
     a = album_info
 
     return Item(
-        **{
-            "album_id": album_id,
-            "album": a.album,
-            "albumartist": a.artist,
-            "albumartist_credit": a.artist_credit,
-            "albumartist_sort": a.artist_sort,
-            "albumdisambig": a.albumdisambig,
-            "albumstatus": a.albumstatus,
-            "albumtype": a.albumtype,
-            "artist": t.artist,
-            "artist_credit": t.artist_credit,
-            "artist_sort": t.artist_sort,
-            "asin": a.asin,
-            "catalognum": a.catalognum,
-            "comp": a.va,
-            "country": a.country,
-            "day": a.day,
-            "disc": t.medium,
-            "disctitle": t.disctitle,
-            "disctotal": a.mediums,
-            "label": a.label,
-            "language": a.language,
-            "length": t.length,
-            "mb_albumid": a.album_id,
-            "mb_artistid": t.artist_id,
-            "mb_releasegroupid": a.releasegroup_id,
-            "mb_trackid": t.track_id,
-            "media": t.media,
-            "month": a.month,
-            "script": a.script,
-            "title": t.title,
-            "track": t.index,
-            "tracktotal": len(a.tracks),
-            "year": a.year,
-        }
+        album_id=album_id,
+        album=a.album,
+        albumartist=a.artist,
+        albumartist_credit=a.artist_credit,
+        albumartist_sort=a.artist_sort,
+        albumdisambig=a.albumdisambig,
+        albumstatus=a.albumstatus,
+        albumtype=a.albumtype,
+        artist=t.artist,
+        artist_credit=t.artist_credit,
+        artist_sort=t.artist_sort,
+        asin=a.asin,
+        catalognum=a.catalognum,
+        comp=a.va,
+        country=a.country,
+        day=a.day,
+        disc=t.medium,
+        disctitle=t.disctitle,
+        disctotal=a.mediums,
+        label=a.label,
+        language=a.language,
+        length=t.length,
+        mb_albumid=a.album_id,
+        mb_artistid=t.artist_id,
+        mb_releasegroupid=a.releasegroup_id,
+        mb_trackid=t.track_id,
+        media=t.media,
+        month=a.month,
+        script=a.script,
+        title=t.title,
+        track=t.index,
+        tracktotal=len(a.tracks),
+        year=a.year,
     )
 
 
@@ -228,6 +211,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         for rt in self.config["release_types"].as_str_seq():
             release_types.extend(rt.split(","))
         calculating_total = self.config["total"].get()
+        fmt = config["format_album"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
                 resp = self.mb_api.browse_release_groups(
@@ -242,17 +226,22 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 )
                 continue
 
-            missing_titles = [
-                f"{artist} - {rg['title']}"
+            missing_albums = [
+                Album(
+                    albumartist=artist,
+                    album=rg["title"],
+                    mb_releasegroupid=rg["id"],
+                    albumtype=(rg.get("primary_type") or "").lower(),
+                )
                 for rg in resp
                 if rg["id"] not in album_ids
             ]
 
             if calculating_total:
-                total_missing += len(missing_titles)
+                total_missing += len(missing_albums)
             else:
-                for title in missing_titles:
-                    print(title)
+                for album in missing_albums:
+                    print_(format(album, fmt))
 
         if calculating_total:
             print(total_missing)

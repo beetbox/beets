@@ -317,6 +317,8 @@ constructs include:
   it belongs to.
 - ``%the{text}`` by :doc:`/plugins/the`: Moves English articles to ends of
   strings.
+- ``%titlecase{text}`` by :doc:`/plugins/titlecase`: Format text according to
+  title case guidelines.
 
 The :doc:`/plugins/inline` lets you define template fields in your beets
 configuration file using Python snippets. And for more advanced processing, you

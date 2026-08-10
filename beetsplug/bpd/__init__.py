@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """A clone of the Music Player Daemon (MPD) that plays music from a
 Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
@@ -165,11 +151,10 @@ def cast_arg(t, val):
     """
     if t == "intbool":
         return cast_arg(bool, cast_arg(int, val))
-    else:
-        try:
-            return t(val)
-        except ValueError:
-            raise ArgumentTypeError()
+    try:
+        return t(val)
+    except ValueError:
+        raise ArgumentTypeError()
 
 
 class BPDCloseError(Exception):
@@ -346,7 +331,6 @@ class BaseServer:
 
     def cmd_ping(self, conn):
         """Succeeds."""
-        pass
 
     def cmd_idle(self, conn, *subsystems):
         subsystems = subsystems or SUBSYSTEMS
@@ -604,7 +588,6 @@ class BaseServer:
 
     def cmd_urlhandlers(self, conn):
         """Indicates supported URL schemes. None by default."""
-        pass
 
     def cmd_playlistinfo(self, conn, index=None):
         """Gives metadata information about the entire playlist or a
@@ -669,10 +652,9 @@ class BaseServer:
                 self.current_index = -1
                 return self.cmd_play(conn)
             return self.cmd_stop(conn)
-        elif self.single and not self.repeat:
+        if self.single and not self.repeat:
             return self.cmd_stop(conn)
-        else:
-            return self.cmd_play(conn)
+        return self.cmd_play(conn)
 
     def cmd_previous(self, conn):
         """Step back to the last song."""
@@ -714,6 +696,7 @@ class BaseServer:
 
         self.paused = False
         self._send_event("player")
+        return None
 
     def cmd_playid(self, conn, track_id=0):
         track_id = cast_arg(int, track_id)
@@ -1410,8 +1393,8 @@ class Server(BaseServer):
                     _, key = self._tagtype_lookup(tag)
                     queries.append(Item.field_query(key, value, query_type))
             return dbcore.query.AndQuery(queries)
-        else:  # No key-value pairs.
-            return dbcore.query.TrueQuery()
+        # No key-value pairs.
+        return dbcore.query.TrueQuery()
 
     def cmd_search(self, conn, *kv):
         """Perform a substring match for items."""
@@ -1528,8 +1511,7 @@ class Server(BaseServer):
         output_id = cast_arg(int, output_id)
         if output_id == 0:
             raise BPDError(ERROR_ARG, "cannot disable this output")
-        else:
-            raise ArgumentIndexError()
+        raise ArgumentIndexError()
 
     # Playback control. The functions below hook into the
     # half-implementations provided by the base class. Together, they're

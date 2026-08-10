@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2019, Joris Jensen
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 import random
 import string
 from hashlib import md5
@@ -41,19 +26,18 @@ def filter_to_be_removed(items, keys):
                 ):
                     dont_remove.append(item)
         return [item for item in items if item not in dont_remove]
-    else:
 
-        def to_be_removed(item):
-            for artist, album, title in keys:
-                if (
-                    artist == item["artist"]
-                    and album == item["album"]
-                    and title == item["title"]
-                ):
-                    return False
-            return True
+    def to_be_removed(item):
+        for artist, album, title in keys:
+            if (
+                artist == item["artist"]
+                and album == item["album"]
+                and title == item["title"]
+            ):
+                return False
+        return True
 
-        return [item for item in items if to_be_removed(item)]
+    return [item for item in items if to_be_removed(item)]
 
 
 class SubsonicPlaylistPlugin(BeetsPlugin):
@@ -96,7 +80,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         if playlist.attrib.get("code", "200") != "200":
             alt_error = "error getting playlist, but no error message found"
             self._log.warn(playlist.attrib.get("message", alt_error))
-            return
+            return None
 
         name = playlist.attrib.get("name", "undefined")
         tracks = [
@@ -167,11 +151,10 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         params["s"] = b
         params["v"] = "1.12.0"
         params["c"] = "beets"
-        resp = requests.get(
+        return requests.get(
             f"{self.config['base_url'].get()}/rest/{endpoint}?{urlencode(params)}",
             timeout=10,
         )
-        return resp
 
     def get_playlists(self, ids):
         output = {}

@@ -49,9 +49,8 @@ class ImportTest(BeetsTestCase):
                 "/music/Soulwax/Any Minute Now",
             ]
 
-        logfile = os.path.join(self.temp_dir, b"logfile.log")
-        with open(logfile, mode="w") as fp:
-            fp.write(logfile_content)
+        logfile = self.temp_path / "logfile.log"
+        logfile.write_text(logfile_content)
         actual_paths = list(paths_from_logfile(logfile))
         assert actual_paths == expected_paths
 

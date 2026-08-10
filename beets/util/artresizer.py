@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Fabrice Laporte
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Abstraction layer to resize images using PIL, ImageMagick, or a
 public resizing proxy if neither is available.
 """
@@ -80,7 +66,6 @@ class LocalBackend(ABC):
         """Return the backend version if its dependencies are satisfied or
         raise `LocalBackendNotAvailableError`.
         """
-        pass
 
     @classmethod
     def available(cls) -> bool:
@@ -105,12 +90,10 @@ class LocalBackend(ABC):
 
         On error, logs a warning and returns `path_in`.
         """
-        pass
 
     @abstractmethod
     def get_size(self, path_in: bytes) -> tuple[int, int] | None:
         """Return the (width, height) of the image or None if unavailable."""
-        pass
 
     @abstractmethod
     def deinterlace(
@@ -120,12 +103,10 @@ class LocalBackend(ABC):
 
         On error, logs a warning and returns `path_in`.
         """
-        pass
 
     @abstractmethod
     def get_format(self, path_in: bytes) -> str | None:
         """Return the image format (e.g., 'PNG') or None if undetectable."""
-        pass
 
     @abstractmethod
     def convert_format(
@@ -135,7 +116,6 @@ class LocalBackend(ABC):
 
         On error, logs a warning and returns `source`.
         """
-        pass
 
     @property
     def can_compare(self) -> bool:
@@ -204,8 +184,7 @@ class IMBackend(LocalBackend):
         # cls._version is never None here, but mypy doesn't get that
         if cls._version is _NOT_AVAILABLE or cls._version is None:
             raise LocalBackendNotAvailableError()
-        else:
-            return cls._version
+        return cls._version
 
     convert_cmd: list[str]
     identify_cmd: list[str]
@@ -260,7 +239,7 @@ class IMBackend(LocalBackend):
         # it here for the sake of explicitness.
         cmd: list[str] = [
             *self.convert_cmd,
-            syspath(path_in, prefix=False),
+            os.fsdecode(path_in),
             "-resize",
             f"{maxwidth}x>",
             "-interlace",
@@ -275,7 +254,7 @@ class IMBackend(LocalBackend):
         if max_filesize > 0:
             cmd += ["-define", f"jpeg:extent={max_filesize}b"]
 
-        cmd.append(syspath(path_out, prefix=False))
+        cmd.append(os.fsdecode(path_out))
 
         try:
             util.command_output(cmd)
@@ -293,7 +272,7 @@ class IMBackend(LocalBackend):
             *self.identify_cmd,
             "-format",
             "%w %h",
-            syspath(path_in, prefix=False),
+            os.fsdecode(path_in),
         ]
 
         try:
@@ -328,10 +307,10 @@ class IMBackend(LocalBackend):
 
         cmd = [
             *self.convert_cmd,
-            syspath(path_in, prefix=False),
+            os.fsdecode(path_in),
             "-interlace",
             "none",
-            syspath(path_out, prefix=False),
+            os.fsdecode(path_out),
         ]
 
         try:
@@ -384,12 +363,10 @@ class IMBackend(LocalBackend):
         # Converting images to grayscale tends to minimize the weight
         # of colors in the diff score. So we first convert both images
         # to grayscale and then pipe them into the `compare` command.
-        # On Windows, ImageMagick doesn't support the magic \\?\ prefix
-        # on paths, so we pass `prefix=False` to `syspath`.
         convert_cmd = [
             *self.convert_cmd,
-            syspath(im2, prefix=False),
-            syspath(im1, prefix=False),
+            os.fsdecode(im2),
+            os.fsdecode(im1),
             "-colorspace",
             "gray",
             "MIFF:-",
@@ -564,8 +541,7 @@ class PILBackend(LocalBackend):
                 )
                 return path_out
 
-            else:
-                return path_out
+            return path_out
         except OSError:
             log.error(
                 "PIL cannot create thumbnail for '{}'",
@@ -699,8 +675,7 @@ class ArtResizer:
     def method(self) -> str:
         if self.local_method is not None:
             return self.local_method.NAME
-        else:
-            return "WEBPROXY"
+        return "WEBPROXY"
 
     def resize(
         self,
@@ -723,9 +698,8 @@ class ArtResizer:
                 quality=quality,
                 max_filesize=max_filesize,
             )
-        else:
-            # Handled by `proxy_url` already.
-            return path_in
+        # Handled by `proxy_url` already.
+        return path_in
 
     def deinterlace(
         self, path_in: bytes, path_out: bytes | None = None
@@ -736,9 +710,8 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.deinterlace(path_in, path_out)
-        else:
-            # FIXME: Should probably issue a warning?
-            return path_in
+        # FIXME: Should probably issue a warning?
+        return path_in
 
     def proxy_url(self, maxwidth: int, url: str, quality: int = 0) -> str:
         """Modifies an image URL according the method, returning a new
@@ -748,8 +721,7 @@ class ArtResizer:
         if self.local:
             # Going to be handled by `resize()`.
             return url
-        else:
-            return resize_url(url, maxwidth, quality)
+        return resize_url(url, maxwidth, quality)
 
     @property
     def local(self) -> bool:
@@ -766,10 +738,9 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.get_size(path_in)
-        else:
-            raise RuntimeError(
-                "image cannot be obtained without artresizer backend"
-            )
+        raise RuntimeError(
+            "image cannot be obtained without artresizer backend"
+        )
 
     def get_format(self, path_in: bytes) -> str | None:
         """Returns the format of the image as a string.
@@ -778,9 +749,8 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.get_format(path_in)
-        else:
-            # FIXME: Should probably issue a warning?
-            return None
+        # FIXME: Should probably issue a warning?
+        return None
 
     def reformat(
         self, path_in: bytes, new_format: str, deinterlaced: bool = True
@@ -820,8 +790,7 @@ class ArtResizer:
 
         if self.local_method is not None:
             return self.local_method.can_compare
-        else:
-            return False
+        return False
 
     def compare(
         self, im1: bytes, im2: bytes, compare_threshold: float
@@ -832,9 +801,8 @@ class ArtResizer:
         """
         if self.local_method is not None:
             return self.local_method.compare(im1, im2, compare_threshold)
-        else:
-            # FIXME: Should probably issue a warning?
-            return None
+        # FIXME: Should probably issue a warning?
+        return None
 
     @property
     def can_write_metadata(self) -> bool:
@@ -842,8 +810,7 @@ class ArtResizer:
 
         if self.local_method is not None:
             return self.local_method.can_write_metadata
-        else:
-            return False
+        return False
 
     def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
         """Write key-value metadata to the image file.

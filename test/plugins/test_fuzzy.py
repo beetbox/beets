@@ -1,38 +1,11 @@
-# This file is part of beets.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the fuzzy query plugin."""
 
 import pytest
 
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginTestHelper
 
 
-@pytest.fixture
-def helper(request):
-    helper = TestHelper()
-    helper.setup_beets()
-
-    request.instance.lib = helper.lib
-    request.instance.add_item = helper.add_item
-
-    yield
-
-    helper.teardown_beets()
-
-
-@pytest.mark.usefixtures("helper")
-class TestFuzzyPlugin(PluginMixin):
+class TestFuzzyPlugin(PluginTestHelper):
     plugin = "fuzzy"
 
     @pytest.mark.parametrize(

@@ -259,7 +259,7 @@ modify
 
 ::
 
-    beet modify [-IMWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
+    beet modify [-IMWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD+=VALUE...] [FIELD-=VALUE...] [FIELD!...]
 
 Change the metadata for items or albums in the database.
 
@@ -277,6 +277,13 @@ title='$track $title'`` will add track numbers to their title metadata.
 To adjust a multi-valued field, such as ``genres``, ``remixers``, ``lyricists``,
 ``composers``, or ``arrangers``, separate the values with |semicolon_space|. For
 example, ``beet modify genres="rock; pop"``.
+
+For these multi-valued fields, you can also use ``+=`` to add values and ``-=``
+to remove values, instead of replacing the whole field. For example, ``beet
+modify genres+=Funk`` adds "Funk" to the existing genres (without duplicating it
+if already present), and ``beet modify genres-=Pop`` removes "Pop" from the
+list, leaving the other values untouched. These operators are only valid for
+multi-valued fields.
 
 When modifying albums with ``-a``, multi-valued fields such as ``artists``,
 ``genres``, ``composers`` are also supported with the same semicolon-separated

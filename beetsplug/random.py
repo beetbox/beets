@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Philippe Mongeau.
-# Copyright 2025, Sebastian Mohr.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 from __future__ import annotations
 
 import random
@@ -109,13 +94,13 @@ def _equal_chance_permutation(
             del groups[group]
 
 
-def _take_time(iter: Iterable[LibModel], secs: float) -> Iterable[LibModel]:
+def _take_time(iter_: Iterable[LibModel], secs: float) -> Iterable[LibModel]:
     """Return a list containing the first values in `iter`, which should
     be Item or Album objects, that add up to the given amount of time in
     seconds.
     """
     total_time = 0.0
-    for obj in iter:
+    for obj in iter_:
         length = obj.length
         if total_time + length <= secs:
             yield obj
@@ -151,5 +136,4 @@ def random_objs(
     # Select objects by time our count.
     if time_minutes:
         return _take_time(perm, time_minutes * 60)
-    else:
-        return islice(perm, number)
+    return islice(perm, number)

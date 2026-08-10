@@ -8,26 +8,15 @@ import pytest
 
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Album, Item
-from beets.test.helper import IOMixin, PluginMixin, TestHelper
+from beets.test.helper import IOMixin, PluginTestHelper
 
 
-@pytest.fixture
-def helper(request):
-    helper = TestHelper()
-    helper.setup_beets()
-
-    request.instance.lib = helper.lib
-
-    yield
-
-    helper.teardown_beets()
-
-
-@pytest.mark.usefixtures("helper")
-class TestMissingAlbums(IOMixin, PluginMixin):
-    """Tests for missing albums functionality."""
-
+class MissingTestHelper(IOMixin, PluginTestHelper):
     plugin = "missing"
+
+
+class TestMissingAlbums(MissingTestHelper):
+    """Tests for missing albums functionality."""
 
     @pytest.mark.parametrize(
         "release_from_mb,expected_output",
@@ -66,6 +55,43 @@ class TestMissingAlbums(IOMixin, PluginMixin):
 
         with self.configure_plugin({}):
             assert self.run_with_output("missing", "--album") == expected_output
+
+    def test_missing_albums_custom_format(self, requests_mock):
+        """Test -f/--format is honored when listing missing albums."""
+        artist_mbid = str(uuid.uuid4())
+        self.lib.add(
+            Album(
+                album="Album",
+                albumartist="Artist",
+                mb_albumartistid=artist_mbid,
+                mb_albumid="album",
+                mb_releasegroupid="release_group_in_lib",
+            )
+        )
+        requests_mock.get(
+            re.compile(
+                rf"/ws/2/release-group\?artist={artist_mbid}&.*type=album"
+            ),
+            json={
+                "release-groups": [
+                    {
+                        "id": "other",
+                        "title": "Other Album",
+                        "primary-type": "Album",
+                    }
+                ]
+            },
+        )
+
+        with self.configure_plugin({}):
+            output = self.run_with_output(
+                "missing",
+                "-a",
+                "-f",
+                "$mb_releasegroupid | $albumtype | $album",
+            )
+
+        assert output == "other | album | Other Album\n"
 
     def test_release_types_filters_results(self, requests_mock):
         """Test --release-types filters to only show specified type."""
@@ -176,11 +202,8 @@ class TestMissingAlbums(IOMixin, PluginMixin):
         assert output == "1\n"
 
 
-@pytest.mark.usefixtures("helper")
-class TestMissingTracks(IOMixin, PluginMixin):
+class TestMissingTracks(MissingTestHelper):
     """Tests for missing tracks functionality."""
-
-    plugin = "missing"
 
     @pytest.mark.parametrize(
         "total,count,expected",

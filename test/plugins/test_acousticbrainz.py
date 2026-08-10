@@ -1,28 +1,12 @@
-# This file is part of beets.
-# Copyright 2016, Nathan Dwek.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the 'acousticbrainz' plugin."""
 
 import json
-import os.path
-import unittest
 
 from beets.test._common import RSRC
 from beetsplug.acousticbrainz import ABSCHEME, AcousticPlugin
 
 
-class MapDataToSchemeTest(unittest.TestCase):
+class TestMapDataToScheme:
     def test_basic(self):
         ab = AcousticPlugin()
         data = {"key 1": "value 1", "key 2": "value 2"}
@@ -65,9 +49,8 @@ class MapDataToSchemeTest(unittest.TestCase):
 
     def test_realistic(self):
         ab = AcousticPlugin()
-        data_path = os.path.join(RSRC, b"acousticbrainz/data.json")
-        with open(data_path) as res:
-            data = json.load(res)
+        data_path = RSRC / "acousticbrainz/data.json"
+        data = json.loads(data_path.read_text())
         mapping = set(ab._map_data_to_scheme(data, ABSCHEME))
         expected = {
             ("chords_key", "A"),

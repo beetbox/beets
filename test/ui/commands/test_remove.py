@@ -1,9 +1,7 @@
-import os
-
 from beets import library
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.remove import remove_items
-from beets.util import MoveOperation, syspath
+from beets.util import MoveOperation
 
 
 class RemoveTest(IOMixin, BeetsTestCase):
@@ -56,15 +54,15 @@ class RemoveTest(IOMixin, BeetsTestCase):
         # To improve upon this, self.io would need to have the capability to
         # generate input that depends on previous output.
         num_existing = 0
-        num_existing += 1 if os.path.exists(syspath(self.i.path)) else 0
-        num_existing += 1 if os.path.exists(syspath(i2.path)) else 0
+        num_existing += 1 if self.i.filepath.exists() else 0
+        num_existing += 1 if i2.filepath.exists() else 0
         assert num_existing == 1
 
     def test_remove_albums_select_with_delete(self):
         a1 = self.add_album_fixture()
         a2 = self.add_album_fixture()
-        path1 = a1.items()[0].path
-        path2 = a2.items()[0].path
+        path1 = a1.items()[0].filepath
+        path2 = a2.items()[0].filepath
         items = self.lib.items()
         assert len(list(items)) == 3
 
@@ -75,6 +73,6 @@ class RemoveTest(IOMixin, BeetsTestCase):
         assert len(list(items)) == 2  # incl. the item from setUp()
         # See test_remove_items_select_with_delete()
         num_existing = 0
-        num_existing += 1 if os.path.exists(syspath(path1)) else 0
-        num_existing += 1 if os.path.exists(syspath(path2)) else 0
+        num_existing += 1 if path1.exists() else 0
+        num_existing += 1 if path2.exists() else 0
         assert num_existing == 1

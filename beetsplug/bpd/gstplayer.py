@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """A wrapper for the GStreamer Python bindings that exposes a simple
 music player.
 """
@@ -200,8 +186,7 @@ class GstPlayer:
             # reason, we cache recent.
             if self.playing and self.cached_time:
                 return self.cached_time
-            else:
-                return (0, 0)
+            return (0, 0)
 
     def seek(self, position):
         """Seeks to position (in seconds)."""

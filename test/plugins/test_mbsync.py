@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 from unittest.mock import Mock, patch
 
 from beets.autotag import AlbumInfo, TrackInfo
@@ -84,13 +70,9 @@ class TestMbsyncCli(PluginTestHelper):
         with caplog.at_level("DEBUG", logger="beets.mbsync"):
             self.run_command("mbsync", "-f", "'%if{$album,$album,$title}'")
 
+        assert "Skipping album with no mb_albumid: 'no id'" in caplog.messages
         assert (
-            "mbsync: Skipping album with no mb_albumid: 'no id'"
-            in caplog.messages
-        )
-        assert (
-            "mbsync: Skipping singleton with no mb_trackid: 'no id'"
-            in caplog.messages
+            "Skipping singleton with no mb_trackid: 'no id'" in caplog.messages
         )
 
     @patch(

@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2019, Carl Suster
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Test the beets.random utilities associated with the random plugin."""
 
 import math
@@ -19,18 +5,17 @@ import random
 
 import pytest
 
-from beets.test.helper import TestHelper
 from beetsplug.random import _equal_chance_permutation, random_objs
 
 
 @pytest.fixture(scope="class")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
+def helper(class_helper):
+    """Use class scope because each random test class owns its item list.
 
-    yield helper
-
-    helper.teardown_beets()
+    The helper creates lightweight item objects for class setup; tests do not
+    need a fresh beets temp dir per method or shared state between classes.
+    """
+    return class_helper
 
 
 @pytest.fixture(scope="module", autouse=True)

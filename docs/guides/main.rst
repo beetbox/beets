@@ -22,7 +22,7 @@ command:
     install plugins and keep Beets updated? See the :doc:`complete installation
     guide </guides/installation>` for:
 
-    - Managing plugins with pipx
+    - Managing plugins with uv tool
     - OS-specific installation notes
     - Package manager options
 

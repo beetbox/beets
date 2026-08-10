@@ -1,27 +1,10 @@
-# This file is part of beets.
-# Copyright 2016, Bruno Cauet
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 import os.path
-from shutil import rmtree
-from tempfile import mkdtemp
 from unittest.mock import Mock, call, patch
 
 import pytest
 
 from beets.test.helper import BeetsTestCase
-from beets.util import bytestring_path, syspath
+from beets.util import syspath
 from beetsplug.thumbnails import (
     LARGE_DIR,
     NORMAL_DIR,
@@ -116,16 +99,6 @@ class ThumbnailsTest(BeetsTestCase):
         plugin.thumbnail_file_name = Mock(return_value=b"md5")
         mock_os.path.exists.return_value = False
 
-        def os_stat(target):
-            if target == syspath(md5_file):
-                return Mock(st_mtime=1)
-            elif target == syspath(path_to_art):
-                return Mock(st_mtime=2)
-            else:
-                raise ValueError(f"invalid target {target}")
-
-        mock_os.stat.side_effect = os_stat
-
         mock_resize = mock_artresizer.shared.resize
         mock_resize.return_value = path_to_resized_art
 
@@ -147,10 +120,9 @@ class ThumbnailsTest(BeetsTestCase):
         def os_stat(target):
             if target == syspath(md5_file):
                 return Mock(st_mtime=3)
-            elif target == syspath(path_to_art):
+            if target == syspath(path_to_art):
                 return Mock(st_mtime=2)
-            else:
-                raise ValueError(f"invalid target {target}")
+            raise ValueError(f"invalid target {target}")
 
         mock_os.stat.side_effect = os_stat
 
@@ -165,25 +137,18 @@ class ThumbnailsTest(BeetsTestCase):
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     def test_make_dolphin_cover_thumbnail(self):
         plugin = ThumbnailsPlugin()
-        tmp = bytestring_path(mkdtemp())
-        album = Mock(path=tmp, artpath=os.path.join(tmp, b"cover.jpg"))
+        tmp = self.temp_path
+        album = Mock(
+            path=os.fsencode(tmp), artpath=os.fsencode(tmp / "cover.jpg")
+        )
         plugin.make_dolphin_cover_thumbnail(album)
-        with open(os.path.join(tmp, b".directory"), "rb") as f:
-            assert f.read().splitlines() == [
-                b"[Desktop Entry]",
-                b"Icon=./cover.jpg",
-            ]
+        filename = tmp / ".directory"
+        assert filename.read_text() == "[Desktop Entry]\nIcon=./cover.jpg"
 
         # not rewritten when it already exists (yup that's a big limitation)
         album.artpath = b"/my/awesome/art.tiff"
         plugin.make_dolphin_cover_thumbnail(album)
-        with open(os.path.join(tmp, b".directory"), "rb") as f:
-            assert f.read().splitlines() == [
-                b"[Desktop Entry]",
-                b"Icon=./cover.jpg",
-            ]
-
-        rmtree(syspath(tmp))
+        assert filename.read_text() == "[Desktop Entry]\nIcon=./cover.jpg"
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.ArtResizer")

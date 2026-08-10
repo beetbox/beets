@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2021, Edgars Supe.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Adds an album template field for formatted album types."""
 
 from __future__ import annotations
@@ -65,9 +51,9 @@ class AlbumTypesPlugin(BeetsPlugin):
         res = ""
         albumtypes = item.albumtypes
         is_va = item.mb_albumartistid == VARIOUS_ARTISTS_ID
-        for type in types:
-            if type[0] in albumtypes and type[1]:
-                if not is_va or (type[0] not in ignore_va and is_va):
-                    res += f"{bracket_l}{type[1]}{bracket_r}"
+        for type_ in types:
+            if type_[0] in albumtypes and type_[1]:
+                if not is_va or (type_[0] not in ignore_va and is_va):
+                    res += f"{bracket_l}{type_[1]}{bracket_r}"
 
         return res

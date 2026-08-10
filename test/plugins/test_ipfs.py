@@ -1,21 +1,7 @@
-# This file is part of beets.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
-import os
+from pathlib import Path
 from unittest.mock import Mock, patch
 
-from beets import util
+from beets import library
 from beets.test import _common
 from beets.test.helper import PluginTestCase
 from beetsplug.ipfs import IPFSPlugin
@@ -35,24 +21,34 @@ class IPFSPluginTest(PluginTestCase):
             found = False
             want_item = test_album.items()[2]
             for check_item in added_album.items():
-                try:
-                    if check_item.get("ipfs", with_album=False):
-                        ipfs_item = os.fsdecode(
-                            os.path.basename(want_item.path)
-                        )
-                        want_path = util.normpath(
-                            os.path.join("/ipfs", test_album.ipfs, ipfs_item)
-                        )
-                        assert check_item.path == want_path
-                        assert (
-                            check_item.get("ipfs", with_album=False)
-                            == want_item.ipfs
-                        )
-                        assert check_item.title == want_item.title
-                        found = True
-                except AttributeError:
-                    pass
+                if check_item.get("ipfs", with_album=False):
+                    ipfs_item = want_item.filepath.name
+                    want_path = (
+                        Path("/ipfs").resolve() / test_album.ipfs / ipfs_item
+                    )
+                    assert check_item.filepath == want_path
+                    assert (
+                        check_item.get("ipfs", with_album=False)
+                        == want_item.ipfs
+                    )
+                    assert check_item.title == want_item.title
+                    found = True
             assert found
+
+    def test_get_remote_lib_accepts_library_path(self):
+        self.lib.path = self.temp_path / "library.db"
+        remote_dir = self.temp_path / "remotes"
+        remote_dir.mkdir()
+
+        remote_lib = library.Library(remote_dir / "joined.db")
+        remote_lib._close()
+
+        ipfs = IPFSPlugin()
+        added_lib = ipfs.get_remote_lib(self.lib)
+        try:
+            assert added_lib.path == remote_dir / "joined.db"
+        finally:
+            added_lib._close()
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(3)]

@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Bruno Cauet
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Create freedesktop.org-compliant thumbnails for album folders
 
 This plugin is POSIX-only.
@@ -89,9 +75,9 @@ class ThumbnailsPlugin(BeetsPlugin):
             )
             return False
 
-        for dir in (NORMAL_DIR, LARGE_DIR):
-            if not os.path.exists(syspath(dir)):
-                os.makedirs(syspath(dir))
+        for dir_ in (NORMAL_DIR, LARGE_DIR):
+            if not os.path.exists(syspath(dir_)):
+                os.makedirs(syspath(dir_))
 
         if not ArtResizer.shared.can_write_metadata:
             raise RuntimeError(
@@ -170,8 +156,8 @@ class ThumbnailsPlugin(BeetsPlugin):
         See https://standards.freedesktop.org/thumbnail-spec/latest/x227.html
         """
         uri = self.get_uri(path)
-        hash = md5(uri.encode("utf-8")).hexdigest()
-        return bytestring_path(f"{hash}.png")
+        hash_ = md5(uri.encode("utf-8")).hexdigest()
+        return bytestring_path(f"{hash_}.png")
 
     def add_tags(self, album, image_path):
         """Write required metadata to the thumbnail

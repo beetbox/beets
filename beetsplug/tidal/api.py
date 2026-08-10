@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import urllib.parse
 import webbrowser
+from contextlib import suppress
 from functools import cached_property
 from itertools import islice, zip_longest
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -154,10 +155,9 @@ class TidalAPI(RequestHandler):
         auth_url, _ = self.session.authorization_url(
             "https://login.tidal.com/authorize"
         )
-        try:
+        ui.print_(f"Visit: {auth_url}")
+        with suppress(webbrowser.Error):
             webbrowser.open(auth_url)
-        except webbrowser.Error:
-            ui.print_(f"Visit: {auth_url}")
         redirect_url = ui.input_("Paste redirected URL: ")
         self.session.fetch_token(
             "https://auth.tidal.com/v1/oauth2/token",
@@ -214,9 +214,9 @@ class TidalAPI(RequestHandler):
             "links": {"next": url},
         }
 
-        while next := doc.get("links", {}).get("next"):
+        while next_ := doc.get("links", {}).get("next"):
             page_doc = self.get_json(
-                url=next, params={**params, "include": include}, **kwargs
+                url=next_, params={**params, "include": include}, **kwargs
             )
             doc = self.merge_multiresource_pagination(doc, page_doc)
 

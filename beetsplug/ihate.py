@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 """Warns you about things you hate (or even blocks import)."""
 
 from beets.importer import Action
@@ -29,8 +14,7 @@ def summary(task):
     """
     if task.is_album:
         return f"{task.cur_artist} - {task.cur_album}"
-    else:
-        return f"{task.item.artist} - {task.item.title}"
+    return f"{task.item.artist} - {task.item.title}"
 
 
 class IHatePlugin(BeetsPlugin):

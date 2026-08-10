@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Glue between metadata sources and the matching logic."""
 
 from __future__ import annotations
@@ -263,7 +249,7 @@ class Info(AttrDict[Any]):
                 f"'{list_field}' (list)",
                 stacklevel=3,
             )
-            if not list_value:
+            if str_value and not list_value:
                 try:
                     sep = next(s for s in ["; ", ", ", " / "] if s in str_value)
                 except StopIteration:
@@ -528,9 +514,8 @@ class TrackInfo(Info):
             if not raw_track[k] and (v := album.get(k)):
                 track[k] = v
 
-        merged = (
+        return (
             album_info.item_data
             | {"tracktotal": len(album_info.tracks)}
             | track.item_data
         )
-        return merged

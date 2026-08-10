@@ -1,17 +1,3 @@
-# This file is part of beets.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 import pytest
 
 from beets.test.helper import IOMixin, PluginMixin, TestHelper
@@ -63,7 +49,7 @@ class TestDuplicatesPlugin(PluginMixin, TestHelper, IOMixin):
         self.create_dups(2)
         out = self.run_cmd(path=True)
 
-        assert self.dup_item.path.decode() in out
+        assert str(self.dup_item.filepath) in out
 
     def test_duplicate_with_count(self):
         self.create_dups(4)
@@ -78,5 +64,5 @@ class TestDuplicatesPlugin(PluginMixin, TestHelper, IOMixin):
         self.create_dups(6)
         out = self.run_cmd(count=True, path=True)
 
-        assert self.dup_item.path.decode() in out
+        assert str(self.dup_item.filepath) in out
         assert out.endswith("5")

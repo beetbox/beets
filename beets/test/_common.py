@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Some common functionality for beets' test cases."""
 
 from __future__ import annotations
@@ -19,44 +5,23 @@ from __future__ import annotations
 import os
 import sys
 from contextlib import contextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import beets
 import beets.library
 
 # Make sure the development versions of the plugins are used
-import beetsplug
-from beets import importer, logging, util
+from beets import importer, logging
 from beets.ui import commands
 from beets.util import syspath
 
 if TYPE_CHECKING:
     import pytest
 
-beetsplug.__path__ = [
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "beetsplug",
-        )
-    )
-]
-
 # Test resources path.
-RSRC = util.bytestring_path(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "test",
-            "rsrc",
-        )
-    )
-)
-PLUGINPATH = os.path.join(RSRC.decode(), "beetsplug")
+RSRC = (Path(__file__).parent.parent.parent / "test" / "rsrc").resolve()
+PLUGINPATH = str(RSRC / "beetsplug")
 
 # Propagate to root logger so the test runner can capture it
 log = logging.getLogger("beets")
@@ -179,19 +144,6 @@ class DummyIO:
 
 def touch(path):
     open(syspath(path), "a").close()
-
-
-class Bag:
-    """An object that exposes a set of fields given as keyword
-    arguments. Any field not found in the dictionary appears to be None.
-    Used for mocking Album objects and the like.
-    """
-
-    def __init__(self, **fields):
-        self.fields = fields
-
-    def __getattr__(self, key):
-        return self.fields.get(key)
 
 
 # Platform mocking.

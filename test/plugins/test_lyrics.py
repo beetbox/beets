@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Fabrice Laporte.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the 'lyrics' plugin."""
 
 from __future__ import annotations
@@ -20,6 +6,7 @@ import re
 import textwrap
 from functools import partial
 from http import HTTPStatus
+from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
@@ -27,15 +14,13 @@ import pytest
 import requests
 
 from beets.library import Item
-from beets.test.helper import PluginMixin, TestHelper
+from beets.test.helper import PluginMixin, PluginTestHelper
 from beets.util.lyrics import Lyrics
 from beetsplug import lyrics
 
 from .lyrics_pages import lyrics_pages
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from .lyrics_pages import LyricsPage
 
 PHRASE_BY_TITLE = {
@@ -46,11 +31,13 @@ PHRASE_BY_TITLE = {
 
 
 @pytest.fixture(scope="module")
-def helper():
-    helper = TestHelper()
-    helper.setup_beets()
-    yield helper
-    helper.teardown_beets()
+def helper(module_helper):
+    """Reuse one module helper for explicit item and media-write checks.
+
+    Helper-backed tests mutate known items and write an MP3 fixture, but they do
+    not assert against the full library shared with other tests in this module.
+    """
+    return module_helper
 
 
 class TestLyricsUtils:
@@ -363,6 +350,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         item = helper.lib.get_item(item.id)
 
         assert item.lyrics_url == lyrics.url
+        assert item.lyrics_instrumental == "0"
         assert item.lyrics_backend == lyrics.backend
         if is_importable("langdetect"):
             assert item.lyrics_language == "EN"
@@ -442,6 +430,11 @@ class TestLyricsSources(LyricsBackendTest):
             ]
         }
         requests_mock.get(lyrics.Google.SEARCH_URL, json=data)
+
+    @pytest.fixture(autouse=True)
+    def _set_lrcmux_sources(self, lyrics_plugin, backend_name):
+        if backend_name == "lrcmux":
+            lyrics_plugin.config["lrcmux"]["sources"] = ["ytmusic"]
 
     def test_backend_source(
         self, monkeypatch, lyrics_plugin, lyrics_page: LyricsPage
@@ -634,9 +627,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
             pytest.param(
-                [lyrics_match(instrumental=True)],
-                "[Instrumental]",
-                id="instrumental track",
+                [lyrics_match(instrumental=True)], "", id="instrumental track"
             ),
             pytest.param(
                 [lyrics_match(syncedLyrics=None)],
@@ -693,6 +684,58 @@ class TestLRCLibLyrics(LyricsBackendTest):
         else:
             assert lyrics
             assert lyrics.text == expected_lyrics
+
+
+class TestLRCMuxLyrics(LyricsBackendTest):
+    SYNCED = "[00:00.00] synced"
+    PLAIN = "plain"
+
+    @pytest.fixture(scope="class")
+    def backend_name(self):
+        return "lrcmux"
+
+    @pytest.mark.parametrize(
+        "plugin_config, mocked_text, expected_format, expected_level",
+        [
+            pytest.param({"synced": True}, SYNCED, "lrc", "line", id="synced"),
+            pytest.param({"synced": False}, PLAIN, "txt", "none", id="plain"),
+            pytest.param(
+                {"synced": True, "lrcmux": {"sources": ["ytmusic"]}},
+                SYNCED,
+                "lrc",
+                "line",
+                id="synced-sources",
+            ),
+        ],
+    )
+    def test_fetch_lyrics(
+        self,
+        backend,
+        requests_mock,
+        mocked_text,
+        expected_format,
+        expected_level,
+        plugin_config,
+    ):
+        requests_mock.get(backend.url, text=mocked_text)
+        result = backend.fetch("la", "la", "la", 0)
+        assert result
+        assert result.text == mocked_text
+        assert result.backend == "lrcmux"
+        assert f"format={expected_format}" in result.url
+        assert f"level={expected_level}" in result.url
+        if sources := (plugin_config.get("lrcmux") or {}).get("sources"):
+            assert f"sources={','.join(sources)}" in result.url
+
+    @pytest.mark.parametrize("plugin_config", [{}])
+    def test_not_found(self, backend, requests_mock):
+        requests_mock.get(backend.url, status_code=HTTPStatus.NOT_FOUND)
+        assert backend.fetch("la", "la", "", 0) is None
+
+    @pytest.mark.parametrize("plugin_config", [{}])
+    def test_empty_response(self, backend, requests_mock):
+        requests_mock.get(backend.url, text="")
+        assert backend.fetch("la", "la", "", 0) is None
 
 
 @pytest.mark.requires_import("langdetect")
@@ -839,6 +882,75 @@ class TestRestFiles:
             < c.index("Song Three")
             < c.index("Lyrics Three")
         )
+
+
+class TestLyricsRestDirectory(PluginTestHelper):
+    plugin = "lyrics"
+
+    @pytest.mark.parametrize(
+        "config_path, arg_path, output_path",
+        [
+            pytest.param(
+                "test/config", "test/cmd", "test/cmd", id="config and cmd arg"
+            ),
+            pytest.param("test/config", None, "test/config", id="config only"),
+            pytest.param(None, "test/cmd", "test/cmd", id="cmd arg only"),
+            pytest.param(
+                "~/test/config", None, "~/test/config", id="user home path"
+            ),
+        ],
+    )
+    def test_rest_config(self, monkeypatch, config_path, arg_path, output_path):
+        test_capture = {}
+
+        class MockRestFiles:
+            def __init__(self, directory):
+                test_capture["directory"] = directory
+
+            def write(self, items):
+                test_capture["items"] = items
+
+        monkeypatch.setattr(lyrics, "RestFiles", MockRestFiles)
+        self.add_item(lyrics="hello")
+
+        cmd_args = [] if arg_path is None else ["-r", arg_path]
+        with self.configure_plugin({"rest_directory": config_path}):
+            self.run_command("lyrics", *cmd_args)
+
+        assert test_capture.get("directory") == Path(output_path).expanduser()
+
+
+class TestLyricsKeepSyncedCommand(PluginTestHelper):
+    plugin = "lyrics"
+
+    @pytest.mark.parametrize(
+        "config_keep_synced, cmd_args, expected_keep_synced",
+        [
+            pytest.param(False, (), False, id="disabled-by-default"),
+            pytest.param(True, (), True, id="enabled-by-config"),
+            pytest.param(False, ("--keep-synced",), True, id="cli-enables"),
+            pytest.param(
+                True, ("--no-keep-synced",), False, id="cli-disables-config"
+            ),
+        ],
+    )
+    def test_keep_synced_cli_option(
+        self, monkeypatch, config_keep_synced, cmd_args, expected_keep_synced
+    ):
+        self.config["lyrics"]["keep_synced"] = config_keep_synced
+        self.add_item(lyrics="[00:00.00] old synced")
+        observed_keep_synced = []
+
+        def capture_keep_synced(plugin, *_):
+            observed_keep_synced.append(plugin.config["keep_synced"].get(bool))
+
+        monkeypatch.setattr(
+            lyrics.LyricsPlugin, "add_item_lyrics", capture_keep_synced
+        )
+
+        self.run_command("lyrics", *cmd_args)
+
+        assert observed_keep_synced.pop(0) is expected_keep_synced
 
 
 class TestLyricsSyltProperty:

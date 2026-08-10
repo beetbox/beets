@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Support for beets plugins."""
 
 from __future__ import annotations
@@ -24,7 +10,7 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar, overload
 
 import mediafile
 from typing_extensions import ParamSpec
@@ -39,7 +25,6 @@ if TYPE_CHECKING:
 
     from confuse import Subview
 
-    from beets.dbcore import Query
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
     from beets.importer import ImportSession, ImportTask
@@ -71,6 +56,7 @@ EventType = Literal[
     "album_removed",
     "albuminfo_received",
     "album_matched",
+    "art_set",
     "before_choose_candidate",
     "before_item_moved",
     "cli_exit",
@@ -122,23 +108,6 @@ class PluginImportError(ImportError):
 
     def __init__(self, name: str):
         super().__init__(f"Could not import plugin {name}")
-
-
-class PluginLogFilter(logging.Filter):
-    """A logging filter that identifies the plugin that emitted a log
-    message.
-    """
-
-    def __init__(self, plugin):
-        self.prefix = f"{plugin.name}: "
-
-    def filter(self, record):
-        if hasattr(record.msg, "msg") and isinstance(record.msg.msg, str):
-            # A _LogMessage from our hacked-up Logging replacement.
-            record.msg.msg = f"{self.prefix}{record.msg.msg}"
-        elif isinstance(record.msg, str):
-            record.msg = f"{self.prefix}{record.msg}"
-        return True
 
 
 # Managing the plugins themselves.
@@ -240,8 +209,6 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
 
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
-        if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
-            self._log.addFilter(PluginLogFilter(self))
 
         # In order to verify the config we need to make sure the plugin is fully
         # configured (plugins usually add the default configuration *after*
@@ -339,7 +306,7 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
 
         return wrapper
 
-    def queries(self) -> dict[str, type[Query]]:
+    def queries(self) -> dict[str, FieldQueryType]:
         """Return a dict mapping prefixes to Query subclasses."""
         return {}
 
@@ -509,14 +476,11 @@ def commands() -> list[Subcommand]:
     return out
 
 
-def queries() -> dict[str, type[Query]]:
-    """Returns a dict mapping prefix strings to Query subclasses all loaded
-    plugins.
-    """
-    out: dict[str, type[Query]] = {}
-    for plugin in find_plugins():
-        out.update(plugin.queries())
-    return out
+def queries() -> dict[str, FieldQueryType]:
+    """Return configured query prefixes from all plugins."""
+    return {
+        p: q for plugin in find_plugins() for p, q in plugin.queries().items()
+    }
 
 
 def types(model_cls: type[AnyModel]) -> dict[str, Type]:
@@ -639,6 +603,14 @@ def album_field_getters() -> TFuncMap[Album]:
 # Event dispatch.
 
 
+@overload
+def send(
+    event: Literal["import_task_created"], **arguments: Any
+) -> list[list[ImportTask]]: ...
+
+
+@overload
+def send(event: EventType, **arguments: Any) -> list[Any]: ...
 def send(event: EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
@@ -668,9 +640,10 @@ def feat_tokens(
         feat_words += custom_words
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return (
-        rf"(?<=[\s(\[])(?:{'|'.join(re.escape(x) for x in feat_words)})(?=\s)"
-    )
+    tokens = "|".join(re.escape(x) for x in feat_words)
+    bracketed = rf"(?:(?<=\s)|^)(?:\(|\[)(?:{tokens})(?=\s)"
+    plain = rf"(?<=[\s(\[])(?:{tokens})(?=\s)"
+    return rf"(?:{bracketed}|{plain})"
 
 
 def apply_item_changes(

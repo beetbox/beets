@@ -1,16 +1,3 @@
-# This file is part of beets.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon"""
 
 import os
@@ -184,10 +171,8 @@ class IPFSPlugin(BeetsPlugin):
             lib, loghandler=None, query=None, paths=[_hash]
         )
         imp.run()
-        # This uses a relative path, hence we cannot use util.syspath(_hash,
-        # prefix=True). However, that should be fine since the hash will not
-        # exceed MAX_PATH.
-        shutil.rmtree(util.syspath(_hash, prefix=False))
+        shutil.rmtree(_hash)
+        return None
 
     def ipfs_publish(self, lib):
         with tempfile.NamedTemporaryFile() as tmp:
@@ -204,6 +189,7 @@ class IPFSPlugin(BeetsPlugin):
                 self._log.error(msg)
                 return False
             self._log.info("hash of library: {}", output)
+        return None
 
     def ipfs_import(self, lib, args):
         _hash = args[0]
@@ -211,8 +197,7 @@ class IPFSPlugin(BeetsPlugin):
             lib_name = args[1]
         else:
             lib_name = _hash
-        lib_root = os.path.dirname(lib.path)
-        remote_libs = os.path.join(lib_root, b"remotes")
+        remote_libs = self._remote_libs_path(lib)
         if not os.path.exists(remote_libs):
             try:
                 os.makedirs(remote_libs)
@@ -243,6 +228,7 @@ class IPFSPlugin(BeetsPlugin):
                 added_album = jlib.add_album(new_album)
                 added_album.ipfs = album.ipfs
                 added_album.store()
+        return None
 
     def already_added(self, check, jlib):
         for jalbum in jlib.albums():
@@ -263,12 +249,14 @@ class IPFSPlugin(BeetsPlugin):
 
     def query(self, lib, args):
         rlib = self.get_remote_lib(lib)
-        albums = rlib.albums(args)
-        return albums
+        return rlib.albums(args)
+
+    def _remote_libs_path(self, lib):
+        lib_root = os.path.dirname(os.fsencode(lib.path))
+        return os.path.join(lib_root, b"remotes")
 
     def get_remote_lib(self, lib):
-        lib_root = os.path.dirname(lib.path)
-        remote_libs = os.path.join(lib_root, b"remotes")
+        remote_libs = self._remote_libs_path(lib)
         path = os.path.join(remote_libs, b"joined.db")
         if not os.path.isfile(path):
             raise OSError
@@ -308,3 +296,4 @@ class IPFSPlugin(BeetsPlugin):
         new_album = tmplib.add_album(items)
         new_album.ipfs = album.ipfs
         new_album.store(inherit=False)
+        return None

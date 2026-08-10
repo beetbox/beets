@@ -1,55 +1,99 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
+from __future__ import annotations
 
 import ctypes
-import os
 import sys
+from typing import TYPE_CHECKING, Any, ClassVar
 from unittest import mock
 
-from beets import util
-from beets.test.helper import IOMixin, PluginTestCase
-from beetsplug.fetchart import FetchArtPlugin, FileSystem
+from beets import importer
+from beets.test.helper import (
+    AutotagImportHelper,
+    IOMixin,
+    PluginMixin,
+    PluginTestHelper,
+)
+from beetsplug.fetchart import CoverArtArchive, FetchArtPlugin, FileSystem
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-class FetchartCliTest(IOMixin, PluginTestCase):
+class TestFetchartImport(PluginMixin, AutotagImportHelper):
+    plugin = "fetchart"
+    preload_plugin = False
+    plugin_defaults: ClassVar[Any] = {"sources": ["filesystem", "coverart"]}
+
+    def setup_beets(self):
+        super().setup_beets()
+
+        self.prepare_album_for_import(1)
+        self.setup_importer()
+
+        self.local_art_patcher = mock.patch.object(
+            FileSystem, "get", autospec=True, return_value=iter(())
+        )
+        self.local_art_mock = self.local_art_patcher.start()
+        self.remote_art_patcher = mock.patch.object(
+            CoverArtArchive, "get", autospec=True, return_value=iter(())
+        )
+        self.remote_art_mock = self.remote_art_patcher.start()
+
+    def teardown_beets(self):
+        super().teardown_beets()
+        self.local_art_patcher.stop()
+        self.remote_art_patcher.stop()
+
+    def test_asis_skips_network_sources(self):
+        self.importer.add_choice(importer.Action.ASIS)
+        with self.configure_plugin(self.plugin_defaults):
+            self.importer.run()
+        self.local_art_mock.assert_called()
+        self.remote_art_mock.assert_not_called()
+
+    def test_apply_uses_network_sources(self):
+        self.importer.add_choice(importer.Action.APPLY)
+        with self.configure_plugin(self.plugin_defaults):
+            self.importer.run()
+        self.local_art_mock.assert_called()
+        self.remote_art_mock.assert_called()
+
+    def test_fetch_for_asis_uses_network_sources(self):
+        self.importer.add_choice(importer.Action.ASIS)
+        with self.configure_plugin(
+            self.plugin_defaults | {"fetch_for_asis": True}
+        ):
+            self.importer.run()
+        self.local_art_mock.assert_called()
+        self.remote_art_mock.assert_called()
+
+
+class TestFetchartCli(IOMixin, PluginTestHelper):
     plugin = "fetchart"
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.config["fetchart"]["cover_names"] = "c\xc3\xb6ver.jpg"
         self.config["art_filename"] = "mycover"
         self.album = self.add_album()
+        self.album.filepath.mkdir(parents=True)
 
     def cover_path(self, ext: str = "jpg"):
-        return os.path.join(self.album.path, f"mycover.{ext}".encode())
+        return self.album.filepath / f"mycover.{ext}"
 
     def check_cover_is_stored(self, ext: str = "jpg"):
-        assert self.album["artpath"] == self.cover_path(ext)
-        with open(util.syspath(self.cover_path(ext))) as f:
-            assert f.read() == "IMAGE"
+        cover_path = self.cover_path(ext)
+        assert cover_path == self.album.art_filepath
+        assert cover_path.read_text() == "IMAGE"
 
-    def hide_file_windows(self, ext="jpg"):
-        hidden_mask = 2
-        success = ctypes.windll.kernel32.SetFileAttributesW(
-            self.cover_path(ext), hidden_mask
-        )
-        if not success:
-            self.skipTest("unable to set file attributes")
+    def hide_file_windows(self, path: Path) -> None:
+        if sys.platform == "win32":
+            hidden_mask = 2
+            assert ctypes.windll.kernel32.SetFileAttributesW(
+                str(path), hidden_mask
+            )
 
     def test_set_art_from_folder(self):
-        self.touch(b"c\xc3\xb6ver.jpg", dir=self.album.path, content="IMAGE")
+        (self.album.filepath / "c\xc3\xb6ver.jpg").write_text("IMAGE")
 
         self.run_command("fetchart")
 
@@ -57,29 +101,28 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.check_cover_is_stored()
 
     def test_filesystem_does_not_pick_up_folder(self):
-        os.makedirs(os.path.join(self.album.path, b"mycover.jpg"))
         self.run_command("fetchart")
         self.album.load()
         assert self.album["artpath"] is None
 
     def test_filesystem_does_not_pick_up_ignored_file(self):
-        self.touch(b"co_ver.jpg", dir=self.album.path, content="IMAGE")
+        (self.album.filepath / "co_ver.jpg").write_text("IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
         assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_ignored_file(self):
-        self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.jpg").write_text("IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
 
     def test_filesystem_does_not_pick_up_hidden_file(self):
-        self.touch(b".cover.jpg", dir=self.album.path, content="IMAGE")
-        if sys.platform == "win32":
-            self.hide_file_windows()
+        path = self.album.filepath / ".cover.jpg"
+        path.write_text("IMAGE")
+        self.hide_file_windows(path)
         self.config["ignore"] = []  # By default, ignore includes '.*'.
         self.config["ignore_hidden"] = True
         self.run_command("fetchart")
@@ -87,16 +130,16 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_hidden_file(self):
-        self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.jpg").write_text("IMAGE")
         self.config["ignore_hidden"] = True
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
 
     def test_filesystem_picks_up_hidden_file(self):
-        self.touch(b".cover.jpg", dir=self.album.path, content="IMAGE")
-        if sys.platform == "win32":
-            self.hide_file_windows()
+        path = self.album.filepath / ".cover.jpg"
+        path.write_text("IMAGE")
+        self.hide_file_windows(path)
         self.config["ignore"] = []  # By default, ignore includes '.*'.
         self.config["ignore_hidden"] = False
         self.run_command("fetchart")
@@ -104,13 +147,13 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         self.check_cover_is_stored()
 
     def test_filesystem_picks_up_webp_file(self):
-        self.touch(b"cover.webp", dir=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.webp").write_text("IMAGE")
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored("webp")
 
     def test_filesystem_picks_up_png_file(self):
-        self.touch(b"cover.png", dir=self.album.path, content="IMAGE")
+        (self.album.filepath / "cover.png").write_text("IMAGE")
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored("png")
@@ -124,7 +167,7 @@ class FetchartCliTest(IOMixin, PluginTestCase):
         """OSError (e.g. PermissionError) in set_art is logged as a warning,
         not an unhandled crash. Regression test for #6193.
         """
-        self.touch(b"c\xc3\xb6ver.jpg", dir=self.album.path, content="IMAGE")
+        (self.album.filepath / "c\xc3\xb6ver.jpg").write_text("IMAGE")
         with mock.patch(
             "beets.library.Album.set_art",
             side_effect=PermissionError("[WinError 32] file in use"),

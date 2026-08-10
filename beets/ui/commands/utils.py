@@ -23,7 +23,7 @@ def do_query(lib, query, album, also_items=True):
 
     if album and not albums:
         raise UserError("No matching albums found.")
-    elif not album and not items:
+    if not album and not items:
         raise UserError("No matching items found.")
 
     return items, albums

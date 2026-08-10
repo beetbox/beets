@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson and Diego Moreda.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 import codecs
 from typing import ClassVar
 from unittest.mock import patch
@@ -27,6 +13,7 @@ from beets.test.helper import (
     PluginMixin,
     TerminalImportMixin,
 )
+from beetsplug.edit import EditPlugin, dump, load
 
 
 class ModifyFileMocker:
@@ -124,7 +111,6 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
     simulated using `ModifyFileMocker`.
     """
 
-    ALBUM_COUNT = 1
     TRACK_COUNT = 10
 
     def setUp(self):
@@ -282,6 +268,25 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
             self.album.items(), self.items_orig, ["albumartist", "mtime"]
         )
 
+    def test_a_album_edit_preserves_missing_artpath(self, mock_write):
+        """Album query (-a), edit album field, preserve missing artpath."""
+        self.config["edit"]["albumfields"] = "album artpath"
+
+        self.run_mocked_command(
+            {"replacements": {"\u00e4lbum": "modified \u00e4lbum"}},
+            # Apply changes.
+            ["a"],
+            args=["-a"],
+        )
+
+        self.album.load()
+        assert mock_write.call_count == self.TRACK_COUNT
+        assert self.album.album == "modified \u00e4lbum"
+        assert self.album.artpath is None
+        self.assertItemFieldsModified(
+            self.album.items(), self.items_orig, ["album", "mtime"]
+        )
+
     def test_malformed_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a malformed yaml
         document)."""
@@ -307,6 +312,118 @@ class EditCommandTest(IOMixin, EditMixin, BeetsTestCase):
         assert mock_write.call_count == 0
 
 
+class ApplyDataMatchingTest(PluginMixin, BeetsTestCase):
+    """`apply_data` must match documents to objects by their ``id`` field,
+    not by their position in the list. A reordered or otherwise misaligned
+    document list must not cause one object's data to be applied to a
+    different object.
+    """
+
+    plugin = "edit"
+
+    def make_items(self):
+        items = []
+        for i in (1, 2, 3):
+            item = Item(id=i, title=f"Title {i}", track=i, artist="Artist")
+            items.append(item)
+        return items
+
+    def test_matches_by_id_when_documents_are_reordered(self):
+        plugin = EditPlugin()
+        items = self.make_items()
+        old_data = [
+            {"id": i.id, "title": i.title, "track": i.track} for i in items
+        ]
+
+        # The saved documents come back in a different order than `items`,
+        # as could happen after a "keep editing" round-trip or a reordering
+        # editor action. Only track 2's title was actually edited.
+        new_data = [
+            {"id": 3, "title": "Title 3", "track": 3},
+            {"id": 1, "title": "Title 1", "track": 1},
+            {"id": 2, "title": "Modified Title 2", "track": 2},
+        ]
+
+        plugin.apply_data(items, old_data, new_data)
+
+        assert [i.title for i in items] == [
+            "Title 1",
+            "Modified Title 2",
+            "Title 3",
+        ]
+        assert [i.track for i in items] == [1, 2, 3]
+
+    def test_ignores_document_with_missing_id(self):
+        plugin = EditPlugin()
+        items = self.make_items()
+        old_data = [
+            {"id": i.id, "title": i.title, "track": i.track} for i in items
+        ]
+
+        # A document without an `id` must never be silently applied to an
+        # unrelated object.
+        new_data = [
+            {"title": "Header-like doc", "track": 99},
+            {"id": 2, "title": "Modified Title 2", "track": 2},
+            {"id": 3, "title": "Title 3", "track": 3},
+        ]
+
+        plugin.apply_data(items, old_data, new_data)
+
+        assert items[0].title == "Title 1"
+        assert items[0].track == 1
+
+    def test_ignores_documents_with_duplicate_id(self):
+        plugin = EditPlugin()
+        items = self.make_items()
+        old_data = [
+            {"id": i.id, "title": i.title, "track": i.track} for i in items
+        ]
+
+        # The user changed document 2's `id` to 1, an id that already
+        # belongs to another document. Neither document should be applied:
+        # we can't tell which one is legitimately item 1's data.
+        new_data = [
+            {"id": 1, "title": "Title 1", "track": 1},
+            {"id": 1, "title": "Modified Title 2", "track": 2},
+            {"id": 3, "title": "Title 3", "track": 3},
+        ]
+
+        plugin.apply_data(items, old_data, new_data)
+
+        assert items[0].title == "Title 1"
+        assert items[0].track == 1
+        assert items[1].title == "Title 2"
+        assert items[1].track == 2
+
+
+class AlbumHeaderFieldsTest(PluginMixin, BeetsTestCase):
+    """`_importer_edit_album_header` must strip item-only fixed fields
+    (title, track, path, ...), since the header is built from a single
+    item and then applied to every item in the album. Flexible fields
+    are not part of either model's fixed schema, so they must be left
+    alone rather than discarded by an overly broad filter.
+    """
+
+    plugin = "edit"
+
+    class _StubTask:
+        is_album = True
+
+        def __init__(self, items):
+            self.items = items
+
+    def test_keeps_flexible_fields_but_drops_item_only_fields(self):
+        item = Item(id=1, title="Title 1", track=1, album="Album", mood="Happy")
+        task = self._StubTask([item])
+
+        self.config["edit"]["albumfields"] = "album mood track title"
+
+        header = EditPlugin()._importer_edit_album_header(task)
+
+        assert header == {"album": "Album", "mood": "Happy"}
+
+
 class EditDuringImporterTestCase(
     EditMixin, TerminalImportMixin, AutotagImportTestCase
 ):
@@ -327,6 +444,108 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
     def setUp(self):
         super().setUp()
         self.importer = self.setup_importer()
+
+    def test_importer_edit_album_header_and_items(self):
+        """Edit both the album header and per-track fields simultaneously."""
+        self.config["edit"]["itemfields"] = "title"
+        self.config["edit"]["albumfields"] = "album"
+
+        self.run_mocked_interpreter(
+            {
+                "replacements": {
+                    "Tag Album": "Modified Album",
+                    "Tag Track": "Modified Track",
+                }
+            },
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        # All items should have the new album and new title.
+        assert all(i.album == "Modified Album" for i in self.lib.items())
+        assert all("Modified Track" in i.title for i in self.lib.items())
+        assert self.lib.albums()[0].album == "Modified Album"
+
+    def test_importer_edit_album_header_skip_no_albumfields(self):
+        """When albumfields is empty, no header section is produced; editing
+        works as before.
+        """
+        self.config["edit"]["itemfields"] = "title"
+        self.config["edit"]["albumfields"] = ""
+
+        self.run_mocked_interpreter(
+            {"replacements": {"Tag Track": "Edited Track"}},
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        assert all("Edited Track" in i.title for i in self.lib.items())
+
+    def test_importer_edit_album_header_ignores_item_only_fields(self):
+        """`albumfields` may be misconfigured with item-only fields (e.g.
+        `track`, `title`, `path`) that vary per track. Those must not end
+        up in the header, since the header gets applied to every item and
+        would otherwise stamp one track's values onto the whole album.
+        """
+        self.prepare_album_for_import(3)
+        self.items_orig = [Item.from_path(f.path) for f in self.import_media]
+
+        self.config["edit"]["itemfields"] = "track title artist album"
+        self.config["edit"]["albumfields"] = "album albumartist track title"
+
+        self.run_mocked_interpreter(
+            {"replacements": {"Tag Album": "Modified Album"}},
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        titles = [i.title for i in self.lib.items()]
+        tracks = [i.track for i in self.lib.items()]
+        assert len(set(titles)) == len(titles)
+        assert len(set(tracks)) == len(tracks)
+        assert all(i.album == "Modified Album" for i in self.lib.items())
+
+    def test_importer_edit_album_header_albumartist(self):
+        """Edit albumartist in the header (default albumfields)."""
+        self.run_mocked_interpreter(
+            {"replacements": {"Tag Artist": "Modified Artist"}},
+            # eDit, Apply changes.
+            ["d", "a"],
+        )
+
+        assert all(
+            i.albumartist is not None and "Modified Artist" in i.albumartist
+            for i in self.lib.items()
+        ) or all(
+            i.albumartist is None and "Tag Artist" in i.artist
+            for i in self.lib.items()
+        )
+
+    def test_importer_edit_album_header_reordered(self):
+        """If the user moves the album header document below the track
+        documents, it must still be recognized as the header (identified by
+        the absence of an `id` field) rather than misapplying a track's
+        fields to every item.
+        """
+        self.config["edit"]["itemfields"] = "title"
+        self.config["edit"]["albumfields"] = "album"
+
+        def reorder_and_edit(filename, log):
+            with codecs.open(filename, encoding="utf-8") as f:
+                docs = load(f.read())
+            header = next(d for d in docs if "id" not in d)
+            tracks = [d for d in docs if "id" in d]
+            header["album"] = "Modified Album"
+            with codecs.open(filename, "w", encoding="utf-8") as f:
+                f.write(dump([*tracks, header]))
+
+        with patch("beetsplug.edit.edit", side_effect=reorder_and_edit):
+            self.importer.add_choice("d")
+            self.importer.add_choice("a")
+            self.importer.run()
+
+        assert all(i.album == "Modified Album" for i in self.lib.items())
+        assert all("Tag Track" in i.title for i in self.lib.items())
 
     def test_edit_apply_asis(self):
         """Edit the album field for all items in the library, apply changes,

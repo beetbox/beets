@@ -1,20 +1,22 @@
-import importlib.util
+from __future__ import annotations
+
 import inspect
 import os
-from functools import cache
+import sys
+from typing import TYPE_CHECKING
 
 import pytest
 
+from beets import logging
 from beets.autotag import Distance
 from beets.dbcore.query import Query
 from beets.test._common import DummyIO
-from beets.test.helper import ConfigMixin
+from beets.test.helper import RUNNING_IN_CI, ConfigMixin, TestHelper
+from beets.test.helper import is_importable as check_import
 from beets.util import cached_classproperty
 
-
-@cache
-def _is_importable(modname: str) -> bool:
-    return bool(importlib.util.find_spec(modname))
+if TYPE_CHECKING:
+    from typing import TextIO
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -41,7 +43,7 @@ def pytest_collection_modifyitems(
             force_ci = marker.kwargs.get("force_ci", True)
             if (
                 force_ci
-                and os.environ.get("GITHUB_ACTIONS") == "true"
+                and RUNNING_IN_CI
                 # only apply this to our repository, to allow other projects to
                 # run tests without installing all dependencies
                 and os.environ.get("GITHUB_REPOSITORY", "") == "beetbox/beets"
@@ -49,7 +51,7 @@ def pytest_collection_modifyitems(
                 continue
 
             modname = marker.args[0]
-            if not _is_importable(modname):
+            if not check_import(modname):
                 test_name = item.nodeid.split("::", 1)[-1]
                 item.add_marker(
                     pytest.mark.skip(
@@ -95,6 +97,41 @@ def pytest_make_parametrize_id(config, val, argname):
 def pytest_assertrepr_compare(op, left, right):
     if isinstance(left, Distance) or isinstance(right, Distance):
         return [f"Comparing Distance: {float(left)} {op} {float(right)}"]
+    return None
+
+
+class _CurrentStderrHandler(logging.StreamHandler):  # type: ignore[type-arg]
+    """Write CLI logs to the active standard error stream.
+
+    Logging is bootstrapped when the CLI runs instead of when this module is
+    imported. That startup can happen while callers have temporarily replaced
+    ``sys.stderr`` for capture or redirection, such as pytest's per-test capture
+    streams. The handler must not retain the stream that happened to be active
+    during the first command invocation because that stream may later be closed.
+    Resolving the stream for each record keeps logs attached to the current CLI
+    environment.
+    """
+
+    @property
+    def stream(self) -> TextIO:
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, stream: TextIO) -> None:
+        pass
+
+
+@pytest.fixture(autouse=True)
+def patch_logging_handler(monkeypatch):
+    """Ensure that beets logs are captured by pytest's capture system."""
+    monkeypatch.setattr(
+        "beets.ui._get_logging_handler", lambda: _CurrentStderrHandler()
+    )
+
+
+@pytest.fixture(autouse=True)
+def do_not_log_sources(monkeypatch):
+    monkeypatch.setattr("beets.config.log_sources", lambda _: None)
 
 
 @pytest.fixture(autouse=True)
@@ -102,9 +139,9 @@ def clear_cached_classproperty():
     cached_classproperty.cache.clear()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def config():
-    """Provide a fresh beets configuration for a module, when requested."""
+    """Provide a fresh beets configuration when requested."""
     return ConfigMixin().config
 
 
@@ -133,4 +170,41 @@ def io(
 def is_importable():
     """Fixture that provides a function to check if a module can be imported."""
 
-    return _is_importable
+    return check_import
+
+
+# Inheriting from TestHelper gives each test function isolated state. Use the
+# fixtures below instead when a broader scope is safe and the suite benefits
+# from reusing the same helper instance.
+@pytest.fixture(scope="session")
+def session_helper():
+    """Share beets test state across the full test session.
+
+    Use this for suites that tolerate shared library contents and global
+    configuration. Tests should target specific records rather than assume a
+    completely fresh overall state.
+    """
+    with TestHelper() as helper:
+        yield helper
+
+
+@pytest.fixture(scope="module")
+def module_helper():
+    """Share beets test state within one test module.
+
+    Use this when tests in the same file can reuse setup and side effects, but
+    later modules should still begin from a clean environment.
+    """
+    with TestHelper() as helper:
+        yield helper
+
+
+@pytest.fixture(scope="class")
+def class_helper():
+    """Share beets test state within one test class.
+
+    Use this when methods in a class can build on the same setup, while nearby
+    classes still need independent libraries, files, or configuration.
+    """
+    with TestHelper() as helper:
+        yield helper

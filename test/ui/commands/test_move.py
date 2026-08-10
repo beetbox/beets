@@ -18,7 +18,7 @@ class MoveTest(BeetsTestCase):
         self.album = self.lib.add_album([self.i])
 
         # Alternate destination directory.
-        self.otherdir = self.temp_dir_path / "testotherdir"
+        self.otherdir = self.temp_path / "testotherdir"
 
     def _move(
         self,
@@ -100,3 +100,37 @@ class MoveTest(BeetsTestCase):
         self.i.load()
         assert self.i.filepath == self.initial_item_path
         assert not self.otherdir.exists()
+
+    def test_move_missing_singleton_continues(self):
+        self.i.load()
+        old_path = self.i.filepath
+        old_path.unlink()
+        self._move()
+        self.i.load()
+        assert self.i.filepath == old_path
+
+    def test_move_album_with_missing_track(self):
+        self.i.load()
+        old_i_path = self.i.filepath
+        old_i_path.unlink()
+
+        i2_path = self.lib_path / "srcfile2"
+        shutil.copy(self.resource_path, i2_path)
+        i2 = library.Item.from_path(i2_path)
+        self.lib.add(i2)
+        i2.album_id = self.album.id
+        i2.store()
+
+        self._move(album=True)
+        self.i.load()
+        i2.load()
+        assert self.i.filepath == old_i_path
+        assert i2.filepath.is_relative_to(self.lib_path)
+        assert i2.filepath.exists()
+
+    def test_move_item_skips_missing_file(self):
+        self.i.load()
+        old_path = self.i.filepath
+        old_path.unlink()
+        self.i.move()
+        assert self.i.filepath == old_path

@@ -37,7 +37,7 @@ your path formatter, and set ``auto`` to ``no`` in the configuration.
 ::
 
     paths:
-      default: %titlecase($albumartist)/$titlecase($albumtitle)/$track $title
+      default: %titlecase{$albumartist}/%titlecase{$album}/$track $title
 
 You can now configure ``titlecase`` to your preference.
 

@@ -351,9 +351,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 else:
                     continue
                 identifier = playlist_info.get("identifier")
-                id = identifier.split("/")[-1]
+                id_ = identifier.split("/")[-1]
                 listenbrainz_playlists.append(
-                    {"type": playlist_type, "date": date, "identifier": id}
+                    {"type": playlist_type, "date": date, "identifier": id_}
                 )
         listenbrainz_playlists = sorted(
             listenbrainz_playlists, key=lambda x: x["type"]

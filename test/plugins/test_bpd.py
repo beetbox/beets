@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for BPD's implementation of the MPD protocol."""
 
 import multiprocessing as mp
@@ -93,15 +79,14 @@ class MPCResponse:
 
     def _parse_status(self, status):
         """Parses the first response line, which contains the status."""
-        if status.startswith("OK") or status.startswith("list_OK"):
+        if status.startswith(("OK", "list_OK")):
             return True, None
-        elif status.startswith("ACK"):
+        if status.startswith("ACK"):
             code, rest = status[5:].split("@", 1)
             pos, rest = rest.split("]", 1)
             cmd, rest = rest[2:].split("}")
             return False, (int(code), int(pos), cmd, rest[1:])
-        else:
-            raise RuntimeError(f"Unexpected status: {status!r}")
+        raise RuntimeError(f"Unexpected status: {status!r}")
 
     def _parse_body(self, body):
         """Messages are generally in the format "header: content".
@@ -147,15 +132,14 @@ class MPCClient:
         while True:
             line = self.readline()
             response += line
-            if line.startswith(b"OK") or line.startswith(b"ACK"):
+            if line.startswith((b"OK", b"ACK")):
                 if force_multi or any(responses):
                     if line.startswith(b"ACK"):
                         responses.append(MPCResponse(response))
                         n_remaining = force_multi - len(responses)
                         responses.extend([None] * n_remaining)
                     return responses
-                else:
-                    return MPCResponse(response)
+                return MPCResponse(response)
             if line.startswith(b"list_OK"):
                 responses.append(MPCResponse(response))
                 response = b""
@@ -280,7 +264,7 @@ class BPDTestHelper(PluginTestCase):
         """
         # Create a config file:
         config = {
-            "pluginpath": [str(self.temp_dir_path)],
+            "pluginpath": [str(self.temp_path)],
             "plugins": "bpd",
             # use port 0 to let the OS choose a free port
             "bpd": {"host": host, "port": 0, "control_port": 0},
@@ -288,7 +272,7 @@ class BPDTestHelper(PluginTestCase):
         if password:
             config["bpd"]["password"] = password
         config_file = tempfile.NamedTemporaryFile(
-            mode="wb", dir=str(self.temp_dir_path), suffix=".yaml", delete=False
+            mode="wb", dir=str(self.temp_path), suffix=".yaml", delete=False
         )
         config_file.write(
             yaml.dump(config, Dumper=confuse.Dumper, encoding="utf-8")
@@ -304,7 +288,7 @@ class BPDTestHelper(PluginTestCase):
                     "--library",
                     self.config["library"].as_filename(),
                     "--directory",
-                    os.fsdecode(self.libdir),
+                    str(self.lib_path),
                     "--config",
                     os.fsdecode(config_file.name),
                     "bpd",

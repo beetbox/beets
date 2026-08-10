@@ -1,27 +1,11 @@
 """Tests for the 'subsonic' plugin."""
 
 import unittest
-from urllib.parse import parse_qs, urlparse
 
 import responses
 
 from beets import config
 from beetsplug import subsonicupdate
-
-
-class ArgumentsMock:
-    """Argument mocks for tests."""
-
-    def __init__(self, mode, show_failures):
-        """Constructs ArgumentsMock."""
-        self.mode = mode
-        self.show_failures = show_failures
-        self.verbose = 1
-
-
-def _params(url):
-    """Get the query parameters from a URL."""
-    return parse_qs(urlparse(url).query)
 
 
 class SubsonicPluginTest(unittest.TestCase):
@@ -182,3 +166,21 @@ class SubsonicPluginTest(unittest.TestCase):
         )
 
         self.subsonicupdate.start_scan()
+
+    @responses.activate
+    def test_start_scan_failed_non_json_response(self):
+        """Tests failed path based on a non-JSON server response."""
+        responses.add(
+            responses.GET,
+            "http://localhost:4040/rest/startScan",
+            status=503,
+            body="<html>server unavailable</html>",
+            content_type="text/html",
+        )
+
+        with self.assertLogs("beets", level="ERROR") as logs:
+            self.subsonicupdate.start_scan()
+
+        assert "Subsonic server returned a non-JSON response" in "\n".join(
+            logs.output
+        )

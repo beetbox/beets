@@ -42,38 +42,62 @@ class ArtistAttributes(TypedDict):
     spotlighted: NotRequired[bool]
 
 
-class AlbumAttributes(TypedDict):
+class MediaAttributes(TypedDict):
+    """Describe media metadata exposed by the TIDAL API.
+
+    Combines the core values needed to identify and present a media item with
+    optional publishing, attribution, and sharing details when TIDAL provides
+    them.
+
+    While this type is not part of the original TIDAL json:api schema itself, we
+    introduced it to simplify our type definitions and allow for easier reuse of
+    shared attributes.
+    """
+
+    duration: str  # ISO 8601
+    title: str
+    explicit: bool
+    mediaTags: list[str]
+    popularity: float
+
+    accessType: NotRequired[Literal["PUBLIC", "UNLISTED", "PRIVATE"]]
+    copyright: NotRequired[Copyright]
+    createdAt: NotRequired[str]  # ISO 8601 datetime
+    externalLinks: NotRequired[list[ExternalLink]]
+    version: NotRequired[str]
+
+
+class AlbumAttributes(MediaAttributes):
+    """Represent album-specific metadata returned by the TIDAL API.
+
+    Extends shared media fields with release packaging details that describe how
+    an album is published and how many items or volumes it contains.
+    """
+
     # see "Albums_Attributes"
     # in https://tidal-music.github.io/tidal-api-reference/tidal-api-oas.json
 
     # Required
     albumType: Literal["ALBUM", "EP", "SINGLE"]
     barcodeId: str
-    duration: str  # ISO 8601
-    explicit: bool
-    mediaTags: list[str]
     numberOfItems: int
     numberOfVolumes: int
-    popularity: float
-    title: str
 
     # Optional
-    accessType: NotRequired[Literal["PUBLIC", "UNLISTED", "PRIVATE"]]
-    copyright: NotRequired[Copyright]
-    createdAt: NotRequired[str]  # ISO 8601 datetime
-    externalLinks: NotRequired[list[ExternalLink]]
     releaseDate: NotRequired[str]  # ISO date YYYY-MM-DD
-    version: NotRequired[str]
 
 
-class TrackAttributes(TypedDict):
+class TrackAttributes(MediaAttributes):
+    """Represent track-specific metadata returned by the TIDAL API.
+
+    Adds the musical and catalog information needed to describe an individual
+    recording, while allowing enrichment fields when TIDAL includes them.
+    """
+
     # see "Tracks_Attributes"
     # in https://tidal-music.github.io/tidal-api-reference/tidal-api-oas.json
 
     # Required
-    title: str
-    duration: str  # ISO 8601
-    explicit: bool
     isrc: str
     key: Literal[
         "UNKNOWN",
@@ -106,18 +130,11 @@ class TrackAttributes(TypedDict):
         "MELODIC_MINOR",
         "PENTATONIC_MINOR",
     ]
-    mediaTags: list[str]
-    popularity: float
 
     # Optional
-    accessType: NotRequired[Literal["PUBLIC", "UNLISTED", "PRIVATE"]]
     bpm: NotRequired[float]
-    copyright: NotRequired[Copyright]
-    createdAt: NotRequired[str]  # ISO 8601 datetime
-    externalLinks: NotRequired[list[ExternalLink]]
     spotlighted: NotRequired[bool]
     toneTags: NotRequired[list[str]]
-    version: NotRequired[str]
 
 
 class SearchAttributes(TypedDict):
@@ -145,6 +162,28 @@ class TidalTrack(TypedDict):
     relationships: dict[str, RelationshipData]
 
 
+class FileMeta(TypedDict):
+    width: int
+    height: int
+
+
+class ArtworkFile(TypedDict):
+    href: str
+    meta: FileMeta
+
+
+class ArtworkAttributes(TypedDict):
+    mediaType: Literal["IMAGE"]
+    files: list[ArtworkFile]
+    visualMetadata: NotRequired[dict[str, str]]
+
+
+class TidalArtwork(TypedDict):
+    id: str
+    type: Literal["artworks"]
+    attributes: ArtworkAttributes
+
+
 class TidalSearch(TypedDict):
     id: str
     type: Literal["searchResults"]
@@ -157,7 +196,9 @@ T = TypeVar("T")
 
 class Document(TypedDict, Generic[T]):
     data: T
-    included: NotRequired[list[TidalArtist | TidalAlbum | TidalTrack]]
+    included: NotRequired[
+        list[TidalArtist | TidalAlbum | TidalTrack | TidalArtwork]
+    ]
     links: NotRequired[dict[str, str]]
 
 

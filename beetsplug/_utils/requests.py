@@ -78,15 +78,15 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         retry = Retry(
             total=6,
             backoff_factor=0.5,
-            # Retry on server errors
             status_forcelist=[
                 HTTPStatus.INTERNAL_SERVER_ERROR,
                 HTTPStatus.BAD_GATEWAY,
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 HTTPStatus.GATEWAY_TIMEOUT,
+                HTTPStatus.TOO_MANY_REQUESTS,
             ],
         )
-        adapter = HTTPAdapter(max_retries=retry)
+        adapter = RateLimitAdapter(rate_limit=0.25, max_retries=retry)
         self.mount("https://", adapter)
         self.mount("http://", adapter)
 

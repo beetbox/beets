@@ -1,0 +1,72 @@
+# Ampersands / Delimiters
+drum and bass:
+    - d(rum)?[ &n/]*b(ass)?
+r&b:
+    - r(hythm)?[ &n/]*b(lues)?
+rock and roll:
+    - rock[- ‐'&n/]*roll
+
+# Hyphenation
+\1-\2:
+    - ([ckj])[- ]*(pop)
+    - (j)[- ]*(rock)
+    - (post)[- ]*(\w+)
+    - (g?lo)[- ]*(fi)
+    - ([pg])[- ]*(funk)
+    - (synth)[- ]*(pop)
+avant-garde:
+    - avant[- ]*(garde?)?
+
+# Adding space
+\1 \2:
+    - (nu)[ -]*(disco|jazz|metal|soul)
+    - (dark)[ -]*(wave)
+    - (blues|folk|indie|gothic|progressive|alternative|punk)[ -]*(rock)
+    - (ska)[ -]*(jazz)
+    - (synth)[- ]*(funk)
+    - (glitch|hip|trip)y?(?:[ -]*hip)?[ -]*(hop)
+
+# Removing delimiters
+\1\2:
+    - (synth)[- ]*(wave)
+    - (psy)[ -]*(trance)
+    - (chill)[ -]*(out)
+
+# Old School spellings: old-school death metal, oldschool hip-hop, old-skool-jungle/-hardcore
+old school death metal:
+    - old[ -]*(?:school|skool)[ -]+death[ -]*metal
+old school hip hop:
+    - old[ -]*(?:school|skool)[ -]+hip[ -]*hop
+old school \1:
+    - old[ -]*(?:school|skool)[ -]+(\w+)
+
+# Terminology / Synonyms
+electronic:
+    - electronic music
+world music:
+    - world
+downtempo:
+    - down[ -]*beat
+shoegaze:
+    - shoegaz(e?r?|ing)
+footwork:
+    - (chicago )?footwork( music)?
+juke:
+    - (chicago )?juke( music| house)?
+
+# Compound genres
+alternative rock:
+    - alt[ -]*rock
+# negative lookahead avoids matching 'gothic metal'
+gothic rock:
+    - goth(?!ic)([ -]*rock)?
+# avoids matching 'progressive metal'
+progressive rock:
+    - prog([ -]*rock)?
+punk rock:
+    - punk
+# psy folk, psych-pop, psychedelic-rock, psychedelic soul, but not psychedelic (standalone)
+psychedelic \1:
+    - psy(?:ch(?:edelic)?)?[ -]*(folk|pop|rock|soul)
+dixieland:
+    - dixieland[ -]*jazz

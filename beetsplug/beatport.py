@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Adds Beatport release and track search support to the autotagger"""
 
 from __future__ import annotations
@@ -294,8 +280,8 @@ class BeatportTrack(BeatportObject):
         self.length = timedelta(milliseconds=data.get("lengthMs", 0) or 0)
         if not self.length:
             try:
-                min, sec = data.get("length", "0:0").split(":")
-                self.length = timedelta(minutes=int(min), seconds=int(sec))
+                min_, sec = data.get("length", "0:0").split(":")
+                self.length = timedelta(minutes=int(min_), seconds=int(sec))
             except ValueError:
                 pass
         if "slug" in data:
@@ -509,5 +495,4 @@ class BeatportPlugin(MetadataSourcePlugin):
     def _get_tracks(self, query):
         """Returns a list of TrackInfo objects for a Beatport query."""
         bp_tracks = self.client.search(query, release_type="track")
-        tracks = [self._get_track_info(x) for x in bp_tracks]
-        return tracks
+        return [self._get_track_info(x) for x in bp_tracks]

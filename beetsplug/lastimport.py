@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Rafael Bodill https://github.com/rafi
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -132,7 +118,7 @@ def import_lastfm(lib, log):
             f"/{page_total}" if page_total > 1 else "",
         )
 
-        for retry in range(0, retry_limit):
+        for retry in range(retry_limit):
             tracks, page_total = fetch_tracks(user, page_current + 1, per_page)
             if page_total < 1:
                 # It means nothing to us!
@@ -143,22 +129,21 @@ def import_lastfm(lib, log):
                 found_total += found
                 unknown_total += unknown
                 break
+            log.error("ERROR: unable to read page #{}", page_current + 1)
+            if retry < retry_limit:
+                log.info(
+                    "Retrying page #{}... ({}/{} retry)",
+                    page_current + 1,
+                    retry + 1,
+                    retry_limit,
+                )
             else:
-                log.error("ERROR: unable to read page #{}", page_current + 1)
-                if retry < retry_limit:
-                    log.info(
-                        "Retrying page #{}... ({}/{} retry)",
-                        page_current + 1,
-                        retry + 1,
-                        retry_limit,
-                    )
-                else:
-                    log.error(
-                        "FAIL: unable to fetch page #{}, ",
-                        "tried {} times",
-                        page_current,
-                        retry + 1,
-                    )
+                log.error(
+                    "FAIL: unable to fetch page #{}, ",
+                    "tried {} times",
+                    page_current,
+                    retry + 1,
+                )
         page_current += 1
 
     log.info("... done!")

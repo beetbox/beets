@@ -1,4 +1,3 @@
-import os
 import shutil
 
 import pytest
@@ -8,22 +7,18 @@ from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 from beets.ui.commands.utils import do_query
-from beets.util import syspath
 
 
 class QueryTest(BeetsTestCase):
-    def add_item(self, filename=b"srcfile", templatefile=b"full.mp3"):
-        itempath = os.path.join(self.libdir, filename)
-        shutil.copy(
-            syspath(os.path.join(_common.RSRC, templatefile)), syspath(itempath)
-        )
+    def add_item(self):
+        itempath = self.lib_path / "srcfile"
+        shutil.copy(_common.RSRC / "full.mp3", itempath)
         item = library.Item.from_path(itempath)
         self.lib.add(item)
         return item
 
     def add_album(self, items):
-        album = self.lib.add_album(items)
-        return album
+        return self.lib.add_album(items)
 
     def check_do_query(
         self, num_items, num_albums, q=(), album=False, also_items=True

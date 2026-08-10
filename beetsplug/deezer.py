@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2019, Rahul Ahuja.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Adds Deezer release and track search support to the autotagger"""
 
 from __future__ import annotations
@@ -152,7 +138,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             cover_art_url=album_data.get("cover_xl"),
         )
 
-    def track_for_id(self, track_id: str) -> None | TrackInfo:
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
         """Fetch a track by its Deezer ID or URL and return a
         TrackInfo object or None if the track is not found.
 
@@ -229,9 +215,20 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         name: str,
         va_likely: bool,
     ) -> tuple[str, dict[str, str]]:
-        query = f'album:"{name}"' if query_type == "album" else name
-        if query_type == "track" or not va_likely:
-            query += f' artist:"{artist}"'
+        if query_type == "album":
+            query = f'album:"{name}"'
+            if not va_likely:
+                query += f' artist:"{artist}"'
+        else:
+            # Deezer drops unquoted free text as soon as the query carries any
+            # field:"value" filter, so `<title> artist:"<artist>"` degenerated
+            # into "every track by this artist", truncated to `search_limit`.
+            # The wanted track routinely fell outside that window. Filtering on
+            # the title instead is no better, because `artist:` is fuzzy enough
+            # to match unrelated artists ("Pan Da Punk" for "Daft Punk"), so the
+            # two filters can intersect to nothing even for a well-tagged file.
+            # Plain free text lets Deezer's own relevance ranking do the work.
+            query = f"{name} {artist}".strip()
 
         return query, {}
 

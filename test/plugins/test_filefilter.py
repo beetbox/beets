@@ -1,34 +1,19 @@
-# This file is part of beets.
-# Copyright 2016, Malte Ried.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the `filefilter` plugin."""
 
-from beets.test.helper import ImportTestCase, PluginMixin
-from beets.util import bytestring_path
+from beets.test.helper import ImportHelper, PluginMixin
 
 
-class FileFilterPluginMixin(PluginMixin, ImportTestCase):
+class FileFilterPluginHelper(PluginMixin, ImportHelper):
     plugin = "filefilter"
     preload_plugin = False
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_tracks_for_import()
 
     def prepare_tracks_for_import(self):
         self.album_track, self.other_album_track, self.single_track = (
-            bytestring_path(self.prepare_album_for_import(1, album_path=p)[0])
+            self.prepare_album_for_import(1, album_path=p)[0]
             for p in [
                 self.import_path / "album",
                 self.import_path / "other_album",
@@ -46,12 +31,12 @@ class FileFilterPluginMixin(PluginMixin, ImportTestCase):
             self.importer.run()
 
         assert len(self.lib.albums()) == expected_album_count
-        assert {i.path for i in self.lib.items()} == expected_paths
+        assert {i.filepath for i in self.lib.items()} == expected_paths
 
 
-class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
-    def setUp(self):
-        super().setUp()
+class TestFileFilterPluginNonSingleton(FileFilterPluginHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.importer = self.setup_importer(autotag=False, copy=False)
 
     def test_import_default(self):
@@ -76,9 +61,9 @@ class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
         self._run({"singleton_path": ".*other_album.*"}, 3, self.all_tracks)
 
 
-class FileFilterPluginSingletonTest(FileFilterPluginMixin):
-    def setUp(self):
-        super().setUp()
+class TestFileFilterPluginSingleton(FileFilterPluginHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.importer = self.setup_singleton_importer(autotag=False, copy=False)
 
     def test_global_config(self):
