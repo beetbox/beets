@@ -40,6 +40,19 @@ if TYPE_CHECKING:
 
 log = getLogger("beets.tidal")
 
+_normalize_label_re = re.compile(
+    r"""
+    ^(?:.*(?:©|℗|\([cp]\))\s*)?                   # optional copyright marker
+    (?:\d{4}\s+)?                                 # optional year
+    (?:.*?\ under\ exclusive\ licen[sc]e\ to\ )?  # optional license prefix
+    (.*?)                                         # text to keep
+    (?:,?\ (?:inc|llc|ltd|co)\.?)?                # optional legal suffix
+    (?:,\ a\ .*)?                                 # optional corporate clause
+    (?:,?\ for\ the\ united\ states\ and\ .*)?    # optional territorial clause
+    $""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
 
 class TidalPlugin(MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
@@ -393,6 +406,13 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     @staticmethod
+    def _normalize_label(text: str) -> str:
+        """Reduce a raw copyright string to a concise label name."""
+        if match := _normalize_label_re.match(text):
+            return match.group(1)
+        return text
+
+    @staticmethod
     def _parse_artwork_url(
         album: TidalAlbum, artwork_by_id: dict[str, TidalArtwork]
     ) -> str | None:
@@ -487,7 +507,7 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _parse_label(attributes: MediaAttributes) -> str | None:
         if copyright_ := attributes.get("copyright"):
-            return copyright_["text"]
+            return TidalPlugin._normalize_label(copyright_["text"])
         return None
 
     @staticmethod
