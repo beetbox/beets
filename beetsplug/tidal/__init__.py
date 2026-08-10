@@ -42,13 +42,13 @@ log = getLogger("beets.tidal")
 
 _normalize_label_re = re.compile(
     r"""
-    ^(?:.*(?:©|℗|\([cp]\))\s*)?          # optional text through last marker
-    (?:\d{4}\s+)?                            # optional year
-    (?:.*?\ under\ exclusive\ licen[sc]e\ to\ )?  # optional license prefix
-    (.*?)                                    # text to keep
-    (?:,?\ (?:inc|llc|ltd|co)\.?)?           # optional legal suffix
-    (?:,\ a\ .*)?                            # optional corporate clause
-    (?:,?\ for\ the\ united\ states\ and\ .*)?  # optional territorial clause
+    ^(?:.*(?:©|℗|\([cp]\))\s*)?                # optional copyright marker
+    (?:\d{4}\s+)?                              # optional year
+    (?:.*?\ under\ exclusive\ licence\ to\ )?  # optional license prefix
+    (.*?)                                      # text to keep
+    (?:,?\ (?:inc|llc|ltd|co)\.?)?             # optional legal suffix
+    (?:,\ a\ .*)?                              # optional corporate clause
+    (?:,?\ for\ the\ united\ states\ and\ .*)? # optional territorial clause
     $""",
     re.IGNORECASE | re.VERBOSE,
 )
