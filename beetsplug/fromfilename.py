@@ -375,8 +375,7 @@ class FromFilenamePlugin(BeetsPlugin):
             m = RE_ALPHANUM_INDEX.match(filename)
             if not m:
                 return ""
-            else:
-                return m.group()
+            return m.group()
 
         # Extract matches for alphanumeric indexes
         indexes: list[tuple[str, Item]] = [
@@ -537,8 +536,7 @@ class FromFilenamePlugin(BeetsPlugin):
     def _mutate_string(text: str, span: tuple[int, int]) -> str:
         """Replace a matched field with a seperator"""
         start, end = span
-        text = text[:start] + "-" + text[end:]
-        return text
+        return text[:start] + "-" + text[end:]
 
     def _sanity_check_matches(
         self,
@@ -572,7 +570,7 @@ class FromFilenamePlugin(BeetsPlugin):
                 # All the artist fields match, and the title fields don't
                 # It's probably the artist
                 return
-            elif one_title and not one_artist and not album_artist:
+            if one_title and not one_artist and not album_artist:
                 # If the track titles match, and there's no album
                 # artist to check on
                 possible_artist = tracks[0]["title"]
