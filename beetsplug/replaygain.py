@@ -682,70 +682,110 @@ class MetaflacBackend(Backend):
 
     def compute_track_gain(self, task: AnyRgTask) -> AnyRgTask:
         """Compute the track gain for each FLAC item in the task."""
-        track_gains = []
-        for item in filter(self.format_supported, task.items):
-            self._add_replay_gain([item])
-            track_gains.append(
-                self._read_gain(item, "TRACK", task.target_level)
-            )
+        items = list(filter(self.format_supported, task.items))
+
+        if not items:
+            task.track_gains = None
+            return task
+
+        results = self._read_gain(items, task.target_level)
+
+        track_gains: list[Gain] = []
+        for item in items:
+            track_gain_value = results[item][1]
+            track_gains.append(track_gain_value)
+
         task.track_gains = track_gains
         return task
 
     def compute_album_gain(self, task: AnyRgTask) -> AnyRgTask:
         """Compute the album gain and per-track gains for the FLAC items."""
         items = list(task.items)
-        if not items or not all(self.format_supported(i) for i in items):
+        supported_items = list(filter(self.format_supported, items))
+
+        if not items or len(supported_items) != len(items):
             task.album_gain = None
             task.track_gains = None
             return task
 
-        self._add_replay_gain(items)
-        task.track_gains = [
-            self._read_gain(item, "TRACK", task.target_level) for item in items
-        ]
-        task.album_gain = self._read_gain(items[0], "ALBUM", task.target_level)
+        results = self._read_gain(items, task.target_level)
+
+        track_gains: list[Gain] = []
+        for item in items:
+            track_gain_value = results[item][1]
+            track_gains.append(track_gain_value)
+
+        album_gain = results[items[0]][0]
+
+        task.album_gain = album_gain
+        task.track_gains = track_gains
         return task
 
-    def _add_replay_gain(self, items: Sequence[Item]) -> None:
-        """Run ``metaflac --add-replay-gain`` on the given files."""
+    def _read_gain(
+        self, items: Sequence[Item], target_level: float
+    ) -> dict[Item, tuple[Gain, Gain]]:
+        """Run ``metaflac --scan-replay-gain`` on the given files"""
         paths = [str(item.filepath) for item in items]
-        call([self.command, "--add-replay-gain", *paths], self._log)
 
-    def _read_gain(self, item: Item, kind: str, target_level: float) -> Gain:
-        """Read the REPLAYGAIN gain and peak tags back from a file."""
-        gain_tag = f"REPLAYGAIN_{kind}_GAIN"
-        peak_tag = f"REPLAYGAIN_{kind}_PEAK"
-        command = [
-            self.command,
-            f"--show-tag={gain_tag}",
-            f"--show-tag={peak_tag}",
-            str(item.filepath),
-        ]
-        tags = self._parse_tags(call(command, self._log).stdout)
         try:
-            gain = self._parse_gain(tags[gain_tag])
-            peak = float(tags[peak_tag])
-        except (KeyError, IndexError, ValueError) as exc:
-            raise ReplayGainError(
-                f"could not read metaflac replaygain tags for {item}: {exc!r}"
+            output = call(
+                [self.command, "--scan-replay-gain", *paths], self._log
+            ).stdout.decode("utf-8", "ignore")
+        except ReplayGainError as exc:
+            raise FatalReplayGainError(
+                f"metaflac --scan-replay-gain failed"
+                f" (you might need to update metaflac): {exc!r}"
             )
-        # metaflac uses an 89 dB reference, like the other backends
-        return Gain(gain=gain + (target_level - 89.0), peak=peak)
+
+        gain_by_path = self._parse_output(output)
+
+        results: dict[Item, tuple[Gain, Gain]] = {}
+        for item in items:
+            path = str(item.filepath)
+
+            try:
+                album_gain, album_peak, track_gain, track_peak = gain_by_path[
+                    path
+                ]
+            except KeyError as exc:
+                raise ReplayGainError(
+                    f"metaflac output missing replaygain values for {path!r}: {exc!r}"
+                )
+
+            # metaflac uses an 89 dB reference, like the other backends
+            offset = target_level - 89.0
+
+            results[item] = (
+                Gain(gain=album_gain + offset, peak=album_peak),
+                Gain(gain=track_gain + offset, peak=track_peak),
+            )
+        return results
 
     @staticmethod
-    def _parse_tags(output: bytes) -> dict[str, str]:
-        """Turn metaflac's NAME=VALUE output into a dict."""
-        tags: dict[str, str] = {}
-        for line in output.decode("utf-8", "ignore").splitlines():
-            name, sep, value = line.partition("=")
-            if sep:
-                tags[name.strip().upper()] = value.strip()
-        return tags
+    def _parse_output(
+        text: str,
+    ) -> dict[str, tuple[float, float, float, float]]:
+        """Parse the output of ``metaflac --scan-replay-gain``."""
+        out: dict[str, tuple[float, float, float, float]] = {}
 
-    @staticmethod
-    def _parse_gain(value: str) -> float:
-        """Turn a '-7.89 dB' tag value into a float."""
-        return float(value.split()[0])
+        for line in text.splitlines():
+            path, sep, values = line.partition(": ")
+
+            if not sep:
+                continue
+
+            try:
+                album_gain, album_peak, track_gain, track_peak = (
+                    float(v) for v in values.split()
+                )
+            except ValueError as exc:
+                raise ReplayGainError(
+                    f"could not parse metaflac output for file {path!r}: {exc!r}"
+                )
+
+            out[path] = (album_gain, album_peak, track_gain, track_peak)
+
+        return out
 
 
 # GStreamer-based backend.
