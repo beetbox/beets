@@ -79,8 +79,8 @@ Other changes
   standard ``asyncio`` event loop.
 - The unmaintained ``probot/stale`` GitHub App config (``.github/stale.yml``)
   has been replaced with a ``.github/workflows/stale.yaml`` workflow using
-  `actions/stale <https://github.com/actions/stale>`_, porting the same
-  schedule and messages. This affects beets developers only.
+  `actions/stale <https://github.com/actions/stale>`_, porting the same schedule
+  and messages. This affects beets developers only.
 
 2.13.1 (July 29, 2026)
 ----------------------
