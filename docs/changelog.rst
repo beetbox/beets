@@ -52,6 +52,10 @@ Bug fixes
   relevance order and truncated to ``search_limit``. For artists with more
   releases than that window, the track being imported was never among the
   candidates offered.
+- :doc:`plugins/tidal`: The ``label`` field no longer stores Tidal's raw
+  copyright/rights-statement text verbatim. It's now normalized to a concise
+  label name, stripping copyright markers, years, and corporate, licensing, and
+  territorial boilerplate. Affects both album and track metadata. :bug:`6796`
 
 ..
     For plugin developers
