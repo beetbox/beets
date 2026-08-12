@@ -17,7 +17,7 @@ from beets.util.units import human_seconds_short
 if TYPE_CHECKING:
     import confuse
 
-    from beets.autotag import AlbumMatch, Match, TrackMatch
+    from beets.autotag import AlbumMatch, Match, Source, TrackMatch
     from beets.library.models import Item
     from beets.util.color import ColorName
 
@@ -32,8 +32,8 @@ class ChangeRepresentation:
     TrackMatch object, accordingly.
     """
 
-    cur_artist: str
-    cur_name: str
+    original_artist: str
+    original_name: str
     match: Match
 
     @cached_property
@@ -99,7 +99,10 @@ class ChangeRepresentation:
         and artist name.
         """
         # Artist.
-        artist_l, artist_r = self.cur_artist or "", self.match.info.artist or ""
+        artist_l, artist_r = (
+            self.original_artist,
+            self.match.info.artist or "",
+        )
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
@@ -112,10 +115,10 @@ class ChangeRepresentation:
         else:
             ui.print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
-        if self.cur_name:
+        if self.original_name:
             type_ = self.match.type
-            name_l, name_r = self.cur_name or "", self.match.info.name
-            if self.cur_name != self.match.info.name != VARIOUS_ARTISTS:
+            name_l, name_r = self.original_name, self.match.info.name
+            if self.original_name != self.match.info.name != VARIOUS_ARTISTS:
                 name_l, name_r = colordiff(name_l, name_r)
                 left = Side(f"{self.changed_prefix} {type_}: ", name_l, "")
                 right = Side("", name_r, "")
@@ -361,12 +364,12 @@ class TrackChange(ChangeRepresentation):
     match: TrackMatch
 
 
-def show_change(cur_artist: str, cur_album: str, match: AlbumMatch) -> None:
+def show_change(source: Source, match: AlbumMatch) -> None:
     """Print out a representation of the changes that will be made if an
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
     """
-    change = AlbumChange(cur_artist, cur_album, match)
+    change = AlbumChange(source.artist, source.name, match)
 
     # Print the match header.
     change.show_match_header()
@@ -378,11 +381,11 @@ def show_change(cur_artist: str, cur_album: str, match: AlbumMatch) -> None:
     change.show_match_tracks()
 
 
-def show_item_change(item: Item, match: TrackMatch) -> None:
-    """Print out the change that would occur by tagging `item` with the
+def show_item_change(source: Source, match: TrackMatch) -> None:
+    """Print out the change that would occur by tagging a track with the
     metadata from `match`, a TrackMatch object.
     """
-    change = TrackChange(item.artist, item.title, match)
+    change = TrackChange(source.artist, source.name, match)
     # Print the match header.
     change.show_match_header()
     # Print the match details.
