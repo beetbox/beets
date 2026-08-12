@@ -1050,6 +1050,38 @@ class TestAliases:
             "alias must normalize 'hip-hop' → 'hip hop' before whitelist check"
         )
 
+    def test_original_fallback_keeps_all_alias_normalized_genres(self, config):
+        """Original-fallback path alias-normalizes without truncating to count.
+
+        Covers force + keep_existing + whitelist + aliases with an empty
+        Last.fm response, so ``_get_genre`` falls back to the item's own
+        (alias-normalized) genres.
+
+        With ``count`` set to 1, both 'hip-hop' (whitelisted only after
+        normalizing to 'hip hop') and the already-whitelisted 'Jazz' must
+        survive, proving the count limit isn't applied early.
+        """
+        config["lastgenre"]["force"] = True
+        config["lastgenre"]["keep_existing"] = True
+        config["lastgenre"]["source"] = "album"
+        config["lastgenre"]["whitelist"] = True
+        config["lastgenre"]["count"] = 1
+        config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop", "hiphop"]}
+        plugin = lastgenre.LastGenrePlugin()
+        plugin.setup()
+        plugin.whitelist = {"hip hop", "jazz"}
+
+        item = _common.item()
+        item.genres = ["hip-hop", "Jazz"]
+
+        with patch(
+            "beetsplug.lastgenre.client.LastFmClient.fetch", return_value=[]
+        ):
+            assert plugin._get_genre(item) == (
+                ["hip hop", "Jazz"],
+                "original fallback",
+            )
+
     def test_normalize_before_ignorelist(self, config):
         """Aliases normalize BEFORE ignorelist filtering.
 
