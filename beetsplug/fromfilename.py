@@ -213,7 +213,7 @@ class FromFilenamePlugin(BeetsPlugin):
             ]
         )
 
-    def filename_task(self, task: ImportTask, _: ImportSession) -> None:
+    def filename_task(self, task: ImportTask, session: ImportSession) -> None:
         """Examines all files in the given import task for any missing
         information it can gather from the file and folder names.
 
@@ -234,7 +234,7 @@ class FromFilenamePlugin(BeetsPlugin):
         if self._has_bad_fields(items, self.file_fields):
             track_matches = self._build_track_matches(item_filenames)
 
-        # If the group albums or singleton flag is thrown do not use the folder
+        # If the group albums or singleton config is set do not use the folder
         if not (
             config["import"]["group_albums"] or config["import"]["singletons"]
         ):
