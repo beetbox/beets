@@ -1,12 +1,14 @@
 """Tests for the fromfilename plugin."""
 
+from typing import ClassVar
 from unittest.mock import patch
 
 import pytest
 
+from beets import importer
 from beets.importer.tasks import ImportTask, SingletonImportTask
 from beets.library import Item
-from beets.test.helper import PluginMixin
+from beets.test.helper import AutotagImportTestCase, PluginTestHelper
 from beetsplug.fromfilename import FilenameMatch, FromFilenamePlugin
 
 
@@ -239,7 +241,7 @@ def test_parse_user_pattern_strings(string, pattern):
     assert f._parse_user_pattern_strings(string, set()) == pattern
 
 
-class TestFromFilename(PluginMixin):
+class TestFromFilename(PluginTestHelper):
     plugin = "fromfilename"
     preload_plugin = False
 
@@ -733,25 +735,78 @@ class TestFromFilename(PluginMixin):
             assert guess.title == "Title"
             assert guess.track == 1
 
-    def test_singleton_flag_import(self):
-        """If the import task is a singleton, assert that
-        the plugin does not guess from the folder."""
-        raise NotImplementedError
-
-    def test_group_album_flag_import(self):
-        """If the group albums flag is thrown, assert
-        that the plugin does not guess from the folder."""
-        raise NotImplementedError
-
-    def test_import_split_by_group(self):
-        """Asser that an initial run without group by album, and an inaccurate
-        album guess, results in a run omitting it with the group album flag."""
-        raise NotImplementedError
-
     def test_config_sanity_check(self):
         """Assert that the sanity check can be disabled in the config."""
         raise NotImplementedError
 
     def test_sanity_check_no_album(self):
         """Assert that sanity check can function with no album match."""
+        raise NotImplementedError
+
+
+class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
+    plugin: ClassVar[str] = "fromfilename"
+
+    def setUp(self):
+        super().setUp()
+        # Create some albums to import
+        album_path = self.import_path / "Artist - Album Title (2026)"
+        self.prepare_album_for_import(item_count=2, album_path=album_path)
+        self.setup_importer()
+
+        # Give each album a unique album title
+        self.import_media[0].album = "This Album"
+        self.import_media[0].year = None
+        self.import_media[0].ailbumartist = None
+        self.import_media[0].save()
+        self.import_media[1].album = "That Album"
+        self.import_media[1].albumartist = None
+        self.import_media[1].year = None
+        self.import_media[1].save()
+
+    def test_album_not_guessed(self):
+        """
+        Assert that the album title was not guessed.
+        """
+        # Now we give it the import task actions
+        self.importer.add_choice(importer.Action.ALBUMS)
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.ASIS)
+
+        self.importer.run()
+        albums = {album.album for album in self.lib.albums()}
+        # We don't see these guessed
+        assert albums == {"This Album", "That Album"}
+
+    def test_album_not_split(self):
+        """
+        If we don't tell it split, assert the year
+        and artist tag are written, but existing tags are not.
+        """
+        self.importer.add_choice(importer.Action.ASIS)
+
+        self.importer.run()
+        year = {item.get("year", with_album=False) for item in self.lib.items()}
+        albumartist = {item.get("albumartist") for item in self.lib.items()}
+        item_albums = {item.album for item in self.lib.items()}
+        albums = {album.album for album in self.lib.albums()}
+
+        # Both have been set from the folder!
+        assert year == {2026}
+        assert albumartist == {"Artist"}
+        assert item_albums == {"This Album", "That Album"}
+        # There is only one actual album imported - the tags are just bad!
+        assert albums == {"This Album"}
+
+    def test_singleton_flag_import(self):
+        """If the import task is a singleton, assert that
+        the plugin does not guess from the folder."""
+
+        # The importer will have set the singleton option
+        self.importer.add_choice(importer.Action.TRACKS)
+        raise NotImplementedError
+
+    def test_import_split_by_group(self):
+        """Asser that an initial run without group by album, and an inaccurate
+        album guess, results in a run omitting it with the group album flag."""
         raise NotImplementedError
