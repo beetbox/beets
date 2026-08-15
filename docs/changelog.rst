@@ -56,6 +56,11 @@ Bug fixes
   copyright/rights-statement text verbatim. It's now normalized to a concise
   label name, stripping copyright markers, years, and corporate, licensing, and
   territorial boilerplate. Affects both album and track metadata. :bug:`6796`
+- :doc:`plugins/deezer`: Track conversion no longer assumes the API sends both
+  ``contributors`` and ``artist``. The fallback to ``artist`` was evaluated even
+  when ``contributors`` was present, so a track payload without ``artist``
+  raised ``KeyError``. Albums were already guarded; this fixes the remaining
+  call site. :bug:`4339`
 
 ..
     For plugin developers
