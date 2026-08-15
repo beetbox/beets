@@ -61,6 +61,8 @@ Bug fixes
   when ``contributors`` was present, so a track payload without ``artist``
   raised ``KeyError``. Albums were already guarded; this fixes the remaining
   call site. :bug:`4339`
+- :doc:`plugins/discogs`: Retry a search once when Discogs returns an invalid
+  JSON response instead of immediately discarding all Discogs candidates.
 
 ..
     For plugin developers
