@@ -346,7 +346,17 @@ class LRCLyrics:
 
     @staticmethod
     def _format_synced(synced: str) -> str:
+        """Return synced lyrics with surrounding whitespace trimmed."""
         return "\n".join(map(str.strip, synced.splitlines()))
+
+    @staticmethod
+    def _synced_as_plain(synced: str) -> str:
+        """Return synced lyrics as plain text, without the LRC timestamps."""
+        return "\n".join(
+            m[2]
+            for line in synced.splitlines()
+            if (m := Lyrics.LINE_PARTS_PAT.match(line))
+        )
 
     def get_text(self, want_synced: bool) -> str:
         """Return the preferred text form for this candidate."""
@@ -359,15 +369,15 @@ class LRCLyrics:
         if self.plain:
             return self.plain
 
-        # 'plainLyrics' may be null while synced lyrics are available, so
-        # prefer those over returning nothing.
+        # 'plainLyrics' may be null while synced lyrics are available. Use the
+        # latter as the plain text, dropping the timestamps.
         if self.synced:
-            return self._format_synced(self.synced)
+            return self._synced_as_plain(self.synced)
 
         # Unreachable for a candidate that passed :attr:`is_valid`, which
         # requires some lyrics to be available. Kept so that this method always
         # returns a string.
-        return INSTRUMENTAL_LYRICS
+        return ""
 
 
 class LRCLib(Backend):

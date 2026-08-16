@@ -627,11 +627,12 @@ class TestLRCLibLyrics(LyricsBackendTest):
 
         LRCLib may return a null 'plainLyrics' while still providing synced
         lyrics, so preferring plain text must not discard the data we have.
+        The timestamps are dropped, since this is standing in for plain text.
         """
         lyrics = fetch_lyrics()
 
         assert lyrics
-        assert lyrics.text == self.SYNCED
+        assert lyrics.text == "synced"
 
     @pytest.mark.parametrize(
         "response_data, expected_lyrics",
