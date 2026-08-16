@@ -12,14 +12,16 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from beets import config
+from beets.autotag import tag_album, tag_item
 from beets.importer import Action, SingletonImportTask
 from beets.plugins import BeetsPlugin
-from beets.util import displayable_path
+from beets.util import PromptChoice, displayable_path
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, ValuesView
     from typing import Any
 
+    from beets.autotag import Proposal
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item
 
@@ -166,9 +168,11 @@ class FromFilenamePlugin(BeetsPlugin):
         super().__init__()
         self.config.add(
             {
+                "autouse": True,
                 "fields": ["artist", "disc", "title", "track"],
                 "patterns": [],
                 "sanity_check": True,
+                "ui_toggle": True,
                 "fromfolder": {
                     "fields": [
                         "album",
@@ -183,22 +187,32 @@ class FromFilenamePlugin(BeetsPlugin):
             }
         )
         self.file_fields = set(self.config["fields"].as_str_seq())
-        self.folder_fields = set(
-            self.config["fromfolder"]["fields"].as_str_seq()
-        )
         self.file_patterns = self._user_pattern_to_regex(
             self.config["patterns"].as_str_seq(), self.file_fields
+        )
+        self.folder_fields = set(
+            self.config["fromfolder"]["fields"].as_str_seq()
         )
         self.folder_patterns = self._user_pattern_to_regex(
             self.config["fromfolder"]["patterns"].as_str_seq(),
             self.folder_fields,
         )
+
         self.backup_items: dict[Item, Mapping[str, Any]] = {}
         self.regroup_items = 0
 
         self.register_listener("import_task_start", self.filename_task)
         self.register_listener("import_task_apply", self.clear_task_data)
         self.register_listener("import_task_choice", self.update_regroup_items)
+        if self.config["ui_toggle"].get(bool):
+            self.register_listener(
+                "before_choose_candidate",
+                lambda: [
+                    PromptChoice(
+                        "f", "toggle FromFilename", self.fromfilename_toggle
+                    )
+                ],
+            )
 
     @cached_property
     def ignored_directories(self) -> set[str]:
@@ -218,6 +232,9 @@ class FromFilenamePlugin(BeetsPlugin):
 
         Alternatively, backups of the data are restored.
         """
+        # Shortcut if the user has disabled the plugin
+        if not self.config["autouse"].get(bool):
+            return
         # Retrieve the list of items to process
         items: list[Item] = task.items
 
@@ -256,9 +273,35 @@ class FromFilenamePlugin(BeetsPlugin):
     def update_regroup_items(
         self, task: ImportTask, session: ImportSession
     ) -> None:
-        # Store the choice flag
+        """
+        Store a count of how many items we can expect
+        in future sessions from this re-grouping.
+
+        This allows the plugin to avoid reading the folder.
+        """
         if task.choice_flag in [Action.ALBUMS, Action.TRACKS]:
             self.regroup_items += len(task.items)
+
+    def fromfilename_toggle(
+        self, task: ImportTask | SingletonImportTask, session: ImportSession
+    ) -> Proposal | None:
+        """
+        Restore any backup data, get new proposals from the un-altered data.
+        """
+        autouse = not self.config["autouse"].get(bool)
+        self.config["autouse"] = autouse
+        if not autouse:
+            if self.backup_items:
+                self.restore_backup_data(task.items)
+                self.backup_items.clear()
+            # Now we have to search for things again...
+            self._log.debug("searching for metadata again...")
+            if task.is_album:
+                _, _, prop = tag_album(task.items)
+                return prop
+            return tag_item(task.items)
+        # We re-enabled it. Things can resume as before.
+        return None
 
     def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
         """
@@ -268,10 +311,10 @@ class FromFilenamePlugin(BeetsPlugin):
         This clears it out for the next import task,
         while keeping items that might have been moved
         to another task.
+
+        Items don't get dropped mid-task, so we should be
+        good with a simple `del` statement
         """
-        # Make sure we've removed everything at the end of the task
-        # items don't really get dropped mid task, so we should
-        # be safe with a simple del
         for item in task.items:
             del self.backup_items[item]
 
