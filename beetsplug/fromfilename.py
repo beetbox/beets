@@ -126,6 +126,9 @@ class FilenameMatch(MutableMapping[str, str | None]):
                 if value is not None:
                     self._matches[key.lower()] = str(value).strip()
 
+    def __str__(self) -> str:
+        return ", ".join([f'{g[0]}="{g[1]}"' for g in self._matches.items()])
+
     def __getitem__(self, key: str) -> str | None:
         return self._matches.get(key, None)
 
@@ -190,7 +193,6 @@ class FromFilenamePlugin(BeetsPlugin):
             self.config["fromfolder"]["patterns"].as_str_seq(),
             self.folder_fields,
         )
-        self.metadata_mutated = False
         self.backup_items: dict[Item, Mapping[str, Any]] = {}
         self.regroup_items = 0
 
@@ -233,9 +235,9 @@ class FromFilenamePlugin(BeetsPlugin):
         Restore the fields we mutated in a previous round of fromfilename
         """
         for item in items:
-            if backup := self.backup_items.get(item):
-                item.update(backup)
-                del self.backup_items[item]
+            backup = self.backup_items.get(item, {})
+            item.update(backup)
+            del self.backup_items[item]
 
     def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
         """
@@ -246,10 +248,11 @@ class FromFilenamePlugin(BeetsPlugin):
         while keeping items that might have been moved
         to another task.
         """
-        for item in task.items:
-            if self.backup_items.get(item):
-                del self.backup_items[item]
         # Make sure we've removed everything at the end of the task
+        # items don't really get dropped mid task, so we should
+        # be safe with a simple del
+        for item in task.items:
+            del self.backup_items[item]
 
     def update_regroup_items(
         self, task: ImportTask, session: ImportSession
@@ -290,7 +293,7 @@ class FromFilenamePlugin(BeetsPlugin):
         parent_folder, item_filenames = self._get_path_strings(items)
 
         track_matches: dict[Item, FilenameMatch] | None = None
-        album_matches: FilenameMatch | None = None
+        album_matches: FilenameMatch = FilenameMatch()
 
         if self._has_bad_fields(items, list(self.file_fields)):
             track_matches = self._build_track_matches(item_filenames)
@@ -308,11 +311,9 @@ class FromFilenamePlugin(BeetsPlugin):
                 self._sanity_check_matches(album_matches, track_matches)
 
             self._apply_track_matches(items, track_matches)
-            self.metadata_mutated = True
 
         if album_matches:
             self._apply_album_matches(items, album_matches)
-            self.metadata_mutated = True
 
     def _has_bad_fields(self, items: list[Item], fields: list[str]) -> bool:
         """Look for what fields are missing data on the items.
@@ -505,26 +506,16 @@ class FromFilenamePlugin(BeetsPlugin):
         self, items: list[Item], album_match: FilenameMatch
     ):
         for item in items:
-            self._log.debug(
-                f"album matches {self._format_guesses(album_match._matches)}"
-            )
+            self._log.debug(f"album matches {album_match}")
             item.update(album_match._matches)
 
     def _apply_track_matches(
         self, items: list[Item], track_matches: dict[Item, FilenameMatch]
     ):
         for item in items:
-            filename_match = track_matches.get(item)
-            if filename_match:
-                self._log.debug(
-                    f"track matches {self._format_guesses(filename_match._matches)}"
-                )
-                item.update(filename_match._matches)
-
-    @staticmethod
-    def _format_guesses(guesses: dict[str, str]) -> str:
-        """Format guesses in a 'field="guess"' style for logging"""
-        return ", ".join([f'{g[0]}="{g[1]}"' for g in guesses.items()])
+            filename_match = track_matches[item]
+            self._log.debug(f"track matches {filename_match}")
+            item.update(filename_match._matches)
 
     @staticmethod
     def _parse_album_and_albumartist(
@@ -618,7 +609,7 @@ class FromFilenamePlugin(BeetsPlugin):
 
     def _sanity_check_matches(
         self,
-        album_match: FilenameMatch | None,
+        album_match: FilenameMatch,
         track_matches: dict[Item, FilenameMatch],
     ) -> None:
         """Check to make sure data is coherent between
@@ -637,9 +628,7 @@ class FromFilenamePlugin(BeetsPlugin):
             return
 
         tracks: list[FilenameMatch] = list(track_matches.values())
-        album_artist = None
-        if album_match is not None:
-            album_artist = album_match["albumartist"]
+        album_artist = album_match["albumartist"]
         one_artist = self._equal_fields(tracks, "artist")
         one_title = self._equal_fields(tracks, "title")
 
