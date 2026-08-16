@@ -209,68 +209,6 @@ class FromFilenamePlugin(BeetsPlugin):
             ]
         )
 
-    def build_backup_data(self, items: list[Item]) -> None:
-        """
-        Build a backup of the data from the items.
-
-        Since items in the task are mutable, if the user wants to
-        revert these operations, we need to restore our backup
-        to the session items.
-        """
-        self.backup_items.update(
-            {item: self.build_item_backup_data(item) for item in items}
-        )
-
-    def build_item_backup_data(self, item: Item) -> Mapping[str, Any]:
-        """
-        Builds the per item dict for `build_backup_data`
-        """
-        return {
-            field: item.get(field, with_album=False)
-            for field in [*self.file_fields, *self.folder_fields]
-        }
-
-    def restore_backup_data(self, items: list[Item]) -> None:
-        """
-        Restore the fields we mutated in a previous round of fromfilename
-        """
-        for item in items:
-            backup = self.backup_items.get(item, {})
-            item.update(backup)
-            del self.backup_items[item]
-
-    def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
-        """
-        When an import task has been applied, we don't need any of the backup
-        data we created.
-
-        This clears it out for the next import task,
-        while keeping items that might have been moved
-        to another task.
-        """
-        # Make sure we've removed everything at the end of the task
-        # items don't really get dropped mid task, so we should
-        # be safe with a simple del
-        for item in task.items:
-            del self.backup_items[item]
-
-    def update_regroup_items(
-        self, task: ImportTask, session: ImportSession
-    ) -> None:
-        # Store the choice flag
-        if task.choice_flag in [Action.ALBUMS, Action.TRACKS]:
-            self.regroup_items += len(task.items)
-
-    def is_regrouped_task(self, items) -> bool:
-        if self.regroup_items:
-            self._log.debug("Is a regrouped item")
-            self.regroup_items -= len(items)
-            self._log.debug(
-                "Is the next a regroup item?: {}", self.regroup_items
-            )
-            return True
-        return False
-
     def filename_task(self, task: ImportTask, session: ImportSession) -> None:
         """Examines all files in the given import task for any missing
         information it can gather from the file and folder names.
@@ -314,6 +252,28 @@ class FromFilenamePlugin(BeetsPlugin):
 
         if album_matches:
             self._apply_album_matches(items, album_matches)
+
+    def update_regroup_items(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
+        # Store the choice flag
+        if task.choice_flag in [Action.ALBUMS, Action.TRACKS]:
+            self.regroup_items += len(task.items)
+
+    def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
+        """
+        When an import task has been applied, we don't need any of the backup
+        data we created.
+
+        This clears it out for the next import task,
+        while keeping items that might have been moved
+        to another task.
+        """
+        # Make sure we've removed everything at the end of the task
+        # items don't really get dropped mid task, so we should
+        # be safe with a simple del
+        for item in task.items:
+            del self.backup_items[item]
 
     def _has_bad_fields(self, items: list[Item], fields: list[str]) -> bool:
         """Look for what fields are missing data on the items.
@@ -663,3 +623,43 @@ class FromFilenamePlugin(BeetsPlugin):
     def _equal_fields(dictionaries: list[FilenameMatch], field: str) -> bool:
         """Checks if all values of a field on a dictionary match."""
         return len(set(d[field] for d in dictionaries)) <= 1
+
+    def is_regrouped_task(self, items) -> bool:
+        if self.regroup_items:
+            self._log.debug("Is a regrouped item")
+            self.regroup_items -= len(items)
+            self._log.debug(
+                "Is the next a regroup item?: {}", self.regroup_items
+            )
+            return True
+        return False
+
+    def build_backup_data(self, items: list[Item]) -> None:
+        """
+        Build a backup of the data from the items.
+
+        Since items in the task are mutable, if the user wants to
+        revert these operations, we need to restore our backup
+        to the session items.
+        """
+        self.backup_items.update(
+            {item: self.build_item_backup_data(item) for item in items}
+        )
+
+    def build_item_backup_data(self, item: Item) -> Mapping[str, Any]:
+        """
+        Builds the per item dict for `build_backup_data`
+        """
+        return {
+            field: item.get(field, with_album=False)
+            for field in [*self.file_fields, *self.folder_fields]
+        }
+
+    def restore_backup_data(self, items: list[Item]) -> None:
+        """
+        Restore the fields we mutated in a previous round of fromfilename
+        """
+        for item in items:
+            backup = self.backup_items.get(item, {})
+            item.update(backup)
+            del self.backup_items[item]
