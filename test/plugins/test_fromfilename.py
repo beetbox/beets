@@ -756,17 +756,19 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
 
         # Give each album a unique album title
         self.import_media[0].album = "This Album"
-        self.import_media[0].year = None
-        self.import_media[0].ailbumartist = None
+        self.import_media[0].artist = ""
+        self.import_media[0].albumartist = ""
+        self.import_media[0].year = 0
         self.import_media[0].save()
         self.import_media[1].album = "That Album"
-        self.import_media[1].albumartist = None
-        self.import_media[1].year = None
+        self.import_media[1].artist = ""
+        self.import_media[1].albumartist = ""
+        self.import_media[1].year = 0
         self.import_media[1].save()
 
     def test_album_not_guessed(self):
         """
-        Assert that the album title was not guessed.
+        Assert that the album fields were not guessed.
         """
         # Now we give it the import task actions
         self.importer.add_choice(importer.Action.ALBUMS)
@@ -774,8 +776,12 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
         self.importer.add_choice(importer.Action.ASIS)
 
         self.importer.run()
+        albumartist = {item.get("albumartist") for item in self.lib.items()}
+        year = {item.get("year", with_album=False) for item in self.lib.items()}
         albums = {album.album for album in self.lib.albums()}
         # We don't see these guessed
+        assert year == {0}
+        assert albumartist == {""}
         assert albums == {"This Album", "That Album"}
 
     def test_album_not_split(self):
@@ -793,9 +799,11 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
 
         # Both have been set from the folder!
         assert year == {2026}
+        # The album artist has beeen set from the folder!
         assert albumartist == {"Artist"}
+        # There is only one actual album imported
+        # the tags are just bad & unupdated!
         assert item_albums == {"This Album", "That Album"}
-        # There is only one actual album imported - the tags are just bad!
         assert albums == {"This Album"}
 
     def test_singleton_flag_import(self):
@@ -804,9 +812,21 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
 
         # The importer will have set the singleton option
         self.importer.add_choice(importer.Action.TRACKS)
-        raise NotImplementedError
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.ASIS)
+
+        self.importer.run()
+
+        year = {item.get("year", with_album=False) for item in self.lib.items()}
+        albumartist = {item.get("albumartist") for item in self.lib.items()}
+        item_albums = {item.album for item in self.lib.items()}
+
+        assert year == {0}
+        assert albumartist == {""}
+        expected_albums = {"This Album", "That Album"}
+        assert item_albums == expected_albums
 
     def test_import_split_by_group(self):
-        """Asser that an initial run without group by album, and an inaccurate
+        """Assert that an initial run without group by album, and an inaccurate
         album guess, results in a run omitting it with the group album flag."""
         raise NotImplementedError
