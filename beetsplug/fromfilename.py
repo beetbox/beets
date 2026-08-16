@@ -172,7 +172,6 @@ class FromFilenamePlugin(BeetsPlugin):
                 "fields": ["artist", "disc", "title", "track"],
                 "patterns": [],
                 "sanity_check": True,
-                "ui_toggle": True,
                 "fromfolder": {
                     "fields": [
                         "album",
@@ -204,15 +203,14 @@ class FromFilenamePlugin(BeetsPlugin):
         self.register_listener("import_task_start", self.filename_task)
         self.register_listener("import_task_apply", self.clear_task_data)
         self.register_listener("import_task_choice", self.update_regroup_items)
-        if self.config["ui_toggle"].get(bool):
-            self.register_listener(
-                "before_choose_candidate",
-                lambda: [
-                    PromptChoice(
-                        "f", "toggle FromFilename", self.fromfilename_toggle
-                    )
-                ],
-            )
+        self.register_listener(
+            "before_choose_candidate",
+            lambda: [
+                PromptChoice(
+                    "f", "toggle FromFilename", self.fromfilename_toggle
+                )
+            ],
+        )
 
     @cached_property
     def ignored_directories(self) -> set[str]:

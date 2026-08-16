@@ -33,6 +33,7 @@ Default
           - track
         patterns: []
         sanity_check: yes
+        autouse: yes
         fromfolder:
             fields:
               - album
@@ -58,9 +59,11 @@ Default
     you would put ``[title, artist]``.
 
 .. conf:: fromfolder
-   :default: [ album, albumartist, catalognum, media, year ]
+    :default: [ album, albumartist, catalognum, media, year ]
 
-    The fields 
+    The fields are what the plugin will search a folder name
+    for. This is not used when choosing to group by album or
+    group by tracks.
 
 .. conf:: patterns
 
@@ -86,11 +89,17 @@ Default
              - "$title - $artist"
 
 .. conf:: sanity_check
-   :default: yes
+    :default: yes
 
-   If both folder and file fields are matched, this will make sure that the track title and
-   artist fields have been guessed correctly. For instance, if all the title guesses are the same,
-   that is more likely to be the album artist rather than the title.
+    If both folder and file fields are matched, this will make sure that the track title and
+    artist fields have been guessed correctly. For instance, if all the title guesses are the same,
+    that is more likely to be the album artist rather than the title.
+
+.. conf:: autouse
+    :default: yes
+
+    Whether or not the plugin should be enabled automatically when starting an import session.
+    Set to false to require turning it on with the UI by selecting ``toggle FromFilename``.
 
 .. conf:: ignore
     :default: []
