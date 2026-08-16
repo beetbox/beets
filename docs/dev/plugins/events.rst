@@ -116,13 +116,15 @@ registration process in this case:
 
 ``write``
     :Parameters: ``item`` (|Item|), ``path`` (path), ``tags`` (dict)
-    :Description: Called just before a file's metadata is written to disk.
-        Handlers may modify ``tags`` or raise ``library.FileOperationError`` to
-        abort.
+    :Description: Called before beets decides whether to write a file's metadata
+        to disk. Handlers may modify ``tags`` or raise
+        ``library.FileOperationError`` to abort.
 
 ``after_write``
-    :Parameters: ``item`` (|Item|)
-    :Description: Called after a file's metadata is written to disk.
+    :Parameters: ``item`` (|Item|), ``path`` (path)
+    :Description: Called after a file's metadata is written to disk. Not sent
+        when the write was skipped because the item's own file already held the
+        tags (see ``Item.write()``).
 
 ``import_task_created``
     :Parameters: ``task`` (|ImportTask|), ``session`` (|ImportSession|)
