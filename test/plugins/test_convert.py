@@ -83,7 +83,7 @@ class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
                 assert len(fnmatch.filter(filenames, "*.mp3")) == 0, (
-                    f"Non-empty import directory {util.displayable_path(path)}"
+                    f"Non-empty import directory {path}"
                 )
 
 

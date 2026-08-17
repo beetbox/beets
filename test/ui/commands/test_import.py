@@ -1,5 +1,6 @@
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -52,7 +53,7 @@ class ImportTest(BeetsTestCase):
         logfile = self.temp_path / "logfile.log"
         logfile.write_text(logfile_content)
         actual_paths = list(paths_from_logfile(logfile))
-        assert actual_paths == expected_paths
+        assert actual_paths == list(map(Path, expected_paths))
 
 
 @patch("beets.ui.term_width", Mock(return_value=54))
