@@ -412,6 +412,10 @@ class SearchApiMetadataSourcePlugin(
         if self.config["search_query_ascii"].get():
             query = unidecode.unidecode(query)
 
+        if not query and not filters:
+            self._log.debug("Skipping search with empty query and filters")
+            return ()
+
         limit = self.config["search_limit"].get(int)
         params = SearchParams(query_type, query, filters, limit)
 
