@@ -1,15 +1,26 @@
 """Tests for the fromfilename plugin."""
 
-from typing import ClassVar
+from __future__ import annotations
+
+import shutil
+from typing import TYPE_CHECKING, ClassVar
 from unittest.mock import patch
 
 import pytest
+from mediafile import MediaFile
 
 from beets import importer
 from beets.importer.tasks import ImportTask, SingletonImportTask
 from beets.library import Item
-from beets.test.helper import AutotagImportTestCase, PluginTestHelper
+from beets.test.helper import (
+    AutotagImportTestCase,
+    PluginTestHelper,
+    TerminalImportMixin,
+)
 from beetsplug.fromfilename import FilenameMatch, FromFilenamePlugin
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Session:
@@ -765,45 +776,68 @@ class TestFromFilename(PluginTestHelper):
         assert guess.title == "Title"
 
 
-class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
+class ImportGroupAlbumTest(
+    TerminalImportMixin, AutotagImportTestCase, PluginTestHelper
+):
     plugin: ClassVar[str] = "fromfilename"
 
     def setUp(self):
         super().setUp()
         # Create some albums to import
         album_path = self.import_path / "Album Artist - Album Title (2026)"
-        self.prepare_album_for_import(item_count=2, album_path=album_path)
+        self.prepare_blank_album_for_import(
+            album_path=album_path,
+            track_filenames=["1 - This Track.mp3", "2 - The Other Track.mp3"],
+        )
         self.setup_importer()
 
-        # Give each album a unique album title
-        self.import_media[0].album = "This Album"
-        self.import_media[0].artist = "Track Artist"
-        self.import_media[0].albumartist = ""
-        self.import_media[0].year = 0
-        self.import_media[0].save()
-        self.import_media[1].album = "That Album"
-        self.import_media[1].artist = "Track Artist"
-        self.import_media[1].albumartist = ""
-        self.import_media[1].year = 0
-        self.import_media[1].save()
+    def prepare_blank_track_for_import(
+        self, track_filename: str, album_path: Path
+    ) -> None:
+        track_path = album_path / track_filename
+        shutil.copy(self.resource_path, track_path)
+        medium = MediaFile(track_path)
+        medium.update({tag: None for tag in medium.fields()})
+        medium.save()
+        self.import_media.append(medium)
+
+    def prepare_blank_album_for_import(
+        self, album_path: Path, track_filenames: list[str]
+    ) -> None:
+
+        album_path.mkdir(exist_ok=True)
+
+        for filename in track_filenames:
+            self.prepare_blank_track_for_import(filename, album_path)
+
+    def prepare_metadata(self, items: list[MediaFile]):
+        items[0].album = "This Album"
+        items[0].title = "First Distinct Title"
+        items[0].save()
+        items[1].album = "That Album"
+        items[1].title = "Second Distinct Title"
+        items[1].save()
 
     def test_album_guessed(self):
         """
         If we don't tell it split, assert the year
         and artist tag are written, but existing tags are not.
         """
+        self.prepare_metadata(self.import_media)
         self.importer.add_choice(importer.Action.ASIS)
 
         self.importer.run()
         year = {item.get("year", with_album=False) for item in self.lib.items()}
         albumartist = {item.get("albumartist") for item in self.lib.items()}
         item_albums = {item.album for item in self.lib.items()}
+        item_titles = {item.title for item in self.lib.items()}
         albums = {album.album for album in self.lib.albums()}
 
         # Both have been set from the folder!
         assert year == {2026}
         # The album artist has beeen set from the folder!
         assert albumartist == {"Album Artist"}
+        assert item_titles == {"First Distinct Title", "Second Distinct Title"}
         # There is only one actual album imported
         # the tags are just bad & unupdated!
         assert item_albums == {"This Album", "That Album"}
@@ -813,6 +847,7 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
         """
         Assert that the album fields were not guessed.
         """
+        self.prepare_metadata(self.import_media)
         # Now we give it the import task actions
         self.importer.add_choice(importer.Action.ALBUMS)
         self.importer.add_choice(importer.Action.ASIS)
@@ -824,12 +859,14 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
         albums = {album.album for album in self.lib.albums()}
         # We don't see these guessed
         assert year == {0}
-        assert albumartist == {"Track Artist"}
+        assert albumartist == {""}
+        # These were there from the start
         assert albums == {"This Album", "That Album"}
 
     def test_singleton_flag_import(self):
         """If the import task is a singleton, assert that
         the plugin does not guess from the folder."""
+        self.prepare_metadata(self.import_media)
 
         # The importer will have set the singleton option
         self.importer.add_choice(importer.Action.TRACKS)
@@ -848,6 +885,12 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
         assert item_albums == expected_albums
 
     def test_skipped_import(self):
+        """
+        If an import task is skipped,
+        nothing goes awry with the management of split
+        import tasks in the plugin.
+        """
+        self.prepare_metadata(self.import_media)
 
         self.importer.add_choice(importer.Action.ALBUMS)
         self.importer.add_choice(importer.Action.SKIP)
@@ -857,3 +900,69 @@ class ImportGroupAlbumTest(AutotagImportTestCase, PluginTestHelper):
 
         albums = {album.album for album in self.lib.albums()}
         assert albums == {"This Album"}
+
+    def test_toggle_from_filename(self):
+        """
+        Assert that from filename can be toggled off and on.
+        """
+        # FromeFilename starts enabled
+        # toggle Fromfilename to "False"
+        self.io.addinput("f")
+        # toggle Fromfilename to "True"
+        self.io.addinput("f")
+        # accept what it found!
+        self.importer.add_choice(importer.Action.ASIS)
+
+        self.importer.run()
+        run_output = self.io.getoutput().split("\n")
+        # What we should see with it enabled
+        assert "Album Artist - Album Title" in run_output[4]
+        assert "The Other Track" in run_output[9]
+        # The line where we have dropped fromfilename
+        assert " - " in run_output[14]
+        assert "2 - The Other Track.mp3" in run_output[19]
+        # And on again!
+        assert "Album Artist - Album Title" in run_output[24]
+        assert "The Other Track" in run_output[29]
+
+    def test_toggle_off_no_write(self):
+        """
+        Assert that when fromefilename is toggled off
+        the data found is not written.
+        """
+        # Toggles from filename off
+        self.io.addinput("f")
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        library_paths = [item.path for item in self.lib.items()]
+        file = MediaFile(library_paths[0])
+        assert not file.title
+        assert not file.album
+        assert not file.albumartist
+        assert not file.artist
+        assert not file.year
+
+    def test_writes_album(self):
+        """
+        When the user selects "ASIS" fromfilename
+        writes the data it found to the imported
+        copy of the file.
+        """
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        library_paths = [item.path for item in self.lib.items()]
+        assert MediaFile(library_paths[0]).album == "Album Title"
+
+    def test_asis_writes_single(self):
+        """
+        When the user selects "ASIS" fromfilename
+        writes the data it found to the imported
+        copy of the file.
+        """
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        library_paths = [item.path for item in self.lib.items()]
+        assert MediaFile(library_paths[0]).title == "This Track"
+        assert MediaFile(library_paths[1]).title == "The Other Track"
