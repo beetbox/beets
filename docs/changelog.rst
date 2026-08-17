@@ -68,9 +68,11 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/bpd`: Replace the bundled Bluelet scheduler with Python's
+  standard ``asyncio`` event loop.
 
 2.13.1 (July 29, 2026)
 ----------------------
