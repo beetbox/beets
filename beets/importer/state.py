@@ -5,14 +5,13 @@ import os
 import pickle
 from bisect import bisect_left, insort
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
 from beets import config
 
 if TYPE_CHECKING:
     from types import TracebackType
-
-    from beets.util import PathBytes
 
 
 # Global logger.
@@ -45,14 +44,14 @@ class ImportState:
     ```
     """
 
-    tagprogress: dict[PathBytes, list[PathBytes]]
-    taghistory: set[tuple[PathBytes, ...]]
-    path: PathBytes
+    tagprogress: dict[Path, list[Path]]
+    taghistory: set[tuple[Path, ...]]
+    path: Path
 
     def __init__(
-        self, readonly: bool = False, path: PathBytes | None = None
+        self, readonly: bool = False, path: Path | None = None
     ) -> None:
-        self.path = path or os.fsencode(config["statefile"].as_filename())
+        self.path = path or config["statefile"].as_path()
         self.tagprogress = {}
         self.taghistory = set()
         self._open()
@@ -70,11 +69,19 @@ class ImportState:
 
     def _open(self) -> None:
         try:
-            with open(self.path, "rb") as f:
+            with self.path.open("rb") as f:
                 state = pickle.load(f)
                 # Read the states
                 self.tagprogress = state.get("tagprogress", {})
                 self.taghistory = state.get("taghistory", set())
+                self.tagprogress = {
+                    Path(os.fsdecode(k)): [Path(os.fsdecode(p)) for p in v]
+                    for k, v in self.tagprogress.items()
+                }
+                self.taghistory = {
+                    tuple(Path(os.fsdecode(p)) for p in pt)
+                    for pt in self.taghistory
+                }
         except Exception as exc:
             # The `pickle` module can emit all sorts of exceptions during
             # unpickling, including ImportError. We use a catch-all
@@ -84,7 +91,7 @@ class ImportState:
 
     def _save(self) -> None:
         try:
-            with open(self.path, "wb") as f:
+            with self.path.open("wb") as f:
                 pickle.dump(
                     {
                         "tagprogress": self.tagprogress,
@@ -97,7 +104,7 @@ class ImportState:
 
     # -------------------------------- Tagprogress ------------------------------- #
 
-    def progress_add(self, toppath: PathBytes, *paths: PathBytes) -> None:
+    def progress_add(self, toppath: Path, *paths: Path) -> None:
         """Record that the files under all of the `paths` have been imported
         under `toppath`.
         """
@@ -109,19 +116,19 @@ class ImportState:
                 else:
                     insort(imported, path)
 
-    def progress_has_element(self, toppath: PathBytes, path: PathBytes) -> bool:
+    def progress_has_element(self, toppath: Path, path: Path) -> bool:
         """Return whether `path` has been imported in `toppath`."""
         imported = self.tagprogress.get(toppath, [])
         i = bisect_left(imported, path)
         return i != len(imported) and imported[i] == path
 
-    def progress_has(self, toppath: PathBytes) -> bool:
+    def progress_has(self, toppath: Path) -> bool:
         """Return `True` if there exist paths that have already been
         imported under `toppath`.
         """
         return toppath in self.tagprogress
 
-    def progress_reset(self, toppath: PathBytes | None) -> None:
+    def progress_reset(self, toppath: Path | None) -> None:
         """Reset the progress for `toppath`."""
         with self as state:
             if toppath in state.tagprogress:
@@ -129,7 +136,7 @@ class ImportState:
 
     # -------------------------------- Taghistory -------------------------------- #
 
-    def history_add(self, paths: list[PathBytes]) -> None:
+    def history_add(self, paths: list[Path]) -> None:
         """Add the paths to the history."""
         with self as state:
             state.taghistory.add(tuple(paths))

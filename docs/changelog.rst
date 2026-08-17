@@ -131,6 +131,13 @@ For plugin developers
 - New ``Library.contains`` method replaces the ``lib.directory in
   util.ancestry(item.path)`` idiom for testing whether a path or a model lives
   inside the library.
+- The importer now works with :class:`pathlib.Path` instead of ``bytes``
+  throughout: ``ImportSession.paths``, ``ImportTask.toppath``, ``paths`` and
+  ``old_paths``, and the ``paths`` argument of the ``import`` event. There is
+  no compatibility shim, so plugins decoding these paths or combining them with
+  ``bytes`` need updating. The ``PathBytes`` alias is removed, and
+  ``extension.fix_extension`` and ``extension.remux_mpeglayer3_wav`` now take
+  and return :class:`pathlib.Path`.
 
 Other changes
 ~~~~~~~~~~~~~
