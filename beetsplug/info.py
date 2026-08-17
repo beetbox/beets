@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import mediafile
 
@@ -201,7 +201,7 @@ class InfoPlugin(BeetsPlugin):
         included_keys = [k for k in included_keys if k != "path"]
 
         first = True
-        summary = {}
+        summary: dict[str, Any] = {}
         for data_emitter in data_collector(lib, args, album=opts.album):
             try:
                 data, item = data_emitter(included_keys or "*")

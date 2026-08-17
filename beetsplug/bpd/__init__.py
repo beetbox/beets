@@ -1631,7 +1631,7 @@ class BPDPlugin(BeetsPlugin):
             if args:
                 ctrl_port = args.pop(0)
             else:
-                ctrl_port = self.config["control_port"].get(int)
+                ctrl_port = self.config["control_port"].get()
             if args:
                 raise UserError("too many arguments")
             password = self.config["password"].as_str()

@@ -19,8 +19,9 @@ from beets.ui import Subcommand, print_
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Iterable
 
-    from beets.library import Library
+    from beets.library import LibModel, Library
 
 
 def lslimit(lib: Library, opts: optparse.Values, args: list[str]) -> None:
@@ -31,6 +32,7 @@ def lslimit(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     if (opts.head or opts.tail or 0) < 0:
         raise ValueError("Limit value must be non-negative")
 
+    objs: Iterable[LibModel]
     if opts.album:
         objs = lib.albums(args)
     else:

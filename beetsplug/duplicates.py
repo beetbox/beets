@@ -19,8 +19,9 @@ from beets.util import (
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Sequence
 
-    from beets.library import Library
+    from beets.library import LibModel, Library
 
 
 PLUGIN = "duplicates"
@@ -155,6 +156,7 @@ class DuplicatesPlugin(BeetsPlugin):
             strict = self.config["strict"].get(bool)
             tag = self.config["tag"].get(str)
 
+            items: Sequence[LibModel]
             if album:
                 if not keys:
                     keys = ["mb_albumid"]
