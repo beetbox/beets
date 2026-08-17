@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("beets")
 
 
-def show_stats(lib, query, exact):
+def show_stats(lib: Library, query: list[str], exact: bool) -> None:
     """Shows some statistics about the matched items."""
     items = lib.items(query)
 

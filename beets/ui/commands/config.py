@@ -53,7 +53,7 @@ def config_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             print("Empty configuration")
 
 
-def config_edit(cli_options):
+def config_edit(cli_options: optparse.Values) -> None:
     """Open a program to edit the user configuration.
     An empty config file is created if no existing config file exists.
     """

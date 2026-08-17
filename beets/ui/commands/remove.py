@@ -11,10 +11,12 @@ from .utils import do_query
 if TYPE_CHECKING:
     import optparse
 
-    from beets.library import Library
+    from beets.library import Album, Item, Library
 
 
-def remove_items(lib, query, album, delete, force):
+def remove_items(
+    lib: Library, query: list[str], album: bool, delete: bool, force: bool
+) -> None:
     """Remove items matching query from lib. If album, then match and
     remove whole albums. If delete, also remove files from disk.
     """
@@ -48,10 +50,10 @@ def remove_items(lib, query, album, delete, force):
             )
 
         # Helpers for printing affected items
-        def fmt_track(t):
+        def fmt_track(t: Item):
             ui.print_(format(t, fmt))
 
-        def fmt_album(a):
+        def fmt_album(a: Album) -> None:
             ui.print_()
             for i in a.items():
                 fmt_track(i)

@@ -1,16 +1,23 @@
 """The 'completion' command: print shell script for command line completion."""
 
+from __future__ import annotations
+
 import os
 import re
+from typing import TYPE_CHECKING
 
 from beets import library, logging, plugins, ui
 from beets.util import syspath
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
 
 # Global logger.
 log = logging.getLogger("beets")
 
 
-def print_completion(*args):
+def print_completion(*args) -> None:
     from beets.ui.commands import default_commands
 
     for line in completion_script(default_commands + plugins.commands()):
@@ -41,7 +48,7 @@ BASH_COMPLETION_PATHS = [
 ]
 
 
-def completion_script(commands):
+def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
     """Yield the full completion shell script as strings.
 
     ``commands`` is alist of ``ui.Subcommand`` instances to generate

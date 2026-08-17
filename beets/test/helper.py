@@ -680,7 +680,7 @@ class ImportSessionFixture(ImportSession):
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         self.io = kwargs.pop("io")
         super().__init__(*args, **kwargs)
         self._choices = []

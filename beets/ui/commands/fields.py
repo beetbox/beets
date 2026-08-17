@@ -9,11 +9,13 @@ from beets import library, ui
 
 if TYPE_CHECKING:
     import optparse
+    import sqlite3
+    from collections.abc import Iterable
 
     from beets.library import Library
 
 
-def _print_keys(query):
+def _print_keys(query: list[sqlite3.Row]) -> None:
     """Given a SQLite query result, print the `key` field of each
     returned row, with indentation of 2 spaces.
     """
@@ -22,7 +24,7 @@ def _print_keys(query):
 
 
 def fields_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
-    def _print_rows(names):
+    def _print_rows(names: Iterable[str]) -> None:
         ui.print_(textwrap.indent("\n".join(sorted(names)), "  "))
 
     ui.print_("Item fields:")
