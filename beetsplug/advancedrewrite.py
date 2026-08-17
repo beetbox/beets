@@ -18,7 +18,9 @@ from beets.ui import UserError
 from .rewrite import apply_rewrite_rules
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
+
+    from beets.library import LibModel
 
 
 class AdvancedRewriteConfig(TypedDict):
@@ -26,7 +28,11 @@ class AdvancedRewriteConfig(TypedDict):
     replacements: dict[str, str | list[str]]
 
 
-def rewriter(field, simple_rules, advanced_rules):
+def rewriter(
+    field: str,
+    simple_rules: list[tuple[re.Pattern[str], str]],
+    advanced_rules: list[tuple[AndQuery, str | list[str]]],
+) -> Callable[[LibModel], str]:
     """Template field function factory.
 
     Create a template field function that rewrites the given field
@@ -35,7 +41,7 @@ def rewriter(field, simple_rules, advanced_rules):
     ``advanced_rules`` must be a list of (query, replacement) pairs.
     """
 
-    def fieldfunc(item):
+    def fieldfunc(item: LibModel) -> str:
         value = item._values_fixed[field]
         if (new_value := apply_rewrite_rules(value, simple_rules)) != value:
             # Rewrite activated.

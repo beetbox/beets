@@ -6,7 +6,7 @@ import os
 from collections import defaultdict
 from functools import cached_property
 from shlex import quote as shell_quote
-from typing import TYPE_CHECKING, Any, Literal, Protocol, TypeAlias
+from typing import TYPE_CHECKING, Literal, Protocol, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
 
@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from beets.library import LibModel, Library
+
+    from ._typing import JSONDict
 
 QueryAndSort = tuple[Query, Sort]
 PlaylistQuery = Query | tuple[QueryAndSort, ...] | None
@@ -222,7 +224,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         self.update_playlists(lib)
 
     def _parse_one_query(
-        self, playlist: dict[str, Any], key: str, model_cls: type
+        self, playlist: JSONDict, key: str, model_cls: type
     ) -> tuple[PlaylistQuery, Sort | None]:
         qs = playlist.get(key)
         if qs is None:

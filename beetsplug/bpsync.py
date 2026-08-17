@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from beets import library, ui, util
 from beets.autotag import AlbumMatch, Distance, TrackMatch
@@ -12,7 +12,9 @@ from beets.util.deprecation import deprecate_for_user
 from .beatport import BeatportPlugin
 
 if TYPE_CHECKING:
-    from beets.library import Library
+    from collections.abc import Sequence
+
+    from beets.library import Album, Item, Library
 
 
 class BPSyncCLIOpts(Protocol):
@@ -22,13 +24,13 @@ class BPSyncCLIOpts(Protocol):
 
 
 class BPSyncPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         deprecate_for_user(self._log, "The 'bpsync' plugin")
         self.beatport_plugin = BeatportPlugin()
         self.beatport_plugin.setup()
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("bpsync", help="update metadata from Beatport")
         cmd.parser.add_option(
             "-p",
@@ -71,7 +73,14 @@ class BPSyncPlugin(BeetsPlugin):
         self.singletons(lib, args, move, pretend, write)
         self.albums(lib, args, move, pretend, write)
 
-    def singletons(self, lib, query, move, pretend, write):
+    def singletons(
+        self,
+        lib: Library,
+        query: Sequence[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ) -> None:
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
@@ -99,13 +108,13 @@ class BPSyncPlugin(BeetsPlugin):
                 apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
-    def is_beatport_track(item):
+    def is_beatport_track(item: Item) -> bool:
         return (
             item.get("data_source") == BeatportPlugin.data_source
             and item.mb_trackid.isnumeric()
         )
 
-    def get_album_tracks(self, album):
+    def get_album_tracks(self, album: Album) -> list[Item] | Literal[False]:
         if not album.mb_albumid:
             self._log.info("Skipping album with no mb_albumid: {}", album)
             return False
@@ -128,7 +137,14 @@ class BPSyncPlugin(BeetsPlugin):
             return False
         return items
 
-    def albums(self, lib, query, move, pretend, write):
+    def albums(
+        self,
+        lib: Library,
+        query: Sequence[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ) -> None:
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """

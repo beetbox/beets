@@ -14,9 +14,11 @@ from beets import config, library, ui, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator, Sequence
 
-    from beets.library import Library
+    from beets.dbcore import Results
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Album, Library
 
 
 class IPFSCLIOpts(Protocol):
@@ -29,14 +31,14 @@ class IPFSCLIOpts(Protocol):
 
 
 class IPFSPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"auto": True, "nocopy": False})
 
         if self.config["auto"]:
             self.import_stages = [self.auto_add]
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("ipfs", help="interact with ipfs")
         cmd.parser.add_option(
             "-a", "--add", dest="add", action="store_true", help="Add to ipfs"
@@ -102,7 +104,7 @@ class IPFSPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    def auto_add(self, session, task):
+    def auto_add(self, session: ImportSession, task: ImportTask) -> None:
         if task.is_album:
             if self.ipfs_add(task.album):
                 task.album.store()
@@ -121,7 +123,7 @@ class IPFSPlugin(BeetsPlugin):
         with self.remote_lib(lib) as jlib:
             player._play_command(jlib, play_opts, args)
 
-    def ipfs_add(self, album):
+    def ipfs_add(self, album: Album) -> bool:
         try:
             album_dir = album.item_dir()
         except AttributeError:
@@ -167,7 +169,7 @@ class IPFSPlugin(BeetsPlugin):
 
         return True
 
-    def ipfs_get(self, lib, query):
+    def ipfs_get(self, lib: Library, query: Sequence[str]) -> None:
         query = query[0]
         # Check if query is a hash
         # TODO: generalize to other hashes; probably use a multihash
@@ -179,7 +181,7 @@ class IPFSPlugin(BeetsPlugin):
             for album in albums:
                 self.ipfs_get_from_hash(lib, album.ipfs)
 
-    def ipfs_get_from_hash(self, lib, _hash):
+    def ipfs_get_from_hash(self, lib: Library, _hash: str) -> bool | None:
         try:
             cmd = "ipfs get".split()
             cmd.append(_hash)
@@ -198,7 +200,7 @@ class IPFSPlugin(BeetsPlugin):
         shutil.rmtree(_hash)
         return None
 
-    def ipfs_publish(self, lib):
+    def ipfs_publish(self, lib: Library) -> bool | None:
         with tempfile.NamedTemporaryFile() as tmp:
             self.ipfs_added_albums(lib, tmp.name)
             try:
@@ -215,7 +217,7 @@ class IPFSPlugin(BeetsPlugin):
             self._log.info("hash of library: {}", output)
         return None
 
-    def ipfs_import(self, lib, args):
+    def ipfs_import(self, lib: Library, args: Sequence[str]) -> bool | None:
         _hash = args[0]
         if len(args) > 1:
             lib_name = args[1]
@@ -254,13 +256,13 @@ class IPFSPlugin(BeetsPlugin):
                 added_album.store()
         return None
 
-    def already_added(self, check, jlib):
+    def already_added(self, check: Album, jlib: Library) -> bool:
         for jalbum in jlib.albums():
             if jalbum.mb_albumid == check.mb_albumid:
                 return True
         return False
 
-    def ipfs_list(self, lib, args):
+    def ipfs_list(self, lib: Library, args: Sequence[str]) -> None:
         fmt = config["format_album"].get()
         try:
             albums = self.query(lib, args)
@@ -271,11 +273,11 @@ class IPFSPlugin(BeetsPlugin):
         for album in albums:
             ui.print_(format(album, fmt), " : ", album.ipfs.decode())
 
-    def query(self, lib, args):
+    def query(self, lib: Library, args: str | Sequence[str]) -> Results[Album]:
         with self.remote_lib(lib) as rlib:
             return rlib.albums(args)
 
-    def _remote_libs_path(self, lib):
+    def _remote_libs_path(self, lib: Library) -> bytes:
         lib_root = os.path.dirname(os.fsencode(lib.path))
         return os.path.join(lib_root, b"remotes")
 
@@ -293,7 +295,7 @@ class IPFSPlugin(BeetsPlugin):
         finally:
             remote_lib._close()
 
-    def ipfs_added_albums(self, rlib, tmpname):
+    def ipfs_added_albums(self, rlib: Library, tmpname: str) -> Library:
         """Returns a new library with only albums/items added to ipfs"""
         tmplib = library.Library(
             tmpname, directory="/ipfs/", set_music_dir=False
@@ -307,7 +309,7 @@ class IPFSPlugin(BeetsPlugin):
                     pass
         return tmplib
 
-    def create_new_album(self, album, tmplib):
+    def create_new_album(self, album: Album, tmplib: Library) -> bool | None:
         items = []
         for item in album.items():
             try:

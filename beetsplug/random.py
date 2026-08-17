@@ -22,7 +22,7 @@ class RandomCLIOpts(Protocol):
     time: float | None
 
 
-def random_func(lib: Library, opts: RandomCLIOpts, args: list[str]):
+def random_func(lib: Library, opts: RandomCLIOpts, args: list[str]) -> None:
     """Select some random items or albums and print the results."""
     # Fetch all the objects matching the query into a list.
     objs = lib.albums(args) if opts.album else lib.items(args)
@@ -73,7 +73,7 @@ random_cmd.func = random_func
 
 
 class Random(BeetsPlugin):
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         return [random_cmd]
 
 

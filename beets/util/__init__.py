@@ -850,7 +850,7 @@ class CommandOutput(NamedTuple):
 
 
 def command_output(
-    cmd: list[str] | list[bytes], shell: bool = False
+    cmd: Sequence[str] | Sequence[bytes], shell: bool = False
 ) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 

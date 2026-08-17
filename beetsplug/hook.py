@@ -33,7 +33,7 @@ class BytesToStrFormatter(string.Formatter):
 class HookPlugin(BeetsPlugin):
     """Allows custom commands to be run when an event is emitted by beets"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add({"hooks": []})
@@ -48,7 +48,7 @@ class HookPlugin(BeetsPlugin):
 
             self.create_and_register_hook(hook_event, hook_command)
 
-    def create_and_register_hook(self, event: EventType, command):
+    def create_and_register_hook(self, event: EventType, command: str) -> None:
         def hook_function(**kwargs) -> None:
             if command is None or len(command) == 0:
                 self._log.error('invalid command "{}"', command)

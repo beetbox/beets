@@ -30,7 +30,7 @@ class BenchMatch(Protocol):
 def aunique_benchmark(
     lib: Library, opts: BenchAunique, args: list[str]
 ) -> None:
-    def _build_tree():
+    def _build_tree() -> None:
         vfs.libtree(lib)
 
     # Measure path generation performance with %aunique{} included.
@@ -80,7 +80,7 @@ def match_benchmark(lib: Library, opts: BenchMatch, args: list[str]) -> None:
     )
 
     # Run the match.
-    def _run_match():
+    def _run_match() -> None:
         source = Source.from_items(items)
         tag_album(source, search_ids=[id_])
 
@@ -96,7 +96,7 @@ def match_benchmark(lib: Library, opts: BenchMatch, args: list[str]) -> None:
 class BenchmarkPlugin(BeetsPlugin):
     """A plugin for performing some simple performance benchmarks."""
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         aunique_bench_cmd = ui.Subcommand(
             "bench_aunique", help="benchmark for %aunique{}"
         )

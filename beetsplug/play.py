@@ -16,10 +16,11 @@ from beets.util import PromptChoice, get_temp_filename
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Sequence
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel, Library
+    from beets.logging import BeetsLogger as Logger
 
 
 # Indicate where arguments should be inserted into the command string.
@@ -41,14 +42,14 @@ PLS_MARKER = "$playlist"
 
 
 def play(
-    command_str,
-    selection,
-    paths,
-    open_args,
-    log,
-    item_type="track",
-    keep_open=False,
-):
+    command_str: str,
+    selection: Sequence[LibModel],
+    paths: Sequence[bytes],
+    open_args: Sequence[bytes],
+    log: Logger,
+    item_type: str = "track",
+    keep_open: bool = False,
+) -> None:
     """Play items in paths with command_str and optional arguments. If
     keep_open, return to beets, otherwise exit once command runs.
     """
@@ -87,7 +88,7 @@ class PlayPlugin(BeetsPlugin):
             "before_choose_candidate", self.before_choose_candidate_listener
         )
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         play_command = Subcommand(
             "play", help="send music to a player as a playlist"
         )
@@ -179,7 +180,7 @@ class PlayPlugin(BeetsPlugin):
         ):
             play(command_str, selection, paths, open_args, self._log, item_type)
 
-    def _command_str(self, args=None):
+    def _command_str(self, args: list[str] | None = None) -> str:
         """Create a command string from the config command and optional args."""
         command_str = config["play"]["command"].get()
         if not command_str:
@@ -192,15 +193,19 @@ class PlayPlugin(BeetsPlugin):
         # Don't include the marker in the command.
         return command_str.replace(f" {ARGS_MARKER}", "")
 
-    def _playlist_or_paths(self, paths):
+    def _playlist_or_paths(self, paths: list[bytes]) -> list[bytes]:
         """Return either the raw paths of items or a playlist of the items."""
         if config["play"]["raw"]:
             return paths
         return [self._create_tmp_playlist(paths)]
 
     def _exceeds_threshold(
-        self, selection, command_str, open_args, item_type="track"
-    ):
+        self,
+        selection: Sequence[LibModel],
+        command_str: str,
+        open_args: Sequence[bytes],
+        item_type: str = "track",
+    ) -> bool:
         """Prompt user whether to abort if playlist exceeds threshold. If
         True, cancel playback. If False, execute play command.
         """
@@ -223,7 +228,7 @@ class PlayPlugin(BeetsPlugin):
 
         return False
 
-    def _create_tmp_playlist(self, paths_list):
+    def _create_tmp_playlist(self, paths_list: Iterable[bytes]) -> bytes:
         """Create a temporary .m3u file. Return the filename."""
         utf8_bom = config["play"]["bom"].get(bool)
         filename = get_temp_filename(__name__, suffix=".m3u")
@@ -242,7 +247,7 @@ class PlayPlugin(BeetsPlugin):
         """Append a "Play" choice to the interactive importer prompt."""
         return [PromptChoice("y", "plaY", self.importer_play)]
 
-    def importer_play(self, session, task):
+    def importer_play(self, session: ImportSession, task: ImportTask) -> None:
         """Get items from current import task and send to play function."""
         selection = task.items
         paths = [item.path for item in selection]

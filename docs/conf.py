@@ -142,11 +142,11 @@ html_static_path = ["_static"]
 html_css_files = ["beets.css"]
 
 
-def skip_member(app, what, name, obj, skip, options):
+def skip_member(app, what, name: str, obj, skip, options):
     if name.startswith("_"):
         return True
     return skip
 
 
-def setup(app):
+def setup(app) -> None:
     app.connect("autodoc-skip-member", skip_member)

@@ -21,8 +21,10 @@ from beets.plugins import BeetsPlugin
 if TYPE_CHECKING:
     from beets.library import LibModel, Library
 
+    from ._typing import JSONDict
 
-def api_url(host, port, endpoint):
+
+def api_url(host: str, port: int, endpoint: str) -> str:
     """Returns a joined url.
 
     Takes host, port and endpoint and generates a valid emby API url.
@@ -55,7 +57,7 @@ def api_url(host, port, endpoint):
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
 
-def password_data(username, password):
+def password_data(username: str, password: str) -> JSONDict:
     """Returns a dict with username and its encoded password.
 
     :param username: Emby username
@@ -72,7 +74,7 @@ def password_data(username, password):
     }
 
 
-def create_headers(user_id, token=None):
+def create_headers(user_id: str, token: str | None = None) -> dict[str, str]:
     """Return header dict that is needed to talk to the Emby API.
 
     :param user_id: Emby user ID
@@ -100,7 +102,9 @@ def create_headers(user_id, token=None):
     return headers
 
 
-def get_token(host, port, headers, auth_data):
+def get_token(
+    host: str, port: int, headers: dict[str, str], auth_data: JSONDict
+) -> str | None:
     """Return token for a user.
 
     :param host: Emby host
@@ -120,7 +124,7 @@ def get_token(host, port, headers, auth_data):
     return r.json().get("AccessToken")
 
 
-def get_user(host, port, username):
+def get_user(host: str, port: int, username: str) -> list[JSONDict]:
     """Return user dict from server or None if there is no user.
 
     :param host: Emby host

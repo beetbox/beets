@@ -16,7 +16,7 @@ FORMAT = "{}, {}"
 class ThePlugin(BeetsPlugin):
     patterns: ClassVar[list[str]] = []
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.template_funcs["the"] = self.the_template_func
@@ -50,7 +50,7 @@ class ThePlugin(BeetsPlugin):
         if not self.patterns:
             self._log.warning("no patterns defined!")
 
-    def unthe(self, text, pattern):
+    def unthe(self, text: str, pattern: str) -> str:
         """Moves pattern in the path format string or strips it
 
         text -- text to handle
@@ -72,7 +72,7 @@ class ThePlugin(BeetsPlugin):
         else:
             return ""
 
-    def the_template_func(self, text):
+    def the_template_func(self, text: str) -> str:
         if not self.patterns:
             return text
         if text:

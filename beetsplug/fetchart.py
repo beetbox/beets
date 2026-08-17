@@ -619,7 +619,7 @@ class AlbumArtOrg(RemoteArtSource):
         album: Album,
         plugin: FetchArtPlugin,
         paths: Sequence[bytes] | None,
-    ):
+    ) -> Iterator[Any]:
         """Return art URL from AlbumArt.org using album ASIN."""
         if not album.asin:
             return
@@ -651,7 +651,7 @@ class GoogleImages(RemoteArtSource):
         self.cx = (self._config["google_engine"].get(),)
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add(
             {
                 "google_key": None,
@@ -728,7 +728,7 @@ class FanartTV(RemoteArtSource):
         self.client_key = self._config["fanarttv_key"].get()
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add({"fanarttv_key": None})
         config["fanarttv_key"].redact = True
 
