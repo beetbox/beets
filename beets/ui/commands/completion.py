@@ -57,10 +57,10 @@ def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
     base_script = os.path.join(
         os.path.dirname(__file__), "./completion_base.sh"
     )
-    with open(base_script) as base_script:
-        yield base_script.read()
+    with open(base_script) as f:
+        yield f.read()
 
-    options = {}
+    options: dict[str, dict[str, list[str]]] = {}
     aliases = {}
     command_names = []
 
@@ -102,8 +102,8 @@ def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
 
     # Command aliases
     yield f"  local aliases={' '.join(aliases.keys())!r}\n"
-    for alias, cmd in aliases.items():
-        yield f"  local alias__{alias.replace('-', '_')}={cmd}\n"
+    for alias, _cmd in aliases.items():
+        yield f"  local alias__{alias.replace('-', '_')}={_cmd}\n"
     yield "\n"
 
     # Fields
@@ -111,13 +111,12 @@ def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
     yield f"  fields={' '.join(fields)!r}\n"
 
     # Command options
-    for cmd, opts in options.items():
-        for option_type, option_list in opts.items():
+    for _cmd, _opts in options.items():
+        for option_type, option_list in _opts.items():
             if option_list:
-                option_list = " ".join(option_list)
                 yield (
-                    "  local"
-                    f" {option_type}__{cmd.replace('-', '_')}='{option_list}'\n"
+                    f"  local {option_type}__{_cmd.replace('-', '_')}"
+                    f"='{' '.join(option_list)}'\n"
                 )
 
     yield "  _beet_dispatch\n"

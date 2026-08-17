@@ -14,7 +14,7 @@ import sys
 import textwrap
 import traceback
 from functools import cache
-from typing import TYPE_CHECKING, Any, TextIO
+from typing import TYPE_CHECKING, Any, Literal, TextIO
 
 import confuse
 
@@ -265,24 +265,25 @@ def input_options(
 
     # The default is just the first option if unspecified.
     if require:
-        default = None
+        default_choice = None
     elif default is None:
-        if numrange:
-            default = numrange[0]
-        else:
-            default = display_letters[0].lower()
+        default_choice = numrange[0] if numrange else display_letters[0].lower()
+    else:
+        default_choice = default
 
     # Make a prompt if one is not provided.
     if not prompt:
         prompt_parts = []
         prompt_part_lengths = []
         if numrange:
-            if isinstance(default, int):
-                default_name = str(default)
+            if isinstance(default_choice, int):
+                default_name = str(default_choice)
                 default_name = colorize("action_default", default_name)
                 tmpl = "# selection (default {})"
                 prompt_parts.append(tmpl.format(default_name))
-                prompt_part_lengths.append(len(tmpl) - 2 + len(str(default)))
+                prompt_part_lengths.append(
+                    len(tmpl) - 2 + len(str(default_choice))
+                )
             else:
                 prompt_parts.append("# selection")
                 prompt_part_lengths.append(len(prompt_parts[-1]))
@@ -329,20 +330,20 @@ def input_options(
         resp = resp.strip().lower()
 
         # Try default option.
-        if default is not None and not resp:
-            resp = default
+        if default_choice is not None and not resp:
+            resp = default_choice  # type: ignore[assignment]
 
         # Try an integer input if available.
         if numrange:
             try:
-                resp = int(resp)
+                int_resp = int(resp)
             except ValueError:
                 pass
             else:
                 low, high = numrange
-                if low <= resp <= high:
-                    return resp
-                resp = None
+                if low <= int_resp <= high:
+                    return int_resp
+                resp = None  # type: ignore[assignment]
 
         # Try a normal letter input.
         if resp:
@@ -464,6 +465,8 @@ class CommonOptionsParser(optparse.OptionParser):
     Each method is fully documented in the related method.
     """
 
+    _album_flags: set[str] | Literal[False]
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._album_flags = False
@@ -500,21 +503,21 @@ class CommonOptionsParser(optparse.OptionParser):
         arguments.
         """
         if store_true:
-            setattr(parser.values, option.dest, True)
+            setattr(parser.values, option.dest, True)  # type: ignore[arg-type]
 
         # Use the explicitly specified format, or the string from the option.
         value = fmt or value or ""
-        parser.values.format = value
+        parser.values.format = value  # type: ignore[union-attr]
 
         if target:
             config[target._format_config_key].set(value)
         else:
             if self._album_flags:
-                if parser.values.album:
+                if parser.values.album:  # type: ignore[union-attr]
                     target = library.Album
                 else:
                     # the option is either missing either not parsed yet
-                    if self._album_flags & set(parser.rargs):
+                    if self._album_flags & set(parser.rargs or []):
                         target = library.Album
                     else:
                         target = library.Item
@@ -546,7 +549,7 @@ class CommonOptionsParser(optparse.OptionParser):
     def add_format_option(
         self,
         flags: Sequence[str] = ("-f", "--format"),
-        target: str | None = None,
+        target: type[LibModel] | Literal["item", "album"] | None = None,
     ) -> None:
         """Add -f/--format option to print some LibModel instances with a
         custom format.
@@ -564,9 +567,11 @@ class CommonOptionsParser(optparse.OptionParser):
         """
         kwargs = {}
         if target:
-            if isinstance(target, str):
-                target = {"item": library.Item, "album": library.Album}[target]
-            kwargs["target"] = target
+            kwargs["target"] = (
+                {"item": library.Item, "album": library.Album}[target]
+                if isinstance(target, str)
+                else target
+            )
 
         opt = optparse.Option(
             *flags,
@@ -599,6 +604,7 @@ class Subcommand:
     """
 
     func: Callable[[library.Library, optparse.Values, list[str]], Any]
+    _root_parser: optparse.OptionParser | None
 
     def __init__(
         self,
@@ -643,6 +649,8 @@ class SubcommandsOptionParser(CommonOptionsParser):
     """A variant of OptionParser that parses subcommands and their
     arguments.
     """
+
+    subcommands: list[Subcommand]
 
     def __init__(self, *args, **kwargs) -> None:
         """Create a new subcommand-aware option parser. All of the
@@ -736,7 +744,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         return None
 
     def parse_global_options(
-        self, args: list[str]
+        self, args: list[str] | None
     ) -> tuple[optparse.Values, list[str]]:
         """Parse options up to the subcommand argument. Returns a tuple
         of the options object and the remaining arguments.

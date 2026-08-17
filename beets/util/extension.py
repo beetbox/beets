@@ -72,9 +72,7 @@ AUDIO_EXTENSIONS = {
 }
 
 
-def fix_extension(
-    path_bytes: PathBytes, logger: Logger | None = None
-) -> bytes | Path:
+def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
     """Return the `path` after adding an appropriate extension if needed.
 
     If the file already has an extension, return as-is.
@@ -142,7 +140,7 @@ def fix_extension(
     else:
         if logger:
             logger.info("Import file with matching format to original target")
-    return new_path
+    return os.fsencode(new_path)
 
 
 def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:

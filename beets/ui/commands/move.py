@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
+from typing_extensions import TypeIs
+
 from beets import logging, ui
 from beets.exceptions import UserError
 from beets.util import MoveOperation, displayable_path, normpath, syspath
@@ -37,11 +39,11 @@ def show_path_changes(path_changes: list[tuple[bytes, bytes]]) -> None:
     Source
       -> Destination
     """
-    sources, destinations = zip(*path_changes)
+    sources_bytes, destinations_bytes = zip(*path_changes)
 
     # Ensure unicode output
-    sources = list(map(displayable_path, sources))
-    destinations = list(map(displayable_path, destinations))
+    sources = list(map(displayable_path, sources_bytes))
+    destinations = list(map(displayable_path, destinations_bytes))
 
     # Calculate widths for terminal split
     col_width = (ui.term_width() - len(" -> ")) // 2
@@ -63,6 +65,12 @@ def show_path_changes(path_changes: list[tuple[bytes, bytes]]) -> None:
             ui.print_(f"{color_source} {' ' * pad} -> {color_dest}")
 
 
+def is_album_selection(
+    objects: list[Item] | list[Album], album: bool
+) -> TypeIs[list[Album]]:
+    return album
+
+
 def move_items(
     lib: Library,
     dest_path: PathLike,
@@ -77,7 +85,7 @@ def move_items(
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
     """
-    dest = os.fsencode(dest_path) if dest_path else dest_path
+    dest = os.fsencode(dest_path) if dest_path else None
     items, albums = do_query(lib, query, album, False)
     objs = albums if album else items
     num_objs = len(objs)
@@ -89,7 +97,11 @@ def move_items(
     def isalbummoved(album: Album) -> bool:
         return any(isitemmoved(i) for i in album.items())
 
-    objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
+    if is_album_selection(objs, album):
+        objs = list(filter(isalbummoved, objs))
+    else:
+        objs = list(filter(isitemmoved, objs))
+
     num_unmoved = num_objs - len(objs)
     # Report unmoved files that match the query.
     unmoved_msg = ""
@@ -112,7 +124,7 @@ def move_items(
         return
 
     if pretend:
-        if album:
+        if is_album_selection(objs, album):
             show_path_changes(
                 [
                     (item.path, item.destination(basedir=dest))

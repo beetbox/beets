@@ -24,7 +24,7 @@ log = logging.getLogger("beets")
 def update_items(
     lib: Library,
     query: list[str],
-    album: bool,
+    is_album: bool,
     move: bool,
     pretend: bool,
     fields: list[str],
@@ -38,7 +38,7 @@ def update_items(
     fields will be.
     """
     with lib.transaction():
-        items, _ = do_query(lib, query, album)
+        items, _ = do_query(lib, query, is_album)
         if move and fields is not None and "path" not in fields:
             # Special case: if an item needs to be moved, the path field has to
             # updated; otherwise the new path will not be reflected in the
@@ -94,7 +94,11 @@ def update_items(
             # Special-case album artist when it matches track artist. (Hacky
             # but necessary for preserving album-level metadata for non-
             # autotagged imports.)
-            if not item.albumartist and (old_item := lib.get_item(item.id)):
+            if (
+                not item.albumartist
+                and item.id
+                and (old_item := lib.get_item(item.id))
+            ):
                 if old_item.albumartist == old_item.artist == item.artist:
                     item.albumartist = old_item.albumartist
                     item._dirty.discard("albumartist")
@@ -130,7 +134,9 @@ def update_items(
             if not album:  # Empty albums have already been removed.
                 log.debug("emptied album {}", album_id)
                 continue
-            first_item = album.items().get()
+
+            if not (first_item := album.items().get()):
+                continue
 
             # Update album structure to reflect an item in it.
             for key in library.Album.item_keys:

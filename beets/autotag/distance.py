@@ -214,15 +214,25 @@ class Distance:
     # Behave like a float.
 
     def __lt__(self, other: object) -> bool:
-        return self.distance < other
+        return isinstance(other, (float, Distance)) and self.distance < other
 
     def __float__(self) -> float:
         return self.distance
 
     def __sub__(self, other: object) -> float:
+        if not isinstance(other, (float, Distance)):
+            raise TypeError(
+                "unsupported operand type(s) for -: "
+                f"'Distance' and {type(other).__name__!r}"
+            )
         return self.distance - other
 
     def __rsub__(self, other: object) -> float:
+        if not isinstance(other, (float, Distance)):
+            raise TypeError(
+                "unsupported operand type(s) for -: "
+                f"'Distance' and {type(other).__name__!r}"
+            )
         return other - self.distance
 
     def __str__(self) -> str:

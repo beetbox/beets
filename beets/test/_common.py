@@ -81,7 +81,7 @@ def item(lib: Library | None = None, **kwargs) -> Item:
 
 # Dummy import session.
 def import_session(
-    lib: Library | None = None,
+    lib: Library,
     loghandler: logging.Handler | None = None,
     paths: list[bytes] = [],
     query: list[str] = [],
