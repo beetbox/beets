@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import mediafile
 
@@ -13,7 +13,13 @@ from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator, Sequence
+
     from beets.library import Library
+
+    from ._typing import JSONDict
+
+    DataEmitter = Callable[[Literal["*"] | list[str]], tuple[JSONDict, Any]]
 
 
 class InfoCLIOpts(Protocol):
@@ -25,7 +31,9 @@ class InfoCLIOpts(Protocol):
     summarize: bool | None
 
 
-def tag_data(lib, args, album=False):
+def tag_data(
+    lib: Library, args: Iterable[str], album: bool = False
+) -> Iterator[DataEmitter]:
     query = []
     for arg in args:
         path = normpath(arg)
@@ -39,14 +47,15 @@ def tag_data(lib, args, album=False):
             yield tag_data_emitter(item.path)
 
 
-def tag_fields():
+def tag_fields() -> set[str]:
     fields = set(mediafile.MediaFile.readable_fields())
     fields.add("art")
     return fields
 
 
-def tag_data_emitter(path):
-    def emitter(included_keys):
+def tag_data_emitter(path: bytes) -> DataEmitter:
+    def emitter(included_keys: Literal["*"] | list[str]) -> tuple[Any, Any]:
+        fields: set[str] | list[str]
         if included_keys == "*":
             fields = tag_fields()
         else:
@@ -70,13 +79,15 @@ def tag_data_emitter(path):
     return emitter
 
 
-def library_data(lib, args, album=False):
+def library_data(
+    lib: Library, args: Sequence[str], album: bool = False
+) -> Iterator[DataEmitter]:
     for item in lib.albums(args) if album else lib.items(args):
         yield library_data_emitter(item)
 
 
-def library_data_emitter(item):
-    def emitter(included_keys):
+def library_data_emitter(item: Item) -> DataEmitter:
+    def emitter(included_keys: Literal["*"] | list[str]) -> tuple[Any, Any]:
         data = dict(item.formatted(included_keys=included_keys))
 
         return data, item
@@ -84,7 +95,7 @@ def library_data_emitter(item):
     return emitter
 
 
-def update_summary(summary, tags):
+def update_summary(summary: JSONDict, tags: JSONDict) -> JSONDict:
     for key, value in tags.items():
         if key not in summary:
             summary[key] = value
@@ -93,7 +104,9 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(data, item=None, fmt=None):
+def print_data(
+    data: JSONDict, item: Item | None = None, fmt: str | None = None
+) -> None:
     """Print, with optional formatting, the fields of a single element.
 
     If no format string `fmt` is passed, the entries on `data` are printed one
@@ -129,7 +142,7 @@ def print_data(data, item=None, fmt=None):
         ui.print_(f"{field:>{maxwidth}}: {value}")
 
 
-def print_data_keys(data, item=None):
+def print_data_keys(data: JSONDict, item: Item | None = None) -> None:
     """Print only the keys (field names) for an item."""
     path = displayable_path(item.path) if item else None
     formatted = []
@@ -147,7 +160,7 @@ def print_data_keys(data, item=None):
 
 
 class InfoPlugin(BeetsPlugin):
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("info", help="show file metadata")
         cmd.func = self.run
         cmd.parser.add_album_option()

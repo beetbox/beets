@@ -17,7 +17,11 @@ from beets import plugins, ui, util
 from beets.exceptions import UserError
 
 if TYPE_CHECKING:
-    from beets.library import Library
+    from collections.abc import Sequence
+
+    from beets.library import Item, Library
+
+    from ._typing import JSONDict
 
 
 class ABSubmitCLIOpts(Protocol):
@@ -33,7 +37,7 @@ class ABSubmitError(Exception):
     """Raised when failing to analyse file with extractor."""
 
 
-def call(args):
+def call(args: Sequence[str]) -> bytes:
     """Execute the command and return its output.
 
     Raise a AnalysisABSubmitError on failure.
@@ -45,7 +49,7 @@ def call(args):
 
 
 class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self._log.warning("This plugin is deprecated.")
@@ -99,7 +103,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 base_url = f"{base_url}/"
             self.url = f"{base_url}{{mbid}}/low-level"
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "absubmit", help="calculate and submit AcousticBrainz analysis"
         )
@@ -139,12 +143,12 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         self.opts = opts
         util.par_map(self.analyze_submit, items)
 
-    def analyze_submit(self, item):
+    def analyze_submit(self, item: Item) -> None:
         analysis = self._get_analysis(item)
         if analysis:
             self._submit_data(item, analysis)
 
-    def _get_analysis(self, item):
+    def _get_analysis(self, item: Item) -> JSONDict | None:
         mbid = item["mb_trackid"]
 
         # Avoid re-analyzing files that already have AB data.
@@ -195,7 +199,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 if e.errno != errno.ENOENT:
                     raise
 
-    def _submit_data(self, item, data):
+    def _submit_data(self, item: Item, data: JSONDict) -> None:
         mbid = item["mb_trackid"]
         headers = {"Content-Type": "application/json"}
         response = requests.post(

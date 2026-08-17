@@ -54,10 +54,10 @@ class ImportAddedPlugin(BeetsPlugin):
         self.config["preserve_mtimes"].get(bool)
         return None
 
-    def reimported_item(self, item):
+    def reimported_item(self, item: Item) -> bool:
         return item.id in self.reimported_item_ids
 
-    def reimported_album(self, album):
+    def reimported_album(self, album: Album) -> bool:
         return album.path in self.replaced_album_paths
 
     def record_if_inplace(
@@ -93,12 +93,12 @@ class ImportAddedPlugin(BeetsPlugin):
         }
         self.replaced_album_paths = set(task.replaced_albums.keys())
 
-    def write_file_mtime(self, path, mtime):
+    def write_file_mtime(self, path: str, mtime: float) -> None:
         """Write the given mtime to the destination path."""
         stat = os.stat(util.syspath(path))
         os.utime(util.syspath(path), (stat.st_atime, mtime))
 
-    def write_item_mtime(self, item, mtime):
+    def write_item_mtime(self, item: Item, mtime: float) -> None:
         """Write the given mtime to an item's `mtime` field and to the mtime
         of the item's file.
         """

@@ -11,13 +11,15 @@ from __future__ import annotations
 
 import os
 from operator import attrgetter
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from beets import library, plugins, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import commands
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from beets.library import Library
 
 
@@ -65,7 +67,7 @@ end
 
 
 class FishPlugin(BeetsPlugin):
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("fish", help="generate Fish shell tab completions")
         cmd.func = self.run
         cmd.parser.add_option(
@@ -136,25 +138,25 @@ class FishPlugin(BeetsPlugin):
             fish_file.write(totstring)
 
 
-def _escape(name):
+def _escape(name: str) -> str:
     # Escape ? in fish
     if name == "?":
         name = f"\\{name}"
     return name
 
 
-def get_cmds_list(cmds_names):
+def get_cmds_list(cmds_names: Iterable[str]) -> str:
     # Make a list of all Beets core & plugin commands
     return f"set CMDS {' '.join(cmds_names)}\n\n"
 
 
-def get_standard_fields(fields):
+def get_standard_fields(fields: Iterable[str]) -> str:
     # Make a list of album/track fields and append with ':'
     fields = (f"{field}:" for field in fields)
     return f"set FIELDS {' '.join(fields)}\n\n"
 
 
-def get_extravalues(lib, extravalues):
+def get_extravalues(lib: Library, extravalues: Sequence[str]) -> str:
     # Make a list of all values from an album/track field.
     # 'beet ls albumartist: <TAB>' yields completions for ABBA, Beatles, etc.
     word = ""
@@ -165,7 +167,9 @@ def get_extravalues(lib, extravalues):
     return word
 
 
-def get_set_of_values_for_field(lib, fields):
+def get_set_of_values_for_field(
+    lib: Library, fields: Sequence[str]
+) -> dict[str, set[Any]]:
     # Get unique values from a specified album/track field
     fields_dict = {}
     for each in fields:
@@ -176,7 +180,7 @@ def get_set_of_values_for_field(lib, fields):
     return fields_dict
 
 
-def get_basic_beet_options():
+def get_basic_beet_options() -> str:
     return (
         BL_NEED2.format("-l format-item", "-f -d 'print with custom format'")
         + BL_NEED2.format("-l format-album", "-f -d 'print with custom format'")
@@ -198,7 +202,11 @@ def get_basic_beet_options():
     )
 
 
-def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
+def get_subcommands(
+    cmd_name_and_help: Iterable[tuple[str, str]],
+    nobasicfields: bool,
+    extravalues: Iterable[str],
+) -> str:
     # Formatting for Fish to complete our fields/values
     word = ""
     for cmdname, cmdhelp in cmd_name_and_help:
@@ -226,7 +234,7 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
     return word
 
 
-def get_all_commands(beetcmds):
+def get_all_commands(beetcmds: Sequence[ui.Subcommand]) -> str:
     # Formatting for Fish to complete command options
     word = ""
     for cmd in beetcmds:
@@ -275,12 +283,12 @@ def get_all_commands(beetcmds):
     return word
 
 
-def clean_whitespace(word):
+def clean_whitespace(word: str) -> str:
     # Remove excess whitespace and tabs in a string
     return " ".join(word.split())
 
 
-def wrap(word):
+def wrap(word: str) -> str:
     # Need " or ' around strings but watch out if they're in the string
     sptoken = '"'
     if '"' in word and ("'") in word:

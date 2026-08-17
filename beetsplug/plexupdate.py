@@ -24,8 +24,13 @@ if TYPE_CHECKING:
 
 
 def get_music_section(
-    host, port, token, library_name, secure, ignore_cert_errors
-):
+    host: str,
+    port: int,
+    token: str,
+    library_name: str,
+    secure: bool,
+    ignore_cert_errors: bool,
+) -> str | None:
     """Getting the section key for the music library in Plex."""
     api_endpoint = append_token("library/sections", token)
     url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
@@ -41,7 +46,14 @@ def get_music_section(
     return None
 
 
-def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
+def update_plex(
+    host: str,
+    port: int,
+    token: str,
+    library_name: str,
+    secure: bool,
+    ignore_cert_errors: bool,
+) -> requests.Response:
     """Ignore certificate errors if configured to."""
     if ignore_cert_errors:
         import urllib3
@@ -61,14 +73,14 @@ def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
     return requests.get(url, verify=not ignore_cert_errors, timeout=10)
 
 
-def append_token(url, token):
+def append_token(url: str, token: str) -> str:
     """Appends the Plex Home token to the api call if required."""
     if token:
         url += f"?{urlencode({'X-Plex-Token': token})}"
     return url
 
 
-def get_protocol(secure):
+def get_protocol(secure: bool) -> str:
     if secure:
         return "https"
     return "http"

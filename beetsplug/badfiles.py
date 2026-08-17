@@ -18,8 +18,10 @@ from beets.util import displayable_path, par_map
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Library
+    from beets.library import Item, Library
 
 ImportAction = Literal["abort", "skip", "continue"]
 
@@ -38,7 +40,7 @@ class CheckerCommandError(Exception):
         msg: Message from the checker execution error.
     """
 
-    def __init__(self, cmd, oserror) -> None:
+    def __init__(self, cmd: Sequence[str], oserror: OSError) -> None:
         self.checker = cmd[0]
         self.path = cmd[-1]
         self.errno = oserror.errno
@@ -63,7 +65,7 @@ class BadFiles(BeetsPlugin):
             "import_task_before_choice", self.on_import_task_before_choice
         )
 
-    def run_command(self, cmd):
+    def run_command(self, cmd: Sequence[str]) -> tuple[int, int, list[str]]:
         self._log.debug(
             "running command: {}", displayable_path(list2cmdline(cmd))
         )
@@ -80,25 +82,29 @@ class BadFiles(BeetsPlugin):
         output = output.decode(sys.getdefaultencoding(), "replace")
         return status, errors, [line for line in output.split("\n") if line]
 
-    def check_mp3val(self, path):
+    def check_mp3val(self, path: str) -> tuple[int, int, list[str]]:
         status, errors, output = self.run_command(["mp3val", path])
         if status == 0:
             output = [line for line in output if line.startswith("WARNING:")]
             errors = len(output)
         return status, errors, output
 
-    def check_flac(self, path):
+    def check_flac(self, path: str) -> tuple[int, int, list[str]]:
         return self.run_command(["flac", "-wst", path])
 
-    def check_custom(self, command):
-        def checker(path):
+    def check_custom(
+        self, command: str
+    ) -> Callable[[str], tuple[int, int, list[str]]]:
+        def checker(path: str):
             cmd = shlex.split(command)
             cmd.append(path)
             return self.run_command(cmd)
 
         return checker
 
-    def get_checker(self, ext):
+    def get_checker(
+        self, ext: str
+    ) -> Callable[[str], tuple[int, int, list[str]]] | None:
         ext = ext.lower()
         try:
             command = self.config["commands"].get(dict).get(ext)
@@ -112,7 +118,7 @@ class BadFiles(BeetsPlugin):
             return self.check_flac
         return None
 
-    def check_item(self, item):
+    def check_item(self, item: Item) -> list[str]:
         # First, check whether the path exists. If not, the user
         # should probably run `beet update` to cleanup your library.
         dpath = displayable_path(item.path)
@@ -259,13 +265,13 @@ class BadFiles(BeetsPlugin):
         items = lib.items(args)
         self.verbose = opts.verbose
 
-        def check_and_print(item):
+        def check_and_print(item: Item) -> None:
             for error_line in self.check_item(item):
                 ui.print_(error_line)
 
         par_map(check_and_print, items)
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         bad_command = Subcommand(
             "bad", help="check for corrupt or missing files"
         )

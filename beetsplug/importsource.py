@@ -52,7 +52,7 @@ class ImportSourcePlugin(BeetsPlugin):
             if "mb_albumid" in item:
                 self.stop_suggestions_for_albums.add(item.mb_albumid)
 
-    def import_stage(self, _, task):
+    def import_stage(self, _, task: ImportTask) -> None:
         """Event handler for albums import finished."""
         for item in task.imported_items():
             # During reimports (import --library), we prevent overwriting the

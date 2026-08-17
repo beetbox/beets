@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from unidecode import unidecode
 
@@ -16,6 +16,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import print_
 
 if TYPE_CHECKING:
+    from beets.dbcore.query import FieldQuery
     from beets.library import Library
 
 
@@ -27,7 +28,7 @@ class BareascQuery(StringFieldQuery[str]):
     """Compare items using bare ASCII, without accents etc."""
 
     @classmethod
-    def string_match(cls, pattern, val):
+    def string_match(cls, pattern: str, val: str) -> bool:
         """Convert both pattern and string to plain ASCII before matching.
 
         If pattern is all lower case, also convert string to lower case so
@@ -40,7 +41,7 @@ class BareascQuery(StringFieldQuery[str]):
         val = unidecode(val)
         return pattern in val
 
-    def col_clause(self):
+    def col_clause(self) -> tuple[str, list[str]]:
         """Compare ascii version of the pattern."""
         clause = f"unidecode({self.field})"
         if self.pattern.islower():
@@ -52,17 +53,17 @@ class BareascQuery(StringFieldQuery[str]):
 class BareascPlugin(BeetsPlugin):
     """Plugin to provide bare-ASCII option for beets matching."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Default prefix for selecting bare-ASCII matching is #."""
         super().__init__()
         self.config.add({"prefix": "#"})
 
-    def queries(self):
+    def queries(self) -> dict[str, type[FieldQuery[Any]]]:
         """Register bare-ASCII matching."""
         prefix = self.config["prefix"].as_str()
         return {prefix: BareascQuery}
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         """Add bareasc command as unidecode version of 'list'."""
         cmd = ui.Subcommand(
             "bareasc", help="unidecode version of beet list command"

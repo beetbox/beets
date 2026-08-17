@@ -16,14 +16,20 @@ from beets.ui import Subcommand
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Collection, Sequence
 
-    from beets.library import Library
+    from beets.library import Item, Library
+
+    from ._typing import JSONDict
 
 
 __author__ = "https://github.com/MrNuggelz"
+TrackKey = tuple[str, str, str]
 
 
-def filter_to_be_removed(items, keys):
+def filter_to_be_removed(
+    items: Sequence[Item], keys: Collection[TrackKey]
+) -> list[Item]:
     if len(items) > len(keys):
         dont_remove = []
         for artist, album, title in keys:
@@ -36,7 +42,7 @@ def filter_to_be_removed(items, keys):
                     dont_remove.append(item)
         return [item for item in items if item not in dont_remove]
 
-    def to_be_removed(item):
+    def to_be_removed(item: Item) -> bool:
         for artist, album, title in keys:
             if (
                 artist == item["artist"]
@@ -50,7 +56,7 @@ def filter_to_be_removed(items, keys):
 
 
 class SubsonicPlaylistPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -63,7 +69,9 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         )
         self.config["password"].redact = True
 
-    def update_tags(self, playlist_dict, lib):
+    def update_tags(
+        self, playlist_dict: dict[TrackKey, str], lib: Library
+    ) -> None:
         with lib.transaction():
             for query, playlist_tag in playlist_dict.items():
                 query = AndQuery(
@@ -83,7 +91,9 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                     item.subsonic_playlist = playlist_tag
                     item.try_sync(write=True, move=False)
 
-    def get_playlist(self, playlist_id):
+    def get_playlist(
+        self, playlist_id: str
+    ) -> tuple[str, list[TrackKey]] | None:
         xml = self.send("getPlaylist", {"id": playlist_id}).text
         playlist = ElementTree.fromstring(xml)[0]
         if playlist.attrib.get("code", "200") != "200":
@@ -98,7 +108,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         ]
         return name, tracks
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         def build_playlist(
             lib: Library, opts: optparse.Values, args: list[str]
         ) -> None:
@@ -146,14 +156,16 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         subsonicplaylist_cmds.func = build_playlist
         return [subsonicplaylist_cmds]
 
-    def generate_token(self):
+    def generate_token(self) -> tuple[str, str]:
         salt = "".join(random.choices(string.ascii_lowercase + string.digits))
         return (
             md5((self.config["password"].get() + salt).encode()).hexdigest(),
             salt,
         )
 
-    def send(self, endpoint, params=None):
+    def send(
+        self, endpoint: str, params: JSONDict | None = None
+    ) -> requests.Response:
         if params is None:
             params = {}
         a, b = self.generate_token()
@@ -167,7 +179,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
             timeout=10,
         )
 
-    def get_playlists(self, ids):
+    def get_playlists(self, ids: Sequence[str]) -> dict[TrackKey, str]:
         output = {}
         for playlist_id in ids:
             name, tracks = self.get_playlist(playlist_id)

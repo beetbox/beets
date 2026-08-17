@@ -8,7 +8,7 @@ import shlex
 import subprocess
 from collections import Counter
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 import yaml
 
@@ -20,8 +20,13 @@ from beets.library import Album, Item
 from beets.util import PromptChoice
 
 if TYPE_CHECKING:
+    from collections.abc import Container, Iterable, Sequence
+
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Library
+    from beets.library import LibModel, Library
+    from beets.logging import BeetsLogger as Logger
+
+    from ._typing import JSONDict
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -51,7 +56,7 @@ class ParseError(Exception):
     """
 
 
-def edit(filename, log):
+def edit(filename: str, log: Logger) -> None:
     """Open `filename` in a text editor."""
     cmd = shlex.split(util.editor_command())
     cmd.append(filename)
@@ -62,12 +67,12 @@ def edit(filename, log):
         raise UserError(f"could not run editor command {cmd[0]!r}: {exc}")
 
 
-def dump(arg):
+def dump(arg: Sequence[JSONDict]) -> str:
     """Dump a sequence of dictionaries as YAML for editing."""
     return yaml.safe_dump_all(arg, allow_unicode=True, default_flow_style=False)
 
 
-def load(s):
+def load(s: str) -> list[JSONDict]:
     """Read a sequence of YAML documents back to a list of dictionaries
     with string keys.
 
@@ -90,7 +95,7 @@ def load(s):
     return out
 
 
-def _safe_value(obj, key, value):
+def _safe_value(obj: LibModel, key: str, value: str) -> bool:
     """Check whether the `value` is safe to represent in YAML and trust as
     returned from parsed YAML.
 
@@ -103,7 +108,7 @@ def _safe_value(obj, key, value):
     return isinstance(typ, SAFE_TYPES) and isinstance(value, typ.model_type)
 
 
-def flatten(obj, fields):
+def flatten(obj: LibModel, fields: Container[str] | None) -> JSONDict:
     """Represent `obj`, a `dbcore.Model` object, as a dictionary for
     serialization. Only include the given `fields` if provided;
     otherwise, include everything.
@@ -128,7 +133,7 @@ def flatten(obj, fields):
     return d
 
 
-def apply_(obj, data):
+def apply_(obj: LibModel, data: JSONDict) -> None:
     """Set the fields of a `dbcore.Model` object according to a
     dictionary.
 
@@ -164,7 +169,7 @@ class EditPlugin(plugins.BeetsPlugin):
             "before_choose_candidate", self.before_choose_candidate_listener
         )
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         edit_command = ui.Subcommand("edit", help="interactively edit metadata")
         edit_command.parser.add_option(
             "-f",
@@ -197,7 +202,7 @@ class EditPlugin(plugins.BeetsPlugin):
             fields = self._get_fields(opts.album, opts.field)
         self.edit(opts.album, objs, fields)
 
-    def _get_fields(self, album, extra):
+    def _get_fields(self, album: bool, extra: list[str] | None) -> set[str]:
         """Get the set of fields to edit."""
         # Start with the configured base fields.
         if album:
@@ -214,7 +219,12 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return set(fields)
 
-    def edit(self, album, objs, fields):
+    def edit(
+        self,
+        album: bool,
+        objs: Sequence[LibModel],
+        fields: Container[str] | None,
+    ) -> None:
         """The core editor function.
 
         - `album`: A flag indicating whether we're editing Items or Albums.
@@ -229,7 +239,9 @@ class EditPlugin(plugins.BeetsPlugin):
         if success:
             self.save_changes(objs)
 
-    def edit_objects(self, objs, fields):
+    def edit_objects(
+        self, objs: Sequence[LibModel], fields: Container[str] | None
+    ) -> bool | None:
         """Dump a set of Model objects to a file as text, ask the user
         to edit it, and apply any changes to the objects.
 
@@ -271,7 +283,12 @@ class EditPlugin(plugins.BeetsPlugin):
                 cur_str = new_str
                 continue
 
-    def apply_data(self, objs, old_data, new_data):
+    def apply_data(
+        self,
+        objs: Sequence[LibModel],
+        old_data: Sequence[JSONDict],
+        new_data: Sequence[JSONDict],
+    ) -> None:
         """Take potentially-updated data and apply it to a set of Model
         objects.
 
@@ -324,7 +341,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
             apply_(obj, new_dict)
 
-    def save_changes(self, objs):
+    def save_changes(self, objs: Sequence[LibModel]) -> None:
         """Save a list of updated Model objects to the database."""
         # Save to the database and possibly write tags.
         for ob in objs:
@@ -350,9 +367,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
         return choices
 
-    def _importer_edit_album_header(
-        self, task: ImportTask
-    ) -> dict[str, Any] | None:
+    def _importer_edit_album_header(self, task: ImportTask) -> JSONDict | None:
         """Build the album-header YAML document for import editing.
 
         Returns a dict of album-level fields, or ``None`` when the current
@@ -385,7 +400,7 @@ class EditPlugin(plugins.BeetsPlugin):
         return header if header else None
 
     def _importer_edit_apply_header(
-        self, items: list[Item], header_data: dict[str, Any]
+        self, items: Iterable[Item], header_data: JSONDict
     ) -> None:
         """Apply album-header changes to every item in the list."""
         if not header_data:
@@ -393,9 +408,7 @@ class EditPlugin(plugins.BeetsPlugin):
         for item in items:
             apply_(item, header_data)
 
-    def _edit_yaml(
-        self, old_str: str
-    ) -> tuple[list[dict[str, Any]], str] | None:
+    def _edit_yaml(self, old_str: str) -> tuple[list[JSONDict], str] | None:
         """Open a temporary file with `old_str`, let the user edit it, and
         return the parsed list of YAML documents.
 
@@ -546,7 +559,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
     @staticmethod
     def _importer_edit_restore_from_copies(
-        task: ImportTask, copies: list[Item]
+        task: ImportTask, copies: Sequence[Item]
     ) -> None:
         """Restore items to their state before the last edit cycle.
 
@@ -558,7 +571,9 @@ class EditPlugin(plugins.BeetsPlugin):
                 for key in item._fields:
                     item[key] = copies[i][key]
 
-    def importer_edit_candidate(self, session, task):
+    def importer_edit_candidate(
+        self, session: ImportSession, task: ImportTask
+    ) -> Action | None:
         """Callback for invoking the functionality during an interactive
         import session on a *candidate*. The candidate's metadata is
         applied to the original items.
