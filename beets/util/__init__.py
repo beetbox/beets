@@ -62,10 +62,6 @@ StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
 
-# Here for now to allow for a easy replace later on
-# once we can move to a PathLike (mainly used in importer)
-PathBytes = bytes
-
 
 class HumanReadableError(Exception):
     """An Exception that can include a human-readable error message to
