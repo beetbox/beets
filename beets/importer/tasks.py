@@ -7,6 +7,8 @@ import shutil
 import time
 from collections import defaultdict
 from collections.abc import Callable
+from copy import deepcopy
+from dataclasses import asdict
 from functools import cached_property
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, AnyStr
@@ -320,7 +322,9 @@ class ImportTask(BaseImportTask):
         or APPLY (in which case the data comes from the choice).
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
-            return self.source.data.copy()
+            if self.is_album:
+                return asdict(self.source.data)
+            return deepcopy(dict(self.items[0]))
         if self.choice_flag is Action.APPLY and self.match:
             return self.match.info.copy()
         assert False
