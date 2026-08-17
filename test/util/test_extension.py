@@ -1,6 +1,5 @@
 """Tests for the file extension detection helper."""
 
-import os
 import shutil
 import subprocess
 from unittest.mock import patch
@@ -45,6 +44,4 @@ def test_fix_extension(tmp_path):
     """The detected format is appended whichever line endings ffprobe uses."""
     (source := tmp_path / "no_ext").touch()
 
-    assert fix_extension(os.fsencode(source)) == os.fsencode(
-        tmp_path / "no_ext.mp3"
-    )
+    assert fix_extension(source) == tmp_path / "no_ext.mp3"

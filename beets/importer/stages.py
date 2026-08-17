@@ -4,6 +4,7 @@ import contextvars
 import itertools
 import logging
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING, TypeAlias
 
 from beets import config, plugins
@@ -55,7 +56,7 @@ def read_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
         skipped += task_factory.skipped
 
         if not task_factory.imported:
-            log.warning("No files imported from {}", displayable_path(toppath))
+            log.warning("No files imported from {}", toppath)
 
     # Show skipped directories (due to incremental/resume).
     if skipped:
@@ -84,7 +85,9 @@ def query_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
             items = list(album.items())
             _freshen_items(items)
 
-            task = ImportTask(None, [album.item_dir()], items)
+            task = ImportTask(
+                None, [Path(os.fsdecode(album.item_dir()))], items
+            )
             for task in task.handle_created(session):
                 yield task
 
@@ -112,7 +115,7 @@ def rescan_tasks(
         for d in task.paths
     )
     if filter_to_scope:
-        scan_root = os.path.dirname(scan_root)
+        scan_root = scan_root.parent
 
     discovery_factory = ImportTaskFactory(scan_root, session)
     groups = discovery_factory.paths()
@@ -176,7 +179,9 @@ def group_albums(session: ImportSession) -> StageCoro:
         sorted_items: list[library.Item] = sorted(task.items, key=group)
         for _, items in itertools.groupby(sorted_items, group):
             l_items = list(items)
-            task = ImportTask(task.toppath, [i.path for i in l_items], l_items)
+            task = ImportTask(
+                task.toppath, [i.filepath for i in l_items], l_items
+            )
             # Grouped by tag, not by directory: nothing for a rescan to
             # reconstruct, so the choice is withheld (see `_get_choices`).
             task.is_grouped = True
@@ -280,7 +285,7 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
 
         # Duplicates would be reimported so make them look "fresh"
         _freshen_items(duplicate_items)
-        duplicate_paths = [item.path for item in duplicate_items]
+        duplicate_paths = [item.filepath for item in duplicate_items]
 
         # Record merged paths in the session so they are not reimported
         session.mark_merged(duplicate_paths)
@@ -338,11 +343,11 @@ def plugin_stage(
 def log_files(session: ImportSession, task: ImportTask) -> None:
     """A coroutine (pipeline stage) to log each file to be imported."""
     if isinstance(task, SingletonImportTask):
-        log.info("Singleton: {}", displayable_path(task.item["path"]))
+        log.info("Singleton: {}", task.item.filepath)
     elif task.items:
-        log.info("Album: {}", displayable_path(task.paths[0]))
+        log.info("Album: {}", task.paths[0])
         for item in task.items:
-            log.info("  {}", displayable_path(item["path"]))
+            log.info("  {}", item.filepath)
 
 
 # --------------------------------- Consumer --------------------------------- #
