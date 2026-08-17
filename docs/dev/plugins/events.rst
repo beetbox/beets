@@ -52,7 +52,7 @@ registration process in this case:
         command starts.
 
 ``import``
-    :Parameters: ``lib`` (|Library|), ``paths`` (list of byte paths)
+    :Parameters: ``lib`` (|Library|), ``paths`` (list of :class:`pathlib.Path`)
     :Description: Called after the ``import`` command finishes.
 
 ``album_imported``
