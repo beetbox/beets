@@ -54,14 +54,9 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-AnyPath = TypeVar("AnyPath", str, bytes, Path)
 StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
-
-# Here for now to allow for a easy replace later on
-# once we can move to a PathLike (mainly used in importer)
-PathBytes = bytes
 
 
 class HumanReadableError(Exception):

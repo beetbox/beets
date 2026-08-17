@@ -83,7 +83,7 @@ def item(lib: Library | None = None, **kwargs) -> Item:
 def import_session(
     lib: Library,
     loghandler: logging.Handler | None = None,
-    paths: Sequence[bytes] | None = None,
+    paths: Sequence[Path] | None = None,
     query: str | Sequence[str] | Query | None = None,
     cli: bool = False,
 ) -> importer.ImportSession:

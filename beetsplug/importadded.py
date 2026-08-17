@@ -1,4 +1,4 @@
-"""Populate an item's `added` and `mtime` fields by using the file
+"""Populate an item's `added` and `mtime` fields by using the fileimportadd
 modification time (mtime) of the item's source file before import.
 
 Reimported albums and items are skipped.
@@ -13,6 +13,8 @@ from beets import importer, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
 
@@ -20,7 +22,7 @@ if TYPE_CHECKING:
 class ImportAddedPlugin(BeetsPlugin):
     item_mtime: dict[bytes, float]
     reimported_item_ids: set[int | None]
-    replaced_album_paths: set[bytes]
+    replaced_album_paths: set[Path]
 
     def __init__(self) -> None:
         super().__init__()
@@ -58,7 +60,7 @@ class ImportAddedPlugin(BeetsPlugin):
         return item.id in self.reimported_item_ids
 
     def reimported_album(self, album: Album) -> bool:
-        return album.path in self.replaced_album_paths
+        return album.filepath in self.replaced_album_paths
 
     def record_if_inplace(
         self, task: ImportTask, session: ImportSession

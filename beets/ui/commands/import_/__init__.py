@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from beets import config, logging, plugins, ui
@@ -28,7 +29,7 @@ class ImportCLIOpts(Protocol):
     from_logfiles: list[str] | None
 
 
-def paths_from_logfile(path: str) -> Iterator[str]:
+def paths_from_logfile(path: str) -> Iterator[Path]:
     """Parse the logfile and yield skipped paths to pass to the `import`
     command.
     """
@@ -45,10 +46,10 @@ def paths_from_logfile(path: str) -> Iterator[str]:
             if verb not in {"asis", "skip", "duplicate-skip"}:
                 raise ValueError(f"line {i} contains unknown verb {verb}")
 
-            yield os.path.commonpath(paths.split("; "))
+            yield (normpath(Path(os.path.commonpath(paths.split("; ")))))
 
 
-def parse_logfiles(logfiles: list[str]) -> Iterator[str]:
+def parse_logfiles(logfiles: list[str]) -> Iterator[Path]:
     """Parse all `logfiles` and yield paths from it."""
     for logfile in logfiles:
         try:
@@ -64,7 +65,7 @@ def parse_logfiles(logfiles: list[str]) -> Iterator[str]:
 
 
 def import_files(
-    lib: Library, paths: list[bytes], query: list[str] | None
+    lib: Library, paths: list[Path], query: list[str] | None
 ) -> None:
     """Import the files in the given list of paths or matching the
     query.
@@ -107,10 +108,10 @@ def import_func(lib: Library, opts: ImportCLIOpts, args: list[str]) -> None:
 
     if opts.library:
         query = args
-        byte_paths = []
+        paths = []
     else:
         query = None
-        paths = args
+        paths = list(map(Path, args))
 
         # The paths from the logfiles go into a separate list to allow handling
         # errors differently from user-specified paths.
@@ -119,35 +120,28 @@ def import_func(lib: Library, opts: ImportCLIOpts, args: list[str]) -> None:
         if not paths and not paths_from_logfiles:
             raise UserError("no path specified")
 
-        byte_paths = [os.fsencode(p) for p in paths]
-        byte_paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
-
         # Check the user-specified directories.
-        for path in byte_paths:
-            if not os.path.exists(syspath(normpath(path))):
-                raise UserError(
-                    f"no such file or directory: {displayable_path(path)}"
-                )
+        for path in paths:
+            if not path.exists():
+                raise UserError(f"no such file or directory: {path}")
 
         # Check the directories from the logfiles, but don't throw an error in
         # case those paths don't exist. Maybe some of those paths have already
         # been imported and moved separately, so logging a warning should
         # suffice.
-        for path in byte_paths_from_logfiles:
-            if not os.path.exists(syspath(normpath(path))):
-                log.warning(
-                    "No such file or directory: {}", displayable_path(path)
-                )
+        for path in paths_from_logfiles:
+            if not path.exists():
+                log.warning("No such file or directory: {}", path)
                 continue
 
-            byte_paths.append(path)
+            paths.append(path)
 
         # If all paths were read from a logfile, and none of them exist, throw
         # an error
-        if not byte_paths:
+        if not paths:
             raise UserError("none of the paths are importable")
 
-    import_files(lib, byte_paths, query)
+    import_files(lib, paths, query)
 
 
 def _store_dict(
