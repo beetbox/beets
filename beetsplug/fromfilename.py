@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import Proposal
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
+    from beets.library import Album, Item, Library
 
 
 # Filename field extraction patterns
@@ -211,6 +211,8 @@ class FromFilenamePlugin(BeetsPlugin):
                 )
             ],
         )
+        self.register_listener("item_imported", self.write_found_item)
+        self.register_listener("album_imported", self.write_found_album)
 
     @cached_property
     def ignored_directories(self) -> set[str]:
@@ -221,8 +223,22 @@ class FromFilenamePlugin(BeetsPlugin):
             ]
         )
 
+    def write_found_item(self, lib: Library, item: Item):
+        """
+        Ensure the data we found is written to the imported file.
+        """
+        item.try_write()
+
+    def write_found_album(self, lib: Library, album: Album):
+        """
+        Ensure the data we found is written to the imported file.
+        """
+        for item in album.items():
+            item.try_write()
+
     def filename_task(self, task: ImportTask, session: ImportSession) -> None:
-        """Examines all files in the given import task for any missing
+        """
+        Examines all files in the given import task for any missing
         information it can gather from the file and folder names.
 
         Once the information has been obtained and checked, it
@@ -236,8 +252,8 @@ class FromFilenamePlugin(BeetsPlugin):
         # Retrieve the list of items to process
         items: list[Item] = task.items
 
-        if self.backup_items:
-            self.restore_backup_data(items)
+        # Conditionally restores any existing data
+        self.restore_backup_data(items)
 
         # Create a backup of the items we can restore later
         self.build_backup_data(items)
@@ -281,7 +297,7 @@ class FromFilenamePlugin(BeetsPlugin):
             self.regroup_items += len(task.items)
 
     def fromfilename_toggle(
-        self, task: ImportTask | SingletonImportTask, session: ImportSession
+        self, session: ImportSession, task: ImportTask | SingletonImportTask
     ) -> Proposal | None:
         """
         Restore any backup data, get new proposals from the un-altered data.
@@ -289,17 +305,17 @@ class FromFilenamePlugin(BeetsPlugin):
         autouse = not self.config["autouse"].get(bool)
         self.config["autouse"] = autouse
         if not autouse:
-            if self.backup_items:
-                self.restore_backup_data(task.items)
-                self.backup_items.clear()
-            # Now we have to search for things again...
-            self._log.debug("searching for metadata again...")
-            if task.is_album:
-                _, _, prop = tag_album(task.items)
-                return prop
-            return tag_item(task.items)
-        # We re-enabled it. Things can resume as before.
-        return None
+            self.restore_backup_data(task.items)
+        if autouse:
+            self.filename_task(task, session)
+        # Now we have to search for things again...
+        self._log.debug(
+            "fromfilename set to {} - searching for metadata again...", autouse
+        )
+        if task.is_album:
+            _, _, prop = tag_album(task.items)
+            return prop
+        return tag_item(task.items)
 
     def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
         """
@@ -314,7 +330,10 @@ class FromFilenamePlugin(BeetsPlugin):
         good with a simple `del` statement
         """
         for item in task.items:
-            del self.backup_items[item]
+            try:
+                del self.backup_items[item]
+            except KeyError:
+                continue
 
     def _has_bad_fields(self, items: list[Item], fields: list[str]) -> bool:
         """Look for what fields are missing data on the items.
@@ -337,8 +356,10 @@ class FromFilenamePlugin(BeetsPlugin):
     def _user_pattern_to_regex(
         self, patterns: list[str], fields: set[str]
     ) -> list[re.Pattern[str]]:
-        """Compile user patterns into a list of usable regex
-        patterns. Catches errors are continues without bad regex patterns.
+        """
+        Compile user patterns into a list of usable regex patterns.
+
+        Catchs syntax errors and continues without bad regex patterns.
         """
         return [
             re.compile(regexp)
@@ -666,12 +687,13 @@ class FromFilenamePlugin(BeetsPlugin):
         return len(set(d[field] for d in dictionaries)) <= 1
 
     def is_regrouped_task(self, items) -> bool:
+        """
+        If the item is within the count of
+        items from a previous regrouping task,
+        we know to not look at the folder.
+        """
         if self.regroup_items:
-            self._log.debug("Is a regrouped item")
             self.regroup_items -= len(items)
-            self._log.debug(
-                "Is the next a regroup item?: {}", self.regroup_items
-            )
             return True
         return False
 
@@ -700,7 +722,8 @@ class FromFilenamePlugin(BeetsPlugin):
         """
         Restore the fields we mutated in a previous round of fromfilename
         """
-        for item in items:
-            backup = self.backup_items.get(item, {})
-            item.update(backup)
-            del self.backup_items[item]
+        if self.backup_items:
+            for item in items:
+                backup = self.backup_items.get(item, {})
+                item.update(backup)
+                del self.backup_items[item]
