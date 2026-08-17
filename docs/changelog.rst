@@ -63,6 +63,10 @@ Bug fixes
   call site. :bug:`4339`
 - :doc:`plugins/discogs`: Retry a search once when Discogs returns an invalid
   JSON response instead of immediately discarding all Discogs candidates.
+- Plugins built on ``SearchApiMetadataSourcePlugin``
+  (:doc:`plugins/musicbrainz`, :doc:`plugins/spotify`, :doc:`plugins/deezer` and
+  :doc:`plugins/discogs`) no longer send a search request when both the query
+  text and the filters are empty. :bug:`6862`
 
 ..
     For plugin developers
