@@ -6,12 +6,16 @@ import os
 import shutil
 import subprocess
 import tempfile
+from contextlib import contextmanager
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Protocol
 
 from beets import config, library, ui, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from beets.library import Library
 
 
@@ -108,11 +112,14 @@ class IPFSPlugin(BeetsPlugin):
     ) -> None:
         from beetsplug.play import PlayPlugin
 
-        jlib = self.get_remote_lib(lib)
         player = PlayPlugin()
         config["play"]["relative_to"] = None
-        player.album = True
-        player.play_music(jlib, player, args)
+        # set opts that `_play_command` expects
+        play_opts = SimpleNamespace(
+            album=True, randomize=None, args=None, yes=None
+        )
+        with self.remote_lib(lib) as jlib:
+            player._play_command(jlib, play_opts, args)
 
     def ipfs_add(self, album):
         try:
@@ -265,19 +272,26 @@ class IPFSPlugin(BeetsPlugin):
             ui.print_(format(album, fmt), " : ", album.ipfs.decode())
 
     def query(self, lib, args):
-        rlib = self.get_remote_lib(lib)
-        return rlib.albums(args)
+        with self.remote_lib(lib) as rlib:
+            return rlib.albums(args)
 
     def _remote_libs_path(self, lib):
         lib_root = os.path.dirname(os.fsencode(lib.path))
         return os.path.join(lib_root, b"remotes")
 
-    def get_remote_lib(self, lib):
+    @contextmanager
+    def remote_lib(self, lib: Library) -> Iterator[Library]:
         remote_libs = self._remote_libs_path(lib)
         path = os.path.join(remote_libs, b"joined.db")
         if not os.path.isfile(path):
             raise OSError
-        return library.Library(path)
+
+        remote_lib = library.Library(path)
+
+        try:
+            yield remote_lib
+        finally:
+            remote_lib._close()
 
     def ipfs_added_albums(self, rlib, tmpname):
         """Returns a new library with only albums/items added to ipfs"""

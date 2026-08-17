@@ -67,6 +67,8 @@ Bug fixes
   (:doc:`plugins/musicbrainz`, :doc:`plugins/spotify`, :doc:`plugins/deezer` and
   :doc:`plugins/discogs`) no longer send a search request when both the query
   text and the filters are empty. :bug:`6862`
+- :doc:`plugins/ipfs`: Fix ``beet ipfs --play`` option to invoke the Play plugin
+  through its command interface.
 
 ..
     For plugin developers
