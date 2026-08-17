@@ -42,6 +42,10 @@ if TYPE_CHECKING:
     """Genre hierarchy as list of paths from general to specific.
     Example: [['electronic', 'house'], ['electronic', 'techno']]"""
 
+    GenresWithLabel = tuple[list[str], str]
+    #: A pair of ``(genre list, label)`` returned by a genre resolution stage.
+    #: The label is used for logging and describes the source and filtering applied.
+
 
 # Canonicalization tree processing.
 
@@ -442,7 +446,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return self._resolve_genres(combined, artist=artist)
 
     @cached_property
-    def fallback(self) -> tuple[list[str], str]:
+    def fallback(self) -> GenresWithLabel:
         """Return the configured fallback genre and label."""
         if fallback := self.config["fallback"].get():
             return [fallback], "fallback"
@@ -454,7 +458,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         keep_genres: list[str],
         new_genres: list[str],
         artist: str | None = None,
-    ) -> tuple[list[str], str] | None:
+    ) -> GenresWithLabel | None:
         """Try to resolve genres for a given stage and log the result.
 
         If any newly fetched genres and/or existing genres are resolved, return
@@ -474,7 +478,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def _try_resolve_existing_genres(
         self, obj: LibModel, genres: list[str]
-    ) -> tuple[list[str], str] | None:
+    ) -> GenresWithLabel | None:
         """Handle existing genres when not forcing.
 
         Clean up existing genres if enabled, or return them unchanged. Return
@@ -487,11 +491,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "cleanup", keep_genres, [], artist=self._artist_for_filter(obj)
             )
 
-        return genres, "keep any, no-force"
+        return genres, "keep any, no-force"  # type: ignore
 
     def _try_resolve_original_fallback(
         self, obj: LibModel, genres: list[str], keep_genres: list[str]
-    ) -> tuple[list[str], str] | None:
+    ) -> GenresWithLabel | None:
         """Attempt to fall back to existing original genres if configured.
 
         ``genres`` are the original unchanged values and are checked as-is
@@ -572,7 +576,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return "most popular track", [], None
 
-    def _get_genre(self, obj: LibModel) -> tuple[list[str], str]:
+    def _get_genre(self, obj: LibModel) -> GenresWithLabel:
         """Get the final genre list for an Album or Item object.
 
         `self.sources` specifies allowed genre sources. Starting with the first
