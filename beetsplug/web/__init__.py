@@ -6,7 +6,7 @@ import base64
 import json
 import os
 import typing as t
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import flask
 from flask import jsonify
@@ -19,7 +19,10 @@ from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    from beets.library import Library
+    from collections.abc import Iterable, Iterator, Sequence
+
+    from beets.library import LibModel, Library
+    from beetsplug._typing import JSONDict
 
 
 class WebCLIOpts(Protocol):
@@ -40,7 +43,7 @@ else:
 # Utilities.
 
 
-def _rep(obj, expand=False):
+def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
     """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
     Album object. For Albums, `expand` dictates whether tracks are
     included.
@@ -78,11 +81,13 @@ def _rep(obj, expand=False):
     return None
 
 
-def json_generator(items, root, expand=False):
+def json_generator(
+    items: Sequence[LibModel], root: str, expand: bool = False
+) -> Iterator[Any]:
     """Generator that dumps list of beets Items or Albums as JSON
 
     :param root:  root key for JSON
-    :param items: list of :class:`Item` or :class:`Album` to dump
+    :param items: sequence of :class:`Item` or :class:`Album` to dump
     :param expand: If true every :class:`Album` contains its items in the json
                    representation
     :returns:     generator that yields strings
@@ -98,13 +103,13 @@ def json_generator(items, root, expand=False):
     yield "]}"
 
 
-def is_expand():
+def is_expand() -> bool:
     """Returns whether the current request is for an expanded response."""
 
     return flask.request.args.get("expand") is not None
 
 
-def is_delete():
+def is_delete() -> bool:
     """Returns whether the current delete request should remove the selected
     files.
     """
@@ -112,16 +117,16 @@ def is_delete():
     return flask.request.args.get("delete") is not None
 
 
-def get_method():
+def get_method() -> str:
     """Returns the HTTP method of the current request."""
     return flask.request.method
 
 
-def resource(name, patchable=False):
+def resource(name: str, patchable: bool = False) -> Any:
     """Decorates a function to handle RESTful HTTP requests for a resource."""
 
-    def make_responder(retriever):
-        def responder(ids):
+    def make_responder(retriever: t.Callable[[int], LibModel | None]) -> Any:
+        def responder(ids: Sequence[int]):
             entities = [retriever(id_) for id_ in ids]
             entities = [entity for entity in entities if entity]
 
@@ -169,11 +174,13 @@ def resource(name, patchable=False):
     return make_responder
 
 
-def resource_query(name, patchable=False):
+def resource_query(name: str, patchable: bool = False) -> Any:
     """Decorates a function to handle RESTful HTTP queries for resources."""
 
-    def make_responder(query_func):
-        def responder(queries):
+    def make_responder(
+        query_func: t.Callable[[Iterable[str]], Sequence[LibModel]],
+    ) -> Any:
+        def responder(queries: Iterable[str]) -> Any:
             entities = query_func(queries)
 
             if get_method() == "DELETE":
@@ -215,13 +222,13 @@ def resource_query(name, patchable=False):
     return make_responder
 
 
-def resource_list(name):
+def resource_list(name: str) -> Any:
     """Decorates a function to handle RESTful HTTP request for a list of
     resources.
     """
 
-    def make_responder(list_all):
-        def responder():
+    def make_responder(list_all: t.Callable[[], Sequence[LibModel]]) -> Any:
+        def responder() -> Any:
             return app.response_class(
                 json_generator(list_all(), root=name, expand=is_expand()),
                 mimetype="application/json",
@@ -233,7 +240,9 @@ def resource_list(name):
     return make_responder
 
 
-def _get_unique_table_field_values(model, field, sort_field):
+def _get_unique_table_field_values(
+    model: type[LibModel], field: str, sort_field: str
+) -> list[Any]:
     """retrieve all unique values belonging to a key from a model"""
     if field not in model.all_keys() or sort_field not in model.all_keys():
         raise KeyError
@@ -247,7 +256,7 @@ def _get_unique_table_field_values(model, field, sort_field):
 class IdListConverter(BaseConverter):
     """Converts comma separated lists of ids in urls to integer lists."""
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> list[int]:
         ids = []
         for id_ in value.split(","):
             try:
@@ -256,14 +265,14 @@ class IdListConverter(BaseConverter):
                 pass
         return ids
 
-    def to_url(self, value):
+    def to_url(self, value: Sequence[int]) -> str:
         return ",".join(str(v) for v in value)
 
 
 class QueryConverter(PathConverter):
     """Converts slash separated lists of queries in the url to string list."""
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> list[str]:
         queries = value.split("/")
         """Do not do path substitution on regex value tests"""
         return [
@@ -271,7 +280,7 @@ class QueryConverter(PathConverter):
             for query in queries
         ]
 
-    def to_url(self, value):
+    def to_url(self, value: Sequence[str]) -> str:
         return "/".join([v.replace(os.sep, "\\") for v in value])
 
 
@@ -289,7 +298,7 @@ app.url_map.converters["everything"] = EverythingConverter
 
 
 @app.before_request
-def before_request():
+def before_request() -> None:
     g.lib = app.config["lib"]
 
 
@@ -298,19 +307,19 @@ def before_request():
 
 @app.route("/item/<idlist:ids>", methods=["GET", "DELETE", "PATCH"])
 @resource("items", patchable=True)
-def get_item(id_):
+def get_item(id_) -> Any:
     return g.lib.get_item(id_)
 
 
 @app.route("/item/")
 @app.route("/item/query/")
 @resource_list("items")
-def all_items():
+def all_items() -> Any:
     return g.lib.items()
 
 
 @app.route("/item/<int:item_id>/file")
-def item_file(item_id):
+def item_file(item_id: int) -> Any:
     item = g.lib.get_item(item_id)
 
     item_path = util.syspath(item.path)
@@ -331,12 +340,12 @@ def item_file(item_id):
 
 @app.route("/item/query/<query:queries>", methods=["GET", "DELETE", "PATCH"])
 @resource_query("items", patchable=True)
-def item_query(queries):
+def item_query(queries: Sequence[str]) -> Any:
     return g.lib.items(queries)
 
 
 @app.route("/item/path/<everything:path>")
-def item_at_path(path):
+def item_at_path(path: str) -> Any:
     query = PathQuery("path", path.encode("utf-8"))
     item = g.lib.items(query).get()
     if item:
@@ -345,7 +354,7 @@ def item_at_path(path):
 
 
 @app.route("/item/values/<string:key>")
-def item_unique_field_values(key):
+def item_unique_field_values(key: str) -> Any:
     sort_key = flask.request.args.get("sort_key", key)
     try:
         values = _get_unique_table_field_values(
@@ -361,25 +370,25 @@ def item_unique_field_values(key):
 
 @app.route("/album/<idlist:ids>", methods=["GET", "DELETE"])
 @resource("albums")
-def get_album(id_):
+def get_album(id_) -> Any:
     return g.lib.get_album(id_)
 
 
 @app.route("/album/")
 @app.route("/album/query/")
 @resource_list("albums")
-def all_albums():
+def all_albums() -> Any:
     return g.lib.albums()
 
 
 @app.route("/album/query/<query:queries>", methods=["GET", "DELETE"])
 @resource_query("albums")
-def album_query(queries):
+def album_query(queries: Sequence[str]) -> Any:
     return g.lib.albums(queries)
 
 
 @app.route("/album/<int:album_id>/art")
-def album_art(album_id):
+def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
     if album and album.artpath:
         return flask.send_file(album.artpath.decode())
@@ -387,7 +396,7 @@ def album_art(album_id):
 
 
 @app.route("/album/values/<string:key>")
-def album_unique_field_values(key):
+def album_unique_field_values(key: str) -> Any:
     sort_key = flask.request.args.get("sort_key", key)
     try:
         values = _get_unique_table_field_values(
@@ -402,7 +411,7 @@ def album_unique_field_values(key):
 
 
 @app.route("/artist/")
-def all_artists():
+def all_artists() -> Any:
     with g.lib.transaction() as tx:
         rows = tx.query("SELECT DISTINCT albumartist FROM albums")
     all_artists = [row[0] for row in rows]
@@ -413,7 +422,7 @@ def all_artists():
 
 
 @app.route("/stats")
-def stats():
+def stats() -> Any:
     with g.lib.transaction() as tx:
         item_rows = tx.query("SELECT COUNT(*) FROM items")
         album_rows = tx.query("SELECT COUNT(*) FROM albums")
@@ -424,7 +433,7 @@ def stats():
 
 
 @app.route("/")
-def home():
+def home() -> Any:
     return flask.render_template("index.html")
 
 
@@ -432,7 +441,7 @@ def home():
 
 
 class WebPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -446,7 +455,7 @@ class WebPlugin(BeetsPlugin):
             }
         )
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("web", help="start a Web interface")
         cmd.parser.add_option(
             "-d",
@@ -524,10 +533,12 @@ class ReverseProxied:
     :param app: the WSGI application
     """
 
-    def __init__(self, app):
+    def __init__(self, app: t.Callable[..., t.Any]) -> None:
         self.app = app
 
-    def __call__(self, environ, start_response):
+    def __call__(
+        self, environ: dict[str, t.Any], start_response: t.Callable[..., t.Any]
+    ) -> Any:
         script_name = environ.get("HTTP_X_SCRIPT_NAME", "")
         if script_name:
             environ["SCRIPT_NAME"] = script_name

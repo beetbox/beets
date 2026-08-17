@@ -7,7 +7,7 @@ import csv
 import json
 import sys
 from datetime import date, datetime
-from typing import TYPE_CHECKING, Literal, Protocol, get_args
+from typing import TYPE_CHECKING, Any, Literal, Protocol, get_args
 from xml.etree import ElementTree
 
 import mediafile
@@ -17,7 +17,11 @@ from beets.plugins import BeetsPlugin
 from beetsplug.info import library_data, tag_data
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
+
+    from ._typing import JSONDict
 
 Format = Literal["json", "jsonlines", "csv", "xml"]
 
@@ -26,7 +30,7 @@ class ExportCLIOpts(Protocol):
     library: bool | None
     album: bool
     append: bool
-    included_keys: list[str]
+    included_keys: Sequence[str]
     output: str | None
     format: Format | None
 
@@ -34,14 +38,14 @@ class ExportCLIOpts(Protocol):
 class ExportEncoder(json.JSONEncoder):
     """Deals with dates because JSON doesn't have a standard"""
 
-    def default(self, o):
+    def default(self, o: object) -> Any:
         if isinstance(o, (datetime, date)):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
 
 class ExportPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -82,7 +86,7 @@ class ExportPlugin(BeetsPlugin):
             }
         )
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("export", help="export data from beets")
         cmd.func = self.run
         cmd.parser.add_album_option()
@@ -119,7 +123,9 @@ class ExportPlugin(BeetsPlugin):
         )
         return [cmd]
 
-    def run(self, lib: Library, opts: ExportCLIOpts, args: list[str]) -> None:
+    def run(
+        self, lib: Library, opts: ExportCLIOpts, args: Sequence[str]
+    ) -> None:
         file_path = opts.output
         file_mode = "a" if opts.append else "w"
         default_format: Format = self.config["default_format"].as_choice(
@@ -166,7 +172,9 @@ class ExportPlugin(BeetsPlugin):
 class ExportFormat:
     """The output format type"""
 
-    def __init__(self, file_path, file_mode="w", encoding="utf-8"):
+    def __init__(
+        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
+    ) -> None:
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
@@ -178,7 +186,9 @@ class ExportFormat:
         )
 
     @classmethod
-    def factory(cls, file_type, **kwargs):
+    def factory(
+        cls, file_type: str, **kwargs
+    ) -> JsonFormat | CSVFormat | XMLFormat:
         if file_type in ["json", "jsonlines"]:
             return JsonFormat(**kwargs)
         if file_type == "csv":
@@ -187,17 +197,19 @@ class ExportFormat:
             return XMLFormat(**kwargs)
         raise NotImplementedError()
 
-    def export(self, data, **kwargs):
+    def export(self, data: list[JSONDict], **kwargs) -> None:
         raise NotImplementedError()
 
 
 class JsonFormat(ExportFormat):
     """Saves in a json file"""
 
-    def __init__(self, file_path, file_mode="w", encoding="utf-8"):
+    def __init__(
+        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
+    ) -> None:
         super().__init__(file_path, file_mode, encoding)
 
-    def export(self, data, **kwargs):
+    def export(self, data: list[JSONDict], **kwargs) -> None:
         json.dump(data, self.out_stream, cls=ExportEncoder, **kwargs)
         self.out_stream.write("\n")
 
@@ -205,10 +217,12 @@ class JsonFormat(ExportFormat):
 class CSVFormat(ExportFormat):
     """Saves in a csv file"""
 
-    def __init__(self, file_path, file_mode="w", encoding="utf-8"):
+    def __init__(
+        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
+    ) -> None:
         super().__init__(file_path, file_mode, encoding)
 
-    def export(self, data, **kwargs):
+    def export(self, data: list[JSONDict], **kwargs) -> None:
         header = list(data[0].keys()) if data else []
         writer = csv.DictWriter(self.out_stream, fieldnames=header, **kwargs)
         writer.writeheader()
@@ -218,10 +232,12 @@ class CSVFormat(ExportFormat):
 class XMLFormat(ExportFormat):
     """Saves in a xml file"""
 
-    def __init__(self, file_path, file_mode="w", encoding="utf-8"):
+    def __init__(
+        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
+    ) -> None:
         super().__init__(file_path, file_mode, encoding)
 
-    def export(self, data, **kwargs):
+    def export(self, data: list[JSONDict], **kwargs) -> None:
         # Creates the XML file structure.
         library = ElementTree.Element("library")
         tracks = ElementTree.SubElement(library, "tracks")
