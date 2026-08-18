@@ -4,23 +4,34 @@ modification time (mtime) of the item's source file before import.
 Reimported albums and items are skipped.
 """
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from beets import importer, util
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Album, Item, Library
+
 
 class ImportAddedPlugin(BeetsPlugin):
-    def __init__(self):
+    item_mtime: dict[bytes, float]
+    reimported_item_ids: set[int | None]
+    replaced_album_paths: set[bytes]
+
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {"preserve_mtimes": False, "preserve_write_mtimes": False}
         )
 
         # item.id for new items that were reimported
-        self.reimported_item_ids = None
+        self.reimported_item_ids = set()
         # album.path for old albums that were replaced by a reimported album
-        self.replaced_album_paths = None
+        self.replaced_album_paths = set()
         # item path in the library to the mtime of the source file
         self.item_mtime = {}
 
@@ -37,8 +48,11 @@ class ImportAddedPlugin(BeetsPlugin):
         register("item_imported", self.update_item_times)
         register("after_write", self.update_after_write_time)
 
-    def check_config(self, task, session):
+    def check_config(
+        self, task: ImportTask, session: ImportSession
+    ) -> list[ImportTask] | None:
         self.config["preserve_mtimes"].get(bool)
+        return None
 
     def reimported_item(self, item):
         return item.id in self.reimported_item_ids
@@ -46,7 +60,9 @@ class ImportAddedPlugin(BeetsPlugin):
     def reimported_album(self, album):
         return album.path in self.replaced_album_paths
 
-    def record_if_inplace(self, task, session):
+    def record_if_inplace(
+        self, task: ImportTask, session: ImportSession
+    ) -> list[ImportTask] | None:
         if not (
             session.config["copy"]
             or session.config["move"]
@@ -65,7 +81,11 @@ class ImportAddedPlugin(BeetsPlugin):
             for item in items:
                 self.record_import_mtime(item, item.path, item.path)
 
-    def record_reimported(self, task, session):
+        return None
+
+    def record_reimported(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
         self.reimported_item_ids = {
             item.id
             for item, replaced_items in task.replaced_items.items()
@@ -86,7 +106,9 @@ class ImportAddedPlugin(BeetsPlugin):
         self.write_file_mtime(util.syspath(item.path), mtime)
         item.mtime = mtime
 
-    def record_import_mtime(self, item, source, destination):
+    def record_import_mtime(
+        self, item: Item, source: bytes, destination: bytes
+    ) -> None:
         """Record the file mtime of an item's path before its import."""
         mtime = os.stat(util.syspath(source)).st_mtime
         self.item_mtime[destination] = mtime
@@ -97,7 +119,7 @@ class ImportAddedPlugin(BeetsPlugin):
             util.displayable_path(source),
         )
 
-    def update_album_times(self, lib, album):
+    def update_album_times(self, lib: Library, album: Album) -> None:
         if self.reimported_album(album):
             self._log.debug(
                 "Album '{.filepath}' is reimported, skipping import of "
@@ -122,7 +144,7 @@ class ImportAddedPlugin(BeetsPlugin):
         )
         album.store()
 
-    def update_item_times(self, lib, item):
+    def update_item_times(self, lib: Library, item: Item) -> None:
         if self.reimported_item(item):
             self._log.debug(
                 "Item '{.filepath}' is reimported, skipping import of added date.",
@@ -140,7 +162,7 @@ class ImportAddedPlugin(BeetsPlugin):
             )
             item.store()
 
-    def update_after_write_time(self, item, path):
+    def update_after_write_time(self, item: Item, path: bytes) -> None:
         """Update the mtime of the item's file with the item.added value
         after each write of the item if `preserve_write_mtimes` is enabled.
         """

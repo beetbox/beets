@@ -8,6 +8,9 @@ Put something like the following in your config.yaml to configure:
         token: token
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode, urljoin
 from xml.etree import ElementTree
 
@@ -15,6 +18,9 @@ import requests
 
 from beets import config
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
 
 
 def get_music_section(
@@ -69,7 +75,7 @@ def get_protocol(secure):
 
 
 class PlexUpdate(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Adding defaults.
@@ -87,11 +93,11 @@ class PlexUpdate(BeetsPlugin):
         config["plex"]["token"].redact = True
         self.register_listener("database_change", self.listen_for_db_change)
 
-    def listen_for_db_change(self, lib, model):
+    def listen_for_db_change(self, lib: Library, model: LibModel) -> None:
         """Listens for beets db change and register the update for the end"""
         self.register_listener("cli_exit", self.update)
 
-    def update(self, lib):
+    def update(self, lib: Library) -> None:
         """When the client exists try to send refresh request to Plex server."""
         self._log.info("Updating Plex library...")
 

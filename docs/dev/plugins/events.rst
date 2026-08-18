@@ -52,7 +52,7 @@ registration process in this case:
         command starts.
 
 ``import``
-    :Parameters: ``lib`` (|Library|), ``paths`` (list of path strings)
+    :Parameters: ``lib`` (|Library|), ``paths`` (list of byte paths)
     :Description: Called after the ``import`` command finishes.
 
 ``album_imported``
@@ -61,7 +61,7 @@ registration process in this case:
         library.
 
 ``album_removed``
-    :Parameters: ``lib`` (|Library|), ``album`` (|Album|)
+    :Parameters: ``album`` (|Album|)
     :Description: Called every time an album is removed from the library (even
         when its files are not deleted from disk).
 
@@ -78,11 +78,6 @@ registration process in this case:
     :Parameters: ``lib`` (|Library|), ``item`` (|Item|)
     :Description: Called every time the importer adds a singleton to the library
         (not called for full-album imports).
-
-``before_item_imported``
-    :Parameters: ``item`` (|Item|), ``source`` (path), ``destination`` (path)
-    :Description: Called with an ``Item`` object immediately before it is
-        imported.
 
 ``before_item_moved``
     :Parameters: ``item`` (|Item|), ``source`` (path), ``destination`` (path)
@@ -121,7 +116,7 @@ registration process in this case:
         abort.
 
 ``after_write``
-    :Parameters: ``item`` (|Item|)
+    :Parameters: ``item`` (|Item|), ``path`` (path)
     :Description: Called after a file's metadata is written to disk.
 
 ``import_task_created``
@@ -161,7 +156,7 @@ registration process in this case:
         object.
 
 ``database_change``
-    :Parameters: ``lib`` (|Library|), ``model`` (|Model|)
+    :Parameters: ``lib`` (|Library|), ``model`` (|Album| or |Item|)
     :Description: A modification has been made to the library database (may not
         yet be committed).
 
@@ -205,6 +200,19 @@ registration process in this case:
     :Parameters: ``data`` (dict)
     :Description: Like ``mb_track_extract`` but for album tags. Overwrites tags
         set at the track level with the same field.
+
+``after_convert``
+    :Parameters: ``item`` (|Item|), ``dest`` (path), ``keepnew`` (bool)
+    :Description: Called by the :doc:`/plugins/convert` plugin after it
+        successfully converts or copies an item. When ``keepnew`` is false,
+        ``dest`` is the converted file. When ``keepnew`` is true, ``dest`` is
+        where the original file was moved and ``item.path`` identifies the
+        converted file retained in the library.
+
+``smartplaylist_update``
+    :Parameters: (none)
+    :Description: Called by the :doc:`/plugins/smartplaylist` plugin after it
+        writes updated playlist files. It is not called in pretend mode.
 
 The included ``mpdupdate`` plugin provides an example use case for event
 listeners.

@@ -1,9 +1,12 @@
 """Send the results of a query to the configured music player as a playlist."""
 
+from __future__ import annotations
+
 import random
 import shlex
 import subprocess
 from os.path import relpath
+from typing import TYPE_CHECKING
 
 from beets import config, ui, util
 from beets.exceptions import UserError
@@ -11,6 +14,10 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import PromptChoice, get_temp_filename
 from beets.util.color import colorize
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
@@ -51,7 +58,7 @@ def play(
 
 
 class PlayPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         config["play"].add(
@@ -215,7 +222,9 @@ class PlayPlugin(BeetsPlugin):
 
         return filename
 
-    def before_choose_candidate_listener(self, session, task):
+    def before_choose_candidate_listener(
+        self, session: ImportSession, task: ImportTask
+    ) -> list[PromptChoice]:
         """Append a "Play" choice to the interactive importer prompt."""
         return [PromptChoice("y", "plaY", self.importer_play)]
 

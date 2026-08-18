@@ -75,6 +75,12 @@ files. If an original file is newer than a converted file, the converted file
 will be removed from the filesystem, and the original file will be converted
 once again.
 
+Plugin Event
+------------
+
+After successfully converting or copying an item, this plugin sends the
+``after_convert`` event. See :ref:`plugin_events` for its listener parameters.
+
 Configuration
 -------------
 

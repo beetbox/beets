@@ -29,7 +29,7 @@ from beets.util import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from beets.library import Library
+    from beets.library import LibModel, Library
 
 QueryAndSort = tuple[Query, Sort]
 PlaylistQuery = Query | tuple[QueryAndSort, ...] | None
@@ -263,10 +263,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         return query.match(model)
 
     def matches(
-        self,
-        model: Item | Album,
-        query: PlaylistQuery,
-        album_query: PlaylistQuery,
+        self, model: LibModel, query: PlaylistQuery, album_query: PlaylistQuery
     ) -> bool:
         if isinstance(model, Album):
             return self._matches_query(model, album_query)
@@ -274,7 +271,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
             return self._matches_query(model, query)
         return False
 
-    def db_change(self, lib: Library, model: Item | Album) -> None:
+    def db_change(self, lib: Library, model: LibModel) -> None:
         if self._unmatched_playlists is None:
             self.build_queries()
 
