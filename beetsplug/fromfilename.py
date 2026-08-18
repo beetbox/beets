@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from beets import config
-from beets.autotag import tag_album, tag_item
+from beets.autotag import Source
+from beets.autotag.match import tag_album, tag_item
 from beets.importer import Action, SingletonImportTask
 from beets.plugins import BeetsPlugin
 from beets.util import PromptChoice, displayable_path
@@ -314,16 +315,15 @@ class FromFilenamePlugin(BeetsPlugin):
         )
         if task.is_album:
             item = task.items[0]
-            _, _, prop = tag_album(
-                items=task.items,
+            return tag_album(
+                source=Source.from_items(task.items),
                 search_artist=item.get("artist"),
                 search_name=item.get("album"),
             )
-            return prop
         if isinstance(task, SingletonImportTask):
-            item = task.item
+            item = task.items[0]
             return tag_item(
-                item=task.item,
+                source=Source.from_items(task.items),
                 search_artist=item.get("artist"),
                 search_name=item.get("album"),
             )
