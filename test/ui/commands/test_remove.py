@@ -1,6 +1,6 @@
 from beets import library
 from beets.test.helper import BeetsTestCase, IOMixin
-from beets.ui.commands.remove import remove_albums, remove_items
+from beets.ui.commands.remove import remove_items
 from beets.util import MoveOperation
 
 
@@ -46,7 +46,8 @@ class RemoveTest(IOMixin, BeetsTestCase):
 
         for s in ("s", "y", "n"):
             self.io.addinput(s)
-        remove_items(self.lib, "", True, False)
+        output = self.run_with_output("remove", "-d")
+        assert "Really DELETE 2 files?" in output
         items = self.lib.items()
         assert len(list(items)) == 1
         # There is probably no guarantee that the items are queried in any
@@ -68,7 +69,9 @@ class RemoveTest(IOMixin, BeetsTestCase):
 
         for s in ("s", "y", "n"):
             self.io.addinput(s)
-        remove_albums(self.lib, "", True, False)
+        output = self.run_with_output("remove", "-a", "-d")
+        assert "Really DELETE 2 files and 2 albums?" in output
+
         items = self.lib.items()
         assert len(list(items)) == 2  # incl. the item from setUp()
         # See test_remove_items_select_with_delete()
