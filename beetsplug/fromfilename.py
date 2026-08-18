@@ -278,7 +278,8 @@ class FromFilenamePlugin(BeetsPlugin):
         if track_matches and self.config["sanity_check"].get(bool):
             self._sanity_check_matches(album_matches, track_matches)
 
-        self._apply_track_matches(items, track_matches)
+        if track_matches:
+            self._apply_track_matches(items, track_matches)
 
         if album_matches:
             self._apply_album_matches(items, album_matches)
@@ -319,12 +320,14 @@ class FromFilenamePlugin(BeetsPlugin):
                     search_name=item.get("album")
             )
             return prop
-        item = task.item
-        return tag_item(
-                item=task.item,
-                search_artist=item.get("artist"),
-                search_name=item.get("album")
-        )
+        if isinstance(task, SingletonImportTask):
+            item = task.item
+            return tag_item(
+                    item=task.item,
+                    search_artist=item.get("artist"),
+                    search_name=item.get("album")
+            )
+        return None
 
     def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
         """
