@@ -776,14 +776,16 @@ class TestFromFilename(PluginTestHelper):
         assert guess.title == "Title"
 
     def test_sanity_check_function_albumartist(self):
-        album_path = ("Calibre - Musique Concrete "
-        "(2001, Creative Source CRSE0002LP) [Drum & Bass]")
+        album_path = (
+            "Calibre - Musique Concrete "
+            "(2001, Creative Source CRSE0002LP) [Drum & Bass]"
+        )
         items = [
             mock_item(path=f"{album_path}/1 - Calibre - Version.aiff"),
             mock_item(path=f"{album_path}/2 - Calibre - Vice.aiff"),
             mock_item(path=f"{album_path}/3 - Calibre - U Make It Hot.aiff"),
-            mock_item(path=f"{album_path}/4 - Calibre - Untitled.aiff")
-                ]
+            mock_item(path=f"{album_path}/4 - Calibre - Untitled.aiff"),
+        ]
         task = mock_task(items)
         f = FromFilenamePlugin()
         f.filename_task(task, Session())
@@ -995,4 +997,3 @@ class FromfilenameImportTest(
         self.importer.run()
         titles = [item.title for item in self.lib.items()]
         assert titles[0] == "The Other Track"
-
