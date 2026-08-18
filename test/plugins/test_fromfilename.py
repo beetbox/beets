@@ -750,10 +750,10 @@ class TestFromFilename(PluginTestHelper):
         """Assert that the sanity check can be disabled in the config."""
         items = [
             mock_item(
-                path=("/Album Artist - Album Title//Title - Album Artist.mp3")
+                path=("/Album Artist - Album Title/Title - Album Artist.mp3")
             ),
             mock_item(
-                path=("/Album Artist - Album Title//Title2 - Album Artist.mp3")
+                path=("/Album Artist - Album Title/Title2 - Album Artist.mp3")
             ),
         ]
         with self.configure_plugin({"sanity_check": False}):
@@ -775,8 +775,26 @@ class TestFromFilename(PluginTestHelper):
         guess = task.items[0]
         assert guess.title == "Title"
 
+    def test_sanity_check_function_albumartist(self):
+        album_path = ("Calibre - Musique Concrete "
+        "(2001, Creative Source CRSE0002LP) [Drum & Bass]")
+        items = [
+            mock_item(path=f"{album_path}/1 - Calibre - Version.aiff"),
+            mock_item(path=f"{album_path}/2 - Calibre - Vice.aiff"),
+            mock_item(path=f"{album_path}/3 - Calibre - U Make It Hot.aiff"),
+            mock_item(path=f"{album_path}/4 - Calibre - Untitled.aiff")
+                ]
+        task = mock_task(items)
+        f = FromFilenamePlugin()
+        f.filename_task(task, Session())
+        guess = task.items[0]
+        assert guess.album == "Musique Concrete"
+        assert guess.albumartist == "Calibre"
+        assert guess.track == 1
+        assert guess.title == "Version"
 
-class ImportGroupAlbumTest(
+
+class FromfilenameImportTest(
     TerminalImportMixin, AutotagImportTestCase, PluginTestHelper
 ):
     plugin: ClassVar[str] = "fromfilename"
@@ -966,3 +984,15 @@ class ImportGroupAlbumTest(
         library_paths = [item.path for item in self.lib.items()]
         assert MediaFile(library_paths[0]).title == "This Track"
         assert MediaFile(library_paths[1]).title == "The Other Track"
+
+    def test_as_tracks_toggle(self):
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.io.addinput("f")
+        self.io.addinput("t")
+        self.io.addinput("f")
+        self.io.addinput("s")
+        self.io.addinput("a")
+        self.importer.run()
+        titles = [item.title for item in self.lib.items()]
+        assert titles[0] == "The Other Track"
+
