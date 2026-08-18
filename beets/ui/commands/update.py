@@ -9,12 +9,11 @@ from beets import library, logging, ui
 from beets.util import ancestry, syspath
 from beets.util.color import colorize
 
-from .utils import do_query
-
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Iterable
 
-    from beets.library import Library
+    from beets.library import Item, Library
 
 
 # Global logger.
@@ -23,8 +22,7 @@ log = logging.getLogger("beets")
 
 def update_items(
     lib: Library,
-    query: list[str],
-    is_album: bool,
+    items: Iterable[Item],
     move: bool,
     pretend: bool,
     fields: list[str],
@@ -38,7 +36,6 @@ def update_items(
     fields will be.
     """
     with lib.transaction():
-        items, _ = do_query(lib, query, is_album)
         if move and fields is not None and "path" not in fields:
             # Special case: if an item needs to be moved, the path field has to
             # updated; otherwise the new path will not be reflected in the
@@ -163,10 +160,13 @@ def update_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
         ui.print_(os.fsdecode(lib.directory))
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
+    if opts.album:
+        items = [i for a in lib.albums(args) for i in a.items()]
+    else:
+        items = list(lib.items(args))
     update_items(
         lib,
-        args,
-        opts.album,
+        items,
         ui.should_move(opts.move),
         opts.pretend,
         opts.fields,

@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
     from pathlib import Path
 
-    from beets.library import LibModel
+    from beets.library import AlbumOrItem, LibModel
     from beets.util.color import ColorName
 
 
@@ -369,10 +369,10 @@ def input_yn(prompt: str, require: bool = False) -> bool:
 
 def input_select_objects(
     prompt: str,
-    objs: Sequence[LibModel],
-    rep: Callable[[LibModel], Any],
+    objs: Sequence[AlbumOrItem],
+    rep: Callable[[AlbumOrItem], Any],
     prompt_all: str | None = None,
-) -> Any:
+) -> Sequence[AlbumOrItem]:
     """Prompt to user to choose all, none, or some of the given objects.
     Return the list of selected objects.
 

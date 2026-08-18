@@ -1,6 +1,6 @@
 from beets import library
 from beets.test.helper import BeetsTestCase, IOMixin
-from beets.ui.commands.remove import remove_items
+from beets.ui.commands.remove import remove_albums, remove_items
 from beets.util import MoveOperation
 
 
@@ -15,26 +15,26 @@ class RemoveTest(IOMixin, BeetsTestCase):
 
     def test_remove_items_no_delete(self):
         self.io.addinput("y")
-        remove_items(self.lib, "", False, False, False)
+        remove_items(self.lib, "", False, False)
         items = self.lib.items()
         assert len(list(items)) == 0
         assert self.i.filepath.exists()
 
     def test_remove_items_with_delete(self):
         self.io.addinput("y")
-        remove_items(self.lib, "", False, True, False)
+        remove_items(self.lib, "", True, False)
         items = self.lib.items()
         assert len(list(items)) == 0
         assert not self.i.filepath.exists()
 
     def test_remove_items_with_force_no_delete(self):
-        remove_items(self.lib, "", False, False, True)
+        remove_items(self.lib, "", False, True)
         items = self.lib.items()
         assert len(list(items)) == 0
         assert self.i.filepath.exists()
 
     def test_remove_items_with_force_delete(self):
-        remove_items(self.lib, "", False, True, True)
+        remove_items(self.lib, "", True, True)
         items = self.lib.items()
         assert len(list(items)) == 0
         assert not self.i.filepath.exists()
@@ -46,7 +46,7 @@ class RemoveTest(IOMixin, BeetsTestCase):
 
         for s in ("s", "y", "n"):
             self.io.addinput(s)
-        remove_items(self.lib, "", False, True, False)
+        remove_items(self.lib, "", True, False)
         items = self.lib.items()
         assert len(list(items)) == 1
         # There is probably no guarantee that the items are queried in any
@@ -68,7 +68,7 @@ class RemoveTest(IOMixin, BeetsTestCase):
 
         for s in ("s", "y", "n"):
             self.io.addinput(s)
-        remove_items(self.lib, "", True, True, False)
+        remove_albums(self.lib, "", True, False)
         items = self.lib.items()
         assert len(list(items)) == 2  # incl. the item from setUp()
         # See test_remove_items_select_with_delete()

@@ -32,13 +32,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         artfile.unlink()
 
     def _update(
-        self,
-        query=(),
-        album=False,
-        move=False,
-        reset_mtime=True,
-        fields=None,
-        exclude_fields=None,
+        self, move=False, reset_mtime=True, fields=None, exclude_fields=None
     ):
         self.io.addinput("y")
         if reset_mtime:
@@ -46,8 +40,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
             self.i.store()
         update_items(
             self.lib,
-            query,
-            album,
+            list(self.lib.items()),
             move,
             False,
             fields=fields,
