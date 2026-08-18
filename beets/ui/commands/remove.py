@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-from functools import singledispatch
+from functools import partial
 from typing import TYPE_CHECKING, Protocol
 
 from beets import ui
-from beets.library import Album, Item
-
-from .utils import do_query
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
-    from beets.library import LibModel, Library
+    from beets.library import Album, AlbumOrItem, Item, Library
 
 
 class RemoveCLIOpts(Protocol):
@@ -22,75 +19,82 @@ class RemoveCLIOpts(Protocol):
     force: bool
 
 
-def remove_items(
-    lib: Library, query: Sequence[str], album: bool, delete: bool, force: bool
+def remove_objects(
+    objs: Sequence[AlbumOrItem],
+    fmt_obj: Callable[[str, AlbumOrItem], None],
+    suffix: str,
+    lib: Library,
+    delete: bool,
+    force: bool,
 ) -> None:
-    """Remove items matching query from lib. If album, then match and
-    remove whole albums. If delete, also remove files from disk.
-    """
-    # Get the matching items.
-    items, albums = do_query(lib, query, album)
-    objs = albums if album else items
-
     # Confirm file removal if not forcing removal.
-    if not force:
-        # Prepare confirmation with user.
-        album_str = (
-            f" in {len(albums)} album{'s' if len(albums) > 1 else ''}"
-            if album
-            else ""
-        )
-
+    if force:
+        selected_objs = objs
+    else:
         if delete:
             fmt = "$path - $title"
             prompt = "Really DELETE"
-            prompt_all = (
-                "Really DELETE"
-                f" {len(items)} file{'s' if len(items) > 1 else ''}{album_str}"
-            )
+            prompt_all = f"Really DELETE {len(objs)} file{suffix}"
         else:
             fmt = ""
             prompt = "Really remove from the library?"
             prompt_all = (
-                "Really remove"
-                f" {len(items)} item{'s' if len(items) > 1 else ''}{album_str}"
-                " from the library?"
+                f"Really remove {len(objs)} item{suffix} from the library?"
             )
 
-        @singledispatch
-        def fmt_obj(obj: LibModel) -> None:
-            raise NotImplementedError
-
-        @fmt_obj.register
-        def _item(t: Item) -> None:
-            ui.print_(format(t, fmt))
-
-        @fmt_obj.register
-        def _album(a: Album) -> None:
-            ui.print_()
-            for i in a.items():
-                fmt_obj(i)
+        _fmt = partial(fmt_obj, fmt)
 
         # Show all the items.
         for o in objs:
-            fmt_obj(o)
+            _fmt(o)
 
         # Confirm with user.
-        objs = ui.input_select_objects(
-            prompt, objs, fmt_obj, prompt_all=prompt_all
+        selected_objs = ui.input_select_objects(
+            prompt, objs, _fmt, prompt_all=prompt_all
         )
 
-    if not objs:
+    if not selected_objs:
         return
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        for obj in objs:
+        for obj in selected_objs:
             obj.remove(delete)
 
 
+def fmt_item(fmt: str, t: Item) -> None:
+    ui.print_(format(t, fmt))
+
+
+def fmt_album(fmt: str, a: Album) -> None:
+    ui.print_()
+    for i in a.items():
+        fmt_item(fmt, i)
+
+
+def remove_items(lib: Library, query: Sequence[str], *args, **kwargs) -> None:
+    """Remove items matching query from lib."""
+    items: Sequence[Item] = list(lib.items(query))
+    suffix = "s" if len(items) > 1 else ""
+
+    remove_objects(items, fmt_item, suffix, lib, *args, **kwargs)
+
+
+def remove_albums(lib: Library, query: Sequence[str], *args, **kwargs) -> None:
+    """Remove albums matching query from lib."""
+    albums = list(lib.albums(query))
+    items = [i for a in albums for i in a.items()]
+    suffix = "s" if len(items) > 1 else ""
+    album_str = f" in {len(albums)} album{'s' if len(albums) > 1 else ''}"
+
+    remove_objects(
+        albums, fmt_album, f"{suffix}{album_str}", lib, *args, **kwargs
+    )
+
+
 def remove_func(lib: Library, opts: RemoveCLIOpts, args: list[str]) -> None:
-    remove_items(lib, args, opts.album, opts.delete, opts.force)
+    method = remove_albums if opts.album else remove_items
+    method(lib, args, opts.delete, opts.force)
 
 
 remove_cmd = ui.Subcommand(

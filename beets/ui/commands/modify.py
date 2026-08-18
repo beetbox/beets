@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NamedTuple, Protocol
 
-from beets import library, ui
+from beets import ui
 from beets.dbcore import types
 from beets.exceptions import UserError
+from beets.library import Album, Item
 from beets.util.deprecation import maybe_replace_legacy_field
-
-from .utils import do_query
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.library import LibModel, Library
+    from beets.library import AlbumOrItem, LibModel, Library
 
 
 class ModifyCLIOpts(Protocol):
@@ -59,34 +58,28 @@ def _check_modify_operations(
             )
 
 
-def modify_items(
+def modify_objects(
+    model_cls: type[AlbumOrItem],
+    objs: Sequence[AlbumOrItem],
     lib: Library,
     mods: dict[str, ModifyOperation],
     dels: Sequence[str],
-    query: Sequence[str],
     write: bool,
     move: bool,
-    album: bool,
     confirm: bool,
     inherit: bool,
 ) -> None:
-    """Modifies matching items according to user-specified assignments and
+    """Modifies albums or items according to user-specified assignments and
     deletions.
 
-    `mods` is a dictionary of field and value pairse indicating
+    `mods` is a dictionary of field and value pairs indicating
     assignments. `dels` is a list of fields to be deleted.
     """
     # Parse key=value specifications into a dictionary.
-    model_cls = library.Album if album else library.Item
     _check_modify_operations(model_cls, mods)
-
-    # Get the items to modify.
-    items, albums = do_query(lib, query, album, False)
-    objs = albums if album else items
-
     # Apply changes *temporarily*, preview them, and collect modified
     # objects.
-    ui.print_(f"Modifying {len(objs)} {'album' if album else 'item'}s.")
+    ui.print_(f"Modifying {len(objs)} {model_cls.__name__.lower()}s.")
     changed = []
     for obj in objs:
         obj_mods = {
@@ -106,6 +99,7 @@ def modify_items(
         return
 
     # Confirm action.
+    selected_changes: Sequence[AlbumOrItem]
     if confirm:
         if write and move:
             extra = ", move and write tags"
@@ -116,16 +110,26 @@ def modify_items(
         else:
             extra = ""
 
-        changed = ui.input_select_objects(
+        selected_changes = ui.input_select_objects(
             f"Really modify{extra}",
             changed,
             lambda o: print_and_modify(o, mods, dels),
         )
+    else:
+        selected_changes = changed
 
     # Apply changes to database and files
     with lib.transaction():
-        for obj in changed:
+        for obj in selected_changes:
             obj.try_sync(write, move, inherit)
+
+
+def modify_items(lib: Library, query: Sequence[str], *args, **kwargs) -> None:
+    modify_objects(Item, list(lib.items(query)), lib, *args, **kwargs)
+
+
+def modify_albums(lib: Library, query: Sequence[str], *args, **kwargs) -> None:
+    modify_objects(Album, list(lib.albums(query)), lib, *args, **kwargs)
 
 
 def print_and_modify(
@@ -180,14 +184,14 @@ def modify_func(lib: Library, opts: ModifyCLIOpts, args: list[str]) -> None:
     query, mods, dels = modify_parse_args(args, is_album=opts.album)
     if not mods and not dels:
         raise UserError("no modifications specified")
-    modify_items(
+    method = modify_albums if opts.album else modify_items
+    method(
         lib,
+        query,
         mods,
         dels,
-        query,
         ui.should_write(opts.write),
         ui.should_move(opts.move),
-        opts.album,
         not opts.yes,
         opts.inherit,
     )
