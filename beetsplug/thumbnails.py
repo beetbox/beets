@@ -12,7 +12,7 @@ import os
 import shutil
 from hashlib import md5
 from pathlib import PurePosixPath
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from xdg import BaseDirectory
 
@@ -40,7 +40,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         if self.config["auto"] and self._check_local_ok():
             self.register_listener("art_set", self.process_album)
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         thumbnails_command = Subcommand(
             "thumbnails", help="Create album thumbnails"
         )
@@ -72,7 +72,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             for album in lib.albums(args):
                 self.process_album(album)
 
-    def _check_local_ok(self):
+    def _check_local_ok(self) -> bool:
         """Check that everything is ready:
         - local capability to resize images
         - thumbnail dirs exist (create them if needed)
@@ -132,7 +132,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         else:
             self._log.info("nothing to do for {}", album)
 
-    def make_cover_thumbnail(self, album, size, target_dir):
+    def make_cover_thumbnail(
+        self, album: Album, size: int, target_dir: bytes
+    ) -> bool:
         """Make a thumbnail of given size for `album` and put it in
         `target_dir`.
         """
@@ -162,7 +164,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         shutil.move(syspath(resized), syspath(target))
         return True
 
-    def thumbnail_file_name(self, path):
+    def thumbnail_file_name(self, path: bytes) -> bytes:
         """Compute the thumbnail file name
         See https://standards.freedesktop.org/thumbnail-spec/latest/x227.html
         """
@@ -170,7 +172,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         hash_ = md5(uri.encode("utf-8")).hexdigest()
         return bytestring_path(f"{hash_}.png")
 
-    def add_tags(self, album, image_path):
+    def add_tags(self, album: Album, image_path: bytes) -> None:
         """Write required metadata to the thumbnail
         See https://standards.freedesktop.org/thumbnail-spec/latest/x142.html
         """
@@ -186,7 +188,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                 "could not write metadata to {}", displayable_path(image_path)
             )
 
-    def make_dolphin_cover_thumbnail(self, album):
+    def make_dolphin_cover_thumbnail(self, album: Album) -> None:
         outfilename = os.path.join(album.path, b".directory")
         if os.path.exists(syspath(outfilename)):
             return
@@ -202,7 +204,7 @@ class URIGetter:
     available = False
     name = "Abstract base"
 
-    def uri(self, path):
+    def uri(self, path: bytes) -> str:
         raise NotImplementedError()
 
 
@@ -210,11 +212,11 @@ class PathlibURI(URIGetter):
     available = True
     name = "Python Pathlib"
 
-    def uri(self, path):
+    def uri(self, path: bytes) -> str:
         return PurePosixPath(os.fsdecode(path)).as_uri()
 
 
-def copy_c_string(c_string):
+def copy_c_string(c_string: Any) -> bytes | None:
     """Copy a `ctypes.POINTER(ctypes.c_char)` value into a new Python
     string and return it. The old memory is then safe to free.
     """
@@ -243,7 +245,7 @@ class GioURI(URIGetter):
 
             self.libgio.g_object_unref.argtypes = [ctypes.c_void_p]
 
-    def get_library(self):
+    def get_library(self) -> ctypes.CDLL | None:
         lib_name = ctypes.util.find_library("gio-2")
         try:
             if not lib_name:
@@ -252,7 +254,7 @@ class GioURI(URIGetter):
         except OSError:
             return False
 
-    def uri(self, path):
+    def uri(self, path: bytes) -> str:
         g_file_ptr = self.libgio.g_file_new_for_path(path)
         if not g_file_ptr:
             raise RuntimeError(
