@@ -46,6 +46,10 @@ if TYPE_CHECKING:
     #: A pair of ``(genre list, label)`` returned by a genre resolution stage.
     #: The label is used for logging and describes the source and filtering applied.
 
+    GenresWithLabel = tuple[list[str], str]
+    """A pair of (genre list, label) returned by a genre resolution stage.
+    The label is used for logging and describes the source and filtering applied."""
+
 
 # Canonicalization tree processing.
 
@@ -514,6 +518,37 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 return resolved
         return None
 
+    def _try_resolve_original_fallback(
+        self, obj: LibModel, genres: list[str], keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Attempt to fall back to existing original genres if configured.
+
+        ``genres`` (the original unchanged values) are alias-normalized and
+        validated first, then ``keep_genres`` are used for a lowercased
+        canonicalized parent fallback.
+        """
+        if not (genres and self.config["keep_existing"].get()):
+            return None
+
+        artist = self._artist_for_filter(obj)
+
+        # We do not run through _try_resolve_stage yet because count could drop
+        # existing genres, but we still apply aliases before whitelist
+        # filtering.
+        normalized = [
+            norm if norm != g.lower() else g
+            for g in genres
+            if (norm := normalize_genre(self._log, self.alias_patterns, g))
+        ]
+        if valid := self._filter_valid(normalized, artist=artist):
+            return valid, "original fallback"
+
+        # If no existing genre survived the whitelist even after aliasing,
+        # try canonicalization to find a valid whitelisted parent genre.
+        return self._try_resolve_stage(
+            "original fallback", keep_genres, [], artist=artist
+        )
+
     def _fetch_va_genres(self, album: Album) -> list[str]:
         """Fetch the most popular track or artist genre for a Various Artists album."""
         item_genres = []
@@ -537,9 +572,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return []
 
-    def _fetch_artist_stage(
-        self, obj: LibModel
-    ) -> tuple[str, list[str], str | None]:
+    def _fetch_artist_stage(self, obj: LibModel) -> GenresWithLabel:
         """Fetch artist genres for an Item or Album object.
 
         Return a tuple of ``(stage_label, genres, stage_artist)``.
