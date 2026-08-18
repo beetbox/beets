@@ -399,7 +399,7 @@ def input_select_objects(
     objs: Sequence[T],
     rep: Callable[[T], Any],
     prompt_all: str | None = None,
-) -> Any:
+) -> Sequence[T]:
     """Prompt to user to choose all, none, or some of the given objects.
     Return the list of selected objects.
 

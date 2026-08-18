@@ -17,7 +17,6 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.importer import Action
 from beets.library import Album, Item
-from beets.ui.commands.utils import do_query
 from beets.util import PromptChoice
 
 if TYPE_CHECKING:
@@ -186,8 +185,7 @@ class EditPlugin(plugins.BeetsPlugin):
     ) -> None:
         """The CLI command function for the `beet edit` command."""
         # Get the objects to edit.
-        items, albums = do_query(lib, args, opts.album, False)
-        objs = albums if opts.album else items
+        objs = (lib.albums if opts.album else lib.items)(args)
         if not objs:
             ui.print_("Nothing to edit.")
             return

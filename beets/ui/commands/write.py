@@ -6,9 +6,8 @@ import os
 from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
+from beets.exceptions import UserError
 from beets.util import syspath
-
-from .utils import do_query
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -31,7 +30,10 @@ def write_items(
     """Write tag information from the database to the respective files
     in the filesystem.
     """
-    items, _ = do_query(lib, query, False, False)
+    items = lib.items(query)
+
+    if not items:
+        raise UserError("No matching items to write.")
 
     for item in items:
         # Item deleted?
