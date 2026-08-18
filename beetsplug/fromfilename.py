@@ -275,11 +275,10 @@ class FromFilenamePlugin(BeetsPlugin):
             if self._has_bad_fields(items, list(self.folder_fields)):
                 album_matches = self._build_album_match(parent_folder, items)
 
-        if track_matches:
-            if self.config["sanity_check"].get(bool):
-                self._sanity_check_matches(album_matches, track_matches)
+        if track_matches and self.config["sanity_check"].get(bool):
+            self._sanity_check_matches(album_matches, track_matches)
 
-            self._apply_track_matches(items, track_matches)
+        self._apply_track_matches(items, track_matches)
 
         if album_matches:
             self._apply_album_matches(items, album_matches)
@@ -313,9 +312,19 @@ class FromFilenamePlugin(BeetsPlugin):
             "fromfilename set to {} - searching for metadata again...", autouse
         )
         if task.is_album:
-            _, _, prop = tag_album(task.items)
+            item = task.items[0]
+            _, _, prop = tag_album(
+                    items=task.items,
+                    search_artist=item.get("artist"),
+                    search_name=item.get("album")
+            )
             return prop
-        return tag_item(task.items)
+        item = task.item
+        return tag_item(
+                item=task.item,
+                search_artist=item.get("artist"),
+                search_name=item.get("album")
+        )
 
     def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
         """
@@ -455,6 +464,8 @@ class FromFilenamePlugin(BeetsPlugin):
             brackets = RE_BRACKETS.search(text)
         # Remaining text used for album, albumartist
         album, albumartist = self._parse_album_and_albumartist(text)
+        self._log.debug(
+            "possible_album={}, possible_albumartist={}", album, albumartist)
         matches["album"] = album
         matches["albumartist"] = albumartist
         if len(items):
@@ -496,7 +507,7 @@ class FromFilenamePlugin(BeetsPlugin):
         # Iterate through all the filenames
         for index, pair in enumerate(indexes):
             match, item = pair
-            # Substitute the alnum index with an integer
+            # Substitute the album index with an integer
             new_filename = item_filenames[item].replace(
                 match, str(index + 1), 1
             )
@@ -555,7 +566,7 @@ class FromFilenamePlugin(BeetsPlugin):
         ]
         if remaining:
             # If two fields remain, assume artist and album artist
-            if len(remaining) == 2:
+            if 2 <= len(remaining):
                 possible_albumartist = remaining[0]
                 possible_album = remaining[1]
                 # Look for known album artists
@@ -679,6 +690,7 @@ class FromFilenamePlugin(BeetsPlugin):
                     )
 
                     swap_artist_title(tracks)
+        self._log.debug("no need to swap title and artist")
         return
 
     @staticmethod
@@ -726,4 +738,7 @@ class FromFilenamePlugin(BeetsPlugin):
             for item in items:
                 backup = self.backup_items.get(item, {})
                 item.update(backup)
-                del self.backup_items[item]
+                try:
+                    del self.backup_items[item]
+                except KeyError:
+                    self._log.debug(f"item {item.filepath} not in backup data")
