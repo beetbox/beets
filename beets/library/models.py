@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 log = logging.getLogger("beets")
 
-AnyLibModel = TypeVar("AnyLibModel", "Album", "Item")
+AlbumOrItem = TypeVar("AlbumOrItem", "Album", "Item")
 
 
 class LibModel(dbcore.Model["Library"]):

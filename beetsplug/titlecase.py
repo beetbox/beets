@@ -145,7 +145,7 @@ class TitlecasePlugin(BeetsPlugin):
             return preserved_word
         return None
 
-    def received_info_handler(self, info: Info):
+    def received_info_handler(self, info: Info) -> None:
         """Calls titlecase fields for AlbumInfo or TrackInfo
         Processes the tracks field for AlbumInfo
         """

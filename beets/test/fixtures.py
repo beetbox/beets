@@ -6,8 +6,8 @@ exercise metadata registration and model integration.
 
 from typing import ClassVar
 
-from beets.dbcore import sort, types
-from beets.dbcore.db import FormattedMapping, Index
+from beets.dbcore import Index, sort, types
+from beets.dbcore.db import FormattedMapping
 from beets.library import LibModel
 from beets.util import cached_classproperty
 from beets.util.artresizer import IMBackend

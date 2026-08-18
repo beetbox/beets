@@ -23,9 +23,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
 
     from beets.autotag import Info
-    from beets.dbcore.db import Results
-    from beets.library import Library
-    from beets.library.models import Album, Item
+    from beets.importer import ImportSession
+    from beets.library import Album, Item, LibModel, Library
 
     from .api_types import (
         AlbumAttributes,
@@ -92,7 +91,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-    def require_authentication(self) -> None:
+    def require_authentication(self, session: ImportSession) -> None:
         if not os.path.isfile(self._tokenfile()):
             raise UserError(
                 "Please login to TIDAL"
@@ -529,7 +528,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
-        self, results: Results[Item], write: bool, force: bool = False
+        self, results: Sequence[Item], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library items."""
         self._sync_popularity(
@@ -543,7 +542,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def sync_album_popularity(
-        self, results: Results[Album], write: bool, force: bool = False
+        self, results: Sequence[Album], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library albums."""
         self._sync_popularity(
@@ -559,7 +558,7 @@ class TidalPlugin(MetadataSourcePlugin):
     def _sync_popularity(
         self,
         *,
-        results: Results[Item] | Results[Album],
+        results: Sequence[LibModel],
         write: bool,
         force: bool,
         id_field: str,

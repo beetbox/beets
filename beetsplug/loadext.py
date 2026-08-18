@@ -1,13 +1,19 @@
 """Load SQLite extensions."""
 
+from __future__ import annotations
+
 import sqlite3
+from typing import TYPE_CHECKING
 
 from beets.dbcore import Database
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.library import Library
+
 
 class LoadExtPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         if not Database.supports_extensions:
@@ -19,8 +25,8 @@ class LoadExtPlugin(BeetsPlugin):
 
         self.register_listener("library_opened", self.library_opened)
 
-    def library_opened(self, lib):
-        for v in self.config:
+    def library_opened(self, lib: Library) -> None:
+        for v in self.config.sequence():
             ext = v.as_filename()
 
             self._log.debug("loading extension {}", ext)

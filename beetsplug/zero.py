@@ -1,6 +1,9 @@
 """Clears tag fields in media files."""
 
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING, Any
 
 import confuse
 from mediafile import MediaFile
@@ -9,6 +12,11 @@ from beets.importer import Action
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, input_yn
 
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
+
+
 __author__ = "baobab@heresiarch.info"
 
 
@@ -16,7 +24,9 @@ ARTWORK_FIELDS = {"images", "art"}
 
 
 class ZeroPlugin(BeetsPlugin):
-    def __init__(self):
+    fields_to_progs: dict[str, list[re.Pattern[str]]]
+
+    def __init__(self) -> None:
         super().__init__()
 
         self.register_listener("write", self.write_event)
@@ -98,13 +108,17 @@ class ZeroPlugin(BeetsPlugin):
                 # Matches everything
                 self.fields_to_progs[field] = []
 
-    def import_task_choice_event(self, session, task):
+    def import_task_choice_event(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         if task.choice_flag == Action.ASIS and not self.warned:
             self._log.warning('cannot zero in "as-is" mode')
             self.warned = True
         # TODO request write in as-is mode
 
-    def write_event(self, item, path, tags):
+    def write_event(
+        self, item: Item, path: bytes, tags: dict[str, Any]
+    ) -> None:
         if self.config["auto"]:
             self.set_fields(item, tags)
 

@@ -676,7 +676,7 @@ class ImportSessionFixture(ImportSession):
         assert not isinstance(choice, int), f"Invalid choice: {choice}"
         return choice
 
-    choose_item = choose_match  # type: ignore[assignment]
+    choose_item = choose_match  # type: ignore[arg-type, assignment]
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
@@ -712,7 +712,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
         return super().choose_match(task)
 
     def choose_item(
-        self, task: importer.ImportTask
+        self, task: importer.SingletonImportTask
     ) -> TrackMatch | importer.Action:
         self._add_choice_input()
         return super().choose_item(task)

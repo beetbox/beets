@@ -29,7 +29,6 @@ from beets.util import chunks
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.dbcore.db import Results
     from beets.library import Item, Library
     from beets.metadata_plugins import QueryType, SearchParams
     from beetsplug._typing import JSONDict
@@ -185,8 +184,8 @@ class SpotifyPlugin(
 
     def _authenticate(self) -> None:
         """Request an access token via the Client Credentials Flow: https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow"""
-        c_id: str = self.config["client_id"].as_str()
-        c_secret: str = self.config["client_secret"].as_str()
+        c_id = self.config["client_id"].as_str()
+        c_secret = self.config["client_secret"].as_str()
 
         headers = {
             "Authorization": (
@@ -811,11 +810,7 @@ class SpotifyPlugin(
         return features_by_id
 
     def _fetch_info(
-        self,
-        lib: Library,
-        items: Results[Item] | Sequence[Item],
-        write: bool,
-        force: bool,
+        self, lib: Library, items: Sequence[Item], write: bool, force: bool
     ) -> None:
         """Obtain track information from Spotify."""
 

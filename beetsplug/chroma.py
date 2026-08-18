@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
     from beets.autotag import TrackInfo
+    from beets.importer import ImportSession, ImportTask
     from beets.library.models import Item
     from beetsplug.musicbrainz import MusicBrainzPlugin
 
@@ -170,7 +171,7 @@ def _all_releases(items):
 
 
 class AcoustidPlugin(MetadataSourcePlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"auto": True})
         config["acoustid"]["apikey"].redact = True
@@ -200,7 +201,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             )
         return plugin  # type: ignore[return-value]
 
-    def fingerprint_task(self, task, session):
+    def fingerprint_task(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
         return fingerprint_task(self._log, task, session)
 
     def track_distance(self, item, info):
@@ -356,16 +359,15 @@ class AcoustidPlugin(MetadataSourcePlugin):
 # Hooks into import process.
 
 
-def fingerprint_task(log, task, session):
+def fingerprint_task(log, task: ImportTask, session: ImportSession) -> None:
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    items = task.items if task.is_album else [task.item]
-    for item in items:
+    for item in task.items:
         acoustid_match(log, item.path)
 
 
-def apply_acoustid_metadata(task, session):
+def apply_acoustid_metadata(task: ImportTask, session: ImportSession) -> None:
     """Apply Acoustid metadata (fingerprint and ID) to the task's items."""
     for item in task.imported_items():
         if item.path in _fingerprints:
@@ -459,7 +461,7 @@ def fingerprint_item(log, item, write=False, quiet=False):
 
 
 class ScoredItem:
-    def __init__(self, item: Item, score: float):
+    def __init__(self, item: Item, score: float) -> None:
         self.item = item
         self.score = score
 
@@ -482,7 +484,7 @@ class ScoredItem:
 
 
 class TopN:
-    def __init__(self, n: int):
+    def __init__(self, n: int) -> None:
         self.n = n
         self.heap: list[ScoredItem] = []
 
