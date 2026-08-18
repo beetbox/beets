@@ -51,6 +51,8 @@ class GstPlayer:
     another is available on the queue, it is played automatically.
     """
 
+    cached_time: tuple[float, float] | None
+
     def __init__(
         self, finished_callback: Callable[[], None] | None = None
     ) -> None:

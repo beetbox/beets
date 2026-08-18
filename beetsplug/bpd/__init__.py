@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from beets.dbcore.query import FieldQueryType, Query
     from beets.library import Library
     from beets.logging import BeetsLogger as Logger
+    from beetsplug._utils.vfs import Node
 
 
 try:
@@ -210,6 +211,10 @@ class BaseServer:
 
     This is a generic superclass and doesn't support many commands.
     """
+
+    playlist: list[Item]
+    connections: set[MPDConnection]
+    ctrl_sock: socket.socket | None
 
     def __init__(
         self,
@@ -392,7 +397,7 @@ class BaseServer:
         """Succeeds."""
 
     def cmd_idle(self, conn: MPDConnection, *subsystems: str) -> NoReturn:
-        subsystems = subsystems or SUBSYSTEMS
+        subsystems = tuple(subsystems or SUBSYSTEMS)
         for system in subsystems:
             if system not in SUBSYSTEMS:
                 raise BPDError(ERROR_ARG, f"Unrecognised idle event: {system}")
@@ -650,6 +655,22 @@ class BaseServer:
     def cmd_urlhandlers(self, conn: MPDConnection) -> None:
         """Indicates supported URL schemes. None by default."""
 
+    @staticmethod
+    def _parse_range(
+        items: int, accept_single_number: bool = False
+    ) -> list[int] | range:
+        """Convert a range of positions to a list of item info.
+        MPD specifies ranges as START:STOP (endpoint excluded) for some
+        commands. Sometimes a single number can be provided instead.
+        """
+        try:
+            start, stop = str(items).split(":", 1)
+        except ValueError:
+            if accept_single_number:
+                return [cast_arg(int, items)]
+            raise BPDError(ERROR_ARG, "bad range syntax")
+        return range(cast_arg(int, start), cast_arg(int, stop))
+
     def cmd_playlistinfo(
         self, conn: MPDConnection, index: int | None = None
     ) -> Iterator[Any]:
@@ -702,7 +723,7 @@ class BaseServer:
             track = self.playlist[self.current_index]
             yield self._item_info(track)
 
-    def cmd_next(self, conn: MPDConnection) -> None:
+    def cmd_next(self, conn: MPDConnection | None) -> None:
         """Advance to the next song in the playlist."""
         old_index = self.current_index
         self.current_index = self._succ_idx()
@@ -744,7 +765,7 @@ class BaseServer:
             self.paused = cast_arg("intbool", state)
         self._send_event("player")
 
-    def cmd_play(self, conn: MPDConnection, index: int = -1) -> None:
+    def cmd_play(self, conn: MPDConnection | None, index: int = -1) -> None:
         """Begin playback, possibly at a specified playlist index."""
         index = cast_arg(int, index)
 
@@ -773,7 +794,7 @@ class BaseServer:
             index = self._id_to_index(track_id)
         return self.cmd_play(conn, index)
 
-    def cmd_stop(self, conn: MPDConnection) -> None:
+    def cmd_stop(self, conn: MPDConnection | None) -> None:
         """Stop playback."""
         self.current_index = -1
         self.paused = False
@@ -862,6 +883,9 @@ class Connection:
 class MPDConnection(Connection):
     """A connection that receives commands from an MPD-compatible client."""
 
+    notifications: set[str]
+    idle_subscriptions: set[str]
+
     def __init__(
         self,
         server: BaseServer,
@@ -917,17 +941,17 @@ class MPDConnection(Connection):
 
         clist = None  # Initially, no command list is being constructed.
         while True:
-            line = await self.reader.readline()
-            if not line:
+            bytes_line = await self.reader.readline()
+            if not bytes_line:
                 self.disconnect()  # Client disappeared.
                 break
-            line = line.strip()
-            if not line:
+            bytes_line = bytes_line.strip()
+            if not bytes_line:
                 err = BPDError(ERROR_UNKNOWN, "No command given")
                 await self.send(err.response())
                 self.disconnect()  # Client sent a blank line.
                 break
-            line = line.decode("utf8")  # MPD protocol uses UTF-8.
+            line = bytes_line.decode("utf8")  # MPD protocol uses UTF-8.
             for line in line.split(NEWLINE):
                 self.debug(line, kind="<")
 
@@ -993,13 +1017,13 @@ class ControlConnection(Connection):
         """Listen for control commands and delegate to `ctrl_*` methods."""
         self.debug("connected", kind="*")
         while True:
-            line = await self.reader.readline()
-            if not line:
+            bytes_line = await self.reader.readline()
+            if not bytes_line:
                 break  # Client disappeared.
-            line = line.strip()
-            if not line:
+            bytes_line = bytes_line.strip()
+            if not bytes_line:
                 break  # Client sent a blank line.
-            line = line.decode("utf8")  # Protocol uses UTF-8.
+            line = bytes_line.decode("utf8")  # Protocol uses UTF-8.
             for line in line.split(NEWLINE):
                 self.debug(line, kind="<")
             command = Command(line)
@@ -1037,18 +1061,20 @@ class ControlConnection(Connection):
 class Command:
     """A command issued by the client for processing by the server."""
 
-    command_re = re.compile(r"^([^ \t]+)[ \t]*")
     arg_re = re.compile(r'"((?:\\"|[^"])+)"|([^ \t"]+)')
 
     def __init__(self, s: str) -> None:
         """Creates a new `Command` from the given string, `s`, parsing
         the string for command name and arguments.
         """
-        command_match = self.command_re.match(s)
-        self.name = command_match.group(1)
+        try:
+            self.name, args = s.split(maxsplit=1)
+        except ValueError:
+            self.name = s
+            args = ""
 
         self.args = []
-        arg_matches = self.arg_re.findall(s[command_match.end() :])
+        arg_matches = self.arg_re.findall(args)
         for match in arg_matches:
             if match[0]:
                 # Quoted argument.
@@ -1219,7 +1245,7 @@ class Server(BaseServer):
         ]
 
         try:
-            pos = self._id_to_index(item.id)
+            pos = self._id_to_index(item.id)  # type: ignore[arg-type]
             info_lines.append(f"Pos: {pos}")
         except ArgumentNotFoundError:
             # Don't include position if not in playlist.
@@ -1232,23 +1258,6 @@ class Server(BaseServer):
             info_lines.append(f"{tagtype}: {field_value}")
 
         return info_lines
-
-    def _parse_range(
-        self, items: int, accept_single_number: bool = False
-    ) -> list[int] | range:
-        """Convert a range of positions to a list of item info.
-        MPD specifies ranges as START:STOP (endpoint excluded) for some
-        commands. Sometimes a single number can be provided instead.
-        """
-        try:
-            start, stop = str(items).split(":", 1)
-        except ValueError:
-            if accept_single_number:
-                return [cast_arg(int, items)]
-            raise BPDError(ERROR_ARG, "bad range syntax")
-        start = cast_arg(int, start)
-        stop = cast_arg(int, stop)
-        return range(start, stop)
 
     def _item_id(self, item: Item) -> int | None:
         return item.id
@@ -1273,7 +1282,7 @@ class Server(BaseServer):
         If the path does not exist, raises a
         """
         components = path.split("/")
-        node = self.tree
+        node: Node | int = self.tree
 
         for component in components:
             if not component:
@@ -1303,10 +1312,10 @@ class Server(BaseServer):
         if isinstance(node, int):
             # Trying to list a track.
             raise BPDError(ERROR_ARG, "this is not a directory")
-        else:
+        elif node:
             for name, itemid in iter(sorted(node.files.items())):
-                item = self.lib.get_item(itemid)
-                yield self._item_info(item)
+                if item := self.lib.get_item(itemid):
+                    yield self._item_info(item)
             for name, _ in iter(sorted(node.dirs.items())):
                 dirpath = self._path_join(path, name)
                 if dirpath.startswith("/"):
@@ -1315,7 +1324,7 @@ class Server(BaseServer):
                 yield f"directory: {dirpath}"
 
     def _listall(
-        self, basepath: str, node: vfs.Node | int, info: bool = False
+        self, basepath: str, node: vfs.Node | int | None, info: bool = False
     ) -> Iterator[Any]:
         """Helper function for recursive listing. If info, show
         tracks' complete info; otherwise, just show items' paths.
@@ -1323,11 +1332,11 @@ class Server(BaseServer):
         if isinstance(node, int):
             # List a single file.
             if info:
-                item = self.lib.get_item(node)
-                yield self._item_info(item)
+                if item := self.lib.get_item(node):
+                    yield self._item_info(item)
             else:
                 yield f"file: {basepath}"
-        else:
+        elif node:
             # List a directory. Recurse into both directories and files.
             for name, itemid in sorted(node.files.items()):
                 newpath = self._path_join(basepath, name)
@@ -1352,13 +1361,14 @@ class Server(BaseServer):
 
     # Playlist manipulation.
 
-    def _all_items(self, node: vfs.Node | int) -> Iterator[Item]:
+    def _all_items(self, node: vfs.Node | int | None) -> Iterator[Item]:
         """Generator yielding all items under a VFS node."""
         if isinstance(node, int):
             # Could be more efficient if we built up all the IDs and
             # then issued a single SELECT.
-            yield self.lib.get_item(node)  # type: ignore[misc]
-        else:
+            if item := self.lib.get_item(node):
+                yield item
+        elif node:
             # Recurse into a directory.
             for name, itemid in sorted(node.files.items()):
                 # "yield from"
@@ -1503,7 +1513,7 @@ class Server(BaseServer):
                     if allow_any_query:
                         queries.append(
                             Item.any_writable_media_field_query(
-                                query_type, value
+                                value, query_type
                             )
                         )
                     else:
@@ -1652,7 +1662,7 @@ class Server(BaseServer):
     # half-implementations provided by the base class. Together, they're
     # enough to implement all normal playback functionality.
 
-    def cmd_play(self, conn: MPDConnection, index: int = -1) -> None:
+    def cmd_play(self, conn: MPDConnection | None, index: int = -1) -> None:
         new_index = index != -1 and index != self.current_index
         was_paused = self.paused
         super().cmd_play(conn, index)
@@ -1671,7 +1681,7 @@ class Server(BaseServer):
         elif self.player.playing:
             self.player.play()
 
-    def cmd_stop(self, conn: MPDConnection) -> None:
+    def cmd_stop(self, conn: MPDConnection | None) -> None:
         super().cmd_stop(conn)
         self.player.stop()
 
