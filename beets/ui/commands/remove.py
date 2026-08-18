@@ -23,7 +23,8 @@ class RemoveCLIOpts(Protocol):
 def remove_objects(
     objs: Sequence[AlbumOrItem],
     fmt_obj: Callable[[str, AlbumOrItem], None],
-    suffix: str,
+    file_count: int,
+    album_str: str,
     lib: Library,
     opts: RemoveCLIOpts,
 ) -> None:
@@ -34,15 +35,19 @@ def remove_objects(
     if opts.force:
         selected_objs = objs
     else:
+        file_suffix = "s" if file_count > 1 else ""
         if opts.delete:
             fmt = "$path - $title"
             prompt = "Really DELETE"
-            prompt_all = f"Really DELETE {len(objs)} file{suffix}"
+            prompt_all = (
+                f"Really DELETE {file_count} file{file_suffix}{album_str}"
+            )
         else:
             fmt = ""
             prompt = "Really remove from the library?"
             prompt_all = (
-                f"Really remove {len(objs)} item{suffix} from the library?"
+                f"Really remove {file_count} item{file_suffix}{album_str} "
+                "from the library?"
             )
 
         _fmt = partial(fmt_obj, fmt)
@@ -80,9 +85,9 @@ def remove_items(
 ) -> None:
     """Remove items matching query from lib."""
     items = list(lib.items(query))
-    suffix = "s" if len(items) > 1 else ""
+    album_str = ""
 
-    remove_objects(items, fmt_item, suffix, lib, opts=opts)
+    remove_objects(items, fmt_item, len(items), album_str, lib, opts=opts)
 
 
 def remove_albums(
@@ -91,10 +96,9 @@ def remove_albums(
     """Remove albums matching query from lib."""
     albums = list(lib.albums(query))
     items = [i for a in albums for i in a.items()]
-    suffix = "s" if len(items) > 1 else ""
-    album_str = f" in {len(albums)} album{'s' if len(albums) > 1 else ''}"
+    album_str = f" and {len(albums)} album{'s' if len(albums) > 1 else ''}"
 
-    remove_objects(albums, fmt_album, f"{suffix}{album_str}", lib, opts=opts)
+    remove_objects(albums, fmt_album, len(items), album_str, lib, opts=opts)
 
 
 def remove_func(lib: Library, opts: RemoveCLIOpts, args: list[str]) -> None:
