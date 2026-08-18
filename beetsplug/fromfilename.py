@@ -299,7 +299,7 @@ class FromFilenamePlugin(BeetsPlugin):
 
     def fromfilename_toggle(
         self, session: ImportSession, task: ImportTask | SingletonImportTask
-    ) -> Proposal | None:
+    ) -> Proposal:
         """
         Restore any backup data, get new proposals from the un-altered data.
         """
@@ -320,14 +320,12 @@ class FromFilenamePlugin(BeetsPlugin):
                 search_artist=item.get("artist"),
                 search_name=item.get("album"),
             )
-        if isinstance(task, SingletonImportTask):
-            item = task.items[0]
-            return tag_item(
-                source=Source.from_items(task.items),
-                search_artist=item.get("artist"),
-                search_name=item.get("album"),
-            )
-        return None
+        item = task.items[0]
+        return tag_item(
+            source=Source.from_items(task.items),
+            search_artist=item.get("artist"),
+            search_name=item.get("album"),
+        )
 
     def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
         """
@@ -342,10 +340,7 @@ class FromFilenamePlugin(BeetsPlugin):
         good with a simple `del` statement
         """
         for item in task.items:
-            try:
-                del self.backup_items[item]
-            except KeyError:
-                continue
+            del self.backup_items[item]
 
     def _has_bad_fields(self, items: list[Item], fields: list[str]) -> bool:
         """Look for what fields are missing data on the items.
