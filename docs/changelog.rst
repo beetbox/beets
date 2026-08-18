@@ -76,6 +76,8 @@ Bug fixes
   object has no attribute 'splitlines'``. During an import this aborted the
   whole run rather than a single track. A null ``plainLyrics`` now also falls
   back to the synced lyrics instead of discarding them.
+- :ref:`modify-cmd`: Fix applying changes when choosing objects in interactive
+  select mode. :bug:`4880`
 
 ..
     For plugin developers
