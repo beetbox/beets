@@ -187,16 +187,20 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         :param track_data: Deezer Track object dict
         """
-        artist, artist_id = self.get_artist(
-            track_data.get("contributors", [track_data["artist"]])
-        )
+        contributors = track_data.get("contributors")
+        if contributors is None and (artist_data := track_data.get("artist")):
+            contributors = [artist_data]
+        if contributors is not None:
+            artist, artist_id = self.get_artist(contributors)
+        else:
+            artist, artist_id = None, None
         return TrackInfo(
             title=track_data["title"],
             track_id=track_data["id"],
             deezer_track_id=track_data["id"],
             isrc=track_data.get("isrc"),
             artist=artist,
-            artist_id=str(artist_id),
+            artist_id=str(artist_id) if artist_id is not None else None,
             length=track_data["duration"],
             index=track_data.get("track_position"),
             medium=track_data.get("disk_number"),

@@ -1318,6 +1318,16 @@ def bitrate_overrides(bitrates_by_title):
 DUP_KEYS = ["artist", "title"]
 
 
+def test_duplicate_action_prompt_options():
+    assert importer.DuplicateAction.strict_options() == [
+        "Skip new",
+        "Merge all",
+        "Remove old",
+        "Keep all",
+        "Upgrade",
+    ]
+
+
 class ResolveUpgradeTest(unittest.TestCase):
     """Unit tests for `resolve_upgrade`, the per-track decision
     algorithm behind `duplicate_action: upgrade`.

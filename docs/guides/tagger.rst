@@ -232,10 +232,10 @@ one you're importing, you may see a prompt like this:
 ::
 
     This album is already in the library!
-    [S]kip new, Keep all, Remove old, Merge all?
+    [S]kip new, Merge all, Remove old, Keep all, Upgrade?
 
 Beets wants to keep you safe from duplicates, which can be a real pain, so you
-have four choices in this situation. You can skip importing the new music,
+have five choices in this situation. You can skip importing the new music,
 choosing to keep the stuff you already have in your library; you can keep both
 the old and the new music; you can remove the existing music and choose the new
 stuff; or you can merge all the new and old tracks into a single album. If you
@@ -248,6 +248,11 @@ as one bundle together. This is particularly helpful when you have an album
 that's missing some tracks and then want to import the remaining songs. The
 importer will ask you the same questions as it would if you were importing all
 tracks at once.
+
+If you choose "upgrade", beets compares each new track with its existing
+counterpart and replaces the old track only when the new one has a higher
+bitrate. New tracks without an existing counterpart are still added, while the
+rest of the existing album remains untouched.
 
 If you choose to keep two identically-named albums, beets can avoid storing both
 in the same directory. See :ref:`aunique` for details.

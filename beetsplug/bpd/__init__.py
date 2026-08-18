@@ -3,6 +3,9 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
+from __future__ import annotations
+
+import asyncio
 import inspect
 import math
 import random
@@ -20,7 +23,7 @@ from beets import dbcore
 from beets.exceptions import UserError
 from beets.library import Item
 from beets.plugins import BeetsPlugin
-from beets.util import as_string, bluelet
+from beets.util import as_string
 from beetsplug._utils import vfs
 
 if TYPE_CHECKING:
@@ -220,6 +223,7 @@ class BaseServer:
 
         # Current connections
         self.connections = set()
+        self._notification_tasks: dict[MPDConnection, asyncio.Task[None]] = {}
 
         # Object for random numbers generation
         self.random_obj = random.Random()
@@ -230,34 +234,60 @@ class BaseServer:
 
     def disconnect(self, conn):
         """Client has disconnected; clean up residual state."""
-        self.connections.remove(conn)
+        self.connections.discard(conn)
 
     def run(self):
         """Block and start listening for connections from clients. An
         interrupt (^C) closes the server.
         """
+        asyncio.run(self._run())
+
+    async def _run(self) -> None:
+        """Serve MPD and control connections in one event loop."""
         self.startup_time = time.time()
 
-        def start():
-            yield bluelet.spawn(
-                bluelet.server(
-                    self.ctrl_host,
-                    self.ctrl_port,
-                    ControlConnection.handler(self),
+        async with await asyncio.start_server(
+            ControlConnection.handler(self),
+            self.ctrl_host,
+            self.ctrl_port,
+            family=socket.AF_INET,
+        ) as control_server:
+            async with await asyncio.start_server(
+                MPDConnection.handler(self),
+                self.host,
+                self.port,
+                family=socket.AF_INET,
+            ) as mpd_server:
+                await asyncio.gather(
+                    control_server.serve_forever(), mpd_server.serve_forever()
                 )
-            )
-            yield bluelet.server(
-                self.host, self.port, MPDConnection.handler(self)
-            )
 
-        bluelet.run(start())
-
-    def dispatch_events(self):
+    def dispatch_events(self) -> None:
         """If any clients have idle events ready, send them."""
         # We need a copy of `self.connections` here since clients might
         # disconnect once we try and send to them, changing `self.connections`.
         for conn in list(self.connections):
-            yield bluelet.spawn(conn.send_notifications())
+            self._dispatch_connection_events(conn)
+
+    def _dispatch_connection_events(self, conn) -> None:
+        """Start sending queued events unless this connection is busy."""
+        if conn in self._notification_tasks:
+            return
+        task = asyncio.create_task(conn.send_notifications())
+        self._notification_tasks[conn] = task
+        task.add_done_callback(lambda task: self._notification_done(conn, task))
+
+    def _notification_done(self, conn, task) -> None:
+        """Release a connection after its queued events have been sent."""
+        del self._notification_tasks[conn]
+        if task.cancelled():
+            return
+        if error := task.exception():
+            self._log.error("Could not send BPD notifications: {}", error)
+            return
+        pending = conn.notifications.intersection(conn.idle_subscriptions)
+        if conn in self.connections and pending:
+            self._dispatch_connection_events(conn)
 
     def _ctrl_send(self, message):
         """Send some data over the control socket.
@@ -738,39 +768,46 @@ class BaseServer:
 class Connection:
     """A connection between a client and the server."""
 
-    def __init__(self, server, sock):
-        """Create a new connection for the accepted socket `client`."""
+    def __init__(self, server, reader, writer):
+        """Create a new connection for the accepted client streams."""
         self.server = server
-        self.sock = sock
-        self.address = ":".join(map(str, sock.sock.getpeername()))
+        self.reader = reader
+        self.writer = writer
+        peername = writer.get_extra_info("peername")
+        self.address = ":".join(map(str, peername)) if peername else "<unknown>"
 
     def debug(self, message, kind=" "):
         """Log a debug message about this connection."""
         self.server._log.debug("{}[{.address}]: {}", kind, self, message)
 
-    def run(self):
-        pass
+    async def run(self) -> None:
+        raise NotImplementedError
 
-    def send(self, lines):
-        """Send lines, which which is either a single string or an
+    async def send(self, lines) -> None:
+        """Send lines, which is either a single string or an
         iterable consisting of strings, to the client. A newline is
-        added after every string. Returns a Bluelet event that sends
-        the data.
+        added after every string.
         """
         if isinstance(lines, str):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
         for line in out.split(NEWLINE)[:-1]:
             self.debug(line, kind=">")
-        if isinstance(out, str):
-            out = out.encode("utf-8")
-        return self.sock.sendall(out)
+        self.writer.write(out.encode("utf-8"))
+        await self.writer.drain()
 
     @classmethod
     def handler(cls, server):
-        def _handle(sock):
+        async def _handle(reader, writer):
             """Creates a new `Connection` and runs it."""
-            return cls(server, sock).run()
+            try:
+                await cls(server, reader, writer).run()
+            finally:
+                writer.close()
+                try:
+                    await writer.wait_closed()
+                except ConnectionError:
+                    pass
 
         return _handle
 
@@ -778,24 +815,23 @@ class Connection:
 class MPDConnection(Connection):
     """A connection that receives commands from an MPD-compatible client."""
 
-    def __init__(self, server, sock):
+    def __init__(self, server, reader, writer):
         """Create a new connection for the accepted socket `client`."""
-        super().__init__(server, sock)
+        super().__init__(server, reader, writer)
         self.authenticated = False
         self.notifications = set()
         self.idle_subscriptions = set()
 
-    def do_command(self, command):
-        """A coroutine that runs the given command and sends an
-        appropriate response."""
+    async def do_command(self, command) -> None:
+        """Run the given command and send an appropriate response."""
         try:
-            yield bluelet.call(command.run(self))
+            await command.run(self)
         except BPDError as e:
             # Send the error.
-            yield self.send(e.response())
+            await self.send(e.response())
         else:
             # Send success code.
-            yield self.send(RESP_OK)
+            await self.send(RESP_OK)
 
     def disconnect(self):
         """The connection has closed for any reason."""
@@ -806,37 +842,37 @@ class MPDConnection(Connection):
         """Queue up an event for sending to this client."""
         self.notifications.add(event)
 
-    def send_notifications(self, force_close_idle=False):
+    async def send_notifications(self, force_close_idle=False) -> None:
         """Send the client any queued events now."""
         pending = self.notifications.intersection(self.idle_subscriptions)
         try:
             for event in pending:
-                yield self.send(f"changed: {event}")
+                await self.send(f"changed: {event}")
             if pending or force_close_idle:
                 self.idle_subscriptions = set()
                 self.notifications = self.notifications.difference(pending)
-                yield self.send(RESP_OK)
-        except bluelet.SocketClosedError:
+                await self.send(RESP_OK)
+        except ConnectionError:
             self.disconnect()  # Client disappeared.
 
-    def run(self):
+    async def run(self) -> None:
         """Send a greeting to the client and begin processing commands
         as they arrive.
         """
         self.debug("connected", kind="*")
         self.server.connect(self)
-        yield self.send(HELLO)
+        await self.send(HELLO)
 
         clist = None  # Initially, no command list is being constructed.
         while True:
-            line = yield self.sock.readline()
+            line = await self.reader.readline()
             if not line:
                 self.disconnect()  # Client disappeared.
                 break
             line = line.strip()
             if not line:
                 err = BPDError(ERROR_UNKNOWN, "No command given")
-                yield self.send(err.response())
+                await self.send(err.response())
                 self.disconnect()  # Client sent a blank line.
                 break
             line = line.decode("utf8")  # MPD protocol uses UTF-8.
@@ -846,12 +882,13 @@ class MPDConnection(Connection):
             if self.idle_subscriptions:
                 # The connection is in idle mode.
                 if line == "noidle":
-                    yield bluelet.call(self.send_notifications(True))
+                    await self.send_notifications(True)
                 else:
                     err = BPDError(
                         ERROR_UNKNOWN, f"Got command while idle: {line}"
                     )
-                    yield self.send(err.response())
+                    await self.send(err.response())
+                    self.disconnect()
                     break
                 continue
             if line == "noidle":
@@ -861,9 +898,9 @@ class MPDConnection(Connection):
             if clist is not None:
                 # Command list already opened.
                 if line == CLIST_END:
-                    yield bluelet.call(self.do_command(clist))
+                    await self.do_command(clist)
                     clist = None  # Clear the command list.
-                    yield bluelet.call(self.server.dispatch_events())
+                    self.server.dispatch_events()
                 else:
                     clist.append(Command(line))
 
@@ -874,33 +911,32 @@ class MPDConnection(Connection):
             else:
                 # Ordinary command.
                 try:
-                    yield bluelet.call(self.do_command(Command(line)))
+                    await self.do_command(Command(line))
                 except BPDCloseError:
                     # Command indicates that the conn should close.
-                    self.sock.close()
                     self.disconnect()  # Client explicitly closed.
                     return
                 except BPDIdleError as e:
                     self.idle_subscriptions = e.subsystems
                     self.debug(f"awaiting: {' '.join(e.subsystems)}", kind="z")
-                yield bluelet.call(self.server.dispatch_events())
+                self.server.dispatch_events()
 
 
 class ControlConnection(Connection):
     """A connection used to control BPD for debugging and internal events."""
 
-    def __init__(self, server, sock):
+    def __init__(self, server, reader, writer):
         """Create a new connection for the accepted socket `client`."""
-        super().__init__(server, sock)
+        super().__init__(server, reader, writer)
 
     def debug(self, message, kind=" "):
         self.server._log.debug("CTRL {}[{.address}]: {}", kind, self, message)
 
-    def run(self):
+    async def run(self) -> None:
         """Listen for control commands and delegate to `ctrl_*` methods."""
         self.debug("connected", kind="*")
         while True:
-            line = yield self.sock.readline()
+            line = await self.reader.readline()
             if not line:
                 break  # Client disappeared.
             line = line.strip()
@@ -912,33 +948,33 @@ class ControlConnection(Connection):
             command = Command(line)
             try:
                 func = command.delegate("ctrl_", self)
-                yield bluelet.call(func(*command.args))
+                await func(*command.args)
             except (AttributeError, TypeError) as e:
-                yield self.send(f"ERROR: {e.args[0]}")
+                await self.send(f"ERROR: {e.args[0]}")
             except Exception:
-                yield self.send(
+                await self.send(
                     ["ERROR: server error", traceback.format_exc().rstrip()]
                 )
 
-    def ctrl_play_finished(self):
+    async def ctrl_play_finished(self) -> None:
         """Callback from the player signalling a song finished playing."""
-        yield bluelet.call(self.server.dispatch_events())
+        self.server.dispatch_events()
 
-    def ctrl_profile(self):
+    async def ctrl_profile(self) -> None:
         """Memory profiling for debugging."""
         from guppy import hpy
 
         heap = hpy().heap()
-        yield self.send(heap)
+        await self.send(str(heap))
 
-    def ctrl_nickname(self, oldlabel, newlabel):
+    async def ctrl_nickname(self, oldlabel, newlabel) -> None:
         """Rename a client in the log messages."""
         for c in self.server.connections:
             if c.address == oldlabel:
                 c.address = newlabel
                 break
         else:
-            yield self.send(f"ERROR: no such client: {oldlabel}")
+            await self.send(f"ERROR: no such client: {oldlabel}")
 
 
 class Command:
@@ -997,10 +1033,8 @@ class Command:
 
         return func
 
-    def run(self, conn):
-        """A coroutine that executes the command on the given
-        connection.
-        """
+    async def run(self, conn) -> None:
+        """Execute the command on the given connection."""
         try:
             # `conn` is an extra argument to all cmd handlers.
             func = self.delegate("cmd_", conn.server, extra_args=1)
@@ -1022,13 +1056,13 @@ class Command:
             results = func(*args)
             if results:
                 for data in results:
-                    yield conn.send(data)
+                    await conn.send(data)
 
         except BPDError as e:
             # An exposed error. Set the command name and then let
             # the Connection handle it.
             e.cmd_name = self.name
-            raise e
+            raise
 
         except BPDCloseError:
             # An indication that the connection should close. Send
@@ -1059,20 +1093,20 @@ class CommandList(list[Command]):
                 self.append(item)
         self.verbose = verbose
 
-    def run(self, conn):
-        """Coroutine executing all the commands in this list."""
+    async def run(self, conn) -> None:
+        """Execute all the commands in this list."""
         for i, command in enumerate(self):
             try:
-                yield bluelet.call(command.run(conn))
+                await command.run(conn)
             except BPDError as e:
                 # If the command failed, stop executing.
                 e.index = i  # Give the error the correct index.
-                raise e
+                raise
 
             # Otherwise, possibly send the output delimiter if we're in a
             # verbose ("OK") command list.
             if self.verbose:
-                yield conn.send(RESP_CLIST_VERBOSE)
+                await conn.send(RESP_CLIST_VERBOSE)
 
 
 # A subclass of the basic, protocol-handling server that actually plays

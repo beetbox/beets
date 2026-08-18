@@ -14,7 +14,9 @@ New features
 
 - :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
   duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
-  new tracks, and keeps the album together rather than splitting it. :bug:`4471`
+  new tracks, and keeps the album together rather than splitting it. The option
+  is available both through configuration and from the interactive duplicate
+  prompt. :bug:`4471`
 
 Bug fixes
 ~~~~~~~~~
@@ -50,14 +52,31 @@ Bug fixes
   relevance order and truncated to ``search_limit``. For artists with more
   releases than that window, the track being imported was never among the
   candidates offered.
+- :doc:`plugins/tidal`: The ``label`` field no longer stores Tidal's raw
+  copyright/rights-statement text verbatim. It's now normalized to a concise
+  label name, stripping copyright markers, years, and corporate, licensing, and
+  territorial boilerplate. Affects both album and track metadata. :bug:`6796`
+- :doc:`plugins/deezer`: Track conversion no longer assumes the API sends both
+  ``contributors`` and ``artist``. The fallback to ``artist`` was evaluated even
+  when ``contributors`` was present, so a track payload without ``artist``
+  raised ``KeyError``. Albums were already guarded; this fixes the remaining
+  call site. :bug:`4339`
+- :doc:`plugins/discogs`: Retry a search once when Discogs returns an invalid
+  JSON response instead of immediately discarding all Discogs candidates.
+- Plugins built on ``SearchApiMetadataSourcePlugin``
+  (:doc:`plugins/musicbrainz`, :doc:`plugins/spotify`, :doc:`plugins/deezer` and
+  :doc:`plugins/discogs`) no longer send a search request when both the query
+  text and the filters are empty. :bug:`6862`
 
 ..
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/bpd`: Replace the bundled Bluelet scheduler with Python's
+  standard ``asyncio`` event loop.
 
 2.13.1 (July 29, 2026)
 ----------------------
