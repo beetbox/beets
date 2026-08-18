@@ -283,3 +283,19 @@ e9021e17e9f14af8b4805ce1ec7f32843ada7970
 dcc1fd0e4a3e7137d126f224d8f5d9911291652e
 # typing: add types to event handlers
 5039c8f6cff474bec54b2106dd7c7d0cd39878f2
+# typing: make dbcore.db.Results a Sequence
+9adcb601f86b8758cb179ac5d39ca4857846cb27
+# typing: add types to embedart
+26713de0d64b8412ac922d0402929504f6f3c6c7
+# typing: add types to beetsplug._utils.art
+6acef1d5864716300f2c4add4e19cc6e737cce46
+# typing: add types to beets.ui.import_
+2a9786aad7bc8114276e1fda2a3d141abf2608f3
+# typing: add types to beets.util.functemplate
+d8fc064e9c3b428ee6aad5f50d34dc66aba742f2
+# typing: remove redundant types
+f37306b0cc17f17291ea5010178f190a95b29fd5
+# Prefer imports from modules that provide import aliases
+27900f58fbeba06483b77c677045ad1df8e9af45
+# typing: rename AnyLibModel -> AlbumOrItem
+33a01fe0b37942a38c8b88d0fc8167edd02ca81b

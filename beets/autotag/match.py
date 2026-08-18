@@ -352,7 +352,7 @@ def _add_candidate(
         return
 
     # Discard matches without required tags.
-    required_tags: Sequence[str] = config["match"]["required"].as_str_seq()
+    required_tags = config["match"]["required"].as_str_seq()
     for req_tag in required_tags:
         if getattr(info, req_tag) is None:
             log.debug("Ignored. Missing required tag: {}", req_tag)
@@ -368,7 +368,7 @@ def _add_candidate(
 
     # Skip matches with ignored penalties.
     penalties = [key for key, _ in dist]
-    ignored_tags: Sequence[str] = config["match"]["ignored"].as_str_seq()
+    ignored_tags = config["match"]["ignored"].as_str_seq()
     for penalty in ignored_tags:
         if penalty in penalties:
             log.debug("Ignored. Penalty: {}", penalty)

@@ -9,18 +9,15 @@ from pathlib import Path
 import pytest
 
 from beets import util
-from beets.dbcore import types
+from beets.dbcore import AndQuery, MatchQuery, OrQuery, types
 from beets.dbcore.query import (
-    AndQuery,
     BooleanQuery,
     DateQuery,
     FalseQuery,
     InQuery,
-    MatchQuery,
     NoneQuery,
     NotQuery,
     NumericQuery,
-    OrQuery,
     ParsingError,
     PathQuery,
     RegexpQuery,

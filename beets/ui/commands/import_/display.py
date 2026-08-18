@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     import confuse
 
     from beets.autotag import AlbumMatch, Match, Source, TrackMatch
-    from beets.library.models import Item
+    from beets.library import Item
     from beets.util.color import ColorName
 
 VARIOUS_ARTISTS = "Various Artists"

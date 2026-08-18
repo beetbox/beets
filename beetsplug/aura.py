@@ -19,7 +19,8 @@ from flask import (
 from typing_extensions import Self
 
 from beets import config
-from beets.dbcore.query import AndQuery, MatchQuery, NotQuery, RegexpQuery
+from beets.dbcore import AndQuery, MatchQuery
+from beets.dbcore.query import NotQuery, RegexpQuery
 from beets.dbcore.sort import FixedFieldSort, MultipleSort, SlowFieldSort
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
