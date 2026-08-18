@@ -315,17 +315,17 @@ class FromFilenamePlugin(BeetsPlugin):
         if task.is_album:
             item = task.items[0]
             _, _, prop = tag_album(
-                    items=task.items,
-                    search_artist=item.get("artist"),
-                    search_name=item.get("album")
+                items=task.items,
+                search_artist=item.get("artist"),
+                search_name=item.get("album"),
             )
             return prop
         if isinstance(task, SingletonImportTask):
             item = task.item
             return tag_item(
-                    item=task.item,
-                    search_artist=item.get("artist"),
-                    search_name=item.get("album")
+                item=task.item,
+                search_artist=item.get("artist"),
+                search_name=item.get("album"),
             )
         return None
 
@@ -468,7 +468,8 @@ class FromFilenamePlugin(BeetsPlugin):
         # Remaining text used for album, albumartist
         album, albumartist = self._parse_album_and_albumartist(text)
         self._log.debug(
-            "possible_album={}, possible_albumartist={}", album, albumartist)
+            "possible_album={}, possible_albumartist={}", album, albumartist
+        )
         matches["album"] = album
         matches["albumartist"] = albumartist
         if len(items):
