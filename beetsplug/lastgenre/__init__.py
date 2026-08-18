@@ -39,8 +39,8 @@ if TYPE_CHECKING:
     """Set of valid genre names (lowercase). Empty set means all genres allowed."""
 
     CanonTree = list[list[str]]
-    """Genre hierarchy as list of paths from general to specific.
-    Example: [['electronic', 'house'], ['electronic', 'techno']]"""
+    #: Genre hierarchy as list of paths from general to specific.
+    #: Example: [['electronic', 'house'], ['electronic', 'techno']]
 
     GenresWithLabel = tuple[list[str], str]
     #: A pair of ``(genre list, label)`` returned by a genre resolution stage.
