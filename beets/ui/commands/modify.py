@@ -98,9 +98,7 @@ def modify_objects(
             extra = ""
 
         selected_changes = ui.input_select_objects(
-            f"Really modify{extra}",
-            changed,
-            lambda o: print_and_modify(o, mods, dels),
+            f"Really modify{extra}", changed, ui.show_model_changes
         )
     else:
         selected_changes = changed

@@ -69,6 +69,8 @@ Bug fixes
   text and the filters are empty. :bug:`6862`
 - :doc:`plugins/ipfs`: Fix ``beet ipfs --play`` option to invoke the Play plugin
   through its command interface.
+- :ref:`modify-cmd`: Fix applying changes when choosing objects in interactive
+  select mode. :bug:`4880`
 
 ..
     For plugin developers
