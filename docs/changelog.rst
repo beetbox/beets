@@ -9,9 +9,12 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
+  before whitelist filtering, while preserving existing genres regardless of the
+  configured count. :bug:`6890`
 
 Bug fixes
 ~~~~~~~~~
