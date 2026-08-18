@@ -17,6 +17,9 @@ New features
   tracks on different discs). It has the same arguments as :ref:`%aunique
   <aunique>`; the default identifiers are ``title`` and the default
   disambiguators are ``track disc artist``.
+- :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
+  before whitelist filtering, while preserving existing genres regardless of the
+  configured count. :bug:`6890`
 
 Bug fixes
 ~~~~~~~~~
