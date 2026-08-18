@@ -518,6 +518,49 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 return resolved
         return None
 
+    def _try_resolve_album_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Try to resolve album genres for an Item or Album object.
+
+        Fall back to multi-valued albumartists if no genre is found for the
+        main albumartist.
+        """
+        new_genres = self.client.fetch("album", obj)
+
+        if new_genres and (
+            resolved := self._try_resolve_stage(
+                "album", keep_genres, new_genres, artist=obj.albumartist
+            )
+        ):
+            return resolved
+
+        if not new_genres and obj.albumartist != config["va_name"].as_str():
+            self._log.extra_debug(
+                'No album genre found for "{}", '
+                "trying multi-valued albumartists field...",
+                obj.albumartist,
+            )
+            multi_album_genres = []
+            for albumartist in obj.albumartists:
+                self._log.extra_debug(
+                    'Fetching album genre for "{}"', albumartist
+                )
+                multi_album_genres += self.client.fetch(
+                    "album", obj, albumartist, obj.album
+                )
+            if multi_album_genres and (
+                resolved := self._try_resolve_stage(
+                    "multi-valued albumartist album",
+                    keep_genres,
+                    multi_album_genres,
+                    artist=None,
+                )
+            ):
+                return resolved
+
+        return None
+
     def _try_resolve_original_fallback(
         self, obj: LibModel, genres: list[str], keep_genres: list[str]
     ) -> tuple[list[str], str] | None:
@@ -655,11 +698,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     return resolved
 
         if "album" in self.sources:
-            if new_genres := self.client.fetch("album", obj):
-                if resolved := self._try_resolve_stage(
-                    "album", keep_genres, new_genres, artist=obj.albumartist
-                ):
-                    return resolved
+            if resolved := self._try_resolve_album_stage(obj, keep_genres):
+                return resolved
 
         if "artist" in self.sources:
             stage_label, new_genres, stage_artist = self._fetch_artist_stage(
