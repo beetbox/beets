@@ -1,14 +1,18 @@
 FromFilename Plugin
 ===================
 
-The ``fromfilename`` plugin helps to tag albums that are missing tags altogether
-but where the filenames contain useful information like the artist and title.
+The ``fromfilename`` plugin helps to expand the tags on files where filenames
+contain useful information that may be missing on the file metadata.
 
-When you attempt to import a track that's missing a title, this plugin will look
-at the track's filename and parent folder, and guess a number of fields.
+If importing an album, the plugin will look at the parent folder and use it to
+find album specific information.
 
-The extracted information will be used to search for metadata and match track
-ordering.
+The extracted information will be used to search for metadata and better match
+track order.
+
+A prompt is added to the UI by the plugin, ``toggle FromFilename`` that allows
+you to toggle searching with the additional found tags by the plugin. This can
+be helpful when the plugin gets a guess completely wrong!
 
 To use the ``fromfilename`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
@@ -58,13 +62,6 @@ Default
     If you only want the plugin to contribute the track title and artist,
     you would put ``[title, artist]``.
 
-.. conf:: fromfolder
-    :default: [ album, albumartist, catalognum, media, year ]
-
-    The fields are what the plugin will search a folder name
-    for. This is not used when choosing to group by album or
-    group by tracks.
-
 .. conf:: patterns
 
     Users can specify patterns to expand the set of filenames that can
@@ -91,30 +88,31 @@ Default
 .. conf:: sanity_check
     :default: yes
 
-    If both folder and file fields are matched, this will make sure that the track title and
-    artist fields have been guessed correctly. For instance, if all the title guesses are the same,
-    that is more likely to be the album artist rather than the title.
+    This double checks the track title and artist fields have been guessed correctly.
+    Essentially, if all the title guesses are the same, that is more likely to be
+    the album artist than the track title.
 
 .. conf:: autouse
     :default: yes
 
     Whether or not the plugin should be enabled automatically when starting an import session.
-    Set to false to require turning it on with the UI by selecting ``toggle FromFilename``.
+    Set to ``no`` to require turning it on with the UI by selecting ``toggle FromFilename``.
 
-.. conf:: ignore
+.. conf:: fromfolder.fields
+    :default: [ album, albumartist, catalognum, media, year ]
+
+    The fields are what the plugin will search a folder name
+    for. This is not used when choosing to group by album or
+    group by tracks.
+
+.. conf:: fromfolder.patterns
     :default: []
 
-    Specify directory names that will not be searched for album
+    See the above ``patterns`` configuration documentation.
+
+.. conf:: fromfolder.ignore
+    :default: []
+
+    Specify parent directory names that will not be searched for album
     information. Useful if you use a regular directory for importing
     single files.
-
-.. conf:: guess
-
-     Disable guessing from the folder or filename. Be aware that disabling both
-     will cause the plugin to have no effect!
-
-    .. code-block:: yaml
-
-       guess:
-           folder: yes
-           file: yes
