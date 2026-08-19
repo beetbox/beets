@@ -21,6 +21,7 @@ from ._utils.playcount import update_play_counts
 from ._utils.requests import TimeoutAndRetrySession
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
 
     from beets.library import Library
@@ -146,7 +147,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         self._log.info("{} play-counts imported", found)
 
     @staticmethod
-    def _aggregate_listens(tracks: list[Track]) -> list[Track]:
+    def _aggregate_listens(tracks: Iterable[Track]) -> list[Track]:
         """Aggregate individual listen events into per-track play counts.
 
         ListenBrainz returns individual listen events (each with playcount=1).
@@ -304,7 +305,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         return all_listens
 
-    def get_tracks_from_listens(self, listens: list[Listen]) -> list[Track]:
+    def get_tracks_from_listens(self, listens: Iterable[Listen]) -> list[Track]:
         """Returns a list of tracks from a list of listens."""
         tracks: list[Track] = []
         for track in listens:
@@ -346,7 +347,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
     def get_listenbrainz_playlists(self) -> list[JSONDict]:
         resp = self.get_playlists_createdfor(self.username)
-        playlists = resp.get("playlists")
+        if not resp:
+            return []
+        playlists = resp.get("playlists", [])
         listenbrainz_playlists = []
 
         for playlist in playlists:
@@ -387,7 +390,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
     def get_tracks_from_playlist(self, playlist: JSONDict) -> list[JSONDict]:
         """This function returns a list of tracks in the playlist."""
         tracks = []
-        for track in playlist.get("playlist").get("track"):
+        for track in playlist.get("playlist", {}).get("track"):
             identifier = track.get("identifier")
             if isinstance(identifier, list):
                 identifier = identifier[0]
@@ -401,23 +404,19 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             )
         return self.get_track_info(tracks)
 
-    def get_track_info(self, tracks: list[JSONDict]) -> list[JSONDict]:
+    def get_track_info(self, tracks: Iterable[JSONDict]) -> list[JSONDict]:
         track_info = []
         for track in tracks:
-            identifier = track.get("identifier")
-            recording = self.mb_api.get_recording(
-                identifier, includes=["releases", "artist-credits"]
-            )
+            identifier = track["identifier"]
+            recording = self.mb_api.get_base_recording_with_releases(identifier)
             title = recording.get("title")
-            artist_credit = recording.get("artist_credit", [])
-            if artist_credit:
-                artist = artist_credit[0].get("artist", {}).get("name")
+            if artist_credit := next(iter(recording["artist_credit"]), None):
+                artist = artist_credit.get("artist", {}).get("name")
             else:
                 artist = None
-            releases = recording.get("releases", [])
-            if releases:
-                album = releases[0].get("title")
-                date = releases[0].get("date")
+            if release := next(iter(recording["releases"]), None):
+                album = release["title"]
+                date = release.get("date")
                 year = date.split("-")[0] if date else None
             else:
                 album = None
@@ -455,5 +454,8 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             f"- {selected_playlist['date']}"
         )
         # Fetch and return tracks from the selected playlist
-        playlist = self.get_playlist(selected_playlist.get("identifier"))
-        return self.get_tracks_from_playlist(playlist)
+        if (identifier := selected_playlist.get("identifier")) and (
+            playlist := self.get_playlist(identifier)
+        ):
+            return self.get_tracks_from_playlist(playlist)
+        return []

@@ -125,7 +125,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
             self._fetch_info(
                 items,
                 ui.should_write(),
-                opts.force_refetch or self.config["force"],
+                opts.force_refetch or self.config["force"].get(bool),
             )
 
         cmd.func = func
@@ -262,7 +262,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         # `composites = {'initial_key': ['B', 'minor']}`.
 
         # The recursive traversal.
-        composites = defaultdict(list)
+        composites = defaultdict[str, list[str]](list)
         yield from self._data_to_scheme_child(data, scheme, composites)
 
         # When composites has been populated, yield the composite attributes

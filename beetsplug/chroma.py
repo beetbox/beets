@@ -148,7 +148,7 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     # 'countries' to then sort preferred countries first.
     country_patterns = config["match"]["preferred"]["countries"].as_str_seq()
     countries = [re.compile(pat, re.I) for pat in country_patterns]
-    original_year = config["match"]["preferred"]["original_year"]
+    original_year = config["match"]["preferred"]["original_year"].as_str()
     releases.sort(
         key=partial(
             releases_key, countries=countries, original_year=original_year
@@ -170,7 +170,7 @@ def _all_releases(items: Sequence[Item]) -> Iterator[str]:
     which releases the items have in common. Generates release IDs.
     """
     # Count the number of "hits" for each release.
-    relcounts = defaultdict(int)
+    relcounts = defaultdict[str, int](int)
     for item in items:
         if item.path not in _matches:
             continue
@@ -236,11 +236,11 @@ class AcoustidPlugin(MetadataSourcePlugin):
         if self.mb is None:
             return []
 
-        albums = []
-        for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = self.mb.album_for_id(relid)
-            if album:
-                albums.append(album)
+        albums = [
+            a
+            for relid in prefix(_all_releases(items), MAX_RELEASES)
+            if (a := self.mb.album_for_id(relid))
+        ]
 
         self._log.debug("acoustid album candidates: {}", len(albums))
         return albums
@@ -409,7 +409,8 @@ def submit_items(
     log: Logger, userkey: str, items: Sequence[Item], chunksize: int = 64
 ) -> None:
     """Submit fingerprints for the items to the Acoustid server."""
-    data = []  # The running list of dictionaries to submit.
+    # The running list of dictionaries to submit.
+    data: list[JSONDict] = []
 
     def submit_chunk() -> None:
         """Submit the current accumulated fingerprint data."""
@@ -496,10 +497,10 @@ class ScoredItem:
         self.score = score
 
     def __lt__(self, other: object) -> bool:
-        return self.score < other.score
+        return type(self) is type(other) and self.score < other.score
 
     def __gt__(self, other: object) -> bool:
-        return self.score > other.score
+        return type(self) is type(other) and self.score > other.score
 
     def __str__(self) -> str:
         percent = f"{round(self.score * 100, 2)}%".rjust(6)

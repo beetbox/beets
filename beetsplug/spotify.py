@@ -27,7 +27,7 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util import chunks
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
 
     from beets.library import Item, Library
     from beets.metadata_plugins import QueryType, SearchParams
@@ -319,7 +319,7 @@ class SpotifyPlugin(
             raise APIError("Request failed.")
 
     def _multi_artist_credit(
-        self, artists: list[dict[str | int, str]]
+        self, artists: Iterable[dict[str | int, str]]
     ) -> tuple[list[str], list[str]]:
         """Given a list of artist dictionaries, accumulate data into a pair
         of lists: the first being the artist names, and the second being the
@@ -607,7 +607,7 @@ class SpotifyPlugin(
         return True
 
     def _match_library_tracks(
-        self, library: Library, keywords: list[str]
+        self, library: Library, keywords: Sequence[str]
     ) -> list[SearchResponseAlbums | SearchResponseTracks] | None:
         """Get simplified track object dicts for library tracks.
 
@@ -883,7 +883,9 @@ class SpotifyPlugin(
             for item, _ in items_to_update:
                 item.store()
 
-    def track_info(self, track_id: str) -> tuple[Any, Any, Any, Any]:
+    def track_info(
+        self, track_id: str
+    ) -> tuple[int | None, str | None, str | None, str | None]:
         """Fetch a track's popularity and external IDs using its Spotify ID."""
         track_data = self._handle_response(
             "get", f"{self.track_url}/{track_id}"
