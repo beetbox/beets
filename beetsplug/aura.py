@@ -27,8 +27,11 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping, Sequence
+    from collections.abc import Iterable, Sequence
 
+    from werkzeug.datastructures import MultiDict
+
+    from beets.dbcore import Query
     from beets.dbcore.query import SQLiteType
     from beets.dbcore.sort import Sort
     from beets.library import LibModel, Library
@@ -120,9 +123,10 @@ class AURADocument:
     """Base class for building AURA documents."""
 
     model_cls: ClassVar[type[LibModel]]
+    attribute_map: ClassVar[dict[str, str]]
 
     lib: Library
-    args: Mapping[str, str]
+    args: MultiDict[str, str]
 
     @classmethod
     def from_app(cls) -> Self:
@@ -166,7 +170,7 @@ class AURADocument:
         # filter[<attribute>]. This regex extracts <attribute>.
         pattern = re.compile(r"filter\[(?P<attribute>[a-zA-Z0-9_-]+)\]")
         queries = []
-        for key, value in self.args.items():
+        for key, v in self.args.items():
             match = pattern.match(key)
             if match:
                 # Extract attribute name from key
@@ -174,11 +178,11 @@ class AURADocument:
                 # Get the beets version of the attribute name
                 beets_attr = self.attribute_map.get(aura_attr, aura_attr)
                 converter = self.get_attribute_converter(beets_attr)
-                value = converter(value)
+                value = converter(v)  # type: ignore[arg-type, misc]
                 # Add exact match query to list
                 # Use a slow query so it works with all fields
                 queries.append(
-                    self.model_cls.field_query(beets_attr, value, MatchQuery)
+                    self.model_cls.field_query(beets_attr, value, MatchQuery)  # type: ignore[arg-type]
                 )
         # NOTE: AURA doesn't officially support multiple queries
         return AndQuery(queries)
@@ -193,7 +197,7 @@ class AURADocument:
         """
         # Change HTTP query parameter to a list
         aura_sorts = sort_arg.strip(",").split(",")
-        sorts = []
+        sorts: list[Sort] = []
         for aura_attr in aura_sorts:
             if aura_attr[0] == "-":
                 ascending = False
@@ -207,6 +211,10 @@ class AURADocument:
             # Use slow sort so it works with all fields (inc. computed)
             sorts.append(SlowFieldSort(beets_attr, ascending=ascending))
         return MultipleSort(sorts)
+
+    @staticmethod
+    def get_resource_object(lib: Library, *args) -> JSONDict | None:
+        raise NotImplementedError
 
     def paginate(
         self, collection: Sequence[Any]
@@ -252,7 +260,7 @@ class AURADocument:
 
     def get_included(
         self, data: Iterable[JSONDict], include_str: str
-    ) -> list[JSONDict | None]:
+    ) -> list[JSONDict]:
         """Build a list of resource objects for inclusion.
 
         Args:
@@ -283,16 +291,16 @@ class AURADocument:
             res_type = identifier["type"]
             if res_type == "track":
                 track_id = int(identifier["id"])
-                track = self.lib.get_item(track_id)
-                included.append(
-                    TrackDocument.get_resource_object(self.lib, track)
-                )
+                if track := self.lib.get_item(track_id):
+                    included.append(
+                        TrackDocument.get_resource_object(self.lib, track)
+                    )
             elif res_type == "album":
                 album_id = int(identifier["id"])
-                album = self.lib.get_album(album_id)
-                included.append(
-                    AlbumDocument.get_resource_object(self.lib, album)
-                )
+                if album := self.lib.get_album(album_id):
+                    included.append(
+                        AlbumDocument.get_resource_object(self.lib, album)
+                    )
             elif res_type == "artist":
                 artist_id = identifier["id"]
                 included.append(
@@ -305,7 +313,14 @@ class AURADocument:
                 )
             else:
                 raise ValueError(f"Invalid resource type: {res_type}")
-        return included
+        return list(filter(None, included))
+
+    def get_collection(
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+    ) -> Any:
+        raise NotImplementedError
 
     def all_resources(self) -> JSONDict:
         """Build document for /tracks, /albums or /artists."""
@@ -317,7 +332,8 @@ class AURADocument:
             # have a non-empty, non-zero value for that field.
             query.subqueries.extend(
                 NotQuery(
-                    self.model_cls.field_query(s.field, "(^$|^0$)", RegexpQuery)
+                    # these MultipleSorts have FieldSorts which define .field
+                    self.model_cls.field_query(s.field, "(^$|^0$)", RegexpQuery)  # type: ignore[attr-defined]
                 )
                 for s in sort.sorts
             )
@@ -362,7 +378,9 @@ class TrackDocument(AURADocument):
     attribute_map = TRACK_ATTR_MAP
 
     def get_collection(
-        self, query: list[str] | None = None, sort: Sort | None = None
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
     ) -> Any:
         """Get Item objects from the library.
 
@@ -444,7 +462,9 @@ class AlbumDocument(AURADocument):
     attribute_map = ALBUM_ATTR_MAP
 
     def get_collection(
-        self, query: list[str] | None = None, sort: Sort | None = None
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
     ) -> Any:
         """Get Album objects from the library.
 
@@ -530,7 +550,9 @@ class ArtistDocument(AURADocument):
     attribute_map = ARTIST_ATTR_MAP
 
     def get_collection(
-        self, query: list[str] | None = None, sort: Sort | None = None
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
     ) -> Any:
         """Get a list of artist names from the library.
 
@@ -921,7 +943,7 @@ def create_app() -> Flask:
     app.config["lib"] = _open_library(config)
 
     # Enable CORS if required
-    cors = config["aura"]["cors"].as_str_seq(list)
+    cors = config["aura"]["cors"].as_str_seq(split=True)
     if cors:
         from flask_cors import CORS
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import codecs
 import csv
 import json
+import os
 import sys
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, Literal, Protocol, get_args
@@ -12,18 +13,21 @@ from xml.etree import ElementTree
 
 import mediafile
 
-from beets import ui, util
+from beets import ui
+from beets.dbcore.types import BasePathType
+from beets.library.fields import TYPE_BY_FIELD
 from beets.plugins import BeetsPlugin
 from beetsplug.info import library_data, tag_data
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Iterator, Sequence
 
     from beets.library import Library
 
     from ._typing import JSONDict
 
 Format = Literal["json", "jsonlines", "csv", "xml"]
+VALID_FORMATS = get_args(Format)
 
 
 class ExportCLIOpts(Protocol):
@@ -45,6 +49,8 @@ class ExportEncoder(json.JSONEncoder):
 
 
 class ExportPlugin(BeetsPlugin):
+    default_format: Format
+
     def __init__(self) -> None:
         super().__init__()
 
@@ -85,6 +91,9 @@ class ExportPlugin(BeetsPlugin):
                 # 'item_fields': []
             }
         )
+        self.default_format = self.config["default_format"].as_choice(
+            VALID_FORMATS
+        )
 
     def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("export", help="export data from beets")
@@ -118,8 +127,10 @@ class ExportPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-f",
             "--format",
-            default="json",
-            help="the output format: json (default), jsonlines, csv, or xml",
+            type="choice",
+            choices=VALID_FORMATS,
+            default=self.config["default_format"].get(),
+            help="the output format: json|jsonlines|csv|xml",
         )
         return [cmd]
 
@@ -128,15 +139,18 @@ class ExportPlugin(BeetsPlugin):
     ) -> None:
         file_path = opts.output
         file_mode = "a" if opts.append else "w"
-        default_format: Format = self.config["default_format"].as_choice(
-            get_args(Format)
-        )
-        file_format = opts.format or default_format
-        file_format_is_line_based = file_format == "jsonlines"
+        file_format = opts.format or self.default_format
         format_options = self.config[file_format]["formatting"].get(dict)
 
-        export_format = ExportFormat.factory(
-            file_type=file_format, file_path=file_path, file_mode=file_mode
+        _format = (
+            CSVFormat
+            if file_format == "csv"
+            else XMLFormat
+            if file_format == "xml"
+            else JsonFormat
+        )
+        export_format = _format(
+            file_format=file_format, file_path=file_path, file_mode=file_mode
         )
 
         if opts.library or opts.album:
@@ -148,33 +162,43 @@ class ExportPlugin(BeetsPlugin):
         for keys in opts.included_keys:
             included_keys.extend(keys.split(","))
 
-        items = []
-        for data_emitter in data_collector(lib, args, album=opts.album):
-            try:
-                data, _ = data_emitter(included_keys or "*")
-            except (mediafile.UnreadableFileError, OSError) as ex:
-                self._log.error("cannot read file: {}", ex)
-                continue
+        byte_fields = [
+            k for k, v in TYPE_BY_FIELD.items() if isinstance(v, BasePathType)
+        ]
 
-            for key, value in data.items():
-                if isinstance(value, bytes):
-                    data[key] = util.displayable_path(value)
+        def collect_data() -> Iterator[JSONDict]:
+            for data_emitter in data_collector(lib, args, album=opts.album):
+                try:
+                    data, _ = data_emitter(included_keys or "*")
+                except (mediafile.UnreadableFileError, OSError) as ex:
+                    self._log.error("cannot read file: {}", ex)
+                    continue
+                else:
+                    yield data
 
-            if file_format_is_line_based:
-                export_format.export(data, **format_options)
-            else:
-                items += [data]
+        def stringify_bytes(data: JSONDict) -> JSONDict:
+            for field in byte_fields:
+                if (value := data.get(field)) is not None:
+                    data[field] = os.fsdecode(value)
 
-        if not file_format_is_line_based:
-            export_format.export(items, **format_options)
+            return data
+
+        export_format.export(
+            map(stringify_bytes, collect_data()), **format_options
+        )
 
 
 class ExportFormat:
     """The output format type"""
 
     def __init__(
-        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
+        self,
+        file_format: str,
+        file_path: str | None,
+        file_mode: str = "w",
+        encoding: str = "utf-8",
     ) -> None:
+        self.file_format = file_format
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
@@ -185,44 +209,30 @@ class ExportFormat:
             else sys.stdout
         )
 
-    @classmethod
-    def factory(
-        cls, file_type: str, **kwargs
-    ) -> JsonFormat | CSVFormat | XMLFormat:
-        if file_type in ["json", "jsonlines"]:
-            return JsonFormat(**kwargs)
-        if file_type == "csv":
-            return CSVFormat(**kwargs)
-        if file_type == "xml":
-            return XMLFormat(**kwargs)
-        raise NotImplementedError()
-
-    def export(self, data: list[JSONDict], **kwargs) -> None:
+    def export(self, data_iter: Iterable[JSONDict], **kwargs) -> None:
         raise NotImplementedError()
 
 
 class JsonFormat(ExportFormat):
     """Saves in a json file"""
 
-    def __init__(
-        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
-    ) -> None:
-        super().__init__(file_path, file_mode, encoding)
-
-    def export(self, data: list[JSONDict], **kwargs) -> None:
+    def _print_json(self, data: Any, **kwargs) -> None:
         json.dump(data, self.out_stream, cls=ExportEncoder, **kwargs)
         self.out_stream.write("\n")
+
+    def export(self, data_iter: Iterable[JSONDict], **kwargs) -> None:
+        if self.file_format == "json":
+            self._print_json(list(data_iter), **kwargs)
+        else:
+            for item in data_iter:
+                self._print_json(item, **kwargs)
 
 
 class CSVFormat(ExportFormat):
     """Saves in a csv file"""
 
-    def __init__(
-        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
-    ) -> None:
-        super().__init__(file_path, file_mode, encoding)
-
-    def export(self, data: list[JSONDict], **kwargs) -> None:
+    def export(self, data_iter: Iterable[JSONDict], **kwargs) -> None:
+        data = list(data_iter)
         header = list(data[0].keys()) if data else []
         writer = csv.DictWriter(self.out_stream, fieldnames=header, **kwargs)
         writer.writeheader()
@@ -232,13 +242,9 @@ class CSVFormat(ExportFormat):
 class XMLFormat(ExportFormat):
     """Saves in a xml file"""
 
-    def __init__(
-        self, file_path: str, file_mode: str = "w", encoding: str = "utf-8"
-    ) -> None:
-        super().__init__(file_path, file_mode, encoding)
-
-    def export(self, data: list[JSONDict], **kwargs) -> None:
+    def export(self, data_iter: Iterable[JSONDict], **kwargs) -> None:
         # Creates the XML file structure.
+        data = list(data_iter)
         library = ElementTree.Element("library")
         tracks = ElementTree.SubElement(library, "tracks")
         if data and isinstance(data[0], dict):
@@ -249,8 +255,8 @@ class XMLFormat(ExportFormat):
                     track_details.text = value
         # Depending on the version of python the encoding needs to change
         try:
-            data = ElementTree.tostring(library, encoding="unicode", **kwargs)
+            string = ElementTree.tostring(library, encoding="unicode", **kwargs)
         except LookupError:
-            data = ElementTree.tostring(library, encoding="utf-8", **kwargs)
+            string = ElementTree.tostring(library, encoding="utf-8", **kwargs)
 
-        self.out_stream.write(data)
+        self.out_stream.write(string)
