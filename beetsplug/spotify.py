@@ -27,7 +27,7 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util import chunks
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from beets.library import Item, Library
     from beets.metadata_plugins import QueryType, SearchParams
@@ -151,7 +151,7 @@ class SpotifyPlugin(
         "valence": "spotify_valence",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -176,7 +176,7 @@ class SpotifyPlugin(
         )  # Protects audio_features_available
         self.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         """Retrieve previously saved OAuth token or generate a new one."""
 
         try:
@@ -590,7 +590,7 @@ class SpotifyPlugin(
         sync_cmd.func = func
         return [spotify_cmd, sync_cmd]
 
-    def _parse_opts(self, opts):
+    def _parse_opts(self, opts: SpotifyCLIOpts) -> bool:
         if opts.mode:
             self.config["mode"].set(opts.mode)
 
@@ -606,7 +606,9 @@ class SpotifyPlugin(
         self.opts = opts
         return True
 
-    def _match_library_tracks(self, library: Library, keywords: list[str]):
+    def _match_library_tracks(
+        self, library: Library, keywords: list[str]
+    ) -> list[SearchResponseAlbums | SearchResponseTracks] | None:
         """Get simplified track object dicts for library tracks.
 
         Matches tracks based on the specified ``keywords``.
@@ -718,7 +720,9 @@ class SpotifyPlugin(
 
         return results
 
-    def _output_match_results(self, results):
+    def _output_match_results(
+        self, results: Sequence[Mapping[str, Any]] | None
+    ) -> None:
         """Open a playlist or print Spotify URLs.
 
         Uses the provided track object dicts.
@@ -879,7 +883,7 @@ class SpotifyPlugin(
             for item, _ in items_to_update:
                 item.store()
 
-    def track_info(self, track_id: str):
+    def track_info(self, track_id: str) -> tuple[Any, Any, Any, Any]:
         """Fetch a track's popularity and external IDs using its Spotify ID."""
         track_data = self._handle_response(
             "get", f"{self.track_url}/{track_id}"
@@ -898,7 +902,7 @@ class SpotifyPlugin(
             external_ids.get("upc"),
         )
 
-    def track_audio_features(self, track_id: str):
+    def track_audio_features(self, track_id: str) -> JSONDict | None:
         """Fetch track audio features by its Spotify ID.
 
         Thread-safe: avoids redundant API calls and logs the 403 warning only

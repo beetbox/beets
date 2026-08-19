@@ -618,7 +618,7 @@ class MusicBrainzAPI(RequestHandler):
         kwargs["params"]["fmt"] = "json"
         return super().request(*args, **kwargs)
 
-    def get_json(self, *args, **kwargs):
+    def get_json(self, *args, **kwargs) -> JSONDict:
         """Fetch JSON data from MusicBrainz and normalize its field names."""
         return self._normalize_data(super().get_json(*args, **kwargs))
 

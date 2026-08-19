@@ -41,7 +41,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     def __init__(self) -> None:
         super().__init__()
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         """Add beet UI commands to interact with Deezer."""
         deezer_update_cmd = ui.Subcommand(
             "deezerupdate", help=f"Update {self.data_source} rank"
@@ -252,7 +252,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         response.raise_for_status()
         return response.json()["data"]
 
-    def deezerupdate(self, items: Sequence[Item], write: bool):
+    def deezerupdate(self, items: Sequence[Item], write: bool) -> None:
         """Obtain rank information from Deezer."""
         for index, item in enumerate(items, start=1):
             self._log.info(
@@ -279,7 +279,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             if write:
                 item.try_write()
 
-    def fetch_data(self, url: str):
+    def fetch_data(self, url: str) -> JSONDict | None:
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()

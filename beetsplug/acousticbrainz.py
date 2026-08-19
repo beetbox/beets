@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import requests
 
@@ -12,8 +12,12 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Library
+    from beets.library import Item, Library
+
+    from ._typing import JSONDict
 
 
 class AcousticBrainzCLIOpts(Protocol):
@@ -101,7 +105,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "acousticbrainz", help="fetch metadata from AcousticBrainz"
         )
@@ -133,7 +137,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """Function is called upon beet import."""
         self._fetch_info(task.imported_items(), False, True)
 
-    def _get_data(self, mbid):
+    def _get_data(self, mbid: str) -> JSONDict:
         if not self.base_url:
             raise UserError(
                 "This plugin is deprecated since AcousticBrainz has shut "
@@ -161,7 +165,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         return data
 
-    def _fetch_info(self, items, write, force):
+    def _fetch_info(
+        self, items: Sequence[Item], write: bool, force: bool
+    ) -> None:
         """Fetch additional information from AcousticBrainz for the `item`s."""
         tags = self.config["tags"].as_str_seq()
         for item in items:
@@ -200,7 +206,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 if write:
                     item.try_write()
 
-    def _map_data_to_scheme(self, data, scheme):
+    def _map_data_to_scheme(
+        self, data: JSONDict, scheme: JSONDict
+    ) -> Iterator[tuple[str, Any]]:
         """Given `data` as a structure of nested dictionaries, and
         `scheme` as a structure of nested dictionaries , `yield` tuples
         `(attr, val)` where `attr` and `val` are corresponding leaf
@@ -262,7 +270,12 @@ class AcousticPlugin(plugins.BeetsPlugin):
         for composite_attr, value_parts in composites.items():
             yield composite_attr, " ".join(value_parts)
 
-    def _data_to_scheme_child(self, subdata, subscheme, composites):
+    def _data_to_scheme_child(
+        self,
+        subdata: JSONDict,
+        subscheme: JSONDict,
+        composites: dict[str, list[str]],
+    ) -> Iterator[tuple[str, Any]]:
         """The recursive business logic of :meth:`_map_data_to_scheme`:
         Traverse two structures of nested dictionaries in parallel and `yield`
         tuples of corresponding leaf nodes.
@@ -300,7 +313,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 )
 
 
-def _generate_urls(base_url, mbid):
+def _generate_urls(base_url: str, mbid: str) -> Iterator[str]:
     """Generates AcousticBrainz end point urls for given `mbid`."""
     for level in LEVELS:
         yield f"{base_url}{mbid}{level}"
