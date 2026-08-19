@@ -264,20 +264,20 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 self._log.debug("No deezer_track_id present for: {}", item)
                 continue
             try:
-                rank = self.fetch_data(
-                    f"{self.track_url}{deezer_track_id}"
-                ).get("rank")
-                self._log.debug(
-                    "Deezer track: {} has {} rank", deezer_track_id, rank
-                )
+                track = self.fetch_data(f"{self.track_url}{deezer_track_id}")
             except Exception as e:
                 self._log.debug("Invalid Deezer track_id: {}", e)
                 continue
-            item.deezer_track_rank = int(rank)
-            item.store()
-            item.deezer_updated = time.time()
-            if write:
-                item.try_write()
+            else:
+                if track and (rank := track.get("rank") is not None):
+                    self._log.debug(
+                        "Deezer track: {} has {} rank", deezer_track_id, rank
+                    )
+                    item.deezer_track_rank = int(rank)
+                    item.store()
+                    item.deezer_updated = time.time()
+                    if write:
+                        item.try_write()
 
     def fetch_data(self, url: str) -> JSONDict | None:
         try:

@@ -10,13 +10,13 @@ implemented by MusicBrainz yet.
 from __future__ import annotations
 
 import subprocess
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
 from beets.util import PromptChoice, displayable_path
-from beetsplug.info import print_data
 
 if TYPE_CHECKING:
     import optparse
@@ -73,9 +73,13 @@ class MBSubmitPlugin(BeetsPlugin):
         except OSError as exc:
             self._log.error("Could not open picard, got error:\n{}", exc)
 
+    @cached_property
+    def fmt(self) -> str:
+        return self.config["format"].as_str()
+
     def print_tracks(self, session: ImportSession, task: ImportTask) -> None:
         for i in sorted(task.items, key=lambda i: i.track):
-            print_data(None, i, self.config["format"].as_str())
+            ui.print_(format(i, self.fmt))
 
     def commands(self) -> list[ui.Subcommand]:
         """Add beet UI commands for mbsubmit."""
@@ -94,4 +98,4 @@ class MBSubmitPlugin(BeetsPlugin):
     def _mbsubmit(self, items: Sequence[Item]) -> None:
         """Print track information to be submitted to MusicBrainz."""
         for i in sorted(items, key=lambda i: i.track):
-            print_data(None, i, self.config["format"].as_str())
+            ui.print_(format(i, self.fmt))
