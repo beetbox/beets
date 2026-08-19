@@ -12,6 +12,8 @@ from beets.ui import Subcommand, should_write
 from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from beets.importer import ImportTask
     from beets.library import Item, Library
 
@@ -88,7 +90,7 @@ class AutoBPMPlugin(BeetsPlugin):
 
     def calculate_bpm(
         self,
-        items: list[Item],
+        items: Iterable[Item],
         write: bool = False,
         force: bool = False,
         quiet: bool = False,

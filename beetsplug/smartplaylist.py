@@ -224,7 +224,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         self.update_playlists(lib)
 
     def _parse_one_query(
-        self, playlist: JSONDict, key: str, model_cls: type
+        self, playlist: JSONDict, key: str, model_cls: type[LibModel]
     ) -> tuple[PlaylistQuery, Sort | None]:
         qs = playlist.get(key)
         if qs is None:
@@ -273,7 +273,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
 
             self._unmatched_playlists.add((playlist["name"], q_match, a_match))
 
-    def _matches_query(self, model: Item | Album, query: PlaylistQuery) -> bool:
+    def _matches_query(self, model: LibModel, query: PlaylistQuery) -> bool:
         if not query:
             return False
         if isinstance(query, (list, tuple)):

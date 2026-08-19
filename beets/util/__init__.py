@@ -404,19 +404,14 @@ def displayable_path(
     path: PathLike | Iterable[PathLike], separator: str = "; "
 ) -> str:
     """Attempts to decode a bytestring path to a unicode object for the
-    purpose of displaying it to the user. If the `path` argument is a
-    list or a tuple, the elements are joined with `separator`.
+    purpose of displaying it to the user. If the `path` argument is an
+    iterable, the elements are joined with `separator`.
     """
 
-    if isinstance(path, (list, tuple)):
-        return separator.join(displayable_path(p) for p in path)
-    if isinstance(path, str):
-        return path
-    if not isinstance(path, bytes):
-        # A non-string object: just get its unicode representation.
-        return str(path)
+    if isinstance(path, (Path, str, bytes)):
+        return os.fsdecode(path)
 
-    return os.fsdecode(path)
+    return separator.join(displayable_path(p) for p in path)
 
 
 def syspath(path: PathLike) -> str:
