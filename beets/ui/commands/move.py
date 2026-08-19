@@ -13,6 +13,9 @@ from beets.util.diff import colordiff
 from .utils import do_query
 
 if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
     from beets.util import PathLike
 
 # Global logger.
@@ -147,7 +150,7 @@ def move_items(
                     obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
-def move_func(lib, opts, args):
+def move_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     dest = opts.dest
     if dest is not None:
         dest = normpath(dest)

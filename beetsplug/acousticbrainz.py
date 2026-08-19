@@ -12,7 +12,10 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 
 LEVELS = ["/low-level", "/high-level"]
@@ -109,7 +112,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
             help="re-download data when already present",
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             items = lib.items(args)
             self._fetch_info(
                 items,

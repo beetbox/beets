@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from beets.library import LibModel, Library
 
 
-def random_func(lib: Library, opts: optparse.Values, args: list[str]):
+def random_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     """Select some random items or albums and print the results."""
     # Fetch all the objects matching the query into a list.
     objs = lib.albums(args) if opts.album else lib.items(args)

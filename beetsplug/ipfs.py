@@ -1,12 +1,20 @@
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon"""
 
+from __future__ import annotations
+
 import os
 import shutil
 import subprocess
 import tempfile
+from typing import TYPE_CHECKING
 
 from beets import config, library, ui, util
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
 
 
 class IPFSPlugin(BeetsPlugin):
@@ -54,7 +62,7 @@ class IPFSPlugin(BeetsPlugin):
             help="Play music from remote libraries",
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             if opts.add:
                 for album in lib.albums(args):
                     if len(album.items()) == 0:
@@ -88,7 +96,9 @@ class IPFSPlugin(BeetsPlugin):
             if self.ipfs_add(task.album):
                 task.album.store()
 
-    def ipfs_play(self, lib, opts, args):
+    def ipfs_play(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         from beetsplug.play import PlayPlugin
 
         jlib = self.get_remote_lib(lib)

@@ -1,10 +1,19 @@
 """The 'stats' command: show library statistics."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from beets import logging, ui
 from beets.util import syspath
 from beets.util.units import human_bytes, human_seconds
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -49,7 +58,7 @@ Albums: {len(albums)}
 Album artists: {len(album_artists)}""")
 
 
-def stats_func(lib, opts, args):
+def stats_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     show_stats(lib, args, opts.exact)
 
 

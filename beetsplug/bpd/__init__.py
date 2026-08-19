@@ -27,7 +27,10 @@ from beets.util import as_string
 from beetsplug._utils import vfs
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.dbcore.query import Query
+    from beets.library import Library
 
 
 try:
@@ -1621,7 +1624,7 @@ class BPDPlugin(BeetsPlugin):
             "bpd", help="run an MPD-compatible music player server"
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             host = self.config["host"].as_str()
             host = args.pop(0) if args else host
             port = args.pop(0) if args else self.config["port"].get(int)

@@ -1,7 +1,10 @@
 """List duplicate tracks or albums."""
 
+from __future__ import annotations
+
 import os
 import shlex
+from typing import TYPE_CHECKING
 
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
@@ -13,6 +16,12 @@ from beets.util import (
     displayable_path,
     subprocess,
 )
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 PLUGIN = "duplicates"
 
@@ -128,7 +137,7 @@ class DuplicatesPlugin(BeetsPlugin):
         self._command.parser.add_all_common_options()
 
     def commands(self):
-        def _dup(lib, opts, args):
+        def _dup(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
             album = self.config["album"].get(bool)
             checksum = self.config["checksum"].get(str)

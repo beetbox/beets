@@ -12,7 +12,9 @@ from beets.util.deprecation import maybe_replace_legacy_field
 from .utils import do_query
 
 if TYPE_CHECKING:
-    from beets.library import LibModel
+    import optparse
+
+    from beets.library import LibModel, Library
 
 
 class ModifyOperation(NamedTuple):
@@ -150,7 +152,7 @@ def modify_parse_args(args, is_album: bool):
     return query, mods, dels
 
 
-def modify_func(lib, opts, args):
+def modify_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     query, mods, dels = modify_parse_args(args, is_album=opts.album)
     if not mods and not dels:
         raise UserError("no modifications specified")

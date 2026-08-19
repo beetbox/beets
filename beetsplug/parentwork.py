@@ -14,6 +14,9 @@ from beets.plugins import BeetsPlugin
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 
 if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
     from beetsplug._utils.musicbrainz import Work
 
 
@@ -27,7 +30,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self.import_stages = [self.imported]
 
     def commands(self):
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()

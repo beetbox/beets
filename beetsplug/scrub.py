@@ -13,7 +13,10 @@ from beets import config, ui, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 
 _MUTAGEN_FORMATS = {
@@ -46,7 +49,9 @@ class ScrubPlugin(BeetsPlugin):
             self.register_listener("import_task_files", self.import_task_files)
 
     def commands(self):
-        def scrub_func(lib, opts, args):
+        def scrub_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             # Walk through matching files and remove tags.
             for item in lib.items(args):
                 self._log.info("scrubbing: {.filepath}", item)

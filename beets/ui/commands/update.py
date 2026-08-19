@@ -1,12 +1,21 @@
 """The `update` command: Update library contents according to on-disk tags."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from beets import library, logging, ui
 from beets.util import ancestry, syspath
 from beets.util.color import colorize
 
 from .utils import do_query
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -130,7 +139,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                 album.store(fields=album_fields)
 
 
-def update_func(lib, opts, args):
+def update_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     # Verify that the library folder exists to prevent accidental wipes.
     if not os.path.isdir(syspath(lib.directory)):
         ui.print_("Library path is unavailable or does not exist.")

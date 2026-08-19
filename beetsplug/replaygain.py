@@ -1568,7 +1568,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def command_func(
         self, lib: Library, opts: optparse.Values, args: list[str]
-    ):
+    ) -> None:
         try:
             write = ui.should_write(opts.write)
             force = opts.force

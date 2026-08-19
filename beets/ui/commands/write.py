@@ -1,11 +1,20 @@
 """The `write` command: write tag information to files."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from beets import library, logging, ui
 from beets.util import syspath
 
 from .utils import do_query
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -40,7 +49,7 @@ def write_items(lib, query, pretend, force):
             item.try_sync(True, False)
 
 
-def write_func(lib, opts, args):
+def write_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     write_items(lib, args, opts.pretend, opts.force)
 
 

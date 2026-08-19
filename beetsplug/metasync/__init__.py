@@ -12,7 +12,10 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.dbcore import types
+    from beets.library import Library
 
 METASYNC_MODULE = "beetsplug.metasync"
 
@@ -84,7 +87,9 @@ class MetaSyncPlugin(BeetsPlugin):
         cmd.func = self.func
         return [cmd]
 
-    def func(self, lib, opts, args):
+    def func(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         """Command handler for the metasync function."""
         pretend = opts.pretend
 

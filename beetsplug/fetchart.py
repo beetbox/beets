@@ -23,6 +23,7 @@ from beets.util.color import colorize
 from beets.util.config import UnknownPairError, sanitize_pairs
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Iterable, Iterator, Sequence
 
     from beets.importer import ImportSession, ImportTask
@@ -1548,7 +1549,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             help="quiet mode: do not output albums that already have artwork",
         )
 
-        def func(lib: Library, opts, args) -> None:
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.batch_fetch_art(lib, lib.albums(args), opts.force, opts.quiet)
 
         cmd.func = func

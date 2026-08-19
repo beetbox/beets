@@ -19,7 +19,10 @@ from beets.util import PromptChoice, displayable_path
 from beetsplug.info import print_data
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 
 class MBSubmitPlugin(BeetsPlugin):
@@ -79,7 +82,7 @@ class MBSubmitPlugin(BeetsPlugin):
             "mbsubmit", help="Submit Tracks to MusicBrainz"
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             items = lib.items(args)
             self._mbsubmit(items)
 

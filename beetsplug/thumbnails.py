@@ -23,7 +23,9 @@ from beets.util.artresizer import ArtResizer
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
 if TYPE_CHECKING:
-    from beets.library import Album
+    import optparse
+
+    from beets.library import Album, Library
 
 
 NORMAL_DIR = bytestring_path(os.path.join(BASE_DIR, "normal"))
@@ -62,7 +64,9 @@ class ThumbnailsPlugin(BeetsPlugin):
 
         return [thumbnails_command]
 
-    def process_query(self, lib, opts, args):
+    def process_query(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         self.config.set_args(opts)
         if self._check_local_ok():
             for album in lib.albums(args):
