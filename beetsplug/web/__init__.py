@@ -126,9 +126,9 @@ def resource(name: str, patchable: bool = False) -> Any:
     """Decorates a function to handle RESTful HTTP requests for a resource."""
 
     def make_responder(retriever: t.Callable[[int], LibModel | None]) -> Any:
-        def responder(ids: Sequence[int]):
-            entities = [retriever(id_) for id_ in ids]
-            entities = [entity for entity in entities if entity]
+        def responder(ids: Sequence[int]) -> Any:
+            retrieved = [retriever(id_) for id_ in ids]
+            entities = [entity for entity in retrieved if entity]
 
             if get_method() == "DELETE":
                 if app.config.get("READONLY", True):
@@ -307,7 +307,7 @@ def before_request() -> None:
 
 @app.route("/item/<idlist:ids>", methods=["GET", "DELETE", "PATCH"])
 @resource("items", patchable=True)
-def get_item(id_) -> Any:
+def get_item(id_: int) -> Any:
     return g.lib.get_item(id_)
 
 
@@ -321,6 +321,8 @@ def all_items() -> Any:
 @app.route("/item/<int:item_id>/file")
 def item_file(item_id: int) -> Any:
     item = g.lib.get_item(item_id)
+    if not item:
+        return flask.abort(404, f"Item with id {item_id} not found")
 
     item_path = util.syspath(item.path)
     base_filename = os.path.basename(item_path)
@@ -370,7 +372,7 @@ def item_unique_field_values(key: str) -> Any:
 
 @app.route("/album/<idlist:ids>", methods=["GET", "DELETE"])
 @resource("albums")
-def get_album(id_) -> Any:
+def get_album(id_: int) -> Any:
     return g.lib.get_album(id_)
 
 
