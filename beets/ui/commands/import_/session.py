@@ -5,14 +5,8 @@ from itertools import chain
 from typing import TYPE_CHECKING, Literal
 
 from beets import config, importer, logging, plugins, ui
-from beets.autotag import (
-    AlbumMatch,
-    Recommendation,
-    TrackMatch,
-    tag_album,
-    tag_item,
-)
-from beets.importer import DuplicateAction, SingletonImportTask
+from beets.autotag import AlbumMatch, Recommendation, TrackMatch
+from beets.importer import DuplicateAction
 from beets.library import Album
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
@@ -23,8 +17,8 @@ from .display import show_change
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.autotag import Proposal, Source
-    from beets.importer import ImportSession, ImportTask
+    from beets.autotag import Source
+    from beets.importer import ImportSession, ImportTask, SingletonImportTask
     from beets.library import AlbumOrItem, Item
     from beets.util import PathBytes
 
@@ -65,14 +59,9 @@ class TerminalImportSession(importer.ImportSession):
             )
 
         # Take immediate action if appropriate.
-        # TODO: introduce beets.autotag.Candidates to remove these assertions
-        assert task.rec is not None
-        assert task.candidates is not None
-        action = _summary_judgment(task.rec)
+        action = _summary_judgment(task.candidates.recommendation)
         if action == importer.Action.APPLY:
             match = task.candidates[0]
-            # TODO: introduce AlbumImportTask to remove this assertion
-            assert isinstance(match, AlbumMatch)
             show_change(task.source, match)
             return match
         if action is not None:
@@ -86,9 +75,8 @@ class TerminalImportSession(importer.ImportSession):
             # `PromptChoice`.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                # TODO: introduce AlbumImportTask to remove this ignore
-                task.candidates,  # type: ignore[arg-type]
-                task.rec,
+                task.candidates,
+                task.candidates.recommendation,
                 task.source,
                 choices=choices,
             )
@@ -108,11 +96,6 @@ class TerminalImportSession(importer.ImportSession):
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
-            else:
-                # We have a candidate! Finish tagging. Here, choice is an
-                # AlbumMatch object.
-                assert isinstance(choice, AlbumMatch)
-                return choice
 
     def choose_item(
         self, task: SingletonImportTask
@@ -124,14 +107,9 @@ class TerminalImportSession(importer.ImportSession):
         ui.print_(displayable_path(task.item.path))
 
         # Take immediate action if appropriate.
-        # TODO: introduce beets.autotag.Candidates to remove these assertions
-        assert task.rec is not None
-        assert task.candidates is not None
-        action = _summary_judgment(task.rec)
+        action = _summary_judgment(task.candidates.recommendation)
         if action == importer.Action.APPLY:
             match = task.candidates[0]
-            # TODO: introduce AlbumImportTask to remove this assertion
-            assert isinstance(match, TrackMatch)
             show_change(task.source, match)
             return match
         if action is not None:
@@ -141,9 +119,8 @@ class TerminalImportSession(importer.ImportSession):
             # Ask for a choice.
             choices = self._get_choices(task)
             choice = choose_candidate(
-                # TODO: introduce AlbumImportTask to remove this ignore
-                task.candidates,  # type: ignore[arg-type]
-                task.rec,
+                task.candidates,
+                task.candidates.recommendation,
                 task.source,
                 choices=choices,
             )
@@ -250,11 +227,8 @@ class TerminalImportSession(importer.ImportSession):
                 ),
             ]
         choices += [
-            # TODO: introduce beets.autotag.Candidates to remove these ignores
-            #  context: Candidates is a Sequence which will be updated in place
-            #  by manual_search and manual_id, with return types as None.
-            PromptChoice("e", "Enter search", manual_search),  # type: ignore[arg-type]
-            PromptChoice("i", "enter Id", manual_id),  # type: ignore[arg-type]
+            PromptChoice("e", "Enter search", manual_search),
+            PromptChoice("i", "enter Id", manual_id),
             PromptChoice("b", "aBort", abort_action),
         ]
 
@@ -499,29 +473,26 @@ def choose_candidate(
             return choice_actions[sel]
 
 
-def manual_search(session: ImportSession, task: ImportTask) -> Proposal:
-    """Get a new `Proposal` using manual search criteria.
+def manual_search(session: ImportSession, task: ImportTask) -> None:
+    """Resolve candidates using a manual search.
 
     Input either an artist and album (for full albums) or artist and
     track name (for singletons) for manual search.
     """
-    artist = ui.input_("Artist:").strip()
-    name = ui.input_(f"{task.source.type.capitalize()}:").strip()
+    task.candidates.search(
+        ui.input_("Artist:").strip(),
+        ui.input_(f"{task.source.type.capitalize()}:").strip(),
+    )
 
-    method = tag_item if isinstance(task, SingletonImportTask) else tag_album
-    return method(task.source, artist, name)
 
-
-def manual_id(session: ImportSession, task: ImportTask) -> Proposal:
-    """Get a new `Proposal` using a manually-entered ID.
+def manual_id(session: ImportSession, task: ImportTask) -> None:
+    """Resolve candidates using a manually-entered ID.
 
     Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = f"Enter {task.source.type} ID:"
-    search_id = ui.input_(prompt).strip()
-
-    method = tag_item if isinstance(task, SingletonImportTask) else tag_album
-    return method(task.source, search_ids=search_id.split())
+    task.candidates.search_ids(
+        ui.input_(f"Enter {task.source.type} ID:").strip().split()
+    )
 
 
 def abort_action(session: ImportSession, task: ImportTask) -> None:
