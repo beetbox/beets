@@ -178,18 +178,14 @@ class MPDClientWrapper:
         we replace 'strip_path' with ''.
         `strip_path` defaults to ''.
         """
-        result = None
         entry = self.get("currentsong")
-        if "file" in entry:
-            if not is_url(entry["file"]):
-                file = entry["file"]
-                if file.startswith(self.strip_path):
-                    file = file[len(self.strip_path) :]
-                result = os.path.join(self.music_directory, file)
-            else:
-                result = entry["file"]
-        self._log.debug("returning: {}", result)
-        return result, entry.get("id")
+        file, id_ = entry.get("file"), entry.get("id")
+        if file and not is_url(file):
+            if file.startswith(self.strip_path):
+                file = file[len(self.strip_path) :]
+            file = os.path.join(self.music_directory, file)
+        self._log.debug("returning: {}", file)
+        return file, id_
 
     def status(self) -> MPDStatus:
         """Return the current status of the MPD."""
@@ -203,6 +199,8 @@ class MPDClientWrapper:
 
 
 class MPDStats:
+    now_playing: NowPlaying | None = None
+
     def __init__(self, lib: Library, log: Logger) -> None:
         self.lib = lib
         self._log = log
@@ -212,8 +210,6 @@ class MPDStats:
         self.played_ratio_threshold = mpd_config["played_ratio_threshold"].get(
             float
         )
-
-        self.now_playing = None
         self.mpd = MPDClientWrapper(log)
 
     def rating(
@@ -231,7 +227,7 @@ class MPDStats:
 
     def get_item(self, path: str) -> Item | None:
         """Return the beets item related to path."""
-        query = PathQuery("path", path)
+        query = PathQuery("path", os.fsencode(path))
         item = self.lib.items(query).get()
         if item:
             return item
@@ -330,7 +326,7 @@ class MPDStats:
 
     def on_play(self, status: JSONDict) -> None:
         path, songid = self.mpd.currentsong()
-        if not path:
+        if not path or not songid:
             return
 
         played, duration = map(int, status["time"].split(":", 1))
@@ -379,13 +375,7 @@ class MPDStats:
         while True:
             if "player" in events:
                 status = self.mpd.status()
-
-                handler = getattr(self, f"on_{status['state']}", None)
-
-                if handler:
-                    handler(status)
-                else:
-                    self._log.debug('unhandled status "{}"', status)
+                getattr(self, f"on_{status['state']}")(status)
 
             events = self.mpd.events()
 
