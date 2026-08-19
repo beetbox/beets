@@ -4,7 +4,7 @@ import os
 import textwrap
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets import config, ui
 from beets.autotag import AlbumMatch, TrackInfo
@@ -34,10 +34,10 @@ class Change:
 
     original_artist: str
     original_name: str
-    match: Match
+    match: Match[Any]
 
     @classmethod
-    def from_match(cls, match: Match, source: Source) -> Change:
+    def from_match(cls, match: Match[Any], source: Source) -> Change:
         """Construct a Change object from a Match object."""
         _class = AlbumChange if isinstance(match, AlbumMatch) else TrackChange
         return _class(
@@ -384,6 +384,6 @@ class TrackChange(Change):
     match: TrackMatch
 
 
-def show_change(source: Source, match: Match) -> None:
+def show_change(source: Source, match: Match[Any]) -> None:
     """Print out a representation of the changes."""
     Change.from_match(match, source).show()
