@@ -364,8 +364,8 @@ class AcoustidPlugin(MetadataSourcePlugin):
                 if score > 0:
                     top.add(ScoredItem(item, score))
 
-            for item in top:
-                ui.print_(str(item))
+            for scored_item in top:
+                ui.print_(str(scored_item))
 
         cmd.func = search_cmd_func
 

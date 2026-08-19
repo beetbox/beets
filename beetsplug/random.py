@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 
 class RandomCLIOpts(Protocol):
-    album: bool | None
-    equal_chance: bool | None
+    album: bool
+    equal_chance: bool
     field: str
     number: int
     time: float | None
@@ -51,6 +51,7 @@ random_cmd.parser.add_option(
     "-e",
     "--equal-chance",
     action="store_true",
+    default=False,
     help="each field has the same chance",
 )
 random_cmd.parser.add_option(

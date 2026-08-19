@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class ModifyCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     inherit: bool
     move: bool | None
     write: bool | None

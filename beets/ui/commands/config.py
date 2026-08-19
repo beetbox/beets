@@ -10,13 +10,12 @@ from beets.exceptions import UserError
 from beets.util import displayable_path, editor_command, interactive_open
 
 if TYPE_CHECKING:
-
     from beets.library import Library
 
 
 class ConfigCLIOpts(Protocol):
     paths: bool | None
-    defaults: bool | None
+    defaults: bool
     edit: bool | None
     redact: bool
     config: str | None
@@ -99,6 +98,7 @@ config_cmd.parser.add_option(
     "-d",
     "--defaults",
     action="store_true",
+    default=False,
     help="include the default configuration",
 )
 config_cmd.parser.add_option(

@@ -606,7 +606,7 @@ class SpotifyPlugin(
         self.opts = opts
         return True
 
-    def _match_library_tracks(self, library: Library, keywords: str):
+    def _match_library_tracks(self, library: Library, keywords: list[str]):
         """Get simplified track object dicts for library tracks.
 
         Matches tracks based on the specified ``keywords``.

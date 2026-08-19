@@ -41,7 +41,7 @@ ITEM_ONLY_FIELDS = Item._field_names - Album._field_names
 
 
 class EditCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     all: bool | None
     field: list[str] | None
 

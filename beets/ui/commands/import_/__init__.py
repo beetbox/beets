@@ -98,7 +98,7 @@ def import_files(
 
 
 def import_func(lib: Library, opts: ImportCLIOpts, args: list[str]) -> None:
-    config["import"].set_args(opts)
+    config["import"].set_args(vars(opts))
 
     # Special case: --copy flag suppresses import_move (which would
     # otherwise take precedence).

@@ -36,7 +36,7 @@ _temp_files: list[bytes] = []
 
 
 class ConvertCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     keep_new: bool
     yes: bool | None
 

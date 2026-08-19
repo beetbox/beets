@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class ListCLIOpts(Protocol):
-    album: bool | None
+    album: bool
 
 
 def list_items(lib, query, album, fmt=""):

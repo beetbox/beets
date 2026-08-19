@@ -16,8 +16,10 @@ from beets.util import PromptChoice, get_temp_filename
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Library
+    from beets.library import LibModel, Library
 
 
 # Indicate where arguments should be inserted into the command string.
@@ -26,7 +28,7 @@ ARGS_MARKER = "$args"
 
 
 class PlayCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     args: str | None
     randomize: bool | None
     yes: bool | None
@@ -123,6 +125,7 @@ class PlayPlugin(BeetsPlugin):
             relative_to = util.normpath(relative_to)
         # Perform search by album and add folders rather than tracks to
         # playlist.
+        selection: Sequence[LibModel]
         if opts.album:
             selection = lib.albums(args)
             paths = []

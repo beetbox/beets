@@ -490,7 +490,7 @@ class WebPlugin(BeetsPlugin):
 
             # Allow serving behind a reverse proxy
             if self.config["reverse_proxy"]:
-                app.wsgi_app = ReverseProxied(app.wsgi_app)
+                app.wsgi_app = ReverseProxied(app.wsgi_app)  # type: ignore[method-assign]
 
             # Start the web application.
             app.run(

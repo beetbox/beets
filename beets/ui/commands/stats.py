@@ -18,7 +18,7 @@ log = logging.getLogger("beets")
 
 
 class StatsCLIOpts(Protocol):
-    exact: bool | None
+    exact: bool
 
 
 def show_stats(lib, query, exact):
@@ -68,6 +68,10 @@ stats_cmd = ui.Subcommand(
     "stats", help="show statistics about the library or a query"
 )
 stats_cmd.parser.add_option(
-    "-e", "--exact", action="store_true", help="exact size and time"
+    "-e",
+    "--exact",
+    action="store_true",
+    default=False,
+    help="exact size and time",
 )
 stats_cmd.func = stats_func

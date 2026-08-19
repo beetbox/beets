@@ -18,11 +18,13 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
 if TYPE_CHECKING:
-    from beets.library import Library
+    from collections.abc import Iterable
+
+    from beets.library import LibModel, Library
 
 
 class LsLimitCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     head: int | None
     tail: int | None
 
@@ -35,6 +37,7 @@ def lslimit(lib: Library, opts: LsLimitCLIOpts, args: list[str]) -> None:
     if (opts.head or opts.tail or 0) < 0:
         raise ValueError("Limit value must be non-negative")
 
+    objs: Iterable[LibModel]
     if opts.album:
         objs = lib.albums(args)
     else:

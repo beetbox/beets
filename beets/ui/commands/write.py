@@ -19,8 +19,8 @@ log = logging.getLogger("beets")
 
 
 class WriteCLIOpts(Protocol):
-    force: bool | None
-    pretend: bool | None
+    force: bool
+    pretend: bool
 
 
 def write_items(lib, query, pretend, force):
@@ -61,12 +61,14 @@ write_cmd.parser.add_option(
     "-p",
     "--pretend",
     action="store_true",
+    default=False,
     help="show all changes but do nothing",
 )
 write_cmd.parser.add_option(
     "-f",
     "--force",
     action="store_true",
+    default=False,
     help="write tags even if the existing tags match the database",
 )
 write_cmd.func = write_func

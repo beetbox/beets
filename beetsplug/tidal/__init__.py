@@ -41,7 +41,7 @@ class TidalCLIOpts(Protocol):
 
 
 class TidalSyncCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     force: bool
     write: bool
 

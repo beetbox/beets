@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 
 class ReplayGainCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     force: bool
     threads: int | None
     write: bool | None

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class RemoveCLIOpts(Protocol):
-    album: bool | None
+    album: bool
     delete: bool | None
     force: bool | None
 

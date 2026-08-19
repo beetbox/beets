@@ -745,7 +745,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         def lastgenre_func(
             lib: library.Library, opts: LastGenreCLIOpts, args: list[str]
         ) -> None:
-            self.config.set_args(opts)
+            self.config.set_args(vars(opts))
 
             method = lib.albums if opts.album else lib.items
             for obj in method(args):
