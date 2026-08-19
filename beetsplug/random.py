@@ -3,15 +3,17 @@ from __future__ import annotations
 import random
 from itertools import groupby, islice
 from operator import methodcaller
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypeVar
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from beets.library import LibModel, Library
+
+    RandomModel = TypeVar("RandomModel", bound=LibModel)
 
 
 class RandomCLIOpts(Protocol):
@@ -78,8 +80,8 @@ class Random(BeetsPlugin):
 
 
 def _equal_chance_permutation(
-    objs: Iterable[LibModel], field: str
-) -> Iterable[LibModel]:
+    objs: Iterable[RandomModel], field: str
+) -> Iterator[RandomModel]:
     """Generate (lazily) a permutation of the objects where every group
     with equal values for `field` have an equal chance of appearing in
     any given position.
@@ -102,11 +104,10 @@ def _equal_chance_permutation(
             del groups[group]
 
 
-def _take_time(iter_: Iterable[LibModel], secs: float) -> Iterable[LibModel]:
-    """Return a list containing the first values in `iter`, which should
-    be Item or Album objects, that add up to the given amount of time in
-    seconds.
-    """
+def _take_time(
+    iter_: Iterable[RandomModel], secs: float
+) -> Iterator[RandomModel]:
+    """Yield objects without exceeding the requested total duration."""
     total_time = 0.0
     for obj in iter_:
         length = obj.length
@@ -116,12 +117,12 @@ def _take_time(iter_: Iterable[LibModel], secs: float) -> Iterable[LibModel]:
 
 
 def random_objs(
-    objs: Iterable[LibModel],
+    objs: Iterable[RandomModel],
     equal_chance_field: str,
     number: int = 1,
     time_minutes: float | None = None,
     equal_chance: bool = False,
-) -> Iterable[LibModel]:
+) -> Iterator[RandomModel]:
     """Get a random subset of items, optionally constrained by time or count.
 
     Args:
@@ -135,6 +136,7 @@ def random_objs(
     """
     # Permute the objects either in a straightforward way or an
     # field-balanced way.
+    perm: Iterable[RandomModel]
     if equal_chance:
         perm = _equal_chance_permutation(objs, equal_chance_field)
     else:

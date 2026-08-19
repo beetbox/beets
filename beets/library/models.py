@@ -1411,7 +1411,8 @@ class DefaultTemplateFunctions:
         if memoval is not None:
             return memoval
 
-        album: Album = self.lib.get_album(album_id)  # type: ignore[assignment]
+        if not (album := self.lib.get_album(album_id)):
+            return ""
 
         return self._tmpl_unique(
             "aunique",
