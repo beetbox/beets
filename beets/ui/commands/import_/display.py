@@ -4,7 +4,7 @@ import os
 import textwrap
 from dataclasses import dataclass
 from functools import cached_property, singledispatch
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets import config, ui
 from beets.autotag import AlbumMatch, Source, TrackInfo, TrackMatch
@@ -32,7 +32,7 @@ class Change:
     TrackMatch object, accordingly.
     """
 
-    match: Match
+    match: Match[Any]
     source: Source
 
     @cached_property
@@ -371,7 +371,7 @@ class TrackChange(Change):
 
 
 @singledispatch
-def show_change(match: Match, source: Source) -> None:
+def show_change(match: Match[Any], source: Source) -> None:
     """Print out a representation of the changes."""
     raise NotImplementedError
 
