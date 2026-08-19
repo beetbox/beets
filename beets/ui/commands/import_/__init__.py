@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import config, logging, plugins, ui
 from beets.exceptions import UserError
@@ -20,6 +20,12 @@ if TYPE_CHECKING:
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+class ImportCLIOpts(Protocol):
+    copy: bool | None
+    library: bool | None
+    from_logfiles: list[str] | None
 
 
 def paths_from_logfile(path: str) -> Iterator[str]:
@@ -91,7 +97,7 @@ def import_files(
     plugins.send("import", lib=lib, paths=paths)
 
 
-def import_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+def import_func(lib: Library, opts: ImportCLIOpts, args: list[str]) -> None:
     config["import"].set_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would

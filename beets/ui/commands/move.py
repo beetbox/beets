@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import logging, ui
 from beets.exceptions import UserError
@@ -13,13 +13,20 @@ from beets.util.diff import colordiff
 from .utils import do_query
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
     from beets.util import PathLike
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+class MoveCLIOpts(Protocol):
+    album: bool | None
+    copy: bool
+    dest: str | None
+    export: bool
+    pretend: bool
+    timid: bool | None
 
 
 def show_path_changes(path_changes):
@@ -150,7 +157,7 @@ def move_items(
                     obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
-def move_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+def move_func(lib: Library, opts: MoveCLIOpts, args: list[str]) -> None:
     dest = opts.dest
     if dest is not None:
         dest = normpath(dest)

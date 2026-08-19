@@ -11,16 +11,20 @@ from __future__ import annotations
 
 import os
 from operator import attrgetter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import library, plugins, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import commands
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+
+class FishCLIOpts(Protocol):
+    extravalues: list[str] | None
+    noFields: bool  # noqa: N815
+    output: str
 
 
 BL_NEED2 = """complete -c beet -n '__fish_beet_needs_command' {} {}\n"""
@@ -89,7 +93,7 @@ class FishPlugin(BeetsPlugin):
         )
         return [cmd]
 
-    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
+    def run(self, lib: Library, opts: FishCLIOpts, args: list[str]) -> None:
         # Gather the commands from Beets core and its plugins.
         # Collect the album and track fields.
         # If specified, also collect the values for these fields.

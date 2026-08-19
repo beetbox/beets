@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import mediafile
 
@@ -13,9 +13,16 @@ from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+
+class InfoCLIOpts(Protocol):
+    album: bool | None
+    format: str | None
+    included_keys: list[str]
+    keys_only: bool | None
+    library: bool | None
+    summarize: bool | None
 
 
 def tag_data(lib, args, album=False):
@@ -175,7 +182,7 @@ class InfoPlugin(BeetsPlugin):
         cmd.parser.add_format_option(target="item")
         return [cmd]
 
-    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
+    def run(self, lib: Library, opts: InfoCLIOpts, args: list[str]) -> None:
         """Print tag info or library data for each file referenced by args.
 
         Main entry point for the `beet info ARGS...` command.

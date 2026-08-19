@@ -3,19 +3,26 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import config, ui
 from beets.exceptions import UserError
 from beets.util import displayable_path, editor_command, interactive_open
 
 if TYPE_CHECKING:
-    import optparse
 
     from beets.library import Library
 
 
-def config_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+class ConfigCLIOpts(Protocol):
+    paths: bool | None
+    defaults: bool | None
+    edit: bool | None
+    redact: bool
+    config: str | None
+
+
+def config_func(lib: Library, opts: ConfigCLIOpts, args: list[str]) -> None:
     # Make sure lazy configuration is loaded
     config.resolve()
 

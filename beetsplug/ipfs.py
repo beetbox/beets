@@ -6,15 +6,22 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import config, library, ui, util
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+
+class IPFSCLIOpts(Protocol):
+    _import: bool | None
+    _list: bool | None
+    add: bool | None
+    get: bool | None
+    play: bool | None
+    publish: bool | None
 
 
 class IPFSPlugin(BeetsPlugin):
@@ -62,7 +69,7 @@ class IPFSPlugin(BeetsPlugin):
             help="Play music from remote libraries",
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+        def func(lib: Library, opts: IPFSCLIOpts, args: list[str]) -> None:
             if opts.add:
                 for album in lib.albums(args):
                     if len(album.items()) == 0:
@@ -97,7 +104,7 @@ class IPFSPlugin(BeetsPlugin):
                 task.album.store()
 
     def ipfs_play(
-        self, lib: Library, opts: optparse.Values, args: list[str]
+        self, lib: Library, opts: IPFSCLIOpts, args: list[str]
     ) -> None:
         from beetsplug.play import PlayPlugin
 

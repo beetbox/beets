@@ -3,19 +3,26 @@ from __future__ import annotations
 import random
 from itertools import groupby, islice
 from operator import methodcaller
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Iterable
 
     from beets.library import LibModel, Library
 
 
-def random_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+class RandomCLIOpts(Protocol):
+    album: bool | None
+    equal_chance: bool | None
+    field: str
+    number: int
+    time: float | None
+
+
+def random_func(lib: Library, opts: RandomCLIOpts, args: list[str]):
     """Select some random items or albums and print the results."""
     # Fetch all the objects matching the query into a list.
     objs = lib.albums(args) if opts.album else lib.items(args)

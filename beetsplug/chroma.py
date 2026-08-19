@@ -8,7 +8,7 @@ import heapq
 import re
 from collections import defaultdict
 from functools import cached_property, partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import acoustid
 import confuse
@@ -28,6 +28,14 @@ if TYPE_CHECKING:
     from beets.library import Library
     from beets.library.models import Item
     from beetsplug.musicbrainz import MusicBrainzPlugin
+
+
+class ChromaSearchCLIOpts(Protocol):
+    count: int
+    full: bool | None
+    search: str | None
+    write: bool | None
+
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -322,7 +330,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
         )
 
         def search_cmd_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: ChromaSearchCLIOpts, args: list[str]
         ) -> None:
             if not opts.search:
                 raise UserError("no --search provided")

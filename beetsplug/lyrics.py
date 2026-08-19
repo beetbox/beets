@@ -12,7 +12,7 @@ from functools import cached_property, partial, total_ordering
 from html import unescape
 from itertools import filterfalse, groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, NamedTuple
+from typing import TYPE_CHECKING, ClassVar, NamedTuple, Protocol
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import requests
@@ -35,7 +35,6 @@ from ._utils.requests import (
 )
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Callable, Iterable, Iterator
 
     import confuse
@@ -53,6 +52,11 @@ if TYPE_CHECKING:
     )
 
     HtmlTransformer = Callable[[str], str]
+
+
+class LyricsCLIOpts(Protocol):
+    print: bool
+    rest_directory: str | None
 
 
 class CaptchaError(requests.exceptions.HTTPError):
@@ -1143,7 +1147,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             help="do not fetch missing lyrics",
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+        def func(lib: Library, opts: LyricsCLIOpts, args: list[str]) -> None:
             # The "write to files" option corresponds to the
             # import_write config value.
             self.config.set(vars(opts))

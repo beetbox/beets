@@ -6,7 +6,7 @@ import base64
 import json
 import os
 import typing as t
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import flask
 from flask import jsonify
@@ -19,9 +19,11 @@ from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+
+class WebCLIOpts(Protocol):
+    debug: bool
 
 
 # Type checking hacks
@@ -454,7 +456,7 @@ class WebPlugin(BeetsPlugin):
             help="debug mode",
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+        def func(lib: Library, opts: WebCLIOpts, args: list[str]) -> None:
             args = args
             if args:
                 self.config["host"] = args.pop(0)

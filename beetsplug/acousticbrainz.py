@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 import requests
 
@@ -12,10 +12,12 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.importer import ImportSession, ImportTask
     from beets.library import Library
+
+
+class AcousticBrainzCLIOpts(Protocol):
+    force_refetch: bool
 
 
 LEVELS = ["/low-level", "/high-level"]
@@ -112,7 +114,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
             help="re-download data when already present",
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+        def func(
+            lib: Library, opts: AcousticBrainzCLIOpts, args: list[str]
+        ) -> None:
             items = lib.items(args)
             self._fetch_info(
                 items,

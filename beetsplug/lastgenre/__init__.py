@@ -14,7 +14,7 @@ import re
 from collections import defaultdict
 from functools import cached_property, singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 import confuse
 import yaml
@@ -27,7 +27,6 @@ from beetsplug.lastgenre.utils import is_ignored, normalize_genre
 from .client import LastFmClient
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Iterable
 
     from beets.importer import ImportSession, ImportTask
@@ -45,6 +44,10 @@ if TYPE_CHECKING:
     GenresWithLabel = tuple[list[str], str]
     #: A pair of ``(genre list, label)`` returned by a genre resolution stage.
     #: The label is used for logging and describes the source and filtering applied.
+
+
+class LastGenreCLIOpts(Protocol):
+    album: bool
 
 
 # Canonicalization tree processing.
@@ -740,7 +743,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.parser.set_defaults(album=True)
 
         def lastgenre_func(
-            lib: library.Library, opts: optparse.Values, args: list[str]
+            lib: library.Library, opts: LastGenreCLIOpts, args: list[str]
         ) -> None:
             self.config.set_args(opts)
 

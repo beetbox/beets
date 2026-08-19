@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, Protocol
 
 from beets import library, ui
 from beets.dbcore import types
@@ -12,9 +12,15 @@ from beets.util.deprecation import maybe_replace_legacy_field
 from .utils import do_query
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import LibModel, Library
+
+
+class ModifyCLIOpts(Protocol):
+    album: bool | None
+    inherit: bool
+    move: bool | None
+    write: bool | None
+    yes: bool | None
 
 
 class ModifyOperation(NamedTuple):
@@ -152,7 +158,7 @@ def modify_parse_args(args, is_album: bool):
     return query, mods, dels
 
 
-def modify_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+def modify_func(lib: Library, opts: ModifyCLIOpts, args: list[str]) -> None:
     query, mods, dels = modify_parse_args(args, is_album=opts.album)
     if not mods and not dels:
         raise UserError("no modifications specified")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 from confuse import ConfigValueError
 
@@ -12,8 +12,6 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.dbcore import types
     from beets.library import Library
 
@@ -21,6 +19,11 @@ METASYNC_MODULE = "beetsplug.metasync"
 
 # Dictionary to map the MODULE and the CLASS NAME of meta sources
 SOURCES = {"amarok": "Amarok", "itunes": "Itunes"}
+
+
+class MetaSyncCLIOpts(Protocol):
+    pretend: bool | None
+    sources: list[str]
 
 
 class MetaSource(metaclass=ABCMeta):
@@ -88,7 +91,7 @@ class MetaSyncPlugin(BeetsPlugin):
         return [cmd]
 
     def func(
-        self, lib: Library, opts: optparse.Values, args: list[str]
+        self, lib: Library, opts: MetaSyncCLIOpts, args: list[str]
     ) -> None:
         """Command handler for the metasync function."""
         pretend = opts.pretend

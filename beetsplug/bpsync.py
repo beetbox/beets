@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import library, ui, util
 from beets.autotag import AlbumMatch, Distance, TrackMatch
@@ -12,9 +12,13 @@ from beets.util.deprecation import deprecate_for_user
 from .beatport import BeatportPlugin
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+
+class BPSyncCLIOpts(Protocol):
+    move: bool | None
+    pretend: bool | None
+    write: bool | None
 
 
 class BPSyncPlugin(BeetsPlugin):
@@ -58,9 +62,7 @@ class BPSyncPlugin(BeetsPlugin):
         cmd.func = self.func
         return [cmd]
 
-    def func(
-        self, lib: Library, opts: optparse.Values, args: list[str]
-    ) -> None:
+    def func(self, lib: Library, opts: BPSyncCLIOpts, args: list[str]) -> None:
         """Command handler for the bpsync function."""
         move = ui.should_move(opts.move)
         pretend = opts.pretend

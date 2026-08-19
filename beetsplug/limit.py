@@ -11,19 +11,23 @@ from __future__ import annotations
 
 from collections import deque
 from itertools import islice
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets.dbcore import FieldQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
 
 
-def lslimit(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+class LsLimitCLIOpts(Protocol):
+    album: bool | None
+    head: int | None
+    tail: int | None
+
+
+def lslimit(lib: Library, opts: LsLimitCLIOpts, args: list[str]) -> None:
     """Query command with head/tail."""
 
     if (opts.head is not None) and (opts.tail is not None):

@@ -5,7 +5,7 @@ import os
 import re
 import time
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, overload
 
 import confuse
 
@@ -19,7 +19,6 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from .api import TidalAPI
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Callable, Iterable, Sequence
 
     from beets.autotag import Info
@@ -35,6 +34,16 @@ if TYPE_CHECKING:
         TidalArtwork,
         TidalTrack,
     )
+
+
+class TidalCLIOpts(Protocol):
+    auth: bool
+
+
+class TidalSyncCLIOpts(Protocol):
+    album: bool | None
+    force: bool
+    write: bool
 
 
 log = getLogger("beets.tidal")
@@ -612,7 +621,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
         def auth_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: TidalCLIOpts, args: list[str]
         ) -> None:
             if opts.auth:
                 self.api.ui_authenticate_flow()
@@ -652,7 +661,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
         def sync_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: TidalSyncCLIOpts, args: list[str]
         ) -> None:
             query = ["data_source:tidal", *args]
 

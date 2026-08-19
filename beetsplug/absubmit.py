@@ -9,7 +9,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import requests
 
@@ -17,9 +17,12 @@ from beets import plugins, ui, util
 from beets.exceptions import UserError
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+
+class ABSubmitCLIOpts(Protocol):
+    force_refetch: bool
+    pretend_fetch: bool
 
 
 # We use this field to check whether AcousticBrainz info is present.
@@ -123,7 +126,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         return [cmd]
 
     def command(
-        self, lib: Library, opts: optparse.Values, args: list[str]
+        self, lib: Library, opts: ABSubmitCLIOpts, args: list[str]
     ) -> None:
         if not self.url:
             raise UserError(

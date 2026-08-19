@@ -10,7 +10,7 @@ import tempfile
 import threading
 from functools import cached_property
 from string import Template
-from typing import TYPE_CHECKING, Literal, NamedTuple
+from typing import TYPE_CHECKING, Literal, NamedTuple, Protocol
 
 import mediafile
 from confuse import ConfigTypeError, Optional
@@ -26,8 +26,6 @@ from beets.util.pathformats import get_path_formats
 from beetsplug._utils import art
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
     from beets.util.pathformats import PathFormat
@@ -35,6 +33,13 @@ if TYPE_CHECKING:
 _fs_lock = threading.Lock()
 # Keep track of temporary transcoded files for deletion.
 _temp_files: list[bytes] = []
+
+
+class ConvertCLIOpts(Protocol):
+    album: bool | None
+    keep_new: bool
+    yes: bool | None
+
 
 # Some convenient alternate names for formats.
 ALIASES = {"windows media": "wma", "vorbis": "ogg"}
@@ -651,7 +656,7 @@ class ConvertPlugin(BeetsPlugin):
                     util.copy(album.artpath, dest)
 
     def convert_func(
-        self, lib: Library, opts: optparse.Values, args: list[str]
+        self, lib: Library, opts: ConvertCLIOpts, args: list[str]
     ) -> None:
         self.config.set(vars(opts))
         pretend = self.pretend

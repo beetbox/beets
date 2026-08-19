@@ -3,20 +3,22 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import logging, ui
 from beets.util import syspath
 from beets.util.units import human_bytes, human_seconds
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
 
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+class StatsCLIOpts(Protocol):
+    exact: bool | None
 
 
 def show_stats(lib, query, exact):
@@ -58,7 +60,7 @@ Albums: {len(albums)}
 Album artists: {len(album_artists)}""")
 
 
-def stats_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+def stats_func(lib: Library, opts: StatsCLIOpts, args: list[str]) -> None:
     show_stats(lib, args, opts.exact)
 
 

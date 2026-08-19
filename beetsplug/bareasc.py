@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from unidecode import unidecode
 
@@ -16,9 +16,11 @@ from beets.plugins import BeetsPlugin
 from beets.ui import print_
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+
+class BareascCLIOpts(Protocol):
+    album: bool | None
 
 
 class BareascQuery(StringFieldQuery[str]):
@@ -73,7 +75,7 @@ class BareascPlugin(BeetsPlugin):
         return [cmd]
 
     def unidecode_list(
-        self, lib: Library, opts: optparse.Values, args: list[str]
+        self, lib: Library, opts: BareascCLIOpts, args: list[str]
     ) -> None:
         """Emulate normal 'list' command but with unidecode output."""
         album = opts.album

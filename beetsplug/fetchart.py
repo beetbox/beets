@@ -9,7 +9,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal, Protocol
 
 import confuse
 import requests
@@ -23,12 +23,17 @@ from beets.util.color import colorize
 from beets.util.config import UnknownPairError, sanitize_pairs
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Iterable, Iterator, Sequence
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
     from beets.logging import BeetsLogger as Logger
+
+
+class FetchArtCLIOpts(Protocol):
+    force: bool
+    quiet: bool
+
 
 try:
     from bs4 import BeautifulSoup, Tag
@@ -1549,7 +1554,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             help="quiet mode: do not output albums that already have artwork",
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+        def func(lib: Library, opts: FetchArtCLIOpts, args: list[str]) -> None:
             self.batch_fetch_art(lib, lib.albums(args), opts.force, opts.quiet)
 
         cmd.func = func

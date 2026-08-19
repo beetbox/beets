@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypeVar
 
 from beets import ui
 from beets.exceptions import UserError
@@ -24,7 +24,6 @@ from beets.plugins import BeetsPlugin
 from beets.util import command_output, syspath
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Callable, Sequence
     from logging import Logger
 
@@ -32,6 +31,14 @@ if TYPE_CHECKING:
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
+
+
+class ReplayGainCLIOpts(Protocol):
+    album: bool | None
+    force: bool
+    threads: int | None
+    write: bool | None
+
 
 # Utilities.
 
@@ -1567,8 +1574,8 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.handle_track(task.item, False, self.force_on_import)
 
     def command_func(
-        self, lib: Library, opts: optparse.Values, args: list[str]
-    ) -> None:
+        self, lib: Library, opts: ReplayGainCLIOpts, args: list[str]
+    ):
         try:
             write = ui.should_write(opts.write)
             force = opts.force

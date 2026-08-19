@@ -13,7 +13,7 @@ import threading
 import time
 import webbrowser
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypedDict
 
 import confuse
 import requests
@@ -27,7 +27,6 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 from beets.util import chunks
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Sequence
 
     from beets.library import Item, Library
@@ -35,6 +34,15 @@ if TYPE_CHECKING:
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
+
+
+class SpotifyCLIOpts(Protocol):
+    mode: str | None
+    show_failures: bool | None
+
+
+class SpotifySyncCLIOpts(Protocol):
+    force_refetch: bool
 
 
 class TrackDetails(TypedDict):
@@ -532,7 +540,7 @@ class SpotifyPlugin(
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
         def queries(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: SpotifyCLIOpts, args: list[str]
         ) -> None:
             success = self._parse_opts(opts)
             if success:
@@ -573,7 +581,9 @@ class SpotifyPlugin(
             help="re-download data when already present",
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+        def func(
+            lib: Library, opts: SpotifySyncCLIOpts, args: list[str]
+        ) -> None:
             items = lib.items(args)
             self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 

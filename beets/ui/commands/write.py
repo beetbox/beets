@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
 from beets.util import syspath
@@ -11,13 +11,16 @@ from beets.util import syspath
 from .utils import do_query
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
 
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+class WriteCLIOpts(Protocol):
+    force: bool | None
+    pretend: bool | None
 
 
 def write_items(lib, query, pretend, force):
@@ -49,7 +52,7 @@ def write_items(lib, query, pretend, force):
             item.try_sync(True, False)
 
 
-def write_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+def write_func(lib: Library, opts: WriteCLIOpts, args: list[str]) -> None:
     write_items(lib, args, opts.pretend, opts.force)
 
 

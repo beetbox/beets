@@ -7,7 +7,7 @@ import csv
 import json
 import sys
 from datetime import date, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Protocol
 from xml.etree import ElementTree
 
 import mediafile
@@ -17,9 +17,18 @@ from beets.plugins import BeetsPlugin
 from beetsplug.info import library_data, tag_data
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import Library
+
+Format = Literal["json", "jsonlines", "csv", "xml"]
+
+
+class ExportCLIOpts(Protocol):
+    library: bool | None
+    album: bool | None
+    append: bool
+    included_keys: list[str]
+    output: str | None
+    format: Format | None
 
 
 class ExportEncoder(json.JSONEncoder):
@@ -115,7 +124,7 @@ class ExportPlugin(BeetsPlugin):
         )
         return [cmd]
 
-    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
+    def run(self, lib: Library, opts: ExportCLIOpts, args: list[str]) -> None:
         file_path = opts.output
         file_mode = "a" if opts.append else "w"
         file_format = opts.format or self.config["default_format"].get(str)
