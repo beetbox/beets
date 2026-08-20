@@ -17,6 +17,10 @@ New features
   new tracks, and keeps the album together rather than splitting it. The option
   is available both through configuration and from the interactive duplicate
   prompt. :bug:`4471`
+- The interactive import prompt now offers a "Rescan directory" choice for album
+  tasks. It re-reads the album's directory from disk and re-runs the match, so
+  files can be cleaned up (duplicates, junk) while the import is paused at the
+  prompt, without restarting the whole ``beet import`` run.
 
 Bug fixes
 ~~~~~~~~~

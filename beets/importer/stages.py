@@ -14,6 +14,7 @@ from .tasks import (
     ImportTaskFactory,
     SentinelImportTask,
     SingletonImportTask,
+    albums_in_dir,
     resolve_upgrade_target,
 )
 
@@ -85,6 +86,43 @@ def query_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
             task = ImportTask(None, [album.item_dir()], items)
             for task in task.handle_created(session):
                 yield task
+
+
+def rescan_tasks(
+    session: ImportSession, task: ImportTask
+) -> Iterator[BaseImportTask]:
+    """Re-read `task`'s directories from disk and yield fresh tasks for
+    whatever music is found there now.
+
+    Used to implement the "Rescan directory" prompt choice: the user may
+    have manually cleaned up (removed duplicates, deleted junk files, etc.)
+    the directory while the import was paused at the prompt, so we must not
+    reuse `task.items`, which reflect the stale, pre-cleanup listing.
+    """
+    factory = ImportTaskFactory(task.toppath, session)
+    found = False
+    for directory in task.paths:
+        for dirs, paths in albums_in_dir(directory):
+            if session.config["singletons"]:
+                new_tasks = [
+                    new_task
+                    for path in paths
+                    if (new_task := factory.singleton(path)) is not None
+                ]
+            else:
+                album_task = factory.album(paths, dirs)
+                new_tasks = [album_task] if album_task else []
+
+            for new_task in new_tasks:
+                found = True
+                yield from new_task.handle_created(session)
+
+    if not found:
+        log.info(
+            "No music found after rescanning: {}", displayable_path(task.paths)
+        )
+
+    yield SentinelImportTask(task.toppath, task.paths)
 
 
 # ---------------------------------- Stages ---------------------------------- #
@@ -163,6 +201,14 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
     # Ask the user for a choice.
     task.choose_match(session)
     plugins.send("import_task_choice", session=session, task=task)
+
+    # Rescan: re-read the directory from disk and re-run the match.
+    if task.choice_flag is Action.RESCAN:
+        return _extend_pipeline(
+            rescan_tasks(session, task),
+            lookup_candidates(session),
+            user_query(session),
+        )
 
     # As-tracks: transition to singleton workflow.
     if task.choice_flag is Action.TRACKS:

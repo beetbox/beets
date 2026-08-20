@@ -639,6 +639,49 @@ class ImportTracksTest(AutotagImportTestCase):
         assert (self.lib_path / "singletons" / "Applied Track 1.mp3").exists()
 
 
+class ImportRescanTest(AutotagImportTestCase):
+    """Test the Rescan directory action."""
+
+    def setUp(self):
+        super().setUp()
+        self.album_path = self.prepare_album_for_import(2)[0].parent
+        self.setup_importer()
+
+    def test_rescan_picks_up_file_added_after_initial_scan(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        # Simulate the user adding a file to the directory (e.g. after
+        # noticing it was missing) while the import is paused at the prompt.
+        self.prepare_track_for_import(3, self.album_path)
+
+        self.importer.run()
+
+        assert len(self.lib.items()) == 3
+
+    def test_rescan_picks_up_file_removed_after_initial_scan(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        # Simulate the user deleting a duplicate/junk file while the import
+        # is paused at the prompt.
+        (self.album_path / "track_2.mp3").unlink()
+
+        self.importer.run()
+
+        assert len(self.lib.items()) == 1
+
+    def test_rescan_of_emptied_directory_imports_nothing(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+
+        self.importer.run()
+
+        assert not self.lib.items()
+
+
 class ImportCompilationTest(AutotagImportTestCase):
     """Test ASIS import of a folder containing tracks with different artists."""
 
