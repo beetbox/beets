@@ -32,7 +32,7 @@ def rewriter(
     field: str,
     simple_rules: list[tuple[re.Pattern[str], str]],
     advanced_rules: list[tuple[AndQuery, str | list[str]]],
-) -> Callable[[LibModel], str]:
+) -> Callable[[LibModel], str | list[str]]:
     """Template field function factory.
 
     Create a template field function that rewrites the given field
@@ -41,7 +41,7 @@ def rewriter(
     ``advanced_rules`` must be a list of (query, replacement) pairs.
     """
 
-    def fieldfunc(item: LibModel) -> str:
+    def fieldfunc(item: LibModel) -> str | list[str]:
         value = item._values_fixed[field]
         if (new_value := apply_rewrite_rules(value, simple_rules)) != value:
             # Rewrite activated.
@@ -52,7 +52,7 @@ def rewriter(
                 # Rewrite activated.
                 # TODO: BeetsPlugin.template_fields and album_template_fields
                 # require return value 'str' but 'list' here is legit too
-                return replacement  # type: ignore[return-value]
+                return replacement
         # Not activated; return original value.
         return value
 

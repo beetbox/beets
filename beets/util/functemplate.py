@@ -24,6 +24,8 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
 
+    FieldTFuncs: TypeAlias = Mapping[str, Callable[[str], object]]
+
 Part: TypeAlias = "str | Symbol | Call"
 
 SYMBOL_DELIM = "$"
@@ -43,9 +45,7 @@ class Environment:
     """
 
     def __init__(
-        self,
-        values: Mapping[str, str] = {},
-        functions: Mapping[str, Callable[[str], str]] = {},
+        self, values: Mapping[str, str] = {}, functions: FieldTFuncs = {}
     ) -> None:
         self.values = values
         self.functions = functions
@@ -541,9 +541,7 @@ class Template:
         return type(self) is type(other) and self.original == other.original
 
     def interpret(
-        self,
-        values: Mapping[str, str] = {},
-        functions: Mapping[str, Callable[[str], str]] = {},
+        self, values: Mapping[str, str] = {}, functions: FieldTFuncs = {}
     ) -> str:
         """Like `substitute`, but forces the interpreter (rather than
         the compiled version) to be used. The interpreter includes
@@ -553,9 +551,7 @@ class Template:
         return self.expr.evaluate(Environment(values, functions))
 
     def substitute(
-        self,
-        values: Mapping[str, str] = {},
-        functions: Mapping[str, Callable[[str], str]] = {},
+        self, values: Mapping[str, str] = {}, functions: FieldTFuncs = {}
     ) -> str:
         """Evaluate the template given the values and functions."""
         try:

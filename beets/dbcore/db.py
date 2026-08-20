@@ -54,6 +54,8 @@ if TYPE_CHECKING:
     from sqlite3 import Connection
     from types import TracebackType
 
+    from beets.util.functemplate import FieldTFuncs
+
     from ..util import PathLike
     from .query import FieldQueryType, Query, SQLiteType
     from .sort import FieldSort, Sort
@@ -348,7 +350,7 @@ class Model(ABC, Generic[D]):
         # gather the getter mapping every time.
         raise NotImplementedError()
 
-    def _template_funcs(self) -> Mapping[str, Callable[[str], str]]:
+    def _template_funcs(self) -> FieldTFuncs:
         """Return a mapping from function names to text-transformer
         functions.
         """
