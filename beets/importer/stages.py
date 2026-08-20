@@ -99,23 +99,20 @@ def rescan_tasks(
     the directory while the import was paused at the prompt, so we must not
     reuse `task.items`, which reflect the stale, pre-cleanup listing.
     """
+    assert task.toppath is not None
     factory = ImportTaskFactory(task.toppath, session)
     found = False
     for directory in task.paths:
         for dirs, paths in albums_in_dir(directory):
             if session.config["singletons"]:
-                new_tasks = [
-                    new_task
-                    for path in paths
-                    if (new_task := factory.singleton(path)) is not None
-                ]
+                for path in paths:
+                    if (singleton_task := factory.singleton(path)) is not None:
+                        found = True
+                        yield from singleton_task.handle_created(session)
             else:
-                album_task = factory.album(paths, dirs)
-                new_tasks = [album_task] if album_task else []
-
-            for new_task in new_tasks:
-                found = True
-                yield from new_task.handle_created(session)
+                if (album_task := factory.album(paths, dirs)) is not None:
+                    found = True
+                    yield from album_task.handle_created(session)
 
     if not found:
         log.info(
