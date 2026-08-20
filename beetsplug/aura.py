@@ -20,7 +20,6 @@ from typing_extensions import Self
 
 from beets import config
 from beets.dbcore import AndQuery, MatchQuery
-from beets.dbcore.query import NotQuery, RegexpQuery
 from beets.dbcore.sort import FixedFieldSort, MultipleSort, SlowFieldSort
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
@@ -32,7 +31,6 @@ if TYPE_CHECKING:
     from werkzeug.datastructures import MultiDict
 
     from beets.dbcore import Query
-    from beets.dbcore.query import SQLiteType
     from beets.dbcore.sort import Sort
     from beets.library import LibModel, Library
 
@@ -148,22 +146,6 @@ class AURADocument:
         }
         return make_response(document, status)
 
-    @classmethod
-    def get_attribute_converter(cls, beets_attr: str) -> type[SQLiteType]:
-        """Work out what data type an attribute should be for beets.
-
-        Args:
-            beets_attr: The name of the beets attribute, e.g. "title".
-        """
-        try:
-            # Look for field in list of Album fields
-            # and get python type of database type.
-            # See beets.library.Album and beets.dbcore.types
-            return cls.model_cls._fields[beets_attr].model_type
-        except KeyError:
-            # Fall back to string (NOTE: probably not good)
-            return str
-
     def translate_filters(self) -> AndQuery:
         """Translate filters from request arguments to a beets Query."""
         # The format of each filter key in the request parameter is:
@@ -177,17 +159,14 @@ class AURADocument:
                 aura_attr = match.group("attribute")
                 # Get the beets version of the attribute name
                 beets_attr = self.attribute_map.get(aura_attr, aura_attr)
-                converter = self.get_attribute_converter(beets_attr)
-                value = converter(v)  # type: ignore[arg-type, misc]
                 # Add exact match query to list
-                # Use a slow query so it works with all fields
                 queries.append(
-                    self.model_cls.field_query(beets_attr, value, MatchQuery)  # type: ignore[arg-type]
+                    self.model_cls.field_query(beets_attr, v, MatchQuery)
                 )
         # NOTE: AURA doesn't officially support multiple queries
         return AndQuery(queries)
 
-    def translate_sorts(self, sort_arg: str) -> MultipleSort:
+    def translate_sorts(self) -> MultipleSort | None:
         """Translate an AURA sort parameter into a beets Sort.
 
         Args:
@@ -196,6 +175,9 @@ class AURADocument:
                 E.g. "-year,title".
         """
         # Change HTTP query parameter to a list
+        if not (sort_arg := self.args.get("sort")):
+            return None
+
         aura_sorts = sort_arg.strip(",").split(",")
         sorts: list[Sort] = []
         for aura_attr in aura_sorts:
@@ -325,20 +307,7 @@ class AURADocument:
     def all_resources(self) -> JSONDict:
         """Build document for /tracks, /albums or /artists."""
         query = self.translate_filters()
-        sort_arg = self.args.get("sort", None)
-        if sort_arg:
-            sort = self.translate_sorts(sort_arg)
-            # For each sort field add a query which ensures all results
-            # have a non-empty, non-zero value for that field.
-            query.subqueries.extend(
-                NotQuery(
-                    # these MultipleSorts have FieldSorts which define .field
-                    self.model_cls.field_query(s.field, "(^$|^0$)", RegexpQuery)  # type: ignore[attr-defined]
-                )
-                for s in sort.sorts
-            )
-        else:
-            sort = None
+        sort = self.translate_sorts()
         # Get information from the library
         collection = self.get_collection(query=query, sort=sort)
         # Convert info to AURA form and paginate it
@@ -389,19 +358,6 @@ class TrackDocument(AURADocument):
             sort: A beets Sort object.
         """
         return self.lib.items(query, sort)
-
-    @classmethod
-    def get_attribute_converter(cls, beets_attr: str) -> type[SQLiteType]:
-        """Work out what data type an attribute should be for beets.
-
-        Args:
-            beets_attr: The name of the beets attribute, e.g. "title".
-        """
-        # filesize is a special field (read from disk not db?)
-        if beets_attr == "filesize":
-            return int
-
-        return super().get_attribute_converter(beets_attr)
 
     @staticmethod
     def get_resource_object(lib: Library, track: Item) -> JSONDict:

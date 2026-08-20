@@ -81,6 +81,10 @@ Bug fixes
 - :ref:`move-cmd`: Fix moving albums in interactive select/timid mode.
   :bug:`2802`
 - :doc:`plugins/bpd`: Fix ``search`` command when ``any`` field is used.
+- :doc:`plugins/aura`: Prevent multi-valued field filters from crashing with an
+  ``sqlite3.InterfaceError``.
+- :doc:`plugins/aura`: When sorting by ``field``, do not exclude resources that
+  have no value for ``field``.
 
 ..
     For plugin developers
