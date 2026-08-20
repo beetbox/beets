@@ -13,7 +13,9 @@ from beets.util.diff import colordiff
 from .utils import do_query
 
 if TYPE_CHECKING:
-    from beets.library import Library
+    from collections.abc import Iterable, Sequence
+
+    from beets.library import Album, Item, Library
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -28,7 +30,7 @@ class MoveCLIOpts(Protocol):
     timid: bool
 
 
-def show_path_changes(path_changes):
+def show_path_changes(path_changes: Iterable[tuple[bytes, bytes]]) -> None:
     """Given a list of tuples (source, destination) that indicate the
     path changes, log the changes as INFO-level output to the beets log.
     The output is guaranteed to be unicode.
@@ -70,15 +72,15 @@ def show_path_changes(path_changes):
 
 
 def move_items(
-    lib,
+    lib: Library,
     dest: bytes | None,
-    query,
-    copy,
-    album,
-    pretend,
-    confirm=False,
-    export=False,
-):
+    query: Sequence[str],
+    copy: bool,
+    album: bool,
+    pretend: bool,
+    confirm: bool = False,
+    export: bool = False,
+) -> None:
     """Moves or copies items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
@@ -88,10 +90,10 @@ def move_items(
     num_objs = len(objs)
 
     # Filter out files that don't need to be moved.
-    def isitemmoved(item):
+    def isitemmoved(item: Item) -> bool:
         return item.path != item.destination(basedir=dest)
 
-    def isalbummoved(album):
+    def isalbummoved(album: Album) -> bool:
         return any(isitemmoved(i) for i in album.items())
 
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
