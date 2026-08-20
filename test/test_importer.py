@@ -640,22 +640,48 @@ class ImportTracksTest(AutotagImportTestCase):
 
 
 class ImportRescanTest(AutotagImportTestCase):
-    """Test the Rescan directory action."""
+    """Test the Rescan directory action.
+
+    Each test's directory mutation must happen exactly when the first
+    prompt is answered, not before ``self.importer.run()`` starts: since
+    ``ImportSessionFixture.choose_match`` just pops preset choices off a
+    queue, a plain filesystem edit made before ``run()`` would already be
+    visible to the *initial* scan too, which wouldn't actually exercise
+    rescanning (it would test a static directory that happens to include a
+    no-op Rescan choice along the way).
+    """
 
     def setUp(self):
         super().setUp()
         self.album_path = self.prepare_album_for_import(2)[0].parent
         self.setup_importer()
 
+    def _run_with_cleanup_before_first_prompt(self, cleanup):
+        """Run the importer, calling `cleanup` right as the first prompt
+        is being answered -- simulating the user editing the directory
+        while paused there, before choosing Rescan.
+        """
+        original_choose_match = self.importer.choose_match
+        state = {"done": False}
+
+        def choose_match_and_cleanup(task):
+            if not state["done"]:
+                state["done"] = True
+                cleanup()
+            return original_choose_match(task)
+
+        with patch.object(
+            self.importer, "choose_match", side_effect=choose_match_and_cleanup
+        ):
+            self.importer.run()
+
     def test_rescan_picks_up_file_added_after_initial_scan(self):
         self.importer.add_choice(importer.Action.RESCAN)
         self.importer.add_choice(importer.Action.APPLY)
 
-        # Simulate the user adding a file to the directory (e.g. after
-        # noticing it was missing) while the import is paused at the prompt.
-        self.prepare_track_for_import(3, self.album_path)
-
-        self.importer.run()
+        self._run_with_cleanup_before_first_prompt(
+            lambda: self.prepare_track_for_import(3, self.album_path)
+        )
 
         assert len(self.lib.items()) == 3
 
@@ -663,23 +689,53 @@ class ImportRescanTest(AutotagImportTestCase):
         self.importer.add_choice(importer.Action.RESCAN)
         self.importer.add_choice(importer.Action.APPLY)
 
-        # Simulate the user deleting a duplicate/junk file while the import
-        # is paused at the prompt.
-        (self.album_path / "track_2.mp3").unlink()
-
-        self.importer.run()
+        self._run_with_cleanup_before_first_prompt(
+            lambda: (self.album_path / "track_2.mp3").unlink()
+        )
 
         assert len(self.lib.items()) == 1
 
     def test_rescan_of_emptied_directory_imports_nothing(self):
         self.importer.add_choice(importer.Action.RESCAN)
 
-        for track in self.album_path.glob("*.mp3"):
-            track.unlink()
+        def cleanup():
+            for track in self.album_path.glob("*.mp3"):
+                track.unlink()
 
-        self.importer.run()
+        self._run_with_cleanup_before_first_prompt(cleanup)
 
         assert not self.lib.items()
+
+    def test_rescan_with_only_unreadable_files_imports_nothing(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+
+        def cleanup():
+            # Directory still has a music file by extension, but it can't
+            # actually be read as an item.
+            for track in self.album_path.glob("*.mp3"):
+                track.unlink()
+            (self.album_path / "track_1.mp3").write_bytes(b"not a real mp3")
+
+        self._run_with_cleanup_before_first_prompt(cleanup)
+
+        assert not self.lib.items()
+
+    def test_rescan_with_multiple_subdirectories_finds_all_albums(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        def cleanup():
+            # Simulate the user splitting the messy directory into two
+            # proper album subdirectories.
+            for track in self.album_path.glob("*.mp3"):
+                track.unlink()
+            self.prepare_album_for_import(2, album_path=self.album_path / "one")
+            self.prepare_album_for_import(2, album_path=self.album_path / "two")
+
+        self._run_with_cleanup_before_first_prompt(cleanup)
+
+        assert len(self.lib.albums()) == 2
 
 
 class ImportCompilationTest(AutotagImportTestCase):

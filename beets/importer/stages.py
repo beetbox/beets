@@ -98,21 +98,19 @@ def rescan_tasks(
     have manually cleaned up (removed duplicates, deleted junk files, etc.)
     the directory while the import was paused at the prompt, so we must not
     reuse `task.items`, which reflect the stale, pre-cleanup listing.
+
+    Only reachable for album tasks: the "Rescan directory" choice is only
+    ever offered when ``task.is_album`` is true, which in turn only happens
+    when the session isn't in singleton mode.
     """
     assert task.toppath is not None
     factory = ImportTaskFactory(task.toppath, session)
     found = False
     for directory in task.paths:
         for dirs, paths in albums_in_dir(directory):
-            if session.config["singletons"]:
-                for path in paths:
-                    if (singleton_task := factory.singleton(path)) is not None:
-                        found = True
-                        yield from singleton_task.handle_created(session)
-            else:
-                if (album_task := factory.album(paths, dirs)) is not None:
-                    found = True
-                    yield from album_task.handle_created(session)
+            if (album_task := factory.album(paths, dirs)) is not None:
+                found = True
+                yield from album_task.handle_created(session)
 
     if not found:
         log.info(
