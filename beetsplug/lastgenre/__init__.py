@@ -498,21 +498,31 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     ) -> GenresWithLabel | None:
         """Attempt to fall back to existing original genres if configured.
 
-        ``genres`` are the original unchanged values and are checked as-is
-        first, then ``keep_genres`` are used for a lowercased canonicalization
-        retry.
+        ``genres`` (the original unchanged values) are alias-normalized and
+        validated first, then ``keep_genres`` are used for a lowercased
+        canonicalized parent fallback.
         """
-        if genres and self.config["keep_existing"].get():
-            artist = self._artist_for_filter(obj)
-            if valid_genres := self._filter_valid(genres, artist=artist):
-                return valid_genres, "original fallback"
-            # If the original genre doesn't match a whitelisted genre, check
-            # if we can canonicalize it to find a matching, whitelisted genre!
-            if resolved := self._try_resolve_stage(
-                "original fallback", keep_genres, [], artist=artist
-            ):
-                return resolved
-        return None
+        if not (genres and self.config["keep_existing"].get()):
+            return None
+
+        artist = self._artist_for_filter(obj)
+
+        # We do not run through _try_resolve_stage yet because count could drop
+        # existing genres, but we still apply aliases before whitelist
+        # filtering.
+        normalized = [
+            norm if norm != g.lower() else g
+            for g in genres
+            if (norm := normalize_genre(self._log, self.alias_patterns, g))
+        ]
+        if valid := self._filter_valid(normalized, artist=artist):
+            return valid, "original fallback"
+
+        # If no existing genre survived the whitelist even after aliasing,
+        # try canonicalization to find a valid whitelisted parent genre.
+        return self._try_resolve_stage(
+            "original fallback", keep_genres, [], artist=artist
+        )
 
     def _fetch_va_genres(self, album: Album) -> list[str]:
         """Fetch the most popular track or artist genre for a Various Artists album."""

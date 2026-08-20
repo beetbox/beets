@@ -67,6 +67,9 @@ Bug fixes
   (:doc:`plugins/musicbrainz`, :doc:`plugins/spotify`, :doc:`plugins/deezer` and
   :doc:`plugins/discogs`) no longer send a search request when both the query
   text and the filters are empty. :bug:`6862`
+- :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
+  before whitelist filtering, while preserving existing genres regardless of the
+  configured count. :bug:`6890`
 
 ..
     For plugin developers
