@@ -67,6 +67,8 @@ Bug fixes
   (:doc:`plugins/musicbrainz`, :doc:`plugins/spotify`, :doc:`plugins/deezer` and
   :doc:`plugins/discogs`) no longer send a search request when both the query
   text and the filters are empty. :bug:`6862`
+- Fixed convert plugin not taking into account the new format when determining
+  the target path. :bug:`1360`
 
 ..
     For plugin developers
