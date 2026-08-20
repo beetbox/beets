@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, Protocol
 from beets import ui
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
 
 
@@ -14,7 +16,9 @@ class ListCLIOpts(Protocol):
     album: bool
 
 
-def list_items(lib, query, album, fmt=""):
+def list_items(
+    lib: Library, query: Sequence[str], album: bool, fmt: str = ""
+) -> None:
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """

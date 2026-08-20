@@ -12,6 +12,8 @@ from beets.util.color import colorize
 from .utils import do_query
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
 
 
@@ -27,7 +29,15 @@ class UpdateCLIOpts(Protocol):
     pretend: bool | None
 
 
-def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
+def update_items(
+    lib: Library,
+    query: Sequence[str],
+    album: bool,
+    move: bool,
+    pretend: bool,
+    fields: list[str],
+    exclude_fields: Sequence[str] | None = None,
+) -> None:
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     :param fields: The fields to be stored. If not specified, all fields will

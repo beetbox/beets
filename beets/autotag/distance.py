@@ -208,21 +208,21 @@ class Distance:
     def __hash__(self) -> int:
         return id(self)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         return self.distance == other
 
     # Behave like a float.
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: object) -> bool:
         return self.distance < other
 
     def __float__(self) -> float:
         return self.distance
 
-    def __sub__(self, other) -> float:
+    def __sub__(self, other: object) -> float:
         return self.distance - other
 
-    def __rsub__(self, other) -> float:
+    def __rsub__(self, other: object) -> float:
         return other - self.distance
 
     def __str__(self) -> str:
@@ -230,7 +230,7 @@ class Distance:
 
     # Behave like a dict.
 
-    def __getitem__(self, key) -> float:
+    def __getitem__(self, key: str) -> float:
         """Returns the weighted distance for a named penalty."""
         dist = sum(self._penalties[key]) * self._weights[key]
         dist_max = self.max_distance
@@ -247,7 +247,7 @@ class Distance:
     def keys(self) -> KeysView[str]:
         return dict.fromkeys(key for key, _ in self.items()).keys()
 
-    def update(self, dist: Distance):
+    def update(self, dist: Distance) -> None:
         """Adds all the distance penalties from `dist`."""
         if not isinstance(dist, Distance):
             raise ValueError(
@@ -267,7 +267,7 @@ class Distance:
             return bool(value1.match(value2))
         return value1 == value2
 
-    def add(self, key: str, dist: float):
+    def add(self, key: str, dist: float) -> None:
         """Adds a distance penalty. `key` must correspond with a
         configured weight setting. `dist` must be a float between 0.0
         and 1.0, and will be added to any existing distance penalties
@@ -279,7 +279,7 @@ class Distance:
 
     def add_equality(
         self, key: str, value: Any, options: list[Any] | tuple[Any, ...] | Any
-    ):
+    ) -> None:
         """Adds a distance penalty of 1.0 if `value` doesn't match any
         of the values in `options`. If an option is a compiled regular
         expression, it will be considered equal if it matches against
@@ -295,7 +295,7 @@ class Distance:
             dist = 1.0
         self.add(key, dist)
 
-    def add_expr(self, key: str, expr: bool):
+    def add_expr(self, key: str, expr: bool) -> None:
         """Adds a distance penalty of 1.0 if `expr` evaluates to True,
         or 0.0.
         """
@@ -304,7 +304,7 @@ class Distance:
         else:
             self.add(key, 0.0)
 
-    def add_number(self, key: str, number1: int, number2: int):
+    def add_number(self, key: str, number1: int, number2: int) -> None:
         """Adds a distance penalty of 1.0 for each number of difference
         between `number1` and `number2`, or 0.0 when there is no
         difference. Use this when there is no upper limit on the
@@ -319,7 +319,7 @@ class Distance:
 
     def add_priority(
         self, key: str, value: Any, options: list[Any] | tuple[Any, ...] | Any
-    ):
+    ) -> None:
         """Adds a distance penalty that corresponds to the position at
         which `value` appears in `options`. A distance penalty of 0.0
         for the first option, or 1.0 if there is no matching option. If
@@ -337,7 +337,9 @@ class Distance:
             dist = 1.0
         self.add(key, dist)
 
-    def add_ratio(self, key: str, number1: int | float, number2: int | float):
+    def add_ratio(
+        self, key: str, number1: int | float, number2: int | float
+    ) -> None:
         """Adds a distance penalty for `number1` as a ratio of `number2`.
         `number1` is bound at 0 and `number2`.
         """
@@ -348,7 +350,7 @@ class Distance:
             dist = 0.0
         self.add(key, dist)
 
-    def add_string(self, key: str, str1: str | None, str2: str | None):
+    def add_string(self, key: str, str1: str | None, str2: str | None) -> None:
         """Adds a distance penalty based on the edit distance between
         `str1` and `str2`.
         """

@@ -72,7 +72,9 @@ AUDIO_EXTENSIONS = {
 }
 
 
-def fix_extension(path_bytes: PathBytes, logger: Logger | None = None):
+def fix_extension(
+    path_bytes: PathBytes, logger: Logger | None = None
+) -> bytes | Path:
     """Return the `path` after adding an appropriate extension if needed.
 
     If the file already has an extension, return as-is.

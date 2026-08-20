@@ -11,6 +11,7 @@ from beets.util import syspath
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Iterator, Sequence
 
     from beets.library import Library
 
@@ -52,7 +53,7 @@ BASH_COMPLETION_PATHS = [
 ]
 
 
-def completion_script(commands):
+def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
     """Yield the full completion shell script as strings.
 
     ``commands`` is alist of ``ui.Subcommand`` instances to generate

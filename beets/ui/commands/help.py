@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class HelpCommand(ui.Subcommand):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             "help",
             aliases=("?",),

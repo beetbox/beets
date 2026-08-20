@@ -14,7 +14,7 @@ import sys
 import textwrap
 import traceback
 from functools import cache
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TextIO, TypeVar, overload
 
 import confuse
 
@@ -28,8 +28,13 @@ from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.diff import get_model_changes
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
+    from pathlib import Path
 
+    from beets.library import LibModel
+    from beets.util.color import ColorName
+
+T = TypeVar("T")
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
@@ -47,17 +52,17 @@ log = logging.getLogger("beets")
 # Encoding utilities.
 
 
-def _in_encoding():
+def _in_encoding() -> str:
     """Get the encoding to use for *inputting* strings from the console."""
     return _stream_encoding(sys.stdin)
 
 
-def _out_encoding():
+def _out_encoding() -> str:
     """Get the encoding to use for *outputting* strings to the console."""
     return _stream_encoding(sys.stdout)
 
 
-def _stream_encoding(stream, default="utf-8"):
+def _stream_encoding(stream: TextIO, default: str = "utf-8") -> str:
     """A helper for `_in_encoding` and `_out_encoding`: get the stream's
     preferred encoding, using a configured override or a default
     fallback if neither is not specified.
@@ -78,7 +83,7 @@ def _stream_encoding(stream, default="utf-8"):
     return stream.encoding or default
 
 
-def decargs(arglist):
+def decargs(arglist: list[bytes]) -> list[bytes]:
     """Given a list of command-line argument bytestrings, attempts to
     decode them to Unicode strings when running under Python 2.
 
@@ -117,7 +122,7 @@ def print_(*strings: str, end: str = "\n") -> None:
 # Configuration wrappers.
 
 
-def _bool_fallback(a, b):
+def _bool_fallback(a: bool | None, b: bool) -> bool:
     """Given a boolean or None, return the original value or a fallback."""
     if a is None:
         assert isinstance(b, bool)
@@ -126,14 +131,14 @@ def _bool_fallback(a, b):
     return a
 
 
-def should_write(write_opt=None):
+def should_write(write_opt: bool | None = None) -> bool:
     """Decide whether a command that updates metadata should also write
     tags, using the importer configuration as the default.
     """
     return _bool_fallback(write_opt, config["import"]["write"].get(bool))
 
 
-def should_move(move_opt=None):
+def should_move(move_opt: bool | None = None) -> bool:
     """Decide whether a command that updates metadata should also move
     files when they're inside the library, using the importer
     configuration as the default.
@@ -153,7 +158,7 @@ def should_move(move_opt=None):
 # Input prompts.
 
 
-def input_(prompt=None):
+def input_(prompt: str | None = None) -> str:
     """Like `input`, but decodes the result to a Unicode string.
     Raises a UserError if stdin is not available. The prompt is sent to
     stdout rather than stderr. A printed between the prompt and the
@@ -173,15 +178,46 @@ def input_(prompt=None):
     return resp
 
 
+@overload
 def input_options(
-    options,
-    require=False,
-    prompt=None,
-    fallback_prompt=None,
-    numrange=None,
-    default=None,
-    max_width=72,
-):
+    options: tuple[()],
+    require: bool = False,
+    prompt: str | None = None,
+    fallback_prompt: str | None = None,
+    *,
+    numrange: tuple[int, int],
+    default: str | None = None,
+    max_width: int = 72,
+) -> int: ...
+@overload
+def input_options(
+    options: Sequence[str],
+    require: bool = False,
+    prompt: str | None = None,
+    fallback_prompt: str | None = None,
+    numrange: None = None,
+    default: str | None = None,
+    max_width: int = 72,
+) -> str: ...
+@overload
+def input_options(
+    options: Sequence[str],
+    require: bool = False,
+    prompt: str | None = None,
+    fallback_prompt: str | None = None,
+    numrange: tuple[int, int] = ...,
+    default: str | None = None,
+    max_width: int = 72,
+) -> str | int: ...
+def input_options(
+    options: Sequence[str],
+    require: bool = False,
+    prompt: str | None = None,
+    fallback_prompt: str | None = None,
+    numrange: tuple[int, int] | None = None,
+    default: str | None = None,
+    max_width: int = 72,
+) -> str | int:
     """Prompts a user for input. The sequence of `options` defines the
     choices the user has. A single-letter shortcut is inferred for each
     option; the user's choice is returned as that single, lower-case
@@ -247,7 +283,9 @@ def input_options(
         )
 
         # Insert the highlighted letter back into the word.
-        descr_color = "action_default" if is_default else "action_description"
+        descr_color: ColorName = (
+            "action_default" if is_default else "action_description"
+        )
         capitalized.append(
             colorize(descr_color, option[:index])
             + show_letter
@@ -348,7 +386,7 @@ def input_options(
         resp = input_(fallback_prompt)
 
 
-def input_yn(prompt, require=False):
+def input_yn(prompt: str, require: bool = False) -> bool:
     """Prompts the user for a "yes" or "no" response. The default is
     "yes" unless `require` is `True`, in which case there is no default.
     """
@@ -360,7 +398,12 @@ def input_yn(prompt, require=False):
     return sel == "y"
 
 
-def input_select_objects(prompt, objs, rep, prompt_all=None):
+def input_select_objects(
+    prompt: str,
+    objs: Sequence[T],
+    rep: Callable[[T], Any],
+    prompt_all: str | None = None,
+) -> Any:
     """Prompt to user to choose all, none, or some of the given objects.
     Return the list of selected objects.
 
@@ -453,14 +496,16 @@ class CommonOptionsParser(optparse.OptionParser):
     Each method is fully documented in the related method.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._album_flags = False
         # this serves both as an indicator that we offer the feature AND allows
         # us to check whether it has been specified on the CLI - bypassing the
         # fact that arguments may be in any order
 
-    def add_album_option(self, flags=("-a", "--album")):
+    def add_album_option(
+        self, flags: Sequence[str] = ("-a", "--album")
+    ) -> None:
         """Add a -a/--album option to match albums instead of tracks.
 
         If used then the format option can auto-detect whether we're setting
@@ -478,14 +523,14 @@ class CommonOptionsParser(optparse.OptionParser):
 
     def _set_format(
         self,
-        option,
-        opt_str,
-        value,
-        parser,
-        target=None,
-        fmt=None,
-        store_true=False,
-    ):
+        option: optparse.Option,
+        opt_str: str,
+        value: str,
+        parser: SubcommandsOptionParser,
+        target: type[LibModel] | None = None,
+        fmt: str | None = None,
+        store_true: bool = False,
+    ) -> None:
         """Internal callback that sets the correct format while parsing CLI
         arguments.
         """
@@ -513,7 +558,7 @@ class CommonOptionsParser(optparse.OptionParser):
                 config[library.Item._format_config_key].set(value)
                 config[library.Album._format_config_key].set(value)
 
-    def add_path_option(self, flags=("-p", "--path")):
+    def add_path_option(self, flags: Sequence[str] = ("-p", "--path")) -> None:
         """Add a -p/--path option to display the path instead of the default
         format.
 
@@ -533,7 +578,11 @@ class CommonOptionsParser(optparse.OptionParser):
         )
         self.add_option(path)
 
-    def add_format_option(self, flags=("-f", "--format"), target=None):
+    def add_format_option(
+        self,
+        flags: Sequence[str] = ("-f", "--format"),
+        target: str | None = None,
+    ) -> None:
         """Add -f/--format option to print some LibModel instances with a
         custom format.
 
@@ -563,7 +612,7 @@ class CommonOptionsParser(optparse.OptionParser):
         )
         self.add_option(opt)
 
-    def add_all_common_options(self):
+    def add_all_common_options(self) -> None:
         """Add album, path and format options."""
         self.add_album_option()
         self.add_path_option()
@@ -586,7 +635,14 @@ class Subcommand:
 
     func: Callable[[library.Library, Any, list[str]], Any]
 
-    def __init__(self, name, parser=None, help="", aliases=(), hide=False):  # noqa: A002
+    def __init__(
+        self,
+        name: str,
+        parser: CommonOptionsParser | None = None,
+        help: str = "",  # noqa: A002
+        aliases: Sequence[str] = (),
+        hide: bool = False,
+    ) -> None:
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an
         OptionParser responsible for parsing the subcommand's options.
@@ -600,18 +656,18 @@ class Subcommand:
         self.hide = hide
         self._root_parser = None
 
-    def print_help(self):
+    def print_help(self) -> None:
         self.parser.print_help()
 
-    def parse_args(self, args):
+    def parse_args(self, args: list[str]) -> tuple[optparse.Values, list[str]]:
         return self.parser.parse_args(args)
 
     @property
-    def root_parser(self):
+    def root_parser(self) -> optparse.OptionParser | None:
         return self._root_parser
 
     @root_parser.setter
-    def root_parser(self, root_parser):
+    def root_parser(self, root_parser: optparse.OptionParser) -> None:
         self._root_parser = root_parser
         self.parser.prog = (
             f"{as_string(root_parser.get_prog_name())} {self.name}"
@@ -623,7 +679,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
     arguments.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """Create a new subcommand-aware option parser. All of the
         options to OptionParser.__init__ are supported in addition
         to subcommands, a sequence of Subcommand objects.
@@ -643,14 +699,16 @@ class SubcommandsOptionParser(CommonOptionsParser):
 
         self.subcommands = []
 
-    def add_subcommand(self, *cmds):
+    def add_subcommand(self, *cmds) -> None:
         """Adds a Subcommand object to the parser's list of commands."""
         for cmd in cmds:
             cmd.root_parser = self
             self.subcommands.append(cmd)
 
     # Add the list of subcommands to the help message.
-    def format_help(self, formatter=None):
+    def format_help(
+        self, formatter: optparse.HelpFormatter | None = None
+    ) -> str:
         # Get the original help message, to which we will append.
         out = super().format_help(formatter)
         if formatter is None:
@@ -702,7 +760,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
         # list.
         return f"{out}{''.join(result)}"
 
-    def _subcommand_for_name(self, name):
+    def _subcommand_for_name(self, name: str) -> Subcommand | None:
         """Return the subcommand in self.subcommands matching the
         given name. The name may either be the name of a subcommand or
         an alias. If no subcommand matches, returns None.
@@ -712,7 +770,9 @@ class SubcommandsOptionParser(CommonOptionsParser):
                 return subcommand
         return None
 
-    def parse_global_options(self, args):
+    def parse_global_options(
+        self, args: list[str]
+    ) -> tuple[optparse.Values, list[str]]:
         """Parse options up to the subcommand argument. Returns a tuple
         of the options object and the remaining arguments.
         """
@@ -725,7 +785,9 @@ class SubcommandsOptionParser(CommonOptionsParser):
             subargs = ["version"]
         return options, subargs
 
-    def parse_subcommand(self, args):
+    def parse_subcommand(
+        self, args: list[str]
+    ) -> tuple[Subcommand, optparse.Values, list[str]]:
         """Given the `args` left unused by a `parse_global_options`,
         return the invoked subcommand, the subcommand options, and the
         subcommand arguments.
@@ -769,7 +831,7 @@ def _setup() -> tuple[list[Subcommand], library.Library]:
     return subcommands, lib
 
 
-def _ensure_db_directory_exists(path):
+def _ensure_db_directory_exists(path: Path) -> None:
     dbpath = os.fspath(path)
     if dbpath in (":memory:", b":memory:"):  # in memory db
         return
@@ -834,7 +896,7 @@ def _raw_main(args: list[str] | None) -> None:
 
     def parse_csl_callback(
         option: optparse.Option, _, value: str, parser: SubcommandsOptionParser
-    ):
+    ) -> None:
         """Parse a comma-separated list of values."""
         setattr(
             parser.values,

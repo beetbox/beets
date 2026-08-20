@@ -73,7 +73,7 @@ class PluginImportError(ImportError):
     from other errors.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         super().__init__(f"Could not import plugin {name}")
 
 
@@ -162,7 +162,7 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
         ):
             setattr(cls, name, method)
 
-    def __init__(self, name: str | None = None):
+    def __init__(self, name: str | None = None) -> None:
         """Perform one-time plugin setup."""
 
         self.name = name or self.__module__.split(".")[-1]
