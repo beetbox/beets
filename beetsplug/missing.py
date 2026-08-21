@@ -116,7 +116,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             }
         )
 
-        self.album_template_fields["missing"] = _missing_count
+        self.album_template_fields["missing"] = lambda a: str(_missing_count(a))
 
         self._command = Subcommand("missing", help=__doc__, aliases=["miss"])
         self._command.parser.add_option(

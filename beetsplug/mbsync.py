@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class MBSyncCLIOpts(Protocol):
     move: bool | None
-    pretend: bool | None
+    pretend: bool
     write: bool | None
 
 
@@ -31,6 +31,7 @@ class MBSyncPlugin(BeetsPlugin):
             "-p",
             "--pretend",
             action="store_true",
+            default=False,
             help="show all changes but do nothing",
         )
         cmd.parser.add_option(

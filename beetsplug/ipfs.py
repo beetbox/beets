@@ -142,7 +142,7 @@ class IPFSPlugin(BeetsPlugin):
             cmd = "ipfs add --nocopy -q -r".split()
         else:
             cmd = "ipfs add -q -r".split()
-        cmd.append(album_dir)
+        cmd.append(os.fsdecode(album_dir))
         try:
             output = util.command_output(cmd).stdout.split()
         except (OSError, subprocess.CalledProcessError) as exc:
@@ -169,8 +169,8 @@ class IPFSPlugin(BeetsPlugin):
 
         return True
 
-    def ipfs_get(self, lib: Library, query: Sequence[str]) -> None:
-        query = query[0]
+    def ipfs_get(self, lib: Library, queries: Sequence[str]) -> None:
+        query = queries[0]
         # Check if query is a hash
         # TODO: generalize to other hashes; probably use a multihash
         # implementation
@@ -228,13 +228,16 @@ class IPFSPlugin(BeetsPlugin):
             try:
                 os.makedirs(remote_libs)
             except OSError as e:
-                msg = f"Could not create {remote_libs}. Error: {e}"
-                self._log.error(msg)
+                self._log.error(
+                    "Could not create {}. Error: {}",
+                    os.fsdecode(remote_libs),
+                    e,
+                )
                 return False
         path = os.path.join(remote_libs, lib_name.encode() + b".db")
         if not os.path.exists(path):
             cmd = f"ipfs get {_hash} -o".split()
-            cmd.append(path)
+            cmd.append(os.fsdecode(path))
             try:
                 util.command_output(cmd)
             except (OSError, subprocess.CalledProcessError):
@@ -319,7 +322,7 @@ class IPFSPlugin(BeetsPlugin):
                 pass
             item_path = os.fsdecode(os.path.basename(item.path))
             # Clear current path from item
-            item.path = f"{album.ipfs}/{item_path}"
+            item.path = os.fsencode(f"{album.ipfs}/{item_path}")
 
             item.id = None
             items.append(item)

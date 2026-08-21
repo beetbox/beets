@@ -943,7 +943,9 @@ def editor_command() -> str:
     )
 
 
-def interactive_open(targets: Sequence[str], command: str) -> None:
+def interactive_open(
+    targets: Sequence[Path | str | bytes], command: str
+) -> None:
     """Open the files in `targets` by `exec`ing a new `command`, given
     as a Unicode string. (The new program takes over, and Python
     execution ends: this does not fork a subprocess.)
@@ -958,11 +960,10 @@ def interactive_open(targets: Sequence[str], command: str) -> None:
     except ValueError:  # Malformed shell tokens.
         args = [command]
 
-    args.insert(0, args[0])  # for argv[0]
+    first, *rest = args
 
-    args += targets
-
-    os.execlp(*args)
+    # 'first' is duplicated because of argv[0]
+    os.execlp(*[first, first, *rest, *targets])
 
 
 def case_sensitive(path: AnyStr) -> bool:

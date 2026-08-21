@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, TypedDict
+from itertools import chain
+from typing import TYPE_CHECKING, Any, Literal, TypedDict, get_args
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -68,6 +69,7 @@ EventType = (
     | NoArgsEventType
     | AfterConvertEventType
 )
+ALL_EVENTS = list(chain.from_iterable(get_args(e) for e in get_args(EventType)))
 
 
 class AfterWriteEventArgs(TypedDict):

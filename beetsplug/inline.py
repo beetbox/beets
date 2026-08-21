@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import itertools
 import traceback
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets import config
 from beets.plugins import BeetsPlugin
@@ -36,7 +36,7 @@ def _compile_func(body: str, args: str = "") -> Callable[..., Any]:
     body = body.replace("\n", "\n    ")
     body = f"def {FUNC_NAME}({args}):\n    {body}"
     code = compile(body, "inline", "exec")
-    env = {}
+    env: JSONDict = {}
     eval(code, env)
     return env[FUNC_NAME]
 
