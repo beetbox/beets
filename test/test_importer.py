@@ -49,6 +49,38 @@ from beets.util import bytestring_path, syspath
 from beets.util.extension import remux_mpeglayer3_wav
 
 
+class TestChosenInfo:
+    def test_album_metadata_is_a_detached_dictionary(self):
+        item = Item(artist="artist", album="album")
+        task = importer.ImportTask(None, [], [item])
+        task.set_choice(importer.Action.ASIS)
+
+        info = task.chosen_info()
+
+        assert isinstance(info, dict)
+        assert info["artist"] == "artist"
+        info["artist"] = "changed"
+        assert task.source.data.artist == "artist"
+
+    def test_singleton_metadata_preserves_all_item_fields(self):
+        item = Item(
+            artist="artist",
+            title="title",
+            genres=["Rock"],
+            custom_field="custom value",
+        )
+        task = importer.SingletonImportTask(None, item)
+        task.set_choice(importer.Action.ASIS)
+
+        info = task.chosen_info()
+
+        assert isinstance(info, dict)
+        assert info["title"] == "title"
+        assert info["custom_field"] == "custom value"
+        info["genres"].append("Jazz")
+        assert item.genres == ["Rock"]
+
+
 class PathsMixin:
     import_media: list[MediaFile]
 
