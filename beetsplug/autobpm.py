@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import librosa
 import numpy as np
@@ -14,6 +14,11 @@ from beets.util.deprecation import deprecate_for_user
 if TYPE_CHECKING:
     from beets.importer import ImportTask
     from beets.library import Item, Library
+
+
+class AutoBPMCLIOpts(Protocol):
+    force: bool
+    quiet: bool
 
 
 class AutoBPMPlugin(BeetsPlugin):
@@ -62,7 +67,9 @@ class AutoBPMPlugin(BeetsPlugin):
         cmd.func = self.command
         return [cmd]
 
-    def command(self, lib: Library, opts, args: list[str]) -> None:
+    def command(
+        self, lib: Library, opts: AutoBPMCLIOpts, args: list[str]
+    ) -> None:
         force = self.config["force"].get(bool) or opts.force
         quiet = self.config["quiet"].get(bool) or opts.quiet
         self.calculate_bpm(

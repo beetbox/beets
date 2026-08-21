@@ -1,9 +1,17 @@
 """Determine BPM by pressing a key to the rhythm."""
 
+from __future__ import annotations
+
 import time
+from typing import TYPE_CHECKING
 
 from beets import ui
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
 
 
 def bpm(max_strokes):
@@ -42,7 +50,9 @@ class BPMPlugin(BeetsPlugin):
         cmd.func = self.command
         return [cmd]
 
-    def command(self, lib, opts, args):
+    def command(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         write = ui.should_write()
         self.get_bpm(lib.items(args), write)
 

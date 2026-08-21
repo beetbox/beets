@@ -1,3 +1,4 @@
+import os
 import shutil
 
 from beets import library
@@ -29,7 +30,15 @@ class MoveTest(BeetsTestCase):
         pretend=False,
         export=False,
     ):
-        move_items(self.lib, dest, query, copy, album, pretend, export=export)
+        move_items(
+            self.lib,
+            os.fsencode(dest) if dest else None,
+            query,
+            copy,
+            album,
+            pretend,
+            export=export,
+        )
 
     def test_move_item(self):
         self._move()

@@ -375,7 +375,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         parser.add_album_option()
         assert bool(parser._album_flags)
 
-        assert parser.parse_args([]) == ({"album": None}, [])
+        assert parser.parse_args([]) == ({"album": False}, [])
         assert parser.parse_args(["-a"]) == ({"album": True}, [])
         assert parser.parse_args(["--album"]) == ({"album": True}, [])
 
@@ -456,7 +456,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         parser = ui.CommonOptionsParser()
         parser.add_all_common_options()
         assert parser.parse_args([]) == (
-            {"album": None, "path": None, "format": None},
+            {"album": False, "path": None, "format": None},
             [],
         )
 

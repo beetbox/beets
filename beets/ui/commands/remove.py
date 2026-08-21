@@ -1,8 +1,21 @@
 """The `remove` command: remove items from the library (and optionally delete files)."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol
+
 from beets import ui
 
 from .utils import do_query
+
+if TYPE_CHECKING:
+    from beets.library import Library
+
+
+class RemoveCLIOpts(Protocol):
+    album: bool
+    delete: bool | None
+    force: bool | None
 
 
 def remove_items(lib, query, album, delete, force):
@@ -67,7 +80,7 @@ def remove_items(lib, query, album, delete, force):
             obj.remove(delete)
 
 
-def remove_func(lib, opts, args):
+def remove_func(lib: Library, opts: RemoveCLIOpts, args: list[str]) -> None:
     remove_items(lib, args, opts.album, opts.delete, opts.force)
 
 

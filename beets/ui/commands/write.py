@@ -1,14 +1,26 @@
 """The `write` command: write tag information to files."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
 from beets.util import syspath
 
 from .utils import do_query
 
+if TYPE_CHECKING:
+    from beets.library import Library
+
+
 # Global logger.
 log = logging.getLogger("beets")
+
+
+class WriteCLIOpts(Protocol):
+    force: bool
+    pretend: bool
 
 
 def write_items(lib, query, pretend, force):
@@ -40,7 +52,7 @@ def write_items(lib, query, pretend, force):
             item.try_sync(True, False)
 
 
-def write_func(lib, opts, args):
+def write_func(lib: Library, opts: WriteCLIOpts, args: list[str]) -> None:
     write_items(lib, args, opts.pretend, opts.force)
 
 
@@ -49,12 +61,14 @@ write_cmd.parser.add_option(
     "-p",
     "--pretend",
     action="store_true",
+    default=False,
     help="show all changes but do nothing",
 )
 write_cmd.parser.add_option(
     "-f",
     "--force",
     action="store_true",
+    default=False,
     help="write tags even if the existing tags match the database",
 )
 write_cmd.func = write_func

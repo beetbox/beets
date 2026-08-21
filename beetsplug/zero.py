@@ -13,8 +13,10 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, input_yn
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
+    from beets.library import Item, Library
 
 
 __author__ = "baobab@heresiarch.info"
@@ -78,7 +80,9 @@ class ZeroPlugin(BeetsPlugin):
     def commands(self):
         zero_command = Subcommand("zero", help="set fields to null")
 
-        def zero_fields(lib, opts, args):
+        def zero_fields(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             if not args and not input_yn(
                 "Remove fields for all items? (Y/n)", True
             ):

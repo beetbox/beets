@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import tempfile
 from mimetypes import guess_extension
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import requests
 
@@ -18,11 +18,26 @@ from beets.util.artresizer import ArtResizer
 from beetsplug._utils import art
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Sequence
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, LibModel, Library
+
+
+class EmbedArtCLIOpts(Protocol):
+    file: str | None
+    url: str | None
+    yes: bool | None
+
+
+class ExtractArtCLIOpts(Protocol):
+    associate: bool | None
+    filename: str | None
+    outpath: str | None
+
+
+class ClearArtCLIOpts(Protocol):
+    yes: bool | None
 
 
 def _confirm(objs: Sequence[LibModel], album: bool) -> bool:
@@ -109,7 +124,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         ifempty = self.config["ifempty"].get(bool)
 
         def embed_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: EmbedArtCLIOpts, args: list[str]
         ) -> None:
             if opts.file:
                 imagepath = normpath(opts.file)
@@ -210,7 +225,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
 
         def extract_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: ExtractArtCLIOpts, args: list[str]
         ) -> None:
             if opts.outpath:
                 art.extract_first(
@@ -247,7 +262,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
 
         def clear_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: ClearArtCLIOpts, args: list[str]
         ) -> None:
             items = lib.items(args)
             # Confirm with user.

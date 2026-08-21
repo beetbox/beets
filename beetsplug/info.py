@@ -1,6 +1,9 @@
 """Shows file metadata."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Any, Protocol
 
 import mediafile
 
@@ -8,6 +11,18 @@ from beets import ui
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
+
+if TYPE_CHECKING:
+    from beets.library import Library
+
+
+class InfoCLIOpts(Protocol):
+    album: bool
+    format: str | None
+    included_keys: list[str]
+    keys_only: bool | None
+    library: bool | None
+    summarize: bool | None
 
 
 def tag_data(lib, args, album=False):
@@ -135,17 +150,12 @@ class InfoPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand("info", help="show file metadata")
         cmd.func = self.run
+        cmd.parser.add_album_option()
         cmd.parser.add_option(
             "-l",
             "--library",
             action="store_true",
             help="show library fields instead of tags",
-        )
-        cmd.parser.add_option(
-            "-a",
-            "--album",
-            action="store_true",
-            help='show album fields instead of tracks (implies "--library")',
         )
         cmd.parser.add_option(
             "-s",
@@ -167,7 +177,7 @@ class InfoPlugin(BeetsPlugin):
         cmd.parser.add_format_option(target="item")
         return [cmd]
 
-    def run(self, lib, opts, args):
+    def run(self, lib: Library, opts: InfoCLIOpts, args: list[str]) -> None:
         """Print tag info or library data for each file referenced by args.
 
         Main entry point for the `beet info ARGS...` command.
@@ -193,7 +203,7 @@ class InfoPlugin(BeetsPlugin):
         included_keys = [k for k in included_keys if k != "path"]
 
         first = True
-        summary = {}
+        summary: dict[str, Any] = {}
         for data_emitter in data_collector(lib, args, album=opts.album):
             try:
                 data, item = data_emitter(included_keys or "*")

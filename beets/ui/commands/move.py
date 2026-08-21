@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from beets import logging, ui
 from beets.exceptions import UserError
@@ -13,10 +13,19 @@ from beets.util.diff import colordiff
 from .utils import do_query
 
 if TYPE_CHECKING:
-    from beets.util import PathLike
+    from beets.library import Library
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+class MoveCLIOpts(Protocol):
+    album: bool
+    copy: bool
+    dest: str | None
+    export: bool
+    pretend: bool
+    timid: bool
 
 
 def show_path_changes(path_changes):
@@ -62,7 +71,7 @@ def show_path_changes(path_changes):
 
 def move_items(
     lib,
-    dest_path: PathLike,
+    dest: bytes | None,
     query,
     copy,
     album,
@@ -74,7 +83,6 @@ def move_items(
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
     """
-    dest = os.fsencode(dest_path) if dest_path else dest_path
     items, albums = do_query(lib, query, album, False)
     objs = albums if album else items
     num_objs = len(objs)
@@ -147,10 +155,9 @@ def move_items(
                     obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
-def move_func(lib, opts, args):
-    dest = opts.dest
+def move_func(lib: Library, opts: MoveCLIOpts, args: list[str]) -> None:
+    dest = normpath(opts.dest) if opts.dest else None
     if dest is not None:
-        dest = normpath(dest)
         if not os.path.isdir(syspath(dest)):
             raise UserError(f"no such directory: {displayable_path(dest)}")
 
@@ -188,14 +195,15 @@ move_cmd.parser.add_option(
     "-t",
     "--timid",
     dest="timid",
+    default=False,
     action="store_true",
     help="always confirm all actions",
 )
 move_cmd.parser.add_option(
     "-e",
     "--export",
-    default=False,
     action="store_true",
+    default=False,
     help="copy without changing the database path",
 )
 move_cmd.parser.add_album_option()

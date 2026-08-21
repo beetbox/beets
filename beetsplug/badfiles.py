@@ -7,7 +7,7 @@ import os
 import shlex
 import sys
 from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Protocol
 
 import confuse
 
@@ -19,8 +19,13 @@ from beets.util.color import colorize
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 ImportAction = Literal["abort", "skip", "continue"]
+
+
+class BadCLIOpts(Protocol):
+    verbose: bool
 
 
 class CheckerCommandError(Exception):
@@ -249,7 +254,7 @@ class BadFiles(BeetsPlugin):
             raise Exception(f"Unexpected selection: {sel}")
         return None
 
-    def command(self, lib, opts, args):
+    def command(self, lib: Library, opts: BadCLIOpts, args: list[str]) -> None:
         # Get items from arguments
         items = lib.items(args)
         self.verbose = opts.verbose

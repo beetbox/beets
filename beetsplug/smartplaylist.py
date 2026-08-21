@@ -6,7 +6,7 @@ import os
 from collections import defaultdict
 from functools import cached_property
 from shlex import quote as shell_quote
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, Protocol, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
 
@@ -38,6 +38,19 @@ PlaylistQueryAndSort = tuple[PlaylistQuery, Sort | None]
 PlaylistMatch: TypeAlias = tuple[
     str, PlaylistQueryAndSort, PlaylistQueryAndSort
 ]
+
+
+class SmartPlaylistCLIOpts(Protocol):
+    pretend: bool | None
+    format: str
+    playlist_dir: str
+    dest_regen: bool
+    relative_to: str | None
+    prefix: str
+    forward_slash: bool
+    urlencode: bool
+    uri_format: str | None
+    output: Literal["m3u", "extm3u"]
 
 
 class SmartPlaylistPlugin(plugins.BeetsPlugin):
@@ -177,7 +190,9 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         spl_update.func = self.update_cmd
         return [spl_update]
 
-    def update_cmd(self, lib: Library, opts: Any, args: list[str]) -> None:
+    def update_cmd(
+        self, lib: Library, opts: SmartPlaylistCLIOpts, args: list[str]
+    ) -> None:
         self.build_queries()
         if args:
             args_set = set(args)

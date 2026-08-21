@@ -13,7 +13,7 @@ import threading
 import time
 import webbrowser
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypedDict
 
 import confuse
 import requests
@@ -34,6 +34,15 @@ if TYPE_CHECKING:
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
+
+
+class SpotifyCLIOpts(Protocol):
+    mode: str | None
+    show_failures: bool | None
+
+
+class SpotifySyncCLIOpts(Protocol):
+    force_refetch: bool
 
 
 class TrackDetails(TypedDict):
@@ -530,7 +539,9 @@ class SpotifyPlugin(
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
-        def queries(lib, opts, args):
+        def queries(
+            lib: Library, opts: SpotifyCLIOpts, args: list[str]
+        ) -> None:
             success = self._parse_opts(opts)
             if success:
                 results = self._match_library_tracks(lib, args)
@@ -570,7 +581,9 @@ class SpotifyPlugin(
             help="re-download data when already present",
         )
 
-        def func(lib, opts, args):
+        def func(
+            lib: Library, opts: SpotifySyncCLIOpts, args: list[str]
+        ) -> None:
             items = lib.items(args)
             self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 
@@ -593,7 +606,7 @@ class SpotifyPlugin(
         self.opts = opts
         return True
 
-    def _match_library_tracks(self, library: Library, keywords: str):
+    def _match_library_tracks(self, library: Library, keywords: list[str]):
         """Get simplified track object dicts for library tracks.
 
         Matches tracks based on the specified ``keywords``.

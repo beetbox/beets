@@ -8,7 +8,7 @@ import heapq
 import re
 from collections import defaultdict
 from functools import cached_property, partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import acoustid
 import confuse
@@ -20,12 +20,22 @@ from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Iterable, Iterator
 
     from beets.autotag import TrackInfo
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
     from beets.library.models import Item
     from beetsplug.musicbrainz import MusicBrainzPlugin
+
+
+class ChromaSearchCLIOpts(Protocol):
+    count: int
+    full: bool | None
+    search: str | None
+    write: bool | None
+
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -258,7 +268,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             "submit", help="submit Acoustid fingerprints"
         )
 
-        def submit_cmd_func(lib, opts, args):
+        def submit_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             try:
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
@@ -271,7 +283,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             "fingerprint", help="generate fingerprints for items without them"
         )
 
-        def fingerprint_cmd_func(lib, opts, args):
+        def fingerprint_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             for item in lib.items(args):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
@@ -315,7 +329,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             help="Write computed fingerprints to files",
         )
 
-        def search_cmd_func(lib, opts, args):
+        def search_cmd_func(
+            lib: Library, opts: ChromaSearchCLIOpts, args: list[str]
+        ) -> None:
             if not opts.search:
                 raise UserError("no --search provided")
             if opts.count <= 0:
@@ -348,8 +364,8 @@ class AcoustidPlugin(MetadataSourcePlugin):
                 if score > 0:
                     top.add(ScoredItem(item, score))
 
-            for item in top:
-                ui.print_(str(item))
+            for scored_item in top:
+                ui.print_(str(scored_item))
 
         cmd.func = search_cmd_func
 

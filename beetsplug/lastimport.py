@@ -12,6 +12,10 @@ from beets.exceptions import UserError
 from ._utils.playcount import update_play_counts
 
 if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
     from ._utils.playcount import Track
 
 API_URL = "https://ws.audioscrobbler.com/2.0/"
@@ -29,7 +33,7 @@ class LastImportPlugin(plugins.BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand("lastimport", help="import last.fm play-count")
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             import_lastfm(lib, self._log)
 
         cmd.func = func
