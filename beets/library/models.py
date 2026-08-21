@@ -91,9 +91,12 @@ class LibModel(dbcore.Model["Library"]):
         super().store(fields)
         plugins.send("database_change", lib=self.db, model=self)
 
-    def remove(self) -> None:
+    def _remove(self) -> None:
         super().remove()
         plugins.send("database_change", lib=self.db, model=self)
+
+    def remove(self, delete: bool = False) -> None:
+        raise NotImplementedError
 
     def add(self, lib: Library | None = None) -> None:
         # super().add() calls self.store(), which sends `database_change`,
@@ -386,7 +389,7 @@ class Album(LibModel):
 
         Set with_items to False to avoid removing the album's items.
         """
-        super().remove()
+        super()._remove()
 
         # Send a 'album_removed' signal to plugins
         plugins.send("album_removed", album=self)
@@ -1121,7 +1124,7 @@ class Item(LibModel):
         If `with_album`, then the item's album (if any) is removed
         if the item was the last in the album.
         """
-        super().remove()
+        super()._remove()
 
         # Remove the album if it is empty.
         if with_album:

@@ -12,7 +12,7 @@ from beets.util.color import colorize
 from .utils import do_query
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
 
     from beets.library import Library
 
@@ -26,16 +26,16 @@ class UpdateCLIOpts(Protocol):
     exclude_fields: list[str] | None
     fields: list[str] | None
     move: bool | None
-    pretend: bool | None
+    pretend: bool
 
 
 def update_items(
     lib: Library,
     query: Sequence[str],
-    album: bool,
+    is_album: bool,
     move: bool,
     pretend: bool,
-    fields: list[str],
+    fields: list[str] | None,
     exclude_fields: Sequence[str] | None = None,
 ) -> None:
     """For all the items matched by the query, update the library to
@@ -45,8 +45,9 @@ def update_items(
     :param exclude_fields: The fields to not be stored. If not specified, all
     fields will be.
     """
+    item_fields: Collection[str]
     with lib.transaction():
-        items, _ = do_query(lib, query, album)
+        items, _ = do_query(lib, query, is_album)
         if move and fields is not None and "path" not in fields:
             # Special case: if an item needs to be moved, the path field has to
             # updated; otherwise the new path will not be reflected in the
@@ -102,7 +103,11 @@ def update_items(
             # Special-case album artist when it matches track artist. (Hacky
             # but necessary for preserving album-level metadata for non-
             # autotagged imports.)
-            if not item.albumartist and (old_item := lib.get_item(item.id)):
+            if (
+                not item.albumartist
+                and item.id
+                and (old_item := lib.get_item(item.id))
+            ):
                 if old_item.albumartist == old_item.artist == item.artist:
                     item.albumartist = old_item.albumartist
                     item._dirty.discard("albumartist")
@@ -138,7 +143,9 @@ def update_items(
             if not album:  # Empty albums have already been removed.
                 log.debug("emptied album {}", album_id)
                 continue
-            first_item = album.items().get()
+
+            if not (first_item := album.items().get()):
+                continue
 
             # Update album structure to reflect an item in it.
             for key in library.Album.item_keys:
@@ -199,6 +206,7 @@ update_cmd.parser.add_option(
     "-p",
     "--pretend",
     action="store_true",
+    default=False,
     help="show all changes but do nothing",
 )
 update_cmd.parser.add_option(

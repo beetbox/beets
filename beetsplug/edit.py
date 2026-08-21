@@ -566,7 +566,7 @@ class EditPlugin(plugins.BeetsPlugin):
         applied to the original items.
         """
         # Prompt the user for a candidate.
-        sel = ui.input_options([], numrange=(1, len(task.candidates)))
+        sel = ui.input_options((), numrange=(1, len(task.candidates)))
         # Force applying the candidate on the items.
         task.match = task.candidates[sel - 1]
         task.apply_metadata()

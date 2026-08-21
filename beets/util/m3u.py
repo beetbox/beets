@@ -12,6 +12,8 @@ class EmptyPlaylistError(Exception):
 class M3UFile:
     """Reads and writes m3u or m3u8 playlist files."""
 
+    media_list: list[bytes]
+
     def __init__(self, path: bytes) -> None:
         """``path`` is the absolute path to the playlist file.
 

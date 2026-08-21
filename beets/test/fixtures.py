@@ -47,9 +47,10 @@ class DummyIMBackend(IMBackend):
     The version is sufficiently recent to support image comparison.
     """
 
+    _version = (7, 0, 0)
+
     def __init__(self) -> None:
         """Init a dummy backend class for mocked ImageMagick tests."""
-        self.version = (7, 0, 0)
         self.legacy = False
         self.convert_cmd = ["magick"]
         self.identify_cmd = ["magick", "identify"]

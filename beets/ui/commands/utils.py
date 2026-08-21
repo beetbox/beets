@@ -21,9 +21,9 @@ def do_query(
     a UserError if no items match. also_items controls whether, when
     fetching albums, the associated items should be fetched also.
     """
+    items: list[Item] = []
     if album:
         albums = list(lib.albums(query))
-        items = []
         if also_items:
             for al in albums:
                 items += al.items()

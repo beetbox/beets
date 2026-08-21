@@ -23,8 +23,8 @@ def list_items(
     albums instead of single items.
     """
     if album:
-        for album in lib.albums(query):
-            ui.print_(format(album, fmt))
+        for _album in lib.albums(query):
+            ui.print_(format(_album, fmt))
     else:
         for item in lib.items(query):
             ui.print_(format(item, fmt))
@@ -35,6 +35,9 @@ def list_func(lib: Library, opts: ListCLIOpts, args: list[str]) -> None:
 
 
 list_cmd = ui.Subcommand("list", help="query the library", aliases=("ls",))
-list_cmd.parser.usage += "\nExample: %prog -f '$album: $title' artist:beatles"
+list_cmd.parser.set_usage(
+    list_cmd.parser.get_usage().rstrip()
+    + "\nExample: %prog -f '$album: $title' artist:beatles"
+)
 list_cmd.parser.add_all_common_options()
 list_cmd.func = list_func
