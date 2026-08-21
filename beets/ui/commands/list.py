@@ -1,6 +1,17 @@
 """The 'list' command: query and show library contents."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol
+
 from beets import ui
+
+if TYPE_CHECKING:
+    from beets.library import Library
+
+
+class ListCLIOpts(Protocol):
+    album: bool
 
 
 def list_items(lib, query, album, fmt=""):
@@ -15,7 +26,7 @@ def list_items(lib, query, album, fmt=""):
             ui.print_(format(item, fmt))
 
 
-def list_func(lib, opts, args):
+def list_func(lib: Library, opts: ListCLIOpts, args: list[str]) -> None:
     list_items(lib, args, opts.album)
 
 

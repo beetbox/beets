@@ -299,3 +299,5 @@ f37306b0cc17f17291ea5010178f190a95b29fd5
 27900f58fbeba06483b77c677045ad1df8e9af45
 # typing: rename AnyLibModel -> AlbumOrItem
 33a01fe0b37942a38c8b88d0fc8167edd02ca81b
+# typing: add types to command handlers
+14eabc60600ff3c8ef1908100ae7abd3aa998bc4

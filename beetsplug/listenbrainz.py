@@ -7,7 +7,7 @@ import json
 import time
 import zipfile
 from collections import Counter
-from typing import TYPE_CHECKING, ClassVar, TypedDict
+from typing import TYPE_CHECKING, ClassVar, Protocol, TypedDict
 
 import requests
 
@@ -23,7 +23,14 @@ from ._utils.requests import TimeoutAndRetrySession
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from beets.library import Library
+
     from ._utils.playcount import Track
+
+
+class LBImportCLIOpts(Protocol):
+    export_file: str | None
+    max_listens: int | None
 
 
 class Listen(TypedDict):
@@ -93,7 +100,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             ),
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: LBImportCLIOpts, args: list[str]) -> None:
             self._lbupdate(
                 lib, export_file=opts.export_file, max_listens=opts.max_listens
             )

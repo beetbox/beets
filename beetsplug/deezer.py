@@ -17,6 +17,7 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 VARIOUS_ARTISTS_ID = 5080
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Sequence
 
     from beets.library import Item, Library
@@ -46,7 +47,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             "deezerupdate", help=f"Update {self.data_source} rank"
         )
 
-        def func(lib: Library, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             items = lib.items(args)
             self.deezerupdate(list(items), ui.should_write())
 
