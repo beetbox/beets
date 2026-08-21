@@ -12,7 +12,7 @@ from beets import plugins
 from beets.exceptions import UserError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
 ASCII_DIGITS = string.digits + string.ascii_lowercase
 T = TypeVar("T")
@@ -125,14 +125,15 @@ def str2fmt(s: str) -> SpanFormat:
     )
     m = re.match(regex, s)
 
-    res = {
-        "fromnchars": len(m.group("fromyear")),
-        "tonchars": len(m.group("toyear")),
-    }
-    res["fmt"] = (
-        f"{m['bef']}{{}}{m['sep']}{'{}' if res['tonchars'] else ''}{m['after']}"
-    )
-    return res
+    if m:
+        fromnchars = len(m.group("fromyear"))
+        tonchars = len(m.group("toyear"))
+        fmt = f"{m['bef']}{{}}{m['sep']}{'{}' if tonchars else ''}{m['after']}"
+    else:
+        fromnchars = tonchars = 0
+        fmt = "{}"
+
+    return {"fromnchars": fromnchars, "tonchars": tonchars, "fmt": fmt}
 
 
 def format_span(
@@ -246,6 +247,7 @@ class BucketPlugin(plugins.BeetsPlugin):
         if not field and len(text) == 4 and text.isdigit():
             field = "year"
 
+        func: Callable[[str], str]
         if field == "year":
             func = self.find_bucket_year
         else:

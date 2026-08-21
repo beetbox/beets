@@ -104,7 +104,7 @@ class ImportAddedPlugin(BeetsPlugin):
         """
         # The file's mtime on disk must be in sync with the item's mtime
         self.write_file_mtime(util.syspath(item.path), mtime)
-        item.mtime = mtime
+        item.mtime = int(mtime)
 
     def record_import_mtime(
         self, item: Item, source: bytes, destination: bytes

@@ -771,6 +771,8 @@ class MetaflacBackend(Backend):
 class GStreamerBackend(Backend):
     NAME = "gstreamer"
 
+    _error: ReplayGainError | None = None
+
     def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
         self._import_gst()
@@ -1235,7 +1237,7 @@ class ExceptionWatcher(Thread):
     """
 
     def __init__(
-        self, queue: queue.Queue[Exception], callback: Callable[[], None]
+        self, queue: queue.Queue[BaseException], callback: Callable[[], None]
     ) -> None:
         self._queue = queue
         self._callback = callback
@@ -1492,7 +1494,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Open a `ThreadPool` instance in `self.pool`"""
         if self.pool is None and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
-            self.exc_queue: queue.Queue[Exception] = queue.Queue()
+            self.exc_queue: queue.Queue[BaseException] = queue.Queue()
 
             signal.signal(signal.SIGINT, self._interrupt)
 

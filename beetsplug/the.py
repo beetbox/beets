@@ -1,7 +1,6 @@
 """Moves patterns in path formats (suitable for moving articles)."""
 
 import re
-from typing import ClassVar
 
 from beets.plugins import BeetsPlugin
 
@@ -14,7 +13,7 @@ FORMAT = "{}, {}"
 
 
 class ThePlugin(BeetsPlugin):
-    patterns: ClassVar[list[str]] = []
+    patterns: list[str]
 
     def __init__(self) -> None:
         super().__init__()
@@ -58,13 +57,13 @@ class ThePlugin(BeetsPlugin):
         strip -- if True, pattern will be removed
         """
         if text:
-            r = re.compile(pattern, flags=re.IGNORECASE)
+            m = re.compile(pattern, flags=re.IGNORECASE)
             try:
-                t = r.findall(text)[0]
+                t = m.findall(text)[0]
             except IndexError:
                 return text
             else:
-                r = re.sub(r, "", text).strip()
+                r = re.sub(m, "", text).strip()
                 if self.config["strip"]:
                     return r
                 fmt = self.config["format"].as_str()

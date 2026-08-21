@@ -261,7 +261,10 @@ class EditPlugin(plugins.BeetsPlugin):
             # Show the changes.
             # If the objects are not on the DB yet, we need a copy of their
             # original state for show_model_changes.
-            objs_old = [obj.copy() if obj.id < 0 else None for obj in objs]
+            objs_old = [
+                obj.copy() if (obj.id is not None and obj.id < 0) else None
+                for obj in objs
+            ]
             self.apply_data(objs, old_data, new_data)
             changed = False
             for obj, obj_old in zip(objs, objs_old):
@@ -579,9 +582,12 @@ class EditPlugin(plugins.BeetsPlugin):
         applied to the original items.
         """
         # Prompt the user for a candidate.
-        sel = ui.input_options((), numrange=(1, len(task.candidates)))
-        # Force applying the candidate on the items.
-        task.match = task.candidates[sel - 1]
-        task.apply_metadata()
+        if task.candidates:
+            sel = ui.input_options((), numrange=(1, len(task.candidates)))
+            # Force applying the candidate on the items.
+            task.match = task.candidates[sel - 1]
+            task.apply_metadata()
 
-        return self.importer_edit(session, task)
+            return self.importer_edit(session, task)
+
+        return None

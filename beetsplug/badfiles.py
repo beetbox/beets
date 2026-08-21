@@ -79,8 +79,8 @@ class BadFiles(BeetsPlugin):
             status = e.returncode
         except OSError as e:
             raise CheckerCommandError(cmd, e)
-        output = output.decode(sys.getdefaultencoding(), "replace")
-        return status, errors, [line for line in output.split("\n") if line]
+        output_str = output.decode(sys.getdefaultencoding(), "replace")
+        return status, errors, [line for line in output_str.split("\n") if line]
 
     def check_mp3val(self, path: str) -> tuple[int, int, list[str]]:
         status, errors, output = self.run_command(["mp3val", path])
@@ -95,10 +95,8 @@ class BadFiles(BeetsPlugin):
     def check_custom(
         self, command: str
     ) -> Callable[[str], tuple[int, int, list[str]]]:
-        def checker(path: str):
-            cmd = shlex.split(command)
-            cmd.append(path)
-            return self.run_command(cmd)
+        def checker(path: str) -> tuple[int, int, list[str]]:
+            return self.run_command([*shlex.split(command), path])
 
         return checker
 
@@ -107,15 +105,17 @@ class BadFiles(BeetsPlugin):
     ) -> Callable[[str], tuple[int, int, list[str]]] | None:
         ext = ext.lower()
         try:
-            command = self.config["commands"].get(dict).get(ext)
-        except confuse.NotFoundError:
-            command = None
-        if command:
+            command = self.config["commands"].get(confuse.MappingValues(str))[
+                ext
+            ]
+        except (confuse.NotFoundError, KeyError):
+            if ext == "mp3":
+                return self.check_mp3val
+            if ext == "flac":
+                return self.check_flac
+        else:
             return self.check_custom(command)
-        if ext == "mp3":
-            return self.check_mp3val
-        if ext == "flac":
-            return self.check_flac
+
         return None
 
     def check_item(self, item: Item) -> list[str]:
@@ -132,9 +132,7 @@ class BadFiles(BeetsPlugin):
         if not checker:
             self._log.error("no checker specified in the config for {}", ext)
             return []
-        path = item.path
-        if not isinstance(path, str):
-            path = item.path.decode(sys.getfilesystemencoding())
+        path = str(item.filepath)
         try:
             status, errors, output = checker(path)
         except CheckerCommandError as e:

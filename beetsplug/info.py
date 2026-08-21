@@ -15,11 +15,13 @@ from beets.util import displayable_path, normpath, syspath
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
 
-    from beets.library import Library
+    from beets.library import LibModel, Library
 
     from ._typing import JSONDict
 
-    DataEmitter = Callable[[Literal["*"] | list[str]], tuple[JSONDict, Any]]
+    DataEmitter = Callable[
+        [Literal["*"] | list[str]], tuple[JSONDict, LibModel]
+    ]
 
 
 class InfoCLIOpts(Protocol):
@@ -54,7 +56,9 @@ def tag_fields() -> set[str]:
 
 
 def tag_data_emitter(path: bytes) -> DataEmitter:
-    def emitter(included_keys: Literal["*"] | list[str]) -> tuple[Any, Any]:
+    def emitter(
+        included_keys: Literal["*"] | list[str],
+    ) -> tuple[JSONDict, LibModel]:
         fields: set[str] | list[str]
         if included_keys == "*":
             fields = tag_fields()
@@ -64,7 +68,7 @@ def tag_data_emitter(path: bytes) -> DataEmitter:
             # We can't serialize the image data.
             fields.remove("images")
         mf = mediafile.MediaFile(syspath(path))
-        tags = {}
+        tags: JSONDict = {}
         for field in fields:
             if field == "art":
                 tags[field] = mf.art is not None
@@ -86,11 +90,13 @@ def library_data(
         yield library_data_emitter(item)
 
 
-def library_data_emitter(item: Item) -> DataEmitter:
-    def emitter(included_keys: Literal["*"] | list[str]) -> tuple[Any, Any]:
-        data = dict(item.formatted(included_keys=included_keys))
+def library_data_emitter(model: LibModel) -> DataEmitter:
+    def emitter(
+        included_keys: Literal["*"] | list[str],
+    ) -> tuple[JSONDict, LibModel]:
+        data = dict(model.formatted(included_keys=included_keys))
 
-        return data, item
+        return data, model
 
     return emitter
 
@@ -105,7 +111,7 @@ def update_summary(summary: JSONDict, tags: JSONDict) -> JSONDict:
 
 
 def print_data(
-    data: JSONDict, item: Item | None = None, fmt: str | None = None
+    data: JSONDict, item: LibModel | None = None, fmt: str | None = None
 ) -> None:
     """Print, with optional formatting, the fields of a single element.
 
@@ -142,7 +148,7 @@ def print_data(
         ui.print_(f"{field:>{maxwidth}}: {value}")
 
 
-def print_data_keys(data: JSONDict, item: Item | None = None) -> None:
+def print_data_keys(data: JSONDict, item: LibModel | None = None) -> None:
     """Print only the keys (field names) for an item."""
     path = displayable_path(item.path) if item else None
     formatted = []

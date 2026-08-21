@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, NamedTuple
 
 import pylast
-from pylast import TopItem, _extract, _number
+from pylast import _extract, _number
 
 from beets import config, plugins, ui
 from beets.dbcore import types
@@ -20,6 +20,15 @@ if TYPE_CHECKING:
     from ._utils.playcount import Track
 
 API_URL = "https://ws.audioscrobbler.com/2.0/"
+
+
+class OurTrack(pylast.Track):
+    mbid: str
+
+
+class OurTopItem(NamedTuple):
+    item: OurTrack
+    weight: float
 
 
 class LastImportPlugin(plugins.BeetsPlugin):
@@ -54,7 +63,6 @@ class CustomUser(pylast.User):
     def _get_things(
         self,
         method: str,
-        thing: str,
         thing_type: type[pylast.Track | pylast.Album],
         params: type[pylast._Opus] | None = None,
         cacheable: bool = True,
@@ -70,15 +78,15 @@ class CustomUser(pylast.User):
         total_pages = int(toptracks_node.getAttribute("totalPages"))
 
         seq = []
-        for node in doc.getElementsByTagName(thing):
+        for node in doc.getElementsByTagName(thing_type.__name__.lower()):
             title = _extract(node, "name")
             artist = _extract(node, "name", 1)
             mbid = _extract(node, "mbid")
             playcount = _number(_extract(node, "playcount"))
 
-            thing = thing_type(artist, title, self.network)
-            thing.mbid = mbid
-            seq.append(TopItem(thing, playcount))
+            thing = OurTrack(artist, title, self.network)
+            thing.mbid = mbid  # type: ignore[union-attr]
+            seq.append(OurTopItem(thing, playcount))
 
         return seq, total_pages
 
@@ -106,9 +114,7 @@ class CustomUser(pylast.User):
         if limit:
             params["limit"] = limit
 
-        return self._get_things(
-            "getTopTracks", "track", pylast.Track, params, cacheable
-        )
+        return self._get_things("getTopTracks", pylast.Track, params, cacheable)
 
 
 def import_lastfm(lib: Library, log: Logger) -> None:
@@ -175,10 +181,12 @@ def fetch_tracks(user: str, page: int, limit: int) -> tuple[list[Track], int]:
     )
     return [
         {
-            "mbid": track.item.mbid or "",
-            "artist": track.item.artist.name.strip(),
-            "name": track.item.title.strip(),
-            "playcount": int(track.weight),
+            "mbid": t.item.mbid or "",
+            "artist": (
+                n.strip() if ((a := t.item.artist) and (n := a.name)) else ""
+            ),
+            "name": ti.strip() if ((i := t.item) and (ti := i.title)) else "",
+            "playcount": int(t.weight),
         }
-        for track in results
+        for t in results
     ], total_pages

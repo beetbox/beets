@@ -8,6 +8,7 @@ import string
 import subprocess
 from typing import TYPE_CHECKING, Any
 
+from beets.events import ALL_EVENTS
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
@@ -43,7 +44,7 @@ class HookPlugin(BeetsPlugin):
         for hook_index in range(len(hooks)):
             hook = self.config["hooks"][hook_index]
 
-            hook_event = hook["event"].as_str()
+            hook_event: EventType = hook["event"].as_choice(choices=ALL_EVENTS)
             hook_command = hook["command"].as_str()
 
             self.create_and_register_hook(hook_event, hook_command)

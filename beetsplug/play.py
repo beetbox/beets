@@ -60,9 +60,7 @@ def play(
 
     try:
         if keep_open:
-            command = shlex.split(command_str)
-            command = command + open_args
-            subprocess.call(command)
+            subprocess.call([*shlex.split(command_str), *open_args])
         else:
             util.interactive_open(open_args, command_str)
     except OSError as exc:
@@ -180,7 +178,7 @@ class PlayPlugin(BeetsPlugin):
         ):
             play(command_str, selection, paths, open_args, self._log, item_type)
 
-    def _command_str(self, args: list[str] | None = None) -> str:
+    def _command_str(self, args: str | None = None) -> str:
         """Create a command string from the config command and optional args."""
         command_str = config["play"]["command"].get()
         if not command_str:

@@ -74,14 +74,14 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
     ) -> None:
         with lib.transaction():
             for query, playlist_tag in playlist_dict.items():
-                query = AndQuery(
+                and_query = AndQuery(
                     [
                         MatchQuery("artist", query[0]),
                         MatchQuery("album", query[1]),
                         MatchQuery("title", query[2]),
                     ]
                 )
-                items = lib.items(query)
+                items = lib.items(and_query)
                 if not items:
                     self._log.warn(
                         "{} | track not found ({})", playlist_tag, query
@@ -182,9 +182,11 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
     def get_playlists(self, ids: Sequence[str]) -> dict[TrackKey, str]:
         output = {}
         for playlist_id in ids:
-            name, tracks = self.get_playlist(playlist_id)
-            for track in tracks:
-                if track not in output:
-                    output[track] = ";"
-                output[track] += f"{name};"
+            playlist = self.get_playlist(playlist_id)
+            if playlist:
+                name, tracks = playlist
+                for track in tracks:
+                    if track not in output:
+                        output[track] = ";"
+                    output[track] += f"{name};"
         return output

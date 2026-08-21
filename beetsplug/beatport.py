@@ -27,7 +27,6 @@ from beets.util.deprecation import deprecate_for_user
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
-    from beets.importer import ImportSession
     from beets.library import Item
 
     from ._typing import JSONDict
@@ -312,7 +311,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         )
         self.config["apikey"].redact = True
         self.config["apisecret"].redact = True
-        self.register_listener("import_begin", self.setup)
+        self.setup()
 
     @property
     def client(self) -> BeatportClient:
@@ -322,7 +321,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             )
         return self._client
 
-    def setup(self, session: ImportSession) -> None:
+    def setup(self) -> None:
         c_key = self.config["apikey"].as_str()
         c_secret = self.config["apisecret"].as_str()
 

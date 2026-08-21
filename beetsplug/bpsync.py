@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 class BPSyncCLIOpts(Protocol):
     move: bool | None
-    pretend: bool | None
+    pretend: bool
     write: bool | None
 
 
@@ -28,6 +28,7 @@ class BPSyncPlugin(BeetsPlugin):
         super().__init__()
         deprecate_for_user(self._log, "The 'bpsync' plugin")
         self.beatport_plugin = BeatportPlugin()
+        # this would cause an error but this plugin is dead
         self.beatport_plugin.setup()
 
     def commands(self) -> list[ui.Subcommand]:
@@ -36,6 +37,7 @@ class BPSyncPlugin(BeetsPlugin):
             "-p",
             "--pretend",
             action="store_true",
+            default=False,
             help="show all changes but do nothing",
         )
         cmd.parser.add_option(
@@ -100,12 +102,12 @@ class BPSyncPlugin(BeetsPlugin):
                 continue
 
             # Apply.
-            trackinfo = self.beatport_plugin.track_for_id(item.mb_trackid)
-            with lib.transaction():
-                TrackMatch(Distance(), trackinfo, item).apply_metadata(
-                    from_scratch=False
-                )
-                apply_item_changes(lib, item, move, pretend, write)
+            if trackinfo := self.beatport_plugin.track_for_id(item.mb_trackid):
+                with lib.transaction():
+                    TrackMatch(Distance(), trackinfo, item).apply_metadata(
+                        from_scratch=False
+                    )
+                    apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
     def is_beatport_track(item: Item) -> bool:
@@ -166,9 +168,7 @@ class BPSyncPlugin(BeetsPlugin):
             beatport_trackid_to_trackinfo = {
                 track.track_id: track for track in albuminfo.tracks
             }
-            library_trackid_to_item = {
-                int(item.mb_trackid): item for item in items
-            }
+            library_trackid_to_item = {item.mb_trackid: item for item in items}
             item_info_pairs = [
                 (item, beatport_trackid_to_trackinfo[track_id])
                 for track_id, item in library_trackid_to_item.items()

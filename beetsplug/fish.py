@@ -152,8 +152,7 @@ def get_cmds_list(cmds_names: Iterable[str]) -> str:
 
 def get_standard_fields(fields: Iterable[str]) -> str:
     # Make a list of album/track fields and append with ':'
-    fields = (f"{field}:" for field in fields)
-    return f"set FIELDS {' '.join(fields)}\n\n"
+    return f"set FIELDS {' '.join(f'{field}:' for field in fields)}\n\n"
 
 
 def get_extravalues(lib: Library, extravalues: Sequence[str]) -> str:
@@ -171,7 +170,7 @@ def get_set_of_values_for_field(
     lib: Library, fields: Sequence[str]
 ) -> dict[str, set[Any]]:
     # Get unique values from a specified album/track field
-    fields_dict = {}
+    fields_dict: dict[str, set[str]] = {}
     for each in fields:
         fields_dict[each] = set()
     for item in lib.items():
@@ -205,7 +204,7 @@ def get_basic_beet_options() -> str:
 def get_subcommands(
     cmd_name_and_help: Iterable[tuple[str, str]],
     nobasicfields: bool,
-    extravalues: Iterable[str],
+    extravalues: Iterable[str] | None,
 ) -> str:
     # Formatting for Fish to complete our fields/values
     word = ""
