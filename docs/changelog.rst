@@ -21,6 +21,10 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
+  large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
+  (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
+  backend, which leaked fds on fingerprinting errors. :bug:`5171`
 - Add ``editor`` config option to allow users to permanently set their preferred
   editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables.
   :bug:`6641`
