@@ -21,6 +21,7 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Improve error message when SQLite fails to open the library database file due to permissions or uncreated target directories. :bug:`1676`
 - Add ``editor`` config option to allow users to permanently set their preferred
   editor, overriding ``$VISUAL`` and ``$EDITOR`` environment variables.
   :bug:`6641`
