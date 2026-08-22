@@ -1,10 +1,22 @@
 """Synchronise library metadata with metadata source backends."""
 
+from __future__ import annotations
+
 from collections import defaultdict
+from typing import TYPE_CHECKING, Protocol
 
 from beets import library, metadata_plugins, ui, util
 from beets.autotag import AlbumMatch, Distance, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
+
+if TYPE_CHECKING:
+    from beets.library import Library
+
+
+class MBSyncCLIOpts(Protocol):
+    move: bool | None
+    pretend: bool | None
+    write: bool | None
 
 
 class MBSyncPlugin(BeetsPlugin):
@@ -45,7 +57,7 @@ class MBSyncPlugin(BeetsPlugin):
         cmd.func = self.func
         return [cmd]
 
-    def func(self, lib, opts, args):
+    def func(self, lib: Library, opts: MBSyncCLIOpts, args: list[str]) -> None:
         """Command handler for the mbsync function."""
         move = ui.should_move(opts.move)
         pretend = opts.pretend

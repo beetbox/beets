@@ -63,6 +63,12 @@ Bug fixes
   call site. :bug:`4339`
 - :doc:`plugins/discogs`: Retry a search once when Discogs returns an invalid
   JSON response instead of immediately discarding all Discogs candidates.
+- Plugins built on ``SearchApiMetadataSourcePlugin``
+  (:doc:`plugins/musicbrainz`, :doc:`plugins/spotify`, :doc:`plugins/deezer` and
+  :doc:`plugins/discogs`) no longer send a search request when both the query
+  text and the filters are empty. :bug:`6862`
+- :doc:`plugins/ipfs`: Fix ``beet ipfs --play`` option to invoke the Play plugin
+  through its command interface.
 - :doc:`plugins/lyrics`: LRCLib entries that carry no lyrics text at all, with
   both ``plainLyrics`` and ``syncedLyrics`` null while ``instrumental`` is
   ``False``, are no longer considered matches. Previously such an entry was
@@ -75,9 +81,11 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/bpd`: Replace the bundled Bluelet scheduler with Python's
+  standard ``asyncio`` event loop.
 
 2.13.1 (July 29, 2026)
 ----------------------

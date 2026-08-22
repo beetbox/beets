@@ -1,13 +1,24 @@
 """Fetch various AcousticBrainz metadata using MBID."""
 
+from __future__ import annotations
+
 from collections import defaultdict
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 import requests
 
 from beets import plugins, ui
 from beets.dbcore import types
 from beets.exceptions import UserError
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
+
+
+class AcousticBrainzCLIOpts(Protocol):
+    force_refetch: bool
+
 
 LEVELS = ["/low-level", "/high-level"]
 ABSCHEME = {
@@ -68,7 +79,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         "voice_instrumental": types.STRING,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self._log.warning("This plugin is deprecated.")
@@ -103,7 +114,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
             help="re-download data when already present",
         )
 
-        def func(lib, opts, args):
+        def func(
+            lib: Library, opts: AcousticBrainzCLIOpts, args: list[str]
+        ) -> None:
             items = lib.items(args)
             self._fetch_info(
                 items,
@@ -114,7 +127,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    def import_task_files(self, session, task):
+    def import_task_files(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         """Function is called upon beet import."""
         self._fetch_info(task.imported_items(), False, True)
 

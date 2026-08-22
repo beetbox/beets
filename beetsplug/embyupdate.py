@@ -8,12 +8,18 @@ emby:
     password: password
 """
 
+from __future__ import annotations
+
 import hashlib
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
 
 import requests
 
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
 
 
 def api_url(host, port, endpoint):
@@ -132,7 +138,7 @@ def get_user(host, port, username):
 
 
 class EmbyUpdate(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("emby")
 
         # Adding defaults.
@@ -153,11 +159,11 @@ class EmbyUpdate(BeetsPlugin):
 
         self.register_listener("database_change", self.listen_for_db_change)
 
-    def listen_for_db_change(self, lib, model):
+    def listen_for_db_change(self, lib: Library, model: LibModel) -> None:
         """Listens for beets db change and register the update for the end."""
         self.register_listener("cli_exit", self.update)
 
-    def update(self, lib):
+    def update(self, lib: Library) -> None:
         """When the client exists try to send refresh request to Emby."""
         self._log.info("Updating Emby library...")
 

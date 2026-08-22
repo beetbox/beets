@@ -310,6 +310,7 @@ lyrics_pages = [
     LyricsPage.make(
         "https://api.lrcmux.dev/get?artist=The+Beatles&title=Lady+Madonna&duration=186&format=lrc&level=line&sources=ytmusic",
         """
+        [00:00.00]
         [00:08.71] Lady Madonna, children at your feet
         [00:13.08] Wonder how you manage to make ends meet
         [00:17.43] Who finds the money when you pay the rent?

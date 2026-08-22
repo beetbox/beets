@@ -4,12 +4,15 @@ This plugin is POSIX-only.
 Spec: standards.freedesktop.org/thumbnail-spec/latest/index.html
 """
 
+from __future__ import annotations
+
 import ctypes
 import ctypes.util
 import os
 import shutil
 from hashlib import md5
 from pathlib import PurePosixPath
+from typing import TYPE_CHECKING
 
 from xdg import BaseDirectory
 
@@ -19,12 +22,18 @@ from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Album, Library
+
+
 NORMAL_DIR = bytestring_path(os.path.join(BASE_DIR, "normal"))
 LARGE_DIR = bytestring_path(os.path.join(BASE_DIR, "large"))
 
 
 class ThumbnailsPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"auto": True, "force": False, "dolphin": False})
 
@@ -55,7 +64,9 @@ class ThumbnailsPlugin(BeetsPlugin):
 
         return [thumbnails_command]
 
-    def process_query(self, lib, opts, args):
+    def process_query(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         self.config.set_args(opts)
         if self._check_local_ok():
             for album in lib.albums(args):
@@ -94,7 +105,7 @@ class ThumbnailsPlugin(BeetsPlugin):
 
         return True
 
-    def process_album(self, album):
+    def process_album(self, album: Album) -> None:
         """Produce thumbnails for the album folder."""
         self._log.debug("generating thumbnail for {}", album)
         if not album.artpath:
@@ -218,7 +229,7 @@ class GioURI(URIGetter):
 
     name = "GIO"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.libgio = self.get_library()
         self.available = bool(self.libgio)
         if self.available:

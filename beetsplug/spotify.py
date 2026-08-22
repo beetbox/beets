@@ -13,7 +13,7 @@ import threading
 import time
 import webbrowser
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypedDict
 
 import confuse
 import requests
@@ -29,12 +29,20 @@ from beets.util import chunks
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.dbcore.db import Results
     from beets.library import Item, Library
     from beets.metadata_plugins import QueryType, SearchParams
     from beetsplug._typing import JSONDict
 
 DEFAULT_WAITING_TIME = 5
+
+
+class SpotifyCLIOpts(Protocol):
+    mode: str | None
+    show_failures: bool | None
+
+
+class SpotifySyncCLIOpts(Protocol):
+    force_refetch: bool
 
 
 class TrackDetails(TypedDict):
@@ -185,8 +193,8 @@ class SpotifyPlugin(
 
     def _authenticate(self) -> None:
         """Request an access token via the Client Credentials Flow: https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow"""
-        c_id: str = self.config["client_id"].as_str()
-        c_secret: str = self.config["client_secret"].as_str()
+        c_id = self.config["client_id"].as_str()
+        c_secret = self.config["client_secret"].as_str()
 
         headers = {
             "Authorization": (
@@ -531,7 +539,9 @@ class SpotifyPlugin(
 
     def commands(self) -> list[ui.Subcommand]:
         # autotagger import command
-        def queries(lib, opts, args):
+        def queries(
+            lib: Library, opts: SpotifyCLIOpts, args: list[str]
+        ) -> None:
             success = self._parse_opts(opts)
             if success:
                 results = self._match_library_tracks(lib, args)
@@ -571,7 +581,9 @@ class SpotifyPlugin(
             help="re-download data when already present",
         )
 
-        def func(lib, opts, args):
+        def func(
+            lib: Library, opts: SpotifySyncCLIOpts, args: list[str]
+        ) -> None:
             items = lib.items(args)
             self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 
@@ -594,7 +606,7 @@ class SpotifyPlugin(
         self.opts = opts
         return True
 
-    def _match_library_tracks(self, library: Library, keywords: str):
+    def _match_library_tracks(self, library: Library, keywords: list[str]):
         """Get simplified track object dicts for library tracks.
 
         Matches tracks based on the specified ``keywords``.
@@ -811,11 +823,7 @@ class SpotifyPlugin(
         return features_by_id
 
     def _fetch_info(
-        self,
-        lib: Library,
-        items: Results[Item] | Sequence[Item],
-        write: bool,
-        force: bool,
+        self, lib: Library, items: Sequence[Item], write: bool, force: bool
     ) -> None:
         """Obtain track information from Spotify."""
 

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import random
 import string
 from hashlib import md5
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode
 from xml.etree import ElementTree
 
@@ -10,6 +13,12 @@ from beets.dbcore import AndQuery
 from beets.dbcore.query import MatchQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 __author__ = "https://github.com/MrNuggelz"
 
@@ -90,7 +99,9 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         return name, tracks
 
     def commands(self):
-        def build_playlist(lib, opts, args):
+        def build_playlist(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             self.config.set_args(opts)
             ids = self.config["playlist_ids"].as_str_seq()
             if self.config["playlist_names"].as_str_seq():

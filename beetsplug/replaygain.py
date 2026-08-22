@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from threading import Event, Thread
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypeVar
 
 from beets import ui
 from beets.exceptions import UserError
@@ -24,7 +24,6 @@ from beets.plugins import BeetsPlugin
 from beets.util import command_output, syspath
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Callable, Sequence
     from logging import Logger
 
@@ -32,6 +31,14 @@ if TYPE_CHECKING:
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
+
+
+class ReplayGainCLIOpts(Protocol):
+    album: bool
+    force: bool
+    threads: int | None
+    write: bool | None
+
 
 # Utilities.
 
@@ -114,7 +121,7 @@ class RgTask:
         peak_method: PeakMethod | None,
         backend_name: str,
         log: Logger,
-    ):
+    ) -> None:
         self.items = items
         self.album = album
         self.target_level = target_level
@@ -212,7 +219,7 @@ class R128Task(RgTask):
         target_level: float,
         backend_name: str,
         log: Logger,
-    ):
+    ) -> None:
         # R128_* tags do not store the track/album peak
         super().__init__(items, album, target_level, None, backend_name, log)
 
@@ -244,7 +251,7 @@ class Backend(ABC):
     NAME = ""
     do_parallel = False
 
-    def __init__(self, config: ConfigView, log: Logger):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         """Initialize the backend with the configuration view for the
         plugin.
         """
@@ -272,7 +279,7 @@ class FfmpegBackend(Backend):
     NAME = "ffmpeg"
     do_parallel = True
 
-    def __init__(self, config: ConfigView, log: Logger):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
         self._ffmpeg_path = "ffmpeg"
 
@@ -533,11 +540,11 @@ class CommandBackend(Backend):
 
     cmd_name: Tool
 
-    def __init__(self, config: ConfigView, log: Logger):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
         config.add({"command": "", "noclip": True})
 
-        cmd_path: Path = Path(config["command"].as_str())
+        cmd_path = Path(config["command"].as_str())
         supported_tools = set(self.SUPPORTED_FORMATS_BY_TOOL)
 
         if (cmd_name := cmd_path.name) not in supported_tools:
@@ -664,7 +671,7 @@ class MetaflacBackend(Backend):
 
     SUPPORTED_FORMATS: ClassVar[set[str]] = {"FLAC"}
 
-    def __init__(self, config: ConfigView, log: Logger):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
         config.add({"metaflac": "metaflac"})
 
@@ -754,7 +761,7 @@ class MetaflacBackend(Backend):
 class GStreamerBackend(Backend):
     NAME = "gstreamer"
 
-    def __init__(self, config: ConfigView, log: Logger):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
         self._import_gst()
 
@@ -1052,7 +1059,7 @@ class AudioToolsBackend(Backend):
 
     NAME = "audiotools"
 
-    def __init__(self, config: ConfigView, log: Logger):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
         self._import_audiotools()
 
@@ -1215,7 +1222,7 @@ class ExceptionWatcher(Thread):
 
     def __init__(
         self, queue: queue.Queue[Exception], callback: Callable[[], None]
-    ):
+    ) -> None:
         self._queue = queue
         self._callback = callback
         self._stopevent = Event()
@@ -1541,7 +1548,7 @@ class ReplayGainPlugin(BeetsPlugin):
             self.exc_watcher.join()
             self.pool = None
 
-    def import_begin(self, session: ImportSession):
+    def import_begin(self, session: ImportSession) -> None:
         """Handle `import_begin` event -> open pool"""
         threads: int = self.config["threads"].get(int)
 
@@ -1552,7 +1559,7 @@ class ReplayGainPlugin(BeetsPlugin):
         ):
             self.open_pool(threads)
 
-    def import_end(self, paths):
+    def import_end(self, lib: Library, paths: list[bytes]) -> None:
         """Handle `import` event -> close pool"""
         self.close_pool()
 
@@ -1567,7 +1574,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.handle_track(task.item, False, self.force_on_import)
 
     def command_func(
-        self, lib: Library, opts: optparse.Values, args: list[str]
+        self, lib: Library, opts: ReplayGainCLIOpts, args: list[str]
     ):
         try:
             write = ui.should_write(opts.write)

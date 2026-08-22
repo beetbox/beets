@@ -13,7 +13,7 @@ from beets.util import as_string, cached_classproperty
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, KeysView, Sequence
+    from collections.abc import Iterator, KeysView
 
     from beets.library import Item
     from beets.util import Likelies
@@ -454,7 +454,7 @@ def distance(
     # Current or preferred media.
     if album_info.media:
         # Preferred media options.
-        media_patterns: Sequence[str] = preferred_config["media"].as_str_seq()
+        media_patterns = preferred_config["media"].as_str_seq()
         options = [
             re.compile(rf"(\d+x)?({pat})", re.I) for pat in media_patterns
         ]
@@ -493,7 +493,7 @@ def distance(
             dist.add("year", 1.0)
 
     # Preferred countries.
-    country_patterns: Sequence[str] = preferred_config["countries"].as_str_seq()
+    country_patterns = preferred_config["countries"].as_str_seq()
     options = [re.compile(pat, re.I) for pat in country_patterns]
     if album_info.country and options:
         dist.add_priority("country", album_info.country, options)

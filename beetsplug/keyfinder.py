@@ -1,10 +1,18 @@
 """Uses the `KeyFinder` program to add the `initial_key` field."""
 
+from __future__ import annotations
+
 import os.path
 import subprocess
+from typing import TYPE_CHECKING
 
 from beets import ui, util
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
 
 
 class KeyFinderPlugin(BeetsPlugin):
@@ -22,7 +30,9 @@ class KeyFinderPlugin(BeetsPlugin):
         cmd.func = self.command
         return [cmd]
 
-    def command(self, lib, opts, args):
+    def command(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         self.find_key(lib.items(args), write=ui.should_write())
 
     def imported(self, session, task):

@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from beets.library.models import Item
+from beets.library import Item
 from beets.test.helper import PluginTestHelper
 from beetsplug.tidal import TidalPlugin
 

@@ -1,16 +1,27 @@
 """The 'completion' command: print shell script for command line completion."""
 
+from __future__ import annotations
+
 import os
 import re
+from typing import TYPE_CHECKING
 
 from beets import library, logging, plugins, ui
 from beets.util import syspath
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
 
 # Global logger.
 log = logging.getLogger("beets")
 
 
-def print_completion(*args):
+def print_completion(
+    lib: Library, opts: optparse.Values, args: list[str]
+) -> None:
     from beets.ui.commands import default_commands
 
     for line in completion_script(default_commands + plugins.commands()):

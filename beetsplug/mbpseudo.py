@@ -86,7 +86,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         self.register_listener("album_matched", self._adjust_final_album_match)
 
     # noinspection PyMethodMayBeStatic
-    def _on_plugins_loaded(self):
+    def _on_plugins_loaded(self) -> None:
         for plugin in find_plugins():
             if isinstance(plugin, MusicBrainzPlugin) and not isinstance(
                 plugin, MusicBrainzPseudoReleasePlugin
@@ -234,7 +234,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             for tag_key, pseudo_key in track_custom_tags:
                 track[tag_key] = pseudo_track[pseudo_key]
 
-    def _adjust_final_album_match(self, match: AlbumMatch):
+    def _adjust_final_album_match(self, match: AlbumMatch) -> None:
         album_info = match.info
         if isinstance(album_info, PseudoAlbumInfo):
             self._log.debug(
@@ -270,7 +270,7 @@ class PseudoAlbumInfo(AlbumInfo):
 
     def __init__(
         self, pseudo_release: AlbumInfo, official_release: AlbumInfo, **kwargs
-    ):
+    ) -> None:
         super().__init__(pseudo_release.tracks, **kwargs)
         self.__dict__["_pseudo_source"] = True
         self.__dict__["_official_release"] = official_release

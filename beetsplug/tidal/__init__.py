@@ -5,7 +5,7 @@ import os
 import re
 import time
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, overload
 
 import confuse
 
@@ -19,13 +19,11 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from .api import TidalAPI
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Callable, Iterable, Sequence
 
     from beets.autotag import Info
-    from beets.dbcore.db import Results
-    from beets.library import Library
-    from beets.library.models import Album, Item
+    from beets.importer import ImportSession
+    from beets.library import Album, Item, LibModel, Library
 
     from .api_types import (
         AlbumAttributes,
@@ -36,6 +34,16 @@ if TYPE_CHECKING:
         TidalArtwork,
         TidalTrack,
     )
+
+
+class TidalCLIOpts(Protocol):
+    auth: bool
+
+
+class TidalSyncCLIOpts(Protocol):
+    album: bool
+    force: bool
+    write: bool
 
 
 log = getLogger("beets.tidal")
@@ -92,7 +100,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-    def require_authentication(self) -> None:
+    def require_authentication(self, session: ImportSession) -> None:
         if not os.path.isfile(self._tokenfile()):
             raise UserError(
                 "Please login to TIDAL"
@@ -529,7 +537,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
-        self, results: Results[Item], write: bool, force: bool = False
+        self, results: Sequence[Item], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library items."""
         self._sync_popularity(
@@ -543,7 +551,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def sync_album_popularity(
-        self, results: Results[Album], write: bool, force: bool = False
+        self, results: Sequence[Album], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library albums."""
         self._sync_popularity(
@@ -559,7 +567,7 @@ class TidalPlugin(MetadataSourcePlugin):
     def _sync_popularity(
         self,
         *,
-        results: Results[Item] | Results[Album],
+        results: Sequence[LibModel],
         write: bool,
         force: bool,
         id_field: str,
@@ -613,7 +621,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
         def auth_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: TidalCLIOpts, args: list[str]
         ) -> None:
             if opts.auth:
                 self.api.ui_authenticate_flow()
@@ -653,7 +661,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
         def sync_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: TidalSyncCLIOpts, args: list[str]
         ) -> None:
             query = ["data_source:tidal", *args]
 

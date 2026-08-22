@@ -1,10 +1,13 @@
 """Exports data from beets"""
 
+from __future__ import annotations
+
 import codecs
 import csv
 import json
 import sys
 from datetime import date, datetime
+from typing import TYPE_CHECKING, Literal, Protocol, get_args
 from xml.etree import ElementTree
 
 import mediafile
@@ -12,6 +15,20 @@ import mediafile
 from beets import ui, util
 from beets.plugins import BeetsPlugin
 from beetsplug.info import library_data, tag_data
+
+if TYPE_CHECKING:
+    from beets.library import Library
+
+Format = Literal["json", "jsonlines", "csv", "xml"]
+
+
+class ExportCLIOpts(Protocol):
+    library: bool | None
+    album: bool
+    append: bool
+    included_keys: list[str]
+    output: str | None
+    format: Format | None
 
 
 class ExportEncoder(json.JSONEncoder):
@@ -68,17 +85,12 @@ class ExportPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand("export", help="export data from beets")
         cmd.func = self.run
+        cmd.parser.add_album_option()
         cmd.parser.add_option(
             "-l",
             "--library",
             action="store_true",
             help="show library fields instead of tags",
-        )
-        cmd.parser.add_option(
-            "-a",
-            "--album",
-            action="store_true",
-            help='show album fields instead of tracks (implies "--library")',
         )
         cmd.parser.add_option(
             "--append",
@@ -107,10 +119,13 @@ class ExportPlugin(BeetsPlugin):
         )
         return [cmd]
 
-    def run(self, lib, opts, args):
+    def run(self, lib: Library, opts: ExportCLIOpts, args: list[str]) -> None:
         file_path = opts.output
         file_mode = "a" if opts.append else "w"
-        file_format = opts.format or self.config["default_format"].get(str)
+        default_format: Format = self.config["default_format"].as_choice(
+            get_args(Format)
+        )
+        file_format = opts.format or default_format
         file_format_is_line_based = file_format == "jsonlines"
         format_options = self.config[file_format]["formatting"].get(dict)
 
