@@ -2226,6 +2226,32 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
         assert mp3_path.exists()
         assert not dest.exists()
 
+    def test_remux_mpeglayer3_wav_mp3_extension(self):
+        """A MPEGLAYER3 WAV with an `.mp3` extension must not be deleted.
+
+        See #6748.
+        """
+        src = _common.RSRC / "mpeglayer3.wav"
+        dest = self.temp_path / "mpeglayer3.mp3"
+        shutil.copy(syspath(src), syspath(dest))
+
+        mp3_path = remux_mpeglayer3_wav(dest)
+
+        assert mp3_path == dest
+        assert dest.exists()
+
+    def test_remux_mpeglayer3_wav_mp3_extension_uppercase(self):
+        """The same holds when the extension differs only by case."""
+        src = _common.RSRC / "mpeglayer3.wav"
+        dest = self.temp_path / "mpeglayer3.MP3"
+        shutil.copy(syspath(src), syspath(dest))
+
+        mp3_path = remux_mpeglayer3_wav(dest)
+
+        assert dest.exists()
+        assert mp3_path is not None
+        assert mp3_path.exists()
+
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""
         self.config["import"]["remux_mp3_in_wav"] = False
