@@ -12,7 +12,7 @@ from functools import cached_property, partial, total_ordering
 from html import unescape
 from itertools import filterfalse, groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, NamedTuple, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import requests
@@ -71,7 +71,7 @@ class GeniusHTTPError(requests.exceptions.HTTPError):
 # Utilities.
 
 
-def search_pairs(item):
+def search_pairs(item: Item) -> Iterable[tuple[str, list[str]]]:
     """Yield a pairs of artists and titles to search for.
 
     The first item in the pair is the name of the artist, the second
@@ -86,7 +86,9 @@ def search_pairs(item):
     The method also tries to split multiple titles separated with `/`.
     """
 
-    def generate_alternatives(string, patterns):
+    def generate_alternatives(
+        string: str, patterns: Iterable[str]
+    ) -> list[str]:
         """Generate string alternatives by extracting first matching group for
         each given pattern.
         """
@@ -210,13 +212,17 @@ class LyricsRequestHandler(RequestHandler):
         r.encoding = None
         return r.text
 
-    def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
+    def get_json(
+        self, url: str, params: JSONDict | None = None, **kwargs
+    ) -> Any:
         """Return JSON data from the given URL."""
         url = self.format_url(url, params)
         self.debug("Fetching JSON from {}", url)
         return super().get_json(url, **kwargs)
 
-    def post_json(self, url: str, params: JSONDict | None = None, **kwargs):
+    def post_json(
+        self, url: str, params: JSONDict | None = None, **kwargs
+    ) -> Any:
         """Send POST request and return JSON response."""
         url = self.format_url(url, params)
         self.debug("Posting JSON to {}", url)
@@ -648,7 +654,7 @@ class Tekstowo(SearchBackend):
     BASE_URL = "https://www.tekstowo.pl"
     SEARCH_URL = f"{BASE_URL}/szukaj,{{}}.html"
 
-    def build_url(self, artist, title):
+    def build_url(self, artist: str, title: str) -> str:
         artistitle = f"{artist.title()} {title.title()}"
 
         return self.SEARCH_URL.format(quote_plus(unidecode(artistitle)))
@@ -1058,7 +1064,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             return Translator.from_config(self._log, **config.flatten())
         return None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -1101,7 +1107,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("lyrics", help="fetch song lyrics")
         cmd.parser.add_option(
             "-p",

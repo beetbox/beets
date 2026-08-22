@@ -22,11 +22,11 @@ __author__ = "https://github.com/MrNuggelz"
 
 
 class Unimported(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"ignore_extensions": [], "ignore_subdirectories": []})
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         def print_unimported(
             lib: Library, opts: optparse.Values, args: list[str]
         ) -> None:

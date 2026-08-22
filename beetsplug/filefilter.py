@@ -58,7 +58,7 @@ class FileFilterPlugin(BeetsPlugin):
         # If not filtered, return the original task unchanged.
         return [task]
 
-    def file_filter(self, full_path):
+    def file_filter(self, full_path: bytes) -> bool:
         """Checks if the configured regular expressions allow the import
         of the file given in full_path.
         """

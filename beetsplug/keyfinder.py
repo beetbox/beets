@@ -11,19 +11,21 @@ from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Sequence
 
-    from beets.library import Library
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
 
 
 class KeyFinderPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"bin": "KeyFinder", "auto": True, "overwrite": False})
 
         if self.config["auto"].get(bool):
             self.import_stages = [self.imported]
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "keyfinder", help="detect and add initial key from audio"
         )
@@ -35,10 +37,10 @@ class KeyFinderPlugin(BeetsPlugin):
     ) -> None:
         self.find_key(lib.items(args), write=ui.should_write())
 
-    def imported(self, session, task):
+    def imported(self, session: ImportSession, task: ImportTask) -> None:
         self.find_key(task.imported_items())
 
-    def find_key(self, items, write=False):
+    def find_key(self, items: Sequence[Item], write: bool = False) -> None:
         overwrite = self.config["overwrite"].get(bool)
         command = [self.config["bin"].as_str()]
         # The KeyFinder GUI program needs the -f flag before the path.

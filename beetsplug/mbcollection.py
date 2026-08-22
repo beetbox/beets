@@ -170,7 +170,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
         return MBCollection(collection, self.mb_api)
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         mbupdate = Subcommand("mbupdate", help="Update MusicBrainz collection")
         mbupdate.parser.add_option(
             "-r",

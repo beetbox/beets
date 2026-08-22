@@ -12,7 +12,7 @@ from beets.dbcore.query import BLOB_TYPE, InQuery
 from beets.util import path_as_posix
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
     from beets.dbcore.query import FieldQueryType
     from beets.library import Item, Library
@@ -140,7 +140,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             except beets.util.FilesystemError:
                 self._log.error("Failed to update playlist: {}", playlist)
 
-    def find_playlists(self):
+    def find_playlists(self) -> Iterator[str]:
         """Find M3U playlists in the playlist directory."""
         playlist_dir = beets.util.syspath(self.playlist_dir)
         try:
@@ -155,7 +155,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             if is_m3u_file(filename):
                 yield os.path.join(self.playlist_dir, filename)
 
-    def update_playlist(self, filename, base_dir):
+    def update_playlist(self, filename: str, base_dir: bytes) -> None:
         """Find M3U playlists in the specified directory."""
         changes = 0
         deletions = 0
