@@ -43,7 +43,7 @@ class TestListenBrainzPlugin(ConfigMixin):
 
     def test_get_track_info(self, plugin, requests_mock):
         requests_mock.get(
-            "/ws/2/recording/id1?inc=releases%2Bartist-credits",
+            "/ws/2/recording/id1?inc=releases",
             json={
                 "title": "T",
                 "artist-credit": [],

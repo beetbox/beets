@@ -41,7 +41,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     def __init__(self) -> None:
         super().__init__()
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         """Add beet UI commands to interact with Deezer."""
         deezer_update_cmd = ui.Subcommand(
             "deezerupdate", help=f"Update {self.data_source} rank"
@@ -252,7 +252,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         response.raise_for_status()
         return response.json()["data"]
 
-    def deezerupdate(self, items: Sequence[Item], write: bool):
+    def deezerupdate(self, items: Sequence[Item], write: bool) -> None:
         """Obtain rank information from Deezer."""
         for index, item in enumerate(items, start=1):
             self._log.info(
@@ -264,22 +264,22 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 self._log.debug("No deezer_track_id present for: {}", item)
                 continue
             try:
-                rank = self.fetch_data(
-                    f"{self.track_url}{deezer_track_id}"
-                ).get("rank")
-                self._log.debug(
-                    "Deezer track: {} has {} rank", deezer_track_id, rank
-                )
+                track = self.fetch_data(f"{self.track_url}{deezer_track_id}")
             except Exception as e:
                 self._log.debug("Invalid Deezer track_id: {}", e)
                 continue
-            item.deezer_track_rank = int(rank)
-            item.store()
-            item.deezer_updated = time.time()
-            if write:
-                item.try_write()
+            else:
+                if track and (rank := track.get("rank") is not None):
+                    self._log.debug(
+                        "Deezer track: {} has {} rank", deezer_track_id, rank
+                    )
+                    item.deezer_track_rank = int(rank)
+                    item.store()
+                    item.deezer_updated = time.time()
+                    if write:
+                        item.try_write()
 
-    def fetch_data(self, url: str):
+    def fetch_data(self, url: str) -> JSONDict | None:
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()

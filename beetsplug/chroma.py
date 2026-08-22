@@ -8,7 +8,7 @@ import heapq
 import re
 from collections import defaultdict
 from functools import cached_property, partial
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import acoustid
 import confuse
@@ -21,13 +21,15 @@ from beets.util.color import colorize
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterable, Iterator, Sequence
 
-    from beets.autotag import TrackInfo
+    from beets.autotag import AlbumInfo, TrackInfo
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Library
-    from beets.library.models import Item
+    from beets.library import Item, Library
+    from beets.logging import BeetsLogger as Logger
     from beetsplug.musicbrainz import MusicBrainzPlugin
+
+    from ._typing import JSONDict
 
 
 class ChromaSearchCLIOpts(Protocol):
@@ -58,7 +60,7 @@ _fingerprints: dict[bytes, str] = {}
 _acoustids: dict[bytes, str] = {}
 
 
-def prefix(it, count):
+def prefix(it: Iterable[Any], count: int) -> Iterator[Any]:
     """Truncate an iterable to at most `count` items."""
     for i, v in enumerate(it):
         if i >= count:
@@ -66,7 +68,9 @@ def prefix(it, count):
         yield v
 
 
-def releases_key(release, countries, original_year):
+def releases_key(
+    release: JSONDict, countries: Sequence[re.Pattern[str]], original_year: str
+) -> tuple[int, int, int, int]:
     """Used as a key to sort releases by date then preferred country"""
     date = release.get("date")
     if date and original_year:
@@ -89,7 +93,7 @@ def releases_key(release, countries, original_year):
     return (year, month, day, country_key)
 
 
-def acoustid_match(log, path):
+def acoustid_match(log: Logger, path: bytes) -> None:
     """Gets metadata for a file from Acoustid and populates the
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
@@ -144,7 +148,7 @@ def acoustid_match(log, path):
     # 'countries' to then sort preferred countries first.
     country_patterns = config["match"]["preferred"]["countries"].as_str_seq()
     countries = [re.compile(pat, re.I) for pat in country_patterns]
-    original_year = config["match"]["preferred"]["original_year"]
+    original_year = config["match"]["preferred"]["original_year"].as_str()
     releases.sort(
         key=partial(
             releases_key, countries=countries, original_year=original_year
@@ -161,12 +165,12 @@ def acoustid_match(log, path):
 # Plugin structure and autotagging logic.
 
 
-def _all_releases(items):
+def _all_releases(items: Sequence[Item]) -> Iterator[str]:
     """Given an iterable of Items, determines (according to Acoustid)
     which releases the items have in common. Generates release IDs.
     """
     # Count the number of "hits" for each release.
-    relcounts = defaultdict(int)
+    relcounts = defaultdict[str, int](int)
     for item in items:
         if item.path not in _matches:
             continue
@@ -216,7 +220,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
     ) -> None:
         return fingerprint_task(self._log, task, session)
 
-    def track_distance(self, item, info):
+    def track_distance(self, item: Item, info: TrackInfo) -> Distance:
         dist = Distance()
         if item.path not in _matches or not info.track_id:
             # Match failed or no track ID.
@@ -226,20 +230,24 @@ class AcoustidPlugin(MetadataSourcePlugin):
         dist.add_expr("track_id", info.track_id not in recording_ids)
         return dist
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
+    ) -> list[AlbumInfo]:
         if self.mb is None:
             return []
 
-        albums = []
-        for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = self.mb.album_for_id(relid)
-            if album:
-                albums.append(album)
+        albums = [
+            a
+            for relid in prefix(_all_releases(items), MAX_RELEASES)
+            if (a := self.mb.album_for_id(relid))
+        ]
 
         self._log.debug("acoustid album candidates: {}", len(albums))
         return albums
 
-    def item_candidates(self, item, artist, title) -> Iterable[TrackInfo]:
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
         if item.path not in _matches:
             return []
 
@@ -255,15 +263,15 @@ class AcoustidPlugin(MetadataSourcePlugin):
         self._log.debug("acoustid item candidates: {}", len(tracks))
         return tracks
 
-    def album_for_id(self, *args, **kwargs):
+    def album_for_id(self, *args, **kwargs) -> None:
         # Lookup by fingerprint ID does not make too much sense.
         return None
 
-    def track_for_id(self, *args, **kwargs):
+    def track_for_id(self, *args, **kwargs) -> None:
         # Lookup by fingerprint ID does not make too much sense.
         return None
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         submit_cmd = ui.Subcommand(
             "submit", help="submit Acoustid fingerprints"
         )
@@ -293,7 +301,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
         return [submit_cmd, fingerprint_cmd, self.chromasearch_cmd()]
 
-    def chromasearch_cmd(self):
+    def chromasearch_cmd(self) -> ui.Subcommand:
         cmd = ui.Subcommand(
             "chromasearch", help="search local database by chroma fingerprint"
         )
@@ -375,7 +383,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
 # Hooks into import process.
 
 
-def fingerprint_task(log, task: ImportTask, session: ImportSession) -> None:
+def fingerprint_task(
+    log: Logger, task: ImportTask, session: ImportSession
+) -> None:
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
@@ -395,11 +405,14 @@ def apply_acoustid_metadata(task: ImportTask, session: ImportSession) -> None:
 # UI commands.
 
 
-def submit_items(log, userkey, items, chunksize=64):
+def submit_items(
+    log: Logger, userkey: str, items: Sequence[Item], chunksize: int = 64
+) -> None:
     """Submit fingerprints for the items to the Acoustid server."""
-    data = []  # The running list of dictionaries to submit.
+    # The running list of dictionaries to submit.
+    data: list[JSONDict] = []
 
-    def submit_chunk():
+    def submit_chunk() -> None:
         """Submit the current accumulated fingerprint data."""
         log.info("submitting {} fingerprints", len(data))
         try:
@@ -440,7 +453,9 @@ def submit_items(log, userkey, items, chunksize=64):
         submit_chunk()
 
 
-def fingerprint_item(log, item, write=False, quiet=False):
+def fingerprint_item(
+    log: Logger, item: Item, write: bool = False, quiet: bool = False
+) -> str | None:
     """Get the fingerprint for an Item. If the item already has a
     fingerprint, it is not regenerated. If fingerprint generation fails,
     return None. If the items are associated with a library, they are
@@ -481,13 +496,13 @@ class ScoredItem:
         self.item = item
         self.score = score
 
-    def __lt__(self, other):
-        return self.score < other.score
+    def __lt__(self, other: object) -> bool:
+        return type(self) is type(other) and self.score < other.score
 
-    def __gt__(self, other):
-        return self.score > other.score
+    def __gt__(self, other: object) -> bool:
+        return type(self) is type(other) and self.score > other.score
 
-    def __str__(self):
+    def __str__(self) -> str:
         percent = f"{round(self.score * 100, 2)}%".rjust(6)
         if self.score >= 0.95:
             percent = colorize("text_success", percent)
@@ -504,7 +519,7 @@ class TopN:
         self.n = n
         self.heap: list[ScoredItem] = []
 
-    def add(self, value: ScoredItem):
+    def add(self, value: ScoredItem) -> None:
         if len(self.heap) < self.n:
             heapq.heappush(self.heap, value)
         else:
