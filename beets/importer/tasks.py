@@ -279,6 +279,7 @@ class ImportTask(BaseImportTask):
             Action.TRACKS,
             Action.ALBUMS,
             Action.RETAG,
+            Action.RESCAN,
         ):
             # TODO: redesign to stricten the type
             self.choice_flag = choice  # type: ignore[assignment]

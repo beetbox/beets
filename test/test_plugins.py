@@ -271,7 +271,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             def return_choices(self, session, task):
                 return [
                     PromptChoice("f", "Foo", None),
-                    PromptChoice("r", "baR", None),
+                    PromptChoice("z", "baR", None),
                 ]
 
         self.register_plugin(DummyPlugin)
@@ -283,6 +283,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -360,6 +361,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -396,6 +398,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -440,6 +443,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
