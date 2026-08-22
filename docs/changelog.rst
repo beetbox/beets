@@ -73,6 +73,13 @@ Bug fixes
   text and the filters are empty. :bug:`6862`
 - :doc:`plugins/ipfs`: Fix ``beet ipfs --play`` option to invoke the Play plugin
   through its command interface.
+- :doc:`plugins/lyrics`: LRCLib entries that carry no lyrics text at all, with
+  both ``plainLyrics`` and ``syncedLyrics`` null while ``instrumental`` is
+  ``False``, are no longer considered matches. Previously such an entry was
+  accepted and its null text propagated, raising ``AttributeError: 'NoneType'
+  object has no attribute 'splitlines'``. During an import this aborted the
+  whole run rather than a single track. A null ``plainLyrics`` now also falls
+  back to the synced lyrics instead of discarding them.
 
 ..
     For plugin developers
