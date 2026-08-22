@@ -2,22 +2,24 @@
 
 from __future__ import annotations
 
+from functools import singledispatch
 from typing import TYPE_CHECKING, Protocol
 
 from beets import ui
+from beets.library import Album, Item
 
 from .utils import do_query
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.library import Album, Item, Library
+    from beets.library import LibModel, Library
 
 
 class RemoveCLIOpts(Protocol):
     album: bool
-    delete: bool | None
-    force: bool | None
+    delete: bool
+    force: bool
 
 
 def remove_items(
@@ -55,16 +57,19 @@ def remove_items(
                 " from the library?"
             )
 
-        # Helpers for printing affected items
-        def fmt_track(t: Item):
+        @singledispatch
+        def fmt_obj(obj: LibModel) -> None:
+            raise NotImplementedError
+
+        @fmt_obj.register
+        def _item(t: Item) -> None:
             ui.print_(format(t, fmt))
 
-        def fmt_album(a: Album) -> None:
+        @fmt_obj.register
+        def _album(a: Album) -> None:
             ui.print_()
             for i in a.items():
-                fmt_track(i)
-
-        fmt_obj = fmt_album if album else fmt_track
+                fmt_obj(i)
 
         # Show all the items.
         for o in objs:
@@ -92,10 +97,18 @@ remove_cmd = ui.Subcommand(
     "remove", help="remove matching items from the library", aliases=("rm",)
 )
 remove_cmd.parser.add_option(
-    "-d", "--delete", action="store_true", help="also remove files from disk"
+    "-d",
+    "--delete",
+    action="store_true",
+    default=False,
+    help="also remove files from disk",
 )
 remove_cmd.parser.add_option(
-    "-f", "--force", action="store_true", help="do not ask when removing items"
+    "-f",
+    "--force",
+    action="store_true",
+    default=False,
+    help="do not ask when removing items",
 )
 remove_cmd.parser.add_album_option()
 remove_cmd.func = remove_func

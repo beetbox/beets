@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
     import pytest
 
+    from beets.dbcore import Query
     from beets.library import Item, Library
 
 # Test resources path.
@@ -81,10 +82,10 @@ def item(lib: Library | None = None, **kwargs) -> Item:
 
 # Dummy import session.
 def import_session(
-    lib: Library | None = None,
+    lib: Library,
     loghandler: logging.Handler | None = None,
-    paths: Sequence[bytes] = [],
-    query: Sequence[str] = [],
+    paths: Sequence[bytes] | None = None,
+    query: str | Sequence[str] | Query | None = None,
     cli: bool = False,
 ) -> importer.ImportSession:
     cls = (

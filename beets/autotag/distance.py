@@ -214,16 +214,25 @@ class Distance:
     # Behave like a float.
 
     def __lt__(self, other: object) -> bool:
-        return self.distance < other
+        if isinstance(other, (int, float, Distance)):
+            return self.distance < other
+
+        return NotImplemented
 
     def __float__(self) -> float:
         return self.distance
 
     def __sub__(self, other: object) -> float:
-        return self.distance - other
+        if isinstance(other, (int, float, Distance)):
+            return self.distance - other
+
+        return NotImplemented
 
     def __rsub__(self, other: object) -> float:
-        return other - self.distance
+        if isinstance(other, (int, float, Distance)):
+            return other - self.distance
+
+        return NotImplemented
 
     def __str__(self) -> str:
         return f"{self.distance:.2f}"
