@@ -653,7 +653,7 @@ class Model(ABC, Generic[D]):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: D | None = None):
+    def add(self, db: D | None = None) -> None:
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -681,7 +681,7 @@ class Model(ABC, Generic[D]):
 
     def formatted(
         self,
-        included_keys: str = FormattedMapping.ALL_KEYS,
+        included_keys: str | list[str] = FormattedMapping.ALL_KEYS,
         for_path: bool = False,
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted

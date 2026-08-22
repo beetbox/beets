@@ -10,6 +10,8 @@ from beets.util import syspath
 from beets.util.units import human_bytes, human_seconds
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
 
 
@@ -21,7 +23,7 @@ class StatsCLIOpts(Protocol):
     exact: bool
 
 
-def show_stats(lib, query, exact):
+def show_stats(lib: Library, query: Sequence[str], exact: bool) -> None:
     """Shows some statistics about the matched items."""
     items = lib.items(query)
 

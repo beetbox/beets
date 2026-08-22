@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         Iterable,
         Iterator,
         Sequence,
+        Sized,
     )
     from types import TracebackType
 
@@ -62,7 +63,7 @@ def _invalidate_queue(
     required (because it's not reentrant!).
     """
 
-    def _qsize(len=len):  # noqa: A002
+    def _qsize(len: Callable[[Sized], int] = len) -> int:  # noqa: A002
         return 1
 
     def _put(item: Any) -> None:
@@ -181,7 +182,7 @@ def stage(
     """Decorate a function to become a simple stage.
 
     >>> @stage
-    ... def add(n, i):
+    ... def add(n: int, i: int):
     ...     return i + n
     >>> pipe = Pipeline([
     ...     iter([1, 2, 3]),

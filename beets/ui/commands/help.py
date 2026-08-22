@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class HelpCommand(ui.Subcommand):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             "help",
             aliases=("?",),
@@ -24,6 +24,7 @@ class HelpCommand(ui.Subcommand):
     def func(
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
+        assert isinstance(self.root_parser, ui.SubcommandsOptionParser)
         if args:
             cmdname = args[0]
             helpcommand = self.root_parser._subcommand_for_name(cmdname)
