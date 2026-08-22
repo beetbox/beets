@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import shlex
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
@@ -19,9 +19,9 @@ from beets.util import (
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Sequence
+    from collections.abc import Iterator, Sequence
 
-    from beets.library import LibModel, Library
+    from beets.library import AlbumOrItem, LibModel, Library
 
 
 PLUGIN = "duplicates"
@@ -30,7 +30,7 @@ PLUGIN = "duplicates"
 class DuplicatesPlugin(BeetsPlugin):
     """List duplicate tracks or albums"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -137,7 +137,7 @@ class DuplicatesPlugin(BeetsPlugin):
         )
         self._command.parser.add_all_common_options()
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         def _dup(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
             album = self.config["album"].get(bool)
@@ -213,14 +213,15 @@ class DuplicatesPlugin(BeetsPlugin):
 
     def _process_item(
         self,
-        item,
-        copy=False,
-        move=False,
-        delete=False,
-        tag=False,
-        fmt="",
-        remove=False,
-    ):
+        item: Item,
+        *,
+        copy: bool,
+        move: bytes,
+        delete: bool,
+        tag: str,
+        fmt: str,
+        remove: bool,
+    ) -> None:
         """Process Item `item`."""
         print_(format(item, fmt))
         if copy:
@@ -241,7 +242,7 @@ class DuplicatesPlugin(BeetsPlugin):
             setattr(item, k, v)
             item.store()
 
-    def _checksum(self, item, prog):
+    def _checksum(self, item: Item, prog: str) -> tuple[str, Any]:
         """Run external `prog` on file path associated with `item`, cache
         output as flexattr on a key that is the name of the program, and
         return the key, checksum tuple.
@@ -274,7 +275,9 @@ class DuplicatesPlugin(BeetsPlugin):
             )
         return key, checksum
 
-    def _group_by(self, objs, keys, strict):
+    def _group_by(
+        self, objs: Sequence[AlbumOrItem], keys: Sequence[str], strict: bool
+    ) -> dict[tuple[Any, ...], list[LibModel]]:
         """Return a dictionary with keys arbitrary concatenations of attributes
         and values lists of objects (Albums or Items) with those keys.
 
@@ -304,7 +307,11 @@ class DuplicatesPlugin(BeetsPlugin):
 
         return counts
 
-    def _order(self, objs, tiebreak=None):
+    def _order(
+        self,
+        objs: Sequence[AlbumOrItem],
+        tiebreak: dict[str, list[str]] | None = None,
+    ) -> list[LibModel]:
         """Return the objects (Items or Albums) sorted by descending
         order of priority.
 
@@ -317,12 +324,12 @@ class DuplicatesPlugin(BeetsPlugin):
 
         if tiebreak and kind in tiebreak.keys():
 
-            def key(x):
+            def key(x: AlbumOrItem) -> tuple[Any, ...]:
                 return tuple(getattr(x, k) for k in tiebreak[kind])
         else:
             if kind == "items":
 
-                def truthy(v):
+                def truthy(v: object) -> bool:
                     # Avoid a Unicode warning by avoiding comparison
                     # between a bytes object and the empty Unicode
                     # string ''.
@@ -332,16 +339,16 @@ class DuplicatesPlugin(BeetsPlugin):
 
                 fields = Item.all_keys()
 
-                def key(x):
+                def key(x: AlbumOrItem) -> int:
                     return sum(1 for f in fields if truthy(getattr(x, f)))
             else:
 
-                def key(x):
+                def key(x: AlbumOrItem) -> int:
                     return len(x.items())
 
         return sorted(objs, key=key, reverse=True)
 
-    def _merge_items(self, objs):
+    def _merge_items(self, objs: Sequence[AlbumOrItem]) -> Sequence[Item]:
         """Merge Item objs by copying missing fields from items in the tail to
         the head item.
 
@@ -365,7 +372,7 @@ class DuplicatesPlugin(BeetsPlugin):
                         break
         return objs
 
-    def _merge_albums(self, objs):
+    def _merge_albums(self, objs: Sequence[Album]) -> Sequence[Album]:
         """Merge Album objs by copying missing items from albums in the tail
         to the head album.
 
@@ -388,7 +395,7 @@ class DuplicatesPlugin(BeetsPlugin):
                     missing.move(operation=MoveOperation.COPY)
         return objs
 
-    def _merge(self, objs):
+    def _merge(self, objs: Sequence[AlbumOrItem]) -> Sequence[LibModel]:
         """Merge duplicate items. See ``_merge_items`` and ``_merge_albums``
         for the relevant strategies.
         """
@@ -399,7 +406,15 @@ class DuplicatesPlugin(BeetsPlugin):
             objs = self._merge_albums(objs)
         return objs
 
-    def _duplicates(self, objs, keys, full, strict, tiebreak, merge):
+    def _duplicates(
+        self,
+        objs: Sequence[AlbumOrItem],
+        keys: Sequence[str],
+        full: bool,
+        strict: bool,
+        tiebreak: dict[str, list[str]] | None,
+        merge: bool,
+    ) -> Iterator[tuple[tuple[Any, ...], int, Sequence[LibModel]]]:
         """Generate triples of keys, duplicate counts, and constituent objects."""
         offset = 0 if full else 1
         for k, objs in self._group_by(objs, keys, strict).items():
