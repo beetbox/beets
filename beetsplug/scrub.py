@@ -4,7 +4,7 @@ automatically whenever tags are written.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import mediafile
 import mutagen
@@ -14,6 +14,11 @@ from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
+
+
+class ScrubCLIOpts(Protocol):
+    write: bool
 
 
 _MUTAGEN_FORMATS = {
@@ -46,7 +51,9 @@ class ScrubPlugin(BeetsPlugin):
             self.register_listener("import_task_files", self.import_task_files)
 
     def commands(self):
-        def scrub_func(lib, opts, args):
+        def scrub_func(
+            lib: Library, opts: ScrubCLIOpts, args: list[str]
+        ) -> None:
             # Walk through matching files and remove tags.
             for item in lib.items(args):
                 self._log.info("scrubbing: {.filepath}", item)

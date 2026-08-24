@@ -8,7 +8,7 @@ import shlex
 import subprocess
 from collections import Counter
 from tempfile import NamedTemporaryFile
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import yaml
 
@@ -22,6 +22,7 @@ from beets.util import PromptChoice
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Library
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -37,6 +38,12 @@ SAFE_TYPES = (
 # part of either model's fixed schema, so they can't be told apart by name
 # alone and are left for the user to configure correctly.
 ITEM_ONLY_FIELDS = Item._field_names - Album._field_names
+
+
+class EditCLIOpts(Protocol):
+    album: bool
+    all: bool | None
+    field: list[str] | None
 
 
 class ParseError(Exception):
@@ -174,7 +181,9 @@ class EditPlugin(plugins.BeetsPlugin):
         edit_command.func = self._edit_command
         return [edit_command]
 
-    def _edit_command(self, lib, opts, args):
+    def _edit_command(
+        self, lib: Library, opts: EditCLIOpts, args: list[str]
+    ) -> None:
         """The CLI command function for the `beet edit` command."""
         # Get the objects to edit.
         items, albums = do_query(lib, args, opts.album, False)

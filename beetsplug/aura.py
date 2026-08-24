@@ -6,7 +6,7 @@ import os
 import re
 from dataclasses import dataclass
 from mimetypes import guess_type
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 from flask import (
     Blueprint,
@@ -31,6 +31,11 @@ if TYPE_CHECKING:
 
     from beets.dbcore.query import SQLiteType
     from beets.library import LibModel, Library
+
+
+class AuraCLIOpts(Protocol):
+    debug: bool
+
 
 # Constants
 
@@ -931,7 +936,7 @@ class AURAPlugin(BeetsPlugin):
     def commands(self):
         """Add subcommand used to run the AURA server."""
 
-        def run_aura(lib, opts, args):
+        def run_aura(lib: Library, opts: AuraCLIOpts, args: list[str]) -> None:
             """Run the application using Flask's built in-server.
 
             Args:

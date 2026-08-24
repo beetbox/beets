@@ -9,9 +9,11 @@ from typing import TYPE_CHECKING
 from beets import config, plugins, ui
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.autotag import AlbumInfo, Info, TrackInfo
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Album, Item
+    from beets.library import Album, Item, Library
 
 DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
     "abridged",
@@ -256,7 +258,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         )
 
     def commands(self) -> list[ui.Subcommand]:
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
             write = ui.should_write()
 

@@ -16,6 +16,7 @@ from beets.ui import Subcommand, print_
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Iterator
 
     from beets.library import Library
@@ -151,7 +152,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         self._command.parser.add_format_option()
 
     def commands(self):
-        def _miss(lib, opts, args):
+        def _miss(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
             albms = self.config["album"].get()
 

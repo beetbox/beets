@@ -1,6 +1,9 @@
 """The `update` command: Update library contents according to on-disk tags."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
 from beets.util import ancestry, syspath
@@ -8,8 +11,20 @@ from beets.util.color import colorize
 
 from .utils import do_query
 
+if TYPE_CHECKING:
+    from beets.library import Library
+
+
 # Global logger.
 log = logging.getLogger("beets")
+
+
+class UpdateCLIOpts(Protocol):
+    album: bool
+    exclude_fields: list[str] | None
+    fields: list[str] | None
+    move: bool | None
+    pretend: bool | None
 
 
 def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
@@ -38,10 +53,14 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             item_fields = fields
         # get all the album fields to update
         album_fields = fields or library.Album._fields.keys()
-        if exclude_fields:
+        if exclude_fields_set := set(exclude_fields or []):
             # remove any excluded fields from the item and album sets
-            item_fields = [f for f in item_fields if f not in exclude_fields]
-            album_fields = [f for f in album_fields if f not in exclude_fields]
+            item_fields = [
+                f for f in item_fields if f not in exclude_fields_set
+            ]
+            album_fields = [
+                f for f in album_fields if f not in exclude_fields_set
+            ]
 
         # Walk through the items and pick up their changes.
         affected_albums = set()
@@ -73,8 +92,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
             # Special-case album artist when it matches track artist. (Hacky
             # but necessary for preserving album-level metadata for non-
             # autotagged imports.)
-            if not item.albumartist:
-                old_item = lib.get_item(item.id)
+            if not item.albumartist and (old_item := lib.get_item(item.id)):
                 if old_item.albumartist == old_item.artist == item.artist:
                     item.albumartist = old_item.albumartist
                     item._dirty.discard("albumartist")
@@ -130,11 +148,11 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                 album.store(fields=album_fields)
 
 
-def update_func(lib, opts, args):
+def update_func(lib: Library, opts: UpdateCLIOpts, args: list[str]) -> None:
     # Verify that the library folder exists to prevent accidental wipes.
     if not os.path.isdir(syspath(lib.directory)):
         ui.print_("Library path is unavailable or does not exist.")
-        ui.print_(lib.directory)
+        ui.print_(os.fsdecode(lib.directory))
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
     update_items(

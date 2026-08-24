@@ -468,7 +468,10 @@ class CommonOptionsParser(optparse.OptionParser):
         Sets the album property on the options extracted from the CLI.
         """
         album = optparse.Option(
-            *flags, action="store_true", help="match albums instead of tracks"
+            *flags,
+            action="store_true",
+            default=False,
+            help="match albums instead of tracks",
         )
         self.add_option(album)
         self._album_flags = set(flags)
@@ -581,7 +584,7 @@ class Subcommand:
     invoked by a SubcommandOptionParser.
     """
 
-    func: Callable[[library.Library, optparse.Values, list[str]], Any]
+    func: Callable[[library.Library, Any, list[str]], Any]
 
     def __init__(self, name, parser=None, help="", aliases=(), hide=False):  # noqa: A002
         """Creates a new subcommand. name is the primary way to invoke
