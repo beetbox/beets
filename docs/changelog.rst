@@ -80,10 +80,21 @@ Bug fixes
   select mode. :bug:`4880`
 - :ref:`move-cmd`: Fix moving albums in interactive select/timid mode.
   :bug:`2802`
+- ``beet modify --write`` no longer re-saves a file that already holds the tags
+  being written, so changing a field only the database keeps, such as
+  ``data_source``, no longer gives the file a new modification time. Files
+  written with the ``id3v23`` option are still saved every time, and so are
+  files whose tags have yet to be converted to the default ID3v2.4, since saving
+  is what converts them. :bug:`6529`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``Item.write()`` no longer saves the item's own file, and no longer sends the
+  ``after_write`` event, when the file already holds the tags being written. A
+  file whose tags still need converting between ID3 versions is saved either
+  way. Pass ``force=True`` (or ``Item.try_sync(..., force_write=True)``) to save
+  it regardless.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -188,21 +199,10 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
-- ``beet modify --write`` no longer re-saves a file that already holds the tags
-  being written, so changing a field only the database keeps, such as
-  ``data_source``, no longer gives the file a new modification time. Files
-  written with the ``id3v23`` option are still saved every time, and so are
-  files whose tags have yet to be converted to the default ID3v2.4, since saving
-  is what converts them. :bug:`6529`
 
-For plugin developers
-~~~~~~~~~~~~~~~~~~~~~
-
-- ``Item.write()`` no longer saves the item's own file, and no longer sends the
-  ``after_write`` event, when the file already holds the tags being written. A
-  file whose tags still need converting between ID3 versions is saved either
-  way. Pass ``force=True`` (or ``Item.try_sync(..., force_write=True)``) to save
-  it regardless.
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
 
 Other changes
 ~~~~~~~~~~~~~
