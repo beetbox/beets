@@ -17,7 +17,12 @@ from beets.ui import commands
 from beets.util import syspath
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
     import pytest
+
+    from beets.dbcore import Query
+    from beets.library import Item, Library
 
 # Test resources path.
 RSRC = (Path(__file__).parent.parent.parent / "test" / "rsrc").resolve()
@@ -33,7 +38,7 @@ HAVE_SYMLINK = sys.platform != "win32"
 HAVE_HARDLINK = sys.platform != "win32"
 
 
-def item(lib=None, **kwargs):
+def item(lib: Library | None = None, **kwargs) -> Item:
     defaults = dict(
         title="the title",
         artist="the artist",
@@ -76,7 +81,13 @@ def item(lib=None, **kwargs):
 
 
 # Dummy import session.
-def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
+def import_session(
+    lib: Library,
+    loghandler: logging.Handler | None = None,
+    paths: Sequence[bytes] | None = None,
+    query: str | Sequence[str] | Query | None = None,
+    cli: bool = False,
+) -> importer.ImportSession:
     cls = (
         commands.import_.session.TerminalImportSession
         if cli
@@ -142,7 +153,7 @@ class DummyIO:
 # Utility.
 
 
-def touch(path):
+def touch(path: bytes) -> None:
     open(syspath(path), "a").close()
 
 
@@ -150,7 +161,7 @@ def touch(path):
 
 
 @contextmanager
-def platform_windows():
+def platform_windows() -> Iterator[None]:
     import ntpath
 
     old_path = os.path
@@ -162,7 +173,7 @@ def platform_windows():
 
 
 @contextmanager
-def platform_posix():
+def platform_posix() -> Iterator[None]:
     import posixpath
 
     old_path = os.path
@@ -174,7 +185,7 @@ def platform_posix():
 
 
 @contextmanager
-def system_mock(name):
+def system_mock(name: str) -> Iterator[None]:
     import platform
 
     old_system = platform.system

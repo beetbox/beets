@@ -400,6 +400,7 @@ def choose_candidate(
     choice_actions = {c.short: c for c in choices}
 
     # Zero candidates.
+    sel: str | int
     if not candidates:
         if source.type == "track":
             ui.print_("No matching recordings found.")
@@ -460,16 +461,16 @@ def choose_candidate(
 
             # Ask the user for a choice.
             sel = ui.input_options(choice_opts, numrange=(1, len(candidates)))
-            if sel == "m":
-                pass
-            elif sel in choice_actions:
-                return choice_actions[sel]
-            else:  # Numerical selection.
+            if isinstance(sel, int):  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
                     # When choosing anything but the first match,
                     # disable the default action.
                     require = True
+            elif sel == "m":
+                pass
+            elif sel in choice_actions:
+                return choice_actions[sel]
         bypass_candidates = False
 
         # Show what we're about to do.

@@ -72,7 +72,7 @@ AUDIO_EXTENSIONS = {
 }
 
 
-def fix_extension(path_bytes: PathBytes, logger: Logger | None = None):
+def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
     """Return the `path` after adding an appropriate extension if needed.
 
     If the file already has an extension, return as-is.
@@ -134,13 +134,13 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None):
     new_path = path.with_suffix("." + detected_format)
     if not new_path.exists():
         if beets.config["import"]["fix_ext_inplace"]:
-            util.move(bytes(path), bytes(new_path))
+            util.move(path, new_path)
         else:
-            util.copy(bytes(path), bytes(new_path))
+            util.copy(path, new_path)
     else:
         if logger:
             logger.info("Import file with matching format to original target")
-    return new_path
+    return os.fsencode(new_path)
 
 
 def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:
