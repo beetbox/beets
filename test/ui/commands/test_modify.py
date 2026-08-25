@@ -267,7 +267,7 @@ class TestWriteTags(ModifyHelper, TestHelper):
         [item] = album.items()
         item.write()
         item.store()
-        os.utime(syspath(item.path), (1000000000, 1000000000))
+        os.utime(item.filepath, (1000000000, 1000000000))
         return item
 
     def test_keep_file_when_only_database_field_changes(self, item):
