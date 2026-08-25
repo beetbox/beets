@@ -1266,13 +1266,13 @@ class TestWrite(TestHelper):
         # A write to a path other than the item's own file always saves.
         item = self.add_item_fixture()
         item.write()
-        custom_path = os.path.join(self.temp_dir, b"custom.mp3")
-        shutil.copy(syspath(item.path), syspath(custom_path))
-        os.utime(syspath(custom_path), (1000000000, 1000000000))
+        custom_path = self.temp_path / "custom.mp3"
+        shutil.copy(item.filepath, custom_path)
+        os.utime(custom_path, (1000000000, 1000000000))
 
         item.write(custom_path)
 
-        assert os.path.getmtime(syspath(custom_path)) != 1000000000
+        assert os.path.getmtime(custom_path) != 1000000000
 
     def test_write_custom_tags(self):
         item = self.add_item_fixture(artist="old artist")
@@ -1312,7 +1312,7 @@ class TestWrite(TestHelper):
         # back from it never equals the one stored in the database.
         item.rg_track_peak = 10 ** (-1.2 / 20)
         item.write()
-        os.utime(syspath(item.path), (1000000000, 1000000000))
+        os.utime(item.filepath, (1000000000, 1000000000))
 
         item.write()
 
@@ -1323,21 +1323,21 @@ class TestWrite(TestHelper):
         # ID3v2.4, so a v2.3 file is saved even when it holds the tags.
         item = self.add_item_fixture(format="MP3")
         item.write()
-        mediafile = mutagen.File(syspath(item.path))
+        mediafile = mutagen.File(item.filepath)
         mediafile.tags.update_to_v23()
         mediafile.save(v2_version=3)
         item.read()
 
         item.write()
 
-        assert mutagen.File(syspath(item.path)).tags.version >= (2, 4, 0)
+        assert mutagen.File(item.filepath).tags.version >= (2, 4, 0)
 
     def test_id3v23_write_saves_file_with_the_tags(self):
         # Converting the tags to ID3v2.3 also happens when the file is saved,
         # so a write with the option enabled never skips the save.
         item = self.add_item_fixture(format="MP3")
         item.write()
-        os.utime(syspath(item.path), (1000000000, 1000000000))
+        os.utime(item.filepath, (1000000000, 1000000000))
 
         item.write(id3v23=True)
 
@@ -1348,16 +1348,16 @@ class TestWrite(TestHelper):
         # the file no longer holds the tags once it is gone.
         item = self.add_item_fixture(format="FLAC")
         item.write()
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         mediafile.artists = ["the artist", "", "another artist"]
         mediafile.save()
         item.artists = ["the artist", "another artist"]
-        os.utime(syspath(item.path), (1000000000, 1000000000))
+        os.utime(item.filepath, (1000000000, 1000000000))
 
         item.write()
 
         assert item.current_mtime() != 1000000000
-        assert MediaFile(syspath(item.path)).artists == [
+        assert MediaFile(item.filepath).artists == [
             "the artist",
             "another artist",
         ]
@@ -1367,24 +1367,24 @@ class TestWrite(TestHelper):
         # removing it is a change to save.
         item = self.add_item_fixture(format="FLAC")
         item.write()
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         mediafile.artists = [""]
         mediafile.save()
-        os.utime(syspath(item.path), (1000000000, 1000000000))
+        os.utime(item.filepath, (1000000000, 1000000000))
 
         item.write()
 
         assert item.current_mtime() != 1000000000
-        assert MediaFile(syspath(item.path)).artists is None
+        assert MediaFile(item.filepath).artists is None
 
     def test_write_image_tag_always_saves(self):
         # Images are never compared, so a write that carries one saves even
         # when the file already embeds the same image.
         item = self.add_item_fixture(format="MP3")
-        with open(os.path.join(_common.RSRC, b"image-2x3.jpg"), "rb") as f:
+        with open(_common.RSRC / "image-2x3.jpg", "rb") as f:
             image = Image(f.read())
         item.write(tags={"images": [image]})
-        os.utime(syspath(item.path), (1000000000, 1000000000))
+        os.utime(item.filepath, (1000000000, 1000000000))
 
         item.write(tags={"images": [image]})
 
@@ -1399,7 +1399,7 @@ class TestWrite(TestHelper):
         real_init = MediaFile.__init__
 
         def racy_init(mediafile, *args, **kwargs):
-            os.utime(syspath(item.path), (mtime + 100, mtime + 100))
+            os.utime(item.filepath, (mtime + 100, mtime + 100))
             real_init(mediafile, *args, **kwargs)
 
         with patch.object(MediaFile, "__init__", racy_init):
@@ -1410,9 +1410,9 @@ class TestWrite(TestHelper):
     def test_write_file_with_an_unreadable_image(self):
         # Only the fields being written are compared, so an image beets
         # cannot read does not stop the write.
-        path = os.path.join(self.temp_dir, b"unreadable_image.ogg")
-        shutil.copy(os.path.join(_common.RSRC, b"full.ogg"), path)
-        mediafile = mutagen.File(syspath(path))
+        path = self.temp_path / "unreadable_image.ogg"
+        shutil.copy(_common.RSRC / "full.ogg", path)
+        mediafile = mutagen.File(path)
         mediafile["metadata_block_picture"] = ["not base64"]
         mediafile.save()
         item = beets.library.Item.from_path(path)
@@ -1420,7 +1420,7 @@ class TestWrite(TestHelper):
 
         item.write()
 
-        assert MediaFile(syspath(path)).title == "another title"
+        assert MediaFile(path).title == "another title"
 
 
 class TestItemRead(PytestItemHelper):
