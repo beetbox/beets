@@ -14,7 +14,7 @@ def raw_seconds_short(string: str) -> float:
     return float(minutes * 60 + seconds)
 
 
-def human_seconds_short(interval):
+def human_seconds_short(interval: float) -> str:
     """Formats a number of seconds as a short human-readable M:SS
     string.
     """
@@ -22,7 +22,7 @@ def human_seconds_short(interval):
     return f"{interval // 60}:{interval % 60:02d}"
 
 
-def human_bytes(size):
+def human_bytes(size: float) -> str:
     """Formats size, a number of bytes, in a human-readable way."""
     powers = ["", "K", "M", "G", "T", "P", "E", "Z", "Y", "H"]
     unit = "B"
@@ -34,7 +34,7 @@ def human_bytes(size):
     return "big"
 
 
-def human_seconds(interval):
+def human_seconds(interval: float) -> str:
     """Formats interval, a number of seconds, as a human-readable time
     interval using English words.
     """

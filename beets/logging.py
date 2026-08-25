@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from logging import RootLogger
+    from logging import LogRecord, RootLogger
     from types import TracebackType
 
     T = TypeVar("T")
@@ -113,7 +113,7 @@ class LegacyFormatter(Formatter):
         "beets.musicbrainz.sub"     "musicbrainz.sub: msg"
     """
 
-    def format(self, record):
+    def format(self, record: LogRecord) -> str:
         parts = record.name.split(".")
         record.legacy_prefix = (
             f"{'.'.join(parts[1:])}: " if len(parts) > 1 else ""
@@ -134,12 +134,14 @@ class StrFormatLogger(Logger):
     """
 
     class _LogMessage:
-        def __init__(self, msg: str, args: _ArgsType, kwargs: dict[str, Any]):
+        def __init__(
+            self, msg: str, args: _ArgsType, kwargs: dict[str, Any]
+        ) -> None:
             self.msg = msg
             self.args = args
             self.kwargs = kwargs
 
-        def __str__(self):
+        def __str__(self) -> str:
             args = [_logsafe(a) for a in self.args]
             kwargs = {k: _logsafe(v) for (k, v) in self.kwargs.items()}
             return self.msg.format(*args, **kwargs)
@@ -154,7 +156,7 @@ class StrFormatLogger(Logger):
         stack_info: bool = False,
         stacklevel: int = 2,
         **kwargs,
-    ):
+    ) -> None:
         """Log msg.format(*args, **kwargs)"""
 
         if isinstance(msg, str):
@@ -174,13 +176,13 @@ class StrFormatLogger(Logger):
 class ThreadLocalLevelLogger(Logger):
     """A version of `Logger` whose level is thread-local instead of shared."""
 
-    def __init__(self, name, level=NOTSET):
+    def __init__(self, name: str, level: int = NOTSET) -> None:
         self._thread_level = threading.local()
         self.default_level = NOTSET
         super().__init__(name, level)
 
     @property
-    def level(self):
+    def level(self) -> int:
         try:
             return self._thread_level.level
         except AttributeError:
@@ -188,10 +190,10 @@ class ThreadLocalLevelLogger(Logger):
             return self.level
 
     @level.setter
-    def level(self, value):
+    def level(self, value: int) -> None:
         self._thread_level.level = value
 
-    def set_global_level(self, level):
+    def set_global_level(self, level: int) -> None:
         """Set the level on the current thread + the default value for all
         threads.
         """
@@ -223,7 +225,7 @@ my_manager.loggerClass = BeetsLogger
 def getLogger(name: str) -> BeetsLogger: ...
 @overload
 def getLogger(name: None = ...) -> RootLogger: ...
-def getLogger(name=None) -> BeetsLogger | RootLogger:  # noqa: N802
+def getLogger(name: str | None = None) -> BeetsLogger | RootLogger:  # noqa: N802
     if name:
         return my_manager.getLogger(name)  # type: ignore[return-value]
     return Logger.root

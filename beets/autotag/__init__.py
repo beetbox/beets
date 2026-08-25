@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib import import_module
+from typing import Any
 
 # Parts of external interface.
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
@@ -22,7 +23,7 @@ from .match import (
 from .source import Source
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     if name == "current_metadata":
         deprecate_for_maintainers(
             f"'beets.autotag.{name}'", "'beets.util.get_most_common_tags'"

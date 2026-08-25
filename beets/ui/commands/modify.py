@@ -12,6 +12,8 @@ from beets.util.deprecation import maybe_replace_legacy_field
 from .utils import do_query
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import LibModel, Library
 
 
@@ -57,7 +59,17 @@ def _check_modify_operations(
             )
 
 
-def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
+def modify_items(
+    lib: Library,
+    mods: dict[str, ModifyOperation],
+    dels: Sequence[str],
+    query: Sequence[str],
+    write: bool,
+    move: bool,
+    album: bool,
+    confirm: bool,
+    inherit: bool,
+) -> None:
     """Modifies matching items according to user-specified assignments and
     deletions.
 
@@ -116,7 +128,11 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
             obj.try_sync(write, move, inherit)
 
 
-def print_and_modify(obj, mods, dels):
+def print_and_modify(
+    obj: LibModel,
+    mods: dict[str, list[str]] | dict[str, ModifyOperation],
+    dels: Sequence[str],
+) -> bool:
     """Print the modifications to an item and return a bool indicating
     whether any changes were made.
 
@@ -132,7 +148,9 @@ def print_and_modify(obj, mods, dels):
     return ui.show_model_changes(obj)
 
 
-def modify_parse_args(args, is_album: bool):
+def modify_parse_args(
+    args: Sequence[str], is_album: bool
+) -> tuple[list[str], dict[str, ModifyOperation], list[str]]:
     """Split the arguments for the modify subcommand into query parts,
     assignments (field=value), and deletions (field!).  Returns the result as
     a three-tuple in that order.

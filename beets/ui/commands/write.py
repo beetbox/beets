@@ -11,6 +11,8 @@ from beets.util import syspath
 from .utils import do_query
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
 
 
@@ -23,7 +25,9 @@ class WriteCLIOpts(Protocol):
     pretend: bool
 
 
-def write_items(lib, query, pretend, force):
+def write_items(
+    lib: Library, query: Sequence[str], pretend: bool, force: bool
+) -> None:
     """Write tag information from the database to the respective files
     in the filesystem.
     """
