@@ -684,7 +684,7 @@ class TestCandidates(TidalPluginTest):
                         "albums": {
                             "data": [
                                 {"id": "1", "type": "albums"},
-                                {"id": "2", "type": "albums"}
+                                {"id": "2", "type": "albums"},
                             ]
                         }
                     }
@@ -712,8 +712,44 @@ class TestCandidates(TidalPluginTest):
         assert candidates[0].album == "Query Album"
         # get_albums should only be called with the first album id
         self.tidal.api.get_albums.assert_called_once_with(
-            ids=["1"], barcode_ids=[], include=["items.artists", "artists", "coverArt"]
+            ids=["1"],
+            barcode_ids=[],
+            include=["items.artists", "artists", "coverArt"],
         )
+
+    def test_search_album_limit_not_reached(self):
+        """Test candidates with limit set but fewer results than limit."""
+        self.tidal.config["search_limit"] = 5
+        items = [Item(title="My Song", artist="My Artist", album="My Album")]
+
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "albums": {"data": [{"id": "1", "type": "albums"}]}
+                    }
+                }
+            }
+        )
+
+        track = _make_track("101", "Album Track", "PT3M", "ISRC001", ["1001"])
+        album, track_lookup, artist_lookup = _make_album(
+            "1", "Query Album", [track], ["1001"]
+        )
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album],
+                "included": [*artist_lookup.values(), *track_lookup.values()],
+            }
+        )
+
+        candidates = list(
+            self.tidal.candidates(items, "My Artist", "My Album", False)
+        )
+
+        # Only 1 result found, limit=5 not reached, no early break
+        assert len(candidates) == 1
+        assert candidates[0].album == "Query Album"
 
 
 class TestItemCandidates(TidalPluginTest):
@@ -779,17 +815,25 @@ class TestItemCandidates(TidalPluginTest):
                         "tracks": {
                             "data": [
                                 {"id": "490839595", "type": "tracks"},
-                                {"id": "490839596", "type": "tracks"}
+                                {"id": "490839596", "type": "tracks"},
                             ]
                         }
                     }
                 },
                 "included": [
                     _make_track(
-                        "490839595", "Query Track 1", "PT3M", "ISRC001", ["1001"]
+                        "490839595",
+                        "Query Track 1",
+                        "PT3M",
+                        "ISRC001",
+                        ["1001"],
                     ),
                     _make_track(
-                        "490839596", "Query Track 2", "PT3M", "ISRC002", ["1001"]
+                        "490839596",
+                        "Query Track 2",
+                        "PT3M",
+                        "ISRC002",
+                        ["1001"],
                     ),
                     _make_artist("1001", "Query Artist"),
                 ],
@@ -802,6 +846,43 @@ class TestItemCandidates(TidalPluginTest):
 
         assert self.tidal.api.search_results.called
         assert len(results) == 1
+        assert results[0].title == "Query Track 1"
+
+    def test_search_track_limit_not_reached(self):
+        """Test item_candidates with limit set but fewer results than limit."""
+        self.tidal.config["search_limit"] = 5
+        item = Item(title="Query Song", artist="Query Artist")
+
+        self.tidal.api.search_results = Mock(
+            return_value={
+                "data": {
+                    "relationships": {
+                        "tracks": {
+                            "data": [{"id": "490839595", "type": "tracks"}]
+                        }
+                    }
+                },
+                "included": [
+                    _make_track(
+                        "490839595",
+                        "Query Track 1",
+                        "PT3M",
+                        "ISRC001",
+                        ["1001"],
+                    ),
+                    _make_artist("1001", "Query Artist"),
+                ],
+            }
+        )
+
+        results = list(
+            self.tidal.item_candidates(item, "Query Artist", "Query Song")
+        )
+
+        # Only 1 result per query, 2 queries generated, limit=5 not reached
+        # (no early break). Both queries return the same track, so 2 results.
+        assert self.tidal.api.search_results.called
+        assert len(results) == 2
         assert results[0].title == "Query Track 1"
 
 

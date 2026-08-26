@@ -242,10 +242,7 @@ class TidalPlugin(MetadataSourcePlugin):
         album_rels = search_doc["data"]["relationships"]["albums"]["data"]
         if limit is not None:
             album_rels = album_rels[:limit]
-        album_ids = [
-            album_rel["id"]
-            for album_rel in album_rels
-        ]
+        album_ids = [album_rel["id"] for album_rel in album_rels]
         yield from filter(None, self.search_albums_by_ids(tidal_ids=album_ids))
 
     @overload
