@@ -5,7 +5,6 @@ from beets import library
 from beets.plugins import BeetsPlugin
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
-from beets.ui.commands.update import update_items
 from beets.util import MoveOperation, remove
 
 
@@ -31,28 +30,12 @@ class UpdateTest(IOMixin, BeetsTestCase):
         self.album.store()
         artfile.unlink()
 
-    def _update(
-        self,
-        query=(),
-        album=False,
-        move=False,
-        reset_mtime=True,
-        fields=None,
-        exclude_fields=None,
-    ):
+    def _update(self, *args, reset_mtime=True):
         self.io.addinput("y")
         if reset_mtime:
             self.i.mtime = 0
             self.i.store()
-        update_items(
-            self.lib,
-            query,
-            album,
-            move,
-            False,
-            fields=fields,
-            exclude_fields=exclude_fields,
-        )
+        self.run_command("update", *args)
 
     def test_delete_removes_item(self):
         assert list(self.lib.items())
@@ -111,7 +94,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.save()
-        self._update(move=True)
+        self._update("-m")
         item = self.lib.items().get()
         assert b"differentTitle" in item.path
 
@@ -119,7 +102,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
         mf.save()
-        self._update(move=False)
+        self._update("--nomove")
         item = self.lib.items().get()
         assert b"differentTitle" not in item.path
 
@@ -128,7 +111,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf.title = "differentTitle"
         mf.genres = ["differentGenre"]
         mf.save()
-        self._update(move=True, fields=["title"])
+        self._update("-m", "--field=title")
         item = self.lib.items().get()
         assert b"differentTitle" in item.path
         assert item.genres != ["differentGenre"]
@@ -138,7 +121,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf.title = "differentTitle"
         mf.genres = ["differentGenre"]
         mf.save()
-        self._update(move=False, fields=["title"])
+        self._update("--nomove", "--field=title")
         item = self.lib.items().get()
         assert b"differentTitle" not in item.path
         assert item.genres != ["differentGenre"]
@@ -147,7 +130,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf = MediaFile(self.i.filepath)
         mf.album = "differentAlbum"
         mf.save()
-        self._update(move=True)
+        self._update("-m")
         item = self.lib.items().get()
         assert b"differentAlbum" in item.path
 
@@ -156,7 +139,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf = MediaFile(self.i.filepath)
         mf.album = "differentAlbum"
         mf.save()
-        self._update(move=True)
+        self._update("-m")
         album = self.lib.albums()[0]
         assert artpath != album.artpath
         assert album.artpath is not None
@@ -166,7 +149,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf.album = "differentAlbum"
         mf.genres = ["differentGenre"]
         mf.save()
-        self._update(move=True, fields=["album"])
+        self._update("-m", "--field=album")
         item = self.lib.items().get()
         assert b"differentAlbum" in item.path
         assert item.genres != ["differentGenre"]
@@ -176,7 +159,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf.album = "differentAlbum"
         mf.genres = ["differentGenre"]
         mf.save()
-        self._update(move=True, fields=["genres"])
+        self._update("-m", "--field=genres")
         item = self.lib.items().get()
         assert b"differentAlbum" not in item.path
         assert item.genres == ["differentGenre"]
@@ -223,6 +206,6 @@ class UpdateTest(IOMixin, BeetsTestCase):
         mf = MediaFile(self.i.filepath)
         mf.lyrics = "new lyrics"
         mf.save()
-        self._update(exclude_fields=["lyrics"])
+        self._update("--exclude-field=lyrics")
         item = self.lib.items().get()
         assert item.lyrics != "new lyrics"
