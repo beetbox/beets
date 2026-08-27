@@ -13,7 +13,6 @@ from typing_extensions import Self
 
 import beets
 from beets import dbcore, logging, plugins, util
-from beets.dbcore import types
 from beets.dbcore.db import FormattedMapping
 from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.sort import SmartArtistSort
@@ -35,7 +34,7 @@ from .queries import parse_query_string
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, KeysView, Mapping
 
-    from beets.dbcore import Results
+    from beets.dbcore import Results, types
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort
     from beets.util.functemplate import FieldTFuncs
@@ -814,11 +813,8 @@ class Item(LibModel):
     def __setitem__(self, key: str, value: Any) -> None:
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
-        if key == "path":
-            if isinstance(value, str):
-                value = bytestring_path(value)
-            elif isinstance(value, types.BLOB_TYPE):
-                value = bytes(value)
+        if key == "path" and isinstance(value, str):
+            value = bytestring_path(value)
         elif key == "album_id":
             self._cached_album = None
 

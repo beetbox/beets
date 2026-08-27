@@ -41,6 +41,19 @@ class PytestItemHelper(TestHelper):
         return _common.item(self.lib)
 
 
+class TestBlobTypeCompatibility:
+    def test_canonical_alias_is_bytes(self):
+        assert beets.dbcore.query.BLOB_TYPE is bytes
+
+    def test_legacy_alias_warns(self):
+        with pytest.deprecated_call(
+            match="'beets.library.BLOB_TYPE' is deprecated"
+        ):
+            blob_type = beets.library.BLOB_TYPE
+
+        assert blob_type is bytes
+
+
 class TestLoad(PytestItemHelper):
     def test_load_restores_data_from_db(self, item_in_db):
         original_title = item_in_db.title
@@ -158,6 +171,13 @@ class TestGetSet(PytestItemHelper):
     def test_set_does_not_dirty_if_value_unchanged(self, item):
         item.title = item.title
         assert "title" not in item._dirty
+
+    def test_set_memoryview_path_normalizes_to_bytes(self, item):
+        item.path = memoryview(b"/tmp/song.mp3")
+
+        assert item.path == b"/tmp/song.mp3"
+        assert isinstance(item.path, bytes)
+        assert item.filepath == Path("/tmp/song.mp3")
 
     def test_invalid_field_raises_attributeerror(self, item):
         with pytest.raises(AttributeError):
