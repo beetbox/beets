@@ -6,15 +6,14 @@ import os
 from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
+from beets.exceptions import UserError
 from beets.util import ancestry, syspath
 from beets.util.color import colorize
-
-from .utils import do_query
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
-    from beets.library import Library
+    from beets.library import Item, Library
 
 
 # Global logger.
@@ -31,23 +30,24 @@ class UpdateCLIOpts(Protocol):
 
 def update_items(
     lib: Library,
-    query: Sequence[str],
-    is_album: bool,
+    items: Sequence[Item],
     move: bool,
     pretend: bool,
     fields: list[str] | None,
     exclude_fields: Sequence[str] | None = None,
 ) -> None:
-    """For all the items matched by the query, update the library to
-    reflect the item's embedded tags.
+    """For all items, update the library to reflect the item's embedded tags.
+
     :param fields: The fields to be stored. If not specified, all fields will
     be.
     :param exclude_fields: The fields to not be stored. If not specified, all
     fields will be.
     """
+    if not items:
+        raise UserError("No matching items to update.")
+
     item_fields: Collection[str]
     with lib.transaction():
-        items, _ = do_query(lib, query, is_album)
         if move and fields is not None and "path" not in fields:
             # Special case: if an item needs to be moved, the path field has to
             # updated; otherwise the new path will not be reflected in the
@@ -172,10 +172,13 @@ def update_func(lib: Library, opts: UpdateCLIOpts, args: list[str]) -> None:
         ui.print_(os.fsdecode(lib.directory))
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
+    if opts.album:
+        items = [i for a in lib.albums(args) for i in a.items()]
+    else:
+        items = list(lib.items(args))
     update_items(
         lib,
-        args,
-        opts.album,
+        items,
         ui.should_move(opts.move),
         opts.pretend,
         opts.fields,

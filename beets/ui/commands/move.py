@@ -3,21 +3,17 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Protocol
-
-from typing_extensions import TypeIs
+from typing import TYPE_CHECKING, Literal, Protocol
 
 from beets import logging, ui
 from beets.exceptions import UserError
 from beets.util import MoveOperation, displayable_path, normpath, syspath
 from beets.util.diff import colordiff
 
-from .utils import do_query
-
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
 
-    from beets.library import Album, Item, Library
+    from beets.library import Album, AlbumOrItem, Item, Library
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -73,90 +69,62 @@ def show_path_changes(path_changes: Iterable[tuple[bytes, bytes]]) -> None:
             ui.print_(f"{color_source} {' ' * pad} -> {color_dest}")
 
 
-def is_album_selection(
-    objects: list[Item] | list[Album], album: bool
-) -> TypeIs[list[Album]]:
-    return album
-
-
-def move_items(
-    lib: Library,
+def move_objects(
+    all_objs: Sequence[AlbumOrItem],
+    filter_objs: Callable[[bytes | None, AlbumOrItem], bool],
+    entity: Literal["album", "item"],
+    get_paths: Callable[[Iterable[AlbumOrItem]], list[tuple[bytes, bytes]]],
+    *,
     dest: bytes | None,
-    query: Sequence[str],
-    copy: bool,
-    album: bool,
-    pretend: bool,
-    confirm: bool = False,
-    export: bool = False,
+    opts: MoveCLIOpts,
 ) -> None:
-    """Moves or copies items to a new base directory, given by dest. If
+    """Move or copy albums or items to a new base directory, given by dest. If
     dest is None, then the library's base directory is used, making the
     command "consolidate" files.
     """
-    items, albums = do_query(lib, query, album, False)
-    objs = albums if album else items
-    num_objs = len(objs)
+    if not all_objs:
+        raise UserError(f"No matching {entity}s found.")
 
-    # Filter out files that don't need to be moved.
-    def isitemmoved(item: Item) -> bool:
-        return item.path != item.destination(basedir=dest)
+    objs = [o for o in all_objs if filter_objs(dest, o)]
 
-    def isalbummoved(album: Album) -> bool:
-        return any(isitemmoved(i) for i in album.items())
-
-    if is_album_selection(objs, album):
-        objs = list(filter(isalbummoved, objs))
-    else:
-        objs = list(filter(isitemmoved, objs))
-
-    num_unmoved = num_objs - len(objs)
+    num_unmoved = len(all_objs) - len(objs)
     # Report unmoved files that match the query.
     unmoved_msg = ""
     if num_unmoved > 0:
         unmoved_msg = f" ({num_unmoved} already in place)"
 
-    copy = copy or export  # Exporting always copies.
+    copy = opts.copy or opts.export  # Exporting always copies.
     action = "Copying" if copy else "Moving"
     act = "copy" if copy else "move"
-    entity = "album" if album else "item"
+    obj_count = len(objs)
     log.info(
         "{} {} {}{}{}.",
         action,
-        len(objs),
+        obj_count,
         entity,
-        "s" if len(objs) != 1 else "",
+        "s" if obj_count != 1 else "",
         unmoved_msg,
     )
     if not objs:
         return
 
-    if pretend:
-        if is_album_selection(objs, album):
-            show_path_changes(
-                [
-                    (item.path, item.destination(basedir=dest))
-                    for obj in objs
-                    for item in obj.items()
-                ]
-            )
-        else:
-            show_path_changes(
-                [(obj.path, obj.destination(basedir=dest)) for obj in objs]
-            )
+    if opts.pretend:
+        show_path_changes(get_paths(objs))
     else:
-        if confirm:
-            objs = ui.input_select_objects(
+        selected_objs: Sequence[AlbumOrItem]
+        if opts.timid:
+            selected_objs = ui.input_select_objects(
                 f"Really {act}",
                 objs,
-                lambda o: show_path_changes(
-                    [(o.path, o.destination(basedir=dest))]
-                ),
+                lambda o: show_path_changes(get_paths([o])),
             )
+        else:
+            selected_objs = objs
 
-        for obj in objs:
+        for obj in selected_objs:
             log.debug("moving: {.filepath}", obj)
 
-            if export:
+            if opts.export:
                 # Copy without affecting the database.
                 obj.move(
                     operation=MoveOperation.COPY, basedir=dest, store=False
@@ -169,22 +137,47 @@ def move_items(
                     obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
+def isitemmoved(dest: bytes | None, item: Item) -> bool:
+    """Filter out files that don't need to be moved."""
+    return item.path != item.destination(basedir=dest)
+
+
+def isalbummoved(dest: bytes | None, album: Album) -> bool:
+    return any(isitemmoved(dest, i) for i in album.items())
+
+
+def move_items(
+    lib: Library, query: Sequence[str], dest: bytes | None, opts: MoveCLIOpts
+) -> None:
+    def get_paths(objs: Iterable[Item]) -> list[tuple[bytes, bytes]]:
+        return [(obj.path, obj.destination(basedir=dest)) for obj in objs]
+
+    objs = list(lib.items(query))
+    move_objects(objs, isitemmoved, "item", get_paths, dest=dest, opts=opts)
+
+
+def move_albums(
+    lib: Library, query: Sequence[str], dest: bytes | None, opts: MoveCLIOpts
+) -> None:
+    def get_paths(objs: Iterable[Album]) -> list[tuple[bytes, bytes]]:
+        return [
+            (item.path, item.destination(basedir=dest))
+            for obj in objs
+            for item in obj.items()
+        ]
+
+    objs = list(lib.albums(query))
+    move_objects(objs, isalbummoved, "album", get_paths, dest=dest, opts=opts)
+
+
 def move_func(lib: Library, opts: MoveCLIOpts, args: list[str]) -> None:
     dest = normpath(opts.dest) if opts.dest else None
     if dest is not None:
         if not os.path.isdir(syspath(dest)):
             raise UserError(f"no such directory: {displayable_path(dest)}")
 
-    move_items(
-        lib,
-        dest,
-        args,
-        opts.copy,
-        opts.album,
-        opts.pretend,
-        opts.timid,
-        opts.export,
-    )
+    method = move_albums if opts.album else move_items
+    method(lib, args, dest, opts)
 
 
 move_cmd = ui.Subcommand("move", help="move or copy items", aliases=("mv",))
