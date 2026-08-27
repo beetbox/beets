@@ -78,6 +78,8 @@ Bug fixes
   back to the synced lyrics instead of discarding them.
 - :ref:`modify-cmd`: Fix applying changes when choosing objects in interactive
   select mode. :bug:`4880`
+- :ref:`move-cmd`: Fix moving albums in interactive select/timid mode.
+  :bug:`2802`
 
 ..
     For plugin developers

@@ -1,10 +1,10 @@
 import shutil
 
 from beets import library
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import BeetsTestCase, IOMixin
 
 
-class MoveTest(BeetsTestCase):
+class MoveTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -58,6 +58,15 @@ class MoveTest(BeetsTestCase):
 
     def test_move_album_custom_dir(self):
         self.run_command("move", "-a", "--dest", str(self.otherdir))
+        self.i.load()
+        assert b"testotherdir" in self.i.path
+        assert self.i.filepath.exists()
+        assert not self.initial_item_path.exists()
+
+    def test_move_album_custom_dir_timid(self):
+        self.io.addinput("s")  # select
+        self.io.addinput("y")  # yes
+        self.run_command("move", "-a", "--dest", str(self.otherdir), "-t")
         self.i.load()
         assert b"testotherdir" in self.i.path
         assert self.i.filepath.exists()

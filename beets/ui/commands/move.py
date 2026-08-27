@@ -116,9 +116,7 @@ def move_objects(
             selected_objs = ui.input_select_objects(
                 f"Really {act}",
                 objs,
-                lambda o: show_path_changes(
-                    [(o.path, o.destination(basedir=dest))]
-                ),
+                lambda o: show_path_changes(get_paths([o])),
             )
         else:
             selected_objs = objs
