@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from mediafile import MediaFile
 
@@ -109,6 +111,24 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
         new_items = self.lib.items(f"artist:{new_artist}")
         assert len(list(original_items)) == 3
         assert len(list(new_items)) == 7
+
+    def test_selective_modify_output(self):
+        """Test that the output shows the correct changes.
+
+        See #4880 where attempts to modify 'added' field resulted in TypeError.
+        Modifying simple fields, like 'artist' resulted in the following output:
+        $ beet modify artist:OLD artist=NEW
+          artist: OLD -> ModifyOperation(operator=None, value='NEW')
+        """
+        self.io.addinput("s")  # select
+        self.io.addinput("y")  # yes
+        new_added = "2020-01-01 00:00:00"
+        pattern = re.compile(rf"added: .* -> {new_added}")
+
+        output = self.run_with_output("modify", f"added={new_added}")
+
+        # we expect to see this printed twice
+        assert len(pattern.findall(output)) == 2
 
     def test_modify_formatted(self):
         for i in range(3):
