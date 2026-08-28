@@ -9,7 +9,7 @@ from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
-from beets.ui.commands.import_ import import_files, paths_from_logfile
+from beets.ui.commands.import_ import paths_from_logfile
 from beets.ui.commands.import_.display import show_change
 from beets.ui.commands.import_.session import summarize_items
 
@@ -19,7 +19,7 @@ class ImportTest(BeetsTestCase):
         config["import"]["quiet"] = True
         config["import"]["timid"] = True
         with pytest.raises(UserError):
-            import_files(None, [], None)
+            self.run_command("import")
 
     def test_parse_paths_from_logfile(self):
         if os.path.__name__ == "ntpath":
