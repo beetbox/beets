@@ -456,19 +456,19 @@ class EditPlugin(plugins.BeetsPlugin):
             if not obj._db or obj.id is None:
                 obj.id = -i
 
-        # Decide which fields to show.
-        album_fields = set()
-        if getattr(task, "is_album", False):
-            album_fields = set(self.config["albumfields"].as_str_seq())
+        # Build the album header before deciding which fields to show for each
+        # track. Only fields actually present in the header should be omitted
+        # from the track documents.
+        header_data = self._importer_edit_album_header(task)
+        header_fields = set(header_data) if header_data is not None else set()
         item_fields = set(self.config["itemfields"].as_str_seq())
 
         # Track-level fields exclude any that are shown in the album header
         # to avoid duplication.
-        track_fields = item_fields - album_fields
+        track_fields = item_fields - header_fields
         track_fields.add("id")
 
         # Build the YAML document list.
-        header_data = self._importer_edit_album_header(task)
         old_track_data = [flatten(o, track_fields) for o in task.items]
         all_old_data = []
         if header_data is not None:
