@@ -309,6 +309,8 @@ Items will automatically be moved around when necessary if they're in your
 library directory, but you can disable that with ``-M``. Tags will be written to
 the files according to the settings you have for imports, but these can be
 overridden with ``-w`` (write tags, the default) and ``-W`` (don't write tags).
+A file that already holds the tags is left untouched, so changing a field that
+beets keeps only in its database does not give the file a new modification time.
 
 When you run the ``modify`` command, it prints a list of all affected items in
 the library and asks for your permission before making any changes. You can then
