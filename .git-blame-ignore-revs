@@ -305,3 +305,5 @@ f37306b0cc17f17291ea5010178f190a95b29fd5
 029de94b206bd64aecc24f24bf011413b86d78e7
 # typing: add annotations to bpd plugin
 1ae87783858f53b62ccdc4f9400e035ef03f843a
+# typing: add annotations to API and export plugins
+ee4d6eef36269fbf99e0f566487ab21069be279f
