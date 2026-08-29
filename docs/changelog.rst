@@ -80,6 +80,7 @@ Bug fixes
   select mode. :bug:`4880`
 - :ref:`move-cmd`: Fix moving albums in interactive select/timid mode.
   :bug:`2802`
+- :doc:`plugins/bpd`: Fix ``search`` command when ``any`` field is used.
 
 ..
     For plugin developers
