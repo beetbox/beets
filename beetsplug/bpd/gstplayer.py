@@ -51,6 +51,8 @@ class GstPlayer:
     another is available on the queue, it is played automatically.
     """
 
+    cached_time: tuple[float, float] | None
+
     def __init__(
         self, finished_callback: Callable[[], None] | None = None
     ) -> None:
@@ -170,7 +172,7 @@ class GstPlayer:
 
     def time(self) -> tuple[float, float]:
         """Returns a tuple containing (position, length) where both
-        values are integers in seconds. If no stream is available,
+        values are floats in seconds. If no stream is available,
         returns (0, 0).
         """
         fmt = Gst.Format(Gst.Format.TIME)
