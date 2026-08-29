@@ -1514,7 +1514,7 @@ class Server(BaseServer):
                     if allow_any_query:
                         queries.append(
                             Item.any_writable_media_field_query(
-                                query_type, value
+                                value, query_type
                             )
                         )
                     else:
