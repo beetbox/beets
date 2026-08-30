@@ -1224,10 +1224,13 @@ class Database:
         return conn
 
     def add_functions(self, conn: sqlite3.Connection) -> None:
-        def regexp(value: Any, pattern: str) -> bool:
+        def regexp(
+            value: Any, pattern: str, delimiter: str | None = None
+        ) -> bool:
             if isinstance(value, bytes):
                 value = value.decode()
-            return re.search(pattern, str(value)) is not None
+            values = str(value).split(delimiter) if delimiter else (str(value),)
+            return any(re.search(pattern, item) is not None for item in values)
 
         def bytelower(bytestring: AnyStr | None) -> AnyStr | None:
             """A custom ``bytelower`` sqlite function so we can compare
@@ -1250,6 +1253,7 @@ class Database:
             )
 
         create_function("regexp", 2, regexp)
+        create_function("regexp", 3, regexp)
         create_function("unidecode", 1, unidecode)
         create_function("bytelower", 1, bytelower)
 

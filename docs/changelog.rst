@@ -81,6 +81,9 @@ Bug fixes
 - :ref:`move-cmd`: Fix moving albums in interactive select/timid mode.
   :bug:`2802`
 - :doc:`plugins/bpd`: Fix ``search`` command when ``any`` field is used.
+- Regular expression queries on multi-valued fields now match each value
+  separately instead of matching their serialized database representation.
+  :bug:`6961`
 
 ..
     For plugin developers
