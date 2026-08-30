@@ -294,6 +294,22 @@ class TestMatch:
         assert not NotQuery(q).match(item) == should_match
 
 
+class TestMultiValueQueries:
+    def test_regexp_matches_individual_value(self, helper):
+        helper.add_item(
+            title="multiple genres",
+            genres=["Electro", "Electroclash", "Synth-pop"],
+        )
+        helper.add_item(title="prefix only", genres=["Electroclash"])
+
+        query = Item.field_query("genres", "^Electro$", RegexpQuery)
+        assert query.fast
+        assert query.delimiter == types.MULTI_VALUE_DELIMITER
+        assert {item.title for item in helper.lib.items(query)} == {
+            "multiple genres"
+        }
+
+
 class TestPathQuery:
     """Tests for path-based querying functionality in the database system.
 

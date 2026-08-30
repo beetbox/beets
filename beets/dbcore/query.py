@@ -377,7 +377,11 @@ class RegexpQuery(StringFieldQuery[Pattern[str]]):
     """
 
     def __init__(
-        self, field_name: str, pattern: str, fast: bool = True
+        self,
+        field_name: str,
+        pattern: str,
+        fast: bool = True,
+        delimiter: str | None = None,
     ) -> None:
         pattern = self._normalize(pattern)
         try:
@@ -388,9 +392,15 @@ class RegexpQuery(StringFieldQuery[Pattern[str]]):
                 pattern, "a regular expression", format(exc)
             )
 
+        self.delimiter = delimiter
         super().__init__(field_name, pattern_re, fast)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
+        if self.delimiter:
+            return f" regexp({self.field}, ?, ?)", [
+                self.pattern.pattern,
+                self.delimiter,
+            ]
         return f" regexp({self.field}, ?)", [self.pattern.pattern]
 
     @staticmethod

@@ -123,9 +123,10 @@ class LibModel(dbcore.Model["Library"]):
         """Get a `FieldQuery` for the given field on this model."""
         field = maybe_replace_legacy_field(field, cls is Album)
 
+        field_type = cls._type(field)
         fast = field in cls.all_db_fields
         if (
-            cls._type(field).query is dbcore.query.PathQuery
+            field_type.query is dbcore.query.PathQuery
             and query_cls is not dbcore.query.PathQuery
         ):
             # Regex, exact, and string queries operate on the raw DB value, so
@@ -140,6 +141,13 @@ class LibModel(dbcore.Model["Library"]):
             # an OperationalError if we try to use it in a query.
             # Using an explicit table name resolves this.
             field = f"{cls._table}.{field}"
+
+        if query_cls is dbcore.query.RegexpQuery and isinstance(
+            field_type, types.DelimitedString
+        ):
+            return dbcore.query.RegexpQuery(
+                field, pattern, fast, field_type.db_delimiter
+            )
 
         return query_cls(field, pattern, fast)
 
