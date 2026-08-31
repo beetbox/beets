@@ -4,6 +4,8 @@ import os
 import time
 from typing import TYPE_CHECKING
 
+import confuse
+
 from beets import config, logging, plugins, util
 from beets.util import displayable_path, normpath, pipeline, syspath
 
@@ -13,8 +15,6 @@ from .state import ImportState
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
-
-    import confuse
 
     from beets import dbcore, library
     from beets.autotag import AlbumMatch, TrackMatch
@@ -172,15 +172,23 @@ class ImportSession:
     def choose_match(self, task: ImportTask) -> AlbumMatch | Action:
         raise NotImplementedError
 
+    def _configured_duplicate_action(
+        self, option: str, choices: dict[str, str]
+    ) -> DuplicateAction:
+        """Read the duplicate action configured under ``option``, accepting
+        only ``choices``.
+        """
+        choice = self.config[option].as_choice(choices)
+        log.debug("default {}: {}", option, choice)
+        return DuplicateAction(choice)  # type: ignore[call-arg]
+
     def get_duplicate_action(
         self, task: ImportTask, found_duplicates: list[AlbumOrItem]
     ) -> DuplicateAction:
         """Get the configured duplicate action."""
-        choice = config["import"]["duplicate_action"].as_choice(
-            DuplicateAction.choices()
+        return self._configured_duplicate_action(
+            "duplicate_action", DuplicateAction.choices()
         )
-        log.debug("default action for duplicates: {}", choice)
-        return DuplicateAction(choice)  # type: ignore[call-arg]
 
     def choose_item(self, task: SingletonImportTask) -> TrackMatch | Action:
         raise NotImplementedError
@@ -196,35 +204,38 @@ class ImportSession:
         ``track_duplicates`` maps each :class:`~beets.library.Item` of the
         task to the existing library items it duplicates.
         """
-        view = config["import"]["duplicate_tracks_action"]
-        if view.get():
-            # MERGE is not offered per track, so reject it loudly here.
-            choice = view.as_choice(DuplicateAction.track_choices())
-            action = DuplicateAction(choice)  # type: ignore[call-arg]
-        else:
-            choice = config["import"]["duplicate_action"].as_choice(
-                DuplicateAction.choices()
+        # A caller-supplied config need not carry our defaults, so a missing
+        # option counts as unset and falls back to `duplicate_action`.
+        if self.config["duplicate_tracks_action"].get(
+            confuse.Optional(str, "")
+        ):
+            action = self._configured_duplicate_action(
+                "duplicate_tracks_action", DuplicateAction.track_choices()
             )
-            action = DuplicateAction(choice)  # type: ignore[call-arg]
+        else:
+            action = self._configured_duplicate_action(
+                "duplicate_action", DuplicateAction.choices()
+            )
             if action is DuplicateAction.MERGE:
+                # MERGE is not offered per track.
                 log.debug(
                     "merge is not available for duplicate tracks; keeping all"
                 )
                 action = DuplicateAction.KEEP
-        log.debug("default action for duplicate tracks: {}", action.value)
+
         return dict.fromkeys(track_duplicates, action)
 
     def resolve_duplicates(
         self,
         task: ImportTask,
-        found_duplicates: list[AnyLibModel],
+        found_duplicates: list[AlbumOrItem],
         track_duplicates: dict[library.Item, list[library.Item]],
     ) -> None:
         """Decide, at a single point, what to do about the album- and
         track-level duplicates found for ``task``.
 
         Sets ``task.duplicate_action`` from the album-level duplicates or
-        ``task.track_duplicate_actions`` from the track-level ones. When only
+        ``task.track_duplicates.actions`` from the track-level ones. When only
         *some* tracks duplicate existing items, the import is a partial
         overlap (e.g. completing a partially-imported album), so per-track
         resolution applies and the whole-album action is suppressed. When
@@ -238,7 +249,7 @@ class ImportSession:
                 task, found_duplicates
             )
         elif track_duplicates:
-            task.track_duplicate_actions = self.get_track_duplicate_actions(
+            task.track_duplicates.actions = self.get_track_duplicate_actions(
                 task, track_duplicates
             )
 
