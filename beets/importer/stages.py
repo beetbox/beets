@@ -6,6 +6,8 @@ import logging
 import os
 from typing import TYPE_CHECKING, TypeAlias
 
+import confuse
+
 from beets import config, plugins
 from beets.autotag import AlbumMatch
 from beets.util import MoveOperation, displayable_path, pipeline
@@ -16,6 +18,7 @@ from .tasks import (
     ImportTaskFactory,
     SentinelImportTask,
     SingletonImportTask,
+    TrackDuplicates,
     is_subdir_of_any_in_list,
     resolve_upgrade_target,
 )
@@ -364,7 +367,7 @@ def manipulate_files(session: ImportSession, task: ImportTask) -> None:
             DuplicateAction.UPGRADE,
         ):
             task.remove_duplicates(session.lib)
-        task.remove_track_duplicates(session.lib)
+        task.track_duplicates.remove_old()
 
         if session.config["move"]:
             operation = MoveOperation.MOVE
@@ -438,13 +441,16 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
     to the library.
     """
     if task.choice_flag not in (Action.ASIS, Action.APPLY, Action.RETAG):
+        log.debug("not checking for duplicates: choice is {}", task.choice_flag)
         return
 
     found_duplicates = task.find_duplicates(session.lib)
 
-    track_duplicates: dict[library.Item, list[library.Item]] = {}
-    if task.is_album and session.config["duplicate_tracks"].get(bool):
-        track_duplicates = task.find_track_duplicates(session.lib)
+    track_duplicates = TrackDuplicates()
+    if task.is_album and session.config["duplicate_tracks"].get(
+        confuse.Optional(bool, False)
+    ):
+        track_duplicates = TrackDuplicates.find(task, session.lib)
 
     if not found_duplicates and not track_duplicates:
         return
@@ -454,11 +460,17 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
     if track_duplicates:
         log.debug(
             "found track duplicates: {}",
-            [o.id for matches in track_duplicates.values() for o in matches],
+            [
+                o.id
+                for matches in track_duplicates.duplicates.values()
+                for o in matches
+            ],
         )
 
     task.track_duplicates = track_duplicates
-    session.resolve_duplicates(task, found_duplicates, track_duplicates)
+    session.resolve_duplicates(
+        task, found_duplicates, track_duplicates.duplicates
+    )
 
     if task.duplicate_action is DuplicateAction.UPGRADE:
         if task.apply:
@@ -486,11 +498,7 @@ def _apply_track_duplicate_skips(task: ImportTask) -> None:
     before anything is added to the library. If no items remain, skip the
     whole task.
     """
-    skipped = [
-        item
-        for item, action in task.track_duplicate_actions.items()
-        if action is DuplicateAction.SKIP
-    ]
+    skipped = task.track_duplicates.items_with_action(DuplicateAction.SKIP)
     if not skipped:
         return
 
@@ -518,18 +526,14 @@ def _fold_into_existing_album(session: ImportSession, task: ImportTask) -> None:
     -- or none of the matches belong to an album at all -- do the new tracks
     stay in their own album.
     """
-    skipped = [
-        item
-        for item, action in task.track_duplicate_actions.items()
-        if action is DuplicateAction.SKIP
-    ]
+    skipped = task.track_duplicates.items_with_action(DuplicateAction.SKIP)
     if not skipped or task.skip or not task.is_album:
         return
 
     album_ids = {
         match.album_id
         for item in skipped
-        for match in task.track_duplicates.get(item, [])
+        for match in task.track_duplicates.old_items(item)
         if match.album_id is not None
     }
     existing_album = (
