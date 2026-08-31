@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import json
 import os
-import typing as t
 from typing import TYPE_CHECKING, Any, Protocol
 
 import flask
@@ -19,19 +18,12 @@ from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
     from beets.library import LibModel, Library
     from beetsplug._typing import JSONDict
 
-
-class WebCLIOpts(Protocol):
-    debug: bool
-
-
-# Type checking hacks
-
-if t.TYPE_CHECKING:
+if TYPE_CHECKING:
 
     class LibraryCtx(flask.ctx._AppCtxGlobals):
         lib: beets.library.Library
@@ -39,6 +31,13 @@ if t.TYPE_CHECKING:
     g = LibraryCtx()
 else:
     from flask import g
+
+
+class WebCLIOpts(Protocol):
+    debug: bool
+
+
+# Type checking hacks
 
 # Utilities.
 
@@ -125,7 +124,7 @@ def get_method() -> str:
 def resource(name: str, patchable: bool = False) -> Any:
     """Decorates a function to handle RESTful HTTP requests for a resource."""
 
-    def make_responder(retriever: t.Callable[[int], LibModel | None]) -> Any:
+    def make_responder(retriever: Callable[[int], LibModel | None]) -> Any:
         def responder(ids: Sequence[int]) -> Any:
             retrieved = [retriever(id_) for id_ in ids]
             entities = [entity for entity in retrieved if entity]
@@ -178,7 +177,7 @@ def resource_query(name: str, patchable: bool = False) -> Any:
     """Decorates a function to handle RESTful HTTP queries for resources."""
 
     def make_responder(
-        query_func: t.Callable[[Iterable[str]], Sequence[LibModel]],
+        query_func: Callable[[Iterable[str]], Sequence[LibModel]],
     ) -> Any:
         def responder(queries: Iterable[str]) -> Any:
             entities = query_func(queries)
@@ -227,7 +226,7 @@ def resource_list(name: str) -> Any:
     resources.
     """
 
-    def make_responder(list_all: t.Callable[[], Sequence[LibModel]]) -> Any:
+    def make_responder(list_all: Callable[[], Sequence[LibModel]]) -> Any:
         def responder() -> Any:
             return app.response_class(
                 json_generator(list_all(), root=name, expand=is_expand()),
@@ -535,11 +534,11 @@ class ReverseProxied:
     :param app: the WSGI application
     """
 
-    def __init__(self, app: t.Callable[..., t.Any]) -> None:
+    def __init__(self, app: Callable[..., Any]) -> None:
         self.app = app
 
     def __call__(
-        self, environ: dict[str, t.Any], start_response: t.Callable[..., t.Any]
+        self, environ: dict[str, Any], start_response: Callable[..., Any]
     ) -> Any:
         script_name = environ.get("HTTP_X_SCRIPT_NAME", "")
         if script_name:
