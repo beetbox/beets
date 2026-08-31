@@ -407,7 +407,7 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
 
     # Drop tracks resolved as duplicates before anything is added to the
     # library; this may skip the whole task.
-    _apply_track_duplicate_skips(task)
+    skipped = _apply_track_duplicate_skips(task)
     if task.skip:
         return
 
@@ -420,7 +420,7 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
 
     # When duplicate tracks were skipped, complete the existing album with
     # the remaining new tracks instead of keeping them as a new album.
-    _fold_into_existing_album(session, task)
+    _fold_into_existing_album(session, task, skipped)
 
     # If ``set_fields`` is set, set those fields to the
     # configured values.
@@ -493,14 +493,14 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
     session.log_choice(task, True)
 
 
-def _apply_track_duplicate_skips(task: ImportTask) -> None:
+def _apply_track_duplicate_skips(task: ImportTask) -> list[library.Item]:
     """Drop items whose per-track duplicate action is SKIP from the task,
     before anything is added to the library. If no items remain, skip the
-    whole task.
+    whole task. Returns the dropped items.
     """
     skipped = task.track_duplicates.items_with_action(DuplicateAction.SKIP)
     if not skipped:
-        return
+        return skipped
 
     for item in skipped:
         log.info("Skipping duplicate track: {}", displayable_path(item.path))
@@ -515,8 +515,12 @@ def _apply_track_duplicate_skips(task: ImportTask) -> None:
         )
         task.set_choice(Action.SKIP)
 
+    return skipped
 
-def _fold_into_existing_album(session: ImportSession, task: ImportTask) -> None:
+
+def _fold_into_existing_album(
+    session: ImportSession, task: ImportTask, skipped: list[library.Item]
+) -> None:
     """After skipping duplicate tracks, fold the newly added tracks into the
     existing album the skipped tracks' duplicates belong to.
 
@@ -526,7 +530,6 @@ def _fold_into_existing_album(session: ImportSession, task: ImportTask) -> None:
     -- or none of the matches belong to an album at all -- do the new tracks
     stay in their own album.
     """
-    skipped = task.track_duplicates.items_with_action(DuplicateAction.SKIP)
     if not skipped or task.skip or not task.is_album:
         return
 

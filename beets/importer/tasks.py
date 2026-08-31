@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, AnyStr, Protocol, cast
 
 import mediafile
 
-from beets import config, dbcore, library, plugins, util
+from beets import config, library, plugins, util
 from beets.autotag import AlbumMatch, Source, tag_album, tag_item
 from beets.dbcore.query import PathQuery
 from beets.util import extension
@@ -233,12 +233,9 @@ class TrackDuplicates:
         for item, tmp_item in cls._candidate_pairs(task, lib):
             if not any(tmp_item.get(k) for k in keys):
                 continue
-            dup_query = dbcore.AndQuery(
-                [
-                    tmp_item.field_query(k, tmp_item.get(k), dbcore.MatchQuery)
-                    for k in keys
-                ]
-            )
+            # `Item.duplicates_query` restricts the search to singletons;
+            # the base implementation does not.
+            dup_query = library.LibModel.duplicates_query(tmp_item, keys)
             if found := [
                 other
                 for other in lib.items(dup_query)
