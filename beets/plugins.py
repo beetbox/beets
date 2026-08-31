@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     # which uses an import from `beets.library` and `beets.imported`
     ImportStageFunc = Callable[[ImportSession, ImportTask], None]
     T = TypeVar("T", Album, Item, str)
-    TFunc = Callable[[T], str]
+    TFunc = Callable[[T], object]
     TFuncMap = dict[str, TFunc[T]]
 
     AnyModel = TypeVar("AnyModel", Album, Item)

@@ -150,7 +150,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 artifacts = [
-    "man/**"
+    "man/**",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -295,6 +295,7 @@ skip-magic-trailing-comma = true
 future-annotations = true
 select = [
     "A", # flake8-builtins
+    "ANN", # flake8-annotations
     # "ARG", # flake8-unused-arguments
     # "C4", # flake8-comprehensions
     "E", # pycodestyle
@@ -313,22 +314,33 @@ select = [
     "W", # pycodestyle
 ]
 ignore = [
+    "ANN002", # no need to document *args due to noise
+    "ANN003", # no need to document **kwargs due to noise
+    "ANN401", # we use Any type in the codebase
     "TC006", # no need to quote 'cast's since we use 'from __future__ import annotations'
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
+"docs/conf.py" = ["ANN"]
 "test/plugins/test_ftintitle.py" = ["E501"]
 "test/test_util.py" = ["E501"]
 "test/util/test_diff.py" = ["E501"]
 "test/util/test_id_extractors.py" = ["E501"]
-"test/**" = ["RUF001"] # we use Unicode characters in tests
+"test/**" = [
+    "RUF001", # we use Unicode characters in tests
+    "ANN", # we don't annotate test functions
+]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.pycodestyle]
 max-line-length = 88
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-dummy-args = true
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

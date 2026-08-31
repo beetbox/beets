@@ -8,7 +8,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 import mediafile
-from typing_extensions import override
+from typing_extensions import Self, override
 
 from beets import config
 from beets.autotag import AlbumInfo, Source, assign_items, distance
@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from beets.autotag import AlbumMatch, Distance
     from beets.library import Item
 
+    from ._typing import JSONDict
     from ._utils.musicbrainz import (
         Release,
         ReleaseRelation,
@@ -188,7 +189,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
     def _replace_artist_with_alias(
         self, raw_pseudo_release: Release, pseudo_release: AlbumInfo
-    ):
+    ) -> None:
         """Use the pseudo-release's language to search for artist
         alias if the user hasn't configured import languages."""
 
@@ -221,7 +222,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
 
     def _add_custom_tags(
         self, official_release: AlbumInfo, pseudo_release: AlbumInfo
-    ):
+    ) -> None:
         for tag_key, pseudo_key in (
             self.config["album_custom_tags"].get().items()
         ):
@@ -279,7 +280,7 @@ class PseudoAlbumInfo(AlbumInfo):
                 self[k] = v
 
     @cached_property
-    def raw_data(self):
+    def raw_data(self) -> JSONDict:
         # Info.raw_data does self.__class__(**self.copy()) which fails for
         # PseudoAlbumInfo since __init__ requires pseudo_release and
         # official_release. Construct a plain AlbumInfo instead.
@@ -310,10 +311,10 @@ class PseudoAlbumInfo(AlbumInfo):
             len(items) - len(mapping),
         )
 
-    def use_pseudo_as_ref(self):
+    def use_pseudo_as_ref(self) -> None:
         self.__dict__["_pseudo_source"] = True
 
-    def use_official_as_ref(self):
+    def use_official_as_ref(self) -> None:
         self.__dict__["_pseudo_source"] = False
 
     def __getattr__(self, attr: str) -> Any:
@@ -322,7 +323,7 @@ class PseudoAlbumInfo(AlbumInfo):
             return super().__getattr__(attr)
         return self.__dict__["_official_release"].__getattr__(attr)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         cls = self.__class__
         result = cls.__new__(cls)
 

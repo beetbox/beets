@@ -404,19 +404,14 @@ def displayable_path(
     path: PathLike | Iterable[PathLike], separator: str = "; "
 ) -> str:
     """Attempts to decode a bytestring path to a unicode object for the
-    purpose of displaying it to the user. If the `path` argument is a
-    list or a tuple, the elements are joined with `separator`.
+    purpose of displaying it to the user. If the `path` argument is an
+    iterable, the elements are joined with `separator`.
     """
 
-    if isinstance(path, (list, tuple)):
-        return separator.join(displayable_path(p) for p in path)
-    if isinstance(path, str):
-        return path
-    if not isinstance(path, bytes):
-        # A non-string object: just get its unicode representation.
-        return str(path)
+    if isinstance(path, (Path, str, bytes)):
+        return os.fsdecode(path)
 
-    return os.fsdecode(path)
+    return separator.join(displayable_path(p) for p in path)
 
 
 def syspath(path: PathLike) -> str:
@@ -850,7 +845,7 @@ class CommandOutput(NamedTuple):
 
 
 def command_output(
-    cmd: list[str] | list[bytes], shell: bool = False
+    cmd: Sequence[str] | Sequence[bytes], shell: bool = False
 ) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
@@ -943,7 +938,9 @@ def editor_command() -> str:
     )
 
 
-def interactive_open(targets: Sequence[str], command: str) -> None:
+def interactive_open(
+    targets: Sequence[Path | str | bytes], command: str
+) -> None:
     """Open the files in `targets` by `exec`ing a new `command`, given
     as a Unicode string. (The new program takes over, and Python
     execution ends: this does not fork a subprocess.)
@@ -958,11 +955,10 @@ def interactive_open(targets: Sequence[str], command: str) -> None:
     except ValueError:  # Malformed shell tokens.
         args = [command]
 
-    args.insert(0, args[0])  # for argv[0]
+    first, *rest = args
 
-    args += targets
-
-    os.execlp(*args)
+    # 'first' is duplicated because of argv[0]
+    os.execlp(*[first, first, *rest, *targets])
 
 
 def case_sensitive(path: AnyStr) -> bool:

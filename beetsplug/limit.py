@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
     from beets.library import LibModel, Library
 
+    from ._typing import JSONDict
+
 
 class LsLimitCLIOpts(Protocol):
     album: bool
@@ -69,11 +71,11 @@ lslimit_cmd.func = lslimit
 class LimitPlugin(BeetsPlugin):
     """Query limit functionality via command and query prefix."""
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         """Expose `lslimit` subcommand."""
         return [lslimit_cmd]
 
-    def queries(self):
+    def queries(self) -> JSONDict:
         class HeadQuery(FieldQuery):
             """This inner class pattern allows the query to track state."""
 
@@ -86,7 +88,7 @@ class LimitPlugin(BeetsPlugin):
                 self.fast = False
 
             @classmethod
-            def value_match(cls, pattern, value):
+            def value_match(cls, pattern: str, value: str) -> bool:
                 if cls.N is None:
                     cls.N = int(pattern)
                     if cls.N < 0:

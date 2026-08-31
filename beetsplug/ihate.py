@@ -9,6 +9,8 @@ from beets.library import Album, Item, parse_query_string
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from beets.importer import ImportSession, ImportTask
 
 
@@ -25,7 +27,9 @@ class IHatePlugin(BeetsPlugin):
         self.config.add({"warn": [], "skip": []})
 
     @classmethod
-    def do_i_hate_this(cls, task, action_patterns):
+    def do_i_hate_this(
+        cls, task: ImportTask, action_patterns: Iterable[str]
+    ) -> bool:
         """Process group of patterns (warn or skip) and returns True if
         task is hated and not whitelisted.
         """

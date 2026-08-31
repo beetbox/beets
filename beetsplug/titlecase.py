@@ -141,7 +141,7 @@ class TitlecasePlugin(BeetsPlugin):
     def the_artist_regexp(self) -> re.Pattern[str]:
         return re.compile(r"\bthe\b")
 
-    def titlecase_callback(self, word, **kwargs) -> str | None:
+    def titlecase_callback(self, word: str, **kwargs) -> str | None:
         """Callback function for words to preserve case of."""
         if preserved_word := self.preserve["words"].get(word.upper(), ""):
             return preserved_word

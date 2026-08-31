@@ -10,11 +10,12 @@ from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
     import optparse
+    from collections.abc import Sequence
 
-    from beets.library import Library
+    from beets.library import Item, Library
 
 
-def bpm(max_strokes):
+def bpm(max_strokes: int) -> float:
     """Returns average BPM (possibly of a playing song)
     listening to Enter keystrokes.
     """
@@ -38,11 +39,11 @@ def bpm(max_strokes):
 
 
 class BPMPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"max_strokes": 3, "overwrite": True})
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "bpm",
             help="determine bpm of a song by pressing a key to the rhythm",
@@ -56,7 +57,7 @@ class BPMPlugin(BeetsPlugin):
         write = ui.should_write()
         self.get_bpm(lib.items(args), write)
 
-    def get_bpm(self, items, write=False):
+    def get_bpm(self, items: Sequence[Item], write: bool = False) -> None:
         overwrite = self.config["overwrite"].get(bool)
         if len(items) > 1:
             raise ValueError("Can only get bpm of one song at time")
