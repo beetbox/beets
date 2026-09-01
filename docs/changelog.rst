@@ -85,6 +85,8 @@ Bug fixes
   ``sqlite3.InterfaceError``.
 - :doc:`plugins/aura`: When sorting by ``field``, do not exclude resources that
   have no value for ``field``.
+- :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
+  format when determining the target path. :bug:`1360`
 
 ..
     For plugin developers
