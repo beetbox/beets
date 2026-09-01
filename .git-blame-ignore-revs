@@ -315,3 +315,7 @@ ee4d6eef36269fbf99e0f566487ab21069be279f
 6b4f8fa25b744adf05a3e9199e470d663f297502
 # typing: add types to duplicates plugin
 8e4fa56acb73216f36769090b322088ff2ed5364
+# typing: add missing types to plugins
+11d41aee7d3253ae702d1519a1b8f78df4596132
+# typing: various consistency fixes
+5c3695da262ec64e52ec8057302fe2d852b62afa

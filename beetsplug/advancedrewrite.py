@@ -50,8 +50,6 @@ def rewriter(
         for query, replacement in advanced_rules:
             if query.match(item):
                 # Rewrite activated.
-                # TODO: BeetsPlugin.template_fields and album_template_fields
-                # require return value 'str' but 'list' here is legit too
                 return replacement
         # Not activated; return original value.
         return value
