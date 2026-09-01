@@ -69,7 +69,7 @@ def prefix(it: Iterable[Any], count: int) -> Iterator[Any]:
 
 
 def releases_key(
-    release: JSONDict, countries: Sequence[re.Pattern[str]], original_year: str
+    release: JSONDict, countries: Sequence[re.Pattern[str]], original_year: bool
 ) -> tuple[int, int, int, int]:
     """Used as a key to sort releases by date then preferred country"""
     date = release.get("date")
@@ -148,7 +148,7 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     # 'countries' to then sort preferred countries first.
     country_patterns = config["match"]["preferred"]["countries"].as_str_seq()
     countries = [re.compile(pat, re.I) for pat in country_patterns]
-    original_year = config["match"]["preferred"]["original_year"].as_str()
+    original_year = config["match"]["preferred"]["original_year"].get(bool)
     releases.sort(
         key=partial(
             releases_key, countries=countries, original_year=original_year
