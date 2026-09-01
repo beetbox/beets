@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class BufferedSocket:
     """Socket abstraction that allows reading by line."""
 
-    def __init__(self, host, port, sep=b"\n") -> None:
+    def __init__(self, host: str, port: int, sep: bytes = b"\n") -> None:
         if host[0] in ["/", "~"]:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.connect(os.path.expanduser(host))
@@ -36,7 +36,7 @@ class BufferedSocket:
         self.buf = b""
         self.sep = sep
 
-    def readline(self):
+    def readline(self) -> bytes:
         while self.sep not in self.buf:
             data = self.sock.recv(1024)
             if not data:
@@ -47,10 +47,10 @@ class BufferedSocket:
             return res + self.sep
         return b""
 
-    def send(self, data):
+    def send(self, data: bytes) -> None:
         self.sock.send(data)
 
-    def close(self):
+    def close(self) -> None:
         self.sock.close()
 
 
@@ -84,7 +84,12 @@ class MPDUpdatePlugin(BeetsPlugin):
             config["mpd"]["password"].as_str(),
         )
 
-    def update_mpd(self, host="localhost", port=6600, password=None) -> None:
+    def update_mpd(
+        self,
+        host: str = "localhost",
+        port: int = 6600,
+        password: str | None = None,
+    ) -> None:
         """Sends the "update" command to the MPD server indicated,
         possibly authenticating with a password first.
         """

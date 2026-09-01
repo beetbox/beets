@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import pylast
-from pylast import TopItem, _extract, _number
+from pylast import _extract, _number
 
 from beets import config, plugins, ui
 from beets.dbcore import types
@@ -12,13 +12,27 @@ from beets.exceptions import UserError
 from ._utils.playcount import update_play_counts
 
 if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+    from beets.logging import BeetsLogger as Logger
+
     from ._utils.playcount import Track
 
 API_URL = "https://ws.audioscrobbler.com/2.0/"
 
 
+class OurTrack(pylast.Track):
+    mbid: str
+
+
+class OurTopItem(NamedTuple):
+    item: OurTrack
+    weight: float
+
+
 class LastImportPlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         config["lastfm"].add({"user": "", "api_key": plugins.LASTFM_KEY})
         config["lastfm"]["user"].redact = True
@@ -26,10 +40,10 @@ class LastImportPlugin(plugins.BeetsPlugin):
         self.config.add({"per_page": 500, "retry_limit": 3})
         self.item_types = {"lastfm_play_count": types.INTEGER}
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("lastimport", help="import last.fm play-count")
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             import_lastfm(lib, self._log)
 
         cmd.func = func
@@ -43,12 +57,17 @@ class CustomUser(pylast.User):
     tracks.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     def _get_things(
-        self, method, thing, thing_type, params=None, cacheable=True
-    ):
+        self,
+        method: str,
+        thing_type: type[pylast.Track | pylast.Album],
+        params: type[pylast._Opus] | None = None,
+        cacheable: bool = True,
+        stream: bool = False,
+    ) -> tuple[list[OurTopItem], int]:
         """Returns a list of the most played thing_types by this thing, in a
         tuple with the total number of pages of results. Includes an MBID, if
         found.
@@ -59,21 +78,25 @@ class CustomUser(pylast.User):
         total_pages = int(toptracks_node.getAttribute("totalPages"))
 
         seq = []
-        for node in doc.getElementsByTagName(thing):
+        for node in doc.getElementsByTagName(thing_type.__name__.lower()):
             title = _extract(node, "name")
             artist = _extract(node, "name", 1)
             mbid = _extract(node, "mbid")
             playcount = _number(_extract(node, "playcount"))
 
-            thing = thing_type(artist, title, self.network)
-            thing.mbid = mbid
-            seq.append(TopItem(thing, playcount))
+            thing = OurTrack(artist, title, self.network)
+            thing.mbid = mbid  # type: ignore[union-attr]
+            seq.append(OurTopItem(thing, playcount))
 
         return seq, total_pages
 
     def get_top_tracks_by_page(
-        self, period=pylast.PERIOD_OVERALL, limit=None, page=1, cacheable=True
-    ):
+        self,
+        period: str = pylast.PERIOD_OVERALL,
+        limit: int | None = None,
+        page: int = 1,
+        cacheable: bool = True,
+    ) -> tuple[list[OurTopItem], int]:
         """Returns the top tracks played by a user, in a tuple with the total
         number of pages of results.
         * period: The period of time. Possible values:
@@ -91,12 +114,10 @@ class CustomUser(pylast.User):
         if limit:
             params["limit"] = limit
 
-        return self._get_things(
-            "getTopTracks", "track", pylast.Track, params, cacheable
-        )
+        return self._get_things("getTopTracks", pylast.Track, params, cacheable)
 
 
-def import_lastfm(lib, log):
+def import_lastfm(lib: Library, log: Logger) -> None:
     user = config["lastfm"]["user"].as_str()
     per_page = config["lastimport"]["per_page"].get(int)
 
@@ -152,7 +173,7 @@ def import_lastfm(lib, log):
     log.info("{} play-counts imported", found_total)
 
 
-def fetch_tracks(user, page, limit) -> tuple[list[Track], int]:
+def fetch_tracks(user: str, page: int, limit: int) -> tuple[list[Track], int]:
     network = pylast.LastFMNetwork(api_key=config["lastfm"]["api_key"].get(str))
     user_obj = CustomUser(user, network)
     results, total_pages = user_obj.get_top_tracks_by_page(
@@ -160,10 +181,12 @@ def fetch_tracks(user, page, limit) -> tuple[list[Track], int]:
     )
     return [
         {
-            "mbid": track.item.mbid or "",
-            "artist": track.item.artist.name.strip(),
-            "name": track.item.title.strip(),
-            "playcount": int(track.weight),
+            "mbid": t.item.mbid or "",
+            "artist": (
+                n.strip() if ((a := t.item.artist) and (n := a.name)) else ""
+            ),
+            "name": ti.strip() if ((i := t.item) and (ti := i.title)) else "",
+            "playcount": int(t.weight),
         }
-        for track in results
+        for t in results
     ], total_pages

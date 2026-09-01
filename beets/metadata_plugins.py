@@ -60,7 +60,9 @@ def get_metadata_source(name: str) -> MetadataSourcePlugin | None:
 
 
 @contextmanager
-def maybe_handle_plugin_error(plugin: MetadataSourcePlugin, method_name: str):
+def maybe_handle_plugin_error(
+    plugin: MetadataSourcePlugin, method_name: str
+) -> Iterator[None]:
     """Safely call a plugin method, catching and logging exceptions."""
     if config["raise_on_error"]:
         yield

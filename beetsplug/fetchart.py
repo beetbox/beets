@@ -9,7 +9,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal, Protocol
 
 import confuse
 import requests
@@ -28,6 +28,12 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
     from beets.logging import BeetsLogger as Logger
+
+
+class FetchArtCLIOpts(Protocol):
+    force: bool
+    quiet: bool
+
 
 try:
     from bs4 import BeautifulSoup, Tag
@@ -613,7 +619,7 @@ class AlbumArtOrg(RemoteArtSource):
         album: Album,
         plugin: FetchArtPlugin,
         paths: Sequence[bytes] | None,
-    ):
+    ) -> Iterator[Any]:
         """Return art URL from AlbumArt.org using album ASIN."""
         if not album.asin:
             return
@@ -645,7 +651,7 @@ class GoogleImages(RemoteArtSource):
         self.cx = (self._config["google_engine"].get(),)
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add(
             {
                 "google_key": None,
@@ -722,7 +728,7 @@ class FanartTV(RemoteArtSource):
         self.client_key = self._config["fanarttv_key"].get()
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add({"fanarttv_key": None})
         config["fanarttv_key"].redact = True
 
@@ -1548,7 +1554,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             help="quiet mode: do not output albums that already have artwork",
         )
 
-        def func(lib: Library, opts, args) -> None:
+        def func(lib: Library, opts: FetchArtCLIOpts, args: list[str]) -> None:
             self.batch_fetch_art(lib, lib.albums(args), opts.force, opts.quiet)
 
         cmd.func = func

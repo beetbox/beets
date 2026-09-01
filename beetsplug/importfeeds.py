@@ -22,6 +22,8 @@ from beets.util import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.importer import ImportSession
     from beets.library import Album, Item, Library
 
@@ -29,7 +31,7 @@ if TYPE_CHECKING:
 M3U_DEFAULT_NAME = "imported.m3u"
 
 
-def _build_m3u_session_filename(basename):
+def _build_m3u_session_filename(basename: str) -> bytes:
     """Builds unique m3u filename by putting current date between given
     basename and file ending."""
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
@@ -41,7 +43,7 @@ def _build_m3u_session_filename(basename):
     )
 
 
-def _build_m3u_filename(basename):
+def _build_m3u_filename(basename: str) -> bytes:
     """Builds unique m3u filename by appending given basename to current
     date."""
     basename = re.sub(r"[\s,/\\'\"]", "_", basename)
@@ -53,7 +55,7 @@ def _build_m3u_filename(basename):
     )
 
 
-def _write_m3u(m3u_path, items_paths):
+def _write_m3u(m3u_path: bytes, items_paths: Sequence[bytes]) -> None:
     """Append relative paths to items into m3u file."""
     mkdirall(m3u_path)
     with open(syspath(m3u_path), "ab") as f:
@@ -85,13 +87,15 @@ class ImportFeedsPlugin(BeetsPlugin):
         self.register_listener("item_imported", self.item_imported)
         self.register_listener("import_begin", self.import_begin)
 
-    def get_feeds_dir(self):
+    def get_feeds_dir(self) -> str | bytes:
         feeds_dir = self.config["dir"].get()
         if feeds_dir:
             return os.path.expanduser(bytestring_path(feeds_dir))
         return config["directory"].as_filename()
 
-    def _record_items(self, lib, basename, items):
+    def _record_items(
+        self, lib: Library, basename: str, items: Sequence[Item]
+    ) -> None:
         """Records relative paths to the given items for each feed format"""
         feedsdir = bytestring_path(self.get_feeds_dir())
         formats = self.config["formats"].as_str_seq()

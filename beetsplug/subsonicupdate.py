@@ -57,7 +57,7 @@ class SubsonicUpdate(BeetsPlugin):
     def spl_update(self) -> None:
         self.register_listener("cli_exit", self.start_scan)
 
-    def __create_token(self):
+    def __create_token(self) -> tuple[str, str]:
         """Create salt and token from given password.
 
         :return: The generated salt and hashed token
@@ -73,7 +73,7 @@ class SubsonicUpdate(BeetsPlugin):
         # Put together the payload of the request to the server and the URL
         return salt, token
 
-    def __format_url(self, endpoint):
+    def __format_url(self, endpoint: str) -> str:
         """Get the Subsonic URL to trigger the given endpoint.
         Uses either the url config option or the deprecated host, port,
         and context_path config options together.

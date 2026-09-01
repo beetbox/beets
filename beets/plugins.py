@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     # which uses an import from `beets.library` and `beets.imported`
     ImportStageFunc = Callable[[ImportSession, ImportTask], None]
     T = TypeVar("T", Album, Item, str)
-    TFunc = Callable[[T], str]
+    TFunc = Callable[[T], object]
     TFuncMap = dict[str, TFunc[T]]
 
     AnyModel = TypeVar("AnyModel", Album, Item)
@@ -73,7 +73,7 @@ class PluginImportError(ImportError):
     from other errors.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         super().__init__(f"Could not import plugin {name}")
 
 
@@ -162,7 +162,7 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
         ):
             setattr(cls, name, method)
 
-    def __init__(self, name: str | None = None):
+    def __init__(self, name: str | None = None) -> None:
         """Perform one-time plugin setup."""
 
         self.name = name or self.__module__.split(".")[-1]

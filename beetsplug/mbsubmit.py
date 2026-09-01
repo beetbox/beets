@@ -10,16 +10,20 @@ implemented by MusicBrainz yet.
 from __future__ import annotations
 
 import subprocess
+from functools import cached_property
 from typing import TYPE_CHECKING
 
 from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
 from beets.util import PromptChoice, displayable_path
-from beetsplug.info import print_data
 
 if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Sequence
+
     from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
 
 
 class MBSubmitPlugin(BeetsPlugin):
@@ -58,7 +62,7 @@ class MBSubmitPlugin(BeetsPlugin):
             ]
         return []
 
-    def picard(self, session, task):
+    def picard(self, session: ImportSession, task: ImportTask) -> None:
         paths = []
         for p in task.paths:
             paths.append(displayable_path(p))
@@ -69,17 +73,21 @@ class MBSubmitPlugin(BeetsPlugin):
         except OSError as exc:
             self._log.error("Could not open picard, got error:\n{}", exc)
 
-    def print_tracks(self, session, task):
-        for i in sorted(task.items, key=lambda i: i.track):
-            print_data(None, i, self.config["format"].as_str())
+    @cached_property
+    def fmt(self) -> str:
+        return self.config["format"].as_str()
 
-    def commands(self):
+    def print_tracks(self, session: ImportSession, task: ImportTask) -> None:
+        for i in sorted(task.items, key=lambda i: i.track):
+            ui.print_(format(i, self.fmt))
+
+    def commands(self) -> list[ui.Subcommand]:
         """Add beet UI commands for mbsubmit."""
         mbsubmit_cmd = ui.Subcommand(
             "mbsubmit", help="Submit Tracks to MusicBrainz"
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             items = lib.items(args)
             self._mbsubmit(items)
 
@@ -87,7 +95,7 @@ class MBSubmitPlugin(BeetsPlugin):
 
         return [mbsubmit_cmd]
 
-    def _mbsubmit(self, items):
+    def _mbsubmit(self, items: Sequence[Item]) -> None:
         """Print track information to be submitted to MusicBrainz."""
         for i in sorted(items, key=lambda i: i.track):
-            print_data(None, i, self.config["format"].as_str())
+            ui.print_(format(i, self.fmt))

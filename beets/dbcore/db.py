@@ -54,6 +54,8 @@ if TYPE_CHECKING:
     from sqlite3 import Connection
     from types import TracebackType
 
+    from beets.util.functemplate import FieldTFuncs
+
     from ..util import PathLike
     from .query import FieldQueryType, Query, SQLiteType
     from .sort import FieldSort, Sort
@@ -348,7 +350,7 @@ class Model(ABC, Generic[D]):
         # gather the getter mapping every time.
         raise NotImplementedError()
 
-    def _template_funcs(self) -> Mapping[str, Callable[[str], str]]:
+    def _template_funcs(self) -> FieldTFuncs:
         """Return a mapping from function names to text-transformer
         functions.
         """
@@ -653,7 +655,7 @@ class Model(ABC, Generic[D]):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: D | None = None):
+    def add(self, db: D | None = None) -> None:
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -681,7 +683,7 @@ class Model(ABC, Generic[D]):
 
     def formatted(
         self,
-        included_keys: str = FormattedMapping.ALL_KEYS,
+        included_keys: str | list[str] = FormattedMapping.ALL_KEYS,
         for_path: bool = False,
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted

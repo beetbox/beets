@@ -299,3 +299,19 @@ f37306b0cc17f17291ea5010178f190a95b29fd5
 27900f58fbeba06483b77c677045ad1df8e9af45
 # typing: rename AnyLibModel -> AlbumOrItem
 33a01fe0b37942a38c8b88d0fc8167edd02ca81b
+# typing: add types to command handlers
+14eabc60600ff3c8ef1908100ae7abd3aa998bc4
+# typing: add missing core annotations
+029de94b206bd64aecc24f24bf011413b86d78e7
+# typing: add annotations to bpd plugin
+1ae87783858f53b62ccdc4f9400e035ef03f843a
+# typing: add annotations to API and export plugins
+ee4d6eef36269fbf99e0f566487ab21069be279f
+# typing: add annotations to metadata source plugins
+21e045795d2478a7f45a81bbc095ccf3aa69d59f
+# typing: add annotations to mpdstats
+4f0ac15b99cc240a6b611d2b70f29f1e576d6418
+# typing: add annotations to thumbnails
+6b4f8fa25b744adf05a3e9199e470d663f297502
+# typing: add types to duplicates plugin
+8e4fa56acb73216f36769090b322088ff2ed5364

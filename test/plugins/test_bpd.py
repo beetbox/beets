@@ -1010,6 +1010,12 @@ class BPDDatabaseTest(BPDTestHelper):
         self._assert_ok(response)
         assert self.item1.title == response.data["Title"]
 
+    def test_cmd_search_any(self):
+        with self.run_bpd() as client:
+            response = client.send_command("search", "any", "1")
+        self._assert_ok(response)
+        assert self.item1.title == response.data["Title"]
+
     def test_cmd_list(self):
         with self.run_bpd() as client:
             responses = client.send_commands(
