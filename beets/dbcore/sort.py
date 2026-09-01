@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.dbcore.db import AnyModel, Model
 
 
@@ -19,8 +21,8 @@ class Sort:
         """
         return None
 
-    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
-        """Sort the list of objects and return a list."""
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        """Sort the given sequence of model objects."""
         return sorted(items)
 
     def is_slow(self) -> bool:
@@ -72,7 +74,7 @@ class MultipleSort(Sort):
                 return True
         return False
 
-    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
         slow_sorts = []
         switch_slow = False
         for sort in reversed(self.sorts):
@@ -114,7 +116,7 @@ class FieldSort(Sort):
         self.ascending = ascending
         self.case_insensitive = case_insensitive
 
-    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
+    def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
         # TODO: Support flexible attributes with different types (e.g. a mix
         # of strings and numbers) without falling over.
 
@@ -186,7 +188,7 @@ class SlowFieldSort(FieldSort):
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
 
-    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
         return items
 
     def __nonzero__(self) -> bool:
@@ -214,7 +216,7 @@ class SmartArtistSort(FieldSort):
 
         return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
 
-    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
+    def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
         def key(obj: Model) -> str | bytes:
             val = obj[f"{self.field}_sort"] or obj[self.field]
             return val.lower() if self.case_insensitive else val

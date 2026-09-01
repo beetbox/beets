@@ -26,7 +26,6 @@ from beets.util import (
     syspath,
 )
 from beets.util.deprecation import maybe_replace_legacy_field
-from beets.util.functemplate import Template, template
 from beets.util.pathformats import PF_KEY_DEFAULT
 
 from .exceptions import FileOperationError, ReadError, WriteError
@@ -39,13 +38,14 @@ if TYPE_CHECKING:
     from beets.dbcore import Results
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort
+    from beets.util.functemplate import FieldTFuncs
     from beets.util.pathformats import PathFormat
 
     from .library import Library
 
 log = logging.getLogger("beets")
 
-AnyLibModel = TypeVar("AnyLibModel", "Album", "Item")
+AlbumOrItem = TypeVar("AlbumOrItem", "Album", "Item")
 
 
 class LibModel(dbcore.Model["Library"]):
@@ -83,7 +83,7 @@ class LibModel(dbcore.Model["Library"]):
         """The path to the entity as pathlib.Path."""
         return Path(os.fsdecode(self.path))
 
-    def _template_funcs(self) -> Mapping[str, Callable[[str], str]]:
+    def _template_funcs(self) -> FieldTFuncs:
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
         return funcs
@@ -92,9 +92,12 @@ class LibModel(dbcore.Model["Library"]):
         super().store(fields)
         plugins.send("database_change", lib=self.db, model=self)
 
-    def remove(self) -> None:
+    def _remove(self) -> None:
         super().remove()
         plugins.send("database_change", lib=self.db, model=self)
+
+    def remove(self, delete: bool = False) -> None:
+        raise NotImplementedError
 
     def add(self, lib: Library | None = None) -> None:
         # super().add() calls self.store(), which sends `database_change`,
@@ -102,10 +105,9 @@ class LibModel(dbcore.Model["Library"]):
         super().add(lib)
 
     def __format__(self, spec: str) -> str:
-        if not spec:
-            spec = beets.config[self._format_config_key].as_str()
-        assert isinstance(spec, str)
-        return self.evaluate_template(spec)
+        return self.evaluate_template(
+            spec or beets.config[self._format_config_key].as_str()
+        )
 
     def __str__(self) -> str:
         return format(self)
@@ -388,7 +390,7 @@ class Album(LibModel):
 
         Set with_items to False to avoid removing the album's items.
         """
-        super().remove()
+        super()._remove()
 
         # Send a 'album_removed' signal to plugins
         plugins.send("album_removed", album=self)
@@ -546,8 +548,8 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = template(beets.config["art_filename"].as_str())
-        subpath = self.evaluate_template(filename_tmpl, True)
+        filename_tmpl = beets.config["art_filename"].as_str()
+        subpath = self.evaluate_template(filename_tmpl, for_path=True)
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
         subpath = util.sanitize_path(subpath, replacements=self.db.replacements)
@@ -1123,7 +1125,7 @@ class Item(LibModel):
         If `with_album`, then the item's album (if any) is removed
         if the item was the last in the album.
         """
-        super().remove()
+        super()._remove()
 
         # Remove the album if it is empty.
         if with_album:
@@ -1223,6 +1225,7 @@ class Item(LibModel):
         relative_to_libdir: bool = False,
         basedir: bytes | None = None,
         path_formats: list[PathFormat] | None = None,
+        extension: str | None = None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1250,19 +1253,16 @@ class Item(LibModel):
                     break
             else:
                 assert False, "no default path format"
-        if isinstance(path_format, Template):
-            subpath_tmpl = path_format
-        else:
-            subpath_tmpl = template(path_format)
-
         # Evaluate the selected template.
-        subpath = self.evaluate_template(subpath_tmpl, True)
+        subpath = self.evaluate_template(path_format, for_path=True)
 
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
 
         lib_path_str, fallback = util.legalize_path(
-            subpath, self.db.replacements, self.filepath.suffix
+            subpath,
+            self.db.replacements,
+            f".{extension}" if extension else self.filepath.suffix,
         )
         if fallback:
             # Print an error message if legalization fell back to
@@ -1315,7 +1315,7 @@ class DefaultTemplateFunctions:
         self.item = item
         self.lib = lib
 
-    def functions(self) -> dict[str, Callable[..., str]]:
+    def functions(self) -> dict[str, Callable[..., object]]:
         """Return a dictionary containing the functions defined in this
         object.
 
@@ -1415,7 +1415,8 @@ class DefaultTemplateFunctions:
         if memoval is not None:
             return memoval
 
-        album: Album = self.lib.get_album(album_id)  # type: ignore[assignment]
+        if not (album := self.lib.get_album(album_id)):
+            return ""
 
         return self._tmpl_unique(
             "aunique",

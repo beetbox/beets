@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from sys import stderr
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import confuse
 
@@ -10,11 +10,11 @@ from .util.deprecation import deprecate_imports
 if TYPE_CHECKING:
     from .logging import Logger
 
-__version__ = "2.12.0"
+__version__ = "2.13.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     """Handle deprecated imports."""
     return deprecate_imports(
         __name__, {"art": "beetsplug._utils", "vfs": "beetsplug._utils"}, name

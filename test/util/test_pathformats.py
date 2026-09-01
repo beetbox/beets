@@ -6,9 +6,7 @@ def test_get_path_formats(config):
     # override the default 'singleton' path and add a new one
     config["paths"].set({"singleton": "bar", "new": "hello"})
 
-    path_formats = get_path_formats(config["paths"])
-    actual_path_formats = [(key, tmpl.original) for key, tmpl in path_formats]
-    assert actual_path_formats == [
+    assert get_path_formats(config["paths"]) == [
         ("singleton:true", "bar"),
         ("new", "hello"),
         # defaults

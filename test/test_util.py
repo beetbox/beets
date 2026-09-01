@@ -122,7 +122,7 @@ class UtilTest(unittest.TestCase):
 class PathConversionTest(unittest.TestCase):
     def test_syspath_windows_format(self):
         with _common.platform_windows():
-            path = os.path.join("a", "b", "c")
+            path = Path("a") / "b" / "c"
             outpath = util.syspath(path)
         assert isinstance(outpath, str)
         assert outpath.startswith("\\\\?\\")
@@ -138,7 +138,7 @@ class PathConversionTest(unittest.TestCase):
 
     def test_syspath_posix_unchanged(self):
         with _common.platform_posix():
-            path = os.path.join("a", "b", "c")
+            path = str(Path("a") / "b" / "c")
             outpath = util.syspath(path)
         assert path == outpath
 
@@ -230,7 +230,7 @@ class TestPlurality:
             Item(albumartist="aartist", label="label 3", album="another album"),
         ]
 
-        likelies, consensus = util.get_most_common_tags(items)
+        likelies = util.get_most_common_tags(items)
 
         assert likelies["albumartist"] == "aartist"
         assert likelies["album"] == "album"
@@ -238,11 +238,6 @@ class TestPlurality:
         assert likelies["artist"] == "aartist"
         assert likelies["label"] == "label 1"
         assert likelies["year"] == 0
-
-        assert consensus["year"]
-        assert consensus["albumartist"]
-        assert not consensus["album"]
-        assert not consensus["label"]
 
 
 class HelperTest(unittest.TestCase):
@@ -428,6 +423,11 @@ class UniquePathTest(BeetsTestCase):
         path = util.unique_path(self.base / "x.1.mp3")
         assert path == str(self.base / "x.3.mp3")
 
+    def test_conflicting_file_with_multi_digit_number_increases_number(self):
+        (self.base / "w.10.mp3").touch()
+        path = util.unique_path(self.base / "w.10.mp3")
+        assert path == str(self.base / "w.11.mp3")
+
 
 class MkDirAllTest(BeetsTestCase):
     def test_mkdirall(self):
@@ -492,3 +492,25 @@ class TestAsciifyPath:
         monkeypatch.setattr("beets.util.os.altsep", "\\")
 
         assert util.asciify_path("caf\xe9\\na\xefve") == "cafe/naive"
+
+
+class EditorCommandTest(unittest.TestCase):
+    def test_editor_command_from_config(self):
+        """editor config option takes priority over environment variables."""
+        from beets import config
+
+        config.set({"editor": "nano"})
+        with patch.dict(os.environ, {"VISUAL": "vim", "EDITOR": "emacs"}):
+            assert util.editor_command() == "nano"
+
+    def test_editor_command_falls_back_to_visual(self):
+        """Falls back to $VISUAL when no editor config is set."""
+        with patch.dict(
+            os.environ, {"VISUAL": "vim", "EDITOR": "emacs"}, clear=True
+        ):
+            assert util.editor_command() == "vim"
+
+    def test_editor_command_falls_back_to_editor_env(self):
+        """Falls back to $EDITOR when no editor config or $VISUAL is set."""
+        with patch.dict(os.environ, {"EDITOR": "emacs"}, clear=True):
+            assert util.editor_command() == "emacs"

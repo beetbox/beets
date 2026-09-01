@@ -1,11 +1,21 @@
 """The `fields` command: show available fields for queries and format strings."""
 
+from __future__ import annotations
+
 import textwrap
+from typing import TYPE_CHECKING
 
 from beets import library, ui
 
+if TYPE_CHECKING:
+    import optparse
+    import sqlite3
+    from collections.abc import Iterable, Sequence
 
-def _print_keys(query):
+    from beets.library import Library
+
+
+def _print_keys(query: Sequence[sqlite3.Row]) -> None:
     """Given a SQLite query result, print the `key` field of each
     returned row, with indentation of 2 spaces.
     """
@@ -13,8 +23,8 @@ def _print_keys(query):
         ui.print_(f"  {row['key']}")
 
 
-def fields_func(lib, opts, args):
-    def _print_rows(names):
+def fields_func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+    def _print_rows(names: Iterable[str]) -> None:
         ui.print_(textwrap.indent("\n".join(sorted(names)), "  "))
 
     ui.print_("Item fields:")

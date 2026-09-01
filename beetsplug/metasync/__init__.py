@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from importlib import import_module
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Protocol
 
 from confuse import ConfigValueError
 
@@ -12,7 +12,11 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    from confuse import ConfigView
+
     from beets.dbcore import types
+    from beets.library import Item, Library
+    from beets.logging import BeetsLogger as Logger
 
 METASYNC_MODULE = "beetsplug.metasync"
 
@@ -20,19 +24,24 @@ METASYNC_MODULE = "beetsplug.metasync"
 SOURCES = {"amarok": "Amarok", "itunes": "Itunes"}
 
 
+class MetaSyncCLIOpts(Protocol):
+    pretend: bool | None
+    sources: list[str]
+
+
 class MetaSource(metaclass=ABCMeta):
     item_types: ClassVar[dict[str, types.Type]]
 
-    def __init__(self, config, log):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         self.config = config
         self._log = log
 
     @abstractmethod
-    def sync_from_source(self, item):
+    def sync_from_source(self, item: Item) -> None:
         pass
 
 
-def load_meta_sources():
+def load_meta_sources() -> dict[str, type[MetaSource]]:
     """Returns a dictionary of all the MetaSources
     E.g., {'itunes': Itunes} with isinstance(Itunes, MetaSource) true
     """
@@ -48,7 +57,7 @@ def load_meta_sources():
 META_SOURCES = load_meta_sources()
 
 
-def load_item_types():
+def load_item_types() -> dict[str, types.Type]:
     """Returns a dictionary containing the item_types of all the MetaSources"""
     item_types = {}
     for meta_source in META_SOURCES.values():
@@ -59,10 +68,10 @@ def load_item_types():
 class MetaSyncPlugin(BeetsPlugin):
     item_types = load_item_types()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "metasync", help="update metadata from music player libraries"
         )
@@ -84,7 +93,9 @@ class MetaSyncPlugin(BeetsPlugin):
         cmd.func = self.func
         return [cmd]
 
-    def func(self, lib, opts, args):
+    def func(
+        self, lib: Library, opts: MetaSyncCLIOpts, args: list[str]
+    ) -> None:
         """Command handler for the metasync function."""
         pretend = opts.pretend
 

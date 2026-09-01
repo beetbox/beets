@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from beets import library, util
 from beets.test import _common
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestCase, PluginTestHelper
 from beetsplug.ipfs import IPFSPlugin
 
 
@@ -22,11 +23,11 @@ class IPFSPluginTest(PluginTestCase):
             want_item = test_album.items()[2]
             for check_item in added_album.items():
                 if check_item.get("ipfs", with_album=False):
-                    ipfs_item = os.fsdecode(os.path.basename(want_item.path))
-                    want_path = util.normpath(
-                        os.path.join("/ipfs", test_album.ipfs, ipfs_item)
+                    ipfs_item = want_item.filepath.name
+                    want_path = (
+                        Path("/ipfs").resolve() / test_album.ipfs / ipfs_item
                     )
-                    assert check_item.path == want_path
+                    assert check_item.filepath == want_path
                     assert (
                         check_item.get("ipfs", with_album=False)
                         == want_item.ipfs
@@ -44,11 +45,8 @@ class IPFSPluginTest(PluginTestCase):
         remote_lib._close()
 
         ipfs = IPFSPlugin()
-        added_lib = ipfs.get_remote_lib(self.lib)
-        try:
+        with ipfs.remote_lib(self.lib) as added_lib:
             assert added_lib.path == remote_dir / "joined.db"
-        finally:
-            added_lib._close()
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(3)]
@@ -77,3 +75,25 @@ class IPFSPluginTest(PluginTestCase):
         album.store(inherit=False)
 
         return album
+
+
+class TestIPFSPlay(PluginTestHelper):
+    plugin = "ipfs"
+    db_on_disk = True
+
+    def test_ipfs_play(self, monkeypatch):
+        """Test that ipfs successfully calls PlayPlugin's play method."""
+        # do not attempt to actually play the music
+        monkeypatch.setattr("beetsplug.play.play", lambda *_: None)
+
+        # we need some music to play
+        self.add_album_fixture()
+
+        # create remote lib in the expected place,
+        # see IPFSPlugin._remote_libs_path
+        remote_dir = Path(os.fsdecode(self.lib.path)).parent / "remotes"
+        remote_dir.mkdir()
+        util.copy(self.lib.path, remote_dir / "joined.db")
+
+        # check that we can play without any errors
+        IPFSPlugin().ipfs_play(self.lib, None, [])

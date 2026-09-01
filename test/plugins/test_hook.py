@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
@@ -11,6 +12,8 @@ from beets.test.helper import PluginTestHelper
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from beets.events import EventType
 
 
 class HookTestCase(PluginTestHelper):
@@ -22,13 +25,13 @@ class HookTestCase(PluginTestHelper):
 
 
 class TestHookLogs(HookTestCase):
-    HOOK: plugins.EventType = "write"
+    HOOK: EventType = "write"
 
     def _configure_hook(self, command: str) -> None:
         config = {"hooks": [self._get_hook(self.HOOK, command)]}
 
         with self.configure_plugin(config):
-            plugins.send(self.HOOK)
+            plugins.send(self.HOOK)  # type: ignore[arg-type]
 
     def test_hook_empty_command(self, caplog: pytest.LogCaptureFixture):
         with caplog.at_level("DEBUG"):
@@ -56,7 +59,7 @@ class TestHookLogs(HookTestCase):
 
 
 class TestHookCommand(HookTestCase):
-    EVENTS: ClassVar[list[plugins.EventType]] = ["write", "after_write"]
+    EVENTS: ClassVar[list[EventType]] = ["write", "after_write"]
 
     @pytest.fixture(autouse=True)
     def setUp(self):
@@ -79,7 +82,9 @@ class TestHookCommand(HookTestCase):
         2. Assert that a file has been created under the original path, which proves
            that the configured hook command has been executed.
         """
-        events_with_paths = list(zip(self.EVENTS, self.paths))
+        events_with_paths: list[tuple[EventType, str]] = list(
+            zip(self.EVENTS, self.paths)
+        )
         hooks = [
             self._get_hook(e, f"touch {make_test_path(e, p)}")
             for e, p in events_with_paths
@@ -88,10 +93,10 @@ class TestHookCommand(HookTestCase):
         with self.configure_plugin({"hooks": hooks}):
             for event, path in events_with_paths:
                 if send_path_kwarg:
-                    plugins.send(event, path=path)
+                    plugins.send(event, path=path)  # type: ignore[call-overload]
                 else:
-                    plugins.send(event)
-                assert os.path.isfile(path)
+                    plugins.send(event)  # type: ignore[arg-type]
+                assert Path(os.fsdecode(path)).is_file()
 
     @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_no_arguments(self):

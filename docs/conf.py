@@ -18,8 +18,8 @@ copyright = "2016, Adrian Sampson"  # noqa: A001
 
 master_doc = "index"
 language = "en"
-version = "2.12"
-release = "2.12.0"
+version = "2.13"
+release = "2.13.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -142,11 +142,11 @@ html_static_path = ["_static"]
 html_css_files = ["beets.css"]
 
 
-def skip_member(app, what, name, obj, skip, options):
+def skip_member(app, what, name: str, obj, skip, options):
     if name.startswith("_"):
         return True
     return skip
 
 
-def setup(app):
+def setup(app) -> None:
     app.connect("autodoc-skip-member", skip_member)

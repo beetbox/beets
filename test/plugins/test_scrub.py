@@ -1,5 +1,3 @@
-import os
-
 from mediafile import MediaFile
 
 from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
@@ -14,7 +12,7 @@ class TestScrubbedImport(AsIsImporterMixin, PluginMixin, ImportHelper):
             self.run_asis_importer(write=True)
 
         for item in self.lib.items():
-            imported_file = MediaFile(os.path.join(item.path))
+            imported_file = MediaFile(item.filepath)
             assert imported_file.artist == "Tag Artist"
             assert imported_file.album == "Tag Album"
 
@@ -23,7 +21,7 @@ class TestScrubbedImport(AsIsImporterMixin, PluginMixin, ImportHelper):
             self.run_asis_importer(write=True)
 
         for item in self.lib.items():
-            imported_file = MediaFile(os.path.join(item.path))
+            imported_file = MediaFile(item.filepath)
             assert imported_file.artist == "Tag Artist"
             assert imported_file.album == "Tag Album"
 
@@ -32,6 +30,6 @@ class TestScrubbedImport(AsIsImporterMixin, PluginMixin, ImportHelper):
             self.run_asis_importer(write=False)
 
         for item in self.lib.items():
-            imported_file = MediaFile(os.path.join(item.path))
+            imported_file = MediaFile(item.filepath)
             assert imported_file.artist is None
             assert imported_file.album is None

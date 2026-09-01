@@ -251,7 +251,8 @@ and day are optional. If you leave out the day, for example, you will get
 matches for the whole month.
 
 Date *intervals*, like the numeric intervals described above, are separated by
-two dots (``..``). You can specify a start, an end, or both.
+two dots (``..``). You can specify a start, an end, or both. An interval written
+back to front, such as ``2010..2008``, means the same as ``2008..2010``.
 
 Here is an example that finds all the albums added in 2008:
 

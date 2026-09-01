@@ -8,6 +8,9 @@ Put something like the following in your config.yaml to configure:
         token: token
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from urllib.parse import urlencode, urljoin
 from xml.etree import ElementTree
 
@@ -16,10 +19,18 @@ import requests
 from beets import config
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
+
 
 def get_music_section(
-    host, port, token, library_name, secure, ignore_cert_errors
-):
+    host: str,
+    port: int,
+    token: str,
+    library_name: str,
+    secure: bool,
+    ignore_cert_errors: bool,
+) -> str | None:
     """Getting the section key for the music library in Plex."""
     api_endpoint = append_token("library/sections", token)
     url = urljoin(f"{get_protocol(secure)}://{host}:{port}", api_endpoint)
@@ -35,7 +46,14 @@ def get_music_section(
     return None
 
 
-def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
+def update_plex(
+    host: str,
+    port: int,
+    token: str,
+    library_name: str,
+    secure: bool,
+    ignore_cert_errors: bool,
+) -> requests.Response:
     """Ignore certificate errors if configured to."""
     if ignore_cert_errors:
         import urllib3
@@ -55,21 +73,21 @@ def update_plex(host, port, token, library_name, secure, ignore_cert_errors):
     return requests.get(url, verify=not ignore_cert_errors, timeout=10)
 
 
-def append_token(url, token):
+def append_token(url: str, token: str) -> str:
     """Appends the Plex Home token to the api call if required."""
     if token:
         url += f"?{urlencode({'X-Plex-Token': token})}"
     return url
 
 
-def get_protocol(secure):
+def get_protocol(secure: bool) -> str:
     if secure:
         return "https"
     return "http"
 
 
 class PlexUpdate(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         # Adding defaults.
@@ -87,11 +105,11 @@ class PlexUpdate(BeetsPlugin):
         config["plex"]["token"].redact = True
         self.register_listener("database_change", self.listen_for_db_change)
 
-    def listen_for_db_change(self, lib, model):
+    def listen_for_db_change(self, lib: Library, model: LibModel) -> None:
         """Listens for beets db change and register the update for the end"""
         self.register_listener("cli_exit", self.update)
 
-    def update(self, lib):
+    def update(self, lib: Library) -> None:
         """When the client exists try to send refresh request to Plex server."""
         self._log.info("Updating Plex library...")
 

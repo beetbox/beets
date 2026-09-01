@@ -33,6 +33,7 @@ from .states import DISAMBIGUATION_RE, ArtistState, TracklistState
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
 
+    from beets.importer import ImportSession
     from beets.library import Item
     from beets.metadata_plugins import QueryType, SearchParams
 
@@ -78,7 +79,7 @@ FIELDS_TO_DISCOGS_KEYS = {
 
 
 class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -123,7 +124,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         return field_by_tag
 
-    def setup(self, session=None) -> None:
+    def setup(self, session: ImportSession | None = None) -> None:
         """Create the `discogs_client` field. Authenticate if necessary."""
         c_key = self.config["apikey"].as_str()
         c_secret = self.config["apisecret"].as_str()
@@ -292,9 +293,19 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
         """Search Discogs releases and return raw result mappings with IDs."""
-        results = self.discogs_client.search(params.query, **params.filters)
-        results.per_page = params.limit
-        return [r.data for r in results.page(1)]
+
+        def search() -> list[IDResponse]:
+            results = self.discogs_client.search(params.query, **params.filters)
+            results.per_page = params.limit
+            return [r.data for r in results.page(1)]
+
+        try:
+            return search()
+        except json.JSONDecodeError:
+            self._log.debug(
+                "Discogs returned an invalid JSON search response; retrying"
+            )
+            return search()
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:

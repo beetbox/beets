@@ -76,5 +76,5 @@ def sanitize_pairs(
 
 
 class UnknownPairError(Exception):
-    def __init__(self, k, v):
+    def __init__(self, k: str, v: str) -> None:
         super().__init__(f"setting {k}={v} is not recognized")
