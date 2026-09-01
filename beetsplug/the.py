@@ -1,7 +1,6 @@
 """Moves patterns in path formats (suitable for moving articles)."""
 
 import re
-from typing import ClassVar
 
 from beets.plugins import BeetsPlugin
 
@@ -14,9 +13,9 @@ FORMAT = "{}, {}"
 
 
 class ThePlugin(BeetsPlugin):
-    patterns: ClassVar[list[str]] = []
+    patterns: list[str]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.template_funcs["the"] = self.the_template_func
@@ -50,7 +49,7 @@ class ThePlugin(BeetsPlugin):
         if not self.patterns:
             self._log.warning("no patterns defined!")
 
-    def unthe(self, text, pattern):
+    def unthe(self, text: str, pattern: str) -> str:
         """Moves pattern in the path format string or strips it
 
         text -- text to handle
@@ -58,13 +57,13 @@ class ThePlugin(BeetsPlugin):
         strip -- if True, pattern will be removed
         """
         if text:
-            r = re.compile(pattern, flags=re.IGNORECASE)
+            m = re.compile(pattern, flags=re.IGNORECASE)
             try:
-                t = r.findall(text)[0]
+                t = m.findall(text)[0]
             except IndexError:
                 return text
             else:
-                r = re.sub(r, "", text).strip()
+                r = re.sub(m, "", text).strip()
                 if self.config["strip"]:
                     return r
                 fmt = self.config["format"].as_str()
@@ -72,7 +71,7 @@ class ThePlugin(BeetsPlugin):
         else:
             return ""
 
-    def the_template_func(self, text):
+    def the_template_func(self, text: str) -> str:
         if not self.patterns:
             return text
         if text:

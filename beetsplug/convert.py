@@ -26,6 +26,8 @@ from beets.util.pathformats import get_path_formats
 from beetsplug._utils import art
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
     from beets.util.pathformats import PathFormat
@@ -399,8 +401,18 @@ class ConvertPlugin(BeetsPlugin):
         return self.fmt != item.format.lower()
 
     def get_item_destination(self, item: Item) -> bytes:
+        extension = (
+            os.fsdecode(self.command.ext)
+            if (
+                self.should_transcode(item)
+                and not self.config["keep_new"].get(bool)
+            )
+            else None
+        )
         return item.destination(
-            basedir=self.dest, path_formats=self.path_formats
+            basedir=self.dest,
+            path_formats=self.path_formats,
+            extension=extension,
         )
 
     @pipeline.mutator_stage
@@ -778,7 +790,7 @@ class ConvertPlugin(BeetsPlugin):
                     util.remove(path)
                 _temp_files.remove(path)
 
-    def _parallel_convert(self, items: list[Item], keep_new: bool):
+    def _parallel_convert(self, items: Iterable[Item], keep_new: bool) -> None:
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """

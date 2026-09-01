@@ -297,7 +297,7 @@ class TerminalImportSession(importer.ImportSession):
         return choices + extra_choices
 
 
-def summarize_items(items: list[Item], singleton: bool) -> str:
+def summarize_items(items: Sequence[Item], singleton: bool) -> str:
     """Produces a brief summary line describing a set of items. Used for
     manually resolving duplicates during import.
 
