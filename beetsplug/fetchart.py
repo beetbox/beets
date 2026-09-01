@@ -518,6 +518,10 @@ class CoverArtArchive(RemoteArtSource):
     ID = "coverart"
     VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["release", "releasegroup"]
     VALID_THUMBNAIL_SIZES: ClassVar[list[int]] = [250, 500, 1200]
+    LEGACY_THUMBNAIL_NAMES: ClassVar[dict[str, str]] = {
+        "250": "small",
+        "500": "large",
+    }
 
     URL = "https://coverartarchive.org/release/{mbid}"
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
@@ -561,7 +565,13 @@ class CoverArtArchive(RemoteArtSource):
                     if preferred_width is not None:
                         if isinstance(item.get("thumbnails"), dict):
                             image_url = item["thumbnails"].get(
-                                preferred_width, image_url
+                                preferred_width,
+                                item["thumbnails"].get(
+                                    self.LEGACY_THUMBNAIL_NAMES.get(
+                                        preferred_width
+                                    ),
+                                    image_url,
+                                ),
                             )
                     yield image_url
                 except KeyError:
