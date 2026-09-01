@@ -21,7 +21,9 @@ if TYPE_CHECKING:
     from beets.library import LibModel, Library
 
 
-def update_kodi(host, port, user, password):
+def update_kodi(
+    host: str, port: int, user: str, password: str
+) -> requests.Response:
     """Sends request to the Kodi api to start a library refresh."""
     url = f"http://{host}:{port}/jsonrpc"
 

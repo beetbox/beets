@@ -17,10 +17,13 @@ from beets.plugins import BeetsPlugin
 from beets.util import ancestry, displayable_path, syspath
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from beets.library import Album, Item, Library
+    from beets.logging import BeetsLogger as Logger
 
 
-def convert_perm(perm):
+def convert_perm(perm: str | int) -> int:
     """Convert a string to an integer, interpreting the text as octal.
     Or, if `perm` is an integer, reinterpret it as an octal number that
     has been "misinterpreted" as decimal.
@@ -30,14 +33,14 @@ def convert_perm(perm):
     return int(perm, 8)
 
 
-def check_permissions(path, permission):
+def check_permissions(path: bytes, permission: int) -> bool:
     """Check whether the file's permissions equal the given vector.
     Return a boolean.
     """
     return oct(stat.S_IMODE(os.stat(syspath(path)).st_mode)) == oct(permission)
 
 
-def assert_permissions(path, permission, log):
+def assert_permissions(path: bytes, permission: int, log: Logger) -> None:
     """Check whether the file's permissions are as expected, otherwise,
     log a warning message. Return a boolean indicating the match, like
     `check_permissions`.
@@ -51,10 +54,10 @@ def assert_permissions(path, permission, log):
         )
 
 
-def dirs_in_library(library, item):
+def dirs_in_library(library: bytes, path: bytes) -> list[bytes]:
     """Creates a list of ancestor directories in the beets library path."""
     return [
-        ancestor for ancestor in ancestry(item) if ancestor.startswith(library)
+        ancestor for ancestor in ancestry(path) if ancestor.startswith(library)
     ][1:]
 
 
@@ -75,8 +78,8 @@ class Permissions(BeetsPlugin):
         )
 
     def fix_album(self, lib: Library, album: Album) -> None:
-        files = []
-        dirs = set()
+        files: list[bytes] = []
+        dirs: set[bytes] = set()
         for item in album.items():
             files.append(item.path)
             dirs.update(dirs_in_library(lib.directory, item.path))
@@ -87,7 +90,11 @@ class Permissions(BeetsPlugin):
         if album.artpath:
             self.set_permissions(files=[album.artpath])
 
-    def set_permissions(self, files=[], dirs=[]):
+    def set_permissions(
+        self,
+        files: Iterable[bytes] | None = None,
+        dirs: Iterable[bytes] | None = None,
+    ) -> None:
         # Get the configured permissions. The user can specify this either a
         # string (in YAML quotes) or, for convenience, as an integer so the
         # quotes can be omitted. In the latter case, we need to reinterpret the
@@ -97,7 +104,7 @@ class Permissions(BeetsPlugin):
         file_perm = convert_perm(file_perm)
         dir_perm = convert_perm(dir_perm)
 
-        for path in files:
+        for path in files or []:
             # Changing permissions on the destination file.
             self._log.debug(
                 "setting file permissions on {}", displayable_path(path)
@@ -109,7 +116,7 @@ class Permissions(BeetsPlugin):
             assert_permissions(path, file_perm, self._log)
 
         # Change permissions for the directories.
-        for path in dirs:
+        for path in dirs or []:
             # Changing permissions on the destination directory.
             self._log.debug(
                 "setting directory permissions on {}", displayable_path(path)

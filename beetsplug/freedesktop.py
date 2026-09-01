@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class FreedesktopPlugin(BeetsPlugin):
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         deprecated = ui.Subcommand(
             "freedesktop",
             help="Print a message to redirect to thumbnails --dolphin",

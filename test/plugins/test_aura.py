@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+from beets.dbcore.types import MULTI_VALUE_DELIMITER
+
 if TYPE_CHECKING:
     from flask.testing import Client
 
@@ -37,6 +39,8 @@ def item(helper):
         title="Title",
         artist="Artist",
         albumartist="Album Artist",
+        genres=["rock", "pop"],
+        track=2,
     )
 
 
@@ -91,9 +95,11 @@ class TestAuraResponse:
                 "album": item.album,
                 "albumartist": item.albumartist,
                 "artist": item.artist,
+                "genre": item.genres,
+                "genres": item.genres,
                 "size": item.filepath.stat().st_size,
                 "title": item.title,
-                "track": 1,
+                "track": item.track,
             },
             "relationships": {
                 "albums": {"data": [{"id": str(album.id), "type": "album"}]},
@@ -117,7 +123,12 @@ class TestAuraResponse:
         return {
             "type": "album",
             "id": str(album.id),
-            "attributes": {"artist": album.albumartist, "title": album.album},
+            "attributes": {
+                "artist": album.albumartist,
+                "title": album.album,
+                "genre": album.genres,
+                "genres": album.genres,
+            },
             "relationships": {
                 "tracks": {"data": [{"id": str(album.id), "type": "track"}]}
             },
@@ -131,7 +142,15 @@ class TestAuraResponse:
         artist_document,
         track_document,
     ):
-        data = get_response_data("/aura/tracks", {"filter[title]": item.title})
+        """Test tracks response.
+
+        1. Filter by a field which has an int type.
+        2. Sort by a field that has no value: make sure the item is included in
+           the response.
+        """
+        data = get_response_data(
+            "/aura/tracks", {"filter[track]": item.track, "sort": "mb_trackid"}
+        )
 
         assert data == {
             "data": [track_document],
@@ -150,6 +169,13 @@ class TestAuraResponse:
     def test_albums(
         self, get_response_data, album, album_document, track_document
     ):
-        data = get_response_data("/aura/albums", {"filter[album]": album.album})
+        """Test albums response.
+
+        1. Filter by a field which has a list type.
+        """
+        data = get_response_data(
+            "/aura/albums",
+            {"filter[genres]": MULTI_VALUE_DELIMITER.join(album.genres)},
+        )
 
         assert data == {"data": [album_document], "included": [track_document]}

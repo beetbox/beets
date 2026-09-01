@@ -31,17 +31,20 @@ class ImportSourcePlugin(BeetsPlugin):
         super().__init__()
         self.config.add({"suggest_removal": False})
         self.import_stages = [self.import_stage]
-        self.register_listener("item_removed", self.suggest_removal)
         # In order to stop future removal suggestions for an album we keep
-        # track of `mb_albumid`s in this set.
+        # track of `mb_albumid`s in this set. Always initialize to avoid
+        # AttributeError when methods access this even if feature disabled.
         self.stop_suggestions_for_albums = set()
-        # During reimports (import --library) both the import_task_choice and
-        # the item_removed event are triggered. The item_removed event is
-        # triggered first. For the import_task_choice event we prevent removal
-        # suggestions using the existing stop_suggestions_for_album mechanism.
-        self.register_listener(
-            "import_task_choice", self.prevent_suggest_removal
-        )
+        # Only register removal suggestion listeners if the feature is enabled
+        if self.config["suggest_removal"]:
+            self.register_listener("item_removed", self.suggest_removal)
+            # During reimports (import --library) both the import_task_choice and
+            # the item_removed event are triggered. The item_removed event is
+            # triggered first. For the import_task_choice event we prevent removal
+            # suggestions using the existing stop_suggestions_for_album mechanism.
+            self.register_listener(
+                "import_task_choice", self.prevent_suggest_removal
+            )
 
     def prevent_suggest_removal(
         self, session: ImportSession, task: ImportTask
@@ -52,7 +55,7 @@ class ImportSourcePlugin(BeetsPlugin):
             if "mb_albumid" in item:
                 self.stop_suggestions_for_albums.add(item.mb_albumid)
 
-    def import_stage(self, _, task):
+    def import_stage(self, _, task: ImportTask) -> None:
         """Event handler for albums import finished."""
         for item in task.imported_items():
             # During reimports (import --library), we prevent overwriting the
@@ -67,10 +70,7 @@ class ImportSourcePlugin(BeetsPlugin):
 
     def suggest_removal(self, item: Item) -> None:
         """Prompts the user to delete the original path the item was imported from."""
-        if (
-            not self.config["suggest_removal"]
-            or item.mb_albumid in self.stop_suggestions_for_albums
-        ):
+        if item.mb_albumid in self.stop_suggestions_for_albums:
             return
 
         if "source_path" not in item:

@@ -518,6 +518,10 @@ class CoverArtArchive(RemoteArtSource):
     ID = "coverart"
     VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["release", "releasegroup"]
     VALID_THUMBNAIL_SIZES: ClassVar[list[int]] = [250, 500, 1200]
+    LEGACY_THUMBNAIL_NAMES: ClassVar[dict[str, str]] = {
+        "250": "small",
+        "500": "large",
+    }
 
     URL = "https://coverartarchive.org/release/{mbid}"
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
@@ -561,7 +565,13 @@ class CoverArtArchive(RemoteArtSource):
                     if preferred_width is not None:
                         if isinstance(item.get("thumbnails"), dict):
                             image_url = item["thumbnails"].get(
-                                preferred_width, image_url
+                                preferred_width,
+                                item["thumbnails"].get(
+                                    self.LEGACY_THUMBNAIL_NAMES.get(
+                                        preferred_width
+                                    ),
+                                    image_url,
+                                ),
                             )
                     yield image_url
                 except KeyError:
@@ -619,7 +629,7 @@ class AlbumArtOrg(RemoteArtSource):
         album: Album,
         plugin: FetchArtPlugin,
         paths: Sequence[bytes] | None,
-    ):
+    ) -> Iterator[Any]:
         """Return art URL from AlbumArt.org using album ASIN."""
         if not album.asin:
             return
@@ -651,7 +661,7 @@ class GoogleImages(RemoteArtSource):
         self.cx = (self._config["google_engine"].get(),)
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add(
             {
                 "google_key": None,
@@ -728,7 +738,7 @@ class FanartTV(RemoteArtSource):
         self.client_key = self._config["fanarttv_key"].get()
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add({"fanarttv_key": None})
         config["fanarttv_key"].redact = True
 
