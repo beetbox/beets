@@ -1503,7 +1503,10 @@ class DefaultTemplateFunctions:
         resolved_keys = keys or beets.config["tunique"]["keys"].as_str()
         key_fields = resolved_keys.split() or ["title"]
         query = dbcore.AndQuery(
-            [dbcore.MatchQuery(f, self.item.get(f)) for f in key_fields]
+            [
+                self.item.field_query(f, self.item.get(f), dbcore.MatchQuery)
+                for f in key_fields
+            ]
             + [dbcore.MatchQuery("album_id", album_id)]
         )
 
@@ -1603,9 +1606,15 @@ class DefaultTemplateFunctions:
             return ""
 
         # Find the first disambiguator that distinguishes the items.
+        # Use path-formatted values so separators like "/" in "AC/DC"
+        # are treated as they appear on disk (e.g., "AC_DC" after
+        # path_sep_replace).
         for disambiguator in disam_list:
             # Get the value for each item for the current field.
-            disam_values = {s.get(disambiguator, "") for s in ambiguous_items}
+            disam_values = {
+                s.formatted(for_path=True).get(disambiguator)
+                for s in ambiguous_items
+            }
 
             # If the set of unique values is equal to the number of
             # items in the disambiguation set, we're done -- this is
