@@ -6,8 +6,7 @@ from typing import ClassVar
 import pytest
 
 from beets.dbcore import types
-from beets.library import migrations
-from beets.library.models import Album, Item
+from beets.library import Album, Item, migrations
 from beets.test.helper import TestHelper
 from beets.util import cached_classproperty, path_as_posix
 

@@ -39,7 +39,6 @@ from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
 from beets.util import MoveOperation, clean_module_tempdir, syspath
-from beets.util.functemplate import template
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -614,12 +613,9 @@ class ImportHelper(TestHelper, ImporterMixin):
         super().setup_beets()
         self.import_media = []
         self.lib.path_formats = [
-            ("default", template(os.path.join("$artist", "$album", "$title"))),
-            ("singleton:true", template(os.path.join("singletons", "$title"))),
-            (
-                "comp:true",
-                template(os.path.join("compilations", "$album", "$title")),
-            ),
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
         ]
 
 
@@ -680,14 +676,18 @@ class ImportSessionFixture(ImportSession):
         assert not isinstance(choice, int), f"Invalid choice: {choice}"
         return choice
 
-    choose_item = choose_match  # type: ignore[assignment]
+    choose_item = choose_match  # type: ignore[arg-type, assignment]
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
-    def __init__(self, *args, **kwargs):
+    _choices: list[importer.Action | int]
+    _duplicate_actions: list[importer.DuplicateAction]
+
+    def __init__(self, *args, **kwargs) -> None:
         self.io = kwargs.pop("io")
         super().__init__(*args, **kwargs)
         self._choices = []
+        self._duplicate_actions = []
 
     default_choice = importer.Action.APPLY
 
@@ -696,6 +696,17 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
     def clear_choices(self) -> None:
         self._choices = []
+        self._duplicate_actions = []
+
+    def add_duplicate_action(self, action: importer.DuplicateAction) -> None:
+        self._duplicate_actions.append(action)
+
+    def _get_duplicate_action_from_user(
+        self, task: importer.ImportTask, found_duplicates: list[Any]
+    ) -> str:
+        if self._duplicate_actions:
+            self.io.addinput(self._duplicate_actions.pop(0).value)
+        return super()._get_duplicate_action_from_user(task, found_duplicates)
 
     def choose_match(
         self, task: importer.ImportTask
@@ -704,7 +715,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
         return super().choose_match(task)
 
     def choose_item(
-        self, task: importer.ImportTask
+        self, task: importer.SingletonImportTask
     ) -> TrackMatch | importer.Action:
         self._add_choice_input()
         return super().choose_item(task)

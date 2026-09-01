@@ -191,6 +191,8 @@ adfb73b66dba0fc799880af176ef6f9ac0a7ee68
 6493d4dd018e08eb5d16d5381ebff47deea98bb1
 # Import everything from parent beets.autotag
 29580d2f00eb02f1ce77ebe3e1435804f7252ba1
+# Move Match classes to beets.autotag.match
+fd46e5b7738a3e11ef01e6fa8dc6fb8e0c7c82ec
 # Add setup fixture to TestHelper
 7bad226c33c2d48b5102cff213c67f16eeb09a7b
 # Fix mbcollection tests
@@ -271,3 +273,49 @@ d24c0d341ec6074c343cd8054083fe358da8fa14
 b2f52ac12443c102712b735e456fd07a6525786b
 # Return Path from TestHelper.create_mediafile_fixture
 bb66b0c378e9bf7d97622a1582d93c4dfcf20fdd
+# Move AttrDict under beets.util
+ea334bd977ee8ed0cdbd627b7e9564dd08dd43f7
+# typing: type handlers and listeners explicitly
+88627e062b452e936bf0e7e90554cd56e3713288
+# typing: Define events in a separate module, import explicitly
+e9021e17e9f14af8b4805ce1ec7f32843ada7970
+# typing: Import events module instead
+dcc1fd0e4a3e7137d126f224d8f5d9911291652e
+# typing: add types to event handlers
+5039c8f6cff474bec54b2106dd7c7d0cd39878f2
+# typing: make dbcore.db.Results a Sequence
+9adcb601f86b8758cb179ac5d39ca4857846cb27
+# typing: add types to embedart
+26713de0d64b8412ac922d0402929504f6f3c6c7
+# typing: add types to beetsplug._utils.art
+6acef1d5864716300f2c4add4e19cc6e737cce46
+# typing: add types to beets.ui.import_
+2a9786aad7bc8114276e1fda2a3d141abf2608f3
+# typing: add types to beets.util.functemplate
+d8fc064e9c3b428ee6aad5f50d34dc66aba742f2
+# typing: remove redundant types
+f37306b0cc17f17291ea5010178f190a95b29fd5
+# Prefer imports from modules that provide import aliases
+27900f58fbeba06483b77c677045ad1df8e9af45
+# typing: rename AnyLibModel -> AlbumOrItem
+33a01fe0b37942a38c8b88d0fc8167edd02ca81b
+# typing: add types to command handlers
+14eabc60600ff3c8ef1908100ae7abd3aa998bc4
+# typing: add missing core annotations
+029de94b206bd64aecc24f24bf011413b86d78e7
+# typing: add annotations to bpd plugin
+1ae87783858f53b62ccdc4f9400e035ef03f843a
+# typing: add annotations to API and export plugins
+ee4d6eef36269fbf99e0f566487ab21069be279f
+# typing: add annotations to metadata source plugins
+21e045795d2478a7f45a81bbc095ccf3aa69d59f
+# typing: add annotations to mpdstats
+4f0ac15b99cc240a6b611d2b70f29f1e576d6418
+# typing: add annotations to thumbnails
+6b4f8fa25b744adf05a3e9199e470d663f297502
+# typing: add types to duplicates plugin
+8e4fa56acb73216f36769090b322088ff2ed5364
+# typing: add missing types to plugins
+11d41aee7d3253ae702d1519a1b8f78df4596132
+# typing: various consistency fixes
+5c3695da262ec64e52ec8057302fe2d852b62afa

@@ -1,28 +1,43 @@
 """Some simple performance benchmarks for beets."""
 
+from __future__ import annotations
+
 import cProfile
 import timeit
+from typing import TYPE_CHECKING, Protocol
 
 from beets import importer, plugins, ui
-from beets.autotag import tag_album
+from beets.autotag import Source, tag_album
 from beets.plugins import BeetsPlugin
-from beets.util.functemplate import Template
 from beets.util.pathformats import PF_KEY_DEFAULT
 from beetsplug._utils import vfs
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-def aunique_benchmark(lib, prof):
-    def _build_tree():
+    from beets.library import Item, Library
+
+
+class BenchAunique(Protocol):
+    profile: bool
+
+
+class BenchMatch(Protocol):
+    profile: bool
+    id: str | None
+
+
+def aunique_benchmark(
+    lib: Library, opts: BenchAunique, args: list[str]
+) -> None:
+    def _build_tree() -> None:
         vfs.libtree(lib)
 
     # Measure path generation performance with %aunique{} included.
     lib.path_formats = [
-        (
-            PF_KEY_DEFAULT,
-            Template("$albumartist/$album%aunique{}/$track $title"),
-        )
+        (PF_KEY_DEFAULT, "$albumartist/$album%aunique{}/$track $title")
     ]
-    if prof:
+    if opts.profile:
         cProfile.runctx(
             "_build_tree()",
             {},
@@ -35,9 +50,9 @@ def aunique_benchmark(lib, prof):
 
     # And with %aunique replaced with a "cheap" no-op function.
     lib.path_formats = [
-        (PF_KEY_DEFAULT, Template("$albumartist/$album%lower{}/$track $title"))
+        (PF_KEY_DEFAULT, "$albumartist/$album%lower{}/$track $title")
     ]
-    if prof:
+    if opts.profile:
         cProfile.runctx(
             "_build_tree()",
             {},
@@ -49,14 +64,13 @@ def aunique_benchmark(lib, prof):
         print("Without %aunique:", interval)
 
 
-def match_benchmark(lib, prof, query=None, album_id=None):
+def match_benchmark(lib: Library, opts: BenchMatch, args: list[str]) -> None:
     # If no album ID is provided, we'll match against a suitably huge
     # album.
-    if not album_id:
-        album_id = "9c5c043e-bc69-4edb-81a4-1aaf9c81e6dc"
+    id_ = opts.id or "9c5c043e-bc69-4edb-81a4-1aaf9c81e6dc"
 
     # Get an album from the library to use as the source for the match.
-    items = lib.albums(query).get().items()
+    items: Sequence[Item] = i.items() if (i := lib.albums(args).get()) else []
 
     # Ensure fingerprinting is invoked (if enabled).
     plugins.send(
@@ -66,10 +80,11 @@ def match_benchmark(lib, prof, query=None, album_id=None):
     )
 
     # Run the match.
-    def _run_match():
-        tag_album(items, search_ids=[album_id])
+    def _run_match() -> None:
+        source = Source.from_items(items)
+        tag_album(source, search_ids=[id_])
 
-    if prof:
+    if opts.profile:
         cProfile.runctx(
             "_run_match()", {}, {"_run_match": _run_match}, "match.prof"
         )
@@ -81,7 +96,7 @@ def match_benchmark(lib, prof, query=None, album_id=None):
 class BenchmarkPlugin(BeetsPlugin):
     """A plugin for performing some simple performance benchmarks."""
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         aunique_bench_cmd = ui.Subcommand(
             "bench_aunique", help="benchmark for %aunique{}"
         )
@@ -92,9 +107,7 @@ class BenchmarkPlugin(BeetsPlugin):
             default=False,
             help="performance profiling",
         )
-        aunique_bench_cmd.func = lambda lib, opts, args: aunique_benchmark(
-            lib, opts.profile
-        )
+        aunique_bench_cmd.func = aunique_benchmark
 
         match_bench_cmd = ui.Subcommand(
             "bench_match", help="benchmark for track matching"
@@ -109,8 +122,6 @@ class BenchmarkPlugin(BeetsPlugin):
         match_bench_cmd.parser.add_option(
             "-i", "--id", default=None, help="album ID to match against"
         )
-        match_bench_cmd.func = lambda lib, opts, args: match_benchmark(
-            lib, opts.profile, args, opts.id
-        )
+        match_bench_cmd.func = match_benchmark
 
         return [aunique_bench_cmd, match_bench_cmd]

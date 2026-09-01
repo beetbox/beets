@@ -9,7 +9,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal, Protocol
 
 import confuse
 import requests
@@ -28,6 +28,12 @@ if TYPE_CHECKING:
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
     from beets.logging import BeetsLogger as Logger
+
+
+class FetchArtCLIOpts(Protocol):
+    force: bool
+    quiet: bool
+
 
 try:
     from bs4 import BeautifulSoup, Tag
@@ -79,7 +85,7 @@ class Candidate:
         url: str | None = None,
         match: MetadataMatch | None = None,
         size: tuple[int, int] | None = None,
-    ):
+    ) -> None:
         self._log = log
         self.path = path
         self.url = url
@@ -512,6 +518,10 @@ class CoverArtArchive(RemoteArtSource):
     ID = "coverart"
     VALID_MATCHING_CRITERIA: ClassVar[list[str]] = ["release", "releasegroup"]
     VALID_THUMBNAIL_SIZES: ClassVar[list[int]] = [250, 500, 1200]
+    LEGACY_THUMBNAIL_NAMES: ClassVar[dict[str, str]] = {
+        "250": "small",
+        "500": "large",
+    }
 
     URL = "https://coverartarchive.org/release/{mbid}"
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
@@ -555,7 +565,13 @@ class CoverArtArchive(RemoteArtSource):
                     if preferred_width is not None:
                         if isinstance(item.get("thumbnails"), dict):
                             image_url = item["thumbnails"].get(
-                                preferred_width, image_url
+                                preferred_width,
+                                item["thumbnails"].get(
+                                    self.LEGACY_THUMBNAIL_NAMES.get(
+                                        preferred_width
+                                    ),
+                                    image_url,
+                                ),
                             )
                     yield image_url
                 except KeyError:
@@ -613,7 +629,7 @@ class AlbumArtOrg(RemoteArtSource):
         album: Album,
         plugin: FetchArtPlugin,
         paths: Sequence[bytes] | None,
-    ):
+    ) -> Iterator[Any]:
         """Return art URL from AlbumArt.org using album ASIN."""
         if not album.asin:
             return
@@ -639,13 +655,13 @@ class GoogleImages(RemoteArtSource):
     ID = "google"
     URL = "https://www.googleapis.com/customsearch/v1"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.key = (self._config["google_key"].get(),)
         self.cx = (self._config["google_engine"].get(),)
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add(
             {
                 "google_key": None,
@@ -717,12 +733,12 @@ class FanartTV(RemoteArtSource):
     API_ALBUMS = f"{API_URL}music/albums/"
     PROJECT_KEY = "61a7d0ab4e67162b7a0c7c35915cd48e"
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.client_key = self._config["fanarttv_key"].get()
 
     @staticmethod
-    def add_default_config(config: confuse.ConfigView):
+    def add_default_config(config: confuse.ConfigView) -> None:
         config.add({"fanarttv_key": None})
         config["fanarttv_key"].redact = True
 
@@ -1513,7 +1529,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         return True
 
     # Synchronous; after music files are put in place.
-    def assign_art(self, session: ImportSession, task: ImportTask):
+    def assign_art(self, session: ImportSession, task: ImportTask) -> None:
         """Place the discovered art in the filesystem."""
         if task in self.art_candidates:
             candidate = self.art_candidates.pop(task)
@@ -1548,7 +1564,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             help="quiet mode: do not output albums that already have artwork",
         )
 
-        def func(lib: Library, opts, args) -> None:
+        def func(lib: Library, opts: FetchArtCLIOpts, args: list[str]) -> None:
             self.batch_fetch_art(lib, lib.albums(args), opts.force, opts.quiet)
 
         cmd.func = func

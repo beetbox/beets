@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
@@ -21,7 +22,7 @@ from .models import Album, Item
 from .queries import parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterator
 
     from beets.dbcore.sort import Sort
     from beets.util import PathLike, Replacements
@@ -103,7 +104,7 @@ class Library(dbcore.Database):
         self._memotable = {}
         return obj.id
 
-    def add_album(self, items: list[Item]) -> Album:
+    def add_album(self, items: Sequence[Item]) -> Album:
         """Create a new album consisting of a list of items.
 
         The items are added to the database if they don't yet have an
@@ -156,7 +157,7 @@ class Library(dbcore.Database):
                     parsed_query, parsed_sort = parse_query_string(
                         query, model_cls
                     )
-                elif isinstance(query, (list, tuple)):
+                elif isinstance(query, Sequence):
                     parsed_query, parsed_sort = parse_query_parts(
                         query, model_cls
                     )

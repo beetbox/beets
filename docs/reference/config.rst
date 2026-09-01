@@ -847,8 +847,8 @@ that same album rather than a new one. If the import matches more than one
 existing album (e.g. two differently-encoded copies of the same release already
 in the library), only the album it overlaps with the most is upgraded; every
 other candidate album is left completely untouched, since a track can only ever
-be added to one album. Unlike the other options, "upgrade" is config-only and is
-not offered when ``duplicate_action`` is ``ask``.
+be added to one album. When ``duplicate_action`` is ``ask``, "upgrade" is one of
+the available interactive choices.
 
 .. _duplicate_verbose_prompt:
 
@@ -868,7 +868,7 @@ is applied, which would, considering the default, look like this:
     New: 2 items, MP3, 320kbps, 7:18, 17.1 MiB
       Artist Name - Album Name - First Track Title
       Artist Name - Album Name - Second Track Title
-    [S]kip new, Keep all, Remove old, Merge all?
+    [S]kip new, Merge all, Remove old, Keep all, Upgrade?
 
 Default: ``no``.
 

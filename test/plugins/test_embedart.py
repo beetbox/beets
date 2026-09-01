@@ -190,7 +190,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         trackpath = album.items()[0].filepath
         shutil.copy(resource_path, trackpath)
 
-        self.run_command("extractart", "-n", "extracted")
+        self.run_command("extractart", "-a", "-n", "extracted")
 
         assert (album.filepath / "extracted.png").exists()
 
@@ -200,7 +200,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         trackpath = album.items()[0].filepath
         shutil.copy(resource_path, trackpath)
 
-        self.run_command("extractart", "-n", "extracted")
+        self.run_command("extractart", "-a", "-n", "extracted")
 
         assert (album.filepath / "extracted.jpg").exists()
 

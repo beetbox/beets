@@ -4,12 +4,13 @@ from typing import TYPE_CHECKING, TypedDict
 
 from typing_extensions import NotRequired
 
-from beets.dbcore.query import AndQuery, MatchQuery, OrQuery, SubstringQuery
+from beets.dbcore import AndQuery, MatchQuery, OrQuery
+from beets.dbcore.query import SubstringQuery
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.dbcore.query import Query
+    from beets.dbcore import Query
     from beets.library import Item, Library
     from beets.logging import BeetsLogger
 

@@ -1,11 +1,10 @@
 import shutil
 
 from beets import library
-from beets.test.helper import BeetsTestCase
-from beets.ui.commands.move import move_items
+from beets.test.helper import BeetsTestCase, IOMixin
 
 
-class MoveTest(BeetsTestCase):
+class MoveTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -19,93 +18,93 @@ class MoveTest(BeetsTestCase):
 
         # Alternate destination directory.
         self.otherdir = self.temp_path / "testotherdir"
-
-    def _move(
-        self,
-        query=(),
-        dest=None,
-        copy=False,
-        album=False,
-        pretend=False,
-        export=False,
-    ):
-        move_items(self.lib, dest, query, copy, album, pretend, export=export)
+        self.otherdir.mkdir()
+        self.item_moved_to = self.otherdir / "Compilations"
 
     def test_move_item(self):
-        self._move()
+        self.run_command("move")
         self.i.load()
         assert b"libdir" in self.i.path
         assert self.i.filepath.exists()
         assert not self.initial_item_path.exists()
 
     def test_copy_item(self):
-        self._move(copy=True)
+        self.run_command("move", "-c")
         self.i.load()
         assert b"libdir" in self.i.path
         assert self.i.filepath.exists()
         assert self.initial_item_path.exists()
 
     def test_move_album(self):
-        self._move(album=True)
+        self.run_command("move", "-a")
         self.i.load()
         assert b"libdir" in self.i.path
         assert self.i.filepath.exists()
         assert not self.initial_item_path.exists()
 
     def test_copy_album(self):
-        self._move(copy=True, album=True)
+        self.run_command("move", "-a", "-c")
         self.i.load()
         assert b"libdir" in self.i.path
         assert self.i.filepath.exists()
         assert self.initial_item_path.exists()
 
     def test_move_item_custom_dir(self):
-        self._move(dest=self.otherdir)
+        self.run_command("move", "--dest", str(self.otherdir))
         self.i.load()
         assert b"testotherdir" in self.i.path
         assert self.i.filepath.exists()
         assert not self.initial_item_path.exists()
 
     def test_move_album_custom_dir(self):
-        self._move(dest=self.otherdir, album=True)
+        self.run_command("move", "-a", "--dest", str(self.otherdir))
+        self.i.load()
+        assert b"testotherdir" in self.i.path
+        assert self.i.filepath.exists()
+        assert not self.initial_item_path.exists()
+
+    def test_move_album_custom_dir_timid(self):
+        self.io.addinput("s")  # select
+        self.io.addinput("y")  # yes
+        self.run_command("move", "-a", "--dest", str(self.otherdir), "-t")
         self.i.load()
         assert b"testotherdir" in self.i.path
         assert self.i.filepath.exists()
         assert not self.initial_item_path.exists()
 
     def test_pretend_move_item(self):
-        self._move(dest=self.otherdir, pretend=True)
+        self.run_command("move", "--dest", str(self.otherdir), "-p")
         self.i.load()
         assert self.i.filepath == self.initial_item_path
 
     def test_pretend_move_album(self):
-        self._move(album=True, pretend=True)
+        self.run_command("move", "-a", "-p")
         self.i.load()
         assert self.i.filepath == self.initial_item_path
 
     def test_export_item_custom_dir(self):
-        self._move(dest=self.otherdir, export=True)
+        self.run_command("move", "--dest", str(self.otherdir), "-e")
         self.i.load()
         assert self.i.filepath == self.initial_item_path
-        assert self.otherdir.exists()
+        assert self.item_moved_to.exists()
 
     def test_export_album_custom_dir(self):
-        self._move(dest=self.otherdir, album=True, export=True)
+        self.run_command("move", "--dest", str(self.otherdir), "-a", "-e")
         self.i.load()
         assert self.i.filepath == self.initial_item_path
-        assert self.otherdir.exists()
+        assert self.item_moved_to.exists()
 
     def test_pretend_export_item(self):
-        self._move(dest=self.otherdir, pretend=True, export=True)
+        self.run_command("move", "--dest", str(self.otherdir), "-e", "-p")
         self.i.load()
         assert self.i.filepath == self.initial_item_path
-        assert not self.otherdir.exists()
+        assert not self.item_moved_to.exists()
 
     def test_move_missing_singleton_continues(self):
         self.i.load()
         old_path = self.i.filepath
         old_path.unlink()
-        self._move()
+        self.run_command("move")
         self.i.load()
         assert self.i.filepath == old_path
 
@@ -121,7 +120,7 @@ class MoveTest(BeetsTestCase):
         i2.album_id = self.album.id
         i2.store()
 
-        self._move(album=True)
+        self.run_command("move", "-a")
         self.i.load()
         i2.load()
         assert self.i.filepath == old_i_path

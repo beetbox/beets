@@ -1318,6 +1318,16 @@ def bitrate_overrides(bitrates_by_title):
 DUP_KEYS = ["artist", "title"]
 
 
+def test_duplicate_action_prompt_options():
+    assert importer.DuplicateAction.strict_options() == [
+        "Skip new",
+        "Merge all",
+        "Remove old",
+        "Keep all",
+        "Upgrade",
+    ]
+
+
 class ResolveUpgradeTest(unittest.TestCase):
     """Unit tests for `resolve_upgrade`, the per-track decision
     algorithm behind `duplicate_action: upgrade`.
@@ -1611,18 +1621,18 @@ class TestImportDuplicateSingletonUpgrade(ImportHelper):
         assert self.old_item.filepath.exists()
 
 
-class TagLogTest(unittest.TestCase):
+class TagLogTest(TestHelper):
     def test_tag_log_line(self):
         sio = StringIO()
         handler = logging.StreamHandler(sio)
-        session = _common.import_session(loghandler=handler)
+        session = _common.import_session(self.lib, loghandler=handler)
         session.tag_log("status", "path")
         assert "status path" in sio.getvalue()
 
     def test_tag_log_unicode(self):
         sio = StringIO()
         handler = logging.StreamHandler(sio)
-        session = _common.import_session(loghandler=handler)
+        session = _common.import_session(self.lib, loghandler=handler)
         session.tag_log("status", "caf\xe9")  # send unicode
         assert "status caf\xe9" in sio.getvalue()
 

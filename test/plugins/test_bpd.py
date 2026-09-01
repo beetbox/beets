@@ -1,5 +1,6 @@
 """Tests for BPD's implementation of the MPD protocol."""
 
+import asyncio
 import multiprocessing as mp
 import os
 import socket
@@ -16,7 +17,6 @@ import pytest
 import yaml
 
 from beets.test.helper import PluginTestCase
-from beets.util import bluelet
 
 bpd = pytest.importorskip("beetsplug.bpd", exc_type=ImportError)
 
@@ -206,24 +206,101 @@ def implements(commands, fail=False):
     return unittest.expectedFailure(_test) if fail else _test
 
 
-bluelet_listener = bluelet.Listener
+class MemoryStreamWriter:
+    """Capture writes and optionally hold them at the drain boundary."""
+
+    def __init__(self, block_drain=False):
+        self.data = bytearray()
+        self.drain_started = asyncio.Event()
+        self.can_drain = asyncio.Event()
+        if not block_drain:
+            self.can_drain.set()
+
+    def get_extra_info(self, name):
+        return ("localhost", 6600) if name == "peername" else None
+
+    def write(self, data):
+        self.data.extend(data)
+
+    async def drain(self):
+        self.drain_started.set()
+        await self.can_drain.wait()
 
 
-@patch("beets.util.bluelet.Listener")
-def start_server(args, assigned_port, listener_patch):
+class AsyncServerTest(unittest.TestCase):
+    def test_dispatch_events_sends_one_notification_at_a_time(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            writer = MemoryStreamWriter(block_drain=True)
+            conn = bpd.MPDConnection(server, asyncio.StreamReader(), writer)
+            conn.notifications.add("player")
+            conn.idle_subscriptions.add("player")
+            server.connect(conn)
+
+            server.dispatch_events()
+            await writer.drain_started.wait()
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            tasks = tuple(server._notification_tasks.values())
+
+            writer.can_drain.set()
+            await asyncio.gather(*tasks)
+
+            assert bytes(writer.data) == b"changed: player\nOK\n"
+
+        asyncio.run(exercise())
+
+    def test_dispatch_events_sends_event_queued_while_task_finishes(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            writer = MemoryStreamWriter()
+            conn = bpd.MPDConnection(server, asyncio.StreamReader(), writer)
+            conn.idle_subscriptions.add("player")
+            server.connect(conn)
+
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            conn.notify("player")
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            await asyncio.gather(*server._notification_tasks.values())
+
+            assert bytes(writer.data) == b"changed: player\nOK\n"
+
+        asyncio.run(exercise())
+
+    def test_idle_error_disconnects_client(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            reader = asyncio.StreamReader()
+            reader.feed_data(b"idle\nnotacommand\n")
+            reader.feed_eof()
+            conn = bpd.MPDConnection(server, reader, MemoryStreamWriter())
+
+            await conn.run()
+
+            assert conn not in server.connections
+
+        asyncio.run(exercise())
+
+
+asyncio_start_server = asyncio.start_server
+
+
+@patch("beetsplug.bpd.asyncio.start_server")
+def start_server(args, assigned_port, start_server_patch):
     """Start the bpd server, writing the port to `assigned_port`."""
 
-    def listener_wrap(host, port):
-        """Wrap `bluelet.Listener`, writing the port to `assigend_port`."""
-        # `bluelet.Listener` has previously been saved to
-        # `bluelet_listener` as this function will replace it at its
-        # original location.
-        listener = bluelet_listener(host, port)
-        # read port assigned by OS
-        assigned_port.put_nowait(listener.sock.getsockname()[1])
-        return listener
+    async def start_server_wrap(callback, host, port, **kwargs):
+        """Start an asyncio server and report its assigned port."""
+        # `asyncio.start_server` has previously been saved because this
+        # function replaces it at its original location.
+        server = await asyncio_start_server(callback, host, port, **kwargs)
+        # Read the port assigned by the OS.
+        assigned_port.put_nowait(server.sockets[0].getsockname()[1])
+        return server
 
-    listener_patch.side_effect = listener_wrap
+    start_server_patch.side_effect = start_server_wrap
 
     import beets.ui
 
@@ -930,6 +1007,12 @@ class BPDDatabaseTest(BPDTestHelper):
     def test_cmd_search(self):
         with self.run_bpd() as client:
             response = client.send_command("search", "track", "1")
+        self._assert_ok(response)
+        assert self.item1.title == response.data["Title"]
+
+    def test_cmd_search_any(self):
+        with self.run_bpd() as client:
+            response = client.send_command("search", "any", "1")
         self._assert_ok(response)
         assert self.item1.title == response.data["Title"]
 

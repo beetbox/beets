@@ -39,3 +39,36 @@ class TestSearchQuery:
         )
 
         assert query == 'album:"Album"'
+
+
+class TestGetTrack:
+    def track_data(self, **fields):
+        return {
+            "id": 1,
+            "title": "Title",
+            "duration": 100,
+            "link": "https://www.deezer.com/track/1",
+            **fields,
+        }
+
+    def test_uses_contributors_when_artist_is_missing(self, plugin):
+        track = plugin._get_track(
+            self.track_data(contributors=[{"id": 2, "name": "Artist"}])
+        )
+
+        assert track.artist == "Artist"
+        assert track.artist_id == "2"
+
+    def test_falls_back_to_artist_without_contributors(self, plugin):
+        track = plugin._get_track(
+            self.track_data(artist={"id": 2, "name": "Artist"})
+        )
+
+        assert track.artist == "Artist"
+        assert track.artist_id == "2"
+
+    def test_tolerates_missing_artist_and_contributors(self, plugin):
+        track = plugin._get_track(self.track_data())
+
+        assert track.artist is None
+        assert track.artist_id is None

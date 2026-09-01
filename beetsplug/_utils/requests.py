@@ -90,7 +90,7 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         self.mount("https://", adapter)
         self.mount("http://", adapter)
 
-    def request(self, *args, **kwargs):
+    def request(self, *args, **kwargs) -> requests.Response:
         """Execute HTTP request with automatic timeout and status validation.
 
         Ensures all requests have a timeout (defaults to 10 seconds) and raises
@@ -115,7 +115,7 @@ class RateLimitAdapter(HTTPAdapter):
     Override `_wait_time()` for custom strategies (token bucket, burst, etc.).
     """
 
-    def __init__(self, rate_limit: float = 0.25, **kwargs):
+    def __init__(self, rate_limit: float = 0.25, **kwargs) -> None:
         super().__init__(**kwargs)
         self.rate_limit = rate_limit
         self._last_request_time = 0.0
@@ -125,7 +125,9 @@ class RateLimitAdapter(HTTPAdapter):
         """Return seconds to wait. Override for custom rate limiting."""
         return max(0, self.rate_limit - elapsed)
 
-    def send(self, request: requests.PreparedRequest, *args, **kwargs):
+    def send(
+        self, request: requests.PreparedRequest, *args, **kwargs
+    ) -> requests.Response:
         with self._lock:
             elapsed = time.monotonic() - self._last_request_time
             wait = self._wait_time(elapsed)
@@ -222,6 +224,6 @@ class RequestHandler:
         """Perform HTTP DELETE request with automatic error handling."""
         return self.request("delete", *args, **kwargs)
 
-    def get_json(self, *args, **kwargs):
+    def get_json(self, *args, **kwargs) -> Any:
         """Fetch and parse JSON data from an HTTP endpoint."""
         return self.get(*args, **kwargs).json()

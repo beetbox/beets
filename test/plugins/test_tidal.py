@@ -9,7 +9,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from beets.library.models import Item
+from beets.library import Item
 from beets.test.helper import PluginTestHelper
 from beetsplug.tidal import TidalPlugin
 
@@ -747,13 +747,44 @@ class TestStaticHelpers:
 
     @pytest.mark.parametrize(
         "attrs, expected",
-        [
-            ({"copyright": {"text": "(P) 2024 Tidal"}}, "(P) 2024 Tidal"),
-            ({}, None),
-        ],
+        [({"copyright": {"text": "(P) 2024 Tidal"}}, "Tidal"), ({}, None)],
     )
     def test_parse_label(self, attrs, expected):
         assert TidalPlugin._parse_label(attrs) == expected
+
+    @pytest.mark.parametrize(
+        "text, expected",
+        [
+            # marker prefixes
+            ("© 2017 Blackened Recordings", "Blackened Recordings"),
+            ("(C) 2019 Ghosteen Ltd", "Ghosteen"),
+            ("(P) 2007 Century Media Records Ltd.", "Century Media Records"),
+            ("℗ 2024 Tidal", "Tidal"),
+            # plain label name
+            ("Lightning Bolt", "Lightning Bolt"),
+            # under exclusive license to
+            (
+                "Kim Gordon under exclusive license to Matador Records",
+                "Matador Records",
+            ),
+            # issue #6796's own examples, verbatim — cover the corporate-relationship
+            # clause, the territorial split, and the bare trailing suffix
+            (
+                "© 2011 Motown Records, a Division of UMG Recordings, Inc.",
+                "Motown Records",
+            ),
+            (
+                (
+                    "© 2019 Atlantic Recording Corporation for the United States and "
+                    "WEA International Inc. for the world outside of the United States"
+                ),
+                "Atlantic Recording Corporation",
+            ),
+            ("(P) 1992 Zomba Recording LLC", "Zomba Recording"),
+        ],
+    )
+    def test_normalize_label(self, text, expected):
+        assert TidalPlugin._normalize_label(text) == expected
 
     @pytest.mark.parametrize(
         "attrs, expected",

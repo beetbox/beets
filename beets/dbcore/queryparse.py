@@ -149,11 +149,11 @@ def construct_query_part(
 
 # TYPING ERROR
 def query_from_strings(
-    query_cls: type[query.CollectionQuery],
+    query_cls: type[query.AnyCollectionQuery],
     model_cls: type[LibModel],
     prefixes: Prefixes,
     query_parts: Collection[str],
-) -> query.Query:
+) -> query.AnyCollectionQuery:
     """Creates a collection query of type `query_cls` from a list of
     strings in the format used by parse_query_part. `model_cls`
     determines how queries are constructed from strings.

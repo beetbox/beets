@@ -10,8 +10,8 @@ from typing import ClassVar
 import pytest
 
 from beets import dbcore
-from beets.dbcore import query, sort, types
-from beets.dbcore.db import DBCustomFunctionError, Index
+from beets.dbcore import Index, query, sort, types
+from beets.dbcore.db import DBCustomFunctionError
 from beets.library import Album, Item
 from beets.test.fixtures import ModelFixture1
 
@@ -581,6 +581,17 @@ class ResultsIteratorTest(unittest.TestCase):
         objs = self.db._get_results(ModelFixture1, sort=s)
         assert objs[0].foo == "bar"
         assert objs[1].foo == "baz"
+
+    def test_negative_subscript(self):
+        objs = self.db._get_results(ModelFixture1)
+        assert objs[-1].foo == "bar"
+        assert objs[-2].foo == "baz"
+
+    def test_slice(self):
+        objs = self.db._get_results(ModelFixture1)
+        assert [obj.foo for obj in objs[:]] == ["baz", "bar"]
+        assert [obj.foo for obj in objs[1:]] == ["bar"]
+        assert [obj.foo for obj in objs[::-1]] == ["bar", "baz"]
 
     def test_length(self):
         objs = self.db._get_results(ModelFixture1)

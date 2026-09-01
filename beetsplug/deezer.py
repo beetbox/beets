@@ -17,6 +17,7 @@ from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 VARIOUS_ARTISTS_ID = 5080
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Sequence
 
     from beets.library import Item, Library
@@ -40,13 +41,13 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
     def __init__(self) -> None:
         super().__init__()
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         """Add beet UI commands to interact with Deezer."""
         deezer_update_cmd = ui.Subcommand(
             "deezerupdate", help=f"Update {self.data_source} rank"
         )
 
-        def func(lib: Library, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             items = lib.items(args)
             self.deezerupdate(list(items), ui.should_write())
 
@@ -187,16 +188,20 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         :param track_data: Deezer Track object dict
         """
-        artist, artist_id = self.get_artist(
-            track_data.get("contributors", [track_data["artist"]])
-        )
+        contributors = track_data.get("contributors")
+        if contributors is None and (artist_data := track_data.get("artist")):
+            contributors = [artist_data]
+        if contributors is not None:
+            artist, artist_id = self.get_artist(contributors)
+        else:
+            artist, artist_id = None, None
         return TrackInfo(
             title=track_data["title"],
             track_id=track_data["id"],
             deezer_track_id=track_data["id"],
             isrc=track_data.get("isrc"),
             artist=artist,
-            artist_id=str(artist_id),
+            artist_id=str(artist_id) if artist_id is not None else None,
             length=track_data["duration"],
             index=track_data.get("track_position"),
             medium=track_data.get("disk_number"),
@@ -247,7 +252,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         response.raise_for_status()
         return response.json()["data"]
 
-    def deezerupdate(self, items: Sequence[Item], write: bool):
+    def deezerupdate(self, items: Sequence[Item], write: bool) -> None:
         """Obtain rank information from Deezer."""
         for index, item in enumerate(items, start=1):
             self._log.info(
@@ -259,22 +264,22 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 self._log.debug("No deezer_track_id present for: {}", item)
                 continue
             try:
-                rank = self.fetch_data(
-                    f"{self.track_url}{deezer_track_id}"
-                ).get("rank")
-                self._log.debug(
-                    "Deezer track: {} has {} rank", deezer_track_id, rank
-                )
+                track = self.fetch_data(f"{self.track_url}{deezer_track_id}")
             except Exception as e:
                 self._log.debug("Invalid Deezer track_id: {}", e)
                 continue
-            item.deezer_track_rank = int(rank)
-            item.store()
-            item.deezer_updated = time.time()
-            if write:
-                item.try_write()
+            else:
+                if track and (rank := track.get("rank") is not None):
+                    self._log.debug(
+                        "Deezer track: {} has {} rank", deezer_track_id, rank
+                    )
+                    item.deezer_track_rank = int(rank)
+                    item.store()
+                    item.deezer_updated = time.time()
+                    if write:
+                        item.try_write()
 
-    def fetch_data(self, url: str):
+    def fetch_data(self, url: str) -> JSONDict | None:
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()

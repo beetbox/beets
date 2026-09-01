@@ -16,7 +16,7 @@ class Substitute(BeetsPlugin):
     replacement) pairs.
     """
 
-    def tmpl_substitute(self, text):
+    def tmpl_substitute(self, text: str) -> str:
         """Do the actual replacing."""
         if text:
             for pattern, replacement in self.substitute_rules:
@@ -24,7 +24,7 @@ class Substitute(BeetsPlugin):
             return text
         return ""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the substitute plugin.
 
         Get the configuration, register template function and create list of

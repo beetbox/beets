@@ -9,13 +9,14 @@ from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
 from beets import config, metadata_plugins
-from beets.util import as_string, cached_classproperty, get_most_common_tags
+from beets.util import as_string, cached_classproperty
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, KeysView, Sequence
+    from collections.abc import Iterator, KeysView
 
     from beets.library import Item
+    from beets.util import Likelies
     from beets.util.color import ColorName
 
     from .hooks import AlbumInfo, TrackInfo
@@ -207,29 +208,38 @@ class Distance:
     def __hash__(self) -> int:
         return id(self)
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         return self.distance == other
 
     # Behave like a float.
 
-    def __lt__(self, other) -> bool:
-        return self.distance < other
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, (int, float, Distance)):
+            return self.distance < other
+
+        return NotImplemented
 
     def __float__(self) -> float:
         return self.distance
 
-    def __sub__(self, other) -> float:
-        return self.distance - other
+    def __sub__(self, other: object) -> float:
+        if isinstance(other, (int, float, Distance)):
+            return self.distance - other
 
-    def __rsub__(self, other) -> float:
-        return other - self.distance
+        return NotImplemented
+
+    def __rsub__(self, other: object) -> float:
+        if isinstance(other, (int, float, Distance)):
+            return other - self.distance
+
+        return NotImplemented
 
     def __str__(self) -> str:
         return f"{self.distance:.2f}"
 
     # Behave like a dict.
 
-    def __getitem__(self, key) -> float:
+    def __getitem__(self, key: str) -> float:
         """Returns the weighted distance for a named penalty."""
         dist = sum(self._penalties[key]) * self._weights[key]
         dist_max = self.max_distance
@@ -246,7 +256,7 @@ class Distance:
     def keys(self) -> KeysView[str]:
         return dict.fromkeys(key for key, _ in self.items()).keys()
 
-    def update(self, dist: Distance):
+    def update(self, dist: Distance) -> None:
         """Adds all the distance penalties from `dist`."""
         if not isinstance(dist, Distance):
             raise ValueError(
@@ -266,7 +276,7 @@ class Distance:
             return bool(value1.match(value2))
         return value1 == value2
 
-    def add(self, key: str, dist: float):
+    def add(self, key: str, dist: float) -> None:
         """Adds a distance penalty. `key` must correspond with a
         configured weight setting. `dist` must be a float between 0.0
         and 1.0, and will be added to any existing distance penalties
@@ -278,7 +288,7 @@ class Distance:
 
     def add_equality(
         self, key: str, value: Any, options: list[Any] | tuple[Any, ...] | Any
-    ):
+    ) -> None:
         """Adds a distance penalty of 1.0 if `value` doesn't match any
         of the values in `options`. If an option is a compiled regular
         expression, it will be considered equal if it matches against
@@ -294,7 +304,7 @@ class Distance:
             dist = 1.0
         self.add(key, dist)
 
-    def add_expr(self, key: str, expr: bool):
+    def add_expr(self, key: str, expr: bool) -> None:
         """Adds a distance penalty of 1.0 if `expr` evaluates to True,
         or 0.0.
         """
@@ -303,7 +313,7 @@ class Distance:
         else:
             self.add(key, 0.0)
 
-    def add_number(self, key: str, number1: int, number2: int):
+    def add_number(self, key: str, number1: int, number2: int) -> None:
         """Adds a distance penalty of 1.0 for each number of difference
         between `number1` and `number2`, or 0.0 when there is no
         difference. Use this when there is no upper limit on the
@@ -318,7 +328,7 @@ class Distance:
 
     def add_priority(
         self, key: str, value: Any, options: list[Any] | tuple[Any, ...] | Any
-    ):
+    ) -> None:
         """Adds a distance penalty that corresponds to the position at
         which `value` appears in `options`. A distance penalty of 0.0
         for the first option, or 1.0 if there is no matching option. If
@@ -336,7 +346,9 @@ class Distance:
             dist = 1.0
         self.add(key, dist)
 
-    def add_ratio(self, key: str, number1: int | float, number2: int | float):
+    def add_ratio(
+        self, key: str, number1: int | float, number2: int | float
+    ) -> None:
         """Adds a distance penalty for `number1` as a ratio of `number2`.
         `number1` is bound at 0 and `number2`.
         """
@@ -347,7 +359,7 @@ class Distance:
             dist = 0.0
         self.add(key, dist)
 
-    def add_string(self, key: str, str1: str | None, str2: str | None):
+    def add_string(self, key: str, str1: str | None, str2: str | None) -> None:
         """Adds a distance penalty based on the edit distance between
         `str1` and `str2`.
         """
@@ -427,63 +439,62 @@ def track_distance(
 
 
 def distance(
-    items: Sequence[Item],
+    original: Likelies,
     album_info: AlbumInfo,
     item_info_pairs: list[tuple[Item, TrackInfo]],
+    unmatched_count: int,
 ) -> Distance:
-    """Determines how "significant" an album metadata change would be.
-    Returns a Distance object. `album_info` is an AlbumInfo object
-    reflecting the album to be compared. `items` is a sequence of all
-    Item objects that will be matched (order is not important).
-    `mapping` is a dictionary mapping Items to TrackInfo objects; the
-    keys are a subset of `items` and the values are a subset of
-    `album_info.tracks`.
-    """
-    likelies, _ = get_most_common_tags(items)
+    """Determine how "significant" an album metadata change would be.
 
+    Returns a Distance object.
+    `original` contains original album metadata.
+    `album_info` is an AlbumInfo object reflecting the album to be compared.
+    `item_info_pairs` is a list with matched (Item, TrackInfo) pairs.
+    `unmatched_count` is the number of unmatched tracks on the release.
+    """
     dist = Distance()
 
     # Artist, if not various.
     if not album_info.va:
-        dist.add_string("artist", likelies["artist"], album_info.artist)
+        dist.add_string("artist", original.artist, album_info.artist)
 
     # Album.
-    dist.add_string("album", likelies["album"], album_info.album)
+    dist.add_string("album", original.album, album_info.album)
 
     preferred_config = config["match"]["preferred"]
     # Current or preferred media.
     if album_info.media:
         # Preferred media options.
-        media_patterns: Sequence[str] = preferred_config["media"].as_str_seq()
+        media_patterns = preferred_config["media"].as_str_seq()
         options = [
             re.compile(rf"(\d+x)?({pat})", re.I) for pat in media_patterns
         ]
         if options:
             dist.add_priority("media", album_info.media, options)
         # Current media.
-        elif likelies["media"]:
-            dist.add_equality("media", album_info.media, likelies["media"])
+        elif original.media:
+            dist.add_equality("media", album_info.media, original.media)
 
     # Mediums.
-    if likelies["disctotal"] and album_info.mediums:
-        dist.add_number("mediums", likelies["disctotal"], album_info.mediums)
+    if original.disctotal and album_info.mediums:
+        dist.add_number("mediums", original.disctotal, album_info.mediums)
 
     # Prefer earliest release.
     if album_info.year and preferred_config["original_year"]:
         # Assume 1889 (earliest first gramophone discs) if we don't know the
         # original year.
-        original = album_info.original_year or 1889
-        diff = abs(album_info.year - original)
-        diff_max = abs(datetime.date.today().year - original)
+        original_year = album_info.original_year or 1889
+        diff = abs(album_info.year - original_year)
+        diff_max = abs(datetime.date.today().year - original_year)
         dist.add_ratio("year", diff, diff_max)
     # Year.
-    elif likelies["year"] and album_info.year:
-        if likelies["year"] in (album_info.year, album_info.original_year):
+    elif original.year and album_info.year:
+        if original.year in (album_info.year, album_info.original_year):
             # No penalty for matching release or original year.
             dist.add("year", 0.0)
         elif album_info.original_year:
             # Prefer matchest closest to the release year.
-            diff = abs(likelies["year"] - album_info.year)
+            diff = abs(original.year - album_info.year)
             diff_max = abs(
                 datetime.date.today().year - album_info.original_year
             )
@@ -493,35 +504,33 @@ def distance(
             dist.add("year", 1.0)
 
     # Preferred countries.
-    country_patterns: Sequence[str] = preferred_config["countries"].as_str_seq()
+    country_patterns = preferred_config["countries"].as_str_seq()
     options = [re.compile(pat, re.I) for pat in country_patterns]
     if album_info.country and options:
         dist.add_priority("country", album_info.country, options)
     # Country.
-    elif likelies["country"] and album_info.country:
-        dist.add_string("country", likelies["country"], album_info.country)
+    elif original.country and album_info.country:
+        dist.add_string("country", original.country, album_info.country)
 
     # Label.
-    if likelies["label"] and album_info.label:
-        dist.add_string("label", likelies["label"], album_info.label)
+    if original.label and album_info.label:
+        dist.add_string("label", original.label, album_info.label)
 
     # Catalog number.
-    if likelies["catalognum"] and album_info.catalognum:
+    if original.catalognum and album_info.catalognum:
         dist.add_string(
-            "catalognum", likelies["catalognum"], album_info.catalognum
+            "catalognum", original.catalognum, album_info.catalognum
         )
 
     # Disambiguation.
-    if likelies["albumdisambig"] and album_info.albumdisambig:
+    if original.albumdisambig and album_info.albumdisambig:
         dist.add_string(
-            "albumdisambig", likelies["albumdisambig"], album_info.albumdisambig
+            "albumdisambig", original.albumdisambig, album_info.albumdisambig
         )
 
     # Album ID.
-    if likelies["mb_albumid"]:
-        dist.add_equality(
-            "album_id", likelies["mb_albumid"], album_info.album_id
-        )
+    if original.mb_albumid:
+        dist.add_equality("album_id", original.mb_albumid, album_info.album_id)
 
     # Tracks.
     dist.tracks = {}
@@ -534,9 +543,9 @@ def distance(
         dist.add("missing_tracks", 1.0)
 
     # Unmatched tracks.
-    for _ in range(len(items) - len(item_info_pairs)):
+    for _ in range(unmatched_count):
         dist.add("unmatched_tracks", 1.0)
 
-    dist.add_data_source(likelies["data_source"], album_info.data_source)
+    dist.add_data_source(original.data_source, album_info.data_source)
 
     return dist
