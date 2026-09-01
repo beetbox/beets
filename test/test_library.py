@@ -991,6 +991,37 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         # i2 has no trackdisambig, so no suffix
         self._assert_dest(b"/base/Common Title", i2)
 
+    def test_tunique_with_flex_key_field(self, items):
+        # Flexible field as key must be queried via field_query.
+        i1, i2 = items
+        i1.title = "Diff1"
+        i2.title = "Diff2"
+        i1["flexkey"] = "same"
+        i2["flexkey"] = "same"
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{flexkey,track}")
+        self._assert_dest(b"/base/Diff1 [07]", i1)
+        self._assert_dest(b"/base/Diff2 [11]", i2)
+
+    def test_tunique_path_formatted_disambiguator_collision(self, items):
+        # AC/DC vs AC_DC collide after for_path sanitization.
+        i1, i2 = items
+        i1.track = 1
+        i2.track = 1
+        i1.disc = 1
+        i2.disc = 1
+        i1.artist = "AC/DC"
+        i2.artist = "AC_DC"
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,artist}")
+        # No disambiguator distinguishes path-formatted values -> fallback IDs.
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
 
 class TestPluginDestination(TestHelper):
     @pytest.fixture(autouse=True)
