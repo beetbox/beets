@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import random
 import shlex
 import subprocess
@@ -154,15 +155,12 @@ class PlayPlugin(BeetsPlugin):
             random.shuffle(paths)
 
         open_args = self._playlist_or_paths(paths)
-        open_args_str = [
-            p.decode("utf-8") for p in self._playlist_or_paths(paths)
-        ]
         command_str = self._command_str(opts.args)
 
         if PLS_MARKER in command_str:
             if not config["play"]["raw"]:
                 command_str = command_str.replace(
-                    PLS_MARKER, "".join(open_args_str)
+                    PLS_MARKER, "".join(map(str, open_args))
                 )
                 self._log.debug(
                     "command altered by PLS_MARKER to: {}", command_str
@@ -230,14 +228,14 @@ class PlayPlugin(BeetsPlugin):
         """Create a temporary .m3u file. Return the filename."""
         utf8_bom = config["play"]["bom"].get(bool)
         filename = get_temp_filename(__name__, suffix=".m3u")
-        with open(filename, "wb") as m3u:
+        with filename.open("wb") as m3u:
             if utf8_bom:
                 m3u.write(b"\xef\xbb\xbf")
 
             for item in paths_list:
                 m3u.write(item + b"\n")
 
-        return filename
+        return os.fsencode(filename)
 
     def before_choose_candidate_listener(
         self, session: ImportSession, task: ImportTask

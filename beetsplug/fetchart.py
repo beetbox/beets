@@ -9,6 +9,7 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal, Protocol
 
 import confuse
@@ -17,7 +18,7 @@ from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
 from beets.exceptions import UserError
-from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
+from beets.util import get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 from beets.util.color import colorize
 from beets.util.config import UnknownPairError, sanitize_pairs
@@ -44,9 +45,9 @@ except ImportError:
 
 
 CONTENT_TYPES = {
-    "image/jpeg": [b"jpg", b"jpeg"],
-    "image/png": [b"png"],
-    "image/webp": [b"webp"],
+    "image/jpeg": ["jpg", "jpeg"],
+    "image/png": ["png"],
+    "image/webp": ["webp"],
 }
 IMAGE_EXTENSIONS = [ext for exts in CONTENT_TYPES.values() for ext in exts]
 
@@ -81,7 +82,7 @@ class Candidate:
         self,
         log: Logger,
         source_name: str,
-        path: bytes | None = None,
+        path: Path | None = None,
         url: str | None = None,
         match: MetadataMatch | None = None,
         size: tuple[int, int] | None = None,
@@ -195,7 +196,7 @@ class Candidate:
         # Check filesize.
         downsize = False
         if plugin.max_filesize:
-            filesize = os.stat(syspath(self.path)).st_size
+            filesize = self.path.stat().st_size
             if filesize > plugin.max_filesize:
                 self._log.debug(
                     "image needs resizing ({}B > {.max_filesize}B)",
@@ -388,10 +389,7 @@ class ArtSource(RequestMixin, ABC):
 
     @abstractmethod
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         pass
 
@@ -474,7 +472,7 @@ class RemoteArtSource(ArtSource):
                     )
                     return
 
-                ext = b"." + CONTENT_TYPES[real_ct][0]
+                ext = f".{CONTENT_TYPES[real_ct][0]}"
 
                 if real_ct != ct:
                     self._log.warning(
@@ -486,17 +484,15 @@ class RemoteArtSource(ArtSource):
                         ext,
                     )
 
-                filename = get_temp_filename(__name__, suffix=ext.decode())
-                with open(filename, "wb") as fh:
+                filename = get_temp_filename(__name__, suffix=ext)
+                with filename.open("wb") as fh:
                     # write the first already loaded part of the image
                     fh.write(header)
                     # download the remaining part of the image
                     for chunk in data:
                         fh.write(chunk)
-                self._log.debug(
-                    "downloaded art to: {}", util.displayable_path(filename)
-                )
-                candidate.path = util.bytestring_path(filename)
+                self._log.debug("downloaded art to: {}", filename)
+                candidate.path = filename
                 return
 
         except (OSError, requests.RequestException, TypeError) as exc:
@@ -527,10 +523,7 @@ class CoverArtArchive(RemoteArtSource):
     GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         """Return the Cover Art Archive and Cover Art Archive release
         group URLs using album MusicBrainz release ID and release group
@@ -604,10 +597,7 @@ class Amazon(RemoteArtSource):
     INDICES = (1, 2)
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         """Generate URLs using Amazon ID (ASIN) string."""
         if album.asin:
@@ -625,10 +615,7 @@ class AlbumArtOrg(RemoteArtSource):
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Any]:
         """Return art URL from AlbumArt.org using album ASIN."""
         if not album.asin:
@@ -679,10 +666,7 @@ class GoogleImages(RemoteArtSource):
         return has_key
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         """Return art URL from google custom search engine
         given an album title and interpreter.
@@ -743,10 +727,7 @@ class FanartTV(RemoteArtSource):
         config["fanarttv_key"].redact = True
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         if not album.mb_releasegroupid:
             return
@@ -813,10 +794,7 @@ class ITunesStore(RemoteArtSource):
     API_URL = "https://itunes.apple.com/search"
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         """Return art URL from iTunes Store given an album title."""
         if not (album.albumartist and album.album):
@@ -919,10 +897,7 @@ class Wikipedia(RemoteArtSource):
                  Limit 1"""
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         if not (album.albumartist and album.album):
             return
@@ -1056,17 +1031,14 @@ class FileSystem(LocalArtSource):
         return [idx for (idx, x) in enumerate(cover_names) if x in filename]
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         """Look for album art files in the specified directories."""
         if not paths:
             return
-        cover_names = list(map(util.bytestring_path, plugin.cover_names))
-        cover_names_str = b"|".join(cover_names)
-        cover_pat = rb"".join([rb"(\b|_)(", cover_names_str, rb")(\b|_)"])
+        cover_names = plugin.cover_names
+        cover_names_str = "|".join(cover_names)
+        cover_pat = rf"(\b|_)({cover_names_str})(\b|_)"
 
         for path in paths:
             if not os.path.isdir(syspath(path)):
@@ -1074,17 +1046,15 @@ class FileSystem(LocalArtSource):
 
             # Find all files that look like images in the directory.
             images = []
-            ignore = list(map(os.fsencode, config["ignore"].as_str_seq()))
+            ignore = config["ignore"].as_str_seq()
             ignore_hidden = config["ignore_hidden"].get(bool)
             for _, _, files in sorted_walk(
-                path, ignore=ignore, ignore_hidden=ignore_hidden
+                str(path), ignore=ignore, ignore_hidden=ignore_hidden
             ):
                 for fn in files:
-                    fn = bytestring_path(fn)
+                    fn_path = path / fn
                     for ext in IMAGE_EXTENSIONS:
-                        if fn.lower().endswith(b"." + ext) and os.path.isfile(
-                            syspath(os.path.join(path, fn))
-                        ):
+                        if fn_path.suffix == f".{ext}" and fn_path.is_file():
                             images.append(fn)
 
             # Look for "preferred" filenames.
@@ -1094,22 +1064,16 @@ class FileSystem(LocalArtSource):
             remaining = []
             for fn in images:
                 if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
-                    self._log.debug(
-                        "using well-named art file {}",
-                        util.displayable_path(fn),
-                    )
+                    self._log.debug("using well-named art file {}", fn)
                     yield self._candidate(
-                        path=os.path.join(path, fn), match=MetadataMatch.EXACT
+                        path=path / fn, match=MetadataMatch.EXACT
                     )
                 else:
                     remaining.append(fn)
 
             # Fall back to a configured image.
             if plugin.fallback:
-                self._log.debug(
-                    "using fallback art file {}",
-                    util.displayable_path(plugin.fallback),
-                )
+                self._log.debug("using fallback art file {}", plugin.fallback)
                 yield self._candidate(
                     path=plugin.fallback, match=MetadataMatch.FALLBACK
                 )
@@ -1121,8 +1085,7 @@ class FileSystem(LocalArtSource):
                     util.displayable_path(remaining[0]),
                 )
                 yield self._candidate(
-                    path=os.path.join(path, remaining[0]),
-                    match=MetadataMatch.FALLBACK,
+                    path=path / remaining[0], match=MetadataMatch.FALLBACK
                 )
 
 
@@ -1160,10 +1123,7 @@ class LastFM(RemoteArtSource):
         return has_key
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         if not album.mb_albumid:
             return
@@ -1230,10 +1190,7 @@ class Spotify(RemoteArtSource):
         return HAS_BEAUTIFUL_SOUP
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         try:
             url = f"{self.SPOTIFY_ALBUM_URL}{album.items().get().spotify_album_id}"  # type: ignore[union-attr]
@@ -1278,10 +1235,7 @@ class CoverArtUrl(RemoteArtSource):
     ID = "cover_art_url"
 
     def get(
-        self,
-        album: Album,
-        plugin: FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        self, album: Album, plugin: FetchArtPlugin, paths: Sequence[Path] | None
     ) -> Iterator[Candidate]:
         image_url = None
         try:
@@ -1389,10 +1343,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.enforce_ratio = True
 
         cover_names = self.config["cover_names"].as_str_seq()
-        self.cover_names = list(map(util.bytestring_path, cover_names))
+        self.cover_names = cover_names
         self.cautious = self.config["cautious"].get(bool)
         self.fallback = self.config["fallback"].get(
-            confuse.Optional(confuse.Filename())
+            confuse.Optional(confuse.templates.Path())
         )
         self.store_source = self.config["store_source"].get(bool)
 
@@ -1470,7 +1424,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             return (
                 candidate.path is not None
                 and self.fallback is not None
-                and os.path.samefile(candidate.path, self.fallback)
+                and candidate.path.samefile(self.fallback)
             )
         except OSError:
             return False
@@ -1498,7 +1452,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            candidate = self.art_for_album(task.album, task.paths, local)
+            paths = [Path(os.fsdecode(p)) for p in task.paths]
+            candidate = self.art_for_album(task.album, paths, local)
 
             if candidate:
                 self.art_candidates[task] = candidate
@@ -1575,7 +1530,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def art_for_album(
         self,
         album: Album,
-        paths: Sequence[bytes] | None,
+        paths: Sequence[Path] | None,
         local_only: bool = False,
     ) -> Candidate | None:
         """Given an Album object, returns a path to downloaded art for the
@@ -1635,7 +1590,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # In ordinary invocations, look for images on the
                 # filesystem. When forcing, however, always go to the Web
                 # sources.
-                local_paths = None if force else [album.path]
+                local_paths = None if force else [album.filepath]
 
                 candidate = self.art_for_album(album, local_paths)
                 if candidate:

@@ -200,7 +200,7 @@ class PlayOnImportTest(
         with (
             patch(
                 "beetsplug.play.get_temp_filename",
-                side_effect=lambda *_, **__: playlist_path_bytes,
+                side_effect=lambda *_, **__: playlist_path,
             ),
             patch("beetsplug.play.subprocess.call") as subprocess_call_mock,
         ):
