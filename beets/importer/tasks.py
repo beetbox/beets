@@ -236,6 +236,11 @@ class ImportTask(BaseImportTask):
     choice_flag: Action | None = None
     match: AlbumMatch | TrackMatch | None = None
 
+    # Set by `group_albums` when items were grouped by tag, not by
+    # directory. No scope for a filesystem rescan, so the "Rescan
+    # directory" choice is withheld (see `_get_choices`).
+    is_grouped: bool = False
+
     # Set by `add()`; only valid afterwards (see class docstring).
     album: library.Album
 
@@ -279,6 +284,7 @@ class ImportTask(BaseImportTask):
             Action.TRACKS,
             Action.ALBUMS,
             Action.RETAG,
+            Action.RESCAN,
         ):
             # TODO: redesign to stricten the type
             self.choice_flag = choice  # type: ignore[assignment]

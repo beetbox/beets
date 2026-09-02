@@ -17,6 +17,9 @@ class Action(Enum):
     # The RETAG action represents "don't apply any match, but do record
     # new metadata". It's not reachable via the standard command prompt but
     # can be used by plugins.
+    RESCAN = "RESCAN"
+    # RESCAN re-reads the task's directories from disk and re-runs the
+    # match, so the user can clean up files without restarting the import.
 
 
 class DuplicateAction(str, Enum):

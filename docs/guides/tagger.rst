@@ -165,10 +165,10 @@ When beets needs your input about a match, it says something like this:
         Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
-    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, enter Id, or aBort?
+    [A]pply, More candidates, Skip, Use as-is, as Tracks, Group albums, Rescan directory, Enter search, enter Id, or aBort?
 
 When beets asks you this question, it wants you to enter one of the capital
-letters: A, M, S, U, T, G, E, I or B. That is, you can choose one of the
+letters: A, M, S, U, T, G, R, E, I or B. That is, you can choose one of the
 following:
 
 - *A*: Apply the suggested changes shown and move on.
@@ -185,6 +185,10 @@ following:
   groups as albums. If the album artist for a track is not set then the artist
   is used to group that track. For each group importing proceeds as for
   directories. This is helpful if a directory contains multiple albums.
+- *R*: Rescan the directory from disk and re-run the match. Use this if you want
+  to clean up the files (remove duplicates or junk, add missing tracks, etc.)
+  without restarting the whole ``beet import`` run---just make your changes on
+  disk before choosing this option.
 - *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
   or untagged.
