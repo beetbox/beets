@@ -28,6 +28,8 @@ from beetsplug._utils import art
 if TYPE_CHECKING:
     from beets.test.helper import ImageRequestMocker
 
+_p = pytest.param
+
 
 def require_artresizer_compare(test):
     def wrapper(*args, **kwargs):
@@ -184,15 +186,30 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
             f"Image written is not {self.abbey_similarpath}"
         )
 
-    def test_non_ascii_album_path(self):
+    @pytest.mark.parametrize(
+        "filename, expect_error",
+        [
+            _p("extracted", False, id="success-filename"),
+            _p("/absolute/cover", True, id="error-absolute"),
+            _p("subdir/cover", True, id="error-subdir"),
+            _p(tempfile.gettempdir(), True, id="error-directory"),
+        ],
+    )
+    def test_filename_opt(self, caplog, filename, expect_error):
         resource_path = _common.RSRC / "image.mp3"
         album = self.add_album_fixture()
         trackpath = album.items()[0].filepath
         shutil.copy(resource_path, trackpath)
+        converted_path = album.filepath / "extracted.png"
 
-        self.run_command("extractart", "-a", "-n", "extracted")
+        with caplog.at_level("DEBUG"):
+            self.run_command("extractart", "-a", "-n", filename)
 
-        assert (album.filepath / "extracted.png").exists()
+        if expect_error:
+            assert "Only specify a name rather than a path" in caplog.text
+            assert not converted_path.exists()
+        else:
+            assert converted_path.exists()
 
     def test_extracted_extension(self):
         resource_path = _common.RSRC / "image-jpeg.mp3"
