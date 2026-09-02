@@ -242,6 +242,24 @@ class ImportTask(BaseImportTask):
     # directory" choice is withheld for it (see `_get_choices`).
     is_grouped: bool = False
 
+    # Set by `rescan_tasks` to the rescan "generation" (see
+    # `ImportSession.mark_rescanned`) it created this task as part of;
+    # 0 for a task straight from the initial scan. Exempts a rescan's
+    # own output from `user_query`'s `already_rescanned` check against
+    # that same rescan -- without it, the output would immediately look
+    # stale by the same test that's meant to drop *other*, pre-rescan
+    # tasks falling within the directories it just re-read -- while
+    # still allowing a *later* rescan covering the same ground to
+    # correctly supersede it. Anywhere a task is split or rebuilt into
+    # new tasks derived from it (as-Tracks, Group albums,
+    # duplicate-merge, ...) must copy this onto each one actually
+    # continuing through the pipeline -- via
+    # `stages._inherit_rescan_generation`, applied to what
+    # `handle_created` returns rather than to the task passed into it,
+    # since a plugin can replace it there too -- or they'll silently
+    # look stale and get dropped instead of imported.
+    rescan_generation: int = 0
+
     # Set by `add()`; only valid afterwards (see class docstring).
     album: library.Album
 

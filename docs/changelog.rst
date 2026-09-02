@@ -20,7 +20,10 @@ New features
 - The interactive import prompt now offers a "Rescan directory" choice for album
   tasks. It re-reads the album's directory from disk and re-runs the match, so
   files can be cleaned up (duplicates, junk) while the import is paused at the
-  prompt, without restarting the whole ``beet import`` run.
+  prompt, without restarting the whole ``beet import`` run. Note that ``r`` is
+  now reserved for this by the default prompt: a plugin-provided choice bound to
+  the same letter will lose the conflict and be dropped, with a warning.
+  :bug:`166`
 
 Bug fixes
 ~~~~~~~~~

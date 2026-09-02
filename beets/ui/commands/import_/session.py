@@ -97,12 +97,7 @@ class TerminalImportSession(importer.ImportSession):
             # or, basic choices that require no more action here.
             if isinstance(choice, AlbumMatch) or (
                 isinstance(choice, importer.Action)
-                and choice
-                in (
-                    importer.Action.SKIP,
-                    importer.Action.ASIS,
-                    importer.Action.RESCAN,
-                )
+                and choice in (importer.Action.SKIP, importer.Action.ASIS)
             ):
                 # Pass selection to main control flow.
                 return choice

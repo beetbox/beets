@@ -310,6 +310,11 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             def return_choices(self, session, task):
                 return [
                     PromptChoice("f", "Foo", None),
+                    # Unlike the album-prompt variant of this test below,
+                    # "r" is safe here: "Rescan directory" is never
+                    # offered for singleton tasks (see
+                    # `_get_choices`'s `task.is_album` gate), so there's
+                    # nothing for this to collide with.
                     PromptChoice("r", "baR", None),
                 ]
 

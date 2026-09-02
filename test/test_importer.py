@@ -642,7 +642,7 @@ class ImportTracksTest(AutotagImportTestCase):
         assert (self.lib_path / "singletons" / "Applied Track 1.mp3").exists()
 
 
-class ImportRescanTest(AutotagImportTestCase):
+class ImportRescanTest(PluginMixin, AutotagImportTestCase):
     """Test the Rescan directory action.
 
     Each test's directory mutation must happen exactly when the first
@@ -748,6 +748,273 @@ class ImportRescanTest(AutotagImportTestCase):
         self._run_with_cleanup_before_first_prompt(cleanup)
 
         assert len(self.lib.albums()) == 2
+
+    def test_rescan_of_album_with_preexisting_plain_subdirectory_does_not_duplicate_it(
+        self,
+    ):
+        """A plain, non-disc-named subdirectory holding its own album
+        (e.g. a bonus-tracks folder) is discovered as its own separate
+        task, independent of its parent album -- unlike a disc
+        subdirectory, which gets collapsed into the parent's own task
+        (see ``test_rescan_of_multidisc_album_does_not_duplicate_tasks``).
+
+        Rescanning the *parent* album walks its own directory
+        unrestricted (nothing outside it is in scope, so there's
+        normally nothing to filter) and so rediscovers that
+        subdirectory too. Without dropping the subdirectory's original,
+        still-pending task, it would get imported twice: once from the
+        original scan, once from the rescan re-finding it fresh.
+        """
+        self.prepare_album_for_import(1, album_path=self.album_path / "extras")
+        self.setup_importer()
+
+        # The parent album is discovered (and prompted) before its
+        # "extras" subdirectory. Rescan it -- a no-op change, since
+        # nothing on disk moved -- then apply both the reconstructed
+        # parent album and the rediscovered "extras" album exactly
+        # once each.
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_of_album_with_plain_subdirectory_survives_a_second_rescan(
+        self,
+    ):
+        """Rescanning the same task twice must not leave the *first*
+        rescan's still-pending output -- e.g. its own fresh copy of a
+        rediscovered "extras" subdirectory -- stranded behind the
+        second rescan without a scope current enough to drop it too.
+
+        Item/album counts alone can't tell a truly-dropped stale task
+        apart from one that was merely prompted twice and then deduped
+        by the unrelated, pre-existing duplicate-detection machinery --
+        so count prompts by path instead of just the final totals.
+        """
+        self.prepare_album_for_import(1, album_path=self.album_path / "extras")
+        self.setup_importer()
+
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        prompted: list[tuple[bytes, ...]] = []
+        original_choose_match = self.importer.choose_match
+
+        def choose_match_and_record(task):
+            prompted.append(tuple(task.paths))
+            return original_choose_match(task)
+
+        # Patch for the whole run, not just from the first prompt: the
+        # count must include every prompt, and there's nothing to
+        # mutate on disk for this test (both rescans are no-ops).
+        with patch.object(
+            self.importer, "choose_match", side_effect=choose_match_and_record
+        ):
+            self.importer.run()
+
+        extras_path = os.fsencode(str(self.album_path / "extras"))
+        assert sum(1 for paths in prompted if paths == (extras_path,)) == 1
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_then_merge_duplicate_is_not_dropped(self):
+        """A duplicate-merge decision made on a task that came out of a
+        rescan must not be silently discarded just because the merged
+        task's paths fall inside the directory the rescan already
+        marked as re-read (see ``ImportSession.mark_rescanned``): the
+        merged task is freshly built right there in ``user_query``, not
+        itself the stale product of an earlier scan.
+        """
+        # The library already has this album, but with only one track.
+        (self.album_path / "track_2.mp3").unlink()
+        self.setup_importer()
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.run()
+        assert len(self.lib.items()) == 1
+
+        # Re-import with both tracks present and duplicates merged,
+        # choosing Rescan first -- a no-op change, since nothing on
+        # disk moved before the match is applied.
+        self.prepare_track_for_import(2, self.album_path)
+        self.config["import"]["duplicate_action"] = "merge"
+        self.setup_importer()
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.run()
+
+        # The merge must actually have happened -- the point being
+        # tested is that it isn't silently dropped, leaving the album
+        # exactly as it was before the second import (still 1 item).
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) > 1
+
+    def test_merge_duplicate_of_an_unrelated_rescanned_album_is_not_dropped(
+        self,
+    ):
+        """A duplicate-merge task's paths aren't limited to the
+        directory scope of the task it was built from -- they also
+        include the *library* paths of whatever it's merging with,
+        which can be anywhere, including inside a directory some
+        completely unrelated rescan earlier in the same session already
+        marked as re-read. Inheriting that unrelated task's rescan
+        "generation" would make the merge look stale relative to a
+        rescan it has nothing to do with; it must be stamped current as
+        of the session's own state instead (see
+        ``ImportSession.rescan_generation``).
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        album_a = self.import_path / "Album A"
+        album_b = self.import_path / "Album B"
+        self.prepare_album_for_import(2, album_path=album_a)
+        # Same (default) artist/album tags as "Album A", so this
+        # duplicates against it once "Album A" is in the library.
+        self.prepare_album_for_import(2, album_path=album_b)
+        self.config["import"]["duplicate_action"] = "merge"
+        self.setup_importer(copy=False)
+
+        # "Album A" is imported in place (so its library item paths
+        # stay under its own import directory) via a no-op rescan, then
+        # "Album B" -- unrelated to that rescan -- duplicate-merges
+        # against it.
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) > 2
+
+    def test_rescan_then_as_tracks_does_not_drop_items(self):
+        """ "As Tracks", chosen on a task that came out of a rescan,
+        must not be silently discarded either: the resulting singleton
+        tasks are freshly built from `task.items`, not themselves the
+        stale product of an earlier scan, so they must inherit the
+        rescanned task's exemption the same way a duplicate-merge task
+        does (see ``ImportSession.mark_rescanned``).
+        """
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert len(self.lib.items()) == 2
+        assert not self.lib.albums()
+
+    def test_rescan_then_group_albums_does_not_drop_items(self):
+        """ "Group albums", chosen on a task that came out of a rescan,
+        must not be silently discarded either: the per-group tasks it
+        builds are freshly derived from `task.items`, not themselves
+        the stale product of an earlier scan.
+        """
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.ALBUMS)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert len(self.lib.items()) == 2
+        assert len(self.lib.albums()) == 1
+
+    def test_rescan_then_as_tracks_does_not_drop_items_when_a_plugin_replaces_tasks(
+        self,
+    ):
+        """A plugin listening for `import_task_created` can replace a
+        task with different objects entirely (see
+        ``TestEvents.test_import_task_created_with_plugin`` in
+        test_plugins.py) -- the replacements must inherit the
+        pre-replacement task's `rescan_generation` too, not just the
+        task that was passed into `handle_created` in the first place.
+        """
+
+        fired = []
+
+        class RebuildSingletonPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener("import_task_created", self.rebuild)
+
+            def rebuild(self, session, task):
+                if isinstance(task, importer.SingletonImportTask):
+                    fired.append(task)
+                    return [
+                        importer.SingletonImportTask(task.toppath, task.item)
+                    ]
+                return None
+
+        self.register_plugin(RebuildSingletonPlugin)
+
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        # Confirms the plugin's replacement path was actually exercised
+        # -- otherwise this test would just be a duplicate of
+        # test_rescan_then_as_tracks_does_not_drop_items and could pass
+        # even if the plugin never fired.
+        assert len(fired) == 2
+        assert len(self.lib.items()) == 2
+        assert not self.lib.albums()
+
+    def test_rescan_then_group_albums_does_not_drop_items_when_a_plugin_replaces_tasks(
+        self,
+    ):
+        """The `Action.ALBUMS` analogue of
+        ``test_rescan_then_as_tracks_does_not_drop_items_when_a_plugin_replaces_tasks``.
+        """
+
+        fired = []
+
+        class RebuildAlbumPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener("import_task_created", self.rebuild)
+
+            def rebuild(self, session, task):
+                if (
+                    isinstance(task, importer.ImportTask)
+                    and not isinstance(task, importer.SingletonImportTask)
+                    and task.is_grouped
+                ):
+                    fired.append(task)
+                    return [
+                        importer.ImportTask(
+                            task.toppath, task.paths, task.items
+                        )
+                    ]
+                return None
+
+        self.register_plugin(RebuildAlbumPlugin)
+
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.ALBUMS)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        # Confirms the plugin's replacement path was actually exercised
+        # -- otherwise this test would just be a duplicate of
+        # test_rescan_then_group_albums_does_not_drop_items and could
+        # pass even if the plugin never fired (e.g. if `is_grouped`
+        # weren't set in time for the plugin to see it).
+        assert len(fired) == 1
+        assert len(self.lib.items()) == 2
+        assert len(self.lib.albums()) == 1
 
     def test_rescan_of_multidisc_album_does_not_duplicate_tasks(self):
         """`task.paths` for a multi-disc album holds the album root *and*
@@ -868,6 +1135,44 @@ class ImportRescanTest(AutotagImportTestCase):
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.add_choice(importer.Action.RESCAN)
         self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_of_sibling_multidisc_album_does_not_drop_unrelated_album_after_it(
+        self,
+    ):
+        """The mirror of
+        ``test_rescan_of_sibling_multidisc_album_does_not_duplicate_tasks``:
+        an unrelated album sharing the disc directories' parent, but
+        sorting *after* them so it's still an unanswered, pending task
+        at rescan time. The rescan must not drop it -- the shared
+        parent it happens to sit under is not itself the rescan's
+        scope, only the disc directories are (see `rescan_tasks`).
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 1"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 2"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Zzz Album"
+        )
+        self.setup_importer()
+
+        # The disc directories sort and are processed first; rescan
+        # them (a no-op change, since nothing on disk moved), then
+        # leave the still-pending "Zzz Album" as-is.
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.ASIS)
 
         self._run_with_cleanup_before_first_prompt(lambda: None)
 
@@ -1179,6 +1484,77 @@ class TestRescanChoiceAvailability(
         assert "Rescan directory" in first_opts
         assert "Rescan directory" not in second_opts
 
+    def test_rescan_choice_withheld_after_group_albums_with_a_task_replacing_plugin(
+        self,
+    ):
+        """`group_albums` sets `is_grouped` on the task it builds
+        *before* sending `import_task_created`, so a plugin listening
+        for that event and inspecting the task sees it -- but a plugin
+        that *replaces* the task with a new object entirely gets one
+        with `is_grouped` still at its default `False`, unless
+        `group_albums` re-applies it to whatever `handle_created`
+        actually returns. Confirms that re-application is real: without
+        it, this test would offer "Rescan directory" for a task with no
+        directory scope to rescan.
+        """
+
+        class RebuildAlbumPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener("import_task_created", self.rebuild)
+
+            def rebuild(self, session, task):
+                if (
+                    isinstance(task, importer.ImportTask)
+                    and not isinstance(task, importer.SingletonImportTask)
+                    and task.is_grouped
+                ):
+                    return [
+                        importer.ImportTask(
+                            task.toppath, task.paths, task.items
+                        )
+                    ]
+                return None
+
+        self.register_plugin(RebuildAlbumPlugin)
+        self.importer.add_choice(importer.Action.ALBUMS)
+        self.importer.add_choice(importer.Action.SKIP)
+        self.importer.run()
+
+        assert self.mock_input_options.call_count >= 2
+        first_opts, second_opts = (
+            call.args[0] for call in self.mock_input_options.call_args_list[:2]
+        )
+        assert "Rescan directory" in first_opts
+        assert "Rescan directory" not in second_opts
+
+    def test_rescan_choice_withheld_for_toppathless_task(self):
+        """Withheld for the same reason as Group-albums tasks (see
+        `test_rescan_choice_withheld_after_group_albums`): a
+        toppath-less task -- e.g. produced by a library query, as with
+        `beet import -L` -- has no directory scope a filesystem rescan
+        could reconstruct either, and `task.is_album` alone doesn't
+        capture that (a query-produced `ImportTask` is still an album
+        task).
+        """
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        assert len(self.lib.albums()) == 1
+
+        query_session = TerminalImportSessionFixture(
+            self.lib,
+            loghandler=None,
+            query="album:'Tag Album'",
+            io=self.io,
+            paths=None,
+        )
+        query_session.add_choice(importer.Action.SKIP)
+        query_session.run()
+
+        assert self.mock_input_options.call_count >= 2
+        opts = self.mock_input_options.call_args_list[-1].args[0]
+        assert "Rescan directory" not in opts
+
     def test_rescan_choice_forced_by_plugin_on_singleton_task_is_ignored(self):
         """`task.is_album` is False for singleton tasks (e.g. produced
         by "as Tracks"), whose `paths` holds a single item file rather
@@ -1201,11 +1577,20 @@ class TestRescanChoiceAvailability(
 
         assert not self.lib.items()
 
-    def test_rescan_choice_forced_by_plugin_on_grouped_task_is_ignored(self):
+    def test_rescan_choice_forced_by_plugin_on_grouped_task_is_ignored(
+        self, caplog
+    ):
         """`task.choice_flag` can be set by a plugin listening for
         `import_task_choice`, not only through the choices offered at
         the prompt. A plugin forcing Rescan onto a Group-albums task
         must be ignored (falling back to Skip) rather than misbehave.
+
+        Asserts the actual guard fired (the warning log and the
+        resulting `Action.SKIP`), not just the coarse "nothing got
+        imported" symptom: a grouped task's item-file paths can never
+        match anything a directory walk discovers, so the rescan
+        silently finding nothing would produce the same empty-library
+        symptom even if the `is_grouped` guard itself were missing.
         """
 
         class ForceRescanPlugin(plugins.BeetsPlugin):
@@ -1219,8 +1604,11 @@ class TestRescanChoiceAvailability(
 
         self.register_plugin(ForceRescanPlugin)
         self.importer.add_choice(importer.Action.ALBUMS)
-        self.importer.run()
 
+        with caplog.at_level("WARNING"):
+            self.importer.run()
+
+        assert "Ignoring a Rescan directory choice" in caplog.text
         assert not self.lib.albums()
 
     def test_rescan_choice_forced_by_plugin_on_toppathless_task_is_ignored(

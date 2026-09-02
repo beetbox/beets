@@ -10,6 +10,7 @@ from beets.util import displayable_path, normpath, pipeline, syspath
 from . import stages as stagefuncs
 from .actions import Action, DuplicateAction
 from .state import ImportState
+from .tasks import is_subdir_of_any_in_list
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
@@ -46,6 +47,8 @@ class ImportSession:
     _is_resuming: dict[bytes, bool]
     _merged_items: set[PathBytes]
     _merged_dirs: set[PathBytes]
+    _rescanned_scopes: dict[PathBytes, int]
+    _rescan_generation: int
 
     def __init__(
         self,
@@ -74,6 +77,8 @@ class ImportSession:
         self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
+        self._rescanned_scopes = {}
+        self._rescan_generation = 0
 
         # Normalize the paths.
         self.paths = list(map(normpath, paths or []))
@@ -284,6 +289,72 @@ class ImportSession:
             for path in paths
         }
         self._merged_dirs.update(dirs)
+
+    def mark_rescanned(self, scopes: Sequence[PathBytes]) -> int:
+        """Record that each directory in `scopes` was just re-read from
+        disk by a "Rescan directory" choice, and return the rescan
+        "generation" this counts as.
+
+        Pass exactly the directories a rescan is actually re-reading --
+        not some broader ancestor it merely had to walk through to get
+        there, since anything outside those directories is still only
+        as current as whatever last read it.
+
+        Any other, not-yet-processed task discovered from within one of
+        `scopes` -- e.g. a plain subdirectory holding its own album,
+        found by the original scan -- is now stale relative to this
+        rescan and must be dropped rather than processed a second time
+        alongside whatever the rescan itself finds there (see
+        `already_rescanned`). A task produced by *this* rescan (or a
+        later one covering the same ground) is current, not stale --
+        that's what the returned generation number, stamped onto such a
+        task, is for.
+        """
+        self._rescan_generation += 1
+        for scope in scopes:
+            self._rescanned_scopes[scope] = self._rescan_generation
+        return self._rescan_generation
+
+    @property
+    def rescan_generation(self) -> int:
+        """The most recent generation number returned by
+        `mark_rescanned`, or 0 if no rescan has happened yet in this
+        session.
+
+        A task built fresh -- not read from disk, but assembled in
+        `user_query` from an existing task's items (duplicate-merge,
+        as-Tracks, Group albums) -- should be stamped with this rather
+        than with the task it was built from's own `rescan_generation`:
+        it reflects the *library*'s current state as of right now, not
+        just the directory that produced the original task, and a
+        merge in particular can pull in paths from anywhere in the
+        library that a completely unrelated rescan elsewhere in the
+        same session may have already marked at a higher generation.
+        """
+        return self._rescan_generation
+
+    def already_rescanned(
+        self, paths: Sequence[PathBytes], as_of_generation: int
+    ) -> bool:
+        """Returns true if any of `paths` falls inside a directory a
+        "Rescan directory" choice already re-read from disk *more
+        recently* than `as_of_generation` (see `mark_rescanned`) --
+        meaning these paths are stale relative to that rescan and must
+        be dropped rather than processed again.
+
+        `as_of_generation` should be the task's own
+        `ImportTask.rescan_generation`: 0 for a task straight from the
+        initial scan (never itself the output of a rescan, so any
+        rescan at all supersedes it), or the generation a rescan
+        stamped onto the tasks it produced (so only a *later* rescan
+        covering the same ground supersedes those).
+        """
+        return any(
+            (path == scope or is_subdir_of_any_in_list(path, [scope]))
+            and generation > as_of_generation
+            for path in paths
+            for scope, generation in self._rescanned_scopes.items()
+        )
 
     def is_resuming(self, toppath: PathBytes) -> bool:
         """Return `True` if user wants to resume import of this path.

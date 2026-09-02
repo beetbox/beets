@@ -107,81 +107,93 @@ def rescan_tasks(
     by "Group albums" (see ``group_albums`` below), whose items are
     grouped by tag rather than by directory and so have no directory
     scope a filesystem rescan could meaningfully reconstruct.
+
+    Discovery itself is never reimplemented here: every group this
+    yields comes from the exact same ``albums_in_dir`` / flat-mode /
+    single-file logic ``ImportTaskFactory.paths()`` uses for the
+    original scan (see below), so the two can't disagree about what
+    counts as an album. What *is* reconstructed is the narrowest
+    directory that walk needs to start from: rather than always
+    re-walking the task's entire ``toppath`` (correct, but potentially
+    very expensive -- rescanning one album inside a thousand-album
+    library shouldn't mean re-scanning the other 999), this picks the
+    smallest directory guaranteed to contain the whole original group
+    and re-derives which of that walk's results are the ones this task
+    actually came from. That reconstruction is the part genuinely
+    particular to rescanning, and it's what the comments below are
+    about.
     """
     assert task.toppath is not None
 
     # `task.paths` records the *original* directories this task was
     # discovered from -- e.g. `[album_root, disc1, disc2]` for a nested
     # multi-disc album, or `[disc1, disc2]` for two disc directories that
-    # sit side by side with no wrapping parent. Either way, the first
-    # entry is the directory `albums_in_dir` was walking when it started
-    # collapsing this group.
+    # sit side by side with no wrapping parent, possibly at different
+    # depths (`albums_in_dir`'s collapsing only cares whether the next
+    # walked directory's *basename* matches the pattern, not how deep it
+    # is, so one disc can sit nested a level deeper than its siblings).
     #
-    # If every directory in `task.paths` lives under that first entry
-    # (the common case: a single album directory, or a nested multi-disc
-    # album whose disc directories are children of the album root), its
-    # own subtree is the entire rescan scope -- walk it directly. Nothing
-    # outside it could have contributed to this task, so no filtering is
-    # needed either.
+    # The only directory guaranteed to be an ancestor of every one of
+    # them is their lowest common ancestor -- for a single album
+    # directory, or a nested multi-disc album whose disc directories are
+    # all children of the album root, that's just the album's own
+    # directory; for siblings, it's whatever parent they share. That
+    # ancestor is what gets walked, unrestricted, exactly as a normal
+    # scan would, so multi-disc collapsing is judged from the real
+    # directory listing rather than a fabricated one.
     #
-    # Otherwise (the sibling-disc case), some of the original directories
-    # sit *beside* the first entry rather than under it. A flattened
-    # group's directories aren't necessarily all at the same depth --
-    # `albums_in_dir`'s collapsing only cares whether the next walked
-    # directory's *basename* matches the pattern, not how deep it is, so
-    # one disc can sit nested a level deeper than its siblings. The only
-    # directory guaranteed to be an ancestor of all of them is their
-    # lowest common ancestor, so that -- not simply the first entry's
-    # parent -- is what must be walked to reconstruct the grouping.
-    # Walked unrestricted, exactly as a normal scan would, so multi-disc
-    # collapsing is judged from the real directory listing rather than a
-    # fabricated one.
-    #
-    # That walk will also discover unrelated things living under that
-    # ancestor (a third, unrelated album, or loose files dropped there),
-    # so keep only the group(s) still related to the directories this
-    # task originally came from -- either directly (unchanged), or
+    # That walk can also discover unrelated things living under that
+    # ancestor (a third, unrelated album, or loose files dropped there --
+    # nothing does, in the single-directory case, since there's nothing
+    # else *to* find under a directory that already fully bounds the
+    # group), so keep only the group(s) still related to the directories
+    # this task originally came from -- either directly (unchanged), or
     # nested under one of them (the user split a directory into
     # subdirectories, or merged one of its own subdirectories back into
     # it).
     #
-    # This never needs to treat the walked ancestor *itself* as a
-    # candidate merge target, even though it's an ancestor of every
-    # original directory: `albums_in_dir` only keeps collapsing a group
-    # from one walked directory into the next, so any real directory
-    # between an original directory and their lowest common ancestor
-    # would itself have been collapsed into the group and so would
-    # already be in `task.paths` -- matched directly, not through the
-    # ancestor. The ancestor itself is the sole exception, which is
-    # exactly why a group sitting right there can't be told apart from
-    # something that was never part of this task -- the same ambiguity
-    # behind the loose-file and unrelated-sibling cases above. So a user
-    # merging every original directory's files directly into that shared
-    # ancestor isn't reconstructed either; rare enough, and just as
-    # ambiguous, that it's left as a no-op rescan rather than guessed at
-    # -- see
+    # This never needs to treat a group living at the walked ancestor
+    # (or at any directory *between* the ancestor and where a given
+    # original directory's own collapsing began) as a candidate merge
+    # target: `albums_in_dir` only keeps collapsing a group from one
+    # walked directory into the next, so any such directory that really
+    # was part of reconstructing one of the original groups would
+    # itself have been collapsed in and so would already be in
+    # `task.paths` -- matched directly, not through an ancestor
+    # relationship. A group sitting at one of these directories instead
+    # can't be told apart from something that was never part of this
+    # task to begin with -- the same ambiguity behind the loose-file
+    # and unrelated-sibling cases above. So a user merging original
+    # directories' files upward into any of them isn't reconstructed
+    # either; rare enough, and just as ambiguous, that it's left as a
+    # no-op rescan rather than guessed at -- see
     # `test_rescan_of_sibling_multidisc_album_merged_into_parent_is_not_reimported`.
-    scan_root = task.paths[0]
-    filter_to_scope = not all(
-        d == scan_root or is_subdir_of_any_in_list(d, [scan_root])
-        for d in task.paths
-    )
-    if filter_to_scope:
-        scan_root = os.path.commonpath(task.paths)
-
+    scan_root = os.path.commonpath(task.paths)
     discovery_factory = ImportTaskFactory(scan_root, session)
-    groups = discovery_factory.paths()
-    if filter_to_scope:
-        original_dirs = task.paths
-        groups = (
-            (dirs, paths)
-            for dirs, paths in groups
-            if any(
-                d == o or is_subdir_of_any_in_list(d, [o])
-                for d in dirs
-                for o in original_dirs
-            )
+    original_dirs = task.paths
+    groups = (
+        (dirs, paths)
+        for dirs, paths in discovery_factory.paths()
+        if any(
+            d == o or is_subdir_of_any_in_list(d, [o])
+            for d in dirs
+            for o in original_dirs
         )
+    )
+
+    # The directories actually being re-read here (`task.paths`) may
+    # have already been the source of *other*, separately-discovered
+    # tasks still waiting further down the pipeline (e.g. a plain,
+    # non-disc-named subdirectory holding its own album). This rescan
+    # is now the authoritative re-read of those directories, so mark
+    # them: `user_query` drops any such stale task rather than letting
+    # it get processed a second time alongside whatever this rescan
+    # itself finds there. Marking only `task.paths`, not the wider
+    # `scan_root` they were walked from, matters when they're siblings
+    # under a shared parent -- that parent can hold unrelated content
+    # this rescan never touched, which must stay untouched by the mark
+    # too.
+    generation = session.mark_rescanned(task.paths)
 
     # Tasks must keep the *original* toppath, not the rescanned
     # directory: it's used for cleanup (pruning stops at `toppath`, so a
@@ -194,7 +206,14 @@ def rescan_tasks(
     for dirs, paths in groups:
         if (album_task := factory.album(paths, dirs)) is not None:
             found = True
-            yield from album_task.handle_created(session)
+            for created_task in album_task.handle_created(session):
+                # See `ImportTask.rescan_generation`: this rescan is
+                # what's making `created_task` current, so it must not
+                # be dropped by the very check that exists to drop
+                # everything else `mark_rescanned` above just made
+                # stale.
+                created_task.rescan_generation = generation
+                yield created_task
 
     if not found:
         log.info(
@@ -231,10 +250,22 @@ def group_albums(session: ImportSession) -> StageCoro:
         for _, items in itertools.groupby(sorted_items, group):
             l_items = list(items)
             task = ImportTask(task.toppath, [i.path for i in l_items], l_items)
-            # Items are grouped by tag here, not by directory, so there's
-            # no directory scope a filesystem rescan could reconstruct.
+            # Items are grouped by tag here, not by directory, so
+            # there's no directory scope a filesystem rescan could
+            # reconstruct. Set before `handle_created` so a plugin
+            # inspecting the task from its `import_task_created`
+            # handler sees it too.
             task.is_grouped = True
-            tasks += task.handle_created(session)
+            for created_task in task.handle_created(session):
+                # Re-applied to whatever `handle_created` actually
+                # returns, not just `task` itself: a plugin listening
+                # for `import_task_created` can replace it with
+                # different task objects, which would otherwise
+                # silently lose both of these (see
+                # `_inherit_rescan_generation`).
+                created_task.is_grouped = True
+                _inherit_rescan_generation(session, created_task)
+                tasks.append(created_task)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
         out = pipeline.multiple(tasks)
@@ -260,6 +291,38 @@ def lookup_candidates(session: ImportSession, task: ImportTask) -> None:
     task.lookup_candidates(session.config["search_ids"].as_str_seq())
 
 
+def _inherit_rescan_generation(
+    session: ImportSession, child: ImportTask
+) -> None:
+    """Stamp `child` -- a new task freshly built in `user_query` from
+    an existing task's items -- with `session`'s current rescan
+    generation (see `ImportSession.rescan_generation`).
+
+    Call this on every task actually about to continue through the
+    pipeline wherever one task gets split or rebuilt into new ones
+    derived from it -- as-Tracks, Group albums, duplicate-merge, and
+    anywhere else added in the future -- so it doesn't look stale to
+    `user_query`'s `already_rescanned` check relative to whatever's
+    already happened in this session. Forgetting this at any one of
+    those sites silently drops the derived task's items instead of
+    raising an error, so it's easy to miss. Stamping the *session's*
+    current generation rather than the source task's own is
+    deliberate: for duplicate-merge in particular, the new task's
+    paths can include library paths pulled in from anywhere, not just
+    the source task's own directory scope, so a completely unrelated
+    rescan elsewhere in the same session could otherwise still make it
+    look stale.
+
+    Call it on what `ImportTask.handle_created` *returns*, not on the
+    task passed into it: a plugin listening for `import_task_created`
+    can replace that task with different objects, and stamping only
+    the original leaves the replacements at the default `0` -- silently
+    dropped all the same, just one step further downstream. See
+    `rescan_tasks` for the pattern this follows.
+    """
+    child.rescan_generation = session.rescan_generation
+
+
 @pipeline.stage
 def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
     """A coroutine for interfacing with the user about the tagging
@@ -278,6 +341,18 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
         return task
 
     if session.already_merged(task.paths):
+        return pipeline.BUBBLE
+
+    # A "Rescan directory" choice on an earlier task may have already
+    # re-read this task's directory from disk more recently than this
+    # task was created (e.g. this task is a plain subdirectory that a
+    # rescan of its parent walked back over) -- drop it rather than
+    # processing stale, pre-rescan state a second time. Comparing
+    # against `task.rescan_generation` (0 unless this task is itself a
+    # rescan's output) exempts a rescan's own output from being
+    # considered stale by its own marking, while still letting a
+    # *later* rescan correctly supersede it.
+    if session.already_rescanned(task.paths, task.rescan_generation):
         return pipeline.BUBBLE
 
     # Ask the user for a choice.
@@ -314,7 +389,15 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
         def emitter(task: ImportTask) -> Iterator[BaseImportTask]:
             for item in task.items:
                 task = SingletonImportTask(task.toppath, item)
-                yield from task.handle_created(session)
+                for created_task in task.handle_created(session):
+                    # Stamped on what `handle_created` actually
+                    # returns, not on `task` itself: a plugin listening
+                    # for `import_task_created` can replace it with a
+                    # different task object, which would otherwise
+                    # silently lose this (see
+                    # `_inherit_rescan_generation`).
+                    _inherit_rescan_generation(session, created_task)
+                    yield created_task
             yield SentinelImportTask(task.toppath, task.paths)
 
         return _extend_pipeline(
@@ -347,6 +430,7 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
         merged_task = ImportTask(
             None, task.paths + duplicate_paths, task.items + duplicate_items
         )
+        _inherit_rescan_generation(session, merged_task)
 
         return _extend_pipeline(
             [merged_task], lookup_candidates(session), user_query(session)
