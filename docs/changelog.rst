@@ -87,6 +87,9 @@ Bug fixes
   have no value for ``field``.
 - :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
   format when determining the target path. :bug:`1360`
+- :doc:`plugins/edit`: Item-only fields rejected from the album header remain
+  available in per-track documents during interactive import when they are also
+  configured in ``itemfields``. :bug:`6953`
 
 ..
     For plugin developers
