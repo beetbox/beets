@@ -26,6 +26,8 @@ Bug fixes
   writes to the item's source file when ``beet convert`` writes the converted
   file, which previously crashed with a :class:`PermissionError` when the source
   file was read-only. :bug:`6954`
+- :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
+  ``File`` format when using ``media`` in ``extra_tags`` search filters.
 
 ..
     For plugin developers
