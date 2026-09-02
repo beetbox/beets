@@ -278,6 +278,12 @@ class TestFSArt(UseThePlugin):
         candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == candidate_path
 
+    def test_uppercase_extension(self, source, dpath, settings) -> None:
+        candidate_path = dpath / "a.JPG"
+        candidate_path.touch()
+        candidate = next(source.get(Album(), settings, [dpath]))
+        assert candidate.path == candidate_path
+
     def test_appropriately_named_file_takes_precedence(
         self, source, dpath, settings
     ) -> None:
