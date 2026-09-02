@@ -145,6 +145,8 @@ class ScrubPlugin(BeetsPlugin):
         self, session: ImportSession, task: ImportTask
     ) -> None:
         """Automatically scrub imported files."""
+        if not ui.should_write():
+            return
         for item in task.imported_items():
             self._log.debug("auto-scrubbing {.filepath}", item)
-            self._scrub_item(item, ui.should_write())
+            self._scrub_item(item, True)
