@@ -114,8 +114,8 @@ def rescan_tasks(
     # discovered from -- e.g. `[album_root, disc1, disc2]` for a nested
     # multi-disc album, or `[disc1, disc2]` for two disc directories that
     # sit side by side with no wrapping parent. Either way, the first
-    # entry is always the outermost directory the original discovery
-    # walked from.
+    # entry is the directory `albums_in_dir` was walking when it started
+    # collapsing this group.
     #
     # If every directory in `task.paths` lives under that first entry
     # (the common case: a single album directory, or a nested multi-disc
@@ -125,22 +125,49 @@ def rescan_tasks(
     # needed either.
     #
     # Otherwise (the sibling-disc case), some of the original directories
-    # sit *beside* the first entry rather than under it, so the grouping
-    # can only be reconstructed by walking one level *up*, from their
-    # shared parent directory. That walk will also discover unrelated
-    # sibling albums (e.g. a third, unrelated album next to the two disc
-    # directories), so keep only the group(s) that are still related to
-    # the directories this task originally came from -- either directly
-    # (unchanged), nested under one of them (the user split the original
-    # directory into subdirectories), or an ancestor of one of them (the
-    # user merged what were separate subdirectories back together).
+    # sit *beside* the first entry rather than under it. A flattened
+    # group's directories aren't necessarily all at the same depth --
+    # `albums_in_dir`'s collapsing only cares whether the next walked
+    # directory's *basename* matches the pattern, not how deep it is, so
+    # one disc can sit nested a level deeper than its siblings. The only
+    # directory guaranteed to be an ancestor of all of them is their
+    # lowest common ancestor, so that -- not simply the first entry's
+    # parent -- is what must be walked to reconstruct the grouping.
+    # Walked unrestricted, exactly as a normal scan would, so multi-disc
+    # collapsing is judged from the real directory listing rather than a
+    # fabricated one.
+    #
+    # That walk will also discover unrelated things living under that
+    # ancestor (a third, unrelated album, or loose files dropped there),
+    # so keep only the group(s) still related to the directories this
+    # task originally came from -- either directly (unchanged), or
+    # nested under one of them (the user split a directory into
+    # subdirectories, or merged one of its own subdirectories back into
+    # it).
+    #
+    # This never needs to treat the walked ancestor *itself* as a
+    # candidate merge target, even though it's an ancestor of every
+    # original directory: `albums_in_dir` only keeps collapsing a group
+    # from one walked directory into the next, so any real directory
+    # between an original directory and their lowest common ancestor
+    # would itself have been collapsed into the group and so would
+    # already be in `task.paths` -- matched directly, not through the
+    # ancestor. The ancestor itself is the sole exception, which is
+    # exactly why a group sitting right there can't be told apart from
+    # something that was never part of this task -- the same ambiguity
+    # behind the loose-file and unrelated-sibling cases above. So a user
+    # merging every original directory's files directly into that shared
+    # ancestor isn't reconstructed either; rare enough, and just as
+    # ambiguous, that it's left as a no-op rescan rather than guessed at
+    # -- see
+    # `test_rescan_of_sibling_multidisc_album_merged_into_parent_is_not_reimported`.
     scan_root = task.paths[0]
     filter_to_scope = not all(
         d == scan_root or is_subdir_of_any_in_list(d, [scan_root])
         for d in task.paths
     )
     if filter_to_scope:
-        scan_root = os.path.dirname(scan_root)
+        scan_root = os.path.commonpath(task.paths)
 
     discovery_factory = ImportTaskFactory(scan_root, session)
     groups = discovery_factory.paths()
@@ -150,9 +177,7 @@ def rescan_tasks(
             (dirs, paths)
             for dirs, paths in groups
             if any(
-                d == o
-                or is_subdir_of_any_in_list(d, [o])
-                or is_subdir_of_any_in_list(o, [d])
+                d == o or is_subdir_of_any_in_list(d, [o])
                 for d in dirs
                 for o in original_dirs
             )

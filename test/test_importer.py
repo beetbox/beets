@@ -664,13 +664,22 @@ class ImportRescanTest(AutotagImportTestCase):
         is being answered -- simulating the user editing the directory
         while paused there, before choosing Rescan.
         """
+        self._run_with_cleanup_before_nth_prompt(0, cleanup)
+
+    def _run_with_cleanup_before_nth_prompt(self, n, cleanup):
+        """Like `_run_with_cleanup_before_first_prompt`, but the
+        directory edit happens right as the (0-indexed) `n`th prompt is
+        being answered instead of always the first -- for tests that
+        need the edit to land on a specific *later* task, once every
+        prompt before it has already been discovered and answered.
+        """
         original_choose_match = self.importer.choose_match
-        state = {"done": False}
+        state = {"count": 0}
 
         def choose_match_and_cleanup(task):
-            if not state["done"]:
-                state["done"] = True
+            if state["count"] == n:
                 cleanup()
+            state["count"] += 1
             return original_choose_match(task)
 
         with patch.object(
@@ -856,6 +865,248 @@ class ImportRescanTest(AutotagImportTestCase):
         # "Other Album" sorts before the disc directories and is
         # processed first; leave it as-is, then rescan the two-disc
         # album (a no-op change, since nothing on disk moved).
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_of_sibling_multidisc_album_ignores_loose_files_in_shared_parent(
+        self,
+    ):
+        """The disc directories' shared parent may also hold loose files
+        that already form their own separate album, sitting right next
+        to the discs rather than off in some other directory (see
+        ``test_rescan_of_sibling_multidisc_album_does_not_duplicate_tasks``
+        for the analogous case with an unrelated sibling *directory*).
+        Rescanning the disc album must not scoop those loose files into
+        it just because their directory happens to be an ancestor of
+        the two disc directories.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        self.prepare_track_for_import(1, self.import_path)
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 1"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 2"
+        )
+        self.setup_importer()
+
+        # The loose file at the shared parent is processed first; leave
+        # it as-is, then rescan the two-disc album (a no-op change,
+        # since nothing on disk moved).
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_of_sibling_multidisc_album_records_history_under_original_paths(
+        self,
+    ):
+        """The rescanned disc album's `task.paths` -- and so its
+        incremental-import history entry -- must be exactly the two
+        disc directories, not the shared parent walked to reconstruct
+        them. Recording the parent would make a later incremental scan
+        (which never includes the parent, since normal discovery
+        doesn't either) fail to recognize the album as already
+        imported and re-offer it.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        self.prepare_track_for_import(1, self.import_path)
+        disc_1 = self.import_path / "Set Disc 1"
+        disc_2 = self.import_path / "Set Disc 2"
+        self.prepare_album_for_import(1, album_path=disc_1)
+        self.prepare_album_for_import(1, album_path=disc_2)
+        self.setup_importer(incremental=True)
+
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        expected = tuple(sorted(os.fsencode(str(d)) for d in (disc_1, disc_2)))
+        assert expected in ImportState().taghistory
+        # The loose track's own (legitimate) history entry is exactly
+        # `(import_path,)` -- what must not appear is the parent
+        # showing up *alongside* the two disc directories in a single
+        # entry, which is what recording the rescanned task's `paths`
+        # unchanged from the parent walk would produce.
+        parent = os.fsencode(str(self.import_path))
+        assert not any(
+            parent in entry and len(entry) > 1
+            for entry in ImportState().taghistory
+        )
+
+    def test_rescan_of_sibling_multidisc_album_can_be_rescanned_again(self):
+        """Rescanning the disc album must not pull the shared parent
+        into the resulting task's directory scope -- if it did, a
+        *second* rescan of that task would then walk the parent
+        unrestricted and re-offer the already-imported loose album
+        living there.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        self.prepare_track_for_import(1, self.import_path)
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 1"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 2"
+        )
+        self.setup_importer()
+
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_of_sibling_multidisc_album_merged_into_parent_is_not_reimported(
+        self,
+    ):
+        """A user merging both disc directories' files directly into
+        their shared parent can't be told apart from that parent
+        holding an unrelated, already-processed album (see
+        ``test_rescan_of_sibling_multidisc_album_ignores_loose_files_in_shared_parent``)
+        -- so it isn't guessed at. The rescan finds nothing there rather
+        than risking a false positive; the merged files simply aren't
+        picked back up by it.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        disc_1 = self.import_path / "Set Disc 1"
+        disc_2 = self.import_path / "Set Disc 2"
+        self.prepare_album_for_import(1, album_path=disc_1)
+        self.prepare_album_for_import(1, album_path=disc_2)
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Other Album"
+        )
+        self.setup_importer()
+
+        def merge_discs_into_parent():
+            for disc in (disc_1, disc_2):
+                for track in disc.glob("*.mp3"):
+                    # Disc 1 and disc 2 each have their own
+                    # "track_1.mp3"; give the merged copies distinct
+                    # names so neither clobbers the other.
+                    track.rename(self.import_path / f"{disc.name}-{track.name}")
+                disc.rmdir()
+
+        # "Other Album" sorts before the disc directories and is
+        # processed first; leave it as-is (this also forces the two
+        # disc directories to be discovered as *siblings* rather than a
+        # nested multi-disc album, since it means their shared parent
+        # has other content of its own). The merge must happen once the
+        # *disc* task's own prompt is reached, not any earlier -- doing
+        # it before the disc directories are even discovered would
+        # delete them out from under the initial scan and the disc task
+        # would never get created (and its Rescan choice never used) in
+        # the first place, silently passing this test without ever
+        # exercising a rescan at all.
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.RESCAN)
+
+        self._run_with_cleanup_before_nth_prompt(1, merge_discs_into_parent)
+
+        # Only "Other Album" made it in; the merged tracks were left
+        # untouched, loose in the parent directory.
+        assert len(self.lib.items()) == 1
+        assert sorted(p.name for p in self.import_path.glob("*.mp3")) == [
+            "Set Disc 1-track_1.mp3",
+            "Set Disc 2-track_1.mp3",
+        ]
+
+    def test_rescan_of_sibling_multidisc_album_with_disc_in_its_own_subdirectory(
+        self,
+    ):
+        """A flattened sibling group's directories aren't necessarily
+        all at the same depth below their shared parent: one disc can
+        sit in its own subdirectory (e.g. the user already organized
+        that one disc further) while the others sit directly beside it.
+        `task.paths[0]` is then *not* the shared parent's immediate
+        child that every other original directory descends from -- the
+        rescan must still walk the true shared parent and reconstruct
+        the whole group without duplicating or dropping anything.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 1"
+        )
+        (self.import_path / "Set Disc 2").mkdir()
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 2" / "Sub"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Other Album"
+        )
+        self.setup_importer()
+
+        # "Other Album" sorts before the disc directories and is
+        # processed first; leave it as-is, then rescan the two-disc
+        # album (a no-op change, since nothing on disk moved).
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_of_sibling_multidisc_album_with_shallower_sibling_disc(
+        self,
+    ):
+        """The flattened-group collapse can also jump the *other*
+        direction from ``..._with_disc_in_its_own_subdirectory`` above:
+        one disc nested a level deeper than its shared parent's other
+        content, its sibling disc sitting a level *shallower*, directly
+        beside that parent. `task.paths[0]` (the deeper disc) then has a
+        parent that is *not* an ancestor of the shallower one at all --
+        walking just `dirname(task.paths[0])` would miss it entirely and
+        silently drop that disc from the rescanned album, rather than
+        merely mis-scoping the walk.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        (self.import_path / "A").mkdir()
+        self.prepare_track_for_import(1, self.import_path / "A")
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "A" / "Set Disc 1"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 2"
+        )
+        self.setup_importer()
+
+        # "A"'s own loose track sorts and is discovered first; leave it
+        # as-is, then rescan the two-disc album (a no-op change, since
+        # nothing on disk moved).
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.add_choice(importer.Action.RESCAN)
         self.importer.add_choice(importer.Action.APPLY)
