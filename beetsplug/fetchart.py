@@ -10,7 +10,7 @@ from contextlib import closing
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol
 
 import confuse
 import requests
@@ -18,7 +18,7 @@ from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
 from beets.exceptions import UserError
-from beets.util import get_temp_filename, sorted_walk, syspath
+from beets.util import get_temp_filename, sorted_walk
 from beets.util.artresizer import ArtResizer
 from beets.util.color import colorize
 from beets.util.config import UnknownPairError, sanitize_pairs
@@ -49,7 +49,7 @@ CONTENT_TYPES = {
     "image/png": ["png"],
     "image/webp": ["webp"],
 }
-IMAGE_EXTENSIONS = [ext for exts in CONTENT_TYPES.values() for ext in exts]
+IMAGE_EXTENSIONS = [f".{e}" for exts in CONTENT_TYPES.values() for e in exts]
 
 
 class ImageAction(Enum):
@@ -1020,7 +1020,7 @@ class FileSystem(LocalArtSource):
 
     @staticmethod
     def filename_priority(
-        filename: AnyStr, cover_names: Sequence[AnyStr]
+        filename: str, cover_names: Sequence[str]
     ) -> list[int]:
         """Sort order for image names.
 
@@ -1037,55 +1037,55 @@ class FileSystem(LocalArtSource):
         if not paths:
             return
         cover_names = plugin.cover_names
-        cover_names_str = "|".join(cover_names)
-        cover_pat = rf"(\b|_)({cover_names_str})(\b|_)"
+        cover_names_str = "|".join(map(re.escape, cover_names))
+        cover_pat = re.compile(rf"(\b|_)({cover_names_str})(\b|_)", re.I)
 
         for path in paths:
-            if not os.path.isdir(syspath(path)):
+            if not path.is_dir():
                 continue
 
             # Find all files that look like images in the directory.
-            images = []
             ignore = config["ignore"].as_str_seq()
             ignore_hidden = config["ignore_hidden"].get(bool)
-            for _, _, files in sorted_walk(
-                str(path), ignore=ignore, ignore_hidden=ignore_hidden
-            ):
-                for fn in files:
-                    fn_path = path / fn
-                    for ext in IMAGE_EXTENSIONS:
-                        if fn_path.suffix == f".{ext}" and fn_path.is_file():
-                            images.append(fn)
+            images = [
+                fn_path
+                for root, _, files in sorted_walk(
+                    str(path), ignore=ignore, ignore_hidden=ignore_hidden
+                )
+                for fn in files
+                if (
+                    (fn_path := Path(path) / fn).suffix.lower()
+                    in IMAGE_EXTENSIONS
+                )
+                and fn_path.is_file()
+            ]
 
             # Look for "preferred" filenames.
-            images = sorted(
-                images, key=lambda x: self.filename_priority(x, cover_names)
+            images.sort(
+                key=lambda p: self.filename_priority(p.name, cover_names)
             )
             remaining = []
-            for fn in images:
-                if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
-                    self._log.debug("using well-named art file {}", fn)
+            for fn_path in images:
+                if cover_pat.search(name := fn_path.name):
+                    self._log.debug("using well-named art file {}", name)
                     yield self._candidate(
-                        path=path / fn, match=MetadataMatch.EXACT
+                        path=fn_path, match=MetadataMatch.EXACT
                     )
                 else:
-                    remaining.append(fn)
+                    remaining.append(fn_path)
 
             # Fall back to a configured image.
-            if plugin.fallback:
-                self._log.debug("using fallback art file {}", plugin.fallback)
+            if fallback := plugin.fallback:
+                self._log.debug("using fallback art file {}", fallback)
                 yield self._candidate(
-                    path=plugin.fallback, match=MetadataMatch.FALLBACK
+                    path=fallback, match=MetadataMatch.FALLBACK
                 )
 
             # Fall back to any image in the folder.
             if remaining and not plugin.cautious:
-                self._log.debug(
-                    "using fallback art file {}",
-                    util.displayable_path(remaining[0]),
-                )
+                self._log.debug("using fallback art file {}", remaining[0])
                 yield self._candidate(
-                    path=path / remaining[0], match=MetadataMatch.FALLBACK
+                    path=remaining[0], match=MetadataMatch.FALLBACK
                 )
 
 
@@ -1433,9 +1433,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def fetch_art(self, session: ImportSession, task: ImportTask) -> None:
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
-            if task.album.artpath and os.path.isfile(
-                syspath(task.album.artpath)
-            ):
+            if task.album.art_filepath and task.album.art_filepath.is_file():
                 # Album already has art (probably a re-import); skip it.
                 return
             if task.choice_flag == importer.Action.ASIS:
@@ -1579,9 +1577,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """
         for album in albums:
             if (
-                album.artpath
-                and not force
-                and os.path.isfile(syspath(album.artpath))
+                not force
+                and album.art_filepath
+                and album.art_filepath.is_file()
             ):
                 if not quiet:
                     message = colorize("text_highlight_minor", "has album art")
