@@ -237,13 +237,12 @@ class TestParsing(TidalPluginTest):
                     "data_source": "Tidal",
                     "data_url": None,
                     "disctitle": None,
-                    "duration": 180,
                     "genres": None,
                     "index": 1,
                     "initial_key": None,
                     "isrc": "ISRC1",
                     "label": None,
-                    "length": None,
+                    "length": 180,
                     "lyricists": None,
                     "lyricists_ids": [],
                     "mb_workid": None,
@@ -283,13 +282,12 @@ class TestParsing(TidalPluginTest):
                     "data_source": "Tidal",
                     "data_url": None,
                     "disctitle": None,
-                    "duration": 240,
                     "genres": None,
                     "index": 2,
                     "initial_key": None,
                     "isrc": "ISRC2",
                     "label": None,
-                    "length": None,
+                    "length": 240,
                     "lyricists": None,
                     "lyricists_ids": [],
                     "mb_workid": None,
@@ -392,7 +390,7 @@ class TestTrackParsing(TidalPluginTest):
 
         assert info.title == "My Track"
         assert info.track_id == "101"
-        assert info.duration == 240  # PT4M = 240 seconds
+        assert info.length == 240  # PT4M = 240 seconds
         assert info.isrc == "ISRC456"
         assert info.artist == "My Artist"
         assert info.tidal_track_id == "101"
