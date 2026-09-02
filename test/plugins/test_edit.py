@@ -505,6 +505,46 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         assert len(set(tracks)) == len(tracks)
         assert all(i.album == "Modified Album" for i in self.lib.items())
 
+    def test_importer_edit_candidate_keeps_rejected_albumfields_in_tracks(self):
+        """Item-only album fields remain editable in candidate tracks."""
+        self.config["edit"]["albumfields"] = "album title track"
+        self.config["edit"]["itemfields"] = "album title track"
+
+        seen_docs = {}
+
+        def inspect_and_edit(filename, log):
+            with codecs.open(filename, encoding="utf-8") as f:
+                docs = load(f.read())
+
+            headers = [doc for doc in docs if "id" not in doc]
+            tracks = [doc for doc in docs if "id" in doc]
+            seen_docs["headers"] = headers
+            seen_docs["tracks"] = tracks
+            tracks[0]["title"] = "Issue 6953 edited title"
+
+            with codecs.open(filename, "w", encoding="utf-8") as f:
+                f.write(dump(docs))
+
+        with patch("beetsplug.edit.edit", side_effect=inspect_and_edit):
+            self.importer.add_choice("c")
+            self.importer.add_choice("1")
+            self.importer.add_choice("a")
+            self.importer.run()
+
+        assert len(seen_docs["headers"]) == 1
+        assert set(seen_docs["headers"][0]) == {"album"}
+        assert len(seen_docs["tracks"]) == 1
+        assert set(seen_docs["tracks"][0]) == {"id", "title", "track"}
+
+        items = list(self.lib.items())
+        assert len(items) == 1
+        assert items[0].title == "Issue 6953 edited title"
+        assert items[0].mb_trackid == "match 1"
+
+        albums = list(self.lib.albums())
+        assert len(albums) == 1
+        assert albums[0].mb_albumid == "albumid"
+
     def test_importer_edit_album_header_albumartist(self):
         """Edit albumartist in the header (default albumfields)."""
         self.run_mocked_interpreter(
