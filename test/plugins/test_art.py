@@ -278,6 +278,12 @@ class TestFSArt(UseThePlugin):
         candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == candidate_path
 
+    def test_uppercase_extension(self, source, dpath, settings) -> None:
+        candidate_path = dpath / "a.JPG"
+        candidate_path.touch()
+        candidate = next(source.get(Album(), settings, [dpath]))
+        assert candidate.path == candidate_path
+
     def test_appropriately_named_file_takes_precedence(
         self, source, dpath, settings
     ) -> None:
@@ -286,6 +292,37 @@ class TestFSArt(UseThePlugin):
         candidate_path.touch()
         candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == candidate_path
+
+    def test_ignores_art_in_subdirectories(
+        self, source, dpath, settings
+    ) -> None:
+        settings.cover_names = ("cover",)
+        top_level = dpath / "cover.jpg"
+        top_level.touch()
+        nested_dir = dpath / "nested"
+        nested_dir.mkdir()
+        (nested_dir / "cover.jpg").touch()
+
+        candidates = list(source.get(Album(), settings, [dpath]))
+
+        # A list, so that a nested file resolved to the top-level path would
+        # show up as a duplicate rather than being silently deduplicated.
+        assert [candidate.path for candidate in candidates] == [top_level]
+
+    def test_cover_name_matches_stem_not_extension(
+        self, source, dpath, settings
+    ) -> None:
+        settings.cover_names = ("jpg",)
+        settings.cautious = True
+        (dpath / "photo.jpg").touch()
+        named_cover = dpath / "jpg.jpg"
+        named_cover.touch()
+
+        candidates = list(source.get(Album(), settings, [dpath]))
+
+        assert [
+            (candidate.path, candidate.match) for candidate in candidates
+        ] == [(named_cover, fetchart.MetadataMatch.EXACT)]
 
     def test_non_image_file_not_identified(
         self, source, dpath, settings
