@@ -8,6 +8,7 @@ from beets import config, importer, logging, plugins, ui
 from beets.autotag import (
     AlbumMatch,
     Recommendation,
+    SearchQuery,
     TrackMatch,
     tag_album,
     tag_item,
@@ -512,9 +513,10 @@ def manual_search(session: ImportSession, task: ImportTask) -> Proposal:
     """
     artist = ui.input_("Artist:").strip()
     name = ui.input_(f"{task.source.type.capitalize()}:").strip()
+    query = SearchQuery(artist=artist, title=name)
 
     method = tag_item if isinstance(task, SingletonImportTask) else tag_album
-    return method(task.source, artist, name)
+    return method(task.source, search_query=query)
 
 
 def manual_id(session: ImportSession, task: ImportTask) -> Proposal:
