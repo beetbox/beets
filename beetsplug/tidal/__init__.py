@@ -454,7 +454,7 @@ class TidalPlugin(MetadataSourcePlugin):
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(track["attributes"]["duration"]),
+            length=self._duration_to_seconds(track["attributes"]["duration"]),
             label=self._parse_label(track["attributes"]),
             # Flexattrs
             tidal_track_id=track["id"],
