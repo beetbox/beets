@@ -180,6 +180,9 @@ Default
     * ``media``
     * ``year``
 
+    When ``media`` is included, ``Digital Media`` and ``WEB`` are normalized to
+    Discogs' ``File`` format when constructing the search query.
+
     Example:
 
     .. code-block:: yaml

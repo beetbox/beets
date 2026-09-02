@@ -286,6 +286,11 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             value = str(most_common)
             if tag == "catalognum":
                 value = value.replace(" ", "")
+            elif tag == "media" and value.casefold() in {
+                "digital media",
+                "web",
+            }:
+                value = "File"
 
             filters[api_field] = value
 
