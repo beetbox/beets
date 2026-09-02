@@ -1399,6 +1399,7 @@ class Database:
         model_cls: type[AnyModel],
         query: Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> Results[AnyModel]:
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
@@ -1409,6 +1410,7 @@ class Database:
         sort = sort or NullSort()  # Unsorted.
         where, subvals = query.clause()
         order_by = sort.order_clause()
+        # TODO: handle flex fields sort
 
         table = model_cls._table
         _from = table
@@ -1420,7 +1422,7 @@ class Database:
             f"SELECT {table}.* "
             f"FROM ({_from}) "
             f"WHERE {where or 1} "
-            f"GROUP BY {table}.id"
+            f"GROUP BY {table}.id "
         )
         # Fetch flexible attributes for items matching the main query.
         # Doing the per-item filtering in python is faster than issuing
@@ -1437,7 +1439,10 @@ class Database:
             # if we try to order directly.
             # Since the join is required only for filtering, we can filter in
             # a subquery and order the result, which returns unique fields.
-            sql = f"SELECT * FROM ({sql}) ORDER BY {order_by}"
+            sql = f"SELECT * FROM ({sql}) ORDER BY {order_by} "
+
+        if limit is not None:
+            sql += f"LIMIT {limit}"
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)

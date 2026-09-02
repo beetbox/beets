@@ -21,6 +21,8 @@ New features
   new tracks, and keeps the album together rather than splitting it. The option
   is available both through configuration and from the interactive duplicate
   prompt. :bug:`4471`
+- :ref:`list-cmd` Add ``-l / --limit LIMIT`` flag to the ``list`` command to
+  limit query results.
 
 Bug fixes
 ~~~~~~~~~
