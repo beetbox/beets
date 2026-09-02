@@ -467,7 +467,6 @@ class WebPlugin(BeetsPlugin):
         )
 
         def func(lib: Library, opts: WebCLIOpts, args: list[str]) -> None:
-            args = args
             if args:
                 self.config["host"] = args.pop(0)
             if args:
