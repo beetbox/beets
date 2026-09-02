@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import tempfile
 from mimetypes import guess_extension
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 import requests
@@ -13,7 +14,7 @@ from beets import config, ui
 from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 from beets.ui import print_
-from beets.util import bytestring_path, displayable_path, normpath, syspath
+from beets.util import normpath, syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug._utils import art
 
@@ -127,11 +128,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             lib: Library, opts: EmbedArtCLIOpts, args: list[str]
         ) -> None:
             if opts.file:
-                imagepath = normpath(opts.file)
-                if not os.path.isfile(syspath(imagepath)):
-                    raise UserError(
-                        f"image file {displayable_path(imagepath)} not found"
-                    )
+                imagepath = normpath(Path(opts.file))
+                if not imagepath.is_file():
+                    raise UserError(f"image file {imagepath} not found")
 
                 items = lib.items(args)
 
@@ -162,9 +161,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     self._log.error("Invalid image file")
                     return
                 file = f"image{extension}"
-                tempimg = os.fsencode(os.path.join(tempfile.gettempdir(), file))
+                tempimg = Path(tempfile.gettempdir()) / file
                 try:
-                    with open(tempimg, "wb") as f:
+                    with tempimg.open("wb") as f:
                         f.write(response.content)
                 except Exception as e:
                     self._log.error("Unable to save image: {}", e)
@@ -172,7 +171,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 items = lib.items(args)
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.url):
-                    os.remove(tempimg)
+                    tempimg.unlink()
                     return
                 for item in items:
                     art.embed_item(
@@ -185,7 +184,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         ifempty,
                         quality=quality,
                     )
-                os.remove(tempimg)
+                tempimg.unlink()
             else:
                 albums = lib.albums(args)
                 # Confirm with user.
@@ -229,13 +228,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         ) -> None:
             if opts.outpath:
                 art.extract_first(
-                    self._log, normpath(opts.outpath), lib.items(args)
+                    self._log, Path(opts.outpath), lib.items(args)
                 )
             else:
-                filename = bytestring_path(
-                    opts.filename or config["art_filename"].get()
-                )
-                if os.path.dirname(filename) != b"":
+                filename = Path(opts.filename or config["art_filename"].get())
+                if filename.parent != Path():
                     self._log.error(
                         "Only specify a name rather than a path for -n"
                     )
@@ -243,9 +240,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 for album in lib.albums(args):
                     if opts.associate and (
                         artpath := art.extract_first(
-                            self._log,
-                            normpath(os.path.join(album.path, filename)),
-                            album.items(),
+                            self._log, album.filepath / filename, album.items()
                         )
                     ):
                         album.set_art(artpath)
