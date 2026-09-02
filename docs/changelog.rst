@@ -12,6 +12,10 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/plexupdate`: Add ``beet plexupdate --auth``, an interactive
+  plex.tv login following Plex' traditional PIN authentication flow: the access
+  token for the local server is stored in a token file. The manual ``token``
+  configuration option is now deprecated.
 - :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
   duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
   new tracks, and keeps the album together rather than splitting it. The option
