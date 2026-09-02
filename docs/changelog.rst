@@ -87,6 +87,8 @@ Bug fixes
   have no value for ``field``.
 - :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
   format when determining the target path. :bug:`1360`
+- :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
+  ``File`` format when using ``media`` in ``extra_tags`` search filters.
 
 ..
     For plugin developers

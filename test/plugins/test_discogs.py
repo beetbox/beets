@@ -500,6 +500,23 @@ class TestDGSearchQuery(TestHelper):
         assert filters["catno"] == "ABC123"
         config["discogs"]["extra_tags"] = []
 
+    @pytest.mark.parametrize(
+        "media,expected",
+        [("Digital Media", "File"), ("WEB", "File"), ("Vinyl", "Vinyl")],
+    )
+    def test_extra_tags_normalize_media(self, media, expected):
+        plugin = DiscogsPlugin()
+        plugin.config["extra_tags"] = ["media"]
+
+        items = [Item(media=media)]
+
+        _query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert filters["format"] == expected
+        config["discogs"]["extra_tags"] = []
+
 
 class TestDGSearchResponse(DiscogsTestMixin):
     @staticmethod
