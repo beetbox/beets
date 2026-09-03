@@ -93,6 +93,9 @@ Bug fixes
 - :doc:`plugins/tidal`: Pass the converted track duration as ``length`` so it
   contributes to the autotagging track-length distance instead of being silently
   stored as a ``duration`` flexible attribute.
+- Interactive import again applies results from ``enter Id`` and ``Enter
+  search``. Manual lookups now update the task's candidate collection in place,
+  so the new matches replace the previous list instead of being discarded.
 
 ..
     For plugin developers
