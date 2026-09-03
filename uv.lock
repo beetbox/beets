@@ -321,7 +321,7 @@ wheels = [
 
 [[package]]
 name = "beets"
-version = "2.13.0"
+version = "2.13.1"
 source = { editable = "." }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
