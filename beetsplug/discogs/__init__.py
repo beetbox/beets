@@ -183,7 +183,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Save the token for later use.
         self._log.debug("Discogs token {}, secret {}", token, secret)
-        with open(self._tokenfile(), "w") as f:
+        with util.open_secure(self._tokenfile()) as f:
             json.dump({"token": token, "secret": secret}, f)
 
         return token, secret
