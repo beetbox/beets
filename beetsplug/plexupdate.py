@@ -19,6 +19,7 @@ import webbrowser
 from contextlib import suppress
 from functools import cached_property
 from http import HTTPStatus
+from json import JSONDecodeError
 from typing import TYPE_CHECKING, ClassVar, Protocol
 from urllib.parse import urlencode, urljoin
 
@@ -117,7 +118,7 @@ class PlexSession(TimeoutAndRetrySession):
         not-yet-existing file is re-checked until it appears.
         """
         if self._token_cache is None:
-            with suppress(FileNotFoundError):
+            with suppress(FileNotFoundError, JSONDecodeError, OSError):
                 self._token_cache = json.loads(self.token_path.read_text())
 
         return self._token_cache or {}
