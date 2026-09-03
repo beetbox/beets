@@ -295,6 +295,39 @@ class SoftRemoveTest(FilePathTestCase):
         util.remove(self.path / "XXX", True)
 
 
+@unittest.skipIf(
+    sys.platform == "win32", "permission bits are not meaningful on Windows"
+)
+class OpenSecureTest(FilePathTestCase):
+    def test_creates_new_file_with_owner_only_permissions(self):
+        new_path = self.temp_path / "new_token_file"
+        assert not new_path.exists()
+
+        with util.open_secure(new_path) as f:
+            f.write("secret")
+
+        assert new_path.read_text() == "secret"
+        assert oct(os.stat(new_path).st_mode)[-3:] == "600"
+
+    def test_tightens_permissions_of_existing_file(self):
+        os.chmod(self.path, 0o644)
+        assert oct(os.stat(self.path).st_mode)[-3:] == "644"
+
+        with util.open_secure(self.path) as f:
+            f.write("secret")
+
+        assert self.path.read_text() == "secret"
+        assert oct(os.stat(self.path).st_mode)[-3:] == "600"
+
+    def test_overwrites_previous_contents(self):
+        self.path.write_text("old contents")
+
+        with util.open_secure(self.path) as f:
+            f.write("new")
+
+        assert self.path.read_text() == "new"
+
+
 class SafeMoveCopyTest(FilePathTestCase):
     def setUp(self):
         super().setUp()
