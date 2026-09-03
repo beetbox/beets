@@ -124,6 +124,7 @@ class RgTask:
         album: Album | None,
         target_level: float,
         peak_method: PeakMethod | None,
+        max_peak: float | None,
         backend_name: str,
         log: Logger,
     ) -> None:
@@ -131,6 +132,7 @@ class RgTask:
         self.album = album
         self.target_level = target_level
         self.peak_method = peak_method
+        self.max_peak = max_peak
         self.backend_name = backend_name
         self._log = log
         self.album_gain: Gain | None = None
@@ -226,7 +228,9 @@ class R128Task(RgTask):
         log: Logger,
     ) -> None:
         # R128_* tags do not store the track/album peak
-        super().__init__(items, album, target_level, None, backend_name, log)
+        super().__init__(
+            items, album, target_level, None, None, backend_name, log
+        )
 
     def _store_track_gain(self, item: Item, track_gain: Gain) -> None:
         item.rg_track_gain = None
@@ -533,6 +537,130 @@ class FfmpegBackend(Backend):
             raise ReplayGainError(
                 f"ffmpeg output: expected float value, found {value!r}"
             )
+
+
+# rsgain backend
+class RSGainBackend(Backend):
+    """A replaygain backend using rsgain's custom mode"""
+
+    NAME = "rsgain"
+    do_parallel = True
+
+    def __init__(self, config: ConfigView, log: Logger) -> None:
+        super().__init__(config, log)
+        self._rsgain_path = "rsgain"
+
+        # check that rsgain is installed
+        try:
+            call([self._rsgain_path, "--version"], log)
+        except OSError:
+            raise FatalReplayGainError(
+                f"could not find rsgain at {self._rsgain_path}"
+            )
+        self.noclip = config["noclip"].get(bool)
+        self.max_peak = config["max_peak"].get(float)
+
+    def compute_track_gain(self, task: AnyRgTask) -> AnyRgTask:
+        """Computes the track gain for the tracks belonging to `task`, and sets
+        the `track_gains` attribute on the task. Returns `task`.
+        """
+        task.track_gains = self.compute_gain(
+            task.items,
+            task.target_level,
+            task.peak_method,
+            task.max_peak,
+            False,
+        )
+        return task
+
+    def compute_album_gain(self, task: AnyRgTask) -> AnyRgTask:
+        """Computes the album gain for the album belonging to `task`, and sets
+        the `album_gain` attribute on the task. Returns `task`.
+        """
+
+        output = self.compute_gain(
+            task.items, task.target_level, task.peak_method, task.max_peak, True
+        )
+        task.album_gain = output[-1]
+        task.track_gains = output[:-1]
+        return task
+
+    def compute_gain(
+        self,
+        items: Sequence[Item],
+        target_level: float,
+        peak_method: PeakMethod | None,
+        max_peak: float | None,
+        is_album: bool,
+    ) -> list[Gain]:
+        """Computes the track or album gain of a list of items, returns
+        a list of TrackGain objects.
+
+        When computing album gain, the last TrackGain object returned is
+        the album gain
+        """
+        if not items:
+            self._log.debug("no supported tracks to analyze")
+            return []
+
+        """Compute ReplayGain values and return a list of results
+            dictionaries as given by `parse_tool_output`.
+            """
+        # Construct shell command. The "-O" option makes the output
+        # easily parseable (tab-delimited). "-s s" forces gain
+        # recalculation even if tags are already present and disables
+        # tag-writing. "-c p" enables clipping protection for positive
+        # values, unless disabled. "-m -1.0" option sets the max peak
+        # level for clipping protection to -1db, the EBU R128 standard.
+        target_lufs = db_to_lufs(target_level)
+        cmd = [
+            self._rsgain_path,
+            "custom",
+            "--output",
+            "--tagmode=s",
+            f"--clip-mode={'p' if self.noclip else 'n'}",
+            f"--loudness={int(target_lufs)!s}",
+        ]
+
+        if is_album:
+            cmd.append("--album")
+        if self.noclip:
+            max_peak_str = "-1.0" if max_peak is None else str(max_peak)
+            cmd.append(f"--max-peak={max_peak_str}")
+        if peak_method == PeakMethod.true:
+            cmd.append("--true-peak")
+        cmd.extend([str(i.filepath) for i in items])
+
+        self._log.debug("analyzing {} files", len(items))
+        self._log.debug("executing {}", " ".join(cmd))
+        output = call(cmd, self._log).stdout
+        self._log.debug("analysis finished")
+        return self.parse_tool_output(
+            output, len(items) + (1 if is_album else 0)
+        )
+
+    def parse_tool_output(self, text: bytes, num_lines: int) -> list[Gain]:
+        """Given the tab-delimited output from an invocation of rsgain,
+        parse the text and return a list of Gains containing
+        information about each analyzed file.
+        """
+        out = []
+        for line in text.split(b"\n")[1 : num_lines + 1]:
+            parts = line.split(b"\t")
+            if len(parts) != 7 or parts[0] == b"Filename":
+                self._log.debug("bad tool output: {}", text)
+                raise ReplayGainError("rsgain failed")
+
+            # _file_name = parts[0]
+            # _loudness_lufs = int(parts[1])
+            gain = float(parts[2])
+            peak = float(parts[3])
+            # _peak_db = int(parts[4])
+            # _peak_type = int(parts[5])
+            # _clip_adjustment = int(parts[6])
+
+            out.append(Gain(gain, peak))
+        return out
 
 
 # mpgain/aacgain CLI tool backend.
@@ -1268,6 +1396,7 @@ BACKEND_CLASSES: list[type[Backend]] = [
     GStreamerBackend,
     AudioToolsBackend,
     FfmpegBackend,
+    RSGainBackend,
 ]
 BACKENDS: dict[str, type[Backend]] = {b.NAME: b for b in BACKEND_CLASSES}
 
@@ -1290,6 +1419,8 @@ class ReplayGainPlugin(BeetsPlugin):
                 "parallel_on_import": False,
                 "per_disc": False,
                 "peak": "true",
+                "max_peak": -1.0,
+                "noclip": True,
                 "targetlevel": 89,
                 "r128": ["Opus"],
                 "r128_targetlevel": lufs_to_db(-23),
@@ -1321,6 +1452,13 @@ class ReplayGainPlugin(BeetsPlugin):
         # This only applies to plain old rg tags, r128 doesn't store peak
         # values.
         self.peak_method = PeakMethod[peak_method]
+
+        max_peak = self.config["max_peak"].get(float)
+        if max_peak > 0:
+            raise UserError(
+                f"Selected max peak value {max_peak!s} cannot be above zero"
+            )
+        self.max_peak = max_peak
 
         # On-import analysis.
         if self.config["auto"]:
@@ -1404,6 +1542,7 @@ class ReplayGainPlugin(BeetsPlugin):
             album,
             self.config["targetlevel"].as_number(),
             self.peak_method,
+            self.max_peak,
             self.backend_instance.NAME,
             self._log,
         )
