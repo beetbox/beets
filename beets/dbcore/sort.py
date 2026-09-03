@@ -122,27 +122,36 @@ class FieldSort(Sort):
     """
 
     def __init__(
-        self, field: str, ascending: bool = True, case_insensitive: bool = True
+        self,
+        field_name: str,
+        ascending: bool = True,
+        case_insensitive: bool = True,
     ) -> None:
-        self.field = field
+        self.table, _, self.field_name = field_name.rpartition(".")
         self.ascending = ascending
         self.case_insensitive = case_insensitive
 
     @property
+    def field(self) -> str:
+        return (
+            f"{self.table}.{self.field_name}" if self.table else self.field_name
+        )
+
+    @property
     def field_names(self) -> set[str]:
         """A set with fields in this sort."""
-        return {self.field}
+        return {self.field_name}
 
     def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
         # TODO: Support flexible attributes with different types (e.g. a mix
         # of strings and numbers) without falling over.
 
         def key(obj: Model) -> Any:
-            field_val = obj.get(self.field, None)
+            field_val = obj.get(self.field_name, None)
             if field_val is None:
-                if _type := obj._types.get(self.field):
+                if _type := obj._types.get(self.field_name):
                     # If the field is typed, use its null value.
-                    field_val = obj._types[self.field].null
+                    field_val = obj._types[self.field_name].null
                 else:
                     # If not, fall back to using an empty string.
                     field_val = ""

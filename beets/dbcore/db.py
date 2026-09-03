@@ -1452,7 +1452,14 @@ class Database:
             # if we try to order directly.
             # Since the join is required only for filtering, we can filter in
             # a subquery and order the result, which returns unique fields.
-            sql = f"SELECT * FROM ({sql}) ORDER BY {order_by} "
+            select = f"{table}.* FROM ({sql}) {table}"
+            if (
+                sort.field_names & model_cls.other_db_fields
+            ) - model_cls._getters().keys():
+                # only applies to db fields on the other model
+                select += f" {model_cls.relation_join}"
+
+            sql = f"SELECT {select} ORDER BY {order_by} "
 
         if sql_limit is not None:
             sql += f"LIMIT {sql_limit}"
