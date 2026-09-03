@@ -4,10 +4,11 @@ releases and tracks.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import IntEnum
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, TypeVar, overload
 
 import lap
 import numpy as np
@@ -17,7 +18,7 @@ from beets import config, logging, metadata_plugins, plugins
 from .distance import VA_ARTISTS, distance, track_distance
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable
 
     from beets.autotag import Source
     from beets.library import Album, Item
@@ -27,7 +28,7 @@ if TYPE_CHECKING:
 
     JSONDict = dict[str, Any]
     AnyMatch = TypeVar("AnyMatch", "TrackMatch", "AlbumMatch")
-    Candidates = dict[Info.Identifier, AnyMatch]
+    CandidateMap = dict[Info.Identifier, AnyMatch]
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -249,6 +250,41 @@ class Proposal(NamedTuple):
     recommendation: Recommendation
 
 
+class Candidates(Sequence[AlbumMatch | TrackMatch]):
+    """Mutable collection of candidate matches owned by one import task.
+
+    Manual search and ID lookups update this instance in place so the task
+    keeps a stable candidate collection across interactive choices.
+    """
+
+    def __init__(
+        self,
+        matches: Sequence[AlbumMatch | TrackMatch] | None = None,
+        recommendation: Recommendation = Recommendation.none,
+    ) -> None:
+        self._matches: list[AlbumMatch | TrackMatch] = list(matches or ())
+        self.recommendation = recommendation
+
+    def replace(self, proposal: Proposal) -> None:
+        """Replace matches and recommendation while keeping this instance."""
+        self._matches = list(proposal.candidates)
+        self.recommendation = proposal.recommendation
+
+    def __len__(self) -> int:
+        return len(self._matches)
+
+    @overload
+    def __getitem__(self, index: int) -> AlbumMatch | TrackMatch: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[AlbumMatch | TrackMatch]: ...
+
+    def __getitem__(
+        self, index: int | slice
+    ) -> AlbumMatch | TrackMatch | list[AlbumMatch | TrackMatch]:
+        return self._matches[index]
+
+
 def match_by_id(album_id: str | None, consensus: bool) -> Iterable[AlbumInfo]:
     """Return album candidates for the given album id.
 
@@ -329,7 +365,7 @@ def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
 
 
 def _add_candidate(
-    source: Source, results: Candidates[AlbumMatch], info: AlbumInfo
+    source: Source, results: CandidateMap[AlbumMatch], info: AlbumInfo
 ) -> None:
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
@@ -404,7 +440,7 @@ def tag_album(
 
     # The output result, keys are (data_source, album_id) pairs, values are
     # AlbumMatch objects.
-    candidates: Candidates[AlbumMatch] = {}
+    candidates: CandidateMap[AlbumMatch] = {}
 
     # Search by explicit ID.
     if search_ids:
@@ -466,7 +502,7 @@ def tag_item(
     """
     # Holds candidates found so far: keys are (data_source, track_id) pairs,
     # values TrackMatch objects
-    candidates: Candidates[TrackMatch] = {}
+    candidates: CandidateMap[TrackMatch] = {}
     rec: Recommendation | None = None
 
     item = source.items[0]
