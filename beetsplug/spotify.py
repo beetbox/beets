@@ -24,7 +24,7 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.library import Library
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
-from beets.util import chunks
+from beets.util import chunks, open_secure
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
@@ -218,7 +218,7 @@ class SpotifyPlugin(
 
         # Save the token for later use.
         self._log.debug("{0.data_source} access token: {0.access_token}", self)
-        with open(self._tokenfile(), "w") as f:
+        with open_secure(self._tokenfile()) as f:
             json.dump({"access_token": self.access_token}, f)
 
     def _handle_response(
