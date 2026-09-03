@@ -22,7 +22,7 @@ New features
   is available both through configuration and from the interactive duplicate
   prompt. :bug:`4471`
 - :ref:`list-cmd` Add ``-l / --limit LIMIT`` flag to the ``list`` command to
-  limit query results.
+  limit query results. :bug:`5076`
 
 Bug fixes
 ~~~~~~~~~

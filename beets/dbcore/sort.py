@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from functools import reduce
+from operator import or_
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -14,6 +16,11 @@ class Sort:
     """An abstract class representing a sort operation for a query into
     the database.
     """
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return set()
 
     def order_clause(self) -> str | None:
         """Generates a SQL fragment to be used in a ORDER BY clause, or
@@ -46,6 +53,11 @@ class MultipleSort(Sort):
 
     def __init__(self, sorts: list[Sort] | None = None) -> None:
         self.sorts = sorts or []
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return reduce(or_, (s.field_names for s in self.sorts), set())
 
     def add_sort(self, sort: Sort) -> None:
         self.sorts.append(sort)
@@ -115,6 +127,11 @@ class FieldSort(Sort):
         self.field = field
         self.ascending = ascending
         self.case_insensitive = case_insensitive
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return {self.field}
 
     def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
         # TODO: Support flexible attributes with different types (e.g. a mix
