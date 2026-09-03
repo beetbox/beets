@@ -21,7 +21,7 @@ from beets import config
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin
-from beets.util import unique_list
+from beets.util import open_secure, unique_list
 from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
@@ -360,7 +360,7 @@ class BeatportPlugin(MetadataSourcePlugin):
 
         # Save the token for later use.
         self._log.debug("Beatport token {}, secret {}", token, secret)
-        with open(self._tokenfile(), "w") as f:
+        with open_secure(self._tokenfile()) as f:
             json.dump({"token": token, "secret": secret}, f)
 
         return token, secret
