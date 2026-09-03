@@ -106,6 +106,8 @@ Bug fixes
 - :doc:`plugins/tidal`: Restore catalog searches after TIDAL moved search
   queries from the request path to the required ``filter[query]`` parameter.
   :bug:`6989`
+- :doc:`plugins/limit` Deprecate the ``limit`` plugin in favor of the new ``-l``
+  / ``--limit`` flag for the :ref:`list-cmd` command.
 
 ..
     For plugin developers
