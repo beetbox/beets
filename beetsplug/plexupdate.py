@@ -156,16 +156,17 @@ class PlexSession(TimeoutAndRetrySession):
         """
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            try:
+            data: JSONDict = {}
+            with suppress(requests.exceptions.RequestException):
                 data = (
                     super().request("get", f"{PLEX_API}/pins/{pin_id}").json()
                 )
-            except requests.exceptions.RequestException:
-                log.debug("Plex pin polling failed")
-                time.sleep(5)  # 5s polling
-                continue
+
             if token := data.get("authToken"):
                 return token
+
+            log.debug("Plex pin polling failed. Retrying in 5s...")
+            time.sleep(5)  # 5s polling
         return None
 
 
