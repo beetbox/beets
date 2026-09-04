@@ -12,12 +12,14 @@ import pytest
 from beets.library import Item
 from beets.test.helper import PluginTestHelper
 from beetsplug.tidal import TidalPlugin
+from beetsplug.tidal.api import API_BASE, TidalAPI
 
 if TYPE_CHECKING:
     from beetsplug.tidal.api_types import (
         AlbumAttributes,
         RelationshipData,
         ResourceIdentifier,
+        SearchDocument,
         TidalAlbum,
         TidalArtist,
         TidalArtwork,
@@ -26,6 +28,29 @@ if TYPE_CHECKING:
     )
 
 CURRENT_TS = 150000000
+
+
+def _make_search_doc(
+    resource_type: str, resource_ids: list[str]
+) -> SearchDocument:
+    return {
+        "data": [
+            {
+                "id": "search-result",
+                "type": "searchResults",
+                "attributes": {"trackingId": "tracking-id"},
+                "relationships": {
+                    resource_type: {
+                        "data": [
+                            {"id": id_, "type": resource_type}
+                            for id_ in resource_ids
+                        ],
+                        "links": {},
+                    }
+                },
+            }
+        ]
+    }
 
 
 def _make_artwork(id_: str, href: str = "") -> TidalArtwork:
@@ -147,6 +172,26 @@ class TidalPluginTest(PluginTestHelper):
     def setup_beets(self):
         super().setup_beets()
         self.tidal = TidalPlugin()
+
+
+class TestAPI:
+    def test_search_results_uses_query_filter(self):
+        api = TidalAPI("client-id", "token.json")
+        response = {"data": []}
+        api.get_json = Mock(return_value=response)
+
+        result = api.search_results("My Artist My Album", include=["albums"])
+
+        assert result == response
+        api.get_json.assert_called_once_with(
+            f"{API_BASE}/searchResults",
+            params={
+                "filter[query]": "My Artist My Album",
+                "explicitFilter": "INCLUDE",
+                "countryCode": "US",
+                "include": ["albums"],
+            },
+        )
 
 
 class TestParsing(TidalPluginTest):
@@ -640,13 +685,7 @@ class TestCandidates(TidalPluginTest):
 
         # Mock search returning album IDs
         self.tidal.api.search_results = Mock(
-            return_value={
-                "data": {
-                    "relationships": {
-                        "albums": {"data": [{"id": "1", "type": "albums"}]}
-                    }
-                }
-            }
+            return_value=_make_search_doc("albums", ["1"])
         )
 
         # Mock album lookup by ID
@@ -669,6 +708,15 @@ class TestCandidates(TidalPluginTest):
         assert self.tidal.api.search_results.called
         assert len(candidates) == 1
         assert candidates[0].album == "Query Album"
+
+    def test_album_search_handles_empty_response(self):
+        self.tidal.api.search_results = Mock(return_value={"data": []})
+        self.tidal.api.get_albums = Mock()
+
+        candidates = list(self.tidal.search_albums_by_query("missing album"))
+
+        assert candidates == []
+        self.tidal.api.get_albums.assert_not_called()
 
 
 class TestItemCandidates(TidalPluginTest):
@@ -699,13 +747,7 @@ class TestItemCandidates(TidalPluginTest):
 
         self.tidal.api.search_results = Mock(
             return_value={
-                "data": {
-                    "relationships": {
-                        "tracks": {
-                            "data": [{"id": "490839595", "type": "tracks"}]
-                        }
-                    }
-                },
+                **_make_search_doc("tracks", ["490839595"]),
                 "included": [
                     _make_track(
                         "490839595", "Query Track", "PT3M", "ISRC002", ["1001"]
@@ -721,6 +763,13 @@ class TestItemCandidates(TidalPluginTest):
 
         assert self.tidal.api.search_results.called
         assert results[0].title == "Query Track"
+
+    def test_track_search_handles_empty_response(self):
+        self.tidal.api.search_results = Mock(return_value={"data": []})
+
+        candidates = list(self.tidal.search_tracks_by_query("missing track"))
+
+        assert candidates == []
 
 
 class TestStaticHelpers:

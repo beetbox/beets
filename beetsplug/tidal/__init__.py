@@ -196,6 +196,9 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_tracks_by_query(self, query: str) -> Iterable[TrackInfo]:
         """Search for tracks given a string query."""
         search_doc = self.api.search_results(query, include=["tracks.artists"])
+        if not search_doc["data"]:
+            return
+
         track_by_id: dict[str, TidalTrack] = {
             item["id"]: item
             for item in search_doc.get("included", [])
@@ -206,7 +209,9 @@ class TidalPlugin(MetadataSourcePlugin):
             for item in search_doc.get("included", [])
             if item["type"] == "artists"
         }
-        for track_rel in search_doc["data"]["relationships"]["tracks"]["data"]:
+        for track_rel in search_doc["data"][0]["relationships"]["tracks"][
+            "data"
+        ]:
             if track := track_by_id.get(track_rel["id"]):
                 yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
@@ -223,9 +228,12 @@ class TidalPlugin(MetadataSourcePlugin):
             # This is a bit inconvenient, but we fetch the items and artists
             # for all albums separately.
         )
+        if not search_doc["data"]:
+            return
+
         album_ids = [
             album_rel["id"]
-            for album_rel in search_doc["data"]["relationships"]["albums"][
+            for album_rel in search_doc["data"][0]["relationships"]["albums"][
                 "data"
             ]
         ]
