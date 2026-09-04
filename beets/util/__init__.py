@@ -26,7 +26,6 @@ from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from re import Pattern
 from typing import (
-    IO,
     TYPE_CHECKING,
     Any,
     AnyStr,
@@ -444,32 +443,6 @@ def samefile(p1: PathLike, p2: PathLike) -> bool:
         return os.path.samefile(syspath(p1), syspath(p2))
 
     return False
-
-
-def open_secure(path: str | Path, mode: str = "w") -> IO[Any]:
-    """Open ``path`` for writing such that only the file's owner can
-    read or write it (permissions ``0600``).
-
-    The file is created atomically with those permissions when it does
-    not already exist, avoiding the brief window a separate
-    ``os.chmod()`` call after creation would leave during which the
-    file is more permissive than intended (and dependent on the
-    process's ``umask``). If the file already exists -- possibly with
-    broader permissions from before this function was used to write it
-    -- its permissions are tightened to ``0600`` as well.
-
-    Intended for files that may hold sensitive data, such as cached
-    authentication tokens. The returned file object can be used as a
-    context manager, just like the builtin ``open()``.
-    """
-    str_path = os.fspath(path)
-    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-    fd = os.open(str_path, flags, 0o600)
-    try:
-        os.chmod(str_path, 0o600)
-    except OSError:
-        pass
-    return os.fdopen(fd, mode)
 
 
 def remove(path: PathLike, soft: bool = True) -> None:
