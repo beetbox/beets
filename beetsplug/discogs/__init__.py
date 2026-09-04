@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import http.client
 import json
-import os
 import re
 import socket
 import time
@@ -16,7 +15,6 @@ from itertools import groupby
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
-import confuse
 import requests
 from discogs_client import Client, Master, Release
 from discogs_client.exceptions import DiscogsAPIError
@@ -26,7 +24,11 @@ import beets.ui
 from beets import config, util
 from beets.autotag import AlbumInfo, TrackInfo, string_dist
 from beets.exceptions import UserError
-from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
+from beets.metadata_plugins import (
+    IDResponse,
+    SearchApiMetadataSourcePlugin,
+    TokenFileMixin,
+)
 
 from .states import DISAMBIGUATION_RE, ArtistState, TracklistState
 
@@ -78,7 +80,7 @@ FIELDS_TO_DISCOGS_KEYS = {
 }
 
 
-class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
+class DiscogsPlugin(TokenFileMixin, SearchApiMetadataSourcePlugin[IDResponse]):
     def __init__(self) -> None:
         super().__init__()
         self.config.add(
@@ -139,8 +141,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Get the OAuth token from a file or log in.
         try:
-            with open(self._tokenfile()) as f:
-                tokendata = json.load(f)
+            tokendata = json.loads(self.tokenfile.read_text())
         except OSError:
             # No token yet. Generate one.
             token, secret = self.authenticate(c_key, c_secret)
@@ -152,12 +153,8 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def reset_auth(self) -> None:
         """Delete token file & redo the auth steps."""
-        os.remove(self._tokenfile())
+        self.tokenfile.unlink()
         self.setup()
-
-    def _tokenfile(self) -> str:
-        """Get the path to the JSON file for storing the OAuth token."""
-        return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def authenticate(self, c_key: str, c_secret: str) -> tuple[str, str]:
         # Get the link for the OAuth page.
@@ -183,8 +180,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Save the token for later use.
         self._log.debug("Discogs token {}, secret {}", token, secret)
-        with util.open_secure(self._tokenfile()) as f:
-            json.dump({"token": token, "secret": secret}, f)
+        self.write_tokenfile({"token": token, "secret": secret})
 
         return token, secret
 
