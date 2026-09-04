@@ -15,7 +15,6 @@ import webbrowser
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypedDict
 
-import confuse
 import requests
 
 from beets import ui
@@ -23,7 +22,11 @@ from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.library import Library
-from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
+from beets.metadata_plugins import (
+    IDResponse,
+    SearchApiMetadataSourcePlugin,
+    TokenFileMixin,
+)
 from beets.util import chunks
 
 if TYPE_CHECKING:
@@ -108,7 +111,8 @@ class AudioFeaturesUnavailableError(Exception):
 
 
 class SpotifyPlugin(
-    SearchApiMetadataSourcePlugin[SearchResponseAlbums | SearchResponseTracks]
+    TokenFileMixin,
+    SearchApiMetadataSourcePlugin[SearchResponseAlbums | SearchResponseTracks],
 ):
     item_types: ClassVar[dict[str, types.Type]] = {
         "spotify_track_popularity": types.INTEGER,
@@ -180,16 +184,11 @@ class SpotifyPlugin(
         """Retrieve previously saved OAuth token or generate a new one."""
 
         try:
-            with open(self._tokenfile()) as f:
-                token_data = json.load(f)
+            token_data = json.loads(self.tokenfile.read_text())
         except OSError:
             self._authenticate()
         else:
             self.access_token = token_data["access_token"]
-
-    def _tokenfile(self) -> str:
-        """Get the path to the JSON file for storing the OAuth token."""
-        return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def _authenticate(self) -> None:
         """Request an access token via the Client Credentials Flow: https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow"""
@@ -218,8 +217,7 @@ class SpotifyPlugin(
 
         # Save the token for later use.
         self._log.debug("{0.data_source} access token: {0.access_token}", self)
-        with open(self._tokenfile(), "w") as f:
-            json.dump({"access_token": self.access_token}, f)
+        self.write_tokenfile({"access_token": self.access_token})
 
     def _handle_response(
         self,

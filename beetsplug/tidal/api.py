@@ -14,6 +14,7 @@ from beetsplug.tidal.session import TidalSession
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from pathlib import Path
 
     from .api_types import (
         AlbumDocument,
@@ -40,7 +41,7 @@ def _batched(iterable: Iterable[T], n: int) -> Iterable[list[T]]:
 
 
 class TidalAPI(RequestHandler):
-    def __init__(self, client_id: str, token_path: str) -> None:
+    def __init__(self, client_id: str, token_path: str | Path) -> None:
         self.client_id = client_id
         self.token_path = token_path
 

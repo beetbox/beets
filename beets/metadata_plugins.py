@@ -8,12 +8,14 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
+import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import cache, cached_property, wraps
 from typing import (
     TYPE_CHECKING,
+    Any,
     Generic,
     Literal,
     NamedTuple,
@@ -21,6 +23,7 @@ from typing import (
     TypeVar,
 )
 
+import confuse
 import unidecode
 from confuse import NotFoundError
 
@@ -32,9 +35,13 @@ from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 Ret = TypeVar("Ret")
 QueryType = Literal["album", "track"]
+JSONDict = dict[str, Any]
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
+    from pathlib import Path
+
+    from confuse import Subview
 
     from .autotag import AlbumInfo, TrackInfo
     from .library.models import Item
@@ -169,6 +176,32 @@ def get_penalty(data_source: str | None) -> float:
         ),
         MetadataSourcePlugin.DEFAULT_DATA_SOURCE_MISMATCH_PENALTY,
     )
+
+
+class TokenFileMixin:
+    """Mixin for plugins that cache a secret -- typically an OAuth token
+    -- in a JSON file inside beets' configuration directory.
+
+    Including this mixin does not by itself register a default filename:
+    each plugin should still add its own default under its own
+    ``__init__``, e.g. ``self.config.add({"tokenfile": "myplugin_token.json"})``.
+    """
+
+    config: Subview
+
+    @cached_property
+    def tokenfile(self) -> Path:
+        """The path to the JSON file used to cache this plugin's secret."""
+        return self.config["tokenfile"].get(confuse.Path(in_app_dir=True))
+
+    def write_tokenfile(self, data: JSONDict) -> None:
+        """Write ``data`` as JSON to :attr:`tokenfile`.
+
+        The file's permissions are restricted to the owner (``0600``)
+        after writing, since it typically holds sensitive credentials.
+        """
+        self.tokenfile.write_text(json.dumps(data))
+        self.tokenfile.chmod(0o600)
 
 
 class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):

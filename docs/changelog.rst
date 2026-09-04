@@ -97,6 +97,11 @@ Bug fixes
 - :doc:`plugins/tidal`: Pass the converted track duration as ``length`` so it
   contributes to the autotagging track-length distance instead of being silently
   stored as a ``duration`` flexible attribute.
+- Cached OAuth token files written by the :doc:`plugins/discogs`,
+  :doc:`plugins/spotify`, :doc:`plugins/beatport`, and :doc:`plugins/tidal`
+  plugins are now created with owner-only (``0600``) permissions, rather than
+  whatever the process ``umask`` happened to allow. Permissions are also
+  tightened on write for any such file that already exists. :bug:`6984`
 
 ..
     For plugin developers

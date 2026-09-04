@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import itertools
-import os
 import re
 import time
 from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, overload
-
-import confuse
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.exceptions import UserError
 from beets.logging import getLogger
-from beets.metadata_plugins import MetadataSourcePlugin
+from beets.metadata_plugins import MetadataSourcePlugin, TokenFileMixin
 
 from .api import TidalAPI
 
@@ -62,7 +59,7 @@ _normalize_label_re = re.compile(
 )
 
 
-class TidalPlugin(MetadataSourcePlugin):
+class TidalPlugin(TokenFileMixin, MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "tidal_track_id": types.STRING,
         "tidal_artist_id": types.STRING,
@@ -93,15 +90,11 @@ class TidalPlugin(MetadataSourcePlugin):
     def api(self) -> TidalAPI:
         return TidalAPI(
             client_id=self.config["client_id"].as_str(),
-            token_path=self._tokenfile(),
+            token_path=self.tokenfile,
         )
 
-    def _tokenfile(self) -> str:
-        """Return the configured path to the token file in the app directory."""
-        return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
-
     def require_authentication(self, session: ImportSession) -> None:
-        if not os.path.isfile(self._tokenfile()):
+        if not self.tokenfile.is_file():
             raise UserError(
                 "Please login to TIDAL"
                 " using `beet tidal --auth` or disable tidal plugin"
