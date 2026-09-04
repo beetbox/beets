@@ -11,7 +11,6 @@ from requests_oauthlib import OAuth2Session
 from urllib3.util.retry import Retry
 
 from beets.logging import getLogger
-from beets.util import open_secure
 from beetsplug._utils.requests import RateLimitAdapter, TimeoutAndRetrySession
 
 if TYPE_CHECKING:
@@ -70,14 +69,17 @@ class TidalSession(OAuth2Session, TimeoutAndRetrySession):
     def load_token(self) -> JSONDict | None:
         """Load token from JSON file."""
         if self.token_path.exists():
-            with open(self.token_path) as f:
-                return json.load(f)
+            return json.loads(self.token_path.read_text())
         return None
 
     def save_token(self, token: JSONDict) -> None:
-        """Save token to JSON file."""
-        with open_secure(self.token_path) as f:
-            json.dump(token, f, indent=2)
+        """Save token to JSON file.
+
+        The file's permissions are restricted to the owner (``0600``)
+        since it holds a live Tidal session token.
+        """
+        self.token_path.write_text(json.dumps(token, indent=2))
+        self.token_path.chmod(0o600)
 
     def request(
         self, method: str | bytes, url: str | bytes, *args, **kwargs
