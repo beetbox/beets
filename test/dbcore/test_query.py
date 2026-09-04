@@ -293,6 +293,18 @@ class TestMatch:
         assert q.match(item) == should_match
         assert not NotQuery(q).match(item) == should_match
 
+    @pytest.mark.parametrize("pattern", ["-10..0", "0..", "..0"])
+    def test_numeric_range_match_null_field(self, pattern):
+        """A range never matches a null value, as in the SQL clause.
+
+        Nullable types (``NullFloat``/``NullInteger``) use ``None`` as their
+        null value, so e.g. ``rg_track_gain`` is None until ReplayGain runs.
+        Comparing that against the range bounds used to raise a TypeError.
+        """
+        item = Item(rg_track_gain=None)
+
+        assert NumericQuery("rg_track_gain", pattern).match(item) is False
+
 
 class TestPathQuery:
     """Tests for path-based querying functionality in the database system.
