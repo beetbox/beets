@@ -12,6 +12,10 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/plexupdate`: Add ``beet plexupdate --auth``, an interactive
+  plex.tv login following Plex' traditional PIN authentication flow: the access
+  token for the local server is stored in a token file. The manual ``token``
+  configuration option is now deprecated.
 - :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
   duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
   new tracks, and keeps the album together rather than splitting it. The option
@@ -85,6 +89,10 @@ Bug fixes
   ``sqlite3.InterfaceError``.
 - :doc:`plugins/aura`: When sorting by ``field``, do not exclude resources that
   have no value for ``field``.
+- :doc:`plugins/scrub`: The scrub plugin now respects the ``--nowrite`` (``-W``)
+  flag during import. Previously, ``beet import -W`` with the scrub plugin
+  enabled would still remove tags from imported files; the plugin now skips
+  scrubbing when ``should_write()`` returns ``False``. :bug:`6958`
 - :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
   format when determining the target path. :bug:`1360`
 - :doc:`plugins/edit`: Item-only fields rejected from the album header remain
