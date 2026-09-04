@@ -204,4 +204,4 @@ class Document(TypedDict, Generic[T]):
 
 AlbumDocument = Document[list[TidalAlbum]]
 TrackDocument = Document[list[TidalTrack]]
-SearchDocument = Document[TidalSearch]
+SearchDocument = Document[list[TidalSearch]]

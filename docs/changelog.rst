@@ -93,6 +93,9 @@ Bug fixes
 - :doc:`plugins/tidal`: Pass the converted track duration as ``length`` so it
   contributes to the autotagging track-length distance instead of being silently
   stored as a ``duration`` flexible attribute.
+- :doc:`plugins/tidal`: Restore catalog searches after TIDAL moved search
+  queries from the request path to the required ``filter[query]`` parameter.
+  :bug:`6989`
 
 ..
     For plugin developers
