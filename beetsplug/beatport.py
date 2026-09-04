@@ -7,7 +7,6 @@ import re
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Literal, overload
 
-import confuse
 from requests_oauthlib import OAuth1Session
 from requests_oauthlib.oauth1_session import (
     TokenMissing,
@@ -20,8 +19,8 @@ import beets.ui
 from beets import config
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.exceptions import UserError
-from beets.metadata_plugins import MetadataSourcePlugin
-from beets.util import open_secure, unique_list
+from beets.metadata_plugins import MetadataSourcePlugin, TokenFileMixin
+from beets.util import unique_list
 from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
@@ -296,7 +295,7 @@ class BeatportTrack(BeatportObject):
         self.initial_key = str((data.get("key") or {}).get("shortName"))
 
 
-class BeatportPlugin(MetadataSourcePlugin):
+class BeatportPlugin(TokenFileMixin, MetadataSourcePlugin):
     _client: BeatportClient | None = None
 
     def __init__(self) -> None:
@@ -327,8 +326,7 @@ class BeatportPlugin(MetadataSourcePlugin):
 
         # Get the OAuth token from a file or log in.
         try:
-            with open(self._tokenfile()) as f:
-                tokendata = json.load(f)
+            tokendata = json.loads(self.tokenfile.read_text())
         except OSError:
             # No token yet. Generate one.
             token, secret = self.authenticate(c_key, c_secret)
@@ -360,14 +358,9 @@ class BeatportPlugin(MetadataSourcePlugin):
 
         # Save the token for later use.
         self._log.debug("Beatport token {}, secret {}", token, secret)
-        with open_secure(self._tokenfile()) as f:
-            json.dump({"token": token, "secret": secret}, f)
+        self.write_tokenfile({"token": token, "secret": secret})
 
         return token, secret
-
-    def _tokenfile(self) -> str:
-        """Get the path to the JSON file for storing the OAuth token."""
-        return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
