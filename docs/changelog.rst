@@ -12,6 +12,10 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/plexupdate`: Add ``beet plexupdate --auth``, an interactive
+  plex.tv login following Plex' traditional PIN authentication flow: the access
+  token for the local server is stored in a token file. The manual ``token``
+  configuration option is now deprecated.
 - :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
   duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
   new tracks, and keeps the album together rather than splitting it. The option
@@ -91,6 +95,12 @@ Bug fixes
   scrubbing when ``should_write()`` returns ``False``. :bug:`6958`
 - :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
   format when determining the target path. :bug:`1360`
+- :doc:`plugins/edit`: Item-only fields rejected from the album header remain
+  available in per-track documents during interactive import when they are also
+  configured in ``itemfields``. :bug:`6953`
+- :doc:`plugins/tidal`: Pass the converted track duration as ``length`` so it
+  contributes to the autotagging track-length distance instead of being silently
+  stored as a ``duration`` flexible attribute.
 
 ..
     For plugin developers
