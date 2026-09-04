@@ -1,3 +1,5 @@
+import json
+import sys
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor as BaseThreadPoolExecutor
 from threading import Event
@@ -134,6 +136,67 @@ class TestSearchApiMetadataSourcePlugin(PluginMixin):
         config["raise_on_error"] = True
 
         assert search_plugin._search_api("track", "", {}) == ()
+
+
+class TokenFileMockPlugin(
+    metadata_plugins.TokenFileMixin, metadata_plugins.MetadataSourcePlugin
+):
+    """A minimal metadata source plugin for exercising TokenFileMixin."""
+
+    def candidates(self, *args, **kwargs):
+        return []
+
+    def item_candidates(self, *args, **kwargs):
+        return []
+
+    def album_for_id(self, *args, **kwargs):
+        return None
+
+    def track_for_id(self, *args, **kwargs):
+        return None
+
+
+class TestTokenFileMixin(PluginMixin):
+    plugin = "none"
+    preload_plugin = False
+
+    @pytest.fixture
+    def token_plugin(self, config, tmp_path):
+        plugin = TokenFileMockPlugin()
+        plugin.config["tokenfile"] = str(tmp_path / "token.json")
+        return plugin
+
+    def test_tokenfile_resolves_the_configured_path(self, token_plugin, tmp_path):
+        assert token_plugin.tokenfile == tmp_path / "token.json"
+
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="permission bits are not meaningful on Windows",
+    )
+    def test_write_tokenfile_creates_file_with_owner_only_permissions(
+        self, token_plugin
+    ):
+        token_plugin.write_tokenfile({"access_token": "secret"})
+
+        assert json.loads(token_plugin.tokenfile.read_text()) == {
+            "access_token": "secret"
+        }
+        assert oct(token_plugin.tokenfile.stat().st_mode)[-3:] == "600"
+
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="permission bits are not meaningful on Windows",
+    )
+    def test_write_tokenfile_tightens_permissions_of_existing_file(
+        self, token_plugin
+    ):
+        token_plugin.tokenfile.write_text("{}")
+        token_plugin.tokenfile.chmod(0o644)
+        assert oct(token_plugin.tokenfile.stat().st_mode)[-3:] == "644"
+
+        token_plugin.write_tokenfile({"access_token": "secret"})
+
+        assert oct(token_plugin.tokenfile.stat().st_mode)[-3:] == "600"
 
 
 def test_albums_for_ids_calls_each_plugin_once(monkeypatch):
