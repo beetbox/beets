@@ -89,6 +89,10 @@ Bug fixes
   ``sqlite3.InterfaceError``.
 - :doc:`plugins/aura`: When sorting by ``field``, do not exclude resources that
   have no value for ``field``.
+- :doc:`plugins/scrub`: The scrub plugin now respects the ``--nowrite`` (``-W``)
+  flag during import. Previously, ``beet import -W`` with the scrub plugin
+  enabled would still remove tags from imported files; the plugin now skips
+  scrubbing when ``should_write()`` returns ``False``. :bug:`6958`
 - :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
   format when determining the target path. :bug:`1360`
 - :doc:`plugins/edit`: Item-only fields rejected from the album header remain
