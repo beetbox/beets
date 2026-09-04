@@ -166,7 +166,9 @@ class TestTokenFileMixin(PluginMixin):
         plugin.config["tokenfile"] = str(tmp_path / "token.json")
         return plugin
 
-    def test_tokenfile_resolves_the_configured_path(self, token_plugin, tmp_path):
+    def test_tokenfile_resolves_the_configured_path(
+        self, token_plugin, tmp_path
+    ):
         assert token_plugin.tokenfile == tmp_path / "token.json"
 
     @pytest.mark.skipif(
