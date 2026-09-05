@@ -263,6 +263,9 @@ class ImportTask(BaseImportTask):
     ) -> None:
         super().__init__(toppath, paths, items)
         self.is_album = True
+        self._path_replacements: (
+            defaultdict[library.Item, list[library.Item]] | None
+        ) = None
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -392,7 +395,7 @@ class ImportTask(BaseImportTask):
 
             for item in album.items():
                 item.remove(with_album=False)
-                if lib.directory in util.ancestry(item.path):
+                if self._is_path_in_library(lib, item.path):
                     log.debug("deleting duplicate {.filepath}", item)
                     util.remove(item.path)
                     util.prune_dirs(
@@ -403,7 +406,7 @@ class ImportTask(BaseImportTask):
 
             album.remove(with_items=False)
 
-            if artpath and lib.directory in util.ancestry(artpath):
+            if artpath and self._is_path_in_library(lib, artpath):
                 log.debug("deleting duplicate album art {}", artpath)
                 util.remove(artpath)
                 util.prune_dirs(
@@ -426,7 +429,7 @@ class ImportTask(BaseImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove(with_album=False)
-            if lib.directory in util.ancestry(item.path):
+            if self._is_path_in_library(lib, item.path):
                 log.debug("deleting superseded {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
@@ -445,7 +448,7 @@ class ImportTask(BaseImportTask):
             if not surviving:
                 artpath = old_album.artpath
                 old_album.remove(with_items=False)
-                if artpath and lib.directory in util.ancestry(artpath):
+                if artpath and self._is_path_in_library(lib, artpath):
                     log.debug("deleting duplicate album art {}", artpath)
                     util.remove(artpath)
                     util.prune_dirs(
@@ -582,13 +585,22 @@ class ImportTask(BaseImportTask):
         # Don't count albums with the same files as duplicates.
         task_paths = {i.path for i in self.items if i}
 
+        reimported_item_ids = {
+            old_item.id
+            for old_items in self._find_replaced_items(lib).values()
+            for old_item in old_items
+        }
         duplicates = []
         for album in lib.albums(dup_query):
             # Check whether the album paths are all present in the task
             # i.e. album is being completely re-imported by the task,
             # in which case it is not a duplicate (will be replaced).
-            album_paths = {i.path for i in album.items()}
-            if not (album_paths <= task_paths):
+            album_items = list(album.items())
+            album_paths = {i.path for i in album_items}
+            if not (
+                album_paths <= task_paths
+                or all(item.id in reimported_item_ids for item in album_items)
+            ):
                 duplicates.append(album)
 
         return duplicates
@@ -665,7 +677,7 @@ class ImportTask(BaseImportTask):
                 if (
                     operation != util.MoveOperation.MOVE
                     and self.replaced_items[item]
-                    and session.lib.directory in util.ancestry(old_path)
+                    and self._is_path_in_library(session.lib, old_path)
                 ):
                     item.move()
                     # We moved the item, so remove the
@@ -709,15 +721,13 @@ class ImportTask(BaseImportTask):
         """Records the replaced items and albums in the `replaced_items`
         and `replaced_albums` dictionaries.
         """
-        self.replaced_items = defaultdict(list)
+        self.replaced_items = self._find_replaced_items(lib)
         self.replaced_albums: dict[util.PathBytes, library.Album] = (
             defaultdict()
         )
         replaced_album_ids = set()
         for item in self.imported_items():
-            dup_items = list(lib.items(query=PathQuery("path", item.path)))
-            self.replaced_items[item] = dup_items
-            for dup_item in dup_items:
+            for dup_item in self.replaced_items[item]:
                 if (
                     not dup_item.album_id
                     or dup_item.album_id in replaced_album_ids
@@ -727,6 +737,44 @@ class ImportTask(BaseImportTask):
                 if replaced_album:
                     replaced_album_ids.add(dup_item.album_id)
                     self.replaced_albums[replaced_album.path] = replaced_album
+
+    def _find_replaced_items(
+        self, lib: library.Library
+    ) -> defaultdict[library.Item, list[library.Item]]:
+        if self._path_replacements is not None:
+            return self._path_replacements
+
+        replacements: defaultdict[library.Item, list[library.Item]] = (
+            defaultdict(list)
+        )
+        unresolved_items = []
+        for item in self.imported_items():
+            replacements[item] = list(
+                lib.items(query=PathQuery("path", item.path))
+            )
+            if not replacements[item] and self._is_path_in_library(
+                lib, item.path
+            ):
+                unresolved_items.append(item)
+
+        for old_item in lib.items():
+            for item in unresolved_items:
+                if util.samefile(old_item.path, item.path):
+                    replacements[item].append(old_item)
+
+        self._path_replacements = replacements
+        return replacements
+
+    @staticmethod
+    def _is_path_in_library(lib: library.Library, path: util.PathBytes) -> bool:
+        real_directory = os.path.realpath(lib.directory)
+        try:
+            return (
+                os.path.commonpath((real_directory, os.path.realpath(path)))
+                == real_directory
+            )
+        except ValueError:
+            return False
 
     def reimport_metadata(self, lib: library.Library) -> None:
         """For reimports, preserves metadata for reimported items and
@@ -910,10 +958,18 @@ class SingletonImportTask(ImportTask):
         ].as_str_seq()
         dup_query = tmp_item.duplicates_query(keys)
 
+        reimported_item_ids = {
+            item.id
+            for items in self._find_replaced_items(lib).values()
+            for item in items
+        }
         found_items = []
         for other_item in lib.items(dup_query):
             # Existing items not considered duplicates.
-            if other_item.path != self.item.path:
+            if (
+                other_item.id != self.item.id
+                and other_item.id not in reimported_item_ids
+            ):
                 found_items.append(other_item)
         return found_items
 
@@ -928,7 +984,7 @@ class SingletonImportTask(ImportTask):
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
             item.remove()
-            if lib.directory in util.ancestry(item.path):
+            if self._is_path_in_library(lib, item.path):
                 log.debug("deleting duplicate {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
@@ -948,7 +1004,7 @@ class SingletonImportTask(ImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove()
-            if lib.directory in util.ancestry(item.path):
+            if self._is_path_in_library(lib, item.path):
                 log.debug("deleting superseded {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
