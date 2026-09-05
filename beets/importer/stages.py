@@ -122,9 +122,12 @@ def rescan_tasks(
             (dirs, paths)
             for dirs, paths in groups
             if any(
-                d == o
-                or is_subdir_of_any_in_list(d, [o])
-                or is_subdir_of_any_in_list(o, [d])
+                (
+                    d == o
+                    or is_subdir_of_any_in_list(d, [o])
+                    or is_subdir_of_any_in_list(o, [d])
+                )
+
                 for d in dirs
                 for o in original_dirs
             )
