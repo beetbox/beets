@@ -12,6 +12,10 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :doc:`plugins/plexupdate`: Add ``beet plexupdate --auth``, an interactive
+  plex.tv login following Plex' traditional PIN authentication flow: the access
+  token for the local server is stored in a token file. The manual ``token``
+  configuration option is now deprecated.
 - :ref:`duplicate_action`: Add an ``upgrade`` option that replaces individual
   duplicate tracks only if the new copy has a higher bitrate, adds any genuinely
   new tracks, and keeps the album together rather than splitting it. The option
@@ -89,6 +93,10 @@ Bug fixes
   ``sqlite3.InterfaceError``.
 - :doc:`plugins/aura`: When sorting by ``field``, do not exclude resources that
   have no value for ``field``.
+- :doc:`plugins/scrub`: The scrub plugin now respects the ``--nowrite`` (``-W``)
+  flag during import. Previously, ``beet import -W`` with the scrub plugin
+  enabled would still remove tags from imported files; the plugin now skips
+  scrubbing when ``should_write()`` returns ``False``. :bug:`6958`
 - :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
   format when determining the target path. :bug:`1360`
 - :doc:`plugins/edit`: Item-only fields rejected from the album header remain
@@ -97,6 +105,14 @@ Bug fixes
 - :doc:`plugins/tidal`: Pass the converted track duration as ``length`` so it
   contributes to the autotagging track-length distance instead of being silently
   stored as a ``duration`` flexible attribute.
+- :doc:`plugins/tidal`: Restore catalog searches after TIDAL moved search
+  queries from the request path to the required ``filter[query]`` parameter.
+  :bug:`6989`
+- :ref:`import-cmd`: Restore the ability to import from tar and 7z archives.
+  Both failed with an ``'... object has no attribute 'infolist'`` error because
+  ``tarfile.TarFile`` lost its ``ZipFileCompat`` interface in Python 3 and
+  ``py7zr.SevenZipFile`` exposes ``list()`` rather than ``infolist()``.
+  :bug:`5664`
 
 ..
     For plugin developers
