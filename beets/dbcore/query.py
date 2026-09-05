@@ -50,7 +50,7 @@ class InvalidQueryError(ParsingError):
     def __init__(
         self, query: str | Sequence[str] | Query | None, explanation: Exception
     ) -> None:
-        if isinstance(query, list):
+        if isinstance(query, Sequence) and not isinstance(query, str):
             query = " ".join(query)
         message = f"'{query}': {explanation}"
         super().__init__(message)
@@ -119,6 +119,7 @@ class Query(ABC):
 SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 FieldQueryType = type["FieldQuery"]
+AnyCollectionQuery = TypeVar("AnyCollectionQuery", bound="CollectionQuery")
 
 
 class FieldQuery(Query, Generic[P]):

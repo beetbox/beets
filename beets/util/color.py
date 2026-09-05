@@ -3,11 +3,14 @@ from __future__ import annotations
 import os
 import re
 from functools import cache
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import confuse
 
 from beets import config
+
+if TYPE_CHECKING:
+    from beets.util import StrPath
 
 # ANSI terminal colorization code heavily inspired by pygments:
 # https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
@@ -148,8 +151,10 @@ def _colorize(color_name: ColorName, text: str) -> str:
     return f"{COLOR_ESCAPE}[{color_code}m{text}{RESET_COLOR}"
 
 
-def colorize(color_name: ColorName, text: str) -> str:
+def colorize(color_name: ColorName, text: StrPath) -> str:
     """Colorize text when color output is enabled."""
+    text = os.fspath(text)
+
     if config["ui"]["color"] and "NO_COLOR" not in os.environ:
         return _colorize(color_name, text)
 

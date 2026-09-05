@@ -38,13 +38,7 @@ from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
-from beets.util import (
-    MoveOperation,
-    bytestring_path,
-    clean_module_tempdir,
-    syspath,
-)
-from beets.util.functemplate import template
+from beets.util import MoveOperation, clean_module_tempdir, syspath
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -385,7 +379,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         ext: str = "mp3",
         images: list[str] | None = None,
         target_dir: util.PathLike | None = None,
-    ) -> bytes:
+    ) -> Path:
         """Copy a fixture mediafile with the extension to `temp_path`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
@@ -395,8 +389,8 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         if not target_dir:
             target_dir = self.temp_path
         src = _common.RSRC / f"full.{ext}"
-        handle, path = mkstemp(dir=target_dir)
-        path = bytestring_path(path)
+        handle, str_path = mkstemp(dir=target_dir)
+        path = Path(os.fsdecode(str_path))
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
 
@@ -411,35 +405,6 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
             mediafile.save()
 
         return path
-
-    # Safe file operations
-
-    def touch(
-        self,
-        path: util.PathLike,
-        dir_: util.PathLike | None = None,
-        content: str = "",
-    ) -> bytes:
-        """Create a file at `path` with given content.
-
-        If `dir_` is given, it is prepended to `path`. After that, if the
-        path is relative, it is resolved with respect to
-        `self.temp_path`.
-        """
-        bytes_path = os.fsencode(path)
-        if dir_:
-            bytes_path = os.path.join(os.fsencode(dir_), bytes_path)
-
-        if not os.path.isabs(bytes_path):
-            bytes_path = os.path.join(os.fsencode(self.temp_path), bytes_path)
-
-        parent = os.path.dirname(bytes_path)
-        if not os.path.isdir(syspath(parent)):
-            os.makedirs(syspath(parent))
-
-        with open(syspath(bytes_path), "a+") as f:
-            f.write(content)
-        return bytes_path
 
 
 # A test harness for all beets tests.
@@ -648,12 +613,9 @@ class ImportHelper(TestHelper, ImporterMixin):
         super().setup_beets()
         self.import_media = []
         self.lib.path_formats = [
-            ("default", template(os.path.join("$artist", "$album", "$title"))),
-            ("singleton:true", template(os.path.join("singletons", "$title"))),
-            (
-                "comp:true",
-                template(os.path.join("compilations", "$album", "$title")),
-            ),
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
         ]
 
 
@@ -714,14 +676,18 @@ class ImportSessionFixture(ImportSession):
         assert not isinstance(choice, int), f"Invalid choice: {choice}"
         return choice
 
-    choose_item = choose_match  # type: ignore[assignment]
+    choose_item = choose_match  # type: ignore[arg-type, assignment]
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
-    def __init__(self, *args, **kwargs):
+    _choices: list[importer.Action | int]
+    _duplicate_actions: list[importer.DuplicateAction]
+
+    def __init__(self, *args, **kwargs) -> None:
         self.io = kwargs.pop("io")
         super().__init__(*args, **kwargs)
         self._choices = []
+        self._duplicate_actions = []
 
     default_choice = importer.Action.APPLY
 
@@ -730,6 +696,17 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
     def clear_choices(self) -> None:
         self._choices = []
+        self._duplicate_actions = []
+
+    def add_duplicate_action(self, action: importer.DuplicateAction) -> None:
+        self._duplicate_actions.append(action)
+
+    def _get_duplicate_action_from_user(
+        self, task: importer.ImportTask, found_duplicates: list[Any]
+    ) -> str:
+        if self._duplicate_actions:
+            self.io.addinput(self._duplicate_actions.pop(0).value)
+        return super()._get_duplicate_action_from_user(task, found_duplicates)
 
     def choose_match(
         self, task: importer.ImportTask
@@ -738,7 +715,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
         return super().choose_match(task)
 
     def choose_item(
-        self, task: importer.ImportTask
+        self, task: importer.SingletonImportTask
     ) -> TrackMatch | importer.Action:
         self._add_choice_input()
         return super().choose_item(task)

@@ -1,5 +1,7 @@
 """Calculate acoustic information and submit to AcousticBrainz."""
 
+from __future__ import annotations
+
 import errno
 import hashlib
 import json
@@ -7,11 +9,25 @@ import os
 import shutil
 import subprocess
 import tempfile
+from typing import TYPE_CHECKING, Protocol
 
 import requests
 
 from beets import plugins, ui, util
 from beets.exceptions import UserError
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets.library import Item, Library
+
+    from ._typing import JSONDict
+
+
+class ABSubmitCLIOpts(Protocol):
+    force_refetch: bool
+    pretend_fetch: bool
+
 
 # We use this field to check whether AcousticBrainz info is present.
 PROBE_FIELD = "mood_acoustic"
@@ -21,7 +37,7 @@ class ABSubmitError(Exception):
     """Raised when failing to analyse file with extractor."""
 
 
-def call(args):
+def call(args: Sequence[str]) -> bytes:
     """Execute the command and return its output.
 
     Raise a AnalysisABSubmitError on failure.
@@ -33,7 +49,9 @@ def call(args):
 
 
 class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    extractor: str
+
+    def __init__(self) -> None:
         super().__init__()
 
         self._log.warning("This plugin is deprecated.")
@@ -42,19 +60,18 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             {"extractor": "", "force": False, "pretend": False, "base_url": ""}
         )
 
-        self.extractor = self.config["extractor"].as_str()
-        if self.extractor:
-            self.extractor = util.normpath(self.extractor)
+        if extractor := self.config["extractor"].as_str():
+            extractor = os.fsdecode(util.normpath(extractor))
             # Explicit path to extractor
-            if not os.path.isfile(self.extractor):
+            if not os.path.isfile(extractor):
                 raise UserError(
-                    f"Extractor command does not exist: {self.extractor}."
+                    f"Extractor command does not exist: {extractor}."
                 )
         else:
             # Implicit path to extractor, search for it in path
-            self.extractor = "streaming_extractor_music"
+            extractor = "streaming_extractor_music"
             try:
-                call([self.extractor])
+                call([extractor])
             except OSError:
                 raise UserError(
                     "No extractor command found: please install the extractor"
@@ -67,13 +84,21 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
 
             # Get the executable location on the system, which we need
             # to calculate the SHA-1 hash.
-            self.extractor = shutil.which(self.extractor)
+            if extractor_cmd_path := shutil.which(extractor):
+                extractor = extractor_cmd_path
+            else:
+                raise UserError(
+                    f"Path to extractor command {extractor} not found"
+                )
+
+        self.extractor = extractor
 
         # Calculate extractor hash.
-        self.extractor_sha = hashlib.sha1()
-        with open(self.extractor, "rb") as extractor:
-            self.extractor_sha.update(extractor.read())
-        self.extractor_sha = self.extractor_sha.hexdigest()
+        extractor_sha = hashlib.sha1()
+        if extractor:
+            with open(extractor, "rb") as f:
+                extractor_sha.update(f.read())
+        self.extractor_sha = extractor_sha.hexdigest()
 
         self.url = ""
         base_url = self.config["base_url"].as_str()
@@ -87,7 +112,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 base_url = f"{base_url}/"
             self.url = f"{base_url}{{mbid}}/low-level"
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "absubmit", help="calculate and submit AcousticBrainz analysis"
         )
@@ -113,7 +138,9 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         cmd.func = self.command
         return [cmd]
 
-    def command(self, lib, opts, args):
+    def command(
+        self, lib: Library, opts: ABSubmitCLIOpts, args: list[str]
+    ) -> None:
         if not self.url:
             raise UserError(
                 "This plugin is deprecated since AcousticBrainz no longer "
@@ -125,12 +152,12 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         self.opts = opts
         util.par_map(self.analyze_submit, items)
 
-    def analyze_submit(self, item):
+    def analyze_submit(self, item: Item) -> None:
         analysis = self._get_analysis(item)
         if analysis:
             self._submit_data(item, analysis)
 
-    def _get_analysis(self, item):
+    def _get_analysis(self, item: Item) -> JSONDict | None:
         mbid = item["mb_trackid"]
 
         # Avoid re-analyzing files that already have AB data.
@@ -161,13 +188,11 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 call([self.extractor, util.syspath(item.path), filename])
             except ABSubmitError as e:
                 self._log.warning(
-                    "Failed to analyse {item} for AcousticBrainz: {error}",
-                    item=item,
-                    error=e,
+                    "Failed to analyse {} for AcousticBrainz: {}", item, e
                 )
                 return None
-            with open(filename) as tmp_file:
-                analysis = json.load(tmp_file)
+            with open(filename) as f:
+                analysis = json.load(f)
             # Add the hash to the output.
             analysis["metadata"]["version"]["essentia_build_sha"] = (
                 self.extractor_sha
@@ -181,7 +206,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 if e.errno != errno.ENOENT:
                     raise
 
-    def _submit_data(self, item, data):
+    def _submit_data(self, item: Item, data: JSONDict) -> None:
         mbid = item["mb_trackid"]
         headers = {"Content-Type": "application/json"}
         response = requests.post(
@@ -194,10 +219,9 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             except (ValueError, KeyError) as e:
                 message = f"unable to get error message: {e}"
             self._log.error(
-                "Failed to submit AcousticBrainz analysis of {item}: "
-                "{message}).",
-                item=item,
-                message=message,
+                "Failed to submit AcousticBrainz analysis for {}: {}.",
+                item,
+                message,
             )
         else:
             self._log.debug(

@@ -4,6 +4,7 @@ test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
+from beets import importer
 from beets.test.helper import TerminalImportMixin
 from test import test_importer
 
@@ -54,3 +55,12 @@ class GlobalGroupAlbumsImportTest(
     TerminalImportMixin, test_importer.GlobalGroupAlbumsImportTest
 ):
     pass
+
+
+class TestImportDuplicateAlbumUpgrade(
+    TerminalImportMixin, test_importer.TestImportDuplicateAlbumUpgrade
+):
+    def setup_beets(self):
+        super().setup_beets()
+        self.config["import"]["duplicate_action"] = "ask"
+        self.importer.add_duplicate_action(importer.DuplicateAction.UPGRADE)

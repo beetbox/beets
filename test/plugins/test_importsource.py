@@ -5,7 +5,6 @@ import time
 
 from beets import importer, plugins
 from beets.test.helper import AutotagImportTestCase, IOMixin, PluginMixin
-from beets.util import syspath
 
 
 class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
@@ -26,7 +25,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
     def interact(self, stdin: list[str]):
         for char in stdin:
             self.io.addinput(char)
-        self.run_command("remove", f"path:{syspath(self.item_to_remove.path)}")
+        self.run_command("remove", f"path:{self.item_to_remove.filepath}")
 
     def test_do_nothing(self):
         self.interact(["N"])
@@ -66,9 +65,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
         import_paths = self.prepare_album_for_import(
             2, album_path=test_album_path
         )
-        original_mtimes = {
-            path: os.stat(path).st_mtime for path in import_paths
-        }
+        original_mtimes = {p: p.stat().st_mtime for p in import_paths}
 
         # Small delay to detect timestamp changes
         time.sleep(0.1)
@@ -80,7 +77,7 @@ class ImportSourceTest(IOMixin, PluginMixin, AutotagImportTestCase):
 
         # Verify timestamps haven't changed
         for path, original_mtime in original_mtimes.items():
-            current_mtime = os.stat(path).st_mtime
+            current_mtime = path.stat().st_mtime
             assert current_mtime == original_mtime, (
                 f"Source file timestamp changed: {path}"
             )

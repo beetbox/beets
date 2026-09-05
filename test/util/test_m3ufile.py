@@ -1,33 +1,29 @@
 """Testsuite for the M3UFile class."""
 
 import sys
-from os import path
-from shutil import rmtree
-from tempfile import mkdtemp
+from pathlib import Path
 
 import pytest
 
 from beets.test._common import RSRC
+from beets.test.helper import PathsMixin
 from beets.util import bytestring_path
 from beets.util.m3u import EmptyPlaylistError, M3UFile
 
 
-class TestM3UFile:
+class TestM3UFile(PathsMixin):
     """Tests the M3UFile class."""
 
     def test_playlist_write_empty(self):
         """Test whether saving an empty playlist file raises an error."""
-        tempdir = bytestring_path(mkdtemp())
-        the_playlist_file = path.join(tempdir, b"playlist.m3u8")
+        the_playlist_file = self.temp_path / "playlist.m3u8"
         m3ufile = M3UFile(the_playlist_file)
         with pytest.raises(EmptyPlaylistError):
             m3ufile.write()
-        rmtree(tempdir)
 
     def test_playlist_write(self):
         """Test saving ascii paths to a playlist file."""
-        tempdir = bytestring_path(mkdtemp())
-        the_playlist_file = path.join(tempdir, b"playlist.m3u")
+        the_playlist_file = self.temp_path / "playlist.m3u8"
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents(
             [
@@ -36,13 +32,11 @@ class TestM3UFile:
             ]
         )
         m3ufile.write()
-        assert path.exists(the_playlist_file)
-        rmtree(tempdir)
+        assert the_playlist_file.exists()
 
     def test_playlist_write_unicode(self):
         """Test saving unicode paths to a playlist file."""
-        tempdir = bytestring_path(mkdtemp())
-        the_playlist_file = path.join(tempdir, b"playlist.m3u8")
+        the_playlist_file = self.temp_path / "playlist.m3u8"
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents(
             [
@@ -51,15 +45,13 @@ class TestM3UFile:
             ]
         )
         m3ufile.write()
-        assert path.exists(the_playlist_file)
-        rmtree(tempdir)
+        assert the_playlist_file.exists()
 
     @pytest.mark.skipif(sys.platform != "win32", reason="win32")
     def test_playlist_write_and_read_unicode_windows(self):
         """Test saving unicode paths to a playlist file on Windows."""
-        tempdir = bytestring_path(mkdtemp())
-        the_playlist_file = path.join(
-            tempdir, b"playlist_write_and_read_windows.m3u8"
+        the_playlist_file = (
+            self.temp_path / "playlist_write_and_read_windows.m3u8"
         )
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents(
@@ -69,18 +61,17 @@ class TestM3UFile:
             ]
         )
         m3ufile.write()
-        assert path.exists(the_playlist_file)
+        assert the_playlist_file.exists()
         m3ufile_read = M3UFile(the_playlist_file)
         m3ufile_read.load()
         assert m3ufile.media_list[0] == bytestring_path(
-            path.join("x:\\", "This", "is", "å", "path", "to_a_file.mp3")
+            Path("x:\\") / "This" / "is" / "å" / "path" / "to_a_file.mp3"
         )
         assert m3ufile.media_list[1] == bytestring_path(
             r"x:\This\is\another\path\tö_a_file.mp3"
         ), bytestring_path(
-            path.join("x:\\", "This", "is", "another", "path", "tö_a_file.mp3")
+            Path("x:\\") / "This" / "is" / "another" / "path" / "tö_a_file.mp3"
         )
-        rmtree(tempdir)
 
     @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_playlist_load_ascii(self):
@@ -107,7 +98,7 @@ class TestM3UFile:
         """Test loading unicode paths from a playlist file."""
         the_playlist_file = RSRC / "playlist_windows.m3u8"
         winpath = bytestring_path(
-            path.join("x:\\", "This", "is", "å", "path", "to_a_file.mp3")
+            Path("x:\\") / "This" / "is" / "å" / "path" / "to_a_file.mp3"
         )
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()

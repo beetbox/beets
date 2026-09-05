@@ -7,8 +7,7 @@ import sys
 import tempfile
 import unittest
 
-from beets import util
-from beets.util import bytestring_path, hidden
+from beets.util import hidden
 
 
 class HiddenFileTest(unittest.TestCase):
@@ -30,7 +29,7 @@ class HiddenFileTest(unittest.TestCase):
                 else:
                     raise e
 
-            assert hidden.is_hidden(bytestring_path(f.name))
+            assert hidden.is_hidden(f.name)
 
     def test_windows_hidden(self):
         if not sys.platform == "win32":
@@ -57,5 +56,5 @@ class HiddenFileTest(unittest.TestCase):
             return
 
         with tempfile.NamedTemporaryFile(prefix=".tmp") as f:
-            fn = util.bytestring_path(f.name)
+            fn = f.name
             assert hidden.is_hidden(fn)

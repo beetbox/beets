@@ -22,7 +22,7 @@ from beets.test.helper import (
     PluginTestHelper,
     TerminalImportMixin,
 )
-from beets.util import PromptChoice, displayable_path, syspath
+from beets.util import PromptChoice, displayable_path
 
 
 class TestPluginRegistration(IOMixin, PluginTestHelper):
@@ -66,7 +66,7 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
 
         item.write()
 
-        assert MediaFile(syspath(item.path)).artist == "YYY"
+        assert MediaFile(item.filepath).artist == "YYY"
 
     def test_multi_value_flex_field_type(self):
         item = Item(path="apath", artist="aaa")

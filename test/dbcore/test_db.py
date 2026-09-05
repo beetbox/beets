@@ -10,8 +10,8 @@ from typing import ClassVar
 import pytest
 
 from beets import dbcore
-from beets.dbcore import query, sort, types
-from beets.dbcore.db import DBCustomFunctionError, Index
+from beets.dbcore import Index, query, sort, types
+from beets.dbcore.db import DBCustomFunctionError
 from beets.library import Album, Item
 from beets.test.fixtures import ModelFixture1
 
@@ -105,7 +105,7 @@ class TestDatabasePath:
 
     def test_bytes_filesystem_path_opens_decoded_path(self, tmp_path):
         db_path = tmp_path / "library.db"
-        db = DatabaseFixture1(os.fsencode(db_path))
+        db = DatabaseFixture1(db_path)
         try:
             assert db.path == db_path
             assert db_path.exists()
@@ -126,7 +126,8 @@ class MigrationTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        handle, cls.orig_libfile = mkstemp("orig_db")
+        handle, orig_libfile = mkstemp("orig_db")
+        cls.orig_libfile = Path(orig_libfile)
         os.close(handle)
         # Set up a database with the two-field schema.
         old_lib = DatabaseFixture2(cls.orig_libfile)
@@ -141,15 +142,16 @@ class MigrationTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove(cls.orig_libfile)
+        cls.orig_libfile.unlink()
 
     def setUp(self):
-        handle, self.libfile = mkstemp("db")
+        handle, libfile = mkstemp("db")
+        self.libfile = Path(libfile)
         os.close(handle)
         shutil.copyfile(self.orig_libfile, self.libfile)
 
     def tearDown(self):
-        os.remove(self.libfile)
+        self.libfile.unlink()
 
     def test_open_with_same_fields_leaves_untouched(self):
         new_lib = DatabaseFixture2(self.libfile)
@@ -277,6 +279,15 @@ class ModelTest(unittest.TestCase):
         model.add(self.db)
         model.foo = "bar"
         model.store()
+
+        other_model = self.db._get(ModelFixture1, model.id)
+        assert other_model.foo == "bar"
+
+    def test_store_flexattr_in_fields(self):
+        model = ModelFixture1()
+        model.add(self.db)
+        model.foo = "bar"
+        model.store(fields=["foo"])
 
         other_model = self.db._get(ModelFixture1, model.id)
         assert other_model.foo == "bar"
@@ -570,6 +581,17 @@ class ResultsIteratorTest(unittest.TestCase):
         objs = self.db._get_results(ModelFixture1, sort=s)
         assert objs[0].foo == "bar"
         assert objs[1].foo == "baz"
+
+    def test_negative_subscript(self):
+        objs = self.db._get_results(ModelFixture1)
+        assert objs[-1].foo == "bar"
+        assert objs[-2].foo == "baz"
+
+    def test_slice(self):
+        objs = self.db._get_results(ModelFixture1)
+        assert [obj.foo for obj in objs[:]] == ["baz", "bar"]
+        assert [obj.foo for obj in objs[1:]] == ["bar"]
+        assert [obj.foo for obj in objs[::-1]] == ["bar", "baz"]
 
     def test_length(self):
         objs = self.db._get_results(ModelFixture1)

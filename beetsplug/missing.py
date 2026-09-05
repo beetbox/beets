@@ -16,8 +16,10 @@ from beets.ui import Subcommand, print_
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Iterator
 
+    from beets.autotag import AlbumInfo, TrackInfo
     from beets.library import Library
 
 # Valid MusicBrainz release types for filtering release groups
@@ -42,12 +44,14 @@ VALID_RELEASE_TYPES = [
 MB_ARTIST_QUERY = r"mb_albumartistid::^\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$"
 
 
-def _missing_count(album):
+def _missing_count(album: Album) -> bool | int:
     """Return number of missing items in `album`."""
     return (album.albumtotal or 0) - len(album.items())
 
 
-def _item(track_info, album_info, album_id):
+def _item(
+    track_info: TrackInfo, album_info: AlbumInfo, album_id: int | None
+) -> Item:
     """Build and return `item` from `track_info` and `album info`
     objects. `item` is missing what fields cannot be obtained from
     MusicBrainz alone (encoder, rg_track_gain, rg_track_peak,
@@ -100,7 +104,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
     album_types: ClassVar[dict[str, types.Type]] = {"missing": types.INTEGER}
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -112,7 +116,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             }
         )
 
-        self.album_template_fields["missing"] = _missing_count
+        self.album_template_fields["missing"] = lambda a: str(_missing_count(a))
 
         self._command = Subcommand("missing", help=__doc__, aliases=["miss"])
         self._command.parser.add_option(
@@ -150,8 +154,8 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         )
         self._command.parser.add_format_option()
 
-    def commands(self):
-        def _miss(lib, opts, args):
+    def commands(self) -> list[Subcommand]:
+        def _miss(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
             albms = self.config["album"].get()
 
@@ -161,7 +165,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         self._command.func = _miss
         return [self._command]
 
-    def _missing_tracks(self, lib, query):
+    def _missing_tracks(self, lib: Library, query: list[str]) -> None:
         """Print a listing of tracks missing from each album in the library
         matching query.
         """

@@ -160,6 +160,49 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(count=99)
         assert self.plugin._resolve_genres(["blues", "blues"]) == ["blues"]
 
+    def test_fetch_va_genres_picks_most_popular_track_genre(self):
+        """Among fetched track genres, the most common one wins."""
+        self._setup_config()
+        self.config["lastgenre"]["source"] = "track"
+        self.plugin.setup()
+        item1 = self.add_item(artist="Artist A")
+        item2 = self.add_item(artist="Artist B")
+        item3 = self.add_item(artist="Artist C")
+        album = self.lib.add_album([item1, item2, item3])
+
+        track_genres = {
+            "Artist A": ["Rock"],
+            "Artist B": ["Rock"],
+            "Artist C": ["Jazz"],
+        }
+        self.plugin.client.fetch = lambda kind, obj, *args: (
+            track_genres[obj.artist] if kind == "track" else []
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["Rock"]
+
+    def test_fetch_va_genres_falls_back_to_artist_genre(self):
+        """When a track has no genre, fall back to its artist's genre."""
+        self._setup_config()
+        item = self.add_item(artist="Artist A")
+        album = self.lib.add_album([item])
+
+        self.plugin.client.fetch = lambda kind, obj, *args: (
+            ["Jazz"] if kind == "artist" else []
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["Jazz"]
+
+    def test_fetch_va_genres_empty_when_nothing_found(self):
+        """Return an empty list when neither track nor artist genres exist."""
+        self._setup_config()
+        item = self.add_item(artist="Artist A")
+        album = self.lib.add_album([item])
+
+        self.plugin.client.fetch = lambda kind, obj, *args: []
+
+        assert self.plugin._fetch_va_genres(album) == []
+
     def test_fetch_genre(self):
         class MockPylastElem:
             def __init__(self, name):

@@ -1,10 +1,21 @@
 """Allows inline path template customization code in the config file."""
 
+from __future__ import annotations
+
 import itertools
 import traceback
+from typing import TYPE_CHECKING, Any
 
 from beets import config
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from beets.library import LibModel
+
+    from ._typing import JSONDict
+
 
 FUNC_NAME = "__INLINE_FUNC__"
 
@@ -12,26 +23,26 @@ FUNC_NAME = "__INLINE_FUNC__"
 class InlineError(Exception):
     """Raised when a runtime error occurs in an inline expression."""
 
-    def __init__(self, code, exc):
+    def __init__(self, code: str, exc: BaseException) -> None:
         super().__init__(
             f"error in inline path field code:\n{code}\n{type(exc).__name__}: {exc}"
         )
 
 
-def _compile_func(body, args=""):
+def _compile_func(body: str, args: str = "") -> Callable[..., Any]:
     """Given Python code for a function body, return a compiled
     callable that invokes that code.
     """
     body = body.replace("\n", "\n    ")
     body = f"def {FUNC_NAME}({args}):\n    {body}"
     code = compile(body, "inline", "exec")
-    env = {}
+    env: JSONDict = {}
     eval(code, env)
     return env[FUNC_NAME]
 
 
 class InlinePlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         config.add(
@@ -58,7 +69,9 @@ class InlinePlugin(BeetsPlugin):
             if func is not None:
                 self.album_template_fields[key] = func
 
-    def compile_inline(self, python_code, album, field_name):
+    def compile_inline(
+        self, python_code: str, album: bool, field_name: str
+    ) -> Callable[[LibModel], Any] | None:
         """Given a Python expression or function body, compile it as a path
         field function. The returned function takes a single argument, an
         Item, and returns a Unicode string. If the expression cannot be
@@ -82,7 +95,7 @@ class InlinePlugin(BeetsPlugin):
         else:
             is_expr = True
 
-        def _dict_for(obj):
+        def _dict_for(obj: LibModel) -> JSONDict:
             out = {}
             for key in obj.keys(computed=False):
                 if key == field_name:
@@ -95,7 +108,7 @@ class InlinePlugin(BeetsPlugin):
 
         if is_expr:
             # For expressions, just evaluate and return the result.
-            def _expr_func(obj):
+            def _expr_func(obj: LibModel) -> Any:
                 values = _dict_for(obj)
                 values["db_obj"] = obj
                 try:
@@ -107,7 +120,7 @@ class InlinePlugin(BeetsPlugin):
 
         # For function bodies, invoke the function with values as global
         # variables.
-        def _func_func(obj):
+        def _func_func(obj: LibModel) -> Any:
             old_globals = dict(func.__globals__)
             func.__globals__.update(_dict_for(obj))
             try:

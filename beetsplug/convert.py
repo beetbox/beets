@@ -10,7 +10,7 @@ import tempfile
 import threading
 from functools import cached_property
 from string import Template
-from typing import TYPE_CHECKING, Literal, NamedTuple
+from typing import TYPE_CHECKING, Literal, NamedTuple, Protocol
 
 import mediafile
 from confuse import ConfigTypeError, Optional
@@ -26,7 +26,7 @@ from beets.util.pathformats import get_path_formats
 from beetsplug._utils import art
 
 if TYPE_CHECKING:
-    import optparse
+    from collections.abc import Iterable
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
@@ -35,6 +35,13 @@ if TYPE_CHECKING:
 _fs_lock = threading.Lock()
 # Keep track of temporary transcoded files for deletion.
 _temp_files: list[bytes] = []
+
+
+class ConvertCLIOpts(Protocol):
+    album: bool
+    keep_new: bool
+    yes: bool | None
+
 
 # Some convenient alternate names for formats.
 ALIASES = {"windows media": "wma", "vorbis": "ogg"}
@@ -394,8 +401,18 @@ class ConvertPlugin(BeetsPlugin):
         return self.fmt != item.format.lower()
 
     def get_item_destination(self, item: Item) -> bytes:
+        extension = (
+            os.fsdecode(self.command.ext)
+            if (
+                self.should_transcode(item)
+                and not self.config["keep_new"].get(bool)
+            )
+            else None
+        )
         return item.destination(
-            basedir=self.dest, path_formats=self.path_formats
+            basedir=self.dest,
+            path_formats=self.path_formats,
+            extension=extension,
         )
 
     @pipeline.mutator_stage
@@ -651,7 +668,7 @@ class ConvertPlugin(BeetsPlugin):
                     util.copy(album.artpath, dest)
 
     def convert_func(
-        self, lib: Library, opts: optparse.Values, args: list[str]
+        self, lib: Library, opts: ConvertCLIOpts, args: list[str]
     ) -> None:
         self.config.set(vars(opts))
         pretend = self.pretend
@@ -773,7 +790,7 @@ class ConvertPlugin(BeetsPlugin):
                     util.remove(path)
                 _temp_files.remove(path)
 
-    def _parallel_convert(self, items: list[Item], keep_new: bool):
+    def _parallel_convert(self, items: Iterable[Item], keep_new: bool) -> None:
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """

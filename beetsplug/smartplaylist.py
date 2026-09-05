@@ -6,14 +6,15 @@ import os
 from collections import defaultdict
 from functools import cached_property
 from shlex import quote as shell_quote
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import TYPE_CHECKING, Literal, Protocol, TypeAlias
 from urllib.parse import quote
 from urllib.request import pathname2url
 
 import confuse
 
 from beets import plugins, ui
-from beets.dbcore.query import ParsingError, Query
+from beets.dbcore import Query
+from beets.dbcore.query import ParsingError
 from beets.dbcore.sort import Sort
 from beets.exceptions import UserError
 from beets.library import Album, Item, parse_query_string
@@ -29,7 +30,9 @@ from beets.util import (
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from beets.library import Library
+    from beets.library import LibModel, Library
+
+    from ._typing import JSONDict
 
 QueryAndSort = tuple[Query, Sort]
 PlaylistQuery = Query | tuple[QueryAndSort, ...] | None
@@ -37,6 +40,19 @@ PlaylistQueryAndSort = tuple[PlaylistQuery, Sort | None]
 PlaylistMatch: TypeAlias = tuple[
     str, PlaylistQueryAndSort, PlaylistQueryAndSort
 ]
+
+
+class SmartPlaylistCLIOpts(Protocol):
+    pretend: bool | None
+    format: str
+    playlist_dir: str
+    dest_regen: bool
+    relative_to: str | None
+    prefix: str
+    forward_slash: bool
+    urlencode: bool
+    uri_format: str | None
+    output: Literal["m3u", "extm3u"]
 
 
 class SmartPlaylistPlugin(plugins.BeetsPlugin):
@@ -176,7 +192,9 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         spl_update.func = self.update_cmd
         return [spl_update]
 
-    def update_cmd(self, lib: Library, opts: Any, args: list[str]) -> None:
+    def update_cmd(
+        self, lib: Library, opts: SmartPlaylistCLIOpts, args: list[str]
+    ) -> None:
         self.build_queries()
         if args:
             args_set = set(args)
@@ -206,7 +224,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         self.update_playlists(lib)
 
     def _parse_one_query(
-        self, playlist: dict[str, Any], key: str, model_cls: type
+        self, playlist: JSONDict, key: str, model_cls: type[LibModel]
     ) -> tuple[PlaylistQuery, Sort | None]:
         qs = playlist.get(key)
         if qs is None:
@@ -255,7 +273,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
 
             self._unmatched_playlists.add((playlist["name"], q_match, a_match))
 
-    def _matches_query(self, model: Item | Album, query: PlaylistQuery) -> bool:
+    def _matches_query(self, model: LibModel, query: PlaylistQuery) -> bool:
         if not query:
             return False
         if isinstance(query, (list, tuple)):
@@ -263,10 +281,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         return query.match(model)
 
     def matches(
-        self,
-        model: Item | Album,
-        query: PlaylistQuery,
-        album_query: PlaylistQuery,
+        self, model: LibModel, query: PlaylistQuery, album_query: PlaylistQuery
     ) -> bool:
         if isinstance(model, Album):
             return self._matches_query(model, album_query)
@@ -274,7 +289,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
             return self._matches_query(model, query)
         return False
 
-    def db_change(self, lib: Library, model: Item | Album) -> None:
+    def db_change(self, lib: Library, model: LibModel) -> None:
         if self._unmatched_playlists is None:
             self.build_queries()
 
@@ -389,7 +404,7 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
             # the items and generate the correct m3u file names.
             matched_items: list[Item] = []
             for item in items:
-                m3u_name = item.evaluate_template(name, True)
+                m3u_name = item.evaluate_template(name, for_path=True)
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
                 item_uri = self.get_item_uri(item)
 

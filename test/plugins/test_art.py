@@ -22,7 +22,7 @@ from beets.test.helper import (
     has_program,
     is_importable,
 )
-from beets.util import clean_module_tempdir, syspath
+from beets.util import clean_module_tempdir
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
 
@@ -91,7 +91,7 @@ class UseThePlugin(TestHelper):
     @pytest.fixture
     def dpath(self) -> bytes:
         dpath = self.temp_path / "arttest"
-        os.mkdir(syspath(dpath))
+        dpath.mkdir()
         return os.fsencode(dpath)
 
 
@@ -845,7 +845,6 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
 class TestArtImporter(UseThePlugin):
     @pytest.fixture(autouse=True)
     def _setup(self, setup_plugin):
-
         # Mock the album art fetcher to always return our test file.
         self.art_file = self.temp_path / "tmpcover.jpg"
         self.art_file.touch()
@@ -862,7 +861,7 @@ class TestArtImporter(UseThePlugin):
         # Test library.
         (self.lib_path / "album").mkdir()
         itempath = self.lib_path / "album" / "test.mp3"
-        shutil.copyfile(syspath(_common.RSRC / "full.mp3"), syspath(itempath))
+        shutil.copyfile(_common.RSRC / "full.mp3", itempath)
         self.i = _common.item()
         self.i.path = itempath
         self.album = self.lib.add_album([self.i])
@@ -930,8 +929,8 @@ class TestArtImporter(UseThePlugin):
             config["import"]["move"] = prev_move
 
     def test_do_not_delete_original_if_already_in_place(self):
-        artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
-        shutil.copyfile(self.art_file, syspath(artdest))
+        artdest = self.i.filepath.parent / "cover.jpg"
+        shutil.copyfile(self.art_file, artdest)
         self.afa_response = fetchart.Candidate(
             logger, source_name="test", path=artdest
         )

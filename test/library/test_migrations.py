@@ -1,12 +1,12 @@
 import os
 import textwrap
+from pathlib import Path
 from typing import ClassVar
 
 import pytest
 
 from beets.dbcore import types
-from beets.library import migrations
-from beets.library.models import Album, Item
+from beets.library import Album, Item, migrations
 from beets.test.helper import TestHelper
 from beets.util import cached_classproperty, path_as_posix
 
@@ -276,7 +276,7 @@ class TestRelativePathMigration(MigrationTestHelper):
 
     def test_migrate(self):
         """Ensure stored paths become relative while the public API stays stable."""
-        relative_path = os.path.join("foo", "bar", "baz.mp3")
+        relative_path = str(Path("foo") / "bar" / "baz.mp3")
         abs_string_path = str(self.lib_path / relative_path)
         abs_bytes_path = os.fsencode(abs_string_path)
 
@@ -342,7 +342,7 @@ class TestMigrationBackup(MigrationTestHelper):
 
         backups = [
             f
-            for f in os.listdir(os.path.dirname(db_path))
+            for f in db_path.parent.iterdir()
             if os.fsdecode(f).endswith(".bak")
         ]
         assert len(backups) == expected_count

@@ -260,7 +260,7 @@ def changelog_as_markdown(rst: str) -> str:
 
 
 @click.group()
-def cli():
+def cli() -> None:
     pass
 
 
@@ -272,7 +272,7 @@ def bump(version: Version) -> None:
 
 
 @cli.command()
-def changelog():
+def changelog() -> None:
     """Get the most recent version's changelog as Markdown."""
     if changelog := get_changelog_contents():
         try:

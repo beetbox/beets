@@ -18,8 +18,9 @@ import unicodedata
 from collections import Counter
 from collections.abc import Sequence
 from contextlib import suppress
+from copy import deepcopy
 from enum import Enum
-from functools import cache
+from functools import cache, cached_property
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -36,6 +37,7 @@ from typing import (
     cast,
 )
 
+from typing_extensions import Self
 from unidecode import unidecode
 
 import beets
@@ -45,6 +47,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
+    from beets.importer import Action, ImportSession, ImportTask
     from beets.library import Item
 
 MAX_FILENAME_LENGTH = 200
@@ -167,14 +170,14 @@ class MoveOperation(Enum):
 class PromptChoice(NamedTuple):
     short: str
     long: str
-    callback: Any
+    callback: Callable[[ImportSession, ImportTask], Action | None] | None
 
 
 def normpath(path: PathLike) -> bytes:
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
-    str_path = syspath(path, prefix=False)
+    str_path = os.fsdecode(path)
     str_path = os.path.normpath(os.path.abspath(os.path.expanduser(str_path)))
     return bytestring_path(str_path)
 
@@ -268,10 +271,14 @@ def path_as_posix(path: bytes) -> bytes:
     return path.replace(b"\\", b"/")
 
 
-def mkdirall(path: AnyStr) -> None:
+def mkdirall(path: AnyStr | Path) -> None:
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
+    if isinstance(path, Path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return
+
     for ancestor in ancestry(path):
         if not os.path.isdir(syspath(ancestor)):
             try:
@@ -397,27 +404,20 @@ def displayable_path(
     path: PathLike | Iterable[PathLike], separator: str = "; "
 ) -> str:
     """Attempts to decode a bytestring path to a unicode object for the
-    purpose of displaying it to the user. If the `path` argument is a
-    list or a tuple, the elements are joined with `separator`.
+    purpose of displaying it to the user. If the `path` argument is an
+    iterable, the elements are joined with `separator`.
     """
 
-    if isinstance(path, (list, tuple)):
-        return separator.join(displayable_path(p) for p in path)
-    if isinstance(path, str):
-        return path
-    if not isinstance(path, bytes):
-        # A non-string object: just get its unicode representation.
-        return str(path)
+    if isinstance(path, (Path, str, bytes)):
+        return os.fsdecode(path)
 
-    return os.fsdecode(path)
+    return separator.join(displayable_path(p) for p in path)
 
 
-def syspath(path: PathLike, prefix: bool = True) -> str:
+def syspath(path: PathLike) -> str:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
-    to Unicode before they are sent to the OS. To disable the magic
-    prefix on Windows, set `prefix` to False---but only do this if you
-    *really* know what you're doing.
+    to Unicode before they are sent to the OS.
     """
     str_path = os.fsdecode(path)
     # Don't do anything if we're not on windows
@@ -426,7 +426,7 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
 
     # Add the magic prefix if it isn't already there.
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-    if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
+    if not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
             str_path = f"UNC{str_path[1:]}"
@@ -807,18 +807,11 @@ def plurality(objs: Iterable[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def get_most_common_tags(
-    items: Sequence[Item],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Extract the likely current metadata for an album given a list of its
-    items. Return two dictionaries:
-     - The most common value for each field.
-     - Whether each field's value was unanimous (values are booleans).
-    """
+def get_most_common_tags(items: Sequence[Item]) -> Likelies:
+    """Extract the most common value for each field given a list of items."""
     assert items  # Must be nonempty.
 
     likelies = {}
-    consensus = {}
     fields = [
         "artist",
         "album",
@@ -836,14 +829,13 @@ def get_most_common_tags(
     ]
     for field in fields:
         values = [item.get(field) for item in items if item]
-        likelies[field], freq = plurality(values)
-        consensus[field] = freq == len(values)
+        likelies[field], _ = plurality(values)
 
     # If there's an album artist consensus, use this for the artist.
-    if consensus["albumartist"] and likelies["albumartist"]:
+    if len({i.albumartist for i in items}) == 1 and likelies["albumartist"]:
         likelies["artist"] = likelies["albumartist"]
 
-    return likelies, consensus
+    return Likelies(likelies)
 
 
 # stdout and stderr as bytes
@@ -853,7 +845,7 @@ class CommandOutput(NamedTuple):
 
 
 def command_output(
-    cmd: list[str] | list[bytes], shell: bool = False
+    cmd: Sequence[str] | Sequence[bytes], shell: bool = False
 ) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
@@ -931,17 +923,24 @@ def open_anything() -> str:
 def editor_command() -> str:
     """Get a command for opening a text file.
 
-    First try environment variable `VISUAL` followed by `EDITOR`. As last resort
-    fall back to `open_anything()`, the platform-specific tool for opening files
-    in general.
+    First checks the `editor` config option, then tries environment variable
+    `VISUAL` followed by `EDITOR`. As last resort fall back to `open_anything()`,
+    the platform-specific tool for opening files in general.
 
     """
+    from beets import config
+
     return (
-        os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
+        (config["editor"].get(str) if config["editor"].exists() else None)
+        or os.environ.get("VISUAL")
+        or os.environ.get("EDITOR")
+        or open_anything()
     )
 
 
-def interactive_open(targets: Sequence[str], command: str) -> None:
+def interactive_open(
+    targets: Sequence[Path | str | bytes], command: str
+) -> None:
     """Open the files in `targets` by `exec`ing a new `command`, given
     as a Unicode string. (The new program takes over, and Python
     execution ends: this does not fork a subprocess.)
@@ -956,11 +955,10 @@ def interactive_open(targets: Sequence[str], command: str) -> None:
     except ValueError:  # Malformed shell tokens.
         args = [command]
 
-    args.insert(0, args[0])  # for argv[0]
+    first, *rest = args
 
-    args += targets
-
-    os.execlp(*args)
+    # 'first' is duplicated because of argv[0]
+    os.execlp(*[first, first, *rest, *targets])
 
 
 def case_sensitive(path: AnyStr) -> bool:
@@ -1199,3 +1197,66 @@ def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
         yield list(lst[i : i + n])
+
+
+class AttrDict(dict[str, T]):
+    """Mapping enabling attribute-style access to stored metadata values."""
+
+    def copy(self) -> Self:
+        """Return a detached copy preserving subclass-specific behavior."""
+        return deepcopy(self)
+
+    def __getattribute__(self, attr: str) -> T:
+        # Intercept cached_property failures so an AttributeError raised
+        # inside the property body is not masked by __getattr__ fallback.
+        # Reuse the original traceback so the wrapped RuntimeError still
+        # points at the real failing line, but suppress the printed cause
+        # block to keep CLI tracebacks readable. See #6558 (and #6503 /
+        # #6506 for the same masking pattern with different metadata
+        # providers).
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as exc:
+            if not attr.startswith("__"):
+                for klass in type(self).__mro__:
+                    descr = klass.__dict__.get(attr)
+                    if descr is None:
+                        continue
+                    if isinstance(descr, cached_property):
+                        raise RuntimeError(
+                            f"{type(self).__name__}.{attr} failed: {exc}"
+                        ).with_traceback(exc.__traceback__) from None
+                    break
+            raise
+
+    def __getattr__(self, attr: str) -> T:
+        if attr in self:
+            return self[attr]
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+        )
+
+    def __setattr__(self, key: str, value: T) -> None:
+        self.__setitem__(key, value)
+
+    def __hash__(self) -> int:  # type: ignore[override]
+        return id(self)
+
+
+class Likelies(AttrDict[Any]):
+    """A dictionary of the most common tags in a list of items."""
+
+    artist: str
+    album: str
+    albumartist: str
+    year: int
+    disctotal: int
+    mb_albumid: str
+    label: str
+    barcode: str
+    catalognum: str
+    country: str
+    media: str
+    albumdisambig: str
+    data_source: str

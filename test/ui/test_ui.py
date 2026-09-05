@@ -15,7 +15,6 @@ from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
 from beets.ui import _open_library, commands
-from beets.util import syspath
 
 
 class PrintTest(IOMixin, unittest.TestCase):
@@ -63,7 +62,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         # Also set APPDATA, the Windows equivalent of setting $HOME.
         appdata_dir = self.temp_path / "AppData" / "Roaming"
 
-        self._orig_cwd = os.getcwd()
+        self._orig_cwd = Path.cwd()
         self.test_cmd = self._make_test_cmd()
         commands.default_commands.append(self.test_cmd)
 
@@ -79,8 +78,8 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         self.beetsdir = self.temp_path / "beetsdir"
         self.beetsdir.mkdir(parents=True, exist_ok=True)
 
-        self.env_config_path = str(self.beetsdir / "config.yaml")
-        self.cli_config_path = str(self.temp_path / "config.yaml")
+        self.env_config_path = self.beetsdir / "config.yaml"
+        self.cli_config_path = self.temp_path / "config.yaml"
         self.env_patcher = patch(
             "os.environ",
             {"HOME": str(self.temp_path), "APPDATA": str(appdata_dir)},
@@ -98,7 +97,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
     def tearDown(self):
         self.env_patcher.stop()
         commands.default_commands.pop()
-        os.chdir(syspath(self._orig_cwd))
+        os.chdir(self._orig_cwd)
         super().tearDown()
 
     def _make_test_cmd(self):
@@ -118,16 +117,14 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         config._materialized = False
 
     def write_config_file(self):
-        return open(self.user_config_path, "w")
+        return self.user_config_path.open("w")
 
     def test_paths_section_respected(self):
         with self.write_config_file() as config:
             config.write("paths: {x: y}")
 
         self.run_command("test")
-        key, template = self.test_cmd.lib.path_formats[0]
-        assert key == "x"
-        assert template.original == "y"
+        assert self.test_cmd.lib.path_formats[0] == ("x", "y")
 
     def test_nonexistant_db(self):
         with self.write_config_file() as config:
@@ -162,28 +159,23 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         assert repls == [("[xy]", "z"), ("foo", "bar")]
 
     def test_cli_config_option(self):
-        with open(self.cli_config_path, "w") as file:
-            file.write("anoption: value")
-        self.run_command("--config", self.cli_config_path, "test")
+        self.cli_config_path.write_text("anoption: value")
+        self.run_command("--config", str(self.cli_config_path), "test")
         assert config["anoption"].get() == "value"
 
     def test_cli_config_file_overwrites_user_defaults(self):
-        with open(self.user_config_path, "w") as file:
-            file.write("anoption: value")
+        self.user_config_path.write_text("anoption: value")
 
-        with open(self.cli_config_path, "w") as file:
-            file.write("anoption: cli overwrite")
-        self.run_command("--config", self.cli_config_path, "test")
+        self.cli_config_path.write_text("anoption: cli overwrite")
+        self.run_command("--config", str(self.cli_config_path), "test")
         assert config["anoption"].get() == "cli overwrite"
 
     def test_cli_config_file_overwrites_beetsdir_defaults(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
-        with open(self.env_config_path, "w") as file:
-            file.write("anoption: value")
+        self.env_config_path.write_text("anoption: value")
 
-        with open(self.cli_config_path, "w") as file:
-            file.write("anoption: cli overwrite")
-        self.run_command("--config", self.cli_config_path, "test")
+        self.cli_config_path.write_text("anoption: cli overwrite")
+        self.run_command("--config", str(self.cli_config_path), "test")
         assert config["anoption"].get() == "cli overwrite"
 
     #    @unittest.skip('Difficult to implement with optparse')
@@ -206,50 +198,45 @@ class ConfigTest(IOMixin, TestPluginTestCase):
     #    def test_multiple_cli_config_overwrite(self):
     #        cli_overwrite_config_path = self.temp_path / 'overwrite_config.yaml'
     #
-    #        with open(self.cli_config_path, 'w') as file:
-    #            file.write('anoption: value')
+    #        self.cli_config_path.write_text("anoption: value")
     #
     #        with open(cli_overwrite_config_path, 'w') as file:
     #            file.write('anoption: overwrite')
     #
-    #        self.run_command('--config', self.cli_config_path,
+    #        self.run_command('--config', str(self.cli_config_path),
     #                      '--config', cli_overwrite_config_path, 'test')
     #        assert config['anoption'].get() == 'cli overwrite'
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
-        with open(self.cli_config_path, "w") as file:
-            file.write("library: beets.db\n")
-            file.write("statefile: state")
+        self.cli_config_path.write_text("library: beets.db\nstatefile: state")
 
-        self.run_command("--config", self.cli_config_path, "test")
+        self.run_command("--config", str(self.cli_config_path), "test")
         assert config["library"].as_path() == self.user_config_dir / "beets.db"
         assert config["statefile"].as_path() == self.user_config_dir / "state"
 
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
 
-        with open(self.cli_config_path, "w") as file:
-            file.write("library: beets.db\n")
-            file.write("statefile: state")
+        self.cli_config_path.write_text("library: beets.db\nstatefile: state")
 
-        self.run_command("--config", self.cli_config_path, "test")
+        self.run_command("--config", str(self.cli_config_path), "test")
         assert config["library"].as_path() == self.beetsdir / "beets.db"
         assert config["statefile"].as_path() == self.beetsdir / "state"
 
     def test_command_line_option_relative_to_working_dir(self):
         config.read()
-        os.chdir(syspath(self.temp_path))
+        os.chdir(self.temp_path)
         self.run_command("--library", "foo.db", "test")
         assert config["library"].as_path() == Path.cwd() / "foo.db"
 
     def test_cli_config_file_loads_plugin_commands(self):
-        with open(self.cli_config_path, "w") as file:
-            file.write(f"pluginpath: {_common.PLUGINPATH}\n")
-            file.write("plugins: test")
+        self.cli_config_path.write_text(
+            f"pluginpath: {_common.PLUGINPATH}\nplugins: test"
+        )
 
-        self.run_command("--config", self.cli_config_path, "plugin")
+        self.run_command("--config", str(self.cli_config_path), "plugin")
         plugs = plugins.find_plugins()
         assert len(plugs) == 1
         assert plugs[0].is_test_plugin
@@ -258,24 +245,22 @@ class ConfigTest(IOMixin, TestPluginTestCase):
     def test_beetsdir_config(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
 
-        with open(self.env_config_path, "w") as file:
-            file.write("anoption: overwrite")
+        self.env_config_path.write_text("anoption: overwrite")
 
         config.read()
         assert config["anoption"].get() == "overwrite"
 
     def test_beetsdir_points_to_file_error(self):
-        beetsdir = str(self.temp_path / "beetsfile")
-        open(beetsdir, "a").close()
-        os.environ["BEETSDIR"] = beetsdir
+        beetsdir = self.temp_path / "beetsfile"
+        beetsdir.touch()
+        os.environ["BEETSDIR"] = str(beetsdir)
         with pytest.raises(ConfigError):
             self.run_command("test")
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
 
-        with open(self.user_config_path, "w") as file:
-            file.write("anoption: value")
+        self.user_config_path.write_text("anoption: value")
 
         config.read()
         assert not config["anoption"].exists()
@@ -290,9 +275,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
     def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
 
-        with open(self.env_config_path, "w") as file:
-            file.write("library: beets.db\n")
-            file.write("statefile: state")
+        self.env_config_path.write_text("library: beets.db\nstatefile: state")
 
         config.read()
         assert config["library"].as_path() == self.beetsdir / "beets.db"
@@ -392,7 +375,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         parser.add_album_option()
         assert bool(parser._album_flags)
 
-        assert parser.parse_args([]) == ({"album": None}, [])
+        assert parser.parse_args([]) == ({"album": False}, [])
         assert parser.parse_args(["-a"]) == ({"album": True}, [])
         assert parser.parse_args(["--album"]) == ({"album": True}, [])
 
@@ -473,7 +456,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         parser = ui.CommonOptionsParser()
         parser.add_all_common_options()
         assert parser.parse_args([]) == (
-            {"album": None, "path": None, "format": None},
+            {"album": False, "path": None, "format": None},
             [],
         )
 

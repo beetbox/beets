@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any
+from unittest.mock import MagicMock
 
 import pytest
 from discogs_client import Client, Release
 
 from beets import config
 from beets.library import Item
+from beets.metadata_plugins import SearchParams
 from beets.test.helper import TestHelper
 from beetsplug.discogs import ArtistState, DiscogsPlugin
 
@@ -496,6 +499,41 @@ class TestDGSearchQuery(TestHelper):
         # Catalog number should have whitespace removed.
         assert filters["catno"] == "ABC123"
         config["discogs"]["extra_tags"] = []
+
+
+class TestDGSearchResponse(DiscogsTestMixin):
+    @staticmethod
+    def _decode_error():
+        return json.JSONDecodeError("Expecting value", "", 0)
+
+    @pytest.fixture
+    def params(self):
+        return SearchParams("album", "Album", {"type": "release"}, 5)
+
+    @pytest.fixture
+    def client(self, plugin):
+        plugin.discogs_client = MagicMock()
+        return plugin.discogs_client
+
+    def test_retries_invalid_json_response(self, plugin, client, params):
+        result = MagicMock(data={"id": 123})
+        results = client.search.return_value
+        results.page.side_effect = [self._decode_error(), [result]]
+
+        assert plugin.get_search_response(params) == [{"id": 123}]
+        assert client.search.call_count == 2
+        assert results.page.call_count == 2
+        assert results.per_page == params.limit
+
+    def test_raises_after_invalid_json_retry(self, plugin, client, params):
+        results = client.search.return_value
+        results.page.side_effect = [self._decode_error(), self._decode_error()]
+
+        with pytest.raises(json.JSONDecodeError):
+            plugin.get_search_response(params)
+
+        assert client.search.call_count == 2
+        assert results.page.call_count == 2
 
 
 class TestAnv:

@@ -4,19 +4,15 @@ from __future__ import annotations
 
 from copy import deepcopy
 from functools import cached_property
-from typing import Any, ClassVar, TypeVar
-
-from typing_extensions import Self
+from typing import Any, ClassVar
 
 from beets import config, logging
-from beets.util import cached_classproperty, unique_list
+from beets.util import AttrDict, cached_classproperty, unique_list
 from beets.util.deprecation import (
     ALBUM_LEGACY_TO_LIST_FIELD,
     ITEM_LEGACY_TO_LIST_FIELD,
     deprecate_for_maintainers,
 )
-
-V = TypeVar("V")
 
 JSONDict = dict[str, Any]
 
@@ -87,51 +83,6 @@ def correct_list_fields(input_data: JSONDict) -> JSONDict:
 
 
 # Classes used to represent candidate options.
-class AttrDict(dict[str, V]):
-    """Mapping enabling attribute-style access to stored metadata values."""
-
-    def copy(self) -> Self:
-        """Return a detached copy preserving subclass-specific behavior."""
-        return deepcopy(self)
-
-    def __getattribute__(self, attr: str) -> V:
-        # Intercept cached_property failures so an AttributeError raised
-        # inside the property body is not masked by __getattr__ fallback.
-        # Reuse the original traceback so the wrapped RuntimeError still
-        # points at the real failing line, but suppress the printed cause
-        # block to keep CLI tracebacks readable. See #6558 (and #6503 /
-        # #6506 for the same masking pattern with different metadata
-        # providers).
-        try:
-            return super().__getattribute__(attr)
-        except AttributeError as exc:
-            if not attr.startswith("__"):
-                for klass in type(self).__mro__:
-                    descr = klass.__dict__.get(attr)
-                    if descr is None:
-                        continue
-                    if isinstance(descr, cached_property):
-                        raise RuntimeError(
-                            f"{type(self).__name__}.{attr} failed: {exc}"
-                        ).with_traceback(exc.__traceback__) from None
-                    break
-            raise
-
-    def __getattr__(self, attr: str) -> V:
-        if attr in self:
-            return self[attr]
-
-        raise AttributeError(
-            f"'{self.__class__.__name__}' object has no attribute '{attr}'"
-        )
-
-    def __setattr__(self, key: str, value: V) -> None:
-        self.__setitem__(key, value)
-
-    def __hash__(self) -> int:  # type: ignore[override]
-        return id(self)
-
-
 class Info(AttrDict[Any]):
     """Container for metadata about a musical entity."""
 
