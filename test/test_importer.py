@@ -1961,6 +1961,38 @@ class ReimportTest(AutotagImportTestCase):
     def _item(self):
         return self.lib.items().get()
 
+    @pytest.mark.skipif(not _common.HAVE_SYMLINK, reason="need symlinks")
+    def test_reimported_album_through_symlink_preserves_file(self):
+        linked_library = self.temp_path / "linked-library"
+        linked_library.symlink_to(self.lib_path, target_is_directory=True)
+
+        self.setup_importer(import_dir=linked_library, move=True)
+        self.config["import"]["duplicate_action"] = "remove"
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.run()
+
+        item = self._item()
+        assert item.filepath.exists()
+        assert len(self.lib.items()) == 1
+        assert list(self.lib_path.rglob("*.mp3")) == [item.filepath]
+
+    @pytest.mark.skipif(not _common.HAVE_SYMLINK, reason="need symlinks")
+    def test_reimported_singleton_through_symlink_preserves_file(self):
+        linked_library = self.temp_path / "linked-library"
+        linked_library.symlink_to(self.lib_path, target_is_directory=True)
+
+        self.setup_importer(
+            import_dir=linked_library, singletons=True, move=True
+        )
+        self.config["import"]["duplicate_action"] = "remove"
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.run()
+
+        item = self._item()
+        assert item.filepath.exists()
+        assert len(self.lib.items()) == 1
+        assert list(self.lib_path.rglob("*.mp3")) == [item.filepath]
+
     def test_reimported_album_gets_new_metadata(self):
         self._setup_session()
         assert self._album().album == "\xe4lbum"
