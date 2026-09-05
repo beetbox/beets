@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Protocol
 
-from beets import library, ui, util
+from beets import library, ui
 from beets.autotag import AlbumMatch, Distance, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 from beets.util.deprecation import deprecate_for_user
@@ -198,6 +198,6 @@ class BPSyncPlugin(BeetsPlugin):
                 album.store()
 
                 # Move album art (and any inconsistent items).
-                if move and lib.directory in util.ancestry(items[0].path):
+                if move and lib.is_in_directory(items[0]):
                     self._log.debug("moving album {}", album)
                     album.move()

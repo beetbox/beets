@@ -1,6 +1,5 @@
 """Tests for the 'permissions' plugin."""
 
-import os
 import platform
 from unittest.mock import Mock, patch
 
@@ -38,9 +37,12 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
         self.run_asis_importer()
         item = self.lib.items().get()
 
-        paths = (item.path, *dirs_in_library(self.lib.directory, item.path))
+        paths = (
+            item.filepath,
+            *dirs_in_library(self.lib.directory, item.filepath),
+        )
         for path in paths:
-            assert os.stat(path).st_mode & 0o777 == 511
+            assert path.stat().st_mode & 0o777 == 511
 
     def test_convert_perm_from_string(self):
         assert convert_perm("10") == 8
@@ -51,7 +53,7 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
     def test_permissions_on_set_art(self):
         self.do_set_art(True)
 
-    @patch("os.chmod", Mock())
+    @patch("pathlib.Path.chmod", Mock())
     def test_failing_permissions_on_set_art(self):
         self.do_set_art(False)
 
@@ -63,4 +65,4 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
         artpath = self.temp_path / "cover.jpg"
         artpath.touch()
         album.set_art(artpath)
-        assert expect_success == check_permissions(album.artpath, 0o777)
+        assert expect_success == check_permissions(album.art_filepath, 0o777)
