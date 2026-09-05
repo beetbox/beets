@@ -93,7 +93,12 @@ class TerminalImportSession(importer.ImportSession):
             # or, basic choices that require no more action here.
             if isinstance(choice, AlbumMatch) or (
                 isinstance(choice, importer.Action)
-                and choice in (importer.Action.SKIP, importer.Action.ASIS)
+                and choice
+                in (
+                    importer.Action.SKIP,
+                    importer.Action.ASIS,
+                    importer.Action.RESCAN,
+                )
             ):
                 # Pass selection to main control flow.
                 return choice
@@ -241,6 +246,16 @@ class TerminalImportSession(importer.ImportSession):
                     "g", "Group albums", lambda s, t: importer.Action.ALBUMS
                 ),
             ]
+            # Withheld for "Group albums" output: grouped by tag, not by
+            # directory, so there's nothing for a rescan to reconstruct.
+            if task.toppath and not task.is_grouped:
+                choices.append(
+                    PromptChoice(
+                        "r",
+                        "Rescan directory",
+                        lambda s, t: importer.Action.RESCAN,
+                    )
+                )
         choices += [
             PromptChoice("e", "Enter search", manual_search),
             PromptChoice("i", "enter Id", manual_id),
