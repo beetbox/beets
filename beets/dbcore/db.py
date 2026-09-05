@@ -1437,14 +1437,6 @@ class Database:
             f"WHERE {where or 1} "
             f"GROUP BY {table}.id "
         )
-        # Fetch flexible attributes for items matching the main query.
-        # Doing the per-item filtering in python is faster than issuing
-        # one query per item to sqlite.
-        flex_sql = (
-            "SELECT * "
-            f"FROM {model_cls._flex_table} "
-            f"WHERE entity_id IN (SELECT id FROM ({sql}))"
-        )
 
         if order_by:
             # the sort field may exist in both 'items' and 'albums' tables
@@ -1463,6 +1455,15 @@ class Database:
 
         if sql_limit is not None:
             sql += f"LIMIT {sql_limit}"
+
+        # Fetch flexible attributes for items matching the main query.
+        # Doing the per-item filtering in python is faster than issuing
+        # one query per item to sqlite.
+        flex_sql = (
+            "SELECT * "
+            f"FROM {model_cls._flex_table} "
+            f"WHERE entity_id IN (SELECT id FROM ({sql}))"
+        )
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
