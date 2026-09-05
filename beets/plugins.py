@@ -861,10 +861,8 @@ def apply_item_changes(
     if pretend:
         return
 
-    from beets import util
-
     # Move the item if it's in the library.
-    if move and lib.directory in util.ancestry(item.path):
+    if move and lib.is_in_directory(item):
         item.move(with_album=False)
 
     if write:

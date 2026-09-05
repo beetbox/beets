@@ -52,6 +52,7 @@ class Library(dbcore.Database):
     # Used for template substitution performance.
     _memotable: dict[tuple[str | None, str | None, str | None, int | None], str]
     replacements: Replacements
+    directory: Path
 
     @cached_property
     def path_formats(self) -> list[PathFormat]:
@@ -74,10 +75,10 @@ class Library(dbcore.Database):
     def __init__(
         self,
         path: PathLike = Path("library.blb"),
-        directory: str | None = None,
+        directory: Path | None = None,
         set_music_dir: bool = True,
     ) -> None:
-        self.directory = normpath(directory or platformdirs.user_music_dir())
+        self.directory = normpath(directory or platformdirs.user_music_path())
         if set_music_dir:
             context.set_music_dir(self.directory)
 
@@ -91,6 +92,14 @@ class Library(dbcore.Database):
         """Temporarily bind this library's directory to path conversion."""
         with context.music_dir(self.directory):
             yield self
+
+    def contains_path(self, path: Path) -> bool:
+        """Return the given path is in the library's directory."""
+        return path.is_relative_to(self.directory)
+
+    def is_in_directory(self, model: LibModel) -> bool:
+        """Return whether the model is in the library's directory."""
+        return self.contains_path(model.filepath)
 
     # Adding objects to the database.
 

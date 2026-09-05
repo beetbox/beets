@@ -387,11 +387,9 @@ class ImportTask(BaseImportTask):
         log.debug("removing {} old duplicate albums", len(duplicate_albums))
 
         for album in duplicate_albums:
-            artpath = album.artpath
-
             for item in album.items():
                 item.remove(with_album=False)
-                if lib.directory in util.ancestry(item.path):
+                if lib.is_in_directory(item):
                     log.debug("deleting duplicate {.filepath}", item)
                     util.remove(item.path)
                     util.prune_dirs(
@@ -402,7 +400,7 @@ class ImportTask(BaseImportTask):
 
             album.remove(with_items=False)
 
-            if artpath and lib.directory in util.ancestry(artpath):
+            if (artpath := album.art_filepath) and lib.contains_path(artpath):
                 log.debug("deleting duplicate album art {}", artpath)
                 util.remove(artpath)
                 util.prune_dirs(
@@ -425,7 +423,7 @@ class ImportTask(BaseImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove(with_album=False)
-            if lib.directory in util.ancestry(item.path):
+            if lib.is_in_directory(item):
                 log.debug("deleting superseded {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
@@ -442,9 +440,10 @@ class ImportTask(BaseImportTask):
 
             surviving = list(old_album.items())
             if not surviving:
-                artpath = old_album.artpath
                 old_album.remove(with_items=False)
-                if artpath and lib.directory in util.ancestry(artpath):
+                if (artpath := old_album.art_filepath) and lib.contains_path(
+                    artpath
+                ):
                     log.debug("deleting duplicate album art {}", artpath)
                     util.remove(artpath)
                     util.prune_dirs(
@@ -664,7 +663,7 @@ class ImportTask(BaseImportTask):
                 if (
                     operation != util.MoveOperation.MOVE
                     and self.replaced_items[item]
-                    and session.lib.directory in util.ancestry(old_path)
+                    and session.lib.contains_path(item.filepath)
                 ):
                     item.move()
                     # We moved the item, so remove the
@@ -927,7 +926,7 @@ class SingletonImportTask(ImportTask):
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
             item.remove()
-            if lib.directory in util.ancestry(item.path):
+            if lib.is_in_directory(item):
                 log.debug("deleting duplicate {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
@@ -947,7 +946,7 @@ class SingletonImportTask(ImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove()
-            if lib.directory in util.ancestry(item.path):
+            if lib.is_in_directory(item):
                 log.debug("deleting superseded {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
