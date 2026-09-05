@@ -37,6 +37,10 @@ Bug fixes
   digits no longer restarts the numbering: ``track.10.mp3`` now yields
   ``track.11.mp3`` instead of ``track.1.mp3``. The counter was matched with
   ``\.(\d)+$``, which captures only the final digit.
+- :doc:`/plugins/importadded`: The ``preserve_write_mtimes`` option no longer
+  writes to the item's source file when ``beet convert`` writes the converted
+  file, which previously crashed with a :class:`PermissionError` when the source
+  file was read-only. :bug:`6954`
 - Autotagging distance calculations no longer treat ordinary words containing
   "ft" (such as "draft", "left", "gift", "craft") as a "featuring artist"
   suffix, which was silently making genuinely different titles/artists score as
