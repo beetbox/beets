@@ -21,6 +21,8 @@ New features
   new tracks, and keeps the album together rather than splitting it. The option
   is available both through configuration and from the interactive duplicate
   prompt. :bug:`4471`
+- :ref:`list-cmd` Add ``-l / --limit LIMIT`` flag to the ``list`` command to
+  limit query results. :bug:`5076`
 
 Bug fixes
 ~~~~~~~~~
@@ -104,6 +106,8 @@ Bug fixes
 - :doc:`plugins/tidal`: Restore catalog searches after TIDAL moved search
   queries from the request path to the required ``filter[query]`` parameter.
   :bug:`6989`
+- :doc:`plugins/limit` Deprecate the ``limit`` plugin in favor of the new ``-l``
+  / ``--limit`` flag for the :ref:`list-cmd` command.
 
 ..
     For plugin developers
