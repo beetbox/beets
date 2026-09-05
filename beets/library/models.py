@@ -482,7 +482,7 @@ class Album(LibModel):
         the album is not stored automatically, and it will have to be manually
         stored after invoking this method.
         """
-        basedir = basedir or self.db.directory
+        basedir = basedir or os.fsencode(self.db.directory)
 
         # Ensure new metadata is available to items for destination
         # computation.
@@ -1026,7 +1026,7 @@ class Item(LibModel):
             self.try_write()
         if move:
             # Check whether this file is inside the library directory.
-            if self._db and self._db.directory in util.ancestry(self.path):
+            if self._db and self.db.is_in_directory(self):
                 log.debug("moving {.filepath} to synchronize path", self)
                 self.move(with_album=with_album)
         self.store()
@@ -1235,7 +1235,7 @@ class Item(LibModel):
         is true, returns just the fragment of the path underneath the library
         base directory.
         """
-        basedir = basedir or self.db.directory
+        basedir = basedir or os.fsencode(self.db.directory)
         path_formats = path_formats or self.db.path_formats
 
         for query_str, path_format in path_formats:

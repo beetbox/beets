@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
 from beets.exceptions import UserError
-from beets.util import ancestry, syspath
+from beets.util import syspath
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
@@ -119,7 +119,7 @@ def update_items(
             if not pretend:
                 if changed:
                     # Move the item if it's in the library.
-                    if move and lib.directory in ancestry(item.path):
+                    if move and lib.is_in_directory(item):
                         item.move(store=False)
 
                     item.store(fields=item_fields)
@@ -153,7 +153,7 @@ def update_items(
             album.store(fields=album_fields)
 
             # Move album art (and any inconsistent items).
-            if move and lib.directory in ancestry(first_item.path):
+            if move and lib.is_in_directory(first_item):
                 log.debug("moving album {}", album_id)
 
                 # Manually moving and storing the album.
@@ -167,9 +167,9 @@ def update_items(
 
 def update_func(lib: Library, opts: UpdateCLIOpts, args: list[str]) -> None:
     # Verify that the library folder exists to prevent accidental wipes.
-    if not os.path.isdir(syspath(lib.directory)):
+    if not lib.directory.is_dir():
         ui.print_("Library path is unavailable or does not exist.")
-        ui.print_(os.fsdecode(lib.directory))
+        ui.print_(str(lib.directory))
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
     if opts.album:

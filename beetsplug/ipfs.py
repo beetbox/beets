@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tempfile
 from contextlib import contextmanager
+from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Protocol
 
@@ -301,7 +302,7 @@ class IPFSPlugin(BeetsPlugin):
     def ipfs_added_albums(self, rlib: Library, tmpname: str) -> Library:
         """Returns a new library with only albums/items added to ipfs"""
         tmplib = library.Library(
-            tmpname, directory="/ipfs/", set_music_dir=False
+            tmpname, directory=Path("/ipfs/"), set_music_dir=False
         )
         with tmplib.music_dir_context():
             for album in rlib.albums():
