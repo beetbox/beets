@@ -112,6 +112,8 @@ Bug fixes
 Other changes
 ~~~~~~~~~~~~~
 
+- Replace the internal ``Likelies`` dictionary with a frozen dataclass whose
+  fields explicitly describe the metadata used for autotagging. :bug:`6920`
 - :doc:`plugins/bpd`: Replace the bundled Bluelet scheduler with Python's
   standard ``asyncio`` event loop.
 

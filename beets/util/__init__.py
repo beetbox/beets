@@ -19,6 +19,7 @@ from collections import Counter
 from collections.abc import Sequence
 from contextlib import suppress
 from copy import deepcopy
+from dataclasses import dataclass
 from enum import Enum
 from functools import cache, cached_property
 from importlib import import_module
@@ -835,7 +836,21 @@ def get_most_common_tags(items: Sequence[Item]) -> Likelies:
     if len({i.albumartist for i in items}) == 1 and likelies["albumartist"]:
         likelies["artist"] = likelies["albumartist"]
 
-    return Likelies(likelies)
+    return Likelies(
+        artist=likelies["artist"],
+        album=likelies["album"],
+        albumartist=likelies["albumartist"],
+        year=likelies["year"],
+        disctotal=likelies["disctotal"],
+        mb_albumid=likelies["mb_albumid"],
+        label=likelies["label"],
+        barcode=likelies["barcode"],
+        catalognum=likelies["catalognum"],
+        country=likelies["country"],
+        media=likelies["media"],
+        albumdisambig=likelies["albumdisambig"],
+        data_source=likelies["data_source"],
+    )
 
 
 # stdout and stderr as bytes
@@ -1244,8 +1259,9 @@ class AttrDict(dict[str, T]):
         return id(self)
 
 
-class Likelies(AttrDict[Any]):
-    """A dictionary of the most common tags in a list of items."""
+@dataclass(frozen=True)
+class Likelies:
+    """The most common tags in a list of items."""
 
     artist: str
     album: str
@@ -1259,4 +1275,4 @@ class Likelies(AttrDict[Any]):
     country: str
     media: str
     albumdisambig: str
-    data_source: str
+    data_source: str | None
