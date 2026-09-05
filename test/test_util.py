@@ -371,29 +371,28 @@ class WalkTest(BeetsTestCase):
         base_d = self.base / "d"
         base_d.mkdir()
         (base_d / "z").touch()
-        self.str_base = str(self.base)
 
     def test_sorted_files(self):
-        res = list(util.sorted_walk(self.str_base))
+        res = list(util.sorted_walk(self.base))
         assert len(res) == 2
-        assert res[0] == (self.str_base, ["d"], ["x", "y"])
-        assert res[1] == (str(self.base / "d"), [], ["z"])
+        assert res[0] == (self.base, [Path("d")], [Path("x"), Path("y")])
+        assert res[1] == (self.base / Path("d"), [], [Path("z")])
 
     def test_ignore_file(self):
-        res = list(util.sorted_walk(self.str_base, ("x",)))
+        res = list(util.sorted_walk(self.base, ("x",)))
         assert len(res) == 2
-        assert res[0] == (self.str_base, ["d"], ["y"])
-        assert res[1] == (str(self.base / "d"), [], ["z"])
+        assert res[0] == (self.base, [Path("d")], [Path("y")])
+        assert res[1] == (self.base / Path("d"), [], [Path("z")])
 
     def test_ignore_directory(self):
-        res = list(util.sorted_walk(self.str_base, ("d",)))
+        res = list(util.sorted_walk(self.base, ("d",)))
         assert len(res) == 1
-        assert res[0] == (self.str_base, [], ["x", "y"])
+        assert res[0] == (self.base, [], [Path("x"), Path("y")])
 
     def test_ignore_everything(self):
-        res = list(util.sorted_walk(self.str_base, ("*",)))
+        res = list(util.sorted_walk(self.base, ("*",)))
         assert len(res) == 1
-        assert res[0] == (self.str_base, [], [])
+        assert res[0] == (self.base, [], [])
 
 
 class UniquePathTest(BeetsTestCase):

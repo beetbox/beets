@@ -54,14 +54,9 @@ if TYPE_CHECKING:
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-AnyPath = TypeVar("AnyPath", str, bytes, Path)
 StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
-
-# Here for now to allow for a easy replace later on
-# once we can move to a PathLike (mainly used in importer)
-PathBytes = bytes
 
 
 class HumanReadableError(Exception):
@@ -218,11 +213,11 @@ def ancestry(path: AnyStr) -> list[AnyStr]:
 
 
 def sorted_walk(
-    path: AnyStr,
-    ignore: Sequence[AnyStr] = (),
+    path: Path,
+    ignore: Sequence[str] = (),
     ignore_hidden: bool = False,
     logger: Logger | None = None,
-) -> Iterator[tuple[AnyStr, Sequence[AnyStr], Sequence[AnyStr]]]:
+) -> Iterator[tuple[Path, Sequence[Path], Sequence[Path]]]:
     """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
     pattern in `ignore` are skipped. If `logger` is provided, then
@@ -230,49 +225,44 @@ def sorted_walk(
     """
     # Get all the directories and files at this level.
     try:
-        contents = os.listdir(path)
+        entries = path.iterdir()
     except OSError:
         if logger:
-            logger.warning(
-                "could not list directory {}",
-                displayable_path(path),
-                exc_info=True,
-            )
+            logger.warning("could not list directory {}", path, exc_info=True)
         return
     dirs = []
     files = []
-    for base in contents:
+    for entry in entries:
         # Skip ignored filenames.
-        skip = False
-        for pat in ignore:
-            if fnmatch.fnmatch(base, pat):
-                if logger:
-                    logger.debug(
-                        "ignoring '{}' due to ignore rule '{}'", base, pat
-                    )
-                skip = True
-                break
-        if skip:
+        if any(entry.match(pat) for pat in ignore):
+            if logger:
+                logger.debug(
+                    "ignoring '{}' due to ignore rule '{}'",
+                    entry.name,
+                    next(pat for pat in ignore if entry.match(pat)),
+                )
+            continue
+
+        if ignore_hidden and hidden.is_hidden(entry):
             continue
 
         # Add to output as either a file or a directory.
-        cur = os.path.join(path, base)
-        if (ignore_hidden and not hidden.is_hidden(cur)) or not ignore_hidden:
-            if os.path.isdir(syspath(cur)):
-                dirs.append(base)
-            else:
-                files.append(base)
+        if entry.is_dir():
+            dirs.append(entry)
+        else:
+            files.append(entry)
 
     # Sort lists (case-insensitive) and yield the current level.
-    sort_key = path.__class__.lower
-    dirs.sort(key=sort_key)
-    files.sort(key=sort_key)
-    yield (path, dirs, files)
+    dirs.sort(key=lambda p: p.name.lower())
+    files.sort(key=lambda p: p.name.lower())
+    yield (
+        path,
+        [d.relative_to(path) for d in dirs],
+        [f.relative_to(path) for f in files],
+    )
 
-    # Recurse into directories.
-    for base in dirs:
-        cur = os.path.join(path, base)
-        yield from sorted_walk(cur, ignore, ignore_hidden, logger)
+    for dir_path in dirs:
+        yield from sorted_walk(dir_path, ignore, ignore_hidden, logger)
 
 
 def path_as_posix(path: bytes) -> bytes:

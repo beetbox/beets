@@ -6,19 +6,14 @@ import os
 import subprocess
 from logging import Logger
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import mutagen.wave
 
 import beets
 from beets import util
 
-if TYPE_CHECKING:
-    from beets.util import AnyPath
-
 logger = Logger.info
 
-PathBytes = bytes
 PATH_SEP: bytes = util.bytestring_path(os.sep)
 
 # a list of audio formats I got from wikipedia https://en.wikipedia.org/wiki/Audio_file_format
@@ -72,7 +67,7 @@ AUDIO_EXTENSIONS = {
 }
 
 
-def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
+def fix_extension(path: Path, logger: Logger | None = None) -> Path:
     """Return the `path` after adding an appropriate extension if needed.
 
     If the file already has an extension, return as-is.
@@ -80,10 +75,9 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
     If the file is not a music format, return as-is.
     If the format is found, return path with extension.
     """
-    path = Path(os.fsdecode(path_bytes))
     # if there is an extension, return unchanged
     if path.suffix != "":
-        return path_bytes
+        return path
 
     # no extension detected
     # use ffprobe to find the format
@@ -127,7 +121,7 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
 
     # if ffprobe can't find a format, the file is prob not music
     if detected_format == "":
-        return path_bytes
+        return path
 
     # cp and add ext. If already exist, use that file
     # assume, for example, the only diff between 'asdf.mp3' and 'asdf' is format
@@ -140,10 +134,10 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
     else:
         if logger:
             logger.info("Import file with matching format to original target")
-    return os.fsencode(new_path)
+    return new_path
 
 
-def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:
+def remux_mpeglayer3_wav(path: Path) -> Path | None:
     """If 'path' is a WAV file containing an MP3 stream
     (WAVE_FORMAT_MPEGLAYER3, wFormatTag = 0x0055), extract the MP3 stream
     to a new .mp3 file and return its path. Returns None if the file is not
@@ -172,8 +166,4 @@ def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:
 
     util.remove(path)
 
-    if isinstance(path, str):
-        return str(mp3_path)
-    if isinstance(path, bytes):
-        return os.fsencode(mp3_path)
     return mp3_path

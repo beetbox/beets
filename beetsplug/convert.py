@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 _fs_lock = threading.Lock()
 # Keep track of temporary transcoded files for deletion.
-_temp_files: list[bytes] = []
+_temp_files: list[Path] = []
 
 
 class ConvertCLIOpts(Protocol):
@@ -738,7 +738,8 @@ class ConvertPlugin(BeetsPlugin):
             fd, dest = tempfile.mkstemp(b"." + ext, dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
-            _temp_files.append(dest)  # Delete the transcode later.
+            # Delete the transcode later.
+            _temp_files.append(Path(os.fsdecode(dest)))
 
             # Convert.
             try:
@@ -785,7 +786,7 @@ class ConvertPlugin(BeetsPlugin):
     def _cleanup(self, task: ImportTask, session: ImportSession) -> None:
         for path in task.old_paths:
             if path in _temp_files:
-                if os.path.isfile(util.syspath(path)):
+                if path.is_file():
                     util.remove(path)
                 _temp_files.remove(path)
 

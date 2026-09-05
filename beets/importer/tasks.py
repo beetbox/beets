@@ -8,8 +8,9 @@ import time
 from collections import defaultdict
 from collections.abc import Callable
 from functools import cached_property
+from pathlib import Path
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING, Any, AnyStr
+from typing import TYPE_CHECKING, Any
 
 import mediafile
 
@@ -170,14 +171,14 @@ class BaseImportTask:
     Tasks flow through the importer pipeline. Each stage can update
     them."""
 
-    toppath: util.PathBytes | None
-    paths: list[util.PathBytes]
+    toppath: Path | None
+    paths: list[Path]
     items: list[library.Item]
 
     def __init__(
         self,
-        toppath: util.PathBytes | None,
-        paths: Iterable[util.PathBytes] | None,
+        toppath: Path | None,
+        paths: Iterable[Path] | None,
         items: Iterable[library.Item] | None,
     ) -> None:
         """Create a task. The primary fields that define a task are:
@@ -256,8 +257,8 @@ class ImportTask(BaseImportTask):
 
     def __init__(
         self,
-        toppath: util.PathBytes | None,
-        paths: Iterable[util.PathBytes] | None,
+        toppath: Path | None,
+        paths: Iterable[Path] | None,
         items: Iterable[library.Item] | None,
     ) -> None:
         super().__init__(toppath, paths, items)
@@ -518,7 +519,7 @@ class ImportTask(BaseImportTask):
 
         # When copying and deleting originals, delete old files.
         if copy and delete:
-            new_paths = [os.path.realpath(item.path) for item in items]
+            new_paths = [item.filepath for item in items]
             for old_path in self.old_paths:
                 # Only delete files that were actually copied.
                 if old_path not in new_paths:
@@ -653,13 +654,13 @@ class ImportTask(BaseImportTask):
         items = self.imported_items()
         # Save the original paths of all items for deletion and pruning
         # in the next step (finalization).
-        self.old_paths: list[util.PathBytes] = [item.path for item in items]
+        self.old_paths: list[Path] = [item.filepath for item in items]
         for item in items:
             if operation is not None:
                 # In copy and link modes, treat re-imports specially:
                 # move in-library files. (Out-of-library files are
                 # copied/moved as usual).
-                old_path = item.path
+                old_path = item.filepath
                 if (
                     operation != util.MoveOperation.MOVE
                     and self.replaced_items[item]
@@ -708,9 +709,7 @@ class ImportTask(BaseImportTask):
         and `replaced_albums` dictionaries.
         """
         self.replaced_items = defaultdict(list)
-        self.replaced_albums: dict[util.PathBytes, library.Album] = (
-            defaultdict()
-        )
+        self.replaced_albums: dict[Path, library.Album] = defaultdict()
         replaced_album_ids = set()
         for item in self.imported_items():
             dup_items = list(lib.items(query=PathQuery("path", item.path)))
@@ -724,7 +723,9 @@ class ImportTask(BaseImportTask):
                 replaced_album = dup_item._cached_album
                 if replaced_album:
                     replaced_album_ids.add(dup_item.album_id)
-                    self.replaced_albums[replaced_album.path] = replaced_album
+                    self.replaced_albums[replaced_album.filepath] = (
+                        replaced_album
+                    )
 
     def reimport_metadata(self, lib: library.Library) -> None:
         """For reimports, preserves metadata for reimported items and
@@ -763,7 +764,7 @@ class ImportTask(BaseImportTask):
             return existing_fields
 
         if self.is_album:
-            replaced_album = self.replaced_albums.get(self.album.path)
+            replaced_album = self.replaced_albums.get(self.album.filepath)
             if replaced_album:
                 album_fields = _reduce_and_log(
                     self.album,
@@ -836,16 +837,16 @@ class ImportTask(BaseImportTask):
 
     # Utilities.
 
-    def prune(self, filename: util.PathLike) -> None:
+    def prune(self, filename: Path) -> None:
         """Prune any empty directories above the given file. If this
         task has no `toppath` or the file path provided is not within
         the `toppath`, then this function has no effect. Similarly, if
         the file still exists, no pruning is performed, so it's safe to
         call when the file in question may not have been removed.
         """
-        if self.toppath and not os.path.exists(util.syspath(filename)):
+        if self.toppath and not filename.exists():
             util.prune_dirs(
-                os.path.dirname(os.fsdecode(filename)),
+                filename.parent,
                 self.toppath,
                 clutter=config["clutter"].as_str_seq(),
             )
@@ -858,13 +859,11 @@ class SingletonImportTask(ImportTask):
     def source(self) -> Source:
         return Source.from_item(self.item)
 
-    def __init__(
-        self, toppath: util.PathBytes | None, item: library.Item
-    ) -> None:
-        super().__init__(toppath, [item.path], [item])
+    def __init__(self, toppath: Path | None, item: library.Item) -> None:
+        super().__init__(toppath, [item.filepath], [item])
         self.item = item
         self.is_album = False
-        self.paths = [item.path]
+        self.paths = [item.filepath]
 
     def imported_items(self) -> list[library.Item]:
         return [self.item]
@@ -1003,9 +1002,7 @@ class SentinelImportTask(ImportTask):
     """
 
     def __init__(
-        self,
-        toppath: util.PathBytes | None,
-        paths: Iterable[util.PathBytes] | None,
+        self, toppath: Path | None, paths: Iterable[Path] | None
     ) -> None:
         super().__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
@@ -1059,9 +1056,9 @@ class ArchiveImportTask(SentinelImportTask):
       non-move modes.
     """
 
-    toppath: util.PathBytes
+    toppath: Path
 
-    def __init__(self, toppath: util.PathBytes) -> None:
+    def __init__(self, toppath: Path) -> None:
         super().__init__(toppath, ())
         self.extracted = False
         # ``extract()`` reassigns ``self.toppath`` to the temp extraction
@@ -1070,15 +1067,15 @@ class ArchiveImportTask(SentinelImportTask):
         self.archive_path = toppath
 
     @classmethod
-    def is_archive(cls, path: str) -> bool:
+    def is_archive(cls, path: Path) -> bool:
         """Returns true if the given path points to an archive that can
         be handled.
         """
-        if not os.path.isfile(path):
+        if not path.is_file():
             return False
 
         for path_test, _ in cls.handlers:
-            if path_test(os.fsdecode(path)):
+            if path_test(path):
                 return True
         return False
 
@@ -1126,26 +1123,17 @@ class ArchiveImportTask(SentinelImportTask):
         if not self.extracted:
             return
 
-        all_files_imported = move and not any(
-            files for _, _, files in os.walk(util.syspath(self.toppath))
-        )
+        all_files_imported = move and not any(self.toppath.rglob("*"))
 
-        log.debug(
-            "Removing extracted directory: {}",
-            util.displayable_path(self.toppath),
-        )
-        shutil.rmtree(util.syspath(self.toppath))
+        log.debug("Removing extracted directory: {}", self.toppath)
+        shutil.rmtree(self.toppath)
 
         if all_files_imported:
-            log.debug(
-                "Removing imported archive: {}",
-                util.displayable_path(self.archive_path),
-            )
+            log.debug("Removing imported archive: {}", self.archive_path)
             util.remove(self.archive_path)
         elif move:
             log.debug(
-                "Not removing partially imported archive: {}",
-                util.displayable_path(self.archive_path),
+                "Not removing partially imported archive: {}", self.archive_path
             )
 
     def extract(self) -> None:
@@ -1155,14 +1143,12 @@ class ArchiveImportTask(SentinelImportTask):
         assert self.toppath is not None, "toppath must be set"
 
         for path_test, handler_class in self.handlers:
-            if path_test(os.fsdecode(self.toppath)):
+            if path_test(self.toppath):
                 break
         else:
-            raise ValueError(
-                f"No handler found for archive: {util.displayable_path(self.toppath)}"
-            )
-        extract_to = mkdtemp()
-        archive = handler_class(os.fsdecode(self.toppath), mode="r")
+            raise ValueError(f"No handler found for archive: {self.toppath}")
+        extract_to = Path(mkdtemp())
+        archive = handler_class(self.toppath, mode="r")
         try:
             archive.extractall(extract_to)
 
@@ -1175,13 +1161,13 @@ class ArchiveImportTask(SentinelImportTask):
                 # function time.mktime expects a 9-element tuple.
                 # The -1 indicates that the DST flag is unknown.
                 date_time = time.mktime((*f.date_time, 0, 0, -1))
-                fullpath = os.path.join(extract_to, f.filename)
+                fullpath = extract_to / f.filename
                 os.utime(fullpath, (date_time, date_time))
 
         finally:
             archive.close()
         self.extracted = True
-        self.toppath = os.fsencode(extract_to)
+        self.toppath = extract_to
 
 
 class ImportTaskFactory:
@@ -1189,7 +1175,7 @@ class ImportTaskFactory:
     indicated by a path.
     """
 
-    def __init__(self, toppath: util.PathBytes, session: ImportSession) -> None:
+    def __init__(self, toppath: Path, session: ImportSession) -> None:
         """Create a new task factory.
 
         `toppath` is the user-specified path to search for music to
@@ -1200,7 +1186,7 @@ class ImportTaskFactory:
         self.session = session
         self.skipped = 0  # Skipped due to incremental/resume.
         self.imported = 0  # "Real" tasks created.
-        self.is_archive = ArchiveImportTask.is_archive(util.syspath(toppath))
+        self.is_archive = ArchiveImportTask.is_archive(toppath)
 
     def tasks(self) -> Iterable[ImportTask]:
         """Yield all import tasks for music found in the user-specified
@@ -1253,9 +1239,7 @@ class ImportTaskFactory:
             return tasks
         return []
 
-    def paths(
-        self,
-    ) -> Iterable[tuple[list[util.PathBytes], list[util.PathBytes]]]:
+    def paths(self) -> Iterable[tuple[list[Path], list[Path]]]:
         """Walk `self.toppath` and yield `(dirs, files)` pairs where
         `files` are individual music files and `dirs` the set of
         containing directories where the music was found.
@@ -1264,24 +1248,21 @@ class ImportTaskFactory:
         single track when `toppath` is a file, a single directory in
         `flat` mode.
         """
-        if not os.path.isdir(util.syspath(self.toppath)):
+        if not self.toppath.is_dir():
             yield [self.toppath], [self.toppath]
         elif self.session.config["flat"]:
             paths = []
-            for dirs, paths_in_dir in albums_in_dir(self.toppath):
+            for _, paths_in_dir in albums_in_dir(self.toppath):
                 paths += paths_in_dir
             yield [self.toppath], paths
         else:
             for dirs, paths in albums_in_dir(self.toppath):
                 yield dirs, paths
 
-    def singleton(self, path: util.PathBytes) -> SingletonImportTask | None:
+    def singleton(self, path: Path) -> SingletonImportTask | None:
         """Return a `SingletonImportTask` for the music file."""
         if self.session.already_imported(self.toppath, [path]):
-            log.debug(
-                "Skipping previously-imported path: {}",
-                util.displayable_path(path),
-            )
+            log.debug("Skipping previously-imported path: {}", path)
             self.skipped += 1
             return None
 
@@ -1291,7 +1272,7 @@ class ImportTaskFactory:
         return None
 
     def album(
-        self, paths: Iterable[util.PathBytes], dirs: list[util.PathBytes]
+        self, paths: Iterable[Path], dirs: list[Path]
     ) -> ImportTask | None:
         """Return a `ImportTask` with all media files from paths.
 
@@ -1315,7 +1296,7 @@ class ImportTaskFactory:
         return None
 
     def sentinel(
-        self, paths: Iterable[util.PathBytes] | None = None
+        self, paths: Iterable[Path] | None = None
     ) -> SentinelImportTask:
         """Return a `SentinelImportTask` indicating the end of a
         top-level directory import.
@@ -1338,7 +1319,7 @@ class ImportTaskFactory:
             )
             return None
 
-        log.debug("Extracting archive: {}", util.displayable_path(self.toppath))
+        log.debug("Extracting archive: {}", self.toppath)
         archive_task = ArchiveImportTask(self.toppath)
         try:
             archive_task.extract()
@@ -1351,7 +1332,7 @@ class ImportTaskFactory:
         log.debug("Archive extracted to: {.toppath}", self)
         return archive_task
 
-    def read_item(self, path: util.PathBytes) -> library.Item | None:
+    def read_item(self, path: Path) -> library.Item | None:
         """Return an `Item` read from the path.
 
         If an item cannot be read, return `None` instead and log an
@@ -1360,16 +1341,13 @@ class ImportTaskFactory:
 
         # Check if the file has an extension,
         # Add an extension if there isn't one.
-        if os.path.isfile(path):
+        if path.is_file():
             path = extension.fix_extension(path, logger=log)
 
         if config["import"]["remux_mp3_in_wav"].get(bool):
             mp3_path = remux_mpeglayer3_wav(path)
             if mp3_path:
-                log.info(
-                    "Remuxed MPEGLAYER3 WAV to MP3: {}",
-                    util.displayable_path(mp3_path),
-                )
+                log.info("Remuxed MPEGLAYER3 WAV to MP3: {}", mp3_path)
                 path = mp3_path
 
         try:
@@ -1389,65 +1367,47 @@ _MULTIDISC_MARKERS = (
     r"vinyl",
 )
 
-MULTIDISC_BYTES_PATTERNS = [
-    re.compile(rf"^(.*{marker}[\W_]*)\d".encode(), re.I)
-    for marker in _MULTIDISC_MARKERS
-]
-
 MULTIDISC_PATTERNS = [
     re.compile(rf"^(.*{marker}[\W_]*)\d", re.I) for marker in _MULTIDISC_MARKERS
 ]
 
 
-def is_subdir_of_any_in_list(path: AnyStr, dirs: list[AnyStr]) -> bool:
+def is_subdir_of_any_in_list(path: Path, dirs: list[Path]) -> bool:
     """Returns True if path os a subdirectory of any directory in dirs
     (a list). In other case, returns False.
     """
-    ancestors = util.ancestry(path)
+    ancestors = path.parents
     return any(d in ancestors for d in dirs)
 
 
-def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
+def albums_in_dir(path: Path) -> Iterable[tuple[list[Path], list[Path]]]:
     """Recursively searches the given directory and returns an iterable
     of (paths, items) where paths is a list of directories and items is
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    collapse_paths: list[AnyStr] = []
-    collapse_items: list[AnyStr] = []
+    collapse_paths: list[Path] = []
+    collapse_items: list[Path] = []
     collapse_pat = None
 
-    _ignore = config["ignore"].as_str_seq()
-    ignore: list[AnyStr]
-    if isinstance(path, str):
-        ignore = _ignore
-    else:
-        ignore = list(map(os.fsencode, _ignore))
+    ignore = config["ignore"].as_str_seq()
     ignore_hidden: bool = config["ignore_hidden"].get(bool)
 
-    patterns = (
-        MULTIDISC_PATTERNS
-        if isinstance(path, str)
-        else MULTIDISC_BYTES_PATTERNS
-    )
-
-    def get_numbered_variant_pattern(string: AnyStr) -> re.Pattern[AnyStr]:
-        pat = rf"^{re.escape(os.fsdecode(string))}\d"
-        return re.compile(
-            pat if isinstance(string, str) else os.fsencode(pat), re.I
-        )
+    def get_numbered_variant_pattern(string: str) -> re.Pattern[str]:
+        pat = rf"^{re.escape(string)}\d"
+        return re.compile(pat, re.I)
 
     for root, dirs, files in util.sorted_walk(
         path, ignore=ignore, ignore_hidden=ignore_hidden, logger=log
     ):
-        items = [os.path.join(root, f) for f in files]
+        items = [root / f for f in files]
         # If we're currently collapsing the constituent directories in a
         # multi-disc album, check whether we should continue collapsing
         # and add the current directory. If so, just add the directory
         # and move on to the next directory. If not, stop collapsing.
         if collapse_paths:
             if (is_subdir_of_any_in_list(root, collapse_paths)) or (
-                collapse_pat and collapse_pat.match(os.path.basename(root))
+                collapse_pat and collapse_pat.match(root.name)
             ):
                 # Still collapsing.
                 collapse_paths.append(root)
@@ -1466,7 +1426,7 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
         # 1") or it contains no items but only directories that are
         # named in this way.
         start_collapsing = False
-        for marker_pat in patterns:
+        for marker_pat in MULTIDISC_PATTERNS:
             # Is this directory the root of a nested multi-disc album?
             if dirs and not items:
                 # Check whether all subdirectories have the same prefix.
@@ -1475,8 +1435,9 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
                 for subdir in dirs:
                     # The first directory dictates the pattern for
                     # the remaining directories.
+                    subdir_str = str(subdir)
                     if not subdir_pat:
-                        match = marker_pat.match(subdir)
+                        match = marker_pat.match(subdir_str)
                         if match:
                             subdir_pat = get_numbered_variant_pattern(match[1])
                         else:
@@ -1484,7 +1445,7 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
                             break
 
                     # Subsequent directories must match the pattern.
-                    elif not subdir_pat.match(subdir):
+                    elif not subdir_pat.match(subdir_str):
                         start_collapsing = False
                         break
 
@@ -1494,7 +1455,7 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
                     break
 
             # Is this directory the first in a flattened multi-disc album?
-            elif match := marker_pat.match(os.path.basename(root)):
+            elif match := marker_pat.match(root.name):
                 start_collapsing = True
                 # Set the current pattern to match directories with the same
                 # prefix as this one, followed by a digit.

@@ -1050,13 +1050,10 @@ class FileSystem(LocalArtSource):
             images = [
                 fn_path
                 for root, _, files in sorted_walk(
-                    str(path), ignore=ignore, ignore_hidden=ignore_hidden
+                    path, ignore=ignore, ignore_hidden=ignore_hidden
                 )
                 for fn in files
-                if (
-                    (fn_path := Path(path) / fn).suffix.lower()
-                    in IMAGE_EXTENSIONS
-                )
+                if ((fn_path := path / fn).suffix.lower() in IMAGE_EXTENSIONS)
                 and fn_path.is_file()
             ]
 

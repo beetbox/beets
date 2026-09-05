@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypedDict, get_args
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from pathlib import Path
 
     from beets.autotag import AlbumInfo, TrackInfo
     from beets.autotag.match import AlbumMatch
@@ -90,7 +91,7 @@ class ImportTaskEventArgs(TypedDict):
 
 class ImportEventArgs(TypedDict):
     lib: Library
-    paths: list[bytes]
+    paths: list[Path]
 
 
 class AlbumImportedEventArgs(TypedDict):

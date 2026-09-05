@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import os
 import time
 from typing import TYPE_CHECKING
 
-from beets import config, logging, plugins, util
-from beets.util import displayable_path, normpath, pipeline, syspath
+from beets import config, logging, plugins
+from beets.util import displayable_path, normpath, pipeline
 
 from . import stages as stagefuncs
 from .actions import Action, DuplicateAction
@@ -13,13 +12,13 @@ from .state import ImportState
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
+    from pathlib import Path
 
     import confuse
 
     from beets import dbcore, library
     from beets.autotag import AlbumMatch, TrackMatch
     from beets.library import AlbumOrItem
-    from beets.util import PathBytes
 
     from .tasks import ImportTask, SingletonImportTask
 
@@ -40,18 +39,18 @@ class ImportSession:
     """
 
     logger: logging.Logger
-    paths: list[PathBytes]
+    paths: list[Path]
     lib: library.Library
 
-    _is_resuming: dict[bytes, bool]
-    _merged_items: set[PathBytes]
-    _merged_dirs: set[PathBytes]
+    _is_resuming: dict[Path, bool]
+    _merged_items: set[Path]
+    _merged_dirs: set[Path]
 
     def __init__(
         self,
         lib: library.Library,
         loghandler: logging.Handler | None,
-        paths: Sequence[PathBytes] | None,
+        paths: Sequence[Path] | None,
         query: str | Sequence[str] | dbcore.Query | None = None,
     ) -> None:
         """Create a session.
@@ -139,7 +138,7 @@ class ImportSession:
 
         self.want_resume = config["resume"].as_choice([True, False, "ask"])
 
-    def tag_log(self, status: str, paths: Sequence[PathBytes]) -> None:
+    def tag_log(self, status: str, paths: Sequence[Path]) -> None:
         """Log a message about a given album to the importer log. The status
         should reflect the reason the album couldn't be tagged.
         """
@@ -166,7 +165,7 @@ class ImportSession:
             elif task.skip:
                 self.tag_log("skip", paths)
 
-    def should_resume(self, path: PathBytes) -> bool:
+    def should_resume(self, path: Path) -> bool:
         raise NotImplementedError
 
     def choose_match(self, task: ImportTask) -> AlbumMatch | Action:
@@ -243,9 +242,7 @@ class ImportSession:
 
     # Incremental and resumed imports
 
-    def already_imported(
-        self, toppath: PathBytes, paths: Sequence[PathBytes]
-    ) -> bool:
+    def already_imported(self, toppath: Path, paths: Sequence[Path]) -> bool:
         """Returns true if the files belonging to this task have already
         been imported in a previous session.
         """
@@ -261,13 +258,13 @@ class ImportSession:
     _history_dirs = None
 
     @property
-    def history_dirs(self) -> set[tuple[PathBytes, ...]]:
+    def history_dirs(self) -> set[tuple[Path, ...]]:
         # FIXME: This could be simplified to a cached property
         if self._history_dirs is None:
             self._history_dirs = ImportState().taghistory
         return self._history_dirs
 
-    def already_merged(self, paths: Sequence[PathBytes]) -> bool:
+    def already_merged(self, paths: Sequence[Path]) -> bool:
         """Returns true if all the paths being imported were part of a merge
         during previous tasks.
         """
@@ -276,23 +273,20 @@ class ImportSession:
                 return False
         return True
 
-    def mark_merged(self, paths: Sequence[PathBytes]) -> None:
+    def mark_merged(self, paths: Sequence[Path]) -> None:
         """Mark paths and directories as merged for future reimport tasks."""
         self._merged_items.update(paths)
-        dirs = {
-            os.path.dirname(path) if os.path.isfile(syspath(path)) else path
-            for path in paths
-        }
+        dirs = {p.parent if p.is_file() else p for p in paths}
         self._merged_dirs.update(dirs)
 
-    def is_resuming(self, toppath: PathBytes) -> bool:
+    def is_resuming(self, toppath: Path) -> bool:
         """Return `True` if user wants to resume import of this path.
 
         You have to call `ask_resume` first to determine the return value.
         """
         return self._is_resuming.get(toppath, False)
 
-    def ask_resume(self, toppath: PathBytes) -> None:
+    def ask_resume(self, toppath: Path) -> None:
         """If import of `toppath` was aborted in an earlier session, ask
         user if they want to resume the import.
 
@@ -301,10 +295,7 @@ class ImportSession:
         if self.want_resume and ImportState().progress_has(toppath):
             # Either accept immediately or prompt for input to decide.
             if self.want_resume is True or self.should_resume(toppath):
-                log.warning(
-                    "Resuming interrupted import of {}",
-                    util.displayable_path(toppath),
-                )
+                log.warning("Resuming interrupted import of {}", toppath)
                 self._is_resuming[toppath] = True
             else:
                 # Clear progress; we're starting from the top.

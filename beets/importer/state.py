@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import pickle
 from bisect import bisect_left, insort
 from dataclasses import dataclass
@@ -14,7 +13,7 @@ from beets import config
 if TYPE_CHECKING:
     from types import TracebackType
 
-    from beets.util import PathBytes
+    from beets.util import Path
 
 
 # Global logger.
@@ -47,14 +46,14 @@ class ImportState:
     ```
     """
 
-    tagprogress: dict[PathBytes, list[PathBytes]]
-    taghistory: set[tuple[PathBytes, ...]]
-    path: PathBytes
+    tagprogress: dict[Path, list[Path]]
+    taghistory: set[tuple[Path, ...]]
+    path: Path
 
     def __init__(
-        self, readonly: bool = False, path: PathBytes | None = None
+        self, readonly: bool = False, path: Path | None = None
     ) -> None:
-        self.path = path or os.fsencode(config["statefile"].as_filename())
+        self.path = path or config["statefile"].as_path()
         self.tagprogress = {}
         self.taghistory = set()
         self._open()
@@ -72,7 +71,7 @@ class ImportState:
 
     def _open(self) -> None:
         try:
-            with open(self.path, "rb") as f:
+            with self.path.open("rb") as f:
                 state = pickle.load(f)
                 # Read the states
                 self.tagprogress = state.get("tagprogress", {})
@@ -86,7 +85,7 @@ class ImportState:
 
     def _save(self) -> None:
         try:
-            with open(self.path, "wb") as f:
+            with self.path.open("wb") as f:
                 pickle.dump(
                     {
                         "tagprogress": self.tagprogress,
@@ -99,7 +98,7 @@ class ImportState:
 
     # -------------------------------- Tagprogress ------------------------------- #
 
-    def progress_add(self, toppath: PathBytes, *paths: PathBytes) -> None:
+    def progress_add(self, toppath: Path, *paths: Path) -> None:
         """Record that the files under all of the `paths` have been imported
         under `toppath`.
         """
@@ -111,19 +110,19 @@ class ImportState:
                 else:
                     insort(imported, path)
 
-    def progress_has_element(self, toppath: PathBytes, path: PathBytes) -> bool:
+    def progress_has_element(self, toppath: Path, path: Path) -> bool:
         """Return whether `path` has been imported in `toppath`."""
         imported = self.tagprogress.get(toppath, [])
         i = bisect_left(imported, path)
         return i != len(imported) and imported[i] == path
 
-    def progress_has(self, toppath: PathBytes) -> bool:
+    def progress_has(self, toppath: Path) -> bool:
         """Return `True` if there exist paths that have already been
         imported under `toppath`.
         """
         return toppath in self.tagprogress
 
-    def progress_reset(self, toppath: PathBytes | None) -> None:
+    def progress_reset(self, toppath: Path | None) -> None:
         """Reset the progress for `toppath`."""
         with self as state:
             if toppath in state.tagprogress:
@@ -131,7 +130,7 @@ class ImportState:
 
     # -------------------------------- Taghistory -------------------------------- #
 
-    def history_add(self, paths: list[PathBytes]) -> None:
+    def history_add(self, paths: list[Path]) -> None:
         """Add the paths to the history."""
         with self as state:
             state.taghistory.add(tuple(paths))
