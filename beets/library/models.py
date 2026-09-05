@@ -914,7 +914,7 @@ class Item(LibModel):
         if read_path is None:
             read_path = self.path
         else:
-            read_path = normpath(read_path)
+            read_path = os.fsencode(normpath(read_path))
         try:
             mediafile = MediaFile(syspath(read_path))
         except UnreadableFileError as exc:

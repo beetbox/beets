@@ -77,7 +77,7 @@ class Library(dbcore.Database):
         directory: str | None = None,
         set_music_dir: bool = True,
     ) -> None:
-        self.directory = normpath(directory or platformdirs.user_music_path())
+        self.directory = normpath(directory or platformdirs.user_music_dir())
         if set_music_dir:
             context.set_music_dir(self.directory)
 

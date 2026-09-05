@@ -837,7 +837,7 @@ class ImportTask(BaseImportTask):
 
     # Utilities.
 
-    def prune(self, filename: util.PathBytes) -> None:
+    def prune(self, filename: util.PathLike) -> None:
         """Prune any empty directories above the given file. If this
         task has no `toppath` or the file path provided is not within
         the `toppath`, then this function has no effect. Similarly, if
