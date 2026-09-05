@@ -6,9 +6,9 @@ List all files in the library folder which are not listed in the
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING
 
-from beets import util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
@@ -30,29 +30,28 @@ class Unimported(BeetsPlugin):
         def print_unimported(
             lib: Library, opts: optparse.Values, args: list[str]
         ) -> None:
-            ignore_exts = [
-                f".{x}".encode()
-                for x in self.config["ignore_extensions"].as_str_seq()
-            ]
-            ignore_dirs = [
-                os.path.join(lib.directory, x.encode())
+            ignore_exts = {
+                f".{x}" for x in self.config["ignore_extensions"].as_str_seq()
+            }
+            ignore_dirs = {
+                lib.directory / x
                 for x in self.config["ignore_subdirectories"].as_str_seq()
-            ]
-            in_folder = set()
-            for root, _, files in os.walk(lib.directory):
-                # do not traverse if root is a child of an ignored directory
-                if any(root.startswith(ignored) for ignored in ignore_dirs):
-                    continue
-                for file in files:
-                    # ignore files with ignored extensions
-                    if any(file.endswith(ext) for ext in ignore_exts):
-                        continue
-                    in_folder.add(os.path.join(root, file))
+            }
 
-            in_library = {x.path for x in lib.items()}
-            art_files = {x.artpath for x in lib.albums()}
-            for f in in_folder - in_library - art_files:
-                print_(util.displayable_path(f))
+            ignored: set[Path | None] = set()
+            ignored.update(x.filepath for x in lib.items())
+            ignored.update(x.art_filepath for x in lib.albums())
+            for root, _, files in os.walk(lib.directory):
+                root_path = Path(root)
+                # do not traverse if root is a child of an ignored directory
+                if set(root_path.parents) & ignore_dirs:
+                    continue
+                for file in map(Path, files):
+                    # ignore files with ignored extensions
+                    if file.suffix in ignore_exts:
+                        continue
+                    if (_path := (root_path / file)) not in ignored:
+                        print_(str(_path))
 
         unimported = Subcommand(
             "unimported",

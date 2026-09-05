@@ -854,18 +854,15 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     dbpath = config["library"].as_path()
     _ensure_db_directory_exists(dbpath)
     try:
-        lib = library.Library(dbpath, config["directory"].as_filename())
+        lib = library.Library(dbpath, config["directory"].as_path())
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         log.debug("{}", traceback.format_exc())
         raise UserError(
-            f"database file {util.displayable_path(dbpath)} cannot not be"
-            f" opened: {db_error}"
+            f"database file {dbpath} cannot not be opened: {db_error}"
         )
     log.debug(
-        "library database: {}\nlibrary directory: {}",
-        util.displayable_path(lib.path),
-        util.displayable_path(lib.directory),
+        "library database: {}\nlibrary directory: {}", lib.path, lib.directory
     )
     return lib
 
