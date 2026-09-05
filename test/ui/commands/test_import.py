@@ -4,14 +4,28 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import config, library
-from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
+from beets import config, importer, library
+from beets.autotag import (
+    AlbumInfo,
+    AlbumMatch,
+    Distance,
+    Proposal,
+    Recommendation,
+    Source,
+    TrackInfo,
+    TrackMatch,
+    distance,
+)
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.import_ import paths_from_logfile
 from beets.ui.commands.import_.display import show_change
-from beets.ui.commands.import_.session import summarize_items
+from beets.ui.commands.import_.session import (
+    TerminalImportSession,
+    summarize_items,
+)
+from beets.util import PromptChoice
 
 
 class ImportTest(BeetsTestCase):
@@ -188,3 +202,128 @@ class SummarizeItemsTest(unittest.TestCase):
 
         summary = summarize_items([self.item, i2, i2], False)
         assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
+
+
+class ManualLookupCandidatesTest(IOMixin, BeetsTestCase):
+    """Manual search/ID must mutate and reuse the task's Candidates object."""
+
+    def _album_match(self, item: library.Item, album: str) -> AlbumMatch:
+        track = TrackInfo(title=item.title, track_id="tid", index=1)
+        info = AlbumInfo(
+            album=album,
+            album_id=f"id-{album}",
+            artist=item.artist,
+            artist_id="aid",
+            tracks=[track],
+            data_source="test",
+        )
+        return AlbumMatch(Distance(), info, {item: track})
+
+    def _track_match(self, item: library.Item, title: str) -> TrackMatch:
+        info = TrackInfo(
+            title=title,
+            track_id=f"id-{title}",
+            artist=item.artist,
+            artist_id="aid",
+            data_source="test",
+        )
+        return TrackMatch(Distance(), info, item)
+
+    def test_choose_match_reuses_candidates_on_manual_id(self) -> None:
+        item = _common.item()
+        task = importer.ImportTask(b"/top", [b"/path"], [item])
+        old_match = self._album_match(item, "Old Album")
+        new_match = self._album_match(item, "Manual Album")
+        task.candidates.replace(Proposal([old_match], Recommendation.none))
+        candidates_id = id(task.candidates)
+
+        session = TerminalImportSession(self.lib, None, None, [])
+
+        def manual_id_callback(_s, t):
+            t.candidates.replace(Proposal([new_match], Recommendation.strong))
+            return
+
+        enter_id = PromptChoice("i", "enter Id", manual_id_callback)
+        calls = {"n": 0}
+
+        def fake_choose(candidates, rec, source, choices=None):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return enter_id
+            assert candidates is task.candidates
+            assert candidates[0].info.album == "Manual Album"
+            assert rec == Recommendation.strong
+            return candidates[0]
+
+        with patch(
+            "beets.ui.commands.import_.session.choose_candidate", fake_choose
+        ):
+            result = session.choose_match(task)
+
+        assert result is new_match
+        assert id(task.candidates) == candidates_id
+        assert list(task.candidates) == [new_match]
+        assert task.candidates.recommendation == Recommendation.strong
+
+    def test_choose_item_reuses_candidates_on_manual_id(self) -> None:
+        item = _common.item()
+        task = importer.SingletonImportTask(b"/top", item)
+        old_match = self._track_match(item, "Old Title")
+        new_match = self._track_match(item, "Manual Title")
+        task.candidates.replace(Proposal([old_match], Recommendation.none))
+        candidates_id = id(task.candidates)
+
+        session = TerminalImportSession(self.lib, None, None, [])
+
+        def manual_id_callback(_s, t):
+            t.candidates.replace(Proposal([new_match], Recommendation.strong))
+            return
+
+        enter_id = PromptChoice("i", "enter Id", manual_id_callback)
+        calls = {"n": 0}
+
+        def fake_choose(candidates, rec, source, choices=None):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                return enter_id
+            assert candidates is task.candidates
+            assert candidates[0].info.title == "Manual Title"
+            assert rec == Recommendation.strong
+            return candidates[0]
+
+        with patch(
+            "beets.ui.commands.import_.session.choose_candidate", fake_choose
+        ):
+            result = session.choose_item(task)
+
+        assert result is new_match
+        assert id(task.candidates) == candidates_id
+        assert list(task.candidates) == [new_match]
+        assert task.candidates.recommendation == Recommendation.strong
+
+    def test_manual_id_updates_task_candidates_in_place(self) -> None:
+        from beets.ui.commands.import_.session import manual_id
+
+        item = _common.item()
+        task = importer.ImportTask(b"/top", [b"/path"], [item])
+        old_match = self._album_match(item, "Old Album")
+        new_match = self._album_match(item, "Manual Album")
+        task.candidates.replace(Proposal([old_match], Recommendation.none))
+        candidates_id = id(task.candidates)
+        session = TerminalImportSession(self.lib, None, None, [])
+
+        with (
+            patch(
+                "beets.ui.commands.import_.session.ui.input_",
+                return_value="album-id",
+            ),
+            patch(
+                "beets.ui.commands.import_.session.tag_album",
+                return_value=Proposal([new_match], Recommendation.strong),
+            ),
+        ):
+            manual_id(session, task)
+
+        assert id(task.candidates) == candidates_id
+        assert list(task.candidates) == [new_match]
+        assert task.candidates.recommendation == Recommendation.strong
