@@ -24,7 +24,7 @@ from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Iterable, Mapping, Sequence
 
     from beets.autotag import Recommendation, TrackMatch
 
