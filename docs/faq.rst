@@ -307,7 +307,7 @@ missing completely.
 
 To enable ID3v2.3 tags, enable the :ref:`id3v23` config option.
 
-.. _id3v2.4: https://id3.org/id3v2.4.0-structure
+.. _id3v2.4: https://web.archive.org/web/20241227201357/https://id3.org/id3v2.4.0-structure
 
 .. _invalid:
 
