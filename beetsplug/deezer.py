@@ -12,6 +12,7 @@ from beets import config, ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.exceptions import UserError
+from beets.importer.tasks import SINGLE_ARTIST_THRESH
 from beets.metadata_plugins import IDResponse, SearchApiMetadataSourcePlugin
 
 VARIOUS_ARTISTS_ID = 5080
@@ -112,7 +113,15 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         for track in tracks:
             track.medium_total = medium_totals[track.medium]
 
-        is_va = str(album_data["artist"]["id"]) == str(VARIOUS_ARTISTS_ID)
+        album_artist_id = str(album_data["artist"]["id"])
+        # Deezer assigns some compilations a single "main" artist instead of
+        # the Various Artists entity, leaving them undetected. Treat a release
+        # as VA when its album artist performs on fewer tracks than the
+        # importer's own single-artist plurality threshold.
+        is_va = album_artist_id == str(VARIOUS_ARTISTS_ID) or (
+            sum(t.artist_id == album_artist_id for t in tracks)
+            < len(tracks) * SINGLE_ARTIST_THRESH
+        )
         if is_va:
             va_name = config["va_name"].as_str()
             artist = va_name
