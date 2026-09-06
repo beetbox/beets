@@ -12,6 +12,7 @@ from .distance import Distance, distance, string_dist, track_distance
 from .hooks import AlbumInfo, Info, TrackInfo, correct_list_fields
 from .match import (
     AlbumMatch,
+    Candidates,
     Match,
     Proposal,
     Recommendation,
@@ -36,6 +37,7 @@ def __getattr__(name: str) -> Any:
 __all__ = [
     "AlbumInfo",
     "AlbumMatch",
+    "Candidates",
     "Distance",
     "Info",
     "Match",

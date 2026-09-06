@@ -194,3 +194,36 @@ class TestTagMultipleDataSources:
         proposal = tag_item(source)
 
         self.check_proposal(proposal)
+
+
+class TestCandidates:
+    def test_replace_keeps_identity_and_updates_contents(self):
+        from beets.autotag import (
+            AlbumMatch,
+            Candidates,
+            Distance,
+            Proposal,
+            Recommendation,
+            TrackInfo,
+        )
+        from beets.autotag.hooks import AlbumInfo
+
+        track = TrackInfo(title="t", track_id="tid", index=1)
+        info = AlbumInfo(
+            album="a",
+            album_id="aid",
+            artist="ar",
+            artist_id="arid",
+            tracks=[track],
+        )
+        match = AlbumMatch(Distance(), info, {})
+        candidates = Candidates()
+        candidates_id = id(candidates)
+
+        candidates.replace(Proposal([match], Recommendation.strong))
+
+        assert id(candidates) == candidates_id
+        assert list(candidates) == [match]
+        assert candidates.recommendation == Recommendation.strong
+        assert len(candidates) == 1
+        assert candidates[0] is match
