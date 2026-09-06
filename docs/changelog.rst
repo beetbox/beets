@@ -21,6 +21,10 @@ New features
   new tracks, and keeps the album together rather than splitting it. The option
   is available both through configuration and from the interactive duplicate
   prompt. :bug:`4471`
+- The interactive import prompt now offers a "Rescan directory" choice for album
+  tasks. It re-reads the album's directory from disk and re-runs the match, so
+  files can be cleaned up (duplicates, junk) while the import is paused at the
+  prompt, without restarting the whole ``beet import`` run.
 
 Bug fixes
 ~~~~~~~~~
@@ -44,6 +48,9 @@ Bug fixes
 - :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
   ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
   enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
+- :doc:`plugins/deezer`: Detect compilations that Deezer credits to a single
+  "main" artist instead of "Various Artists", so they are tagged as such rather
+  than getting every track artist in the album artist field. :bug:`4057`
 - Flexible attributes whose names contain uppercase characters (for example
   ``beet import --set Tag_With_Uppercase=true``) can now be found by queries.
   Field names are lowercased when a query is parsed, so such attributes could
