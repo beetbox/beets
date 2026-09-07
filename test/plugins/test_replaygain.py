@@ -36,6 +36,8 @@ GAIN_PROG = next(
 
 FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
 
+RSGAIN_AVAILABLE = has_program("rsgain", ["--version"])
+
 METAFLAC_AVAILABLE = has_program("metaflac", ["--version"])
 
 
@@ -113,6 +115,16 @@ class CmdBackendMixin(BackendMixin):
 class FfmpegBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "ffmpeg"}
     has_r128_support = True
+
+
+class RSGainBackendMixin(BackendMixin):
+    plugin_config: ClassVar[dict[str, Any]] = {"backend": "rsgain"}
+    has_r128_support = True
+
+    def test_backend(self):
+        """Skip the test when the rsgain tool is not installed."""
+        if not RSGAIN_AVAILABLE:
+            pytest.skip("rsgain cannot be found")
 
 
 class MetaflacBackendMixin(BackendMixin):
@@ -395,6 +407,13 @@ class TestReplayGainFfmpegNoiseCli(
     FNAME = "whitenoise"
 
 
+@pytest.mark.skipif(not RSGAIN_AVAILABLE, reason="rsgain cannot be found")
+class TestReplayGainRSGainNoiseCli(
+    ReplayGainCliTest, ReplayGainPluginHelper, RSGainBackendMixin
+):
+    FNAME = "whitenoise"
+
+
 @pytest.mark.skipif(not METAFLAC_AVAILABLE, reason="metaflac cannot be found")
 class TestReplayGainMetaflacCli(
     ReplayGainCliTest, ReplayGainPluginHelper, MetaflacBackendMixin
@@ -453,5 +472,12 @@ class TestReplayGainFfmpegImport(
 @pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
 class TestReplayGainFfmpegThreadedImport(
     ThreadedImportMixin, ImportTest, ReplayGainPluginHelper, FfmpegBackendMixin
+):
+    pass
+
+
+@pytest.mark.skipif(not RSGAIN_AVAILABLE, reason="rsgain cannot be found")
+class TestReplayGainRSGainImport(
+    ImportTest, ReplayGainPluginHelper, RSGainBackendMixin
 ):
     pass

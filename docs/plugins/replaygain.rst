@@ -11,9 +11,9 @@ Installation
 
 This plugin can use one of many backends to compute the ReplayGain values:
 GStreamer, mp3gain (and its cousins, aacgain and mp3rgain), Python Audio Tools,
-ffmpeg or metaflac. ffmpeg and mp3gain can be easier to install. mp3gain
-supports fewer audio formats than the other backends, and metaflac only supports
-FLAC.
+ffmpeg, rsgain or metaflac. ffmpeg, rsgain and mp3gain can be easier to install.
+mp3gain supports fewer audio formats than the other backends, and metaflac only
+supports FLAC.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -140,6 +140,19 @@ file.
 
 .. _ffmpeg: https://ffmpeg.org
 
+rsgain
+~~~~~~
+
+This backend uses the ``rsgain`` tool to calculate EBU R128 gain values. To use
+it, install the rsgain_ command-line tool and select the ``rsgain`` backed in
+your config file.
+
+rsgain supports a wide variety of audio formats and is available on most
+platforms. It provides the option of true peak sampling and can easily scan
+entire directories recursively using its ``easy`` mode.
+
+.. _rsgain: https://github.com/complexlogic/rsgain#installation
+
 metaflac
 ~~~~~~~~
 
@@ -173,7 +186,7 @@ file. The available options are:
   write`` after importing to actually write to the imported files. Default:
   ``no``
 - **backend**: The analysis backend; either ``gstreamer``, ``command``,
-  ``audiotools``, ``ffmpeg`` or ``metaflac``. Default: ``command``.
+  ``audiotools``, ``ffmpeg``, ``rsgain`` or ``metaflac``. Default: ``command``.
 - **overwrite**: On import, re-analyze files that already have ReplayGain tags.
   Note that, for historical reasons, the name of this option is somewhat
   unfortunate: It does not decide whether tags are written to the files (which
@@ -190,17 +203,27 @@ file. The available options are:
 - **per_disc**: Calculate album ReplayGain on disc level instead of album level.
   Default: ``no``
 
-These options only work with the "command" backend:
+This option only works with the "command" backend:
 
 - **command**: Name or path to your command backend of choice: either of
   ``mp3gain``, ``aacgain`` or ``mp3rgain``.
+
+This option only works with the "command" and "rsgain" backend:
+
 - **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
   would keep clipping from occurring. Default: ``yes``.
 
-This option only works with the "ffmpeg" backend:
+This option only works with the "ffmpeg" and "rsgain" backend:
 
 - **peak**: Either ``true`` (the default) or ``sample``. ``true`` is more
   accurate but slower.
+
+This option only works with the "rsgain" backend:
+
+- **max_peak**: Maximum allowed peak audio level, in decibels. Only taken into
+  account when clipping protection using the ``noclip`` option is enabled. Must
+  be a negative value, default is ``-1.0`` as recommended by the EBU R128
+  standard.
 
 This option only works with the "metaflac" backend:
 
