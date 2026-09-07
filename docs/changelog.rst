@@ -9,9 +9,14 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :ref:`tunique` (``%tunique{}``): New path template function to disambiguate
+  tracks within the same album that share the same title (e.g., identical-titled
+  tracks on different discs). It has the same arguments as :ref:`%aunique
+  <aunique>`; the default identifiers are ``title`` and the default
+  disambiguators are ``track disc artist``.
 
 ..
     Bug fixes
@@ -31,11 +36,6 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
-- :ref:`tunique` (``%tunique{}``): New path template function to disambiguate
-  tracks within the same album that share the same title (e.g., identical-titled
-  tracks on different discs). It has the same arguments as :ref:`%aunique
-  <aunique>`; the default identifiers are ``title`` and the default
-  disambiguators are ``track disc artist``.
 - :doc:`plugins/plexupdate`: Add ``beet plexupdate --auth``, an interactive
   plex.tv login following Plex' traditional PIN authentication flow: the access
   token for the local server is stored in a token file. The manual ``token``
