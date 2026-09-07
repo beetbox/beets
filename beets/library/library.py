@@ -138,6 +138,7 @@ class Library(dbcore.Database):
         model_cls: type[LM],
         query: str | Sequence[str] | Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> dbcore.Results[LM]:
         """Parse a query and fetch.
 
@@ -169,7 +170,7 @@ class Library(dbcore.Database):
         if parsed_sort and not isinstance(parsed_sort, NullSort):
             sort = parsed_sort
 
-        return super()._get_results(model_cls, parsed_query, sort)
+        return super()._get_results(model_cls, parsed_query, sort, limit)
 
     @staticmethod
     def get_default_album_sort() -> Sort:
@@ -189,17 +190,23 @@ class Library(dbcore.Database):
         self,
         query: str | Sequence[str] | Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> dbcore.Results[Album]:
         """Get :class:`Album` objects matching the query."""
-        return self._fetch(Album, query, sort or self.get_default_album_sort())
+        return self._fetch(
+            Album, query, sort or self.get_default_album_sort(), limit
+        )
 
     def items(
         self,
         query: str | Sequence[str] | Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> dbcore.Results[Item]:
         """Get :class:`Item` objects matching the query."""
-        return self._fetch(Item, query, sort or self.get_default_item_sort())
+        return self._fetch(
+            Item, query, sort or self.get_default_item_sort(), limit
+        )
 
     # Convenience accessors.
     def get_item(self, id_: int) -> Item | None:
