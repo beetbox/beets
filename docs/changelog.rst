@@ -13,9 +13,13 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/lyrics`: Support 3-decimal millisecond timestamps (e.g.
+  ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
+  millisecond precision were erroneously rejected and fell back to plain lyrics.
+  :bug:`7001`
 
 ..
     For plugin developers
