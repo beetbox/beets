@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 class ChromaSearchCLIOpts(Protocol):
     count: int
     full: bool | None
+    limit: int | None
     search: str | None
     write: bool | None
 
@@ -283,8 +284,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
                 raise UserError("no Acoustid user API key provided")
-            submit_items(self._log, apikey, lib.items(args))
+            submit_items(self._log, apikey, lib.items(args, limit=opts.limit))
 
+        submit_cmd.parser.add_limit_option()
         submit_cmd.func = submit_cmd_func
 
         fingerprint_cmd = ui.Subcommand(
@@ -294,9 +296,10 @@ class AcoustidPlugin(MetadataSourcePlugin):
         def fingerprint_cmd_func(
             lib: Library, opts: optparse.Values, args: list[str]
         ) -> None:
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
+        fingerprint_cmd.parser.add_limit_option()
         fingerprint_cmd.func = fingerprint_cmd_func
 
         return [submit_cmd, fingerprint_cmd, self.chromasearch_cmd()]
@@ -336,6 +339,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
             action="store_true",
             help="Write computed fingerprints to files",
         )
+        cmd.parser.add_limit_option()
 
         def search_cmd_func(
             lib: Library, opts: ChromaSearchCLIOpts, args: list[str]
@@ -348,7 +352,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
             target = (0, opts.search.encode("utf-8"))
             top = TopN(opts.count)
 
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 fp = fingerprint_item(
                     self._log,
                     item,

@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 class ReplayGainCLIOpts(Protocol):
     album: bool
     force: bool
+    limit: int | None
     threads: int | None
     write: bool | None
 
@@ -1606,7 +1607,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.open_pool(threads)
 
             if opts.album:
-                albums = lib.albums(args)
+                albums = lib.albums(args, limit=opts.limit)
                 self._log.info(
                     f"Analyzing {len(albums)} albums ~"
                     f" {self.backend_name} backend..."
@@ -1614,7 +1615,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
-                items = lib.items(args)
+                items = lib.items(args, limit=opts.limit)
                 self._log.info(
                     f"Analyzing {len(items)} tracks ~"
                     f" {self.backend_name} backend..."
@@ -1666,5 +1667,6 @@ class ReplayGainPlugin(BeetsPlugin):
             action="store_false",
             help="don't write metadata (opposite of -w)",
         )
+        cmd.parser.add_limit_option()
         cmd.func = self.command_func
         return [cmd]

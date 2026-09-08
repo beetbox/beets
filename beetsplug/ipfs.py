@@ -26,6 +26,7 @@ class IPFSCLIOpts(Protocol):
     _list: bool | None
     add: bool | None
     get: bool | None
+    limit: int | None
     play: bool | None
     publish: bool | None
 
@@ -77,7 +78,7 @@ class IPFSPlugin(BeetsPlugin):
 
         def func(lib: Library, opts: IPFSCLIOpts, args: list[str]) -> None:
             if opts.add:
-                for album in lib.albums(args):
+                for album in lib.albums(args, limit=opts.limit):
                     if len(album.items()) == 0:
                         self._log.info(
                             "{} does not contain items, aborting", album
@@ -96,11 +97,12 @@ class IPFSPlugin(BeetsPlugin):
                 self.ipfs_import(lib, args)
 
             if opts._list:
-                self.ipfs_list(lib, args)
+                self.ipfs_list(lib, args, opts.limit)
 
             if opts.play:
                 self.ipfs_play(lib, opts, args)
 
+        cmd.parser.add_limit_option(flags=("--limit",))
         cmd.func = func
         return [cmd]
 
@@ -118,7 +120,7 @@ class IPFSPlugin(BeetsPlugin):
         config["play"]["relative_to"] = None
         # set opts that `_play_command` expects
         play_opts = SimpleNamespace(
-            album=True, randomize=None, args=None, yes=None
+            album=True, limit=opts.limit, randomize=None, args=None, yes=None
         )
         with self.remote_lib(lib) as jlib:
             player._play_command(jlib, play_opts, args)
@@ -265,10 +267,12 @@ class IPFSPlugin(BeetsPlugin):
                 return True
         return False
 
-    def ipfs_list(self, lib: Library, args: Sequence[str]) -> None:
+    def ipfs_list(
+        self, lib: Library, args: Sequence[str], limit: int | None = None
+    ) -> None:
         fmt = config["format_album"].get()
         try:
-            albums = self.query(lib, args)
+            albums = self.query(lib, args, limit=limit)
         except OSError:
             ui.print_("No imported libraries yet.")
             return
@@ -276,9 +280,11 @@ class IPFSPlugin(BeetsPlugin):
         for album in albums:
             ui.print_(format(album, fmt), " : ", album.ipfs.decode())
 
-    def query(self, lib: Library, args: str | Sequence[str]) -> Results[Album]:
+    def query(
+        self, lib: Library, args: str | Sequence[str], limit: int | None = None
+    ) -> Results[Album]:
         with self.remote_lib(lib) as rlib:
-            return rlib.albums(args)
+            return rlib.albums(args, limit=limit)
 
     def _remote_libs_path(self, lib: Library) -> bytes:
         lib_root = os.path.dirname(os.fsencode(lib.path))
