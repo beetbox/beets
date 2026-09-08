@@ -1,8 +1,6 @@
 """Tests for image resizing based on filesize."""
 
-import os
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 from beets.test import _common
@@ -26,34 +24,30 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             225, self.IMG_225x225, quality=95, max_filesize=0
         )
         # check valid path returned - max_filesize hasn't broken resize command
-        assert Path(os.fsdecode(im_95_qual)).exists()
+        assert im_95_qual.exists()
 
         # Attempt a lower filesize with same quality
+        im_95_size = im_95_qual.stat().st_size
         im_a = backend.resize(
-            225,
-            self.IMG_225x225,
-            quality=95,
-            max_filesize=0.9 * os.stat(im_95_qual).st_size,
+            225, self.IMG_225x225, quality=95, max_filesize=0.9 * im_95_size
         )
-        assert Path(os.fsdecode(im_a)).exists()
+        assert im_a.exists()
         # target size was achieved
-        assert os.stat(im_a).st_size < os.stat(im_95_qual).st_size
+        assert im_a.stat().st_size < im_95_size
 
         # Attempt with lower initial quality
         im_75_qual = backend.resize(
             225, self.IMG_225x225, quality=75, max_filesize=0
         )
-        assert Path(os.fsdecode(im_75_qual)).exists()
+        assert im_75_qual.exists()
 
+        im_75_size = im_75_qual.stat().st_size
         im_b = backend.resize(
-            225,
-            self.IMG_225x225,
-            quality=95,
-            max_filesize=0.9 * os.stat(im_75_qual).st_size,
+            225, self.IMG_225x225, quality=95, max_filesize=0.9 * im_75_size
         )
-        assert Path(os.fsdecode(im_b)).exists()
+        assert im_b.exists()
         # Check high (initial) quality still gives a smaller filesize
-        assert os.stat(im_b).st_size < os.stat(im_75_qual).st_size
+        assert im_b.stat().st_size < im_75_size
 
     @unittest.skipUnless(PILBackend.available(), "PIL not available")
     def test_pil_file_resize(self):
@@ -87,7 +81,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         """
         im = IMBackend()
         path = im.deinterlace(self.IMG_225x225)
-        cmd = [*im.identify_cmd, "-format", "%[interlace]", os.fsdecode(path)]
+        cmd = [*im.identify_cmd, "-format", "%[interlace]", str(path)]
         out = command_output(cmd).stdout
         assert out == b"None"
 

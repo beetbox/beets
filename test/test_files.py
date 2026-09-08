@@ -88,7 +88,7 @@ class MoveTest(BeetsTestCase):
 
     def test_move_changes_path(self):
         self.i.move()
-        assert self.i.path == util.normpath(self.dest)
+        assert self.i.path == util.normpath(os.fsencode(self.dest))
 
     def test_copy_already_at_destination(self):
         self.i.move()
@@ -158,7 +158,7 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_changes_path(self):
         self.i.move(operation=MoveOperation.LINK)
-        assert self.i.path == util.normpath(self.dest)
+        assert self.i.path == util.normpath(os.fsencode(self.dest))
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_arrives(self):
@@ -179,7 +179,7 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_changes_path(self):
         self.i.move(operation=MoveOperation.HARDLINK)
-        assert self.i.path == util.normpath(self.dest)
+        assert self.i.path == util.normpath(os.fsencode(self.dest))
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_from_symlink(self):

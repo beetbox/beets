@@ -531,7 +531,7 @@ requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'fetchart'" },
     { name = "beautifulsoup4", marker = "extra == 'lyrics'" },
     { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "confuse", specifier = ">=2.2.0" },
+    { name = "confuse", specifier = ">=2.2.1" },
     { name = "dbus-python", marker = "sys_platform != 'win32' and extra == 'metasync'" },
     { name = "flask", marker = "extra == 'aura'" },
     { name = "flask", marker = "extra == 'web'" },

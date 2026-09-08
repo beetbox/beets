@@ -17,15 +17,11 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlencode
 
 from beets import logging, util
-from beets.util import (
-    LazySharedInstance,
-    displayable_path,
-    get_temp_filename,
-    syspath,
-)
+from beets.util import LazySharedInstance, get_temp_filename, syspath
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from pathlib import Path
 
 PROXY_URL = "https://images.weserv.nl/"
 
@@ -81,37 +77,35 @@ class LocalBackend(ABC):
     def resize(
         self,
         maxwidth: int,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        path_in: Path,
+        path_out: Path | None = None,
         quality: int = 0,
         max_filesize: int = 0,
-    ) -> bytes:
+    ) -> Path:
         """Resize an image to the given width and return the output path.
 
         On error, logs a warning and returns `path_in`.
         """
 
     @abstractmethod
-    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
+    def get_size(self, path_in: util.PathLike) -> tuple[int, int] | None:
         """Return the (width, height) of the image or None if unavailable."""
 
     @abstractmethod
-    def deinterlace(
-        self, path_in: bytes, path_out: bytes | None = None
-    ) -> bytes:
+    def deinterlace(self, path_in: Path, path_out: Path | None = None) -> Path:
         """Remove interlacing from an image and return the output path.
 
         On error, logs a warning and returns `path_in`.
         """
 
     @abstractmethod
-    def get_format(self, path_in: bytes) -> str | None:
+    def get_format(self, path_in: util.PathLike) -> str | None:
         """Return the image format (e.g., 'PNG') or None if undetectable."""
 
     @abstractmethod
     def convert_format(
-        self, source: bytes, target: bytes, deinterlaced: bool
-    ) -> bytes:
+        self, source: Path, target: Path, deinterlaced: bool
+    ) -> Path:
         """Convert an image to a new format and return the new file path.
 
         On error, logs a warning and returns `source`.
@@ -123,7 +117,7 @@ class LocalBackend(ABC):
         return False
 
     def compare(
-        self, im1: bytes, im2: bytes, compare_threshold: float
+        self, im1: util.PathLike, im2: util.PathLike, compare_threshold: float
     ) -> bool | None:
         """Compare two images and return `True` if they are similar enough, or
         `None` if there is an error.
@@ -138,7 +132,9 @@ class LocalBackend(ABC):
         """Indicate whether writing metadata to images is supported."""
         return False
 
-    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
+    def write_metadata(
+        self, file: util.PathLike, metadata: Mapping[str, str]
+    ) -> None:
         """Write key-value metadata into the image file.
 
         This must only be called if `self.can_write_metadata()` returns `True`.
@@ -213,11 +209,11 @@ class IMBackend(LocalBackend):
     def resize(
         self,
         maxwidth: int,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        path_in: Path,
+        path_out: Path | None = None,
         quality: int = 0,
         max_filesize: int = 0,
-    ) -> bytes:
+    ) -> Path:
         """Resize using ImageMagick.
 
         Use the ``magick`` program or ``convert`` on older versions. Return
@@ -227,9 +223,7 @@ class IMBackend(LocalBackend):
             path_out = get_temp_filename(__name__, "resize_IM_", path_in)
 
         log.debug(
-            "artresizer: ImageMagick resizing {} to {}",
-            displayable_path(path_in),
-            displayable_path(path_out),
+            "artresizer: ImageMagick resizing {} to {}", path_in, path_out
         )
 
         # "-resize WIDTHx>" shrinks images with the width larger
@@ -239,7 +233,7 @@ class IMBackend(LocalBackend):
         # it here for the sake of explicitness.
         cmd: list[str] = [
             *self.convert_cmd,
-            os.fsdecode(path_in),
+            str(path_in),
             "-resize",
             f"{maxwidth}x>",
             "-interlace",
@@ -254,20 +248,17 @@ class IMBackend(LocalBackend):
         if max_filesize > 0:
             cmd += ["-define", f"jpeg:extent={max_filesize}b"]
 
-        cmd.append(os.fsdecode(path_out))
+        cmd.append(str(path_out))
 
         try:
             util.command_output(cmd)
         except subprocess.CalledProcessError:
-            log.warning(
-                "artresizer: IM convert failed for {}",
-                displayable_path(path_in),
-            )
+            log.warning("artresizer: IM convert failed for {}", path_in)
             return path_in
 
         return path_out
 
-    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
+    def get_size(self, path_in: util.PathLike) -> tuple[int, int] | None:
         cmd: list[str] = [
             *self.identify_cmd,
             "-format",
@@ -299,18 +290,16 @@ class IMBackend(LocalBackend):
 
         return size
 
-    def deinterlace(
-        self, path_in: bytes, path_out: bytes | None = None
-    ) -> bytes:
+    def deinterlace(self, path_in: Path, path_out: Path | None = None) -> Path:
         if not path_out:
             path_out = get_temp_filename(__name__, "deinterlace_IM_", path_in)
 
         cmd = [
             *self.convert_cmd,
-            os.fsdecode(path_in),
+            str(path_in),
             "-interlace",
             "none",
-            os.fsdecode(path_out),
+            str(path_out),
         ]
 
         try:
@@ -320,7 +309,7 @@ class IMBackend(LocalBackend):
             # FIXME: Should probably issue a warning?
             return path_in
 
-    def get_format(self, path_in: bytes) -> str | None:
+    def get_format(self, path_in: util.PathLike) -> str | None:
         cmd = [*self.identify_cmd, "-format", "%[magick]", syspath(path_in)]
 
         try:
@@ -333,8 +322,8 @@ class IMBackend(LocalBackend):
             return None
 
     def convert_format(
-        self, source: bytes, target: bytes, deinterlaced: bool
-    ) -> bytes:
+        self, source: Path, target: Path, deinterlaced: bool
+    ) -> Path:
         cmd = [
             *self.convert_cmd,
             syspath(source),
@@ -356,17 +345,19 @@ class IMBackend(LocalBackend):
         return self.version() > (6, 8, 7)
 
     def compare(
-        self, im1: bytes, im2: bytes, compare_threshold: float
+        self, im1: util.PathLike, im2: util.PathLike, compare_threshold: float
     ) -> bool | None:
         is_windows = platform.system() == "Windows"
 
         # Converting images to grayscale tends to minimize the weight
         # of colors in the diff score. So we first convert both images
         # to grayscale and then pipe them into the `compare` command.
+        im1_path = os.fsdecode(im1)
+        im2_path = os.fsdecode(im2)
         convert_cmd = [
             *self.convert_cmd,
-            os.fsdecode(im2),
-            os.fsdecode(im1),
+            im2_path,
+            im1_path,
             "-colorspace",
             "gray",
             "MIFF:-",
@@ -420,9 +411,7 @@ class IMBackend(LocalBackend):
         if compare_proc.returncode:
             if compare_proc.returncode != 1:
                 log.debug(
-                    "ImageMagick compare failed: {}, {}",
-                    displayable_path(im2),
-                    displayable_path(im1),
+                    "ImageMagick compare failed: {}, {}", im2_path, im1_path
                 )
                 return None
             out_str = stderr
@@ -447,7 +436,9 @@ class IMBackend(LocalBackend):
     def can_write_metadata(self) -> bool:
         return True
 
-    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
+    def write_metadata(
+        self, file: util.PathLike, metadata: Mapping[str, str]
+    ) -> None:
         assignments = chain.from_iterable(
             ("-set", k, v) for k, v in metadata.items()
         )
@@ -477,11 +468,11 @@ class PILBackend(LocalBackend):
     def resize(
         self,
         maxwidth: int,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        path_in: Path,
+        path_out: Path | None = None,
         quality: int = 0,
         max_filesize: int = 0,
-    ) -> bytes:
+    ) -> Path:
         """Resize using Python Imaging Library (PIL).  Return the output path
         of resized image.
         """
@@ -490,11 +481,7 @@ class PILBackend(LocalBackend):
 
         from PIL import Image
 
-        log.debug(
-            "artresizer: PIL resizing {} to {}",
-            displayable_path(path_in),
-            displayable_path(path_out),
-        )
+        log.debug("artresizer: PIL resizing {} to {}", path_in, path_out)
 
         try:
             im = Image.open(syspath(path_in))
@@ -507,7 +494,7 @@ class PILBackend(LocalBackend):
 
             # progressive=False only affects JPEGs and is the default,
             # but we include it here for explicitness.
-            im.save(os.fsdecode(path_out), quality=quality, progressive=False)
+            im.save(str(path_out), quality=quality, progressive=False)
 
             if max_filesize > 0:
                 # If maximum filesize is set, we attempt to lower the quality
@@ -531,7 +518,7 @@ class PILBackend(LocalBackend):
                         lower_qual = 10
                     # Use optimize flag to improve filesize decrease
                     im.save(
-                        os.fsdecode(path_out),
+                        path_out,
                         quality=lower_qual,
                         optimize=True,
                         progressive=False,
@@ -543,27 +530,21 @@ class PILBackend(LocalBackend):
 
             return path_out
         except OSError:
-            log.error(
-                "PIL cannot create thumbnail for '{}'",
-                displayable_path(path_in),
-            )
+            log.error("PIL cannot create thumbnail for '{}'", path_in)
             return path_in
 
-    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
+    def get_size(self, path_in: util.PathLike) -> tuple[int, int] | None:
         from PIL import Image
 
+        path = os.fsdecode(path_in)
         try:
-            im = Image.open(syspath(path_in))
+            im = Image.open(path)
             return im.size
         except OSError as exc:
-            log.error(
-                "PIL could not read file {}: {}", displayable_path(path_in), exc
-            )
+            log.error("PIL could not read file {}: {}", path, exc)
             return None
 
-    def deinterlace(
-        self, path_in: bytes, path_out: bytes | None = None
-    ) -> bytes:
+    def deinterlace(self, path_in: Path, path_out: Path | None = None) -> Path:
         if not path_out:
             path_out = get_temp_filename(__name__, "deinterlace_PIL_", path_in)
 
@@ -571,13 +552,13 @@ class PILBackend(LocalBackend):
 
         try:
             im = Image.open(syspath(path_in))
-            im.save(os.fsdecode(path_out), progressive=False)
+            im.save(path_out, progressive=False)
             return path_out
         except OSError:
             # FIXME: Should probably issue a warning?
             return path_in
 
-    def get_format(self, path_in: bytes) -> str | None:
+    def get_format(self, path_in: util.PathLike) -> str | None:
         from PIL import Image, UnidentifiedImageError
 
         try:
@@ -593,8 +574,8 @@ class PILBackend(LocalBackend):
             return None
 
     def convert_format(
-        self, source: bytes, target: bytes, deinterlaced: bool
-    ) -> bytes:
+        self, source: Path, target: Path, deinterlaced: bool
+    ) -> Path:
         from PIL import Image, UnidentifiedImageError
 
         try:
@@ -616,7 +597,7 @@ class PILBackend(LocalBackend):
         return False
 
     def compare(
-        self, im1: bytes, im2: bytes, compare_threshold: float
+        self, im1: util.PathLike, im2: util.PathLike, compare_threshold: float
     ) -> bool | None:
         # It is an error to call this when ArtResizer.can_compare is not True.
         raise NotImplementedError()
@@ -625,7 +606,9 @@ class PILBackend(LocalBackend):
     def can_write_metadata(self) -> bool:
         return True
 
-    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
+    def write_metadata(
+        self, file: util.PathLike, metadata: Mapping[str, str]
+    ) -> None:
         from PIL import Image, PngImagePlugin
 
         # FIXME: Detect and handle other file types (currently, the only user
@@ -634,7 +617,7 @@ class PILBackend(LocalBackend):
         meta = PngImagePlugin.PngInfo()
         for k, v in metadata.items():
             meta.add_text(k, v, zip=False)
-        im.save(os.fsdecode(file), "PNG", pnginfo=meta)
+        im.save(file, "PNG", pnginfo=meta)
 
 
 BACKEND_CLASSES: list[type[LocalBackend]] = [IMBackend, PILBackend]
@@ -680,11 +663,11 @@ class ArtResizer:
     def resize(
         self,
         maxwidth: int,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        path_in: Path,
+        path_out: Path | None = None,
         quality: int = 0,
         max_filesize: int = 0,
-    ) -> bytes:
+    ) -> Path:
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
         temporary file and encodes with the specified quality level.
@@ -701,9 +684,7 @@ class ArtResizer:
         # Handled by `proxy_url` already.
         return path_in
 
-    def deinterlace(
-        self, path_in: bytes, path_out: bytes | None = None
-    ) -> bytes:
+    def deinterlace(self, path_in: Path, path_out: Path | None = None) -> Path:
         """Deinterlace an image.
 
         Only available locally.
@@ -730,7 +711,7 @@ class ArtResizer:
         """
         return self.local_method is not None
 
-    def get_size(self, path_in: bytes) -> tuple[int, int] | None:
+    def get_size(self, path_in: util.PathLike) -> tuple[int, int] | None:
         """Return the size of an image file as an int couple (width, height)
         in pixels.
 
@@ -742,7 +723,7 @@ class ArtResizer:
             "image cannot be obtained without artresizer backend"
         )
 
-    def get_format(self, path_in: bytes) -> str | None:
+    def get_format(self, path_in: util.PathLike) -> str | None:
         """Returns the format of the image as a string.
 
         Only available locally.
@@ -753,8 +734,8 @@ class ArtResizer:
         return None
 
     def reformat(
-        self, path_in: bytes, new_format: str, deinterlaced: bool = True
-    ) -> bytes:
+        self, path_in: Path, new_format: str, deinterlaced: bool = True
+    ) -> Path:
         """Converts image to desired format, updating its extension, but
         keeping the same filename.
 
@@ -768,8 +749,7 @@ class ArtResizer:
         # A nonexhaustive map of image "types" to extensions overrides
         new_format = {"jpeg": "jpg"}.get(new_format, new_format)
 
-        fname, _ = os.path.splitext(path_in)
-        path_new = fname + b"." + new_format.encode("utf8")
+        path_new = path_in.with_suffix(f".{new_format}")
 
         # allows the exception to propagate, while still making sure a changed
         # file path was removed
@@ -793,7 +773,7 @@ class ArtResizer:
         return False
 
     def compare(
-        self, im1: bytes, im2: bytes, compare_threshold: float
+        self, im1: util.PathLike, im2: util.PathLike, compare_threshold: float
     ) -> bool | None:
         """Return a boolean indicating whether two images are similar.
 
@@ -812,7 +792,9 @@ class ArtResizer:
             return self.local_method.can_write_metadata
         return False
 
-    def write_metadata(self, file: bytes, metadata: Mapping[str, str]) -> None:
+    def write_metadata(
+        self, file: util.PathLike, metadata: Mapping[str, str]
+    ) -> None:
         """Write key-value metadata to the image file.
 
         Only available locally. Currently, expects the image to be a PNG file.
