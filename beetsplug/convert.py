@@ -41,6 +41,7 @@ _temp_files: list[bytes] = []
 class ConvertCLIOpts(Protocol):
     album: bool
     keep_new: bool
+    limit: int | None
     yes: bool | None
 
 
@@ -219,6 +220,7 @@ class ConvertPlugin(BeetsPlugin):
             ),
         )
         cmd.parser.add_album_option()
+        cmd.parser.add_limit_option(flags=("--limit",))
         cmd.func = self.convert_func
         return [cmd]
 
@@ -673,13 +675,13 @@ class ConvertPlugin(BeetsPlugin):
         pretend = self.pretend
 
         if opts.album:
-            albums = lib.albums(args)
+            albums = lib.albums(args, limit=opts.limit)
             items = [i for a in albums for i in a.items()]
             if not pretend:
                 for a in albums:
                     ui.print_(format(a, ""))
         else:
-            items = list(lib.items(args))
+            items = list(lib.items(args, limit=opts.limit))
             if not pretend:
                 for i in items:
                     ui.print_(format(i, ""))
