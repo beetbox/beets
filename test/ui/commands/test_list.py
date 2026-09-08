@@ -1,3 +1,8 @@
+import os
+
+import pytest
+
+from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 
@@ -5,10 +10,15 @@ from beets.test.helper import BeetsTestCase, IOMixin
 class ListTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.item = _common.item()
-        self.item.path = "xxx/yyy"
+        self.item = _common.item(
+            path=os.fsencode(self.lib_path / "xxx/yyy"), flex=1
+        )
         self.lib.add(self.item)
         self.lib.add_album([self.item])
+        self.another_item = _common.item(
+            path=os.fsencode(self.lib_path / "another/path"), flex=2
+        )
+        self.lib.add(self.another_item)
 
     def test_list_outputs_item(self):
         stdout = self.run_with_output("list")
@@ -24,7 +34,7 @@ class ListTest(IOMixin, BeetsTestCase):
         assert "na\xefve" in out
 
     def test_list_item_path(self):
-        stdout = self.run_with_output("list", "-f", "$path")
+        stdout = self.run_with_output("list", "flex:1", "-f", "$path")
         assert stdout.strip() == str(self.lib_path / "xxx/yyy")
 
     def test_list_album_outputs_something(self):
@@ -54,10 +64,33 @@ class ListTest(IOMixin, BeetsTestCase):
         assert "the artist" in stdout
 
     def test_list_item_format_multiple(self):
-        stdout = self.run_with_output("list", "-f", "$artist - $album - $year")
-        assert "the artist - the album - 0001" == stdout.strip()
+        stdout = self.run_with_output(
+            "list", "flex:1", "-f", "$artist - $album - $year"
+        )
+        assert stdout.strip() == "the artist - the album - 0001"
 
     def test_list_album_format(self):
         stdout = self.run_with_output("list", "-a", "-f", "$genres")
         assert "the genre" in stdout
         assert "the album" not in stdout
+
+    def test_limit_query_results(self):
+        args = "list", "-p"
+
+        stdout = self.run_with_output(*args).strip()
+        assert len(stdout.splitlines()) == 2
+
+        stdout = self.run_with_output(*args, "-l", "1").strip()
+        assert len(stdout.splitlines()) == 1
+
+        with pytest.raises(UserError, match="must be a non-negative integer"):
+            self.run_with_output(*args, "-l", "-1")
+
+    def test_limit_sort_by_flex_attr(self):
+        args = "list", "-p", "-l", "1"
+
+        stdout = self.run_with_output(*args, "flex+").strip()
+        assert stdout == os.fsdecode(self.item.path)
+
+        stdout = self.run_with_output(*args, "flex-").strip()
+        assert stdout == os.fsdecode(self.another_item.path)

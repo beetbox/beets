@@ -1,6 +1,6 @@
 [project]
 name = "beets"
-version = "2.13.1"
+version = "2.14.0"
 description = "music tagger and library organizer"
 authors = [{ name = "Adrian Sampson", email = "adrian@radbox.org" }]
 maintainers = [{ name = "Serene-Arc" }]

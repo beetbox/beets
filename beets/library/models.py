@@ -13,10 +13,9 @@ from typing_extensions import Self
 
 import beets
 from beets import dbcore, logging, plugins, util
-from beets.dbcore import types
+from beets.dbcore import sort, types
 from beets.dbcore.db import FormattedMapping
 from beets.dbcore.pathutils import normalize_path_for_db
-from beets.dbcore.sort import SmartArtistSort
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -116,6 +115,22 @@ class LibModel(dbcore.Model["Library"]):
         return self.__str__().encode("utf-8")
 
     # Convenient queries.
+    @classmethod
+    def field_sort(
+        cls, field: str, is_ascending: bool, case_insensitive: bool
+    ) -> FieldSort:
+        if sort_cls := cls._sorts.get(field):
+            if issubclass(sort_cls, sort.SmartArtistSort):
+                field = "albumartist" if cls.__name__ == "Album" else "artist"
+        elif field in cls.all_db_fields and field not in cls._getters():
+            sort_cls = sort.FixedFieldSort
+            if field in cls.other_db_fields:
+                field = f"{cls._relation._table}.{field}"
+        else:
+            # Flexible or computed.
+            sort_cls = sort.SlowFieldSort
+
+        return sort_cls(field, is_ascending, case_insensitive)
 
     @classmethod
     def field_query(
@@ -326,8 +341,8 @@ class Album(LibModel):
     _formatter = FormattedMapping
 
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {
-        "albumartist": SmartArtistSort,
-        "artist": SmartArtistSort,
+        "albumartist": sort.SmartArtistSort,
+        "artist": sort.SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
@@ -740,7 +755,9 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts: ClassVar[dict[str, type[FieldSort]]] = {"artist": SmartArtistSort}
+    _sorts: ClassVar[dict[str, type[FieldSort]]] = {
+        "artist": sort.SmartArtistSort
+    }
 
     @cached_classproperty
     def _queries(cls) -> dict[str, FieldQueryType]:

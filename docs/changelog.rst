@@ -9,6 +9,29 @@ below!
 Unreleased
 ----------
 
+..
+    New features
+    ~~~~~~~~~~~~
+
+..
+    Bug fixes
+    ~~~~~~~~~
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/duplicates`: Improve the documentation of the ``checksum``
+  option: explain how the external command is run, remove the broken ``md5sum
+  {file}`` example and show how to use such commands through a wrapper script.
+  :bug:`3979`
+
+2.14.0 (September 07, 2026)
+---------------------------
+
 New features
 ~~~~~~~~~~~~
 
@@ -25,6 +48,8 @@ New features
   tasks. It re-reads the album's directory from disk and re-runs the match, so
   files can be cleaned up (duplicates, junk) while the import is paused at the
   prompt, without restarting the whole ``beet import`` run.
+- :ref:`list-cmd` Add ``-l / --limit LIMIT`` flag to the ``list`` command to
+  limit query results. :bug:`5076`
 
 Bug fixes
 ~~~~~~~~~
@@ -48,6 +73,9 @@ Bug fixes
 - :doc:`plugins/lyrics`: ``beet lyrics`` no longer crashes with an
   ``AttributeError`` on tracks that have no stored lyrics when ``force`` is
   enabled; a missing lyrics body is now treated as empty text. :bug:`6860`
+- :doc:`plugins/deezer`: Detect compilations that Deezer credits to a single
+  "main" artist instead of "Various Artists", so they are tagged as such rather
+  than getting every track artist in the album artist field. :bug:`4057`
 - Flexible attributes whose names contain uppercase characters (for example
   ``beet import --set Tag_With_Uppercase=true``) can now be found by queries.
   Field names are lowercased when a query is parsed, so such attributes could
@@ -113,6 +141,15 @@ Bug fixes
   ``tarfile.TarFile`` lost its ``ZipFileCompat`` interface in Python 3 and
   ``py7zr.SevenZipFile`` exposes ``list()`` rather than ``infolist()``.
   :bug:`5664`
+- :doc:`plugins/listenbrainz` and :doc:`plugins/lastimport`: Play counts are now
+  matched more accurately. An exact MusicBrainz recording ID match is preferred
+  when one exists, and titles are matched exactly (confirmed by the artist or
+  album) before falling back to the previous substring-based matching.
+  Previously all queries were combined, so a listen for "Song" also updated
+  "Song (inst.)" or any other item whose title only contained the listened
+  title.
+- :doc:`plugins/limit` Deprecate the ``limit`` plugin in favor of the new ``-l``
+  / ``--limit`` flag for the :ref:`list-cmd` command.
 
 ..
     For plugin developers
@@ -123,10 +160,9 @@ Other changes
 
 - :doc:`plugins/bpd`: Replace the bundled Bluelet scheduler with Python's
   standard ``asyncio`` event loop.
-- :doc:`plugins/duplicates`: Improve the documentation of the ``checksum``
-  option: explain how the external command is run, remove the broken ``md5sum
-  {file}`` example and show how to use such commands through a wrapper script.
-  :bug:`3979`
+- Docs: fix broken link to ``test/dbcore/test_query.py`` in
+  ``CONTRIBUTING.rst``; add crawler-blocking and unreachable sites to
+  ``linkcheck_ignore`` in ``docs/conf.py``.
 
 2.13.1 (July 29, 2026)
 ----------------------

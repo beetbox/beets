@@ -18,8 +18,8 @@ copyright = "2016, Adrian Sampson"  # noqa: A001
 
 master_doc = "index"
 language = "en"
-version = "2.13"
-release = "2.13.1"
+version = "2.14"
+release = "2.14.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -83,6 +83,12 @@ linkcheck_ignore = [
     r"https://www.gnu.org.*",  # sometimes unreachable
     r"https://www.nongnu.org.*",  # sometimes unreachable
     r"https://web.archive.org.*",  # sometimes unreachable
+    r"https://www.sonos.com.*",  # blocks requests
+    r"https://stackoverflow.com.*",  # blocks requests
+    r"https://superuser.com.*",  # blocks requests
+    r"https://support.discogs.com.*",  # blocks requests
+    r"https://forge\.kanis\.fr.*",  # SSL cert issues
+    r"https://id3\.org.*",  # intermittent server errors
 ]
 
 # Options for HTML output
