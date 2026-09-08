@@ -34,12 +34,13 @@ To run the analysis program and upload its results, type:
 
 ::
 
-    beet absubmit [-f] [-d] [QUERY]
+    beet absubmit [-f] [-d] [-l LIMIT] [QUERY]
 
 By default, the command will only look for AcousticBrainz data when the tracks
 don't already have it; the ``-f`` or ``--force`` switch makes it refetch data
 even when it already exists. You can use the ``-d`` or ``--dry`` switch to check
 which files will be analyzed, before you start a longer period of processing.
+Use ``-l``/``--limit`` to cap the matched tracks before analysis.
 
 The plugin works on music with a MusicBrainz track ID attached. The plugin will
 also skip music that the analysis tool doesn't support.

@@ -55,8 +55,8 @@ Note that the plugin currently does not zero fields when importing "as-is".
 Manually Triggering Zero
 ------------------------
 
-You can also type ``beet zero [QUERY]`` to manually invoke the plugin on music
-in your library.
+You can also type ``beet zero [-l LIMIT] [QUERY]`` to manually invoke the plugin
+on music in your library.
 
 Preserving Album Art
 --------------------

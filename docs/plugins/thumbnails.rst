@@ -38,4 +38,5 @@ Usage
 -----
 
 The ``thumbnails`` command provided by this plugin creates a thumbnail for
-albums that match a query (see :doc:`/reference/query`).
+albums that match a query (see :doc:`/reference/query`). Use ``-l``/``--limit``
+to cap the matched albums before creating thumbnails.

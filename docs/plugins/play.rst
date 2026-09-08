@@ -11,7 +11,8 @@ To use the ``play`` plugin, enable it in your configuration (see
 :ref:`using-plugins`). Then use it by invoking the ``beet play`` command with a
 query. The command will create a temporary m3u file and open it using an
 appropriate application. You can query albums instead of tracks using the ``-a``
-option.
+option. Use ``-l``/``--limit`` to cap the matched tracks or albums before the
+playlist is generated.
 
 By default, the playlist is opened using the ``open`` command on OS X,
 ``xdg-open`` on other Unixes, and ``start`` on Windows. To configure the

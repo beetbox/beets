@@ -88,31 +88,32 @@ Manually Embedding and Extracting Art
 The ``embedart`` plugin provides a couple of commands for manually managing
 embedded album art:
 
-- ``beet embedart [-f IMAGE] QUERY``: embed images in every track of the albums
-  matching the query. If the ``-f`` (``--file``) option is given, then use a
-  specific image file from the filesystem; otherwise, each album embeds its own
-  currently associated album art. The command prompts for confirmation before
-  making the change unless you specify the ``-y`` (``--yes``) option.
-- ``beet embedart [-u IMAGE_URL] QUERY``: embed image specified in the URL into
-  every track of the albums matching the query. The ``-u`` (``--url``) option
-  can be used to specify the URL of the image to be used. The command prompts
-  for confirmation before making the change unless you specify the ``-y``
+- ``beet embedart [-f IMAGE] [-l LIMIT] QUERY``: embed images in every track of
+  the albums matching the query. If the ``-f`` (``--file``) option is given,
+  then use a specific image file from the filesystem; otherwise, each album
+  embeds its own currently associated album art. The command prompts for
+  confirmation before making the change unless you specify the ``-y``
   (``--yes``) option.
-- ``beet extractart [-a] [-n FILE] QUERY``: extracts the images for all albums
-  matching the query. The images are placed inside the album folder. You can
-  specify the destination file name using the ``-n`` option, but leave off the
-  extension: it will be chosen automatically. The destination filename is
-  specified using the ``art_filename`` configuration option. It defaults to
+- ``beet embedart [-u IMAGE_URL] [-l LIMIT] QUERY``: embed image specified in
+  the URL into every track of the albums matching the query. The ``-u``
+  (``--url``) option can be used to specify the URL of the image to be used. The
+  command prompts for confirmation before making the change unless you specify
+  the ``-y`` (``--yes``) option.
+- ``beet extractart [-a] [-n FILE] [-l LIMIT] QUERY``: extracts the images for
+  all albums matching the query. The images are placed inside the album folder.
+  You can specify the destination file name using the ``-n`` option, but leave
+  off the extension: it will be chosen automatically. The destination filename
+  is specified using the ``art_filename`` configuration option. It defaults to
   ``cover`` if it's not specified via ``-o`` nor the config. Using ``-a``, the
   extracted image files are automatically associated with the corresponding
   album.
-- ``beet extractart -o FILE QUERY``: extracts the image from an item matching
-  the query and stores it in a file. You have to specify the destination file
-  using the ``-o`` option, but leave off the extension: it will be chosen
-  automatically.
-- ``beet clearart QUERY``: removes all embedded images from all items matching
-  the query. The command prompts for confirmation before making the change
-  unless you specify the ``-y`` (``--yes``) option. The files listed for
+- ``beet extractart -o FILE [-l LIMIT] QUERY``: extracts the image from an item
+  matching the query and stores it in a file. You have to specify the
+  destination file using the ``-o`` option, but leave off the extension: it will
+  be chosen automatically.
+- ``beet clearart [-l LIMIT] QUERY``: removes all embedded images from all items
+  matching the query. The command prompts for confirmation before making the
+  change unless you specify the ``-y`` (``--yes``) option. The files listed for
   confirmation are the ones matching the query independently of having an
   embedded art. However, only the files with an embedded art are updated,
   leaving untouched the files without.
