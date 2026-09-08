@@ -118,9 +118,10 @@ class IPFSPlugin(BeetsPlugin):
 
         player = PlayPlugin()
         config["play"]["relative_to"] = None
+        limit = opts.limit if opts else None
         # set opts that `_play_command` expects
         play_opts = SimpleNamespace(
-            album=True, limit=opts.limit, randomize=None, args=None, yes=None
+            album=True, limit=limit, randomize=None, args=None, yes=None
         )
         with self.remote_lib(lib) as jlib:
             player._play_command(jlib, play_opts, args)
