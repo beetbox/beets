@@ -4,7 +4,7 @@ Key Finder Plugin
 The ``keyfinder`` plugin uses either the KeyFinder_ or keyfinder-cli_ program to
 detect the musical key of a track from its audio data and store it in the
 ``initial_key`` field of your database. It does so automatically when importing
-music or through the ``beet keyfinder [QUERY]`` command.
+music or through the ``beet keyfinder [-l LIMIT] [QUERY]`` command.
 
 To use the ``keyfinder`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).

@@ -56,4 +56,5 @@ Commands
 The ``deezer`` plugin provides an additional command ``deezerupdate`` to update
 the ``rank`` information from Deezer. The ``rank`` (ranges from 0 to 1M) is a
 global indicator of a song's popularity on Deezer that is updated daily based on
-streams. The higher the ``rank``, the more popular the track is.
+streams. The higher the ``rank``, the more popular the track is. Use
+``-l``/``--limit`` to cap the matched tracks before updating ranks.
