@@ -562,12 +562,6 @@ class MusicBrainzPlugin(
         if not self.ignore_data_tracks:
             all_tracks.extend(medium.get("data_tracks", []))
 
-        medium_data = {
-            "medium": medium["position"],
-            "medium_total": medium["track_count"],
-            "disctitle": medium["title"],
-            "media": medium["format"],
-        }
         valid_tracks = [
             t
             for t in all_tracks
@@ -578,6 +572,12 @@ class MusicBrainzPlugin(
                 and not (self.ignore_video_tracks and t["recording"]["video"])
             )
         ]
+        medium_data = {
+            "medium": medium["position"],
+            "medium_total": len(valid_tracks),
+            "disctitle": medium["title"],
+            "media": medium["format"],
+        }
         for track in valid_tracks:
             # make a copy since we need to modify it with track-level overrides
             recording = track["recording"].copy()
