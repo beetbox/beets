@@ -13,9 +13,12 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
+  their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
+  available. :bug:`7002`
 
 ..
     For plugin developers

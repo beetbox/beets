@@ -92,6 +92,13 @@ NEEDS_FFPROBE = pytest.mark.skipif(
     not has_program("ffprobe", ("-version",)) and not RUNNING_IN_CI,
     reason="ffprobe (ffmpeg) is not available",
 )
+NEEDS_PY7ZR = pytest.mark.skipif(
+    not is_importable("py7zr"), reason="py7zr is not available"
+)
+NEEDS_RARFILE = pytest.mark.skipif(
+    not (is_importable("rarfile") and has_program("unrar")),
+    reason="rarfile or unrar program not found",
+)
 
 
 class ConfigMixin:
