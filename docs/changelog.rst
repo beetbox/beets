@@ -13,13 +13,11 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+- Fix interactive importer ignoring candidates from manual search (``e``) and
+  manual ID (``i``) entry. :bug:`7000`
 
 Other changes
 ~~~~~~~~~~~~~
