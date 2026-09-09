@@ -89,6 +89,7 @@ linkcheck_ignore = [
     r"https://support.discogs.com.*",  # blocks requests
     r"https://forge\.kanis\.fr.*",  # SSL cert issues
     r"https://id3\.org.*",  # intermittent server errors
+    r"https://aka\.ms/.*",  # Microsoft short links block crawlers
 ]
 
 # Options for HTML output

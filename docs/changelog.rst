@@ -16,6 +16,10 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
+  large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
+  (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
+  backend, which leaked fds on fingerprinting errors. :bug:`5171`
 - Add ``alternatives.item_updated`` to the typed event list so
   :doc:`plugins/hook` can listen to it. :bug:`7036`
 
