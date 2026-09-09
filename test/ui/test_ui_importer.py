@@ -42,7 +42,15 @@ class ImportExistingTest(TerminalImportMixin, test_importer.ImportExistingTest):
 class ChooseCandidateTest(
     TerminalImportMixin, test_importer.ChooseCandidateTest
 ):
-    pass
+    def test_manual_search_updates_candidates(self):
+        self.importer.io.addinput("e")
+        self.importer.io.addinput("ManualArtist")
+        self.importer.io.addinput("ManualAlbum")
+        self.importer.io.addinput("1")
+        self.importer.io.addinput("a")
+        self.importer.run()
+        album = self.lib.albums().get()
+        assert "ManualAlbum" in album.album
 
 
 class GroupAlbumsImportTest(

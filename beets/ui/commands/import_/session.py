@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal
 from beets import config, importer, logging, plugins, ui
 from beets.autotag import (
     AlbumMatch,
+    Proposal,
     Recommendation,
     TrackMatch,
     tag_album,
@@ -23,7 +24,7 @@ from .display import show_change, show_item_change
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.autotag import Proposal, Source
+    from beets.autotag import Source
     from beets.importer import ImportSession, ImportTask
     from beets.library import AlbumOrItem, Item
     from beets.util import PathBytes
@@ -113,6 +114,9 @@ class TerminalImportSession(importer.ImportSession):
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
+                if isinstance(post_choice, Proposal):
+                    task.candidates = post_choice.candidates
+                    task.rec = post_choice.recommendation
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
@@ -168,6 +172,9 @@ class TerminalImportSession(importer.ImportSession):
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
+                if isinstance(post_choice, Proposal):
+                    task.candidates = post_choice.candidates
+                    task.rec = post_choice.recommendation
 
     def _report_item_summary(
         self, prefix: Literal["Old", "New"], items: list[Item], is_album: bool
