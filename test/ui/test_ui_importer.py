@@ -20,6 +20,7 @@ class TestNonAutotaggedImport(
 class TestImport(TerminalImportMixin, test_importer.TestImport):
     pass
 
+
 class ImportSingletonTest(
     TerminalImportMixin, test_importer.ImportSingletonTest
 ):

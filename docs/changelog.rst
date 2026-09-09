@@ -17,8 +17,7 @@ Bug fixes
 ~~~~~~~~~
 
 - Fix interactive importer ignoring candidates from manual search (``e``) and
-  manual ID (``i``) entry.
-  :bug:`7000`
+  manual ID (``i``) entry. :bug:`7000`
 
 Other changes
 ~~~~~~~~~~~~~
