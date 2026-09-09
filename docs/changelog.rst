@@ -28,6 +28,9 @@ Other changes
   option: explain how the external command is run, remove the broken ``md5sum
   {file}`` example and show how to use such commands through a wrapper script.
   :bug:`3979`
+- Skip archive import tests (``TestImport7z`` and ``TestImportRar``) when
+  optional dependencies (``py7zr`` or ``rarfile``/``unrar``) are not available.
+  :bug:`7002`
 
 2.14.0 (September 07, 2026)
 ---------------------------
