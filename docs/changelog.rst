@@ -13,17 +13,25 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
+  large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
+  (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
+  backend, which leaked fds on fingerprinting errors. :bug:`5171`
 
 ..
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/duplicates`: Improve the documentation of the ``checksum``
+  option: explain how the external command is run, remove the broken ``md5sum
+  {file}`` example and show how to use such commands through a wrapper script.
+  :bug:`3979`
 
 2.14.0 (September 07, 2026)
 ---------------------------
