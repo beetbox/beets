@@ -55,6 +55,7 @@ class ChooseCandidateTest(
         self.importer.io.addinput("e")
         self.importer.io.addinput("ManualArtist")
         self.importer.io.addinput("ManualAlbum")
+        self.importer.io.addinput("m")
         self.importer.io.addinput("1")
         self.importer.io.addinput("a")
         self.importer.run()
@@ -68,6 +69,7 @@ class ChooseCandidateTest(
         ):
             self.importer.io.addinput("i")
             self.importer.io.addinput("custom_release_id")
+            self.importer.io.addinput("m")
             self.importer.io.addinput("1")
             self.importer.io.addinput("a")
             self.importer.run()
