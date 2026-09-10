@@ -13,13 +13,11 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+- Skip automatic online metadata candidate search during import when both
+  artist and album/title metadata are empty. :bug:`4640`
 
 Other changes
 ~~~~~~~~~~~~~

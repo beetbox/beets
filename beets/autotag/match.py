@@ -434,15 +434,22 @@ def tag_album(
             search_artist, search_name = source.artist, source.name
         log.debug("Search terms: {} - {}", search_artist, search_name)
 
-        # Is this album likely to be a "various artist" release?
-        va_likely = source.va_likely or (search_artist.lower() in VA_ARTISTS)
-        log.debug("Album might be VA: {}", va_likely)
+        # Skip candidate search if both artist and album name are empty,
+        # avoiding useless and slow search queries on un-tagged files (#4640).
+        if search_artist or search_name:
+            # Is this album likely to be a "various artist" release?
+            va_likely = source.va_likely or (
+                search_artist.lower() in VA_ARTISTS
+            )
+            log.debug("Album might be VA: {}", va_likely)
 
-        # Get the results from the data sources.
-        for matched_candidate in metadata_plugins.candidates(
-            source.items, search_artist, search_name, va_likely
-        ):
-            _add_candidate(source, candidates, matched_candidate)
+            # Get the results from the data sources.
+            for matched_candidate in metadata_plugins.candidates(
+                source.items, search_artist, search_name, va_likely
+            ):
+                _add_candidate(source, candidates, matched_candidate)
+        else:
+            log.debug("Skipping album candidate search: no artist or album name.")
 
     log.debug("Evaluating {} candidates.", len(candidates))
     # Sort and get the recommendation.
@@ -497,11 +504,16 @@ def tag_item(
     log.debug("Item search terms: {} - {}", search_artist, search_name)
 
     # Get and evaluate candidate metadata.
-    for track_info in metadata_plugins.item_candidates(
-        item, search_artist, search_name
-    ):
-        dist = track_distance(item, track_info, incl_artist=True)
-        candidates[track_info.identifier] = TrackMatch(dist, track_info, item)
+    if search_artist or search_name:
+        for track_info in metadata_plugins.item_candidates(
+            item, search_artist, search_name
+        ):
+            dist = track_distance(item, track_info, incl_artist=True)
+            candidates[track_info.identifier] = TrackMatch(
+                dist, track_info, item
+            )
+    else:
+        log.debug("Skipping track candidate search: no artist or track title.")
 
     # Sort by distance and return with recommendation.
     log.debug("Found {} candidates.", len(candidates))

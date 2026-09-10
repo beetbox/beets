@@ -194,3 +194,19 @@ class TestTagMultipleDataSources:
         proposal = tag_item(source)
 
         self.check_proposal(proposal)
+
+    def test_search_album_empty_metadata_skips_candidates(self):
+        source = Source.from_items([Item()])
+
+        proposal = tag_album(source)
+
+        assert len(proposal.candidates) == 0
+        assert proposal.recommendation.name == "none"
+
+    def test_search_track_empty_metadata_skips_candidates(self):
+        source = Source.from_item(Item())
+
+        proposal = tag_item(source)
+
+        assert len(proposal.candidates) == 0
+        assert proposal.recommendation.name == "none"
