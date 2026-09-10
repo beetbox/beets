@@ -71,6 +71,58 @@ class TestChroma(IOMixin, PluginMixin, ImportHelper):
         assert TEST_TITLE_1 in output.split("\n")[0]
 
 
+class TestAcoustidMatch:
+    """Tests for acoustid_match() covering the force_fpcalc fix (#5171)."""
+
+    def _make_log(self):
+        log = MagicMock()
+        log.error = MagicMock()
+        return log
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_fingerprint_file_called_with_force_fpcalc(self, mock_fp):
+        """acoustid_match must pass force_fpcalc=True to avoid GStreamer fd leak."""
+        mock_fp.return_value = (30, b"FINGERPRINT")
+        with patch("beetsplug.chroma.acoustid.lookup") as mock_lookup:
+            mock_lookup.return_value = {"status": "ok", "results": []}
+            chroma.acoustid_match(self._make_log(), b"/fake/path.mp3")
+        mock_fp.assert_called_once()
+        _, kwargs = mock_fp.call_args
+        assert kwargs.get("force_fpcalc") is True
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_type_error_logged_not_raised(self, mock_fp):
+        """TypeError from old pyacoustid without force_fpcalc must be caught."""
+        mock_fp.side_effect = TypeError(
+            "unexpected keyword argument 'force_fpcalc'"
+        )
+        log = self._make_log()
+        chroma.acoustid_match(log, b"/fake/path.mp3")  # must not raise
+        log.error.assert_called_once()
+
+
+class TestFingerprintItem:
+    """Tests for fingerprint_item() covering the force_fpcalc TypeError fix."""
+
+    def _make_log(self):
+        log = MagicMock()
+        log.info = MagicMock()
+        return log
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_type_error_returns_none_not_raised(self, mock_fp):
+        """TypeError from old pyacoustid in fingerprint_item must be caught."""
+        mock_fp.side_effect = TypeError(
+            "unexpected keyword argument 'force_fpcalc'"
+        )
+        item = MagicMock()
+        item.length = 30
+        item.acoustid_fingerprint = None
+        log = self._make_log()
+        result = chroma.fingerprint_item(log, item)  # must not raise
+        assert result is None
+
+
 def _seed_acoustid_match(item_path: bytes = b"/fake/path.mp3") -> Item:
     """Seed the chroma module-level match cache as if acoustid had run."""
     chroma._matches[item_path] = (

@@ -98,8 +98,10 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
     try:
-        duration, fp = acoustid.fingerprint_file(util.syspath(path))
-    except acoustid.FingerprintGenerationError as exc:
+        duration, fp = acoustid.fingerprint_file(
+            util.syspath(path), force_fpcalc=True
+        )
+    except (acoustid.FingerprintGenerationError, TypeError) as exc:
         log.error(
             "fingerprinting of {} failed: {}",
             util.displayable_path(repr(path)),
@@ -475,7 +477,9 @@ def fingerprint_item(
     else:
         log.info("{.filepath}: fingerprinting", item)
         try:
-            _, fp = acoustid.fingerprint_file(util.syspath(item.path))
+            _, fp = acoustid.fingerprint_file(
+                util.syspath(item.path), force_fpcalc=True
+            )
             item.acoustid_fingerprint = fp.decode()
             if write:
                 log.info("{.filepath}: writing fingerprint", item)
@@ -483,7 +487,7 @@ def fingerprint_item(
             if item._db:
                 item.store()
             return item.acoustid_fingerprint
-        except acoustid.FingerprintGenerationError as exc:
+        except (acoustid.FingerprintGenerationError, TypeError) as exc:
             log.info("fingerprint generation failed: {}", exc)
     return None
 
