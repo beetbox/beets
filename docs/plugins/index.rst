@@ -501,13 +501,13 @@ beetFs_
     Is a FUSE filesystem for browsing the music in your beets library. (Might be
     out of date.)
 
-beets-getlrc_
-    Fetches synced and non-synced lyrics and creates .lrc files to be used by
-    compatible music players.
-
 beets-genrecanon_
     Maps existing genres into a separate, user-defined canonical taxonomy while
     preserving the original genre metadata.
+
+beets-getlrc_
+    Fetches synced and non-synced lyrics and creates .lrc files to be used by
+    compatible music players.
 
 beets-goingrunning_
     Generates playlists to go with your running sessions.
@@ -629,9 +629,9 @@ beets-youtube_
 
 .. _beets-follow: https://github.com/nolsto/beets-follow
 
-.. _beets-getlrc: https://github.com/jaedonswanson/beets-getlrc
-
 .. _beets-genrecanon: https://codeberg.org/gbcox/beets-genrecanon
+
+.. _beets-getlrc: https://github.com/jaedonswanson/beets-getlrc
 
 .. _beets-goingrunning: https://pypi.org/project/beets-goingrunning
 
