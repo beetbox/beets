@@ -461,6 +461,20 @@ class TestDestination(PytestItemHelper):
         item_in_db.album = "bar"
         assert item_in_db.destination() == np("base/ber/foo")
 
+    def test_destination_stays_in_basedir_with_empty_leading_field(
+        self, item_in_db
+    ):
+        # Regression test for #4889: an empty leading template field
+        # combined with custom replacements that lack the default
+        # separator rule must not produce an absolute path that escapes
+        # the base directory.
+        self.lib.directory = b"base"
+        self.lib.replacements = [(re.compile(r"a"), "e")]
+        self.lib.path_formats = [("default", "$album/$title")]
+        item_in_db.album = ""
+        item_in_db.title = "three"
+        assert item_in_db.destination() == np("base/three")
+
     @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_component(self, item_in_db):
         self.lib.directory = b"base"
