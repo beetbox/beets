@@ -1905,7 +1905,9 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
 
         mp3_path = remux_mpeglayer3_wav(dest)
 
-        assert mp3_path == dest
+        # `remux_mpeglayer3_wav` normalizes through `syspath` (on Windows
+        # this adds the `\\?\` prefix), so compare against the normalized form.
+        assert mp3_path == Path(syspath(dest))
         assert dest.exists()
 
     def test_remux_mpeglayer3_wav_mp3_extension_uppercase(self):
