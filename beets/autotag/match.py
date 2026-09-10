@@ -449,7 +449,9 @@ def tag_album(
             ):
                 _add_candidate(source, candidates, matched_candidate)
         else:
-            log.debug("Skipping album candidate search: no artist or album name.")
+            log.debug(
+                "Skipping album candidate search: no artist or album name."
+            )
 
     log.debug("Evaluating {} candidates.", len(candidates))
     # Sort and get the recommendation.

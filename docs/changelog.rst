@@ -16,8 +16,8 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
-- Skip automatic online metadata candidate search during import when both
-  artist and album/title metadata are empty. :bug:`4640`
+- Skip automatic online metadata candidate search during import when both artist
+  and album/title metadata are empty. :bug:`4640`
 
 Other changes
 ~~~~~~~~~~~~~
