@@ -13,9 +13,13 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Empty leading path-format fields (e.g. from missing metadata) combined with a
+  custom ``replace`` configuration no longer produce an absolute destination
+  path that escapes the library or :doc:`plugins/convert` destination directory;
+  leading path separators are now stripped from the rendered path. :bug:`4889`
 
 ..
     For plugin developers
