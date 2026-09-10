@@ -507,7 +507,7 @@ beets-getlrc_
 
 beets-genrecanon_
     Maps existing genres into a separate, user-defined canonical taxonomy while
-    preserving the original genre metadata.    
+    preserving the original genre metadata.
 
 beets-goingrunning_
     Generates playlists to go with your running sessions.
