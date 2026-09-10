@@ -771,6 +771,14 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         self._setf("foo%aunique{albumartist album,year,}/$title")
         self._assert_dest(b"/base/foo 2001/the title", i1)
 
+    def test_unique_memoizes_brackets_independently(self, items):
+        i1, _i2 = items
+        self._setf(
+            "foo%aunique{albumartist album,year,()}"
+            "%aunique{albumartist album,year,[]}/$title"
+        )
+        self._assert_dest(b"/base/foo (2001) [2001]/the title", i1)
+
     def test_key_flexible_attribute(self, items):
         i1, i2 = items
         album1 = self.lib.get_album(i1)
@@ -1021,6 +1029,45 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         # No disambiguator distinguishes path-formatted values -> fallback IDs.
         self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
         self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    def test_tunique_path_formatted_key_collision(self, items):
+        i1, i2 = items
+        i1.title = "AC/DC"
+        i2.title = "AC_DC"
+        i1.store()
+        i2.store()
+
+        self._assert_dest(b"/base/AC_DC [07]", i1)
+        self._assert_dest(b"/base/AC_DC [11]", i2)
+
+    def test_tunique_replaced_disambiguator_collision(self, items):
+        i1, i2 = items
+        self.lib.replacements = [(re.compile(":"), "_")]
+        i1.artist = "AC:DC"
+        i2.artist = "AC_DC"
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,artist}")
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    def test_tunique_asciified_disambiguator_collision(self, items):
+        i1, i2 = items
+        config["asciify_paths"] = True
+        i1.artist = "Beyonc\u00e9"
+        i2.artist = "Beyonce"
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,artist}")
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    def test_tunique_memoizes_brackets_independently(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,()}%tunique{title,track,[]}")
+        self._assert_dest(b"/base/Common Title (07) [07]", i1)
 
 
 class TestPluginDestination(TestHelper):

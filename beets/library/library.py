@@ -50,7 +50,9 @@ class Library(dbcore.Database):
     )
 
     # Used for template substitution performance.
-    _memotable: dict[tuple[str | None, str | None, str | None, int | None], str]
+    _memotable: dict[
+        tuple[str | None, str | None, str | None, str | None, int | None], str
+    ]
     replacements: Replacements
 
     @cached_property

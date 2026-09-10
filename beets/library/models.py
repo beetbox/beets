@@ -1427,7 +1427,9 @@ class DefaultTemplateFunctions:
         if album_id is None:
             return ""
 
-        memokey = self._tmpl_unique_memokey("aunique", keys, disam, album_id)
+        memokey = self._tmpl_unique_memokey(
+            "aunique", keys, disam, bracket, album_id
+        )
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
@@ -1518,18 +1520,14 @@ class DefaultTemplateFunctions:
             return ""
 
         resolved_keys = keys or beets.config["tunique"]["keys"].as_str()
-        key_fields = resolved_keys.split() or ["title"]
-        query = dbcore.AndQuery(
-            [
-                self.item.field_query(f, self.item.get(f), dbcore.MatchQuery)
-                for f in key_fields
-            ]
-            + [dbcore.MatchQuery("album_id", album_id)]
-        )
+        if not resolved_keys.split():
+            resolved_keys = "title"
+
+        query = self.item.field_query("album_id", album_id, dbcore.MatchQuery)
 
         return self._tmpl_unique(
             "tunique",
-            keys,
+            resolved_keys,
             disam,
             bracket,
             item_id,
@@ -1543,12 +1541,15 @@ class DefaultTemplateFunctions:
         name: str | None,
         keys: str | None,
         disam: str | None,
+        bracket: str | None,
         item_id: int | None,
-    ) -> tuple[str | None, str | None, str | None, int | None]:
+    ) -> tuple[str | None, str | None, str | None, str | None, int | None]:
         """Get the memokey for the unique template named "name" for the
         specific parameters.
         """
-        return (name, keys, disam, item_id)
+        if bracket is None and name is not None:
+            bracket = beets.config[name]["bracket"].as_str()
+        return (name, keys, disam, bracket, item_id)
 
     def _tmpl_unique(
         self,
@@ -1578,14 +1579,14 @@ class DefaultTemplateFunctions:
         "skip_item" is a function that must return True when the template
         should return an empty string.
 
-        "query" is a pre-built query to use instead of building one from
-        ``db_item.duplicates_query(keys)``.
+        "query" is a pre-built query selecting candidate items instead of
+        using ``db_item.duplicates_query(keys)``.
         """
         lib = self.lib
         if lib is None:
             return ""
 
-        memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
+        memokey = self._tmpl_unique_memokey(name, keys, disam, bracket, item_id)
         memoval = lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
@@ -1612,9 +1613,23 @@ class DefaultTemplateFunctions:
         # Find matching items to disambiguate with.
         if query is None:
             query = db_item.duplicates_query(keys_list)
-        ambiguous_items = (
+        candidate_items = (
             lib.items(query) if isinstance(db_item, Item) else lib.albums(query)
         )
+
+        def normalized_field(item: LibModel, field: str) -> str:
+            value = item.formatted(for_path=True).get(field)
+            if beets.config["asciify_paths"]:
+                value = util.asciify_path(value)
+            return util.sanitize_path(value, lib.replacements)
+
+        key_values = tuple(normalized_field(db_item, key) for key in keys_list)
+        ambiguous_items = [
+            item
+            for item in candidate_items
+            if tuple(normalized_field(item, key) for key in keys_list)
+            == key_values
+        ]
 
         # If there's only one item to matching these details, then do
         # nothing.
@@ -1623,14 +1638,11 @@ class DefaultTemplateFunctions:
             return ""
 
         # Find the first disambiguator that distinguishes the items.
-        # Use path-formatted values so separators like "/" in "AC/DC"
-        # are treated as they appear on disk (e.g., "AC_DC" after
-        # path_sep_replace).
         for disambiguator in disam_list:
             # Get the value for each item for the current field.
             disam_values = {
-                s.formatted(for_path=True).get(disambiguator)
-                for s in ambiguous_items
+                normalized_field(item, disambiguator)
+                for item in ambiguous_items
             }
 
             # If the set of unique values is equal to the number of
