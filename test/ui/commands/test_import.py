@@ -54,6 +54,31 @@ class ImportTest(BeetsTestCase):
         actual_paths = list(paths_from_logfile(logfile))
         assert actual_paths == expected_paths
 
+    def test_parse_paths_from_logfile_with_semicolons(self):
+        if os.path.__name__ == "ntpath":
+            logfile_content = (
+                "asis C:\\music\\Artist; The Band\\Album\\CD 01; C:\\music\\Artist; The Band\\Album\\CD 02\n"  # noqa: E501
+                "skip C:\\music\\Various Artists; Co.\\Compilation; Volume 1\n"
+            )
+            expected_paths = [
+                "C:\\music\\Artist; The Band\\Album",
+                "C:\\music\\Various Artists; Co.\\Compilation; Volume 1",
+            ]
+        else:
+            logfile_content = (
+                "asis /music/Artist; The Band/Album/CD 01; /music/Artist; The Band/Album/CD 02\n"  # noqa: E501
+                "skip /music/Various Artists; Co./Compilation; Volume 1\n"
+            )
+            expected_paths = [
+                "/music/Artist; The Band/Album",
+                "/music/Various Artists; Co./Compilation; Volume 1",
+            ]
+
+        logfile = self.temp_path / "logfile_semicolons.log"
+        logfile.write_text(logfile_content)
+        actual_paths = list(paths_from_logfile(logfile))
+        assert actual_paths == expected_paths
+
 
 @patch("beets.ui.term_width", Mock(return_value=54))
 class ShowChangeTestCase(IOMixin, BeetsTestCase):

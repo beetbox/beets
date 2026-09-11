@@ -20,6 +20,8 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- Fix ``beet import --from-logfile`` failing when paths in the logfile contain
+  semicolons. :bug:`4941`
 
 ..
     For plugin developers

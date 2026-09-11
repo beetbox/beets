@@ -28,6 +28,23 @@ class ImportCLIOpts(Protocol):
     from_logfiles: list[str] | None
 
 
+def _split_logfile_paths(paths_str: str) -> list[str]:
+    """Split a string of paths separated by '; '.
+
+    If any path contained '; ' in its file or directory name, naive splitting
+    creates fragments that are not absolute paths. We recombine these fragments
+    with their preceding path.
+    """
+    raw_parts = paths_str.split("; ")
+    path_list: list[str] = []
+    for part in raw_parts:
+        if path_list and not os.path.isabs(part):
+            path_list[-1] = f"{path_list[-1]}; {part}"
+        else:
+            path_list.append(part)
+    return path_list
+
+
 def paths_from_logfile(path: str) -> Iterator[str]:
     """Parse the logfile and yield skipped paths to pass to the `import`
     command.
@@ -45,7 +62,7 @@ def paths_from_logfile(path: str) -> Iterator[str]:
             if verb not in {"asis", "skip", "duplicate-skip"}:
                 raise ValueError(f"line {i} contains unknown verb {verb}")
 
-            yield os.path.commonpath(paths.split("; "))
+            yield os.path.commonpath(_split_logfile_paths(paths))
 
 
 def parse_logfiles(logfiles: list[str]) -> Iterator[str]:
