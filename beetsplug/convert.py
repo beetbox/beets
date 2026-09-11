@@ -711,7 +711,9 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album)
 
         if self.remove_missing:
-            self.remove_non_item_files(items, opts.yes)
+            self.remove_non_item_files(
+                items, opts.yes if opts.yes is not None else False
+            )
 
         # If the user supplied a playlist name, create a playlist for files
         # copied to the destination.
