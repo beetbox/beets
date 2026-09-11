@@ -685,7 +685,10 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     """
     replacements = replacements or CHAR_REPLACE
 
-    comps = re.split(r"[\\/]", path)
+    seps = os.path.sep
+    if os.path.altsep:
+        seps += os.path.altsep
+    comps = re.split(f"[{re.escape(seps)}]", path)
     new_comps = []
     for comp in comps:
         for regex, repl in replacements:

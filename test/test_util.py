@@ -92,6 +92,11 @@ class UtilTest(unittest.TestCase):
             p = util.sanitize_path("//00 ")
         assert p == "00"
 
+    def test_sanitize_backslash_on_posix(self):
+        with _common.platform_posix():
+            p = util.sanitize_path(r"foo\bar/baz")
+        assert p == "foo_bar/baz"
+
     @patch("beets.util.subprocess.Popen")
     def test_command_output(self, mock_popen):
         def popen_fail(*args, **kwargs):
