@@ -494,37 +494,49 @@ class TestAttrDictCachedPropertyMasking:
         assert obj.title == "ok"
 
 
-class DisplayArtistTest(BeetsTestCase):
-    def test_display_artist_disabled(self):
-        self.config["artist_credit"] = False
+class TestDisplayArtist:
+    @pytest.mark.parametrize(
+        "artist_credit_enabled, artist_credit, expected",
+        [
+            _p(False, "Credited Artist", "Canonical Artist", id="disabled"),
+            _p(True, "Credited Artist", "Credited Artist", id="enabled"),
+            _p(True, None, "Canonical Artist", id="fallback_none"),
+        ],
+    )
+    def test_album_display_artist(
+        self, config, artist_credit_enabled, artist_credit, expected
+    ):
+        config["artist_credit"] = artist_credit_enabled
         info = AlbumInfo(
-            artist="Canonical Artist",
-            artist_credit="Credited Artist",
-            tracks=[],
+            artist="Canonical Artist", artist_credit=artist_credit, tracks=[]
         )
-        assert info.display_artist == "Canonical Artist"
+        assert info.display_artist == expected
 
-    def test_display_artist_enabled(self):
-        self.config["artist_credit"] = True
-        info = AlbumInfo(
-            artist="Canonical Artist",
-            artist_credit="Credited Artist",
-            tracks=[],
-        )
-        assert info.display_artist == "Credited Artist"
-
-    def test_display_artist_enabled_fallback(self):
-        self.config["artist_credit"] = True
-        info = AlbumInfo(
-            artist="Canonical Artist", artist_credit=None, tracks=[]
-        )
-        assert info.display_artist == "Canonical Artist"
-
-    def test_track_display_artist(self):
-        self.config["artist_credit"] = True
+    @pytest.mark.parametrize(
+        "artist_credit_enabled, artist_credit, expected",
+        [
+            _p(
+                False,
+                "Credited Track Artist",
+                "Canonical Track Artist",
+                id="disabled",
+            ),
+            _p(
+                True,
+                "Credited Track Artist",
+                "Credited Track Artist",
+                id="enabled",
+            ),
+            _p(True, None, "Canonical Track Artist", id="fallback_none"),
+        ],
+    )
+    def test_track_display_artist(
+        self, config, artist_credit_enabled, artist_credit, expected
+    ):
+        config["artist_credit"] = artist_credit_enabled
         track = TrackInfo(
             title="A Track",
             artist="Canonical Track Artist",
-            artist_credit="Credited Track Artist",
+            artist_credit=artist_credit,
         )
-        assert track.display_artist == "Credited Track Artist"
+        assert track.display_artist == expected

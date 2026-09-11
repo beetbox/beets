@@ -5,12 +5,21 @@ from unittest.mock import Mock, patch
 import pytest
 
 from beets import config, library
-from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
+from beets.autotag import (
+    AlbumInfo,
+    AlbumMatch,
+    Recommendation,
+    Source,
+    TrackInfo,
+    distance,
+)
+from beets.autotag.distance import Distance
 from beets.exceptions import UserError
+from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.import_ import paths_from_logfile
 from beets.ui.commands.import_.display import show_change
-from beets.ui.commands.import_.session import summarize_items
+from beets.ui.commands.import_.session import choose_candidate, summarize_items
 
 
 class ImportTest(BeetsTestCase):
@@ -63,11 +72,7 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
         albumartist = f"another artist with {long_name}"
 
         def make_item(**kwargs):
-            item = library.Item(
-                album=album, albumartist=albumartist, length=60, format="F"
-            )
-            item.update(kwargs)
-            return item
+            return _common.item(album=album, albumartist=albumartist, **kwargs)
 
         items = [
             make_item(track=1, title="first title"),
@@ -161,6 +166,31 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
         msg = self._show_change(artist_credit="credited artist")
         assert "credited artist - café" in msg
         assert "-> credited artist" in msg
+
+    def test_choose_candidate_respects_artist_credit(self):
+        from beets.util import PromptChoice
+
+        self.config["artist_credit"] = True
+        match = AlbumMatch(
+            distance=Distance(),
+            info=AlbumInfo(
+                album="an album",
+                album_id="album id",
+                artist="the canonical artist",
+                artist_credit="the credited artist",
+                artist_id="artist id",
+                tracks=[],
+            ),
+            mapping={},
+            extra_items=[],
+            extra_tracks=[],
+        )
+        source = Mock(type="album", desc="test desc")
+        choice = PromptChoice("s", "Skip", None)
+        with patch("beets.ui.input_options", return_value="s"):
+            choose_candidate([match], Recommendation.none, source, [choice])
+            out = self.io.getoutput()
+            assert "the credited artist - an album" in out
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))

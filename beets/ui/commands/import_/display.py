@@ -103,10 +103,7 @@ class ChangeRepresentation:
             self.original_artist,
             self.match.info.display_artist,
         )
-        if (
-            self.match.info.artist == VARIOUS_ARTISTS
-            or artist_r == VARIOUS_ARTISTS
-        ):
+        if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
         if artist_l != artist_r:
