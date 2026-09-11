@@ -682,6 +682,30 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert json.loads(resp.data)["items"] == full
         assert "X-Total-Count" not in resp.headers
 
+    def test_item_query_limit_caps_results(self):
+        # A broad query on a large library must be cappable so it doesn't
+        # serialize every match; ``limit`` bounds the result set. Without it,
+        # every match is returned (unchanged behavior).
+        for i in range(5):
+            self.lib.add(
+                Item(
+                    title=f"lim_{i}",
+                    artist="LimitArtist",
+                    path=self.path_prefix / f"lim_{i}",
+                )
+            )
+        full = json.loads(
+            self.client.get("/item/query/LimitArtist").data
+        )["results"]
+        assert len(full) == 5
+
+        limited = json.loads(
+            self.client.get("/item/query/LimitArtist?limit=2").data
+        )["results"]
+        assert len(limited) == 2
+        # the capped items are drawn from the full match set
+        assert {r["id"] for r in limited} <= {r["id"] for r in full}
+
     def test_all_albums_limit_offset(self):
         for i in range(4):
             self.lib.add(Album(album=f"pg_album_{i}", albumartist=f"pg_artist_{i}"))

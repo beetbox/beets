@@ -33,6 +33,7 @@ let queue = [], qIndex = -1;
 
 const contentEl = document.getElementById('content');
 const PLACEHOLDER = { simple: 'Search artists, albums, tracks…', query: 'artist:radiohead year:2007..2009 format:FLAC' };
+const SEARCH_CAP = 300;   // rows shown; we ask the server for one more to detect "there are more"
 
 // ---- Routing ---------------------------------------------------------
 function go(hash) { if (location.hash === hash) applyRoute(); else location.hash = hash; }
@@ -103,23 +104,26 @@ function paintResults() {
   const ul = document.getElementById('results');
   const hint = document.getElementById('searchHint');
   if (!ul) return;
-  if (!searchText.trim()) {
-    ul.innerHTML = `<li class="empty-note">Type to search your library.</li>`;
+  if (searchText.trim().length < 2) {
+    ul.innerHTML = `<li class="empty-note">Type at least 2 characters to search.</li>`;
     if (hint) hint.innerHTML = 'beets query syntax supported';
     return;
   }
-  const shown = results.slice(0, 300);
+  const capped = results.length > SEARCH_CAP;
+  const shown = results.slice(0, SEARCH_CAP);
   ul.innerHTML = shown.length ? shown.map(rowHTML).join('') : `<li class="empty-note">No matching tracks.</li>`;
-  if (hint) hint.innerHTML = `<b>${results.length}</b> result${results.length===1?'':'s'}${results.length>300?' (showing 300)':''}`;
+  if (hint) hint.innerHTML = capped
+    ? `showing first <b>${SEARCH_CAP}</b> — refine to narrow`
+    : `<b>${results.length}</b> result${results.length===1?'':'s'}`;
 }
 let searchTimer = null;
 function runSearch() {
   const q = searchText.trim();
-  if (!q) { results = []; paintResults(); return; }
+  if (q.length < 2) { results = []; paintResults(); return; }
   const hint = document.getElementById('searchHint');
   if (hint) hint.textContent = 'Searching…';
   const mine = q;
-  api.itemQuery(q).then(data => {
+  api.itemQuery(q, SEARCH_CAP + 1).then(data => {
     if (mine !== searchText.trim()) return; // stale
     results = data.results || [];
     results.forEach(it => itemCache[it.id] = it);
@@ -231,14 +235,16 @@ function loadAlbumGrid() {
   if (albumQ.trim()) {
     // filtered: server-side beets query, no infinite scroll
     const mine = albumQ.trim();
-    api.albumQuery(mine).then((d) => {
+    api.albumQuery(mine, SEARCH_CAP + 1).then((d) => {
       if (mine !== albumQ.trim()) return;   // a newer filter superseded this one
-      const list = (d.results || []).slice(0, 300);
+      const all = d.results || [];
+      const capped = all.length > SEARCH_CAP;
+      const list = all.slice(0, SEARCH_CAP);
       const g = document.getElementById('albumGrid'); if (!g) return;
       g.innerHTML = list.length
         ? list.map(albumCardHTML).join('')
         : '<div class="empty-note">No matching albums.</div>';
-      const c = document.getElementById('albumCount'); if (c) c.textContent = list.length;
+      const c = document.getElementById('albumCount'); if (c) c.textContent = capped ? SEARCH_CAP + '+' : list.length;
     }).catch(() => {});
   } else {
     albumPager = makePager(

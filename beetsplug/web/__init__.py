@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import itertools
 import json
 import os
 from typing import TYPE_CHECKING, Any, Protocol
@@ -200,6 +201,29 @@ def resource_query(name: str, patchable: bool = False) -> Any:
         query_func: Callable[[Iterable[str]], Sequence[LibModel]],
     ) -> Any:
         def responder(queries: Iterable[str]) -> Any:
+            if get_method() == "GET":
+                # Optional paging. Without offset/limit the full matching set
+                # is streamed as before. With them, only the requested slice is
+                # built and serialized: a broad query on a large library would
+                # otherwise dump every match. The limit is threaded into the
+                # query so beets stops constructing objects past the page.
+                offset, limit = _page_params()
+                if limit is None and not offset:
+                    entities = query_func(queries)
+                else:
+                    fetch_limit = (
+                        (offset + limit) if limit is not None else None
+                    )
+                    entities = query_func(queries, fetch_limit)
+                    if offset:
+                        entities = itertools.islice(entities, offset, None)
+                return app.response_class(
+                    json_generator(
+                        entities, root="results", expand=is_expand()
+                    ),
+                    mimetype="application/json",
+                )
+
             entities = query_func(queries)
 
             if get_method() == "DELETE":
@@ -221,14 +245,6 @@ def resource_query(name: str, patchable: bool = False) -> Any:
 
                 return app.response_class(
                     json_generator(entities, root=name),
-                    mimetype="application/json",
-                )
-
-            if get_method() == "GET":
-                return app.response_class(
-                    json_generator(
-                        entities, root="results", expand=is_expand()
-                    ),
                     mimetype="application/json",
                 )
 
@@ -375,8 +391,8 @@ def item_file(item_id: int) -> Any:
 
 @app.route("/item/query/<query:queries>", methods=["GET", "DELETE", "PATCH"])
 @resource_query("items", patchable=True)
-def item_query(queries: Sequence[str]) -> Any:
-    return g.lib.items(queries)
+def item_query(queries: Sequence[str], limit: int | None = None) -> Any:
+    return g.lib.items(queries, limit=limit)
 
 
 @app.route("/item/path/<everything:path>")
@@ -418,8 +434,8 @@ def all_albums() -> Any:
 
 @app.route("/album/query/<query:queries>", methods=["GET", "DELETE"])
 @resource_query("albums")
-def album_query(queries: Sequence[str]) -> Any:
-    return g.lib.albums(queries)
+def album_query(queries: Sequence[str], limit: int | None = None) -> Any:
+    return g.lib.albums(queries, limit=limit)
 
 
 @app.route("/album/<int:album_id>/art")

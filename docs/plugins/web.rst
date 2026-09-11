@@ -258,6 +258,13 @@ literal path separators in a query, use a backslash instead of a slash.
 This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on
 all items returned by the query.
 
+For ``GET`` this endpoint accepts optional ``offset`` and ``limit`` query string
+parameters to return only a slice of the matches (for example ``?limit=300``),
+which keeps a broad query on a large library from serializing every match. Both
+are optional and backward-compatible -- omitting them returns every matching
+track -- and ``limit`` is capped at 500. The same applies to ``GET
+/album/query/querystring``.
+
 ``GET /item/6/file``
 ~~~~~~~~~~~~~~~~~~~~
 

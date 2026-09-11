@@ -8,10 +8,10 @@ const jget = (u) => fetch(u).then((r) => {
 const qpath = (q) => q.trim().split(/\s+/).filter(Boolean).map(encodeURIComponent).join('/');
 
 export const stats = () => jget('stats');
-export const itemQuery = (q) => jget('item/query/' + qpath(q));
+export const itemQuery = (q, limit) => jget('item/query/' + qpath(q) + (limit ? '?limit=' + limit : ''));
 export const item = (id) => jget('item/' + id);
 export const album = (id) => jget('album/' + id + '?expand');
-export const albumQuery = (q) => jget('album/query/' + qpath(q));
+export const albumQuery = (q, limit) => jget('album/query/' + qpath(q) + (limit ? '?limit=' + limit : ''));
 export const albumsByArtist = (n) => jget('album/query/' + encodeURIComponent('albumartist:' + n));
 export const artists = () => jget('artist/');
 
