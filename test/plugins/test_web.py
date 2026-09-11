@@ -675,6 +675,65 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         assert response.status_code == 200
 
+    def test_get_album_art_relative_artpath(self):
+        # Some libraries store artpath relative to the music directory; the art
+        # route must resolve it against the library directory instead of 500ing.
+        import os
+        import threading
+
+        from beets.library import Library
+        from beets.util import syspath
+
+        # The ORM auto-absolutizes a relative artpath using a ContextVar
+        # that gets set when the Library is constructed (in this thread).
+        # A brand-new OS thread does NOT inherit that ContextVar, which is
+        # exactly what happens on the real web plugin's threaded dev server
+        # (app.run(threaded=True)): each request runs in a worker thread
+        # that never constructed the Library, so the artpath stays relative
+        # there. Run the request from a freshly spawned thread to reproduce
+        # that condition -- calling it from this (the Library-owning)
+        # thread would never exercise the bug.
+        #
+        # This also requires an on-disk database: the default test library
+        # is sqlite ":memory:", and each thread opens its own connection,
+        # so a worker thread would see an empty (tableless) database rather
+        # than a relative-path lookup. An on-disk file, like a real deployed
+        # library, is visible to every thread's connection.
+        dbpath = self.temp_path / "artpath_test.db"
+        lib = Library(str(dbpath), str(self.lib_path))
+        web.app.config["lib"] = lib
+        try:
+            rel = os.path.join(b"rel_art_dir", b"cover.png")
+            abspath = os.path.join(lib.directory, rel)
+            os.makedirs(os.path.dirname(syspath(abspath)), exist_ok=True)
+            with open(syspath(abspath), "wb") as f:
+                f.write(b"PNGDATA")
+
+            lib.add(Album(album="relartalbum", artpath=rel))
+            album_id = lib.albums("relartalbum").get().id
+
+            result = {}
+
+            def make_request() -> None:
+                try:
+                    response = self.client.get(f"/album/{album_id}/art")
+                    result["status_code"] = response.status_code
+                    result["data"] = response.data
+                except Exception as exc:  # re-raised in the main thread below
+                    result["exception"] = exc
+
+            thread = threading.Thread(target=make_request)
+            thread.start()
+            thread.join()
+
+            if "exception" in result:
+                raise result["exception"]
+            assert result["status_code"] == 200
+            assert result["data"] == b"PNGDATA"
+        finally:
+            web.app.config["lib"] = self.lib
+            lib._close()
+
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):
     """Tests for XSS vulnerability in the web plugin templates.

@@ -392,7 +392,12 @@ def album_query(queries: Sequence[str]) -> Any:
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
     if album and album.artpath:
-        return flask.send_file(album.artpath.decode())
+        artpath = album.artpath
+        # artpath may be stored relative to the library directory; resolve it
+        # to an absolute path so send_file doesn't look under the app root.
+        if not os.path.isabs(artpath):
+            artpath = os.path.join(g.lib.directory, artpath)
+        return flask.send_file(util.syspath(artpath))
     return flask.abort(404)
 
 

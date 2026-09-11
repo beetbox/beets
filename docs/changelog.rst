@@ -20,6 +20,9 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- :doc:`plugins/web`: Fix a 500 error when serving album art for albums whose
+  ``artpath`` is stored relative to the library directory; the path is now
+  resolved against the library directory before the file is served.
 
 ..
     For plugin developers
