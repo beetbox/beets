@@ -371,9 +371,7 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
         original_mtime = os.path.getmtime(file_not_to_remove)
 
         # Create files to be marked for removal
-        paths_to_mark_for_removal = [
-            self.create_dummy_file(f) for f in files_to_mark_for_removal
-        ]
+        path_to_mark_for_removal = self.create_dummy_file("to_remove.mp3")
 
         # Set configurations
         for key, val in plugin_config.items():
