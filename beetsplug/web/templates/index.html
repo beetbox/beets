@@ -1,96 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="the music geek’s media organizer">
-        <meta name="keywords"
-              content="beets, media, music, library, metadata, player, tagger, grep, transcoder, organizer">
-        <title>beets</title>
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='beets.css') }}"
-              type="text/css">
-        <script src="{{ url_for('static', filename='jquery.js') }}"></script>
-        <script src="{{ url_for('static', filename='underscore.js') }}"></script>
-        <script src="{{ url_for('static', filename='backbone.js') }}"></script>
-        <script src="{{ url_for('static', filename='beets.js') }}"></script>
-    </head>
-    <body>
-        <div id="header">
-            <h1>beets</h1>
-            <div id="player">
-                <audio></audio>
-                <button class="disabled">&#9654;</button>
-                <button class="play">&#9654;</button>
-                <button class="pause" style="letter-spacing: 1px;">&#10073;&#10073;</button>
-                <span class="times">
-                    <span class="currentTime"></span>
-                </span>
-            </div>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="the music geek’s media organizer">
+    <title>beets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='beets.css') }}" type="text/css">
+    <script src="{{ url_for('static', filename='app.js') }}" type="module"></script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="wordmark"><span class="caret">▸</span>beets</div>
+        <div class="stats mono">
+          <span><b id="stat-songs">…</b> songs</span>
+          <span><b id="stat-albums">…</b> albums</span>
         </div>
-        <div id="entities">
-            <form id="queryForm">
-                <input type="search" id="query" placeholder="Query">
-            </form>
-            <ul id="results">
-            </ul>
+        <div class="segmented" id="nav">
+          <button class="seg active" data-mode="songs">Songs</button>
+          <button class="seg" data-mode="albums">Albums</button>
+          <button class="seg" data-mode="artists">Artists</button>
         </div>
-        <div id="main-detail"></div>
-        <div id="extra-detail"></div>
-        <!-- Templates. -->
-        <script type="text/template" id="item-entry-template">
-            <% if (artist) { %><%- artist %><% } %>
-            <% if (artist && album) { %> &ndash; <% } %>
-            <% if (album) { %><%- album %><% } %>
-            <% if ((artist || album) && title) { %> &ndash; <% } %>
-            <%- title %>
-            <span class="playing">&#9654;</span>
-        </script>
-        <script type="text/template" id="item-main-detail-template">
-            <span class="artist"><%- artist %></span>
-            <span class="album">
-                <span class="albumtitle"><%- album %></span>
-                <span class="year">(<%- year %>)</span>
-            </span>
-            <span class="title"><%- title %></span>
+        <div class="spacer"></div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle light/dark theme">
+          <svg id="themeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></svg>
+        </button>
+      </header>
 
-            <button class="play">&#9654;</button>
+      <div class="content mode-songs" id="content"></div>
 
-            
-        </script>
-        <script type="text/template" id="item-extra-detail-template">
-            <dl>
-                <dt>Track</dt>
-                <dd><%- track %>/<%- tracktotal %></dd>
-                <% if (disc) { %>
-                    <dt>Disc</dt>
-                    <dd><%- disc %>/<%- disctotal %></dd>
-                <% } %>
-                <dt>Length</dt>
-                <dd><%- timeFormat(length) %></dd>
-                <dt>Format</dt>
-                <dd><%- format %></dd>
-                <dt>Bitrate</dt>
-                <dd><%- Math.round(bitrate/1000) %> kbps</dd>
-                <% if (mb_trackid) { %>
-                    <dt>MusicBrainz entry</dt>
-                    <dd>
-                        <a target="_blank" href="http://musicbrainz.org/recording/<%- mb_trackid %>">view</a>
-                    </dd>
-                <% } %>
-                <dt>File</dt>
-                <dd>
-                    <a target="_blank" class="download" href="item/<%- id %>/file">download</a>
-                </dd>
-                <% if (lyrics) { %>
-                    <dt>Lyrics</dt>
-                    <dd class="lyrics"><%- lyrics %></dd>
-                <% } %>
-                <% if (comments) { %>
-                    <dt>Comments</dt>
-                    <dd><%- comments %></dd>
-                <% } %>
-            </dl>
-        </script>
-    </body>
+      <footer class="player">
+        <div class="pl-now">
+          <div class="cover-sm" id="pl-cover" style="background:var(--surface-2)"></div>
+          <div style="min-width:0">
+            <div class="pn-title" id="pl-title">—</div>
+            <div class="pn-sub" id="pl-sub">Nothing playing</div>
+          </div>
+        </div>
+        <div class="pl-center">
+          <div class="transport">
+            <button class="tbtn" id="prevBtn" title="Previous"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14l-11-7z"/></svg></button>
+            <button class="play-btn" id="playBtn" title="Play / pause"><svg id="playIcon" width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+            <button class="tbtn" id="nextBtn" title="Next"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5l11 7-11 7z"/></svg></button>
+          </div>
+          <div class="seek-row">
+            <span class="t mono" id="curTime">0:00</span>
+            <div class="track" id="seek"><div class="fill" id="seekFill"></div><div class="knob" id="seekKnob"></div></div>
+            <span class="t right mono" id="totTime">0:00</span>
+          </div>
+        </div>
+        <div class="pl-right">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+          <div class="vol"><div class="track"><div class="fill"></div></div></div>
+        </div>
+      </footer>
+    </div>
+
+    <audio id="audio"></audio>
+  </body>
 </html>
