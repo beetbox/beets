@@ -68,6 +68,10 @@ TRACK_INDEX_RE = re.compile(
     re.VERBOSE,
 )
 
+RELEASE_DATE_RE = re.compile(
+    r"(?P<year>\d{4})(?:-(?P<month>\d{1,2})(?:-(?P<day>\d{1,2}))?)?"
+)
+
 FIELDS_TO_DISCOGS_KEYS = {
     "barcode": "barcode",
     "catalognum": "catno",
@@ -76,6 +80,27 @@ FIELDS_TO_DISCOGS_KEYS = {
     "media": "format",
     "year": "year",
 }
+
+
+def parse_release_date(
+    released: str | None, year: int | None
+) -> tuple[int | None, int | None, int | None]:
+    """Return the ``(year, month, day)`` a release was issued on.
+
+    Discogs reports the year of a release in its own field but the rest of
+    the date only as part of `released`, which is absent or partial for many
+    releases. `year` is therefore used for any component `released` does not
+    provide.
+    """
+    if not (m := RELEASE_DATE_RE.fullmatch((released or "").strip())):
+        return year, None, None
+
+    released_year, month, day = (
+        int(i) if i else 0 for i in m.group("year", "month", "day")
+    )
+
+    # A zero stands for "unknown" in Discogs' dates, as does a missing group.
+    return released_year or year, month or None, day or None
 
 
 class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
@@ -376,7 +401,9 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Extract information for the optional AlbumInfo fields, if possible.
         va = albumartist.artist == config["va_name"].as_str()
-        year = result.data.get("year")
+        year, month, day = parse_release_date(
+            result.data.get("released"), result.data.get("year")
+        )
         mediums = [t["medium"] for t in tracks]
         country = result.data.get("country")
         data_url = result.data.get("uri")
@@ -423,9 +450,14 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Retrieve master release id (returns None if there isn't one).
         master_id = result.data.get("master_id")
-        # Assume `original_year` is equal to `year` for releases without
-        # a master release, otherwise fetch the master release.
-        original_year = self.get_master_year(master_id) if master_id else year
+        # Assume this release *is* the original when it has no master
+        # release, otherwise fetch the master release. Only its year is
+        # available, so the original month and day stay unknown there.
+        if master_id:
+            original_year = self.get_master_year(master_id)
+            original_month = original_day = None
+        else:
+            original_year, original_month, original_day = year, month, day
 
         return AlbumInfo(
             album=album,
@@ -435,6 +467,8 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             albumtype=albumtype,
             va=va,
             year=year,
+            month=month,
+            day=day,
             label=label,
             mediums=len(set(mediums)),
             releasegroup_id=master_id,
@@ -446,6 +480,8 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             genres=sorted(genres),
             media=media,
             original_year=original_year,
+            original_month=original_month,
+            original_day=original_day,
             data_source=self.data_source,
             data_url=data_url,
             discogs_albumid=discogs_albumid,
