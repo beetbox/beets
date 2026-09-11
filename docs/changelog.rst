@@ -20,6 +20,9 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- Fix the importer UI displaying canonical artist names instead of artist credits
+  when :ref:`artist_credit` is enabled.
+  :bug:`5010`
 
 ..
     For plugin developers

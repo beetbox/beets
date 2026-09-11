@@ -77,7 +77,7 @@ class ChangeRepresentation:
         parts.append(
             ui.colorize(
                 self.match.distance.color,
-                f"{self.match.info.artist} - {self.match.info.name}",
+                f"{self.match.info.display_artist} - {self.match.info.name}",
             )
         )
 
@@ -101,9 +101,12 @@ class ChangeRepresentation:
         # Artist.
         artist_l, artist_r = (
             self.original_artist,
-            self.match.info.artist or "",
+            self.match.info.display_artist,
         )
-        if artist_r == VARIOUS_ARTISTS:
+        if (
+            self.match.info.artist == VARIOUS_ARTISTS
+            or artist_r == VARIOUS_ARTISTS
+        ):
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
         if artist_l != artist_r:

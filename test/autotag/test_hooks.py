@@ -492,3 +492,39 @@ class TestAttrDictCachedPropertyMasking:
     def test_existing_dict_key_returns_value(self):
         obj = AttrDict[str]({"title": "ok"})
         assert obj.title == "ok"
+
+
+class DisplayArtistTest(BeetsTestCase):
+    def test_display_artist_disabled(self):
+        self.config["artist_credit"] = False
+        info = AlbumInfo(
+            artist="Canonical Artist",
+            artist_credit="Credited Artist",
+            tracks=[],
+        )
+        assert info.display_artist == "Canonical Artist"
+
+    def test_display_artist_enabled(self):
+        self.config["artist_credit"] = True
+        info = AlbumInfo(
+            artist="Canonical Artist",
+            artist_credit="Credited Artist",
+            tracks=[],
+        )
+        assert info.display_artist == "Credited Artist"
+
+    def test_display_artist_enabled_fallback(self):
+        self.config["artist_credit"] = True
+        info = AlbumInfo(
+            artist="Canonical Artist", artist_credit=None, tracks=[]
+        )
+        assert info.display_artist == "Canonical Artist"
+
+    def test_track_display_artist(self):
+        self.config["artist_credit"] = True
+        track = TrackInfo(
+            title="A Track",
+            artist="Canonical Track Artist",
+            artist_credit="Credited Track Artist",
+        )
+        assert track.display_artist == "Credited Track Artist"

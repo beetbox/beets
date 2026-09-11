@@ -456,7 +456,7 @@ def choose_candidate(
                     match.distance.string,
                     colorize(
                         dist_color if i == 0 else "text_highlight_minor",
-                        f"{match.info.artist} - {match.info.name}",
+                        f"{match.info.display_artist} - {match.info.name}",
                     ),
                 ]
                 ui.print_(f"  {' '.join(line_parts)}")

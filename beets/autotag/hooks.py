@@ -122,6 +122,13 @@ class Info(AttrDict[Any]):
     def name(self) -> str:
         raise NotImplementedError
 
+    @property
+    def display_artist(self) -> str:
+        """Return the artist name to display, respecting the artist_credit config."""
+        if config["artist_credit"]:
+            return self.artist_credit or self.artist or ""
+        return self.artist or ""
+
     @cached_property
     def raw_data(self) -> JSONDict:
         """Provide metadata with artist credits applied when configured."""

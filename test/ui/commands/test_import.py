@@ -7,7 +7,6 @@ import pytest
 from beets import config, library
 from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
 from beets.exceptions import UserError
-from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.import_ import paths_from_logfile
 from beets.ui.commands.import_.display import show_change
@@ -57,14 +56,18 @@ class ImportTest(BeetsTestCase):
 
 @patch("beets.ui.term_width", Mock(return_value=54))
 class ShowChangeTestCase(IOMixin, BeetsTestCase):
-    def _show_change(self):
+    def _show_change(self, artist_credit: str | None = None):
         """Return an unicode string representing the changes"""
         long_name = f"a{' very' * 10} long name"
         album = "another album"
         albumartist = f"another artist with {long_name}"
 
         def make_item(**kwargs):
-            return _common.item(album=album, albumartist=albumartist, **kwargs)
+            item = library.Item(
+                album=album, albumartist=albumartist, length=60, format="F"
+            )
+            item.update(kwargs)
+            return item
 
         items = [
             make_item(track=1, title="first title"),
@@ -76,6 +79,7 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
             album="caf\xe9",
             album_id="album id",
             artist="the artist",
+            artist_credit=artist_credit,
             artist_id="artist id",
             tracks=[
                 TrackInfo(title="first title", index=1),
@@ -150,6 +154,13 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
             long name                              
 """  # noqa: W291
         )
+
+    def test_show_change_respects_artist_credit(self):
+        self.config["ui"]["import"]["layout"] = "newline"
+        self.config["artist_credit"] = True
+        msg = self._show_change(artist_credit="credited artist")
+        assert "credited artist - café" in msg
+        assert "-> credited artist" in msg
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
