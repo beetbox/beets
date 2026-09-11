@@ -20,6 +20,8 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- Fix invalid destination paths with leading slashes when items have missing
+  metadata. :bug:`4889` :bug:`359`
 
 ..
     For plugin developers

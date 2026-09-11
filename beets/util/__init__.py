@@ -685,14 +685,14 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     """
     replacements = replacements or CHAR_REPLACE
 
-    comps = components(path)
-    if not comps:
-        return ""
-    for i, comp in enumerate(comps):
+    comps = re.split(r"[\\/]", path)
+    new_comps = []
+    for comp in comps:
         for regex, repl in replacements:
             comp = regex.sub(repl, comp)
-        comps[i] = comp
-    return os.path.join(*comps)
+        if comp:
+            new_comps.append(comp)
+    return os.path.join(*new_comps) if new_comps else ""
 
 
 def truncate_str(s: str, length: int) -> str:

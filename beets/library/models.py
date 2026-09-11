@@ -568,7 +568,7 @@ class Album(LibModel):
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
         subpath = util.sanitize_path(subpath, replacements=self.db.replacements)
-        subpath_bytes = bytestring_path(subpath)
+        subpath_bytes = bytestring_path(subpath).lstrip(b"\\/")
 
         _, ext = os.path.splitext(image)
         dest = os.path.join(item_dir, subpath_bytes + ext)
@@ -1290,7 +1290,7 @@ class Item(LibModel):
                 "the filename.",
                 subpath,
             )
-        lib_path_bytes = util.bytestring_path(lib_path_str)
+        lib_path_bytes = util.bytestring_path(lib_path_str).lstrip(b"\\/")
 
         if relative_to_libdir:
             return lib_path_bytes

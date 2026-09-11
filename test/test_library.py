@@ -7,7 +7,6 @@ import os.path
 import re
 import shutil
 import stat
-import unittest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -461,7 +460,6 @@ class TestDestination(PytestItemHelper):
         item_in_db.album = "bar"
         assert item_in_db.destination() == np("base/ber/foo")
 
-    @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_component(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.replacements = [(re.compile(r"^$"), "_")]
@@ -472,7 +470,6 @@ class TestDestination(PytestItemHelper):
         item_in_db.album = "one"
         assert item_in_db.destination() == np("base/one/_/three")
 
-    @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_final_component(self, item_in_db):
         self.lib.directory = b"base"
         self.lib.replacements = [(re.compile(r"^$"), "_")]
@@ -481,6 +478,33 @@ class TestDestination(PytestItemHelper):
         item_in_db.album = "one"
         item_in_db.path = "foo.mp3"
         assert item_in_db.destination() == np("base/one/_.mp3")
+
+    def test_destination_with_empty_leading_components(self, item_in_db):
+        self.lib.directory = b"base"
+        self.lib.path_formats = [
+            ("default", "$albumartist/$album/$track $title")
+        ]
+        item_in_db.title = ""
+        item_in_db.artist = ""
+        item_in_db.albumartist = ""
+        item_in_db.album = ""
+        item_in_db.track = 0
+        item_in_db.path = "foo.mp3"
+        dest = item_in_db.destination()
+        assert not dest.startswith(b"//")
+        assert not dest.startswith(b"/")
+        assert not dest.startswith(b"\\\\")
+        assert dest == np("base/00.mp3")
+
+    def test_destination_stays_in_basedir_with_empty_leading_field(
+        self, item_in_db
+    ):
+        self.lib.directory = b"base"
+        self.lib.replacements = [(re.compile(r"a"), "e")]
+        self.lib.path_formats = [("default", "$album/$title")]
+        item_in_db.album = ""
+        item_in_db.title = "three"
+        assert item_in_db.destination() == np("base/three")
 
     def test_album_field_query(self, item_in_db):
         self.lib.directory = b"one"
@@ -1044,6 +1068,17 @@ class TestArtDestination(TestHelper):
         config["art_filename"] = "artXimage"
         art = ai.art_destination("something.jpg")
         assert b"artYimage" in art
+
+    def test_art_destination_stays_in_item_dir_with_leading_separator(
+        self, item_and_album
+    ):
+        i, ai = item_and_album
+        config["art_filename"] = "/artimage"
+        art = ai.art_destination("something.jpg")
+        track = i.destination()
+        assert not art.startswith(b"//")
+        assert not art.startswith(b"/")
+        assert os.path.dirname(art) == os.path.dirname(track)
 
 
 class TestPathString(PytestItemHelper):
