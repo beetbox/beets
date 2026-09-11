@@ -323,7 +323,7 @@ class TestNoConvert(PluginTestHelper):
 
 
 class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
-    "Tests the effect of the `remove_missing option`"
+    """Tests the effect of the `remove_missing option`"""
 
     @pytest.fixture(autouse=True)
     def setup_removemissing(self, setup):
