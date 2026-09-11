@@ -295,13 +295,13 @@ items of an album.
 ``no``.
 
 ``GET /album/`` also accepts optional ``offset`` and ``limit`` query string
-parameters to return a single page of albums, for example
-``GET /album/?offset=40&limit=20``. Both are optional and backward-compatible:
+parameters to return a single page of albums, for example ``GET
+/album/?offset=40&limit=20``. Both are optional and backward-compatible:
 omitting them returns every album, exactly as before. ``limit`` is capped at
-500; invalid values for either parameter are ignored. When paging is
-requested, the response also carries an ``X-Total-Count`` header with the
-total number of albums in the library, independent of the page size.
-``/item/`` does not support paging.
+500; invalid values for either parameter are ignored. When paging is requested,
+the response also carries an ``X-Total-Count`` header with the total number of
+albums in the library, independent of the page size. ``/item/`` does not support
+paging.
 
 Artists
 ~~~~~~~
@@ -310,11 +310,11 @@ For artists, the following endpoint is provided:
 
 - ``GET /artist/``
 
-Responds with the list of distinct album artist names in the library, along
-with an ``artist_art`` map from each artist that has album art to the id of
-one of that artist's albums (chosen at random per request). Artists whose
-albums have no art are omitted from the map. The web UI uses this to show a
-cover as the artist's avatar, since artists have no artwork of their own.
+Responds with the list of distinct album artist names in the library, along with
+an ``artist_art`` map from each artist that has album art to the id of one of
+that artist's albums (chosen at random per request). Artists whose albums have
+no art are omitted from the map. The web UI uses this to show a cover as the
+artist's avatar, since artists have no artwork of their own.
 
 ::
 
@@ -324,10 +324,10 @@ cover as the artist's avatar, since artists have no artwork of their own.
     }
 
 Like ``/album/``, this endpoint optionally accepts ``offset`` and ``limit``
-query string parameters to page through the list of names. The same rules
-apply: both parameters are optional and backward-compatible, ``limit`` is
-capped at 500, and a paginated response carries an ``X-Total-Count`` header
-with the total number of artists.
+query string parameters to page through the list of names. The same rules apply:
+both parameters are optional and backward-compatible, ``limit`` is capped at
+500, and a paginated response carries an ``X-Total-Count`` header with the total
+number of artists.
 
 ``GET /stats``
 ~~~~~~~~~~~~~~
