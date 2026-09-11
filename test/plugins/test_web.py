@@ -867,6 +867,7 @@ class TestWebXSS(WebPluginMixin, PytestTestHelper):
             "album",
             "albumartist",
             "lyrics",
+            "comments",
             "genre",
             "label",
             "mb_trackid",

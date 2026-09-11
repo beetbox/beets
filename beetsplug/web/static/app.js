@@ -165,7 +165,8 @@ function trackDetailHTML(t, crumbs) {
       ${t.genre?`<span class="chip" style="cursor:default">${esc(t.genre)}</span>`:''}
     </div>
     ${t.lyrics ? `<div class="lyrics-block"><h3>Lyrics</h3><div class="lyrics">${esc(t.lyrics)}</div></div>`
-               : `<div class="lyrics-block"><h3>Lyrics</h3><div class="lyrics" style="color:var(--text-3)">No lyrics stored for this track.</div></div>`}`;
+               : `<div class="lyrics-block"><h3>Lyrics</h3><div class="lyrics" style="color:var(--text-3)">No lyrics stored for this track.</div></div>`}
+    ${t.comments ? `<div class="lyrics-block"><h3>Comments</h3><div class="lyrics">${esc(t.comments)}</div></div>` : ''}`;
 }
 function renderTrackDetail(id) {
   const gen = renderGen;
