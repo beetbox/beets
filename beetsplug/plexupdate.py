@@ -30,6 +30,7 @@ from beets import __version__, ui
 from beets.exceptions import UserError
 from beets.logging import getLogger
 from beets.plugins import BeetsPlugin
+from beets.util import open_private, restrict_permissions
 from beetsplug._utils.requests import (
     BeetsHTTPError,
     RequestHandler,
@@ -119,6 +120,7 @@ class PlexSession(TimeoutAndRetrySession):
         """
         if self._token_cache is None:
             with suppress(FileNotFoundError, JSONDecodeError, OSError):
+                restrict_permissions(self.token_path)
                 self._token_cache = json.loads(self.token_path.read_text())
 
         return self._token_cache or {}
@@ -127,7 +129,8 @@ class PlexSession(TimeoutAndRetrySession):
         """Merge data into the token file and persist it."""
         token = self.load_token()
         token.update(data)
-        self.token_path.write_text(json.dumps(token, indent=2))
+        with open_private(self.token_path, "w") as f:
+            json.dump(token, f, indent=2)
 
     def request(self, *args, **kwargs) -> requests.Response:
         """Send a request, attaching the auth token."""

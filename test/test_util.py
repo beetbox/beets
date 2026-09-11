@@ -514,3 +514,64 @@ class EditorCommandTest(unittest.TestCase):
         """Falls back to $EDITOR when no editor config or $VISUAL is set."""
         with patch.dict(os.environ, {"EDITOR": "emacs"}, clear=True):
             assert util.editor_command() == "emacs"
+
+
+class PrivateFilesTest(unittest.TestCase):
+    def test_open_private_creates_file(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "sub", "token.json")
+            with util.open_private(path, "w") as f:
+                f.write("secret_data")
+
+            with open(path) as f:
+                assert f.read() == "secret_data"
+
+            if platform.system() != "Windows":
+                assert (os.stat(path).st_mode & 0o777) == 0o600
+
+    def test_open_private_binary(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "token.bin")
+            with util.open_private(path, "wb") as f:
+                f.write(b"binary_secret")
+
+            with open(path, "rb") as f:
+                assert f.read() == b"binary_secret"
+
+    def test_open_private_calls_chmod(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "token.json")
+            with patch("os.chmod") as mock_chmod:
+                with util.open_private(path, "w") as f:
+                    f.write("test")
+                mock_chmod.assert_called_once_with(util.syspath(path), 0o600)
+
+    def test_restrict_permissions(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "token.json")
+            with open(path, "w") as f:
+                f.write("data")
+
+            with patch("os.chmod") as mock_chmod:
+                util.restrict_permissions(path)
+                mock_chmod.assert_called_once_with(util.syspath(path), 0o600)
+
+            if platform.system() != "Windows":
+                os.chmod(path, 0o644)
+                util.restrict_permissions(path)
+                assert (os.stat(path).st_mode & 0o777) == 0o600
+
+    def test_restrict_permissions_nonexistent(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "nonexistent.json")
+            util.restrict_permissions(path)

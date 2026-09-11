@@ -139,7 +139,9 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Get the OAuth token from a file or log in.
         try:
-            with open(self._tokenfile()) as f:
+            tokenfile = self._tokenfile()
+            util.restrict_permissions(tokenfile)
+            with open(tokenfile) as f:
                 tokendata = json.load(f)
         except OSError:
             # No token yet. Generate one.
@@ -183,7 +185,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Save the token for later use.
         self._log.debug("Discogs token {}, secret {}", token, secret)
-        with open(self._tokenfile(), "w") as f:
+        with util.open_private(self._tokenfile(), "w") as f:
             json.dump({"token": token, "secret": secret}, f)
 
         return token, secret

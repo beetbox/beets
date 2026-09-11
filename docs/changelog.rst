@@ -13,9 +13,12 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Store authentication token files (Beatport, Discogs, Plex, Spotify, Tidal)
+  with ``0600`` permissions and restrict existing token files to owner
+  read/write. :bug:`6984`
 
 ..
     For plugin developers

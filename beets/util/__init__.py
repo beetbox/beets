@@ -16,8 +16,8 @@ import tempfile
 import traceback
 import unicodedata
 from collections import Counter
-from collections.abc import Sequence
-from contextlib import suppress
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager, suppress
 from copy import deepcopy
 from enum import Enum
 from functools import cache, cached_property
@@ -632,6 +632,56 @@ def reflink(
         raise FilesystemError(
             msg, "reflink", (path, dest), traceback.format_exc()
         ) from exc
+
+
+@contextmanager
+def open_private(
+    path: PathLike, mode: str = "w", encoding: str | None = "utf-8"
+) -> Iterator[Any]:
+    """Open a file with 0600 permissions (read/write by owner only).
+
+    When creating a file, it is created with 0600 permissions atomically.
+    On existing files, permissions are restricted to 0600.
+    """
+    sys_path = syspath(path)
+    parent_dir = os.path.dirname(sys_path)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+
+    if "+" in mode:
+        flags = os.O_CREAT | os.O_RDWR
+    else:
+        flags = os.O_CREAT | os.O_WRONLY
+    if "a" in mode:
+        flags |= os.O_APPEND
+    else:
+        flags |= os.O_TRUNC
+
+    fd = os.open(sys_path, flags, 0o600)
+    with suppress(OSError):
+        os.chmod(sys_path, 0o600)
+
+    try:
+        if "b" in mode:
+            f = open(fd, mode)
+        else:
+            f = open(fd, mode, encoding=encoding)
+    except Exception:
+        os.close(fd)
+        raise
+
+    try:
+        yield f
+    finally:
+        f.close()
+
+
+def restrict_permissions(path: PathLike) -> None:
+    """Ensure a sensitive file (such as a token file) has 0600 permissions."""
+    sys_path = syspath(path)
+    if os.path.exists(sys_path):
+        with suppress(OSError):
+            os.chmod(sys_path, 0o600)
 
 
 def unique_path(path: AnyStr) -> AnyStr:

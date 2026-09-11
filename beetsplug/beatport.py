@@ -21,7 +21,7 @@ from beets import config
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin
-from beets.util import unique_list
+from beets.util import open_private, restrict_permissions, unique_list
 from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
@@ -327,7 +327,9 @@ class BeatportPlugin(MetadataSourcePlugin):
 
         # Get the OAuth token from a file or log in.
         try:
-            with open(self._tokenfile()) as f:
+            tokenfile = self._tokenfile()
+            restrict_permissions(tokenfile)
+            with open(tokenfile) as f:
                 tokendata = json.load(f)
         except OSError:
             # No token yet. Generate one.
@@ -360,7 +362,7 @@ class BeatportPlugin(MetadataSourcePlugin):
 
         # Save the token for later use.
         self._log.debug("Beatport token {}, secret {}", token, secret)
-        with open(self._tokenfile(), "w") as f:
+        with open_private(self._tokenfile(), "w") as f:
             json.dump({"token": token, "secret": secret}, f)
 
         return token, secret
