@@ -12,7 +12,7 @@ const coverStyle = (seed) => `background:linear-gradient(140deg, ${covers[hashId
 const artImg = (albumId) => (albumId != null && albumId !== '') ? `<img class="art" src="album/${albumId}/art" alt="" loading="lazy" onerror="this.remove()">` : '';
 
 // ---- Formatting ------------------------------------------------------
-const esc = (s) => ('' + (s ?? '')).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const esc = (s) => ('' + (s ?? '')).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtTime = (s) => { if (s == null || isNaN(s)) return '0:00'; s = Math.round(s); const m = Math.floor(s/60), sec = String(s%60).padStart(2,'0'); return m >= 60 ? `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}:${sec}` : `${m}:${sec}`; };
 const fmtSize = (b) => !b ? '—' : b >= 1073741824 ? (b/1073741824).toFixed(2)+' GB' : (b/1048576).toFixed(1)+' MB';
 const yearOf = (o) => o && o.year ? o.year : '';
@@ -151,7 +151,7 @@ function trackDetailHTML(t, crumbs) {
       ${metaCell('Size', fmtSize(t.size))}
     </div>
     <div class="links">
-      ${t.mb_trackid ? `<a class="chip" target="_blank" href="https://musicbrainz.org/recording/${t.mb_trackid}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18M3 12h18" stroke-linecap="round"/></svg>MusicBrainz</a>` : ''}
+      ${t.mb_trackid ? `<a class="chip" target="_blank" href="https://musicbrainz.org/recording/${encodeURIComponent(t.mb_trackid)}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18M3 12h18" stroke-linecap="round"/></svg>MusicBrainz</a>` : ''}
       <a class="chip" target="_blank" href="item/${t.id}/file"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Download</a>
       ${t.genre?`<span class="chip" style="cursor:default">${esc(t.genre)}</span>`:''}
     </div>
@@ -191,6 +191,7 @@ function makePager(fetchPage, renderCard, gridId, countId) {
     let page;
     try { page = await fetchPage(offset, PAGE); }
     catch (e) { loading = false; return; }
+    if (dead) { loading = false; return; }   // a re-render superseded this pager mid-fetch
     const grid = document.getElementById(gridId);
     if (!grid) { dead = true; return; }            // view changed while awaiting
     total = page.total;
@@ -330,7 +331,7 @@ function renderAlbumDetail(id) {
           ${metaCell('Format', esc((items[0]&&items[0].format)||'—'))}
           ${metaCell('Total size', fmtSize(totalSize))}
         </div>
-        ${a.mb_albumid?`<div class="links"><a class="chip" target="_blank" href="https://musicbrainz.org/release/${a.mb_albumid}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18M3 12h18" stroke-linecap="round"/></svg>MusicBrainz release</a></div>`:''}
+        ${a.mb_albumid?`<div class="links"><a class="chip" target="_blank" href="https://musicbrainz.org/release/${encodeURIComponent(a.mb_albumid)}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18M3 12h18" stroke-linecap="round"/></svg>MusicBrainz release</a></div>`:''}
         <div class="tracklist">${rows}</div>
         <div class="tl-hint">Click a track for its full metadata · hover to play</div>
       </div>`;

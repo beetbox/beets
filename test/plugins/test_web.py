@@ -770,6 +770,7 @@ class TestWebXSS(WebPluginMixin, PytestTestHelper):
         # interpolated into markup.
         free_text = [
             "title", "artist", "album", "albumartist", "lyrics", "genre", "label",
+            "mb_trackid", "mb_albumid",
         ]
         offenders = []
         for line in src.splitlines():
