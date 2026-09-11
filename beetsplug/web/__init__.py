@@ -116,6 +116,26 @@ def is_delete() -> bool:
     return flask.request.args.get("delete") is not None
 
 
+def _page_params() -> tuple[int, int | None]:
+    """Read (offset, limit) from the query string. Returns (0, None) when no
+    paging is requested. Invalid values are ignored; limit clamps to 500."""
+    args = flask.request.args
+    has_offset = "offset" in args
+    has_limit = "limit" in args
+    if not has_offset and not has_limit:
+        return 0, None
+    try:
+        offset = max(0, int(args.get("offset", 0)))
+    except (TypeError, ValueError):
+        offset = 0
+    limit: int | None
+    try:
+        limit = max(0, min(int(args["limit"]), 500)) if has_limit else None
+    except (TypeError, ValueError):
+        limit = None
+    return offset, limit
+
+
 def get_method() -> str:
     """Returns the HTTP method of the current request."""
     return flask.request.method
@@ -221,13 +241,27 @@ def resource_query(name: str, patchable: bool = False) -> Any:
     return make_responder
 
 
-def resource_list(name: str) -> Any:
+def resource_list(name: str, paginated: bool = False) -> Any:
     """Decorates a function to handle RESTful HTTP request for a list of
     resources.
     """
 
     def make_responder(list_all: Callable[[], Sequence[LibModel]]) -> Any:
         def responder() -> Any:
+            if paginated:
+                offset, limit = _page_params()
+                if not (limit is None and not offset):
+                    items = list(list_all())
+                    total = len(items)
+                    end = (offset + limit) if limit is not None else None
+                    resp = app.response_class(
+                        json_generator(
+                            items[offset:end], root=name, expand=is_expand()
+                        ),
+                        mimetype="application/json",
+                    )
+                    resp.headers["X-Total-Count"] = str(total)
+                    return resp
             return app.response_class(
                 json_generator(list_all(), root=name, expand=is_expand()),
                 mimetype="application/json",
@@ -377,7 +411,7 @@ def get_album(id_: int) -> Any:
 
 @app.route("/album/")
 @app.route("/album/query/")
-@resource_list("albums")
+@resource_list("albums", paginated=True)
 def all_albums() -> Any:
     return g.lib.albums()
 
@@ -415,8 +449,15 @@ def album_unique_field_values(key: str) -> Any:
 def all_artists() -> Any:
     with g.lib.transaction() as tx:
         rows = tx.query("SELECT DISTINCT albumartist FROM albums")
-    all_artists = [row[0] for row in rows]
-    return flask.jsonify(artist_names=all_artists)
+    names = [row[0] for row in rows]
+    offset, limit = _page_params()
+    if limit is None and not offset:
+        return flask.jsonify(artist_names=names)
+    total = len(names)
+    end = (offset + limit) if limit is not None else None
+    resp = flask.jsonify(artist_names=names[offset:end])
+    resp.headers["X-Total-Count"] = str(total)
+    return resp
 
 
 # Library information.

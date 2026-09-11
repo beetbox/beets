@@ -675,6 +675,65 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         assert response.status_code == 200
 
+    def test_item_list_ignores_paging_params(self):
+        # /item/ must not paginate even when params are passed.
+        full = json.loads(self.client.get("/item/").data)["items"]
+        resp = self.client.get("/item/?limit=1&offset=1")
+        assert json.loads(resp.data)["items"] == full
+        assert "X-Total-Count" not in resp.headers
+
+    def test_all_albums_limit_offset(self):
+        for i in range(4):
+            self.lib.add(Album(album=f"pg_album_{i}", albumartist=f"pg_artist_{i}"))
+        full = json.loads(self.client.get("/album/").data)["albums"]
+        total = len(full)
+        assert total >= 4
+
+        resp = self.client.get("/album/?offset=1&limit=2")
+        body = json.loads(resp.data)["albums"]
+        assert [a["id"] for a in body] == [full[1]["id"], full[2]["id"]]
+        assert resp.headers.get("X-Total-Count") == str(total)
+
+        # offset alone (no limit) pages from offset to the end
+        tail = json.loads(self.client.get(f"/album/?offset={total - 1}").data)["albums"]
+        assert [a["id"] for a in tail] == [full[-1]["id"]]
+
+    def test_all_albums_no_params_unchanged(self):
+        # Backward compat: no params -> identical to today, no X-Total-Count.
+        plain = self.client.get("/album/")
+        assert "X-Total-Count" not in plain.headers
+        assert json.loads(plain.data)["albums"] == json.loads(self.client.get("/album/?").data)["albums"]
+
+    def test_all_albums_limit_clamped_and_garbage_ignored(self):
+        for i in range(3):
+            self.lib.add(Album(album=f"clamp_album_{i}"))
+        all_albums = json.loads(self.client.get("/album/").data)["albums"]
+        clamped = json.loads(self.client.get("/album/?limit=99999").data)["albums"]
+        assert len(clamped) == len(all_albums)
+        assert len(clamped) <= 500
+        # garbage limit is ignored -> treated as "no limit" -> returns all
+        assert len(json.loads(self.client.get("/album/?limit=abc").data)["albums"]) == len(all_albums)
+
+    def test_all_artists_limit_offset(self):
+        for i in range(3):
+            self.lib.add(Album(album=f"art_album_{i}", albumartist=f"zz_artist_{i}"))
+        full = json.loads(self.client.get("/artist/").data)["artist_names"]
+        resp = self.client.get("/artist/?limit=2")
+        assert json.loads(resp.data)["artist_names"] == full[:2]
+        assert resp.headers.get("X-Total-Count") == str(len(full))
+
+    def test_page_params_edges(self):
+        from beetsplug import web as webmod
+
+        with webmod.app.test_request_context("/x?limit=99999&offset=-5"):
+            assert webmod._page_params() == (0, 500)
+        with webmod.app.test_request_context("/x?offset=3"):
+            assert webmod._page_params() == (3, None)
+        with webmod.app.test_request_context("/x?limit=abc"):
+            assert webmod._page_params() == (0, None)
+        with webmod.app.test_request_context("/x"):
+            assert webmod._page_params() == (0, None)
+
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):
     """Tests for XSS vulnerability in the web plugin templates.
