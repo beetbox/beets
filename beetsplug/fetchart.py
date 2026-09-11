@@ -325,10 +325,14 @@ def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:
         s.headers = {"User-Agent": "beets"}
         prepped = s.prepare_request(req)
         settings = s.merge_environment_settings(
-            prepped.url, {}, None, None, None
+            prepped.url,
+            send_kwargs.get("proxies", {}),
+            send_kwargs.get("stream"),
+            send_kwargs.get("verify"),
+            send_kwargs.get("cert"),
         )
         log.debug("{}: {.url}", message, prepped)
-        merged_kwargs: dict[Any, Any] = {**send_kwargs, **settings}
+        merged_kwargs: dict[Any, Any] = {**settings, **send_kwargs}
         return s.send(prepped, **merged_kwargs)
 
 
@@ -441,7 +445,27 @@ class RemoteArtSource(ArtSource):
                     candidate.url, stream=True, message="downloading image"
                 )
             ) as resp:
+                if resp.status_code >= 400:
+                    self._log.debug(
+                        "error fetching art: HTTP status {}", resp.status_code
+                    )
+                    return
+
                 ct = resp.headers.get("Content-Type", None)
+                max_filesize = getattr(plugin, "max_filesize", 0)
+
+                if max_filesize and resp.headers.get("Content-Length"):
+                    try:
+                        content_length = int(resp.headers["Content-Length"])
+                        if content_length > max_filesize:
+                            self._log.debug(
+                                "image is too large: {}B > {}B",
+                                content_length,
+                                max_filesize,
+                            )
+                            return
+                    except (ValueError, TypeError):
+                        pass
 
                 # Download the image to a temporary file. As some servers
                 # (notably fanart.tv) have proven to return wrong Content-Types
@@ -487,17 +511,33 @@ class RemoteArtSource(ArtSource):
                     )
 
                 filename = get_temp_filename(__name__, suffix=ext.decode())
-                with open(filename, "wb") as fh:
-                    # write the first already loaded part of the image
-                    fh.write(header)
-                    # download the remaining part of the image
-                    for chunk in data:
-                        fh.write(chunk)
-                self._log.debug(
-                    "downloaded art to: {}", util.displayable_path(filename)
-                )
-                candidate.path = util.bytestring_path(filename)
-                return
+                total_size = len(header)
+                try:
+                    with open(filename, "wb") as fh:
+                        # write the first already loaded part of the image
+                        fh.write(header)
+                        # download the remaining part of the image
+                        for chunk in data:
+                            total_size += len(chunk)
+                            if max_filesize and total_size > max_filesize:
+                                self._log.debug(
+                                    "image exceeded maximum allowed size of {}B",
+                                    max_filesize,
+                                )
+                                break
+                            fh.write(chunk)
+                        else:
+                            self._log.debug(
+                                "downloaded art to: {}",
+                                util.displayable_path(filename),
+                            )
+                            candidate.path = util.bytestring_path(filename)
+                            return
+                    util.remove(filename)
+                    return
+                except Exception:
+                    util.remove(filename)
+                    raise
 
         except (OSError, requests.RequestException, TypeError) as exc:
             # Handling TypeError works around a urllib3 bug:
@@ -1242,7 +1282,7 @@ class Spotify(RemoteArtSource):
             return
 
         try:
-            response = requests.get(url, timeout=10)
+            response = self.request(url)
             response.raise_for_status()
         except requests.RequestException as e:
             self._log.debug("Error: {!s}", e)

@@ -12,7 +12,13 @@ from beets.test.helper import (
     PluginMixin,
     PluginTestHelper,
 )
-from beetsplug.fetchart import CoverArtArchive, FetchArtPlugin, FileSystem
+from beetsplug.fetchart import (
+    Candidate,
+    CoverArtArchive,
+    FetchArtPlugin,
+    FileSystem,
+    _logged_get,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -199,3 +205,107 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
         )
         fa = FetchArtPlugin()
         assert len(fa.sources) == 3
+
+
+class TestFetchartRemoteDownload(PluginTestHelper):
+    plugin = "fetchart"
+
+    def test_logged_get_preserves_stream_and_send_kwargs(self):
+        log = mock.MagicMock()
+        with mock.patch("requests.Session.send") as mock_send:
+            mock_send.return_value = mock.MagicMock()
+            _logged_get(
+                log, "https://example.com/art.jpg", stream=True, timeout=15
+            )
+            mock_send.assert_called_once()
+            _, kwargs = mock_send.call_args
+            assert kwargs["stream"] is True
+            assert kwargs["timeout"] == 15
+
+    def test_logged_get_default_timeout(self):
+        log = mock.MagicMock()
+        with mock.patch("requests.Session.send") as mock_send:
+            mock_send.return_value = mock.MagicMock()
+            _logged_get(log, "https://example.com/art.jpg")
+            mock_send.assert_called_once()
+            _, kwargs = mock_send.call_args
+            assert kwargs["timeout"] == 10
+
+    def test_fetch_image_early_exit_on_http_error(self):
+        log = mock.MagicMock()
+        source = CoverArtArchive(log, self.config["fetchart"])
+        plugin = FetchArtPlugin()
+        candidate = Candidate(
+            log, source.ID, url="https://example.com/error.jpg"
+        )
+
+        mock_resp = mock.MagicMock()
+        mock_resp.status_code = 404
+        with mock.patch.object(source, "request", return_value=mock_resp):
+            source.fetch_image(candidate, plugin)
+
+        assert candidate.path is None
+        mock_resp.iter_content.assert_not_called()
+
+    def test_fetch_image_content_length_exceeds_max_filesize(self):
+        log = mock.MagicMock()
+        source = CoverArtArchive(log, self.config["fetchart"])
+        plugin = FetchArtPlugin()
+        plugin.max_filesize = 5000
+        candidate = Candidate(
+            log, source.ID, url="https://example.com/large.jpg"
+        )
+
+        mock_resp = mock.MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Content-Length": "10000"}
+        with mock.patch.object(source, "request", return_value=mock_resp):
+            source.fetch_image(candidate, plugin)
+
+        assert candidate.path is None
+        mock_resp.iter_content.assert_not_called()
+
+    def test_fetch_image_streaming_exceeds_max_filesize(self):
+        log = mock.MagicMock()
+        source = CoverArtArchive(log, self.config["fetchart"])
+        plugin = FetchArtPlugin()
+        plugin.max_filesize = 50
+        candidate = Candidate(log, source.ID, url="https://example.com/art.jpg")
+
+        # Valid JPEG header (32 bytes) followed by chunk that exceeds 50 bytes total
+        jpeg_header = b"\xff\xd8\xff\xe0" + b"\x00" * 28
+        chunk = b"x" * 40
+
+        mock_resp = mock.MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Content-Type": "image/jpeg"}
+        mock_resp.iter_content.return_value = iter([jpeg_header, chunk])
+
+        with mock.patch.object(source, "request", return_value=mock_resp):
+            source.fetch_image(candidate, plugin)
+
+        assert candidate.path is None
+
+    def test_fetch_image_cleanup_on_download_exception(self):
+        import requests
+
+        log = mock.MagicMock()
+        source = CoverArtArchive(log, self.config["fetchart"])
+        plugin = FetchArtPlugin()
+        candidate = Candidate(log, source.ID, url="https://example.com/art.jpg")
+
+        jpeg_header = b"\xff\xd8\xff\xe0" + b"\x00" * 28
+
+        def failing_chunks():
+            yield jpeg_header
+            raise requests.exceptions.ReadTimeout("read timed out")
+
+        mock_resp = mock.MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Content-Type": "image/jpeg"}
+        mock_resp.iter_content.return_value = failing_chunks()
+
+        with mock.patch.object(source, "request", return_value=mock_resp):
+            source.fetch_image(candidate, plugin)
+
+        assert candidate.path is None

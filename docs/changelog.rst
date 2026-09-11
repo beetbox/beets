@@ -20,6 +20,11 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- :doc:`plugins/fetchart`: Fix ``_logged_get`` environment settings merge
+  overriding explicit request parameters (such as ``stream=True``), prevent
+  downloading when servers respond with HTTP error status codes, enforce
+  ``max_filesize`` during streaming downloads, and ensure temporary files are
+  cleaned up on download failures. :bug:`5454`
 
 ..
     For plugin developers
