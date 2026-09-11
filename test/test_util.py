@@ -575,3 +575,29 @@ class PrivateFilesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = os.path.join(temp_dir, "nonexistent.json")
             util.restrict_permissions(path)
+
+    def test_open_private_chmod_failure_raises_and_closes_fd(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "token.json")
+            with patch("os.chmod", side_effect=PermissionError("Chmod denied")):
+                with pytest.raises(PermissionError):
+                    with util.open_private(path, "w") as f:
+                        f.write("secret")
+
+    def test_restrict_permissions_chmod_failure_raises(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "token.json")
+            with open(path, "w") as f:
+                f.write("data")
+            with patch("os.chmod", side_effect=PermissionError("Chmod denied")):
+                with pytest.raises(PermissionError):
+                    util.restrict_permissions(path)
+
+    def test_open_private_invalid_mode_raises(self):
+        with pytest.raises(ValueError, match="Invalid mode"):
+            with util.open_private("dummy", "invalid"):
+                pass

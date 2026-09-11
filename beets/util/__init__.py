@@ -643,25 +643,38 @@ def open_private(
     When creating a file, it is created with 0600 permissions atomically.
     On existing files, permissions are restricted to 0600.
     """
+    text_mode = mode.replace("b", "")
+    if text_mode == "r":
+        flags = os.O_RDONLY
+    elif text_mode == "r+":
+        flags = os.O_RDWR
+    elif text_mode == "w":
+        flags = os.O_CREAT | os.O_TRUNC | os.O_WRONLY
+    elif text_mode == "w+":
+        flags = os.O_CREAT | os.O_TRUNC | os.O_RDWR
+    elif text_mode == "a":
+        flags = os.O_CREAT | os.O_APPEND | os.O_WRONLY
+    elif text_mode == "a+":
+        flags = os.O_CREAT | os.O_APPEND | os.O_RDWR
+    elif text_mode == "x":
+        flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+    elif text_mode == "x+":
+        flags = os.O_CREAT | os.O_EXCL | os.O_RDWR
+    else:
+        raise ValueError(f"Invalid mode: {mode!r}")
+
     sys_path = syspath(path)
     parent_dir = os.path.dirname(sys_path)
     if parent_dir:
         os.makedirs(parent_dir, exist_ok=True)
 
-    if "+" in mode:
-        flags = os.O_CREAT | os.O_RDWR
-    else:
-        flags = os.O_CREAT | os.O_WRONLY
-    if "a" in mode:
-        flags |= os.O_APPEND
-    else:
-        flags |= os.O_TRUNC
-
     fd = os.open(sys_path, flags, 0o600)
-    with suppress(OSError):
-        os.chmod(sys_path, 0o600)
-
     try:
+        try:
+            os.chmod(sys_path, 0o600)
+        except (NotImplementedError, FileNotFoundError):
+            pass
+
         if "b" in mode:
             f = open(fd, mode)
         else:
@@ -679,9 +692,10 @@ def open_private(
 def restrict_permissions(path: PathLike) -> None:
     """Ensure a sensitive file (such as a token file) has 0600 permissions."""
     sys_path = syspath(path)
-    if os.path.exists(sys_path):
-        with suppress(OSError):
-            os.chmod(sys_path, 0o600)
+    try:
+        os.chmod(sys_path, 0o600)
+    except (FileNotFoundError, NotImplementedError):
+        pass
 
 
 def unique_path(path: AnyStr) -> AnyStr:
