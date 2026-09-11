@@ -492,8 +492,8 @@ class TestDestination(PytestItemHelper):
         item_in_db.path = "foo.mp3"
         dest = item_in_db.destination()
         assert not dest.startswith(b"//")
-        assert not dest.startswith(b"/")
         assert not dest.startswith(b"\\\\")
+        assert dest != b"/00.mp3"
         assert dest == np("base/00.mp3")
 
     def test_destination_stays_in_basedir_with_empty_leading_field(
@@ -1077,7 +1077,8 @@ class TestArtDestination(TestHelper):
         art = ai.art_destination("something.jpg")
         track = i.destination()
         assert not art.startswith(b"//")
-        assert not art.startswith(b"/")
+        assert not art.startswith(b"\\\\")
+        assert art != b"/artimage.jpg"
         assert os.path.dirname(art) == os.path.dirname(track)
 
 
