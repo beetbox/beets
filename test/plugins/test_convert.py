@@ -331,7 +331,7 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
             title="title", artist="artist", album="album", format="flac"
         )
 
-        self.convert_dest = self.temp_dir_path / "convert_dest"
+        self.convert_dest = self.temp_path / "convert_dest"
         self.convert_dest.mkdir(parents=True)
 
         self.config["convert"] = {
