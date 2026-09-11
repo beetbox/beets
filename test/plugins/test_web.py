@@ -694,9 +694,9 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
                     path=self.path_prefix / f"lim_{i}",
                 )
             )
-        full = json.loads(
-            self.client.get("/item/query/LimitArtist").data
-        )["results"]
+        full = json.loads(self.client.get("/item/query/LimitArtist").data)[
+            "results"
+        ]
         assert len(full) == 5
 
         limited = json.loads(
@@ -706,9 +706,41 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         # the capped items are drawn from the full match set
         assert {r["id"] for r in limited} <= {r["id"] for r in full}
 
+    def test_item_query_limit_keeps_flexible_field_matches(self):
+        # A limited query must apply flexible-field predicates before the
+        # limit, so a match beyond the first N database rows is not dropped.
+        # Regression: a SQL limit applied to candidate rows before Python
+        # filtering returned an empty set here.
+        for i in range(6):
+            self.lib.add(
+                Item(
+                    title=f"mood_{i}",
+                    mood="target" if i == 5 else "other",
+                    path=self.path_prefix / f"mood_{i}",
+                )
+            )
+        results = json.loads(
+            self.client.get("/item/query/mood%3Atarget?limit=2").data
+        )["results"]
+        assert len(results) == 1
+        assert results[0]["title"] == "mood_5"
+
+    def test_album_query_exact_match(self):
+        # The artist page relies on exact albumartist matching so selecting
+        # "Air" does not also return "Air Supply".
+        self.lib.add(Album(album="exact_a", albumartist="Air"))
+        self.lib.add(Album(album="exact_b", albumartist="Air Supply"))
+        # albumartist:=Air , url-encoded (%3A=":", %3D="=")
+        results = json.loads(
+            self.client.get("/album/query/albumartist%3A%3DAir").data
+        )["results"]
+        assert sorted({a["albumartist"] for a in results}) == ["Air"]
+
     def test_all_albums_limit_offset(self):
         for i in range(4):
-            self.lib.add(Album(album=f"pg_album_{i}", albumartist=f"pg_artist_{i}"))
+            self.lib.add(
+                Album(album=f"pg_album_{i}", albumartist=f"pg_artist_{i}")
+            )
         full = json.loads(self.client.get("/album/").data)["albums"]
         total = len(full)
         assert total >= 4
@@ -719,28 +751,39 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert resp.headers.get("X-Total-Count") == str(total)
 
         # offset alone (no limit) pages from offset to the end
-        tail = json.loads(self.client.get(f"/album/?offset={total - 1}").data)["albums"]
+        tail = json.loads(self.client.get(f"/album/?offset={total - 1}").data)[
+            "albums"
+        ]
         assert [a["id"] for a in tail] == [full[-1]["id"]]
 
     def test_all_albums_no_params_unchanged(self):
         # Backward compat: no params -> identical to today, no X-Total-Count.
         plain = self.client.get("/album/")
         assert "X-Total-Count" not in plain.headers
-        assert json.loads(plain.data)["albums"] == json.loads(self.client.get("/album/?").data)["albums"]
+        plain_albums = json.loads(plain.data)["albums"]
+        empty_query = json.loads(self.client.get("/album/?").data)["albums"]
+        assert plain_albums == empty_query
 
     def test_all_albums_limit_clamped_and_garbage_ignored(self):
         for i in range(3):
             self.lib.add(Album(album=f"clamp_album_{i}"))
         all_albums = json.loads(self.client.get("/album/").data)["albums"]
-        clamped = json.loads(self.client.get("/album/?limit=99999").data)["albums"]
+        clamped = json.loads(self.client.get("/album/?limit=99999").data)[
+            "albums"
+        ]
         assert len(clamped) == len(all_albums)
         assert len(clamped) <= 500
         # garbage limit is ignored -> treated as "no limit" -> returns all
-        assert len(json.loads(self.client.get("/album/?limit=abc").data)["albums"]) == len(all_albums)
+        garbage = json.loads(self.client.get("/album/?limit=abc").data)[
+            "albums"
+        ]
+        assert len(garbage) == len(all_albums)
 
     def test_all_artists_limit_offset(self):
         for i in range(3):
-            self.lib.add(Album(album=f"art_album_{i}", albumartist=f"zz_artist_{i}"))
+            self.lib.add(
+                Album(album=f"art_album_{i}", albumartist=f"zz_artist_{i}")
+            )
         full = json.loads(self.client.get("/artist/").data)["artist_names"]
         resp = self.client.get("/artist/?limit=2")
         assert json.loads(resp.data)["artist_names"] == full[:2]
@@ -751,7 +794,9 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         # any album art to one of that artist's album ids so the UI can show a
         # cover as the artist avatar. Artists without art are absent.
         with_art = Album(
-            album="has_art", albumartist="ArtistWithArt", artpath=b"/x/cover.jpg"
+            album="has_art",
+            albumartist="ArtistWithArt",
+            artpath=b"/x/cover.jpg",
         )
         self.lib.add(with_art)
         self.lib.add(Album(album="no_art", albumartist="ArtistNoArt"))
@@ -810,13 +855,22 @@ class TestWebXSS(WebPluginMixin, PytestTestHelper):
         )
 
         # The escaping helper must exist.
-        assert re.search(r"const\s+esc\s*=", src), "esc() helper missing from app.js"
+        assert re.search(r"const\s+esc\s*=", src), (
+            "esc() helper missing from app.js"
+        )
 
         # Free-text, user-controlled fields that must be HTML-escaped when
         # interpolated into markup.
         free_text = [
-            "title", "artist", "album", "albumartist", "lyrics", "genre", "label",
-            "mb_trackid", "mb_albumid",
+            "title",
+            "artist",
+            "album",
+            "albumartist",
+            "lyrics",
+            "genre",
+            "label",
+            "mb_trackid",
+            "mb_albumid",
         ]
         offenders = []
         for line in src.splitlines():

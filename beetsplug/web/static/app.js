@@ -16,6 +16,8 @@ const esc = (s) => ('' + (s ?? '')).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<
 const fmtTime = (s) => { if (s == null || isNaN(s)) return '0:00'; s = Math.round(s); const m = Math.floor(s/60), sec = String(s%60).padStart(2,'0'); return m >= 60 ? `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}:${sec}` : `${m}:${sec}`; };
 const fmtSize = (b) => !b ? '—' : b >= 1073741824 ? (b/1073741824).toFixed(2)+' GB' : (b/1048576).toFixed(1)+' MB';
 const yearOf = (o) => o && o.year ? o.year : '';
+// Sort by disc, then track, so multi-disc albums keep their disc order.
+const byDiscTrack = (x, y) => (x.disc || 0) - (y.disc || 0) || (x.track || 0) - (y.track || 0);
 
 // ---- State -----------------------------------------------------------
 let mode = 'songs';
@@ -26,6 +28,7 @@ let selected = null;         // selected item id in songs mode
 let artistsAll = null;       // cached [name]
 let artistArt = {};          // name -> a cover album id (random one of the artist's albums)
 const itemCache = {};        // id -> item
+let renderGen = 0;           // bumped on every render(); async detail callbacks check it before writing
 
 // playback
 const audio = document.getElementById('audio');
@@ -56,6 +59,7 @@ const metaCell = (k, v) => `<div class="meta-cell"><div class="k">${k}</div><div
 
 // ---- Dispatch --------------------------------------------------------
 function render() {
+  renderGen++;                 // any in-flight detail fetch from a prior view is now stale
   if (albumPager) { albumPager.stop(); albumPager = null; }
   clearTimeout(albumFilterTimer);
   contentEl.className = 'content' + (mode === 'songs' && openTrack === null ? ' mode-songs' : '');
@@ -164,16 +168,18 @@ function trackDetailHTML(t, crumbs) {
                : `<div class="lyrics-block"><h3>Lyrics</h3><div class="lyrics" style="color:var(--text-3)">No lyrics stored for this track.</div></div>`}`;
 }
 function renderTrackDetail(id) {
+  const gen = renderGen;
   contentEl.innerHTML = `<div class="browse"><div class="detail-page"><div class="loading-note">Loading track…</div></div></div>`;
   const done = (t) => {
     itemCache[id] = t;
+    if (gen !== renderGen) return;   // navigated away while loading
     const crumbs = `<div class="crumbs">
       ${t.album_id!=null?`<button class="crumb" data-nav="album/${t.album_id}">${esc(t.album)}</button><span class="sep">/</span>`:''}
       <span class="crumb-cur">${esc(t.title)}</span></div>`;
     contentEl.innerHTML = `<div class="browse"><div class="detail-page">${trackDetailHTML(t, crumbs)}</div></div>`;
   };
   if (itemCache[id]) return done(itemCache[id]);
-  api.item(id).then(done).catch(() => contentEl.innerHTML = `<div class="browse"><div class="empty-note">Track not found.</div></div>`);
+  api.item(id).then(done).catch(() => { if (gen === renderGen) contentEl.innerHTML = `<div class="browse"><div class="empty-note">Track not found.</div></div>`; });
 }
 
 // ---- Albums grid -----------------------------------------------------
@@ -300,10 +306,12 @@ function browseShell(title, count, filterId, ph, val, gridId, gridInner) {
 // ---- Album detail ----------------------------------------------------
 const ICON_PLAY_SM = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 function renderAlbumDetail(id) {
+  const gen = renderGen;
   contentEl.innerHTML = `<div class="browse"><div class="loading-note">Loading album…</div></div>`;
   api.album(id).then(a => {
-    const items = (a.items || []).slice().sort((x,y) => (x.track||0)-(y.track||0));
+    const items = (a.items || []).slice().sort(byDiscTrack);
     items.forEach(it => itemCache[it.id] = it);
+    if (gen !== renderGen) return;   // navigated away while loading
     const total = items.reduce((s,t)=>s+(t.length||0),0);
     const totalSize = items.reduce((s,t)=>s+(t.size||0),0);
     const rows = items.map(t => `
@@ -342,13 +350,15 @@ function renderAlbumDetail(id) {
         <div class="tracklist">${rows}</div>
         <div class="tl-hint">Click a track for its full metadata · hover to play</div>
       </div>`;
-  }).catch(() => contentEl.innerHTML = `<div class="browse"><div class="empty-note">Album not found.</div></div>`);
+  }).catch(() => { if (gen === renderGen) contentEl.innerHTML = `<div class="browse"><div class="empty-note">Album not found.</div></div>`; });
 }
 
 // ---- Artist page -----------------------------------------------------
 function renderArtistPage(name) {
+  const gen = renderGen;
   contentEl.innerHTML = `<div class="browse"><div class="loading-note">Loading artist…</div></div>`;
   api.albumsByArtist(name).then(d => {
+    if (gen !== renderGen) return;   // navigated away while loading
     const albums = (d.results || []).slice().sort((x,y)=>(y.year||0)-(x.year||0));
     const years = albums.map(a=>a.year).filter(Boolean);
     contentEl.innerHTML = `
@@ -367,7 +377,7 @@ function renderArtistPage(name) {
         </div>
         <div class="album-grid">${albums.length?albums.map(albumCardHTML).join(''):'<div class="empty-note">No albums found for this artist.</div>'}</div>
       </div>`;
-  }).catch(() => contentEl.innerHTML = `<div class="browse"><div class="empty-note">Could not load artist.</div></div>`);
+  }).catch(() => { if (gen === renderGen) contentEl.innerHTML = `<div class="browse"><div class="empty-note">Could not load artist.</div></div>`; });
 }
 
 // ---- Player ----------------------------------------------------------
@@ -388,17 +398,24 @@ function playFrom(list, idx) {
     });
   }
 }
-function playById(id) {
-  // build a queue from whatever list is on screen
-  let list = results, idx = results.findIndex(x=>x.id==id);
-  if (idx < 0) {
-    const rows = [...document.querySelectorAll('[data-track],[data-play]')];
-    const ids = [...document.querySelectorAll('.trow[data-track]')].map(el=>+el.dataset.track);
-    if (ids.includes(+id)) { list = ids.map(i=>itemCache[i]).filter(Boolean); idx = list.findIndex(x=>x.id==id); }
-  }
-  if (idx < 0) { list = [itemCache[id]].filter(Boolean); idx = 0; }
-  if (!list[idx]) { api.item(id).then(t=>{ itemCache[id]=t; playFrom([t],0); }); return; }
-  playFrom(list, idx);
+function playOne(id) {
+  // Play a single track (the track-detail "Play track" button).
+  const t = itemCache[id];
+  if (t) { playFrom([t], 0); return; }
+  api.item(id).then(x => { itemCache[x.id] = x; playFrom([x], 0); }).catch(() => {});
+}
+function playFromTracklist(id) {
+  // Play from the album tracklist currently on screen, in its displayed order,
+  // so Play-album and the per-row play buttons queue the album's own tracks.
+  const ids = [...document.querySelectorAll('.tracklist .trow[data-track]')].map(el => +el.dataset.track);
+  const list = ids.map(i => itemCache[i]).filter(Boolean);
+  const idx = list.findIndex(x => x.id == id);
+  if (idx >= 0) playFrom(list, idx); else playOne(id);
+}
+function playFromResults(id) {
+  // Play from the current Songs search results.
+  const idx = results.findIndex(x => x.id == id);
+  if (idx >= 0) playFrom(results, idx); else playOne(id);
 }
 function togglePlay() {
   if (!audio.src) { if (results[0]) playFrom(results, 0); return; }
@@ -445,14 +462,31 @@ contentEl.addEventListener('click', e => {
     const inp = document.getElementById('query'); if (inp) inp.placeholder = PLACEHOLDER[searchMode]; if (searchText.trim()) runSearch(); return; }
   const navEl = e.target.closest('[data-nav]'); if (navEl) { go('#' + navEl.dataset.nav); return; }
   const pb = e.target.closest('[data-playalbum]');
-  if (pb) { e.stopPropagation(); api.album(pb.dataset.playalbum).then(a=>{ const its=(a.items||[]).slice().sort((x,y)=>(x.track||0)-(y.track||0)); its.forEach(it=>itemCache[it.id]=it); if (its[0]) playFrom(its,0); }); return; }
-  const pe = e.target.closest('[data-play]'); if (pe && pe.dataset.play) { e.stopPropagation(); playById(pe.dataset.play); return; }
+  if (pb) { e.stopPropagation(); api.album(pb.dataset.playalbum).then(a=>{ const its=(a.items||[]).slice().sort(byDiscTrack); its.forEach(it=>itemCache[it.id]=it); if (its[0]) playFrom(its,0); }); return; }
+  const pe = e.target.closest('[data-play]');
+  if (pe && pe.dataset.play) {
+    e.stopPropagation();
+    // An album tracklist on screen means album context (Play-album and the row
+    // play buttons); otherwise it's the track-detail "Play track" button.
+    if (document.querySelector('.tracklist')) playFromTracklist(pe.dataset.play);
+    else playOne(pe.dataset.play);
+    return;
+  }
   const tr = e.target.closest('[data-track]'); if (tr) { go('#track/' + tr.dataset.track); return; }
   const card = e.target.closest('[data-album]'); if (card) { go('#album/' + card.dataset.album); return; }
   const ar = e.target.closest('[data-artist]'); if (ar) { go('#artist/' + encodeURIComponent(ar.dataset.artist)); return; }
-  const row = e.target.closest('.result'); if (row) { selected = +row.dataset.id; render(); }
+  const row = e.target.closest('.result');
+  if (row) {
+    // Update selection and the detail panel in place, without rebuilding the
+    // results list, so the clicked row survives for a following double-click.
+    selected = +row.dataset.id;
+    document.querySelectorAll('.result.selected').forEach(el => el.classList.remove('selected'));
+    row.classList.add('selected');
+    const sel = itemCache[selected], detail = document.getElementById('songDetail');
+    if (detail && sel) detail.innerHTML = trackDetailHTML(sel);
+  }
 });
-contentEl.addEventListener('dblclick', e => { const row = e.target.closest('.result'); if (row) playById(row.dataset.id); });
+contentEl.addEventListener('dblclick', e => { const row = e.target.closest('.result'); if (row) playFromResults(row.dataset.id); });
 document.getElementById('playBtn').addEventListener('click', togglePlay);
 document.getElementById('nextBtn').addEventListener('click', () => { if (qIndex < queue.length-1) playFrom(queue, qIndex+1); });
 document.getElementById('prevBtn').addEventListener('click', () => { if (qIndex > 0) playFrom(queue, qIndex-1); });
@@ -464,6 +498,40 @@ document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (e.key === ' ') { togglePlay(); e.preventDefault(); }
 });
+
+// ---- Volume ----------------------------------------------------------
+const volTrack = document.getElementById('volTrack');
+function setVolume(frac) {
+  frac = Math.min(1, Math.max(0, frac));
+  audio.volume = frac;
+  const fill = document.getElementById('volFill');
+  if (fill) fill.style.width = (frac * 100) + '%';
+  if (volTrack) volTrack.setAttribute('aria-valuenow', Math.round(frac * 100));
+}
+if (volTrack) {
+  volTrack.addEventListener('click', e => {
+    const r = volTrack.getBoundingClientRect();
+    setVolume((e.clientX - r.left) / r.width);
+  });
+  volTrack.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { setVolume(audio.volume + 0.05); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { setVolume(audio.volume - 0.05); e.preventDefault(); }
+    else if (e.key === 'Home') { setVolume(0); e.preventDefault(); }
+    else if (e.key === 'End') { setVolume(1); e.preventDefault(); }
+  });
+}
+setVolume(audio.volume);   // reflect the audio element's actual volume in the bar
+
+// ---- Media Session (OS / hardware transport controls) ----------------
+if ('mediaSession' in navigator) {
+  try {
+    const ms = navigator.mediaSession;
+    ms.setActionHandler('play', () => { audio.play().catch(() => {}); });
+    ms.setActionHandler('pause', () => audio.pause());
+    ms.setActionHandler('previoustrack', () => { if (qIndex > 0) playFrom(queue, qIndex - 1); });
+    ms.setActionHandler('nexttrack', () => { if (qIndex < queue.length - 1) playFrom(queue, qIndex + 1); });
+  } catch (e) { /* not all actions are supported everywhere */ }
+}
 
 // ---- Theme -----------------------------------------------------------
 const root = document.documentElement, themeIcon = document.getElementById('themeIcon');

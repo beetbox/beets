@@ -12,7 +12,10 @@ export const itemQuery = (q, limit) => jget('item/query/' + qpath(q) + (limit ? 
 export const item = (id) => jget('item/' + id);
 export const album = (id) => jget('album/' + id + '?expand');
 export const albumQuery = (q, limit) => jget('album/query/' + qpath(q) + (limit ? '?limit=' + limit : ''));
-export const albumsByArtist = (n) => jget('album/query/' + encodeURIComponent('albumartist:' + n));
+// Exact albumartist match (`:=`), so "Air" doesn't also pull in "Air Supply".
+// A literal "/" in the name is sent as "\" because the query endpoint splits
+// the path on "/" and restores "\" to a separator; the name is otherwise data.
+export const albumsByArtist = (n) => jget('album/query/' + encodeURIComponent('albumartist:=' + String(n).replace(/\//g, '\\')));
 export const artists = () => jget('artist/');
 
 // Paged albums for the infinite-scroll grid; reads the X-Total-Count header.

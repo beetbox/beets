@@ -82,7 +82,7 @@ def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
 
 
 def json_generator(
-    items: Sequence[LibModel], root: str, expand: bool = False
+    items: Iterable[LibModel], root: str, expand: bool = False
 ) -> Iterator[Any]:
     """Generator that dumps list of beets Items or Albums as JSON
 
@@ -203,20 +203,16 @@ def resource_query(name: str, patchable: bool = False) -> Any:
         def responder(queries: Iterable[str]) -> Any:
             if get_method() == "GET":
                 # Optional paging. Without offset/limit the full matching set
-                # is streamed as before. With them, only the requested slice is
-                # built and serialized: a broad query on a large library would
-                # otherwise dump every match. The limit is threaded into the
-                # query so beets stops constructing objects past the page.
+                # is streamed as before. With them, slice the *matched*
+                # results: iterating the query result applies any
+                # flexible-field predicates first, so islice never drops
+                # matches the way a SQL LIMIT on candidate rows would. Object
+                # construction and serialization stop once the page is filled.
                 offset, limit = _page_params()
-                if limit is None and not offset:
-                    entities = query_func(queries)
-                else:
-                    fetch_limit = (
-                        (offset + limit) if limit is not None else None
-                    )
-                    entities = query_func(queries, fetch_limit)
-                    if offset:
-                        entities = itertools.islice(entities, offset, None)
+                entities: Iterable[LibModel] = query_func(queries)
+                if limit is not None or offset:
+                    end = (offset + limit) if limit is not None else None
+                    entities = itertools.islice(entities, offset, end)
                 return app.response_class(
                     json_generator(
                         entities, root="results", expand=is_expand()
@@ -267,13 +263,16 @@ def resource_list(name: str, paginated: bool = False) -> Any:
             if paginated:
                 offset, limit = _page_params()
                 if not (limit is None and not offset):
-                    items = list(list_all())
-                    total = len(items)
+                    # Reuse one result set: len() counts via the row count
+                    # without constructing every object, and islice builds only
+                    # the requested page (so a small page doesn't materialize
+                    # the whole library on every infinite-scroll request).
+                    results = list_all()
+                    total = len(results)
                     end = (offset + limit) if limit is not None else None
+                    page = list(itertools.islice(results, offset, end))
                     resp = app.response_class(
-                        json_generator(
-                            items[offset:end], root=name, expand=is_expand()
-                        ),
+                        json_generator(page, root=name, expand=is_expand()),
                         mimetype="application/json",
                     )
                     resp.headers["X-Total-Count"] = str(total)
@@ -391,8 +390,8 @@ def item_file(item_id: int) -> Any:
 
 @app.route("/item/query/<query:queries>", methods=["GET", "DELETE", "PATCH"])
 @resource_query("items", patchable=True)
-def item_query(queries: Sequence[str], limit: int | None = None) -> Any:
-    return g.lib.items(queries, limit=limit)
+def item_query(queries: Sequence[str]) -> Any:
+    return g.lib.items(queries)
 
 
 @app.route("/item/path/<everything:path>")
@@ -434,8 +433,8 @@ def all_albums() -> Any:
 
 @app.route("/album/query/<query:queries>", methods=["GET", "DELETE"])
 @resource_query("albums")
-def album_query(queries: Sequence[str], limit: int | None = None) -> Any:
-    return g.lib.albums(queries, limit=limit)
+def album_query(queries: Sequence[str]) -> Any:
+    return g.lib.albums(queries)
 
 
 @app.route("/album/<int:album_id>/art")
