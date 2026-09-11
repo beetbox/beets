@@ -722,6 +722,28 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert json.loads(resp.data)["artist_names"] == full[:2]
         assert resp.headers.get("X-Total-Count") == str(len(full))
 
+    def test_artist_art_maps_artist_to_a_cover_album(self):
+        # Artists have no art of their own; /artist/ maps each artist that has
+        # any album art to one of that artist's album ids so the UI can show a
+        # cover as the artist avatar. Artists without art are absent.
+        with_art = Album(
+            album="has_art", albumartist="ArtistWithArt", artpath=b"/x/cover.jpg"
+        )
+        self.lib.add(with_art)
+        self.lib.add(Album(album="no_art", albumartist="ArtistNoArt"))
+
+        data = json.loads(self.client.get("/artist/").data)
+        art = data["artist_art"]
+
+        # both artists are listed by name
+        assert "ArtistWithArt" in data["artist_names"]
+        assert "ArtistNoArt" in data["artist_names"]
+        # the art map points the art-having artist at its album, and the id
+        # really belongs to one of that artist's albums
+        assert art["ArtistWithArt"] == with_art.id
+        # an artist with no album art gets no entry
+        assert "ArtistNoArt" not in art
+
     def test_page_params_edges(self):
         from beetsplug import web as webmod
 

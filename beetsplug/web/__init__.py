@@ -449,13 +449,23 @@ def album_unique_field_values(key: str) -> Any:
 def all_artists() -> Any:
     with g.lib.transaction() as tx:
         rows = tx.query("SELECT DISTINCT albumartist FROM albums")
+        # Artists have no artwork of their own, so map each one to a cover from
+        # one of its albums (chosen at random per request) for the UI to use as
+        # an avatar. Only albums that actually have art are considered.
+        art_rows = tx.query(
+            "SELECT albumartist, id FROM "
+            "(SELECT albumartist, id FROM albums "
+            "WHERE artpath IS NOT NULL ORDER BY RANDOM()) "
+            "GROUP BY albumartist"
+        )
     names = [row[0] for row in rows]
+    artist_art = {row[0]: row[1] for row in art_rows}
     offset, limit = _page_params()
     if limit is None and not offset:
-        return flask.jsonify(artist_names=names)
+        return flask.jsonify(artist_names=names, artist_art=artist_art)
     total = len(names)
     end = (offset + limit) if limit is not None else None
-    resp = flask.jsonify(artist_names=names[offset:end])
+    resp = flask.jsonify(artist_names=names[offset:end], artist_art=artist_art)
     resp.headers["X-Total-Count"] = str(total)
     return resp
 

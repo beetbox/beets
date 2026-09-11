@@ -24,6 +24,7 @@ let searchMode = 'simple', searchText = '', albumQ = '', artistQ = '';
 let results = [];             // current song search results
 let selected = null;         // selected item id in songs mode
 let artistsAll = null;       // cached [name]
+let artistArt = {};          // name -> a cover album id (random one of the artist's albums)
 const itemCache = {};        // id -> item
 
 // playback
@@ -252,7 +253,7 @@ function loadAlbumGrid() {
 const CAP = 180;
 const artistCardHTML = (name) => `
   <div class="artist-card" data-artist="${esc(name)}">
-    <div class="avatar" style="${coverStyle(name)}"><span class="initial">${esc((name||'?').trim()[0]||'?')}</span></div>
+    <div class="avatar" style="${coverStyle(name)}"><span class="initial">${esc((name||'?').trim()[0]||'?')}</span>${artImg(artistArt[name])}</div>
     <div class="ar-name">${esc(name)}</div>
   </div>`;
 function artistMatches() {
@@ -263,7 +264,7 @@ function renderArtists() {
   contentEl.innerHTML = browseShell('Artists', artistsAll ? artistsAll.length : '…', 'artistFilter', 'Filter artists…', artistQ, 'artistGrid',
     artistsAll ? '' : '<div class="loading-note">Loading artists…</div>');
   if (!artistsAll) {
-    api.artists().then(d => { artistsAll = (d.artist_names || []).filter(Boolean); if (mode==='artists' && openArtist===null) paintArtistGrid(); })
+    api.artists().then(d => { artistsAll = (d.artist_names || []).filter(Boolean); artistArt = d.artist_art || {}; if (mode==='artists' && openArtist===null) paintArtistGrid(); })
       .catch(() => { const g = document.getElementById('artistGrid'); if (g) g.innerHTML = '<div class="empty-note">Could not load artists.</div>'; });
   } else paintArtistGrid();
 }
@@ -281,10 +282,10 @@ function browseShell(title, count, filterId, ph, val, gridId, gridInner) {
   return `
     <div class="browse">
       <div class="browse-head">
+        <div class="mini-search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="${filterId}" placeholder="${ph}" value="${esc(val)}"></div>
         <h2>${title}</h2><span class="count" id="${gridId==='albumGrid'?'albumCount':'artistCount'}">${count}</span>
         <span class="a-year" id="capNote" style="margin-left:10px"></span>
         <div class="grow"></div>
-        <div class="mini-search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input id="${filterId}" placeholder="${ph}" value="${esc(val)}"></div>
       </div>
       <div class="${gridClass}" id="${gridId}">${gridInner}</div>
     </div>`;

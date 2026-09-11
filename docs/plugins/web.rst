@@ -303,12 +303,17 @@ For artists, the following endpoint is provided:
 
 - ``GET /artist/``
 
-Responds with the list of distinct album artist names in the library.
+Responds with the list of distinct album artist names in the library, along
+with an ``artist_art`` map from each artist that has album art to the id of
+one of that artist's albums (chosen at random per request). Artists whose
+albums have no art are omitted from the map. The web UI uses this to show a
+cover as the artist's avatar, since artists have no artwork of their own.
 
 ::
 
     {
-      "artist_names": ["Artist A", "Artist B", ...]
+      "artist_names": ["Artist A", "Artist B", ...],
+      "artist_art": {"Artist A": 42, ...}
     }
 
 Like ``/album/``, this endpoint optionally accepts ``offset`` and ``limit``

@@ -187,7 +187,7 @@
 
   /* ---- Grid views (albums / artists) ---------------------------------- */
   .browse { height: 100%; overflow-y: auto; padding: 34px 44px 48px; }
-  .browse-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 26px; }
+  .browse-head { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
   .browse-head h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0; }
   .browse-head .count { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-3); }
   .browse-head .grow { flex: 1; }
