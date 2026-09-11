@@ -1039,6 +1039,13 @@ class TestAlbumArtPerformOperation(AlbumArtOperationMixin):
         ) as mocked:
             yield mocked
 
+    @pytest.fixture
+    def reformat_mock(self) -> Iterator[MagicMock]:
+        with patch.object(
+            ArtResizer.shared, "reformat", return_value=self.IMAGE_PATH
+        ) as mocked:
+            yield mocked
+
     def test_resize(self, resizer_mock):
         self.plugin.maxwidth = self.IMAGE_WIDTH / 2
         assert self.get_album_art()
@@ -1082,6 +1089,59 @@ class TestAlbumArtPerformOperation(AlbumArtOperationMixin):
         assert self.get_album_art()
         deinterlacer_mock.assert_called_once()
         resizer_mock.assert_called_once()
+
+    def test_reformat_same_format_not_called(self, reformat_mock):
+        """Reformat is not called when candidate already matches cover_format."""
+        self.plugin.cover_format = "jpeg"
+        assert self.get_album_art()
+        reformat_mock.assert_not_called()
+
+        self.plugin.cover_format = "jpg"
+        assert self.get_album_art()
+        reformat_mock.assert_not_called()
+
+        self.plugin.cover_format = "JPEG"
+        assert self.get_album_art()
+        reformat_mock.assert_not_called()
+
+    def test_reformat_called_when_format_differs(self, reformat_mock):
+        """Reformat is called when candidate format differs from cover_format."""
+        self.plugin.cover_format = "png"
+        assert self.get_album_art()
+        reformat_mock.assert_called_once_with(
+            self.IMAGE_PATH, "png", deinterlaced=False
+        )
+
+    def test_reformat_with_deinterlace_skips_redundant_deinterlace(
+        self, reformat_mock, deinterlacer_mock
+    ):
+        """When reformatting with deinterlace=True, reformat handles deinterlacing."""
+        self.plugin.cover_format = "png"
+        self.plugin.deinterlace = True
+        assert self.get_album_art()
+        reformat_mock.assert_called_once_with(
+            self.IMAGE_PATH, "png", deinterlaced=True
+        )
+        deinterlacer_mock.assert_not_called()
+
+    def test_reformat_and_resized(self, resizer_mock, reformat_mock):
+        """Both resize and reformat are called when both conditions are met."""
+        self.plugin.maxwidth = self.IMAGE_WIDTH / 2
+        self.plugin.cover_format = "png"
+        assert self.get_album_art()
+        resizer_mock.assert_called_once()
+        reformat_mock.assert_called_once()
+
+    def test_reformat_png_to_jpeg_integration(self):
+        """Integration test: candidate converts PNG to JPEG and preserves source."""
+        png_path = _common.RSRC / "image-2x3.png"
+        candidate = fetchart.Candidate(logger, "fs", png_path)
+        self.plugin.cover_format = "jpeg"
+        candidate.resize(self.plugin)
+        assert candidate.path != png_path
+        assert Path(os.fsdecode(candidate.path)).exists()
+        assert ArtResizer.shared.get_format(candidate.path) == "JPEG"
+        assert png_path.exists()
 
 
 class TestDeprecatedConfig:

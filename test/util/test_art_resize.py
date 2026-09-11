@@ -9,7 +9,7 @@ from beets.test import _common
 from beets.test.fixtures import DummyIMBackend
 from beets.test.helper import BeetsTestCase, CleanupModulesMixin
 from beets.util import command_output
-from beets.util.artresizer import IMBackend, PILBackend
+from beets.util.artresizer import ArtResizer, IMBackend, PILBackend
 
 
 class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
@@ -99,3 +99,56 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         im.write_metadata("foo", metadata)
         command = [*im.convert_cmd, *"foo -set a A -set b B foo".split()]
         mock_util.command_output.assert_called_once_with(command)
+
+    @unittest.skipUnless(PILBackend.available(), "PIL not available")
+    def test_pil_convert_format_rgb(self):
+        """Test PILBackend.convert_format converts RGB image to JPEG."""
+        from PIL import Image
+
+        src_path = self.temp_path / "test_rgb.png"
+        Image.new("RGB", (10, 10), (0, 255, 0)).save(src_path)
+        dest_path = self.temp_path / "test_rgb.jpg"
+
+        result = PILBackend().convert_format(
+            os.fsencode(src_path), os.fsencode(dest_path), deinterlaced=True
+        )
+        assert result == os.fsencode(dest_path)
+        assert dest_path.exists()
+        with Image.open(dest_path) as im:
+            assert im.format == "JPEG"
+            assert im.mode == "RGB"
+
+    @unittest.skipUnless(PILBackend.available(), "PIL not available")
+    def test_pil_convert_format_rgba(self):
+        """Test PILBackend.convert_format handles RGBA alpha transparency."""
+        from PIL import Image
+
+        src_path = self.temp_path / "test_rgba.png"
+        Image.new("RGBA", (10, 10), (255, 0, 0, 128)).save(src_path)
+        dest_path = self.temp_path / "test_rgba.jpg"
+
+        result = PILBackend().convert_format(
+            os.fsencode(src_path), os.fsencode(dest_path), deinterlaced=True
+        )
+        assert result == os.fsencode(dest_path)
+        assert dest_path.exists()
+        with Image.open(dest_path) as im:
+            assert im.format == "JPEG"
+            assert im.mode == "RGB"
+
+    @unittest.skipUnless(PILBackend.available(), "PIL not available")
+    def test_reformat_preserves_source(self):
+        """Test ArtResizer.reformat creates a temp file without unlinking source."""
+        from PIL import Image
+
+        src_path = self.temp_path / "source.png"
+        Image.new("RGB", (10, 10), (0, 0, 255)).save(src_path)
+
+        resizer = ArtResizer()
+        result = resizer.reformat(os.fsencode(src_path), "jpeg")
+
+        # Source file must not be removed
+        assert src_path.exists()
+        # Result file must exist and be JPEG
+        assert Path(os.fsdecode(result)).exists()
+        assert resizer.get_format(result) == "JPEG"

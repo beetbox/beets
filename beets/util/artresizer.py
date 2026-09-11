@@ -335,9 +335,15 @@ class IMBackend(LocalBackend):
     def convert_format(
         self, source: bytes, target: bytes, deinterlaced: bool
     ) -> bytes:
+        is_jpeg = target.lower().endswith((b".jpg", b".jpeg"))
         cmd = [
             *self.convert_cmd,
             syspath(source),
+            *(
+                ["-background", "white", "-alpha", "remove", "-alpha", "off"]
+                if is_jpeg
+                else []
+            ),
             *(["-interlace", "none"] if deinterlaced else []),
             syspath(target),
         ]
@@ -348,7 +354,11 @@ class IMBackend(LocalBackend):
             )
             return target
         except subprocess.CalledProcessError:
-            # FIXME: Should probably issue a warning?
+            log.warning(
+                "ImageMagick failed to convert image {} to {}",
+                displayable_path(source),
+                displayable_path(target),
+            )
             return source
 
     @property
@@ -599,6 +609,18 @@ class PILBackend(LocalBackend):
 
         try:
             with Image.open(syspath(source)) as im:
+                if target.lower().endswith((b".jpg", b".jpeg")):
+                    if im.mode in ("RGBA", "LA") or (
+                        im.mode == "P" and "transparency" in im.info
+                    ):
+                        rgba = im.convert("RGBA")
+                        background = Image.new(
+                            "RGB", rgba.size, (255, 255, 255)
+                        )
+                        background.paste(rgba, mask=rgba.split()[3])
+                        im = background
+                    elif im.mode != "RGB":
+                        im = im.convert("RGB")
                 im.save(os.fsdecode(target), progressive=not deinterlaced)
                 return target
         except (
@@ -766,22 +788,19 @@ class ArtResizer:
 
         new_format = new_format.lower()
         # A nonexhaustive map of image "types" to extensions overrides
-        new_format = {"jpeg": "jpg"}.get(new_format, new_format)
+        ext = {"jpeg": "jpg"}.get(new_format, new_format)
 
-        fname, _ = os.path.splitext(path_in)
-        path_new = fname + b"." + new_format.encode("utf8")
+        path_new = get_temp_filename(__name__, "reformat_", suffix=f".{ext}")
 
-        # allows the exception to propagate, while still making sure a changed
-        # file path was removed
         result_path = path_in
         try:
             result_path = self.local_method.convert_format(
                 path_in, path_new, deinterlaced
             )
         finally:
-            if result_path != path_in:
+            if result_path != path_new:
                 with suppress(OSError):
-                    os.unlink(path_in)
+                    os.unlink(path_new)
         return result_path
 
     @property

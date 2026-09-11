@@ -6,9 +6,10 @@ import os
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from contextlib import closing
+from contextlib import closing, suppress
 from enum import Enum
 from functools import cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, AnyStr, ClassVar, Literal, Protocol
 
 import confuse
@@ -208,7 +209,14 @@ class Candidate:
         reformat = False
         if plugin.cover_format:
             fmt = ArtResizer.shared.get_format(self.path)
-            reformat = fmt != plugin.cover_format
+            if fmt:
+                desired = plugin.cover_format.lower()
+                desired = {"jpg": "jpeg"}.get(desired, desired)
+                current = fmt.lower()
+                current = {"jpg": "jpeg"}.get(current, current)
+                reformat = current != desired
+            else:
+                reformat = True
             if reformat:
                 self._log.debug(
                     "image needs reformatting: {} -> {.cover_format}",
@@ -245,12 +253,14 @@ class Candidate:
         """
         # validate the candidate in case it hasn't been done yet
         current_check = self.validate(plugin)
-        checks_performed = []
+        checks_performed: list[ImageAction] = []
 
         # we don't want to resize the image if it's valid or bad
         while current_check not in [ImageAction.BAD, ImageAction.EXACT]:
             self._resize(plugin, current_check)
             checks_performed.append(current_check)
+            if current_check == ImageAction.REFORMAT and plugin.deinterlace:
+                checks_performed.append(ImageAction.DEINTERLACE)
             current_check = self.validate(
                 plugin, skip_check_for=checks_performed
             )
@@ -266,6 +276,7 @@ class Candidate:
         assert self.path is not None
         assert self.size is not None
 
+        old_path = self.path
         if check == ImageAction.DOWNSCALE:
             self.path = ArtResizer.shared.resize(
                 plugin.maxwidth,
@@ -290,6 +301,23 @@ class Candidate:
                 plugin.cover_format,  # type: ignore[arg-type]
                 deinterlaced=plugin.deinterlace,
             )
+
+        if self.path and self.path != old_path:
+            temp_dir = util.get_module_tempdir("beets.util.artresizer")
+            try:
+                if (
+                    Path(os.fsdecode(old_path))
+                    .resolve()
+                    .is_relative_to(temp_dir.resolve())
+                ):
+                    with suppress(OSError):
+                        os.unlink(old_path)
+            except (ValueError, OSError):
+                pass
+
+            new_size = ArtResizer.shared.get_size(self.path)
+            if new_size:
+                self.size = new_size
 
 
 def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:

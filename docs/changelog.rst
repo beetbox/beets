@@ -20,6 +20,11 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- :doc:`plugins/fetchart`: Fix ``cover_format`` image reformatting when converting
+  between JPEG and PNG (normalizing format names, compositing transparent RGBA/LA
+  images onto a white background before JPEG conversion, avoiding redundant deinterlacing,
+  updating candidate dimensions across resize stages, and preventing source image deletion).
+  :bug:`4452`
 
 ..
     For plugin developers
