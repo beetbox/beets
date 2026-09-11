@@ -339,35 +339,33 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
             "format": "mp3",
         }
 
-    def create_dummy_file(self, path: str) -> Path:
+    def create_dummy_file(self, filename: str) -> Path:
         "Creates a dummy file in the conversion directory"
-        p = self.convert_dest / path
+        p = self.convert_dest / filename
         p.parent.mkdir(parents=True, exist_ok=True)
         with p.open("w") as f:
             f.write("test")
         return p
 
     @pytest.mark.parametrize(
-        "plugin_config,cli_options,files_to_mark_for_removal,expect_removal",
+        "plugin_config,cli_options,expect_removal",
         [
-            ({}, [], ["to_remove.mp3"], False),
-            ({}, ["--remove-missing", "--pretend"], ["to_remove.mp3"], False),
-            ({}, ["--remove-missing"], ["to_remove.mp3"], True),
-            ({"remove_missing": True}, [], ["to_remove.mp3"], True),
+            ({}, [], False),
+            ({}, ["--remove-missing", "--pretend"], False),
+            ({}, ["--remove-missing"], True),
+            ({"remove_missing": True}, [], True),
         ],
     )
     def test_convert_remove_missing(
         self,
         plugin_config: dict[str, Any],
         cli_options: list[str],
-        files_to_mark_for_removal: list[str],
         expect_removal: bool,
     ):
         # This file mocks an already existing converted file that should not be
         # removed or modified.
-        file_not_to_remove = self.create_dummy_file(
-            util.syspath(self.item.path)
-        )
+        file_not_to_remove = self.item.filepath
+
         original_mtime = os.path.getmtime(file_not_to_remove)
 
         # Create files to be marked for removal
@@ -379,9 +377,8 @@ class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
 
         self.run_convert("--yes", *cli_options)
 
-        # Check if files were expectedly removed or not
-        for p in paths_to_mark_for_removal:
-            assert (not p.exists()) == expect_removal
+        # Check if file was expectedly removed or not
+        assert (not path_to_mark_for_removal.exists()) == expect_removal
 
         # Check that files not to be removed are still there unmodified
         assert file_not_to_remove.exists()
