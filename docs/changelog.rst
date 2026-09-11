@@ -20,6 +20,11 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- :doc:`plugins/spotify`, :doc:`plugins/plexupdate`: Create token files with
+  ``0600`` permissions so that stored credentials are not readable by other
+  users on the system.
+  :bug:`6984`
+
 
 ..
     For plugin developers

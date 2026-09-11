@@ -13,6 +13,7 @@ Put something like the following in your config.yaml to configure:
 from __future__ import annotations
 
 import json
+import os
 import time
 import uuid
 import webbrowser
@@ -127,7 +128,12 @@ class PlexSession(TimeoutAndRetrySession):
         """Merge data into the token file and persist it."""
         token = self.load_token()
         token.update(data)
-        self.token_path.write_text(json.dumps(token, indent=2))
+        fd = os.open(
+            self.token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600
+        )
+        with os.fdopen(fd, "w") as f:
+            json.dump(token, f, indent=2)
+        os.chmod(self.token_path, 0o600)
 
     def request(self, *args, **kwargs) -> requests.Response:
         """Send a request, attaching the auth token."""
