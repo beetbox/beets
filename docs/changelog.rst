@@ -23,6 +23,9 @@ Bug fixes
 - Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
   their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
   available. :bug:`7002`
+- :doc:`plugins/discogs`: Read the release month and day from the API's
+  ``released`` field instead of only the year. Fix Discogs match overwriting
+  month and day tags on import.
 
 ..
     For plugin developers
