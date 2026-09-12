@@ -1163,6 +1163,7 @@ class Item(LibModel):
             )
 
         self.db._memotable = {}
+        self.db._group_memotable = {}
 
     def move(
         self,
@@ -1427,6 +1428,8 @@ class DefaultTemplateFunctions:
         if album_id is None:
             return ""
 
+        if bracket is None:
+            bracket = beets.config["aunique"]["bracket"].as_str()
         memokey = self._tmpl_unique_memokey(
             "aunique", keys, disam, bracket, album_id
         )
@@ -1534,6 +1537,7 @@ class DefaultTemplateFunctions:
             self.item,
             lambda i: i.album_id is None,
             query=query,
+            scope_id=album_id,
         )
 
     def _tmpl_unique_memokey(
@@ -1547,8 +1551,6 @@ class DefaultTemplateFunctions:
         """Get the memokey for the unique template named "name" for the
         specific parameters.
         """
-        if bracket is None and name is not None:
-            bracket = beets.config[name]["bracket"].as_str()
         return (name, keys, disam, bracket, item_id)
 
     def _tmpl_unique(
@@ -1561,6 +1563,7 @@ class DefaultTemplateFunctions:
         db_item: LibModel,
         skip_item: Callable[[LibModel], bool],
         query: dbcore.Query | None = None,
+        scope_id: int | None = None,
     ) -> str:
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
@@ -1586,19 +1589,18 @@ class DefaultTemplateFunctions:
         if lib is None:
             return ""
 
+        if skip_item(db_item):
+            return ""
+
+        if bracket is None:
+            bracket = beets.config[name]["bracket"].as_str()
         memokey = self._tmpl_unique_memokey(name, keys, disam, bracket, item_id)
         memoval = lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
 
-        if skip_item(db_item):
-            lib._memotable[memokey] = ""
-            return ""
-
         keys = keys or beets.config[name]["keys"].as_str()
         disam = disam or beets.config[name]["disambiguators"].as_str()
-        if bracket is None:
-            bracket = beets.config[name]["bracket"].as_str()
         keys_list = keys.split()
         disam_list = disam.split()
 
@@ -1610,47 +1612,54 @@ class DefaultTemplateFunctions:
             bracket_l = ""
             bracket_r = ""
 
-        # Find matching items to disambiguate with.
-        if query is None:
-            query = db_item.duplicates_query(keys_list)
-        candidate_items = (
-            lib.items(query) if isinstance(db_item, Item) else lib.albums(query)
-        )
-
         def normalized_field(item: LibModel, field: str) -> str:
             value = item.formatted(for_path=True).get(field)
             if beets.config["asciify_paths"]:
                 value = util.asciify_path(value)
             return util.sanitize_path(value, lib.replacements)
 
+        # Every member of a collision group reaches the same conclusion about
+        # which disambiguator to use, so compute it once per group.
         key_values = tuple(normalized_field(db_item, key) for key in keys_list)
-        ambiguous_items = [
-            item
-            for item in candidate_items
-            if tuple(normalized_field(item, key) for key in keys_list)
-            == key_values
-        ]
+        groupkey = (name, keys, disam, scope_id, key_values)
+        if (group := lib._group_memotable.get(groupkey)) is None:
+            scope_query = (
+                db_item.duplicates_query(keys_list) if query is None else query
+            )
+            candidate_items = (
+                lib.items(scope_query)
+                if isinstance(db_item, Item)
+                else lib.albums(scope_query)
+            )
+            ambiguous_items = [
+                item
+                for item in candidate_items
+                if tuple(normalized_field(item, key) for key in keys_list)
+                == key_values
+            ]
+
+            disambiguator = None
+            for candidate in disam_list:
+                disam_values = {
+                    normalized_field(item, candidate)
+                    for item in ambiguous_items
+                }
+                if len(disam_values) == len(ambiguous_items):
+                    disambiguator = candidate
+                    break
+
+            group = (len(ambiguous_items), disambiguator)
+            lib._group_memotable[groupkey] = group
+
+        ambiguous_count, disambiguator = group
 
         # If there's only one item to matching these details, then do
         # nothing.
-        if len(ambiguous_items) == 1:
+        if ambiguous_count <= 1:
             lib._memotable[memokey] = ""
             return ""
 
-        # Find the first disambiguator that distinguishes the items.
-        for disambiguator in disam_list:
-            # Get the value for each item for the current field.
-            disam_values = {
-                normalized_field(item, disambiguator)
-                for item in ambiguous_items
-            }
-
-            # If the set of unique values is equal to the number of
-            # items in the disambiguation set, we're done -- this is
-            # sufficient disambiguation.
-            if len(disam_values) == len(ambiguous_items):
-                break
-        else:
+        if disambiguator is None:
             # No disambiguator distinguished all fields.
             res = f" {bracket_l}{item_id}{bracket_r}"
             lib._memotable[memokey] = res

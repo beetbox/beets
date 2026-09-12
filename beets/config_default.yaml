@@ -99,7 +99,7 @@ sunique:
 
 tunique:
     keys: title
-    disambiguators: track disc artist
+    disambiguators: disc track artist
     bracket: '[]'
 
 # --------------- Tagging ---------------

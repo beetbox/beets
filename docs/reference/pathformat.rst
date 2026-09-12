@@ -190,7 +190,7 @@ giving these tracks the same file path.
 
 It has the same arguments as the :ref:`%aunique <aunique>` template, but the
 default values are different. The default identifiers are ``title`` and the
-default disambiguators are ``track disc artist``.
+default disambiguators are ``disc track artist``.
 
 Syntax Details
 --------------

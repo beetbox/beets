@@ -404,7 +404,7 @@ The defaults look like this:
 
     tunique:
         keys: title
-        disambiguators: track disc artist
+        disambiguators: disc track artist
         bracket: '[]'
 
 See :ref:`tunique` for more details.
