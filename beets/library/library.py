@@ -53,6 +53,11 @@ class Library(dbcore.Database):
     _memotable: dict[
         tuple[str | None, str | None, str | None, str | None, int | None], str
     ]
+    # Caches the per-collision-group work shared by every member of a group.
+    _group_memotable: dict[
+        tuple[str | None, str | None, str | None, int | None, tuple[str, ...]],
+        tuple[int, str | None],
+    ]
     replacements: Replacements
 
     @cached_property
@@ -87,6 +92,7 @@ class Library(dbcore.Database):
 
         self.replacements = self.get_replacements()
         self._memotable = {}
+        self._group_memotable = {}
 
     @contextmanager
     def music_dir_context(self) -> Iterator[Library]:
@@ -104,6 +110,7 @@ class Library(dbcore.Database):
         """
         obj.add(self)
         self._memotable = {}
+        self._group_memotable = {}
         return obj.id
 
     def add_album(self, items: Sequence[Item]) -> Album:
@@ -131,6 +138,8 @@ class Library(dbcore.Database):
                 else:
                     item.store()
 
+        self._memotable = {}
+        self._group_memotable = {}
         return album
 
     # Querying.
