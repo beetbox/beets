@@ -640,6 +640,15 @@ class TestLRCLibLyrics(LyricsBackendTest):
             pytest.param([], None, id="handle non-matching lyrics"),
             pytest.param([lyrics_match()], SYNCED, id="synced when available"),
             pytest.param(
+                [
+                    lyrics_match(
+                        syncedLyrics="[00:01.234] 3-decimal synced lyrics"
+                    )
+                ],
+                "[00:01.234] 3-decimal synced lyrics",
+                id="synced with 3-decimal millisecond timestamp",
+            ),
+            pytest.param(
                 [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
             pytest.param(

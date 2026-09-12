@@ -52,3 +52,32 @@ class TestLyrics:
             "FR" if langdetect_available else None
         )
         assert not lyrics.instrumental
+
+    def test_timestamp_precision_and_sylt(self):
+        text = textwrap.dedent("""
+        [00:00.05] Centisecond line
+        [00:01.50] Two decimals
+        [00:02.123] Three decimals
+        [01:00.005] Five milliseconds
+        """).strip()
+        lyrics = Lyrics(text)
+
+        assert lyrics.synced
+        assert lyrics.timestamps == [
+            "[00:00.05]",
+            "[00:01.50]",
+            "[00:02.123]",
+            "[01:00.005]",
+        ]
+        assert lyrics.text_lines == [
+            "Centisecond line",
+            "Two decimals",
+            "Three decimals",
+            "Five milliseconds",
+        ]
+        assert lyrics.sylt == [
+            ("Centisecond line", 50),
+            ("Two decimals", 1500),
+            ("Three decimals", 2123),
+            ("Five milliseconds", 60005),
+        ]
