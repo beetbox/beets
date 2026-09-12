@@ -20,6 +20,9 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
+  their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
+  available. :bug:`7002`
 
 ..
     For plugin developers
