@@ -88,9 +88,10 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             self._mbsubmit(items)
 
+        mbsubmit_cmd.parser.add_limit_option()
         mbsubmit_cmd.func = func
 
         return [mbsubmit_cmd]

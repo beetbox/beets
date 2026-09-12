@@ -215,7 +215,9 @@ like ``title:foo`` will be ignored. Remember that ``artist`` is an item-level
 field; ``albumartist`` is the corresponding album field.
 
 Use the ``-l LIMIT`` (``--limit=LIMIT``) flag when you want to cap the maximum
-number of items that are returned.
+number of items or albums that are returned. Many other commands that accept a
+query also support this option. When another command already uses ``-l`` for a
+different purpose, use the long ``--limit`` form instead.
 
 The ``-p`` option makes beets print out filenames of matched items, which might
 be useful for piping into other Unix commands (such as `xargs
@@ -233,7 +235,7 @@ remove
 
 ::
 
-    beet remove [-adf] QUERY
+    beet remove [-adf] [-l LIMIT] QUERY
 
 Remove music from your library.
 
@@ -242,6 +244,8 @@ By default, it just removes entries from the library database; it doesn't touch
 the files on disk. To actually delete the files, use the ``-d`` flag. When the
 ``-a`` flag is given, the command operates on albums instead of individual
 tracks.
+
+Use ``-l``/``--limit`` to cap the matched items or albums before confirmation.
 
 When you run the ``remove`` command, it prints a list of all affected items in
 the library and asks for your permission before removing them. You can then
@@ -262,7 +266,7 @@ modify
 
 ::
 
-    beet modify [-IMWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD+=VALUE...] [FIELD-=VALUE...] [FIELD!...]
+    beet modify [-IMWay] [-f FORMAT] [-l LIMIT] QUERY [FIELD=VALUE...] [FIELD+=VALUE...] [FIELD-=VALUE...] [FIELD!...]
 
 Change the metadata for items or albums in the database.
 
@@ -323,6 +327,8 @@ This option lets you choose precisely which data to change without spending too
 much time to carefully craft a query. To skip the prompts entirely, use the
 ``-y`` option.
 
+Use ``-l``/``--limit`` to cap the matched items or albums before confirmation.
+
 .. _move-cmd:
 
 move
@@ -330,7 +336,7 @@ move
 
 ::
 
-    beet move [-capt] [-d DIR] QUERY
+    beet move [-capt] [-d DIR] [-l LIMIT] QUERY
 
 Move or copy items in your library.
 
@@ -346,6 +352,9 @@ you a list of files that would be moved but won't actually change anything on
 disk. The ``-t`` option sets the timid mode which will ask again before really
 moving or copying the files.
 
+Use ``-l``/``--limit`` to cap the matched items or albums before moving,
+copying, or previewing changes.
+
 .. _update-cmd:
 
 update
@@ -353,7 +362,7 @@ update
 
 ::
 
-    beet update [-F] FIELD [-e] EXCLUDE_FIELD [-aMp] QUERY
+    beet update [-F] FIELD [-e] EXCLUDE_FIELD [-aMpl] QUERY
 
 Update the library (and, by default, move files) to reflect out-of-band metadata
 changes and file deletions.
@@ -368,6 +377,9 @@ edited.
 To perform a "dry run" of an update, just use the ``-p`` (for "pretend") flag.
 This will show you all the proposed changes but won't actually change anything
 on disk.
+
+Use ``-l``/``--limit`` to cap the matched items or albums before reading files
+and applying updates.
 
 By default, all the changed metadata will be populated back to the database. If
 you only want certain fields to be written, specify them with the ``-F`` flags
@@ -390,7 +402,7 @@ write
 
 ::
 
-    beet write [-pf] [QUERY]
+    beet write [-pfl] [QUERY]
 
 Write metadata from the database into files' tags.
 
@@ -409,6 +421,8 @@ The ``-f`` option forces a write to the file, even if the file tags match the
 database. This is useful for making sure that enabled plugins that run on write
 (e.g., the Scrub and Zero plugins) are run on the file.
 
+Use ``-l``/``--limit`` to cap the matched items before writing tags.
+
 .. _stats-cmd:
 
 stats
@@ -416,7 +430,7 @@ stats
 
 ::
 
-    beet stats [-e] [QUERY]
+    beet stats [-el] [QUERY]
 
 Show some statistics on your entire library (if you don't provide a :doc:`query
 <query>`) or the matched items (if you do).
@@ -424,6 +438,8 @@ Show some statistics on your entire library (if you don't provide a :doc:`query
 By default, the command calculates file sizes using their bitrate and duration.
 The ``-e`` (``--exact``) option reads the exact sizes of each file (but is
 slower). The exact mode also outputs the exact duration in seconds.
+
+Use ``-l``/``--limit`` to cap the matched items before calculating statistics.
 
 .. _fields-cmd:
 

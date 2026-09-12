@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 class LsLimitCLIOpts(Protocol):
     album: bool
     head: int | None
+    limit: int | None
     tail: int | None
 
 
@@ -42,9 +43,9 @@ def lslimit(lib: Library, opts: LsLimitCLIOpts, args: list[str]) -> None:
 
     objs: Iterable[LibModel]
     if opts.album:
-        objs = lib.albums(args)
+        objs = lib.albums(args, limit=opts.limit)
     else:
-        objs = lib.items(args)
+        objs = lib.items(args, limit=opts.limit)
 
     if opts.head is not None:
         objs = islice(objs, opts.head)
@@ -66,6 +67,7 @@ lslimit_cmd.parser.add_option(
 )
 
 lslimit_cmd.parser.add_all_common_options()
+lslimit_cmd.parser.add_limit_option()
 lslimit_cmd.func = lslimit
 
 

@@ -43,6 +43,7 @@ class SpotifyCLIOpts(Protocol):
 
 class SpotifySyncCLIOpts(Protocol):
     force_refetch: bool
+    limit: int | None
 
 
 class TrackDetails(TypedDict):
@@ -580,11 +581,12 @@ class SpotifyPlugin(
             default=False,
             help="re-download data when already present",
         )
+        sync_cmd.parser.add_limit_option()
 
         def func(
             lib: Library, opts: SpotifySyncCLIOpts, args: list[str]
         ) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 
         sync_cmd.func = func

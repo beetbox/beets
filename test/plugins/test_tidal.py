@@ -1072,7 +1072,7 @@ class TestTidalsync(TidalPluginTest):
         self._run_tidalsync("path::aaa")
 
         self.lib.items.assert_called_once_with(
-            ["data_source:tidal", "path::aaa"]
+            ["data_source:tidal", "path::aaa"], limit=None
         )
         self.tidal.sync_item_popularity.assert_called_once_with(
             ["items"], write=False, force=False
@@ -1085,7 +1085,9 @@ class TestTidalsync(TidalPluginTest):
 
         self._run_tidalsync()
 
-        self.lib.items.assert_called_once_with(["data_source:tidal"])
+        self.lib.items.assert_called_once_with(
+            ["data_source:tidal"], limit=None
+        )
         self.tidal.sync_item_popularity.assert_called_once_with(
             ["items"], write=False, force=False
         )
@@ -1099,9 +1101,19 @@ class TestTidalsync(TidalPluginTest):
         self._run_tidalsync("-a", "artist:Test")
 
         self.lib.albums.assert_called_once_with(
-            ["data_source:tidal", "artist:Test"]
+            ["data_source:tidal", "artist:Test"], limit=None
         )
         self.tidal.sync_album_popularity.assert_called_once_with(
             ["albums"], write=False, force=False
         )
         self.tidal.sync_item_popularity.assert_not_called()
+
+    def test_tidalsync_passes_limit_to_query(self):
+        self.lib.items = Mock(return_value=["items"])
+        self.tidal.sync_item_popularity = Mock()
+
+        self._run_tidalsync("--limit", "1", "artist:Test")
+
+        self.lib.items.assert_called_once_with(
+            ["data_source:tidal", "artist:Test"], limit=1
+        )

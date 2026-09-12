@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 
 class BPSyncCLIOpts(Protocol):
+    limit: int | None
     move: bool | None
     pretend: bool
     write: bool | None
@@ -63,6 +64,7 @@ class BPSyncPlugin(BeetsPlugin):
             help="don't write updated metadata to files",
         )
         cmd.parser.add_format_option()
+        cmd.parser.add_limit_option()
         cmd.func = self.func
         return [cmd]
 
@@ -72,8 +74,8 @@ class BPSyncPlugin(BeetsPlugin):
         pretend = opts.pretend
         write = ui.should_write(opts.write)
 
-        self.singletons(lib, args, move, pretend, write)
-        self.albums(lib, args, move, pretend, write)
+        self.singletons(lib, args, move, pretend, write, opts.limit)
+        self.albums(lib, args, move, pretend, write, opts.limit)
 
     def singletons(
         self,
@@ -82,11 +84,12 @@ class BPSyncPlugin(BeetsPlugin):
         move: bool,
         pretend: bool,
         write: bool,
+        limit: int | None,
     ) -> None:
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items([*query, "singleton:true"]):
+        for item in lib.items([*query, "singleton:true"], limit=limit):
             if not item.mb_trackid:
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
@@ -146,12 +149,13 @@ class BPSyncPlugin(BeetsPlugin):
         move: bool,
         pretend: bool,
         write: bool,
+        limit: int | None,
     ) -> None:
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
         # Process matching albums.
-        for album in lib.albums(query):
+        for album in lib.albums(query, limit=limit):
             # Do we have a valid Beatport album?
             items = self.get_album_tracks(album)
             if not items:

@@ -95,6 +95,9 @@ file. The available options mirror the command-line options:
 Examples
 --------
 
+Use ``-l``/``--limit`` to cap the matched tracks or albums before detecting
+duplicates.
+
 List all duplicate tracks in your collection:
 
 ::

@@ -452,6 +452,26 @@ class CommonOptionsParserTest(unittest.TestCase):
         parser.parse_args(["-f", "$foo2", "-a"])
         assert config["format_album"].as_str() == "$foo2"
 
+    def test_limit_option(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_limit_option()
+
+        assert parser.parse_args([]) == ({"limit": None}, [])
+        assert parser.parse_args(["-l", "1"]) == ({"limit": 1}, [])
+        assert parser.parse_args(["--limit", "2"]) == ({"limit": 2}, [])
+
+        with pytest.raises(UserError, match="must be a non-negative integer"):
+            parser.parse_args(["-l", "-1"])
+
+    def test_limit_option_with_custom_flags(self):
+        parser = ui.CommonOptionsParser()
+        parser.add_limit_option(flags=("--limit",))
+
+        assert parser.parse_args(["--limit", "1"]) == ({"limit": 1}, [])
+
+        with pytest.raises(SystemExit):
+            parser.parse_args(["-l", "1"])
+
     def test_add_all_common_options(self):
         parser = ui.CommonOptionsParser()
         parser.add_all_common_options()

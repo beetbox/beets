@@ -81,6 +81,9 @@ of tracks missing from each album.
 Examples
 --------
 
+Use ``-l``/``--limit`` to cap the matched albums before checking for missing
+tracks or releases.
+
 List all missing tracks in your collection:
 
 ::

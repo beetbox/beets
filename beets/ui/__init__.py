@@ -612,6 +612,33 @@ class CommonOptionsParser(optparse.OptionParser):
         )
         self.add_option(opt)
 
+    def _set_limit(
+        self,
+        option: optparse.Option,
+        opt_str: str,
+        value: int,
+        parser: optparse.OptionParser,
+    ) -> None:
+        """Validate and store a maximum query result count."""
+        if value < 0:
+            raise UserError(
+                f"{opt_str} argument must be a non-negative integer"
+            )
+        assert option.dest is not None
+        setattr(parser.values, option.dest, value)
+
+    def add_limit_option(
+        self, flags: Sequence[str] = ("-l", "--limit")
+    ) -> None:
+        """Add an option to cap the number of matched query results."""
+        self.add_option(
+            *flags,
+            type="int",
+            action="callback",
+            callback=self._set_limit,
+            help="limit query results",
+        )
+
     def add_all_common_options(self) -> None:
         """Add album, path and format options."""
         self.add_album_option()

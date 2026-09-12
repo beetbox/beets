@@ -55,6 +55,7 @@ if TYPE_CHECKING:
 
 
 class LyricsCLIOpts(Protocol):
+    limit: int | None
     print: bool
     rest_directory: str | None
 
@@ -1197,7 +1198,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             self.config.set(vars(opts))
-            items = list(lib.items(args))
+            items = list(lib.items(args, limit=opts.limit))
             for item in items:
                 self.add_item_lyrics(item, ui.should_write())
                 if item.lyrics and opts.print:
@@ -1208,6 +1209,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             ):
                 RestFiles(Path(opts.rest_directory).expanduser()).write(items)
 
+        cmd.parser.add_limit_option(flags=("--limit",))
         cmd.func = func
         return [cmd]
 
