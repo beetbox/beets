@@ -18,9 +18,16 @@ New features
   <aunique>`; the default identifiers are ``title`` and the default
   disambiguators are ``track disc artist``.
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/lyrics`: Support 3-decimal millisecond timestamps (e.g.
+  ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
+  millisecond precision were erroneously rejected and fell back to plain lyrics.
+  :bug:`7001`
+- Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
+  their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
+  available. :bug:`7002`
 
 ..
     For plugin developers
