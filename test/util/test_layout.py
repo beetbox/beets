@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from beets.util.color import uncolorize
 from beets.util.layout import split_into_lines
 
 
@@ -28,3 +29,14 @@ class LayoutTestCase(TestCase):
         split_txt = ["\x1b[31mtest\x1b[39;49;00mt", "est", "test", "test"]
         txt = split_into_lines(colored_text, 5, 5)
         assert txt == split_txt
+
+    def test_split_into_lines_two_spans_in_one_word(self):
+        # A single word containing two separately-colored, non-adjacent
+        # spans (e.g. two highlighted typo fixes within one word) must stay
+        # one word, not get split at the second colored span.
+        red, reset = "\x1b[31m", "\x1b[39;49;00m"
+        colored_text = f"extra{red}A{reset}ordin{red}B{reset}ary"
+        txt = split_into_lines(colored_text, 100, 100)
+        assert len(txt) == 1
+        assert " " not in uncolorize(txt[0])
+        assert uncolorize(txt[0]) == "extraAordinBary"
