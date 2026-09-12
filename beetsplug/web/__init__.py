@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 import flask
@@ -391,8 +392,12 @@ def album_query(queries: Sequence[str]) -> Any:
 @app.route("/album/<int:album_id>/art")
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
-    if album and album.artpath:
-        return flask.send_file(album.artpath.decode())
+    if album and (artpath := album.art_filepath):
+        # artpath may be stored relative to the library directory; resolve it
+        # to an absolute path so send_file doesn't look under the app root.
+        if not artpath.is_absolute():
+            artpath = Path(os.fsdecode(g.lib.directory)) / artpath
+        return flask.send_file(util.syspath(artpath))
     return flask.abort(404)
 
 
