@@ -2,6 +2,7 @@ name: Lint check
 run-name: Lint code
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - master
@@ -150,8 +151,10 @@ jobs:
         run: poe lint-docs
 
       - name: Check changelog entries are added under Unreleased section
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
         run: |
-          git diff --word-diff=plain -U1000 origin/${{ github.base_ref }} -- docs/changelog.rst | awk '
+          git diff --word-diff=plain -U1000 "$BASE_SHA" -- docs/changelog.rst | awk '
             # match the new version header
             /^[0-9]+\.[0-9]+\.[0-9]+ \(/ { past_version=1 }
             # match a line that starts with a new changelog entry
