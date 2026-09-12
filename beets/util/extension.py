@@ -167,10 +167,22 @@ def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:
     mp3_data = data[data_offset + 8 :]
 
     syspath = Path(util.syspath(path))
-    mp3_path = syspath.with_suffix(".mp3")
+    # If the source already carries an `.mp3` extension (in any case),
+    # rewrite the extracted stream in place: `with_suffix(".mp3")` would
+    # create a second file next to e.g. `track.MP3` on case-sensitive
+    # filesystems, and the original would then be wrongly removed below.
+    if syspath.suffix.lower() == ".mp3":
+        mp3_path = syspath
+    else:
+        mp3_path = syspath.with_suffix(".mp3")
     mp3_path.write_bytes(mp3_data)
 
-    util.remove(path)
+    # When the source already has an `.mp3` extension, it has just been
+    # rewritten in place with the extracted stream, so there is no separate
+    # original left to remove. Compare with `samefile` so that a case-only
+    # difference on a case-insensitive filesystem is caught too.
+    if not util.samefile(mp3_path, syspath):
+        util.remove(path)
 
     if isinstance(path, str):
         return str(mp3_path)
