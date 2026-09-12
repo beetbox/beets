@@ -682,7 +682,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         import threading
 
         from beets.library import Library
-        from beets.util import syspath
+        from beets.util import bytestring_path
 
         # The ORM auto-absolutizes a relative artpath using a ContextVar
         # that gets set when the Library is constructed (in this thread).
@@ -703,13 +703,12 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         lib = Library(str(dbpath), str(self.lib_path))
         web.app.config["lib"] = lib
         try:
-            rel = os.path.join(b"rel_art_dir", b"cover.png")
-            abspath = os.path.join(lib.directory, rel)
-            os.makedirs(os.path.dirname(syspath(abspath)), exist_ok=True)
-            with open(syspath(abspath), "wb") as f:
-                f.write(b"PNGDATA")
+            rel = Path("rel_art_dir") / "cover.png"
+            abspath = Path(os.fsdecode(lib.directory)) / rel
+            abspath.parent.mkdir(parents=True, exist_ok=True)
+            abspath.write_bytes(b"PNGDATA")
 
-            lib.add(Album(album="relartalbum", artpath=rel))
+            lib.add(Album(album="relartalbum", artpath=bytestring_path(rel)))
             album_id = lib.albums("relartalbum").get().id
 
             result = {}
