@@ -725,6 +725,18 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
 
         self._assert_dest(b"/base/foo/the title", i1)
 
+    def test_adding_album_invalidates_memoized_result(self, items):
+        i1, i2 = items
+        album2 = self.lib.get_album(i2)
+        album2.album = "different album"
+        album2.store()
+        self._assert_dest(b"/base/foo/the title", i1)
+
+        i3 = item(year=2003)
+        self.lib.add_album([i3])
+
+        self._assert_dest(b"/base/foo [2001]/the title", i1)
+
     def test_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
         album2 = self.lib.get_album(i2)
@@ -770,6 +782,14 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         i1, _i2 = items
         self._setf("foo%aunique{albumartist album,year,}/$title")
         self._assert_dest(b"/base/foo 2001/the title", i1)
+
+    def test_unique_memoizes_brackets_independently(self, items):
+        i1, _i2 = items
+        self._setf(
+            "foo%aunique{albumartist album,year,()}"
+            "%aunique{albumartist album,year,[]}/$title"
+        )
+        self._assert_dest(b"/base/foo (2001) [2001]/the title", i1)
 
     def test_key_flexible_attribute(self, items):
         i1, i2 = items
@@ -824,6 +844,12 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         self.lib.add_album([i2])
         self._assert_dest(b"/base/foo/the title", i1)
 
+    def test_sunique_skips_config_for_album_item(self, items):
+        _i1, i2 = items
+        self.lib.add_album([i2])
+        config["sunique"]["bracket"] = 5
+        self._assert_dest(b"/base/foo/the title", i2)
+
     def test_sunique_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
         i2.year = i1.year
@@ -873,6 +899,172 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i2.store()
         self._setf("foo/$title%sunique{artist title flex,year}")
         self._assert_dest(b"/base/foo/the title", i1)
+
+
+class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
+    @pytest.fixture(autouse=True)
+    def items(self, setup):
+        self.lib.directory = b"/base"
+        self.lib.path_formats = [("default", "path")]
+
+        i1 = item(title="Common Title", track=7, disc=1, artist="Some Artist")
+        i2 = item(title="Common Title", track=11, disc=1, artist="Some Artist")
+        self.lib.add_album([i1, i2])
+        self.lib._connection().commit()
+
+        self._setf("$title%tunique{title,track}")
+        return i1, i2
+
+    def test_expands_to_disambiguating_track(self, items):
+        i1, i2 = items
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest(b"/base/Common Title [11]", i2)
+
+    def test_with_default_arguments_uses_disc(self, items):
+        i1, i2 = items
+        i2.disc = 2
+        i2.store()
+        self._setf("$title%tunique{}")
+        self._assert_dest(b"/base/Common Title [01]", i1)
+        self._assert_dest(b"/base/Common Title [02]", i2)
+
+    def test_expands_to_nothing_for_unique_titles(self, items):
+        i1, i2 = items
+        i2.title = "Different"
+        i2.store()
+
+        self._assert_dest(b"/base/Common Title", i1)
+
+    def test_does_not_match_singletons(self, items):
+        i1, _i2 = items
+        i3 = item()
+        i3.title = "Common Title"
+        self.lib.add(i3)
+
+        # i1 still needs disambiguation from i2 in the same album
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        # Singleton should NOT get track disambiguation
+        self._assert_dest(b"/base/Common Title", i3)
+
+    def test_does_not_match_cross_album(self, items):
+        i1, _i2 = items
+        i3 = item()
+        i3.title = "Common Title"
+        i3.track = 7
+        self.lib.add_album([i3])
+
+        # i1 still needs disambiguation from i2 in the same album
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        # Other album's tracks should NOT be matched
+        self._assert_dest(b"/base/Common Title", i3)
+
+    def test_use_fallback_numbers_when_identical(self, items):
+        i1, i2 = items
+        i2.track = i1.track
+        i2.disc = i1.disc
+        i2.artist = i1.artist
+        i2.store()
+
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    @pytest.mark.parametrize("disambiguators", ["track disc", "disc"])
+    def test_expands_to_disambiguating_disc(self, items, disambiguators):
+        i1, i2 = items
+        i2.track = i1.track
+        i2.disc = 2
+        i2.store()
+
+        self._setf(f"$title%tunique{{title,{disambiguators}}}")
+        self._assert_dest(b"/base/Common Title [01]", i1)
+        self._assert_dest(b"/base/Common Title [02]", i2)
+
+    def test_change_brackets(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,()}")
+        self._assert_dest(b"/base/Common Title (07)", i1)
+
+    def test_remove_brackets(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,}")
+        self._assert_dest(b"/base/Common Title 07", i1)
+
+    def test_drop_empty_disambig(self, items):
+        i1, i2 = items
+        i1.trackdisambig = "live version"
+        i2.trackdisambig = None
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,trackdisambig}")
+        # i1 has trackdisambig, so gets suffixed
+        self._assert_dest(b"/base/Common Title [live version]", i1)
+        # i2 has no trackdisambig, so no suffix
+        self._assert_dest(b"/base/Common Title", i2)
+
+    def test_with_flex_key_field(self, items):
+        i1, i2 = items
+        i1.title = "Diff1"
+        i2.title = "Diff2"
+        i1["flexkey"] = "one"
+        i2["flexkey"] = "two"
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{flexkey,track}")
+        self._assert_dest(b"/base/Diff1", i1)
+        self._assert_dest(b"/base/Diff2", i2)
+
+    @pytest.mark.parametrize(
+        "first_artist, second_artist, replacement, asciify",
+        [
+            ("AC/DC", "AC_DC", None, False),
+            ("AC~DC", "AC_DC", (re.compile("~"), "_"), False),
+            ("Beyonc\u00e9", "Beyonce", None, True),
+        ],
+    )
+    def test_disambiguator_collision_after_path_formatting(
+        self, items, first_artist, second_artist, replacement, asciify
+    ):
+        i1, i2 = items
+        i1.track = 1
+        i2.track = 1
+        i1.disc = 1
+        i2.disc = 1
+        i1.artist = first_artist
+        i2.artist = second_artist
+        if replacement:
+            self.lib.replacements = [replacement]
+        config["asciify_paths"] = asciify
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,artist}")
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    def test_path_formatted_key_collision(self, items):
+        i1, i2 = items
+        i1.title = "AC/DC"
+        i2.title = "AC_DC"
+        i1.store()
+        i2.store()
+
+        self._assert_dest(b"/base/AC_DC [07]", i1)
+        self._assert_dest(b"/base/AC_DC [11]", i2)
+
+    def test_memoizes_brackets_independently(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,()}%tunique{title,track,[]}")
+        self._assert_dest(b"/base/Common Title (07) [07]", i1)
+
+    def test_reuses_collision_group_analysis(self, items):
+        i1, i2 = items
+        with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
+            self._assert_dest(b"/base/Common Title [07]", i1)
+            self._assert_dest(b"/base/Common Title [11]", i2)
+
+        assert lib_items.call_count == 1
 
 
 class TestPluginDestination(TestHelper):

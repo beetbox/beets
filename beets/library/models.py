@@ -1163,6 +1163,7 @@ class Item(LibModel):
             )
 
         self.db._memotable = {}
+        self.db._group_memotable = {}
 
     def move(
         self,
@@ -1427,7 +1428,11 @@ class DefaultTemplateFunctions:
         if album_id is None:
             return ""
 
-        memokey = self._tmpl_unique_memokey("aunique", keys, disam, album_id)
+        if bracket is None:
+            bracket = beets.config["aunique"]["bracket"].as_str()
+        memokey = self._tmpl_unique_memokey(
+            "aunique", keys, disam, bracket, album_id
+        )
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
@@ -1485,17 +1490,68 @@ class DefaultTemplateFunctions:
             lambda i: i.album_id is not None,
         )
 
+    def tmpl_tunique(
+        self,
+        keys: str | None = None,
+        disam: str | None = None,
+        bracket: str | None = None,
+    ) -> str:
+        """Generate a string that is guaranteed to be unique among all
+        items in the same album that share the same set of keys.
+
+        A field from "disam" is used in the string if one is sufficient to
+        disambiguate the tracks. Otherwise, a fallback opaque value is
+        used. Both "keys" and "disam" should be given as
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
+        """
+        if not self.item or not self.lib:
+            return ""
+
+        if isinstance(self.item, Item):
+            item_id = self.item.id
+        else:
+            raise NotImplementedError("tunique is only implemented for items")
+
+        if item_id is None:
+            return ""
+
+        # Only applies to items in an album.
+        album_id = self.item.get("album_id")
+        if album_id is None:
+            return ""
+
+        resolved_keys = keys or beets.config["tunique"]["keys"].as_str()
+        if not resolved_keys.split():
+            resolved_keys = "title"
+
+        query = self.item.field_query("album_id", album_id, dbcore.MatchQuery)
+
+        return self._tmpl_unique(
+            "tunique",
+            resolved_keys,
+            disam,
+            bracket,
+            item_id,
+            self.item,
+            lambda i: i.album_id is None,
+            query=query,
+            scope_id=album_id,
+        )
+
     def _tmpl_unique_memokey(
         self,
         name: str | None,
         keys: str | None,
         disam: str | None,
+        bracket: str | None,
         item_id: int | None,
-    ) -> tuple[str | None, str | None, str | None, int | None]:
+    ) -> tuple[str | None, str | None, str | None, str | None, int | None]:
         """Get the memokey for the unique template named "name" for the
         specific parameters.
         """
-        return (name, keys, disam, item_id)
+        return (name, keys, disam, bracket, item_id)
 
     def _tmpl_unique(
         self,
@@ -1506,6 +1562,8 @@ class DefaultTemplateFunctions:
         item_id: int,
         db_item: LibModel,
         skip_item: Callable[[LibModel], bool],
+        query: dbcore.Query | None = None,
+        scope_id: int | None = None,
     ) -> str:
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
@@ -1524,26 +1582,25 @@ class DefaultTemplateFunctions:
         "skip_item" is a function that must return True when the template
         should return an empty string.
 
-        "initial_subqueries" is a list of subqueries that should be included
-        in the query to find the ambiguous items.
+        "query" is a pre-built query selecting candidate items instead of
+        using ``db_item.duplicates_query(keys)``.
         """
         lib = self.lib
         if lib is None:
             return ""
 
-        memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
+        if skip_item(db_item):
+            return ""
+
+        if bracket is None:
+            bracket = beets.config[name]["bracket"].as_str()
+        memokey = self._tmpl_unique_memokey(name, keys, disam, bracket, item_id)
         memoval = lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
 
-        if skip_item(db_item):
-            lib._memotable[memokey] = ""
-            return ""
-
         keys = keys or beets.config[name]["keys"].as_str()
         disam = disam or beets.config[name]["disambiguators"].as_str()
-        if bracket is None:
-            bracket = beets.config[name]["bracket"].as_str()
         keys_list = keys.split()
         disam_list = disam.split()
 
@@ -1555,29 +1612,54 @@ class DefaultTemplateFunctions:
             bracket_l = ""
             bracket_r = ""
 
-        # Find matching items to disambiguate with.
-        query = db_item.duplicates_query(keys_list)
-        ambigous_items = (
-            lib.items(query) if isinstance(db_item, Item) else lib.albums(query)
-        )
+        def normalized_field(item: LibModel, field: str) -> str:
+            value = item.formatted(for_path=True).get(field)
+            if beets.config["asciify_paths"]:
+                value = util.asciify_path(value)
+            return util.sanitize_path(value, lib.replacements)
+
+        # Every member of a collision group reaches the same conclusion about
+        # which disambiguator to use, so compute it once per group.
+        key_values = tuple(normalized_field(db_item, key) for key in keys_list)
+        groupkey = (name, keys, disam, scope_id, key_values)
+        if (group := lib._group_memotable.get(groupkey)) is None:
+            scope_query = (
+                db_item.duplicates_query(keys_list) if query is None else query
+            )
+            candidate_items = (
+                lib.items(scope_query)
+                if isinstance(db_item, Item)
+                else lib.albums(scope_query)
+            )
+            ambiguous_items = [
+                item
+                for item in candidate_items
+                if tuple(normalized_field(item, key) for key in keys_list)
+                == key_values
+            ]
+
+            disambiguator = None
+            for candidate in disam_list:
+                disam_values = {
+                    normalized_field(item, candidate)
+                    for item in ambiguous_items
+                }
+                if len(disam_values) == len(ambiguous_items):
+                    disambiguator = candidate
+                    break
+
+            group = (len(ambiguous_items), disambiguator)
+            lib._group_memotable[groupkey] = group
+
+        ambiguous_count, disambiguator = group
 
         # If there's only one item to matching these details, then do
         # nothing.
-        if len(ambigous_items) == 1:
+        if ambiguous_count <= 1:
             lib._memotable[memokey] = ""
             return ""
 
-        # Find the first disambiguator that distinguishes the items.
-        for disambiguator in disam_list:
-            # Get the value for each item for the current field.
-            disam_values = {s.get(disambiguator, "") for s in ambigous_items}
-
-            # If the set of unique values is equal to the number of
-            # items in the disambiguation set, we're done -- this is
-            # sufficient disambiguation.
-            if len(disam_values) == len(ambigous_items):
-                break
-        else:
+        if disambiguator is None:
             # No disambiguator distinguished all fields.
             res = f" {bracket_l}{item_id}{bracket_r}"
             lib._memotable[memokey] = res
