@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import itertools
 import json
 import os
 from typing import TYPE_CHECKING, Any, Protocol
@@ -81,7 +82,7 @@ def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
 
 
 def json_generator(
-    items: Sequence[LibModel], root: str, expand: bool = False
+    items: Iterable[LibModel], root: str, expand: bool = False
 ) -> Iterator[Any]:
     """Generator that dumps list of beets Items or Albums as JSON
 
@@ -114,6 +115,26 @@ def is_delete() -> bool:
     """
 
     return flask.request.args.get("delete") is not None
+
+
+def _page_params() -> tuple[int, int | None]:
+    """Read (offset, limit) from the query string. Returns (0, None) when no
+    paging is requested. Invalid values are ignored; limit clamps to 500."""
+    args = flask.request.args
+    has_offset = "offset" in args
+    has_limit = "limit" in args
+    if not has_offset and not has_limit:
+        return 0, None
+    try:
+        offset = max(0, int(args.get("offset", 0)))
+    except (TypeError, ValueError):
+        offset = 0
+    limit: int | None
+    try:
+        limit = max(0, min(int(args["limit"]), 500)) if has_limit else None
+    except (TypeError, ValueError):
+        limit = None
+    return offset, limit
 
 
 def get_method() -> str:
@@ -180,6 +201,25 @@ def resource_query(name: str, patchable: bool = False) -> Any:
         query_func: Callable[[Iterable[str]], Sequence[LibModel]],
     ) -> Any:
         def responder(queries: Iterable[str]) -> Any:
+            if get_method() == "GET":
+                # Optional paging. Without offset/limit the full matching set
+                # is streamed as before. With them, slice the *matched*
+                # results: iterating the query result applies any
+                # flexible-field predicates first, so islice never drops
+                # matches the way a SQL LIMIT on candidate rows would. Object
+                # construction and serialization stop once the page is filled.
+                offset, limit = _page_params()
+                entities: Iterable[LibModel] = query_func(queries)
+                if limit is not None or offset:
+                    end = (offset + limit) if limit is not None else None
+                    entities = itertools.islice(entities, offset, end)
+                return app.response_class(
+                    json_generator(
+                        entities, root="results", expand=is_expand()
+                    ),
+                    mimetype="application/json",
+                )
+
             entities = query_func(queries)
 
             if get_method() == "DELETE":
@@ -204,14 +244,6 @@ def resource_query(name: str, patchable: bool = False) -> Any:
                     mimetype="application/json",
                 )
 
-            if get_method() == "GET":
-                return app.response_class(
-                    json_generator(
-                        entities, root="results", expand=is_expand()
-                    ),
-                    mimetype="application/json",
-                )
-
             return flask.abort(405)
 
         responder.__name__ = f"query_{name}"
@@ -221,13 +253,30 @@ def resource_query(name: str, patchable: bool = False) -> Any:
     return make_responder
 
 
-def resource_list(name: str) -> Any:
+def resource_list(name: str, paginated: bool = False) -> Any:
     """Decorates a function to handle RESTful HTTP request for a list of
     resources.
     """
 
     def make_responder(list_all: Callable[[], Sequence[LibModel]]) -> Any:
         def responder() -> Any:
+            if paginated:
+                offset, limit = _page_params()
+                if not (limit is None and not offset):
+                    # Reuse one result set: len() counts via the row count
+                    # without constructing every object, and islice builds only
+                    # the requested page (so a small page doesn't materialize
+                    # the whole library on every infinite-scroll request).
+                    results = list_all()
+                    total = len(results)
+                    end = (offset + limit) if limit is not None else None
+                    page = list(itertools.islice(results, offset, end))
+                    resp = app.response_class(
+                        json_generator(page, root=name, expand=is_expand()),
+                        mimetype="application/json",
+                    )
+                    resp.headers["X-Total-Count"] = str(total)
+                    return resp
             return app.response_class(
                 json_generator(list_all(), root=name, expand=is_expand()),
                 mimetype="application/json",
@@ -377,7 +426,7 @@ def get_album(id_: int) -> Any:
 
 @app.route("/album/")
 @app.route("/album/query/")
-@resource_list("albums")
+@resource_list("albums", paginated=True)
 def all_albums() -> Any:
     return g.lib.albums()
 
@@ -415,8 +464,25 @@ def album_unique_field_values(key: str) -> Any:
 def all_artists() -> Any:
     with g.lib.transaction() as tx:
         rows = tx.query("SELECT DISTINCT albumartist FROM albums")
-    all_artists = [row[0] for row in rows]
-    return flask.jsonify(artist_names=all_artists)
+        # Artists have no artwork of their own, so map each one to a cover from
+        # one of its albums (chosen at random per request) for the UI to use as
+        # an avatar. Only albums that actually have art are considered.
+        art_rows = tx.query(
+            "SELECT albumartist, id FROM "
+            "(SELECT albumartist, id FROM albums "
+            "WHERE artpath IS NOT NULL ORDER BY RANDOM()) "
+            "GROUP BY albumartist"
+        )
+    names = [row[0] for row in rows]
+    artist_art = {row[0]: row[1] for row in art_rows}
+    offset, limit = _page_params()
+    if limit is None and not offset:
+        return flask.jsonify(artist_names=names, artist_art=artist_art)
+    total = len(names)
+    end = (offset + limit) if limit is not None else None
+    resp = flask.jsonify(artist_names=names[offset:end], artist_art=artist_art)
+    resp.headers["X-Total-Count"] = str(total)
+    return resp
 
 
 # Library information.

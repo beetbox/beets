@@ -1,10 +1,14 @@
 Web Plugin
 ==========
 
-The ``web`` plugin is a very basic alternative interface to beets that
-supplements the CLI. It can't do much right now, and the interface is a little
-clunky, but you can use it to query and browse your music and---in browsers that
-support HTML5 Audio---you can even play music.
+The ``web`` plugin is a browser-based alternative interface to beets that
+supplements the CLI. It's a modern, buildless single-page application: search
+your library with a simple text box or with the full :doc:`beets query syntax
+</reference/query>`, and browse it by Songs, Albums, or Artists. Selecting an
+album or track shows its metadata and album art, and---in browsers that support
+HTML5 Audio---you can play music directly from the interface. The UI follows
+your system's light/dark theme automatically, with a manual toggle to override
+it.
 
 While it's not meant to replace the CLI, a graphical interface has a number of
 advantages in certain situations. For example, when editing a tag, a natural CLI
@@ -254,6 +258,13 @@ literal path separators in a query, use a backslash instead of a slash.
 This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on
 all items returned by the query.
 
+For ``GET`` this endpoint accepts optional ``offset`` and ``limit`` query string
+parameters to return only a slice of the matches (for example ``?limit=300``),
+which keeps a broad query on a large library from serializing every match. Both
+are optional and backward-compatible -- omitting them returns every matching
+track -- and ``limit`` is capped at 500. The same applies to ``GET
+/album/query/querystring``.
+
 ``GET /item/6/file``
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -282,6 +293,41 @@ items of an album.
 
 ``DELETE`` is only allowed if ``readonly`` configuration option is set to
 ``no``.
+
+``GET /album/`` also accepts optional ``offset`` and ``limit`` query string
+parameters to return a single page of albums, for example ``GET
+/album/?offset=40&limit=20``. Both are optional and backward-compatible:
+omitting them returns every album, exactly as before. ``limit`` is capped at
+500; invalid values for either parameter are ignored. When paging is requested,
+the response also carries an ``X-Total-Count`` header with the total number of
+albums in the library, independent of the page size. ``/item/`` does not support
+paging.
+
+Artists
+~~~~~~~
+
+For artists, the following endpoint is provided:
+
+- ``GET /artist/``
+
+Responds with the list of distinct album artist names in the library, along with
+an ``artist_art`` map from each artist that has album art to the id of one of
+that artist's albums (chosen at random per request). Artists whose albums have
+no art are omitted from the map. The web UI uses this to show a cover as the
+artist's avatar, since artists have no artwork of their own.
+
+::
+
+    {
+      "artist_names": ["Artist A", "Artist B", ...],
+      "artist_art": {"Artist A": 42, ...}
+    }
+
+Like ``/album/``, this endpoint optionally accepts ``offset`` and ``limit``
+query string parameters to page through the list of names. The same rules apply:
+both parameters are optional and backward-compatible, ``limit`` is capped at
+500, and a paginated response carries an ``X-Total-Count`` header with the total
+number of artists.
 
 ``GET /stats``
 ~~~~~~~~~~~~~~
