@@ -16,6 +16,16 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/lyrics`: Support 3-decimal millisecond timestamps (e.g.
+  ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
+  millisecond precision were erroneously rejected and fell back to plain lyrics.
+  :bug:`7001`
+- Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
+  their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
+  available. :bug:`7002`
+- :doc:`plugins/discogs`: Read the release month and day from the API's
+  ``released`` field instead of only the year. Fix Discogs match overwriting
+  month and day tags on import.
 - Empty leading path-format fields (e.g. from missing metadata) combined with a
   custom ``replace`` configuration no longer produce an absolute destination
   path that escapes the library or :doc:`plugins/convert` destination directory;

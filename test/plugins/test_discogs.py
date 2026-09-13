@@ -242,6 +242,60 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         assert d.style is None
         assert d.genres == ["GENRE1", "GENRE2"]
 
+    @pytest.mark.parametrize(
+        "released, expected",
+        [
+            _p("2000-08-13", (2000, 8, 13), id="full-date"),
+            _p("2000-08", (2000, 8, None), id="year-and-month"),
+            _p("2000", (2000, None, None), id="year-only"),
+            _p("2000-00-00", (2000, None, None), id="zeroed-month-and-day"),
+            _p("2000-08-00", (2000, 8, None), id="zeroed-day"),
+            _p("2000-8-1", (2000, 8, 1), id="unpadded"),
+            _p("  2000-08-13  ", (2000, 8, 13), id="surrounding-whitespace"),
+            # Fall back to the release's own `year` field.
+            _p("", (3001, None, None), id="empty"),
+            _p(None, (3001, None, None), id="missing"),
+            _p("0000-00-00", (3001, None, None), id="zeroed-date"),
+            _p("13 Aug 2000", (3001, None, None), id="unparseable"),
+        ],
+    )
+    def test_parse_release_date(self, released, expected):
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = released
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.year, d.month, d.day) == expected
+
+    def test_original_date_without_master(self):
+        """A release without a master release is its own original."""
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = "2000-08-13"
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.original_year, d.original_month, d.original_day) == (
+            2000,
+            8,
+            13,
+        )
+
+    def test_original_date_with_master(self, monkeypatch):
+        """Only the master release's year is known, so it alone is used."""
+        monkeypatch.setattr(DiscogsPlugin, "get_master_year", lambda *_: 1990)
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = "2000-08-13"
+        release.data["master_id"] = 22222222
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.year, d.month, d.day) == (2000, 8, 13)
+        assert (d.original_year, d.original_month, d.original_day) == (
+            1990,
+            None,
+            None,
+        )
+
 
 class TestStripDisambiguation(DiscogsTestMixin):
     @pytest.fixture
