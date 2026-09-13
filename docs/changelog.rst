@@ -16,6 +16,9 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/playlist`: Match playlist entries that point inside the active
+  library directory when paths are stored library-relative. :bug:`6784`
+- :doc:`plugins/playlist`: Ignore blank lines in M3U playlists.
 - :doc:`plugins/lyrics`: Support 3-decimal millisecond timestamps (e.g.
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
