@@ -139,6 +139,9 @@ Bug fixes
   ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
   album's ``media`` is now their common format (``Hybrid SACD``) instead of the
   generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/playlist`: Match playlist entries that point inside the active
+  library directory when paths are stored library-relative. :bug:`6784`
+- :doc:`plugins/playlist`: Ignore blank lines in M3U playlists.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
