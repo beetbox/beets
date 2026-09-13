@@ -26,6 +26,10 @@ Bug fixes
 - :doc:`plugins/discogs`: Read the release month and day from the API's
   ``released`` field instead of only the year. Fix Discogs match overwriting
   month and day tags on import.
+- Empty leading path-format fields (e.g. from missing metadata) combined with a
+  custom ``replace`` configuration no longer produce an absolute destination
+  path that escapes the library or :doc:`plugins/convert` destination directory;
+  leading path separators are now stripped from the rendered path. :bug:`4889`
 
 ..
     For plugin developers
