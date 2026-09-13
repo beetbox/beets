@@ -819,6 +819,7 @@ def get_most_common_tags(items: Sequence[Item]) -> Likelies:
         "year",
         "disctotal",
         "mb_albumid",
+        "mb_releasegroupid",
         "label",
         "barcode",
         "catalognum",
@@ -1253,6 +1254,7 @@ class Likelies(AttrDict[Any]):
     year: int
     disctotal: int
     mb_albumid: str
+    mb_releasegroupid: str
     label: str
     barcode: str
     catalognum: str

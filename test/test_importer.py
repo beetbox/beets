@@ -1497,6 +1497,105 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         return album
 
 
+class TestAsIsImportDuplicateAlbum(ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
+        self.album = self.add_album_fixture()
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            autotag=False,
+            duplicate_action="skip",
+            duplicate_keys={"album": "albumartist album"},
+        )
+
+    @pytest.mark.parametrize(
+        "old_album_id,new_album_id,old_group_id,new_group_id,album_count",
+        [
+            pytest.param(
+                "43ca95e6-8d1e-4165-99a8-e6fd5a993500",
+                "7a36ef45-f1c4-44c5-ae5a-7d9cabfe2718",
+                "cbe55545-7a3e-3f8c-8c5f-33984a818e91",
+                "6258df90-78c7-3395-8830-e7b4328a002c",
+                2,
+                id="different-releases-and-release-groups",
+            ),
+            pytest.param(
+                "old-release",
+                "new-release",
+                "same-release-group",
+                "same-release-group",
+                2,
+                id="different-releases-same-release-group",
+            ),
+            pytest.param(
+                "",
+                "",
+                "old-release-group",
+                "new-release-group",
+                2,
+                id="missing-releases-different-release-groups",
+            ),
+            pytest.param(
+                "same-release",
+                "same-release",
+                "old-release-group",
+                "new-release-group",
+                1,
+                id="same-release",
+            ),
+            pytest.param(
+                "",
+                "",
+                "same-release-group",
+                "same-release-group",
+                1,
+                id="missing-releases-same-release-group",
+            ),
+            pytest.param(
+                "",
+                "new-release",
+                "",
+                "new-release-group",
+                1,
+                id="identifiers-missing-on-one-side",
+            ),
+        ],
+    )
+    def test_musicbrainz_id_precedence(
+        self,
+        old_album_id,
+        new_album_id,
+        old_group_id,
+        new_group_id,
+        album_count,
+    ):
+        self.album.update(
+            {
+                "albumartist": "Santana",
+                "album": "Santana",
+                "mb_albumid": old_album_id,
+                "mb_releasegroupid": old_group_id,
+            }
+        )
+        self.album.store()
+
+        import_file = self.import_media[0]
+        import_file.update(
+            {
+                "artist": "Santana",
+                "albumartist": "Santana",
+                "album": "Santana",
+                "mb_albumid": new_album_id,
+                "mb_releasegroupid": new_group_id,
+            }
+        )
+        import_file.save()
+
+        self.importer.run()
+
+        assert len(self.lib.albums()) == album_count
+
+
 @patch(
     "beets.metadata_plugins.candidates", Mock(side_effect=album_candidates_mock)
 )

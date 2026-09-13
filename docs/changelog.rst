@@ -13,9 +13,12 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Album imports no longer treat releases with conflicting MusicBrainz release or
+  release-group IDs as duplicates merely because their album artist and title
+  match.
 
 ..
     For plugin developers

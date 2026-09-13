@@ -90,6 +90,23 @@ def _dup_items(obj: library.Album | library.Item) -> list[library.Item]:
     return [obj]
 
 
+def _musicbrainz_album_ids_match(
+    new_album: library.Album, old_album: library.Album
+) -> bool:
+    """Compare MusicBrainz album IDs in order of specificity.
+
+    A release ID identifies a particular release, so it takes precedence over
+    the broader release-group ID. If either side lacks an ID at both levels,
+    callers must fall back to the configured duplicate keys.
+    """
+    for field in ("mb_albumid", "mb_releasegroupid"):
+        new_id = new_album.get(field)
+        old_id = old_album.get(field)
+        if new_id and old_id:
+            return new_id == old_id
+    return True
+
+
 def resolve_upgrade(
     new_items: list[library.Item],
     old_items: list[library.Item],
@@ -590,6 +607,9 @@ class ImportTask(BaseImportTask):
 
         duplicates = []
         for album in lib.albums(dup_query):
+            if not _musicbrainz_album_ids_match(tmp_album, album):
+                continue
+
             # Check whether the album paths are all present in the task
             # i.e. album is being completely re-imported by the task,
             # in which case it is not a duplicate (will be replaced).
