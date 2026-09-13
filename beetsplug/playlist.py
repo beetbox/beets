@@ -69,9 +69,7 @@ class PlaylistQuery(InQuery[bytes]):
                     continue
 
                 paths.append(
-                    beets.util.normpath(
-                        os.path.join(relative_to_bytes, line)
-                    )
+                    beets.util.normpath(os.path.join(relative_to_bytes, line))
                 )
             f.close()
             break
