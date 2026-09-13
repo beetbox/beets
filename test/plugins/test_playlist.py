@@ -16,10 +16,13 @@ class PlaylistTestCase(PluginTestCase):
     z_track_path = Path("x") / "y" / "z.mp3"
     nonexisting_track_path = Path("nonexisting.mp3")
 
+    def get_music_dir(self):
+        return (Path("~") / "Music").expanduser()
+
     def setUp(self):
         super().setUp()
 
-        self.music_dir = (Path("~") / "Music").expanduser()
+        self.music_dir = self.get_music_dir()
 
         for p, title, album in [
             (self.c_track_path, "some item", "some album"),
@@ -95,6 +98,11 @@ class PlaylistQueryTest:
 class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
         self.config["playlist"]["relative_to"] = "library"
+
+
+class PlaylistTestRelativeToActiveLib(PlaylistTestRelativeToLib):
+    def get_music_dir(self):
+        return self.lib_path
 
 
 class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
