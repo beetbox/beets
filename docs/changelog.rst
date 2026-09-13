@@ -104,6 +104,9 @@ Bug fixes
   aborting and leaving it partially updated. :bug:`2419`
 - :doc:`plugins/deezer`: ``deezerupdate`` now stores each track's Deezer rank
   instead of ``1``. :bug:`7106`
+- :doc:`plugins/playlist`: Match playlist entries that point inside the active
+  library directory when paths are stored library-relative. :bug:`6784`
+- :doc:`plugins/playlist`: Ignore blank lines in M3U playlists.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
