@@ -37,6 +37,7 @@ from typing import (
     cast,
 )
 
+from confuse import Optional
 from typing_extensions import Self
 from unidecode import unidecode
 
@@ -501,7 +502,7 @@ def move(path: PathLike, dest: PathLike, replace: bool = False) -> None:
         # Copy the file to a temporary destination.
         basename = os.path.basename(bytestring_path(dest))
         dirname = os.path.dirname(bytestring_path(dest))
-        tempfile_prefix = beets.config["tempfile_prefix"].get(str)
+        tempfile_prefix = beets.config["tempfile_prefix"].get(Optional(str))
         if tempfile_prefix is None:
             tempfile_prefix = "."
         tmp = tempfile.NamedTemporaryFile(
