@@ -469,6 +469,10 @@ beets-bpmanalyser_
 beets-check_
     Automatically checksums your files to detect corruption.
 
+beets-clapback_
+    Fetches and contributes CLAP audio embeddings through the clapback commons
+    — ``absubmit`` reborn — and finds what sounds like a track across libraries.
+
 `A cmus plugin`_
     Integrates with the cmus_ console music player.
 
@@ -618,6 +622,8 @@ beets-youtube_
 .. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
 
 .. _beets-check: https://github.com/geigerzaehler/beets-check
+
+.. _beets-clapback: https://github.com/seethroughlab/clapback/tree/main/packages/beets-clapback
 
 .. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 
