@@ -60,6 +60,14 @@ directory
 The directory to which files will be copied/moved when adding them to the
 library. Defaults to a folder called ``Music`` in your home directory.
 
+tempfile_prefix
+~~~~~~~~~~~~~~~
+
+The prefix used for temporary files when moving files across filesystems. If
+unset, temporary files use a leading dot (``.``). This can be changed when
+moving files to a Windows or Samba share, where a leading dot may cause the
+file to be treated as hidden.
+
 editor
 ~~~~~~
 
