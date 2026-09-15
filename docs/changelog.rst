@@ -13,9 +13,27 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/lyrics`: Support 3-decimal millisecond timestamps (e.g.
+  ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
+  millisecond precision were erroneously rejected and fell back to plain lyrics.
+  :bug:`7001`
+- Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
+  their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
+  available. :bug:`7002`
+- :doc:`plugins/discogs`: Read the release month and day from the API's
+  ``released`` field instead of only the year. Fix Discogs match overwriting
+  month and day tags on import.
+- Empty leading path-format fields (e.g. from missing metadata) combined with a
+  custom ``replace`` configuration no longer produce an absolute destination
+  path that escapes the library or :doc:`plugins/convert` destination directory;
+  leading path separators are now stripped from the rendered path. :bug:`4889`
+- :doc:`/plugins/importadded`: The ``preserve_write_mtimes`` option no longer
+  writes to the item's source file when ``beet convert`` writes the converted
+  file, which previously crashed with a :class:`PermissionError` when the source
+  file was read-only. :bug:`6954`
 
 ..
     For plugin developers
@@ -66,10 +84,6 @@ Bug fixes
   digits no longer restarts the numbering: ``track.10.mp3`` now yields
   ``track.11.mp3`` instead of ``track.1.mp3``. The counter was matched with
   ``\.(\d)+$``, which captures only the final digit.
-- :doc:`/plugins/importadded`: The ``preserve_write_mtimes`` option no longer
-  writes to the item's source file when ``beet convert`` writes the converted
-  file, which previously crashed with a :class:`PermissionError` when the source
-  file was read-only. :bug:`6954`
 - Autotagging distance calculations no longer treat ordinary words containing
   "ft" (such as "draft", "left", "gift", "craft") as a "featuring artist"
   suffix, which was silently making genuinely different titles/artists score as
