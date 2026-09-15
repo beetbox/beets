@@ -1290,6 +1290,11 @@ class Item(LibModel):
                 "the filename.",
                 subpath,
             )
+        # The fragment is always relative to the base directory. Strip
+        # leading separators (left by empty leading template fields when
+        # the replacements do not remove them) which would otherwise make
+        # `os.path.join` discard `basedir`.
+        lib_path_str = lib_path_str.lstrip(os.sep + (os.altsep or ""))
         lib_path_bytes = util.bytestring_path(lib_path_str)
 
         if relative_to_libdir:
