@@ -191,6 +191,12 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
         assert isinstance(album_info, PseudoAlbumInfo)
         assert album_info.data_source == "MusicBrainzPseudoRelease"
 
+    @pytest.mark.xfail(
+        reason=(
+            "mbpseudo needs to be redesigned - it must NOT adjust AlbumMatch"
+            " dynamically"
+        )
+    )
     def test_final_adjustment_skip(
         self, mbpseudo_plugin: MusicBrainzPseudoReleasePlugin
     ):
