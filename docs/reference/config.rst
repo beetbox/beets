@@ -836,6 +836,18 @@ Default:
     album: albumartist album
     item: artist title
 
+For MusicBrainz-tagged libraries, adding ``mb_albumid`` to the album keys
+distinguishes separate releases that have the same album artist and title:
+
+.. code-block:: yaml
+
+    album: albumartist album mb_albumid
+    item: artist title
+
+All configured fields must match. Albums with different MusicBrainz release IDs
+will therefore not be considered duplicates. An album without a MusicBrainz
+release ID will also not match an otherwise identical album that has one.
+
 .. _duplicate_action:
 
 duplicate_action
