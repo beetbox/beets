@@ -30,6 +30,9 @@ Bug fixes
   custom ``replace`` configuration no longer produce an absolute destination
   path that escapes the library or :doc:`plugins/convert` destination directory;
   leading path separators are now stripped from the rendered path. :bug:`4889`
+- Add a configurable ``tempfile_prefix`` for temporary files created during
+  cross-filesystem moves, avoiding hidden-file behavior on Windows and Samba
+  shares caused by a hard-coded leading dot ('.'). :bug:`7033`
 
 ..
     For plugin developers
