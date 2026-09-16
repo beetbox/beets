@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextvars
 import itertools
 import logging
+import os
 from typing import TYPE_CHECKING, TypeAlias
 
 from beets import config, plugins
@@ -14,6 +15,8 @@ from .tasks import (
     ImportTaskFactory,
     SentinelImportTask,
     SingletonImportTask,
+    is_subdir_of_any_in_list,
+    resolve_upgrade_target,
 )
 
 if TYPE_CHECKING:
@@ -86,6 +89,67 @@ def query_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
                 yield task
 
 
+def rescan_tasks(
+    session: ImportSession, task: ImportTask
+) -> Iterator[BaseImportTask]:
+    """Re-read `task`'s directories from disk and yield fresh tasks.
+
+    Backs the "Rescan directory" prompt choice: the user may have cleaned
+    up the directory while the import was paused, so `task.items` is stale
+    and can't be reused. Discovery is delegated to
+    `ImportTaskFactory.paths()`, the same logic the initial scan uses.
+    """
+    assert task.toppath is not None
+
+    # Walk from `task.paths[0]` when every original directory lives under
+    # it (single album, or nested multi-disc). Otherwise (sibling discs
+    # with no wrapping directory) walk their shared parent and filter its
+    # results back down to groups related to the original directories,
+    # leaving unrelated siblings alone.
+    scan_root = task.paths[0]
+    filter_to_scope = not all(
+        d == scan_root or is_subdir_of_any_in_list(d, [scan_root])
+        for d in task.paths
+    )
+    if filter_to_scope:
+        scan_root = os.path.dirname(scan_root)
+
+    discovery_factory = ImportTaskFactory(scan_root, session)
+    groups = discovery_factory.paths()
+    if filter_to_scope:
+        original_dirs = task.paths
+        groups = (
+            (dirs, paths)
+            for dirs, paths in groups
+            if any(
+                (
+                    d == o
+                    or is_subdir_of_any_in_list(d, [o])
+                    or is_subdir_of_any_in_list(o, [d])
+                )
+                for d in dirs
+                for o in original_dirs
+            )
+        )
+
+    # Emitted tasks keep the original `toppath`, not `scan_root`: pruning
+    # stops at `toppath` (else the emptied source dir is stranded after a
+    # move) and resume progress is keyed by it.
+    factory = ImportTaskFactory(task.toppath, session)
+    found = False
+    for dirs, paths in groups:
+        if (album_task := factory.album(paths, dirs)) is not None:
+            found = True
+            yield from album_task.handle_created(session)
+
+    if not found:
+        log.info(
+            "No music found after rescanning: {}", displayable_path(task.paths)
+        )
+
+    yield SentinelImportTask(task.toppath, task.paths)
+
+
 # ---------------------------------- Stages ---------------------------------- #
 # Functions that process import tasks, may transform or filter them
 # They are chained together in the pipeline e.g. stage2(stage1(task)) -> task
@@ -113,6 +177,9 @@ def group_albums(session: ImportSession) -> StageCoro:
         for _, items in itertools.groupby(sorted_items, group):
             l_items = list(items)
             task = ImportTask(task.toppath, [i.path for i in l_items], l_items)
+            # Grouped by tag, not by directory: nothing for a rescan to
+            # reconstruct, so the choice is withheld (see `_get_choices`).
+            task.is_grouped = True
             tasks += task.handle_created(session)
         tasks.append(SentinelImportTask(task.toppath, task.paths))
 
@@ -162,6 +229,25 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
     # Ask the user for a choice.
     task.choose_match(session)
     plugins.send("import_task_choice", session=session, task=task)
+
+    # Rescan: re-read the directory from disk and re-run the match.
+    if task.choice_flag is Action.RESCAN:
+        # A plugin can force `choice_flag` via `import_task_choice`,
+        # bypassing `_get_choices`. Skip when there's no directory scope
+        # to rescan: singleton, toppath-less (query/merge), or grouped.
+        if not task.is_album or task.toppath is None or task.is_grouped:
+            log.warning(
+                "Ignoring a Rescan directory choice for a task with no "
+                "directory scope to rescan: {}",
+                displayable_path(task.paths),
+            )
+            task.choice_flag = Action.SKIP
+        else:
+            return _extend_pipeline(
+                rescan_tasks(session, task),
+                lookup_candidates(session),
+                user_query(session),
+            )
 
     # As-tracks: transition to singleton workflow.
     if task.choice_flag is Action.TRACKS:
@@ -272,7 +358,10 @@ def manipulate_files(session: ImportSession, task: ImportTask) -> None:
     finalizes each task.
     """
     if not task.skip:
-        if task.duplicate_action is DuplicateAction.REMOVE:
+        if task.duplicate_action in (
+            DuplicateAction.REMOVE,
+            DuplicateAction.UPGRADE,
+        ):
             task.remove_duplicates(session.lib)
 
         if session.config["move"]:
@@ -339,6 +428,24 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
             task.duplicate_action = session.get_duplicate_action(
                 task, found_duplicates
             )
+
+            if task.duplicate_action is DuplicateAction.UPGRADE:
+                if task.apply:
+                    # Apply metadata early so items carry their final
+                    # (post-tag) identity before we match them against
+                    # old library items, which store post-tag metadata
+                    # too. `_apply_choice` re-applies it later, which is
+                    # harmless (metadata application is idempotent).
+                    task.apply_metadata()
+                keys = config["import"]["duplicate_keys"]["item"].as_str_seq()
+                kept, superseded, old_album_ids = resolve_upgrade_target(
+                    task.imported_items(), found_duplicates, keys
+                )
+                if not kept:
+                    log.debug("upgrade: no track was an improvement, declining")
+                    task.duplicate_action = DuplicateAction.SKIP
+                else:
+                    task.apply_upgrade(kept, superseded, old_album_ids)
 
             session.log_choice(task, True)
 

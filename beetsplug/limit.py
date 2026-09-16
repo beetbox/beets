@@ -7,15 +7,32 @@
    query language).
 """
 
+from __future__ import annotations
+
 from collections import deque
 from itertools import islice
+from typing import TYPE_CHECKING, Protocol
 
 from beets.dbcore import FieldQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
+from beets.util.deprecation import deprecate_for_user
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from beets.library import LibModel, Library
+
+    from ._typing import JSONDict
 
 
-def lslimit(lib, opts, args):
+class LsLimitCLIOpts(Protocol):
+    album: bool
+    head: int | None
+    tail: int | None
+
+
+def lslimit(lib: Library, opts: LsLimitCLIOpts, args: list[str]) -> None:
     """Query command with head/tail."""
 
     if (opts.head is not None) and (opts.tail is not None):
@@ -23,6 +40,7 @@ def lslimit(lib, opts, args):
     if (opts.head or opts.tail or 0) < 0:
         raise ValueError("Limit value must be non-negative")
 
+    objs: Iterable[LibModel]
     if opts.album:
         objs = lib.albums(args)
     else:
@@ -54,11 +72,17 @@ lslimit_cmd.func = lslimit
 class LimitPlugin(BeetsPlugin):
     """Query limit functionality via command and query prefix."""
 
-    def commands(self):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        deprecate_for_user(
+            self._log, "LimitPlugin ('limit')", "'beet ls -l <number>'"
+        )
+
+    def commands(self) -> list[Subcommand]:
         """Expose `lslimit` subcommand."""
         return [lslimit_cmd]
 
-    def queries(self):
+    def queries(self) -> JSONDict:
         class HeadQuery(FieldQuery):
             """This inner class pattern allows the query to track state."""
 
@@ -71,7 +95,7 @@ class LimitPlugin(BeetsPlugin):
                 self.fast = False
 
             @classmethod
-            def value_match(cls, pattern, value):
+            def value_match(cls, pattern: str, value: str) -> bool:
                 if cls.N is None:
                     cls.N = int(pattern)
                     if cls.N < 0:

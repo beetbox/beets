@@ -1,7 +1,6 @@
 import importlib
 import itertools
 import logging
-import os
 import pkgutil
 import sys
 from typing import ClassVar
@@ -23,7 +22,7 @@ from beets.test.helper import (
     PluginTestHelper,
     TerminalImportMixin,
 )
-from beets.util import PromptChoice, displayable_path, syspath
+from beets.util import PromptChoice, displayable_path
 
 
 class TestPluginRegistration(IOMixin, PluginTestHelper):
@@ -67,7 +66,7 @@ class TestPluginRegistration(IOMixin, PluginTestHelper):
 
         item.write()
 
-        assert MediaFile(syspath(item.path)).artist == "YYY"
+        assert MediaFile(item.filepath).artist == "YYY"
 
     def test_multi_value_flex_field_type(self):
         item = Item(path="apath", artist="aaa")
@@ -101,7 +100,7 @@ class TestEvents(PluginImportHelper):
             if not msg.startswith("Sending event:")
         ]
         assert logs == [
-            f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
+            f"Album: {self.import_path / 'album'}",
             f"  {displayable_path(self.import_media[0].path)}",
             f"  {displayable_path(self.import_media[1].path)}",
         ]
@@ -272,7 +271,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             def return_choices(self, session, task):
                 return [
                     PromptChoice("f", "Foo", None),
-                    PromptChoice("r", "baR", None),
+                    PromptChoice("z", "baZ", None),
                 ]
 
         self.register_plugin(DummyPlugin)
@@ -284,11 +283,12 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
             "Foo",
-            "baR",
+            "baZ",
         )
 
         self.importer.add_choice(Action.SKIP)
@@ -361,6 +361,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -397,6 +398,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -441,6 +443,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",

@@ -7,22 +7,34 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from beets.test.helper import CleanupModulesMixin, IOMixin, PluginTestCase
+from beets.test.helper import (
+    AutotagImportTestCase,
+    BeetsTestCase,
+    CleanupModulesMixin,
+    IOMixin,
+    PluginMixin,
+    TerminalImportMixin,
+)
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
 
 
-@patch("beetsplug.play.util.interactive_open")
-class PlayPluginTest(IOMixin, CleanupModulesMixin, PluginTestCase):
+class PlayPluginMixin(CleanupModulesMixin, PluginMixin):
     modules = (PlayPlugin.__module__,)
     plugin = "play"
 
     def setUp(self):
         super().setUp()
+        self.config["play"]["command"] = "echo"
+
+
+@patch("beetsplug.play.util.interactive_open")
+class PlayPluginTest(IOMixin, PlayPluginMixin, BeetsTestCase):
+    def setUp(self):
+        super().setUp()
         self.item = self.add_item(album="a nice älbum", title="aNiceTitle")
         self.lib.add_album([self.item])
-        self.config["play"]["command"] = "echo"
 
     def run_and_assert(
         self,
@@ -166,3 +178,35 @@ class PlayPluginTest(IOMixin, CleanupModulesMixin, PluginTestCase):
 
         with pytest.raises(UserError):
             self.run_command("play", "title:aNiceTitle")
+
+
+class PlayOnImportTest(
+    TerminalImportMixin, PlayPluginMixin, AutotagImportTestCase
+):
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer()
+
+    def test_play_on_import(self):
+        self.importer.add_choice("y")
+        self.importer.add_choice("1")
+
+        playlist_path = self.temp_path / "beetsplug_play" / "playlist.m3u"
+        playlist_path.parent.mkdir(parents=True)
+        playlist_path.touch()
+        playlist_path_bytes = os.fsencode(playlist_path)
+
+        with (
+            patch(
+                "beetsplug.play.get_temp_filename",
+                side_effect=lambda *_, **__: playlist_path_bytes,
+            ),
+            patch("beetsplug.play.subprocess.call") as subprocess_call_mock,
+        ):
+            self.importer.run()
+
+        # note that the call has mixed types (str and bytes)
+        subprocess_call_mock.assert_called_once_with(
+            ["echo", playlist_path_bytes]
+        )

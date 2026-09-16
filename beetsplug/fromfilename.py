@@ -2,11 +2,24 @@
 (possibly also extract track and artist)
 """
 
+from __future__ import annotations
+
 import os
 import re
+from typing import TYPE_CHECKING
 
 from beets import plugins
 from beets.util import displayable_path
+
+if TYPE_CHECKING:
+    from collections.abc import Hashable, Iterable
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item
+    from beets.logging import BeetsLogger as Logger
+
+    from ._typing import JSONDict
+
 
 # Filename field extraction patterns.
 PATTERNS = [
@@ -26,12 +39,12 @@ PATTERNS = [
 BAD_TITLE_PATTERNS = [r"^$"]
 
 
-def equal(seq):
+def equal(seq: Iterable[Hashable]) -> bool:
     """Determine whether a sequence holds identical elements."""
     return len(set(seq)) <= 1
 
 
-def equal_fields(matchdict, field):
+def equal_fields(matchdict: dict[Item, JSONDict], field: str) -> bool:
     """Do all items in `matchdict`, whose values are dictionaries, have
     the same value for `field`? (If they do, the field is probably not
     the title.)
@@ -39,7 +52,9 @@ def equal_fields(matchdict, field):
     return equal(m[field] for m in matchdict.values())
 
 
-def all_matches(names, pattern):
+def all_matches(
+    names: dict[Item, str], pattern: str
+) -> dict[Item, JSONDict] | None:
     """If all the filenames in the item/filename mapping match the
     pattern, return a dictionary mapping the items to dictionaries
     giving the value for each named subpattern in the match. Otherwise,
@@ -58,7 +73,7 @@ def all_matches(names, pattern):
     return matches
 
 
-def bad_title(title):
+def bad_title(title: str) -> bool:
     """Determine whether a given title is "bad" (empty or otherwise
     meaningless) and in need of replacement.
     """
@@ -68,7 +83,7 @@ def bad_title(title):
     return False
 
 
-def apply_matches(d, log):
+def apply_matches(d: dict[Item, JSONDict], log: Logger) -> None:
     """Given a mapping from items to field dicts, apply the fields to
     the objects.
     """
@@ -119,11 +134,11 @@ def apply_matches(d, log):
 
 
 class FromFilenamePlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.register_listener("import_task_start", self.filename_task)
 
-    def filename_task(self, task, session):
+    def filename_task(self, task: ImportTask, session: ImportSession) -> None:
         """Examine each item in the task to see if we can extract a title
         from the filename. Try to match all filenames to a number of
         regexps, starting with the most complex patterns and successively
@@ -131,7 +146,7 @@ class FromFilenamePlugin(plugins.BeetsPlugin):
         same regex we can make an educated guess of which part of the
         regex that contains the title.
         """
-        items = task.items if task.is_album else [task.item]
+        items = task.items
 
         # Look for suspicious (empty or meaningless) titles.
         missing_titles = sum(bad_title(i.title) for i in items)

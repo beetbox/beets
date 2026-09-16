@@ -11,10 +11,12 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections import UserDict, defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
+from itertools import islice
+from pathlib import Path
 from sqlite3 import Connection, sqlite_version_info
 from typing import (
     TYPE_CHECKING,
@@ -25,6 +27,7 @@ from typing import (
     Literal,
     NamedTuple,
     TypedDict,
+    overload,
 )
 
 from typing_extensions import (
@@ -34,8 +37,9 @@ from typing_extensions import (
 from unidecode import unidecode
 
 import beets
+from beets.util.functemplate import get_template
 
-from ..util import cached_classproperty, functemplate
+from ..util import cached_classproperty
 from . import types
 from .query import MatchQuery, TrueQuery
 from .sort import NullSort
@@ -47,13 +51,13 @@ if TYPE_CHECKING:
         Iterable,
         Iterator,
         KeysView,
-        Sequence,
     )
     from sqlite3 import Connection
     from types import TracebackType
 
-    from beets.util import PathLike
+    from beets.util.functemplate import FieldTFuncs
 
+    from ..util import PathLike
     from .query import FieldQueryType, Query, SQLiteType
     from .sort import FieldSort, Sort
 
@@ -148,8 +152,8 @@ class FormattedMapping(Mapping[str, str]):
             value = value.decode("utf-8", "ignore")
 
         if self.for_path:
-            sep_repl: str = beets.config["path_sep_replace"].as_str()
-            sep_drive: str = beets.config["drive_sep_replace"].as_str()
+            sep_repl = beets.config["path_sep_replace"].as_str()
+            sep_drive = beets.config["drive_sep_replace"].as_str()
 
             if re.match(r"^[a-zA-Z]:", value):
                 value = re.sub(r"(?<=[a-zA-Z]):", sep_drive, value)
@@ -347,7 +351,7 @@ class Model(ABC, Generic[D]):
         # gather the getter mapping every time.
         raise NotImplementedError()
 
-    def _template_funcs(self) -> Mapping[str, Callable[[str], str]]:
+    def _template_funcs(self) -> FieldTFuncs:
         """Return a mapping from function names to text-transformer
         functions.
         """
@@ -462,6 +466,13 @@ class Model(ABC, Generic[D]):
             return self._type(key).null
         if key in self._values_flex:  # Flexible.
             return self._values_flex[key]
+        # Field names are lowercased when queries are parsed, while flexible
+        # attributes are stored with their case preserved, so fall back to a
+        # case-insensitive lookup.
+        lower_key = key.lower()
+        flex_keys = {k.lower(): k for k in self._values_flex}
+        if lower_key in flex_keys:
+            return self._values_flex[flex_keys[lower_key]]
         if raise_:
             raise KeyError(key)
         return default
@@ -590,7 +601,7 @@ class Model(ABC, Generic[D]):
         assignments = []
         subvars: list[SQLiteType] = []
         for key in fields:
-            if key != "id" and key in self._dirty:
+            if key != "id" and key in self._fields and key in self._dirty:
                 self._dirty.remove(key)
                 assignments.append(f"{key}=?")
                 value = self._type(key).to_sql(self[key])
@@ -645,7 +656,7 @@ class Model(ABC, Generic[D]):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: D | None = None):
+    def add(self, db: D | None = None) -> None:
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -673,7 +684,7 @@ class Model(ABC, Generic[D]):
 
     def formatted(
         self,
-        included_keys: str = FormattedMapping.ALL_KEYS,
+        included_keys: str | list[str] = FormattedMapping.ALL_KEYS,
         for_path: bool = False,
     ) -> FormattedMapping:
         """Get a mapping containing all values on this object formatted
@@ -681,20 +692,13 @@ class Model(ABC, Generic[D]):
         """
         return self._formatter(self, included_keys, for_path)
 
-    def evaluate_template(
-        self, template: str | functemplate.Template, for_path: bool = False
-    ) -> str:
-        """Evaluate a template (a string or a `Template` object) using
-        the object's fields. If `for_path` is true, then no new path
-        separators will be added to the template.
+    def evaluate_template(self, fmt: str, for_path: bool = False) -> str:
+        """Evaluate a format string using the object's fields.
+
+        If `for_path` is true, then no new path separators are added to the template.
         """
         # Perform substitution.
-        if isinstance(template, str):
-            t = functemplate.template(template)
-        else:
-            # Help out mypy
-            t = template
-        return t.substitute(
+        return get_template(fmt).substitute(
             self.formatted(for_path=for_path), self._template_funcs()
         )
 
@@ -728,7 +732,7 @@ class Model(ABC, Generic[D]):
 AnyModel = TypeVar("AnyModel", bound=Model)
 
 
-class Results(Generic[AnyModel]):
+class Results(Sequence[AnyModel]):
     """An item query result set. Iterating over the collection lazily
     constructs Model objects that reflect database rows.
     """
@@ -741,6 +745,7 @@ class Results(Generic[AnyModel]):
         flex_rows: list[sqlite3.Row],
         query: Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> None:
         """Create a result set that will construct objects of type
         `model_class`.
@@ -761,6 +766,7 @@ class Results(Generic[AnyModel]):
         self.db = db
         self.query = query
         self.sort = sort
+        self.limit = limit
         self.flex_rows = flex_rows
 
         # We keep a queue of rows we haven't yet consumed for
@@ -812,13 +818,16 @@ class Results(Generic[AnyModel]):
         """Construct and generate Model objects for all matching
         objects, in sorted order.
         """
+        # Objects are pre-sorted (i.e., by the database).
+        objects = self._get_objects()
         if self.sort:
             # Slow sort. Must build the full list first.
-            objects = self.sort.sort(list(self._get_objects()))
-            return iter(objects)
+            objects = iter(self.sort.sort(list(objects)))
 
-        # Objects are pre-sorted (i.e., by the database).
-        return self._get_objects()
+        if self.limit is not None:
+            objects = islice(objects, self.limit)
+
+        return objects
 
     def _get_indexed_flex_attrs(self) -> dict[int, FlexAttrs]:
         """Index flexible attributes by the entity id they belong to"""
@@ -867,22 +876,29 @@ class Results(Generic[AnyModel]):
         """Does this result contain any objects?"""
         return bool(len(self))
 
-    def __getitem__(self, n: int) -> AnyModel:
-        """Get the nth item in this result set. This is inefficient: all
-        items up to n are materialized and thrown away.
-        """
+    @overload
+    def __getitem__(self, index: int) -> AnyModel: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[AnyModel]: ...
+
+    def __getitem__(self, index: int | slice) -> AnyModel | list[AnyModel]:
+        """Return indexed or sliced objects using standard sequence rules."""
+        if isinstance(index, slice) or index < 0:
+            return list(self)[index]
+
         if not self._rows and not self.sort:
             # Fully materialized and already in order. Just look up the
             # object.
-            return self._objects[n]
+            return self._objects[index]
 
         it = iter(self)
         try:
-            for i in range(n):
+            for _ in range(index):
                 next(it)
             return next(it)
         except StopIteration:
-            raise IndexError(f"result index {n} out of range")
+            raise IndexError(f"result index {index} out of range")
 
     def get(self) -> AnyModel | None:
         """Return the first matching object, or None if no objects
@@ -1085,6 +1101,8 @@ class Database:
     data is written in a transaction.
     """
 
+    path: Path
+
     def __init__(self, path: PathLike, timeout: float = 5.0) -> None:
         if sqlite3.threadsafety == 0:
             raise RuntimeError(
@@ -1098,7 +1116,7 @@ class Database:
         if hasattr(sqlite3, "enable_callback_tracebacks"):
             sqlite3.enable_callback_tracebacks(True)
 
-        self.path = path
+        self.path = Path(os.fsdecode(path))
         self.timeout = timeout
 
         self._connections: dict[int, sqlite3.Connection] = {}
@@ -1382,11 +1400,12 @@ class Database:
 
     # Querying.
 
-    def _fetch(
+    def _get_results(
         self,
         model_cls: type[AnyModel],
         query: Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> Results[AnyModel]:
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
@@ -1397,6 +1416,14 @@ class Database:
         sort = sort or NullSort()  # Unsorted.
         where, subvals = query.clause()
         order_by = sort.order_clause()
+        sql_limit = flex_limit = None
+        if limit is not None:
+            if sort.field_names - model_cls.all_db_fields:
+                # sorting by at least one flexible attr.
+                # Limit will be applied after slow field sort.
+                flex_limit = limit
+            else:
+                sql_limit = limit
 
         table = model_cls._table
         _from = table
@@ -1408,15 +1435,7 @@ class Database:
             f"SELECT {table}.* "
             f"FROM ({_from}) "
             f"WHERE {where or 1} "
-            f"GROUP BY {table}.id"
-        )
-        # Fetch flexible attributes for items matching the main query.
-        # Doing the per-item filtering in python is faster than issuing
-        # one query per item to sqlite.
-        flex_sql = (
-            "SELECT * "
-            f"FROM {model_cls._flex_table} "
-            f"WHERE entity_id IN (SELECT id FROM ({sql}))"
+            f"GROUP BY {table}.id "
         )
 
         if order_by:
@@ -1425,7 +1444,26 @@ class Database:
             # if we try to order directly.
             # Since the join is required only for filtering, we can filter in
             # a subquery and order the result, which returns unique fields.
-            sql = f"SELECT * FROM ({sql}) ORDER BY {order_by}"
+            select = f"{table}.* FROM ({sql}) {table}"
+            if (
+                sort.field_names & model_cls.other_db_fields
+            ) - model_cls._getters().keys():
+                # only applies to db fields on the other model
+                select += f" {model_cls.relation_join}"
+
+            sql = f"SELECT {select} ORDER BY {order_by} "
+
+        if sql_limit is not None:
+            sql += f"LIMIT {sql_limit}"
+
+        # Fetch flexible attributes for items matching the main query.
+        # Doing the per-item filtering in python is faster than issuing
+        # one query per item to sqlite.
+        flex_sql = (
+            "SELECT * "
+            f"FROM {model_cls._flex_table} "
+            f"WHERE entity_id IN (SELECT id FROM ({sql}))"
+        )
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
@@ -1438,11 +1476,12 @@ class Database:
             flex_rows,
             None if where else query,  # Slow query component.
             sort if sort.is_slow() else None,  # Slow sort component.
+            flex_limit,
         )
 
     def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:
         """Get a Model object by its id or None if the id does not exist."""
-        return self._fetch(model_cls, MatchQuery("id", id_)).get()
+        return self._get_results(model_cls, MatchQuery("id", id_)).get()
 
 
 class Index(NamedTuple):

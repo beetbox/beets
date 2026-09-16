@@ -2,16 +2,22 @@
 music player.
 """
 
+from __future__ import annotations
+
 import _thread
 import copy
 import os
 import sys
 import time
-import urllib
+import urllib.parse
+from typing import TYPE_CHECKING
 
 import gi
 
 from beets.exceptions import UserError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
 
 try:
     gi.require_version("Gst", "1.0")
@@ -45,7 +51,11 @@ class GstPlayer:
     another is available on the queue, it is played automatically.
     """
 
-    def __init__(self, finished_callback=None):
+    cached_time: tuple[float, float] | None
+
+    def __init__(
+        self, finished_callback: Callable[[], None] | None = None
+    ) -> None:
         """Initialize a player.
 
         If a finished_callback is provided, it is called every time a
@@ -82,13 +92,13 @@ class GstPlayer:
         self.cached_time = None
         self._volume = 1.0
 
-    def _get_state(self):
+    def _get_state(self) -> Gst.State:
         """Returns the current state flag of the playbin."""
         # gst's get_state function returns a 3-tuple; we just want the
         # status flag in position 1.
         return self.player.get_state(Gst.CLOCK_TIME_NONE)[1]
 
-    def _handle_message(self, bus, message):
+    def _handle_message(self, bus: Gst.Bus, message: Gst.Message) -> None:
         """Callback for status updates from GStreamer."""
         if message.type == Gst.MessageType.EOS:
             # file finished playing
@@ -105,19 +115,19 @@ class GstPlayer:
             print(f"Error: {err}")
             self.playing = False
 
-    def _set_volume(self, volume):
+    def _set_volume(self, volume: float) -> None:
         """Set the volume level to a value in the range [0, 1.5]."""
         # And the volume for the playbin.
         self._volume = volume
         self.player.set_property("volume", volume)
 
-    def _get_volume(self):
+    def _get_volume(self) -> float:
         """Get the volume as a float in the range [0, 1.5]."""
         return self._volume
 
     volume = property(_get_volume, _set_volume)
 
-    def play_file(self, path):
+    def play_file(self, path: str | bytes) -> None:
         """Immediately begin playing the audio file at the given
         path.
         """
@@ -129,23 +139,23 @@ class GstPlayer:
         self.player.set_state(Gst.State.PLAYING)
         self.playing = True
 
-    def play(self):
+    def play(self) -> None:
         """If paused, resume playback."""
         if self._get_state() == Gst.State.PAUSED:
             self.player.set_state(Gst.State.PLAYING)
             self.playing = True
 
-    def pause(self):
+    def pause(self) -> None:
         """Pause playback."""
         self.player.set_state(Gst.State.PAUSED)
 
-    def stop(self):
+    def stop(self) -> None:
         """Halt playback."""
         self.player.set_state(Gst.State.NULL)
         self.playing = False
         self.cached_time = None
 
-    def run(self):
+    def run(self) -> None:
         """Start a new thread for the player.
 
         Call this function before trying to play any music with
@@ -154,15 +164,15 @@ class GstPlayer:
 
         # If we don't use the MainLoop, messages are never sent.
 
-        def start():
+        def start() -> None:
             loop = GLib.MainLoop()
             loop.run()
 
         _thread.start_new_thread(start, ())
 
-    def time(self):
+    def time(self) -> tuple[float, float]:
         """Returns a tuple containing (position, length) where both
-        values are integers in seconds. If no stream is available,
+        values are floats in seconds. If no stream is available,
         returns (0, 0).
         """
         fmt = Gst.Format(Gst.Format.TIME)
@@ -188,7 +198,7 @@ class GstPlayer:
                 return self.cached_time
             return (0, 0)
 
-    def seek(self, position):
+    def seek(self, position: float) -> None:
         """Seeks to position (in seconds)."""
         _, cur_len = self.time()
         if position > cur_len:
@@ -202,16 +212,16 @@ class GstPlayer:
         # save new cached time
         self.cached_time = (position, cur_len)
 
-    def block(self):
+    def block(self) -> None:
         """Block until playing finishes."""
         while self.playing:
             time.sleep(1)
 
-    def get_decoders(self):
+    def get_decoders(self) -> dict[str, tuple[set[str], set[str]]]:
         return get_decoders()
 
 
-def get_decoders():
+def get_decoders() -> dict[str, tuple[set[str], set[str]]]:
     """Get supported audio decoders from GStreamer.
     Returns a dict mapping decoder element names to the associated media types
     and file extensions.
@@ -225,7 +235,7 @@ def get_decoders():
         | Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO
     )
 
-    decoders = {}
+    decoders: dict[str, tuple[set[str], set[str]]] = {}
     mime_types = set()
     for f in Gst.ElementFactory.list_get_elements(filt, Gst.Rank.NONE):
         for pad in f.get_static_pad_templates():
@@ -245,7 +255,7 @@ def get_decoders():
     # Check all the TypeFindFactory plugin features form the registry. If they
     # are associated with an audio media type that we found above, get the list
     # of corresponding file extensions.
-    mime_extensions = {mime: set() for mime in mime_types}
+    mime_extensions: dict[str, set[str]] = {mime: set() for mime in mime_types}
     for feat in Gst.Registry.get().get_feature_list(Gst.TypeFindFactory):
         caps = feat.get_caps()
         if caps:
@@ -263,7 +273,7 @@ def get_decoders():
     return decoders
 
 
-def play_simple(paths):
+def play_simple(paths: Iterable[str] | Iterable[bytes]) -> None:
     """Play the files in paths in a straightforward way, without
     using the player's callback function.
     """
@@ -274,13 +284,13 @@ def play_simple(paths):
         p.block()
 
 
-def play_complicated(paths):
+def play_complicated(paths: list[str] | list[bytes]) -> None:
     """Play the files in the path one after the other by using the
     callback function to advance to the next song.
     """
     my_paths = copy.copy(paths)
 
-    def next_song():
+    def next_song() -> None:
         my_paths.pop(0)
         p.play_file(my_paths[0])
 

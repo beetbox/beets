@@ -60,6 +60,17 @@ directory
 The directory to which files will be copied/moved when adding them to the
 library. Defaults to a folder called ``Music`` in your home directory.
 
+editor
+~~~~~~
+
+The text editor to use when editing configuration files (e.g., via ``beet config
+-e``). Overrides the ``$VISUAL`` and ``$EDITOR`` environment variables. If none
+of these are set, beets falls back to the platform default. Example:
+
+::
+
+    editor: nano
+
 create_backup_before_migrations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -822,11 +833,22 @@ Default:
 duplicate_action
 ~~~~~~~~~~~~~~~~
 
-Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``. Controls how
-duplicates are treated in import task. "skip" means that new item(album or
-track) will be skipped; "keep" means keep both old and new items; "remove" means
-remove old item; "merge" means merge into one album; "ask" means the user should
-be prompted for the action each time. The default is ``ask``.
+Either ``skip``, ``keep``, ``remove``, ``merge``, ``upgrade`` or ``ask``.
+Controls how duplicates are treated in import task. "skip" means that new
+item(album or track) will be skipped; "keep" means keep both old and new items;
+"remove" means remove old item; "merge" means merge into one album; "ask" means
+the user should be prompted for the action each time. The default is ``ask``.
+
+"upgrade" compares each newly-imported track against any existing duplicate with
+the same :ref:`duplicate_keys`: a track only replaces its old counterpart if it
+has a higher bitrate, and tracks with no old counterpart are always added. The
+rest of the existing album is left untouched, and the kept tracks are added to
+that same album rather than a new one. If the import matches more than one
+existing album (e.g. two differently-encoded copies of the same release already
+in the library), only the album it overlaps with the most is upgraded; every
+other candidate album is left completely untouched, since a track can only ever
+be added to one album. When ``duplicate_action`` is ``ask``, "upgrade" is one of
+the available interactive choices.
 
 .. _duplicate_verbose_prompt:
 
@@ -846,7 +868,7 @@ is applied, which would, considering the default, look like this:
     New: 2 items, MP3, 320kbps, 7:18, 17.1 MiB
       Artist Name - Album Name - First Track Title
       Artist Name - Album Name - Second Track Title
-    [S]kip new, Keep all, Remove old, Merge all?
+    [S]kip new, Merge all, Remove old, Keep all, Upgrade?
 
 Default: ``no``.
 

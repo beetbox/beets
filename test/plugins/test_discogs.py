@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Any
+from unittest.mock import MagicMock
 
 import pytest
 from discogs_client import Client, Release
 
 from beets import config
 from beets.library import Item
+from beets.metadata_plugins import SearchParams
 from beets.test.helper import TestHelper
 from beetsplug.discogs import ArtistState, DiscogsPlugin
 
@@ -238,6 +241,60 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         d = DiscogsPlugin().get_album_info(release)
         assert d.style is None
         assert d.genres == ["GENRE1", "GENRE2"]
+
+    @pytest.mark.parametrize(
+        "released, expected",
+        [
+            _p("2000-08-13", (2000, 8, 13), id="full-date"),
+            _p("2000-08", (2000, 8, None), id="year-and-month"),
+            _p("2000", (2000, None, None), id="year-only"),
+            _p("2000-00-00", (2000, None, None), id="zeroed-month-and-day"),
+            _p("2000-08-00", (2000, 8, None), id="zeroed-day"),
+            _p("2000-8-1", (2000, 8, 1), id="unpadded"),
+            _p("  2000-08-13  ", (2000, 8, 13), id="surrounding-whitespace"),
+            # Fall back to the release's own `year` field.
+            _p("", (3001, None, None), id="empty"),
+            _p(None, (3001, None, None), id="missing"),
+            _p("0000-00-00", (3001, None, None), id="zeroed-date"),
+            _p("13 Aug 2000", (3001, None, None), id="unparseable"),
+        ],
+    )
+    def test_parse_release_date(self, released, expected):
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = released
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.year, d.month, d.day) == expected
+
+    def test_original_date_without_master(self):
+        """A release without a master release is its own original."""
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = "2000-08-13"
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.original_year, d.original_month, d.original_day) == (
+            2000,
+            8,
+            13,
+        )
+
+    def test_original_date_with_master(self, monkeypatch):
+        """Only the master release's year is known, so it alone is used."""
+        monkeypatch.setattr(DiscogsPlugin, "get_master_year", lambda *_: 1990)
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = "2000-08-13"
+        release.data["master_id"] = 22222222
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.year, d.month, d.day) == (2000, 8, 13)
+        assert (d.original_year, d.original_month, d.original_day) == (
+            1990,
+            None,
+            None,
+        )
 
 
 class TestStripDisambiguation(DiscogsTestMixin):
@@ -496,6 +553,41 @@ class TestDGSearchQuery(TestHelper):
         # Catalog number should have whitespace removed.
         assert filters["catno"] == "ABC123"
         config["discogs"]["extra_tags"] = []
+
+
+class TestDGSearchResponse(DiscogsTestMixin):
+    @staticmethod
+    def _decode_error():
+        return json.JSONDecodeError("Expecting value", "", 0)
+
+    @pytest.fixture
+    def params(self):
+        return SearchParams("album", "Album", {"type": "release"}, 5)
+
+    @pytest.fixture
+    def client(self, plugin):
+        plugin.discogs_client = MagicMock()
+        return plugin.discogs_client
+
+    def test_retries_invalid_json_response(self, plugin, client, params):
+        result = MagicMock(data={"id": 123})
+        results = client.search.return_value
+        results.page.side_effect = [self._decode_error(), [result]]
+
+        assert plugin.get_search_response(params) == [{"id": 123}]
+        assert client.search.call_count == 2
+        assert results.page.call_count == 2
+        assert results.per_page == params.limit
+
+    def test_raises_after_invalid_json_retry(self, plugin, client, params):
+        results = client.search.return_value
+        results.page.side_effect = [self._decode_error(), self._decode_error()]
+
+        with pytest.raises(json.JSONDecodeError):
+            plugin.get_search_response(params)
+
+        assert client.search.call_count == 2
+        assert results.page.call_count == 2
 
 
 class TestAnv:

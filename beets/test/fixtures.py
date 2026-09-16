@@ -4,10 +4,10 @@ These fixtures supply predictable query, sort, and model behavior for tests that
 exercise metadata registration and model integration.
 """
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
-from beets.dbcore import sort, types
-from beets.dbcore.db import FormattedMapping, Index
+from beets.dbcore import Index, sort, types
+from beets.dbcore.db import FormattedMapping
 from beets.library import LibModel
 from beets.util import cached_classproperty
 from beets.util.artresizer import IMBackend
@@ -33,11 +33,11 @@ class ModelFixture1(LibModel):
     _formatter = FormattedMapping
 
     @cached_classproperty
-    def _types(cls):
+    def _types(cls) -> dict[str, types.Type]:
         return {"some_float_field": types.FLOAT}
 
     @classmethod
-    def _getters(cls):
+    def _getters(cls) -> dict[str, Any]:
         return {}
 
 
@@ -47,9 +47,10 @@ class DummyIMBackend(IMBackend):
     The version is sufficiently recent to support image comparison.
     """
 
-    def __init__(self):
+    _version = (7, 0, 0)
+
+    def __init__(self) -> None:
         """Init a dummy backend class for mocked ImageMagick tests."""
-        self.version = (7, 0, 0)
         self.legacy = False
         self.convert_cmd = ["magick"]
         self.identify_cmd = ["magick", "identify"]

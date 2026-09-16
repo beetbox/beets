@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class AlbumTypesPlugin(BeetsPlugin):
     """Adds an album template field for formatted album types."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Init AlbumTypesPlugin."""
         super().__init__()
         self.album_template_fields["atypes"] = self._atypes
@@ -34,7 +34,7 @@ class AlbumTypesPlugin(BeetsPlugin):
             }
         )
 
-    def _atypes(self, item: Album):
+    def _atypes(self, item: Album) -> str:
         """Returns a formatted string based on album's types."""
         types = self.config["types"].as_pairs()
         ignore_va = self.config["ignore_va"].as_str_seq()

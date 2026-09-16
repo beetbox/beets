@@ -2,11 +2,24 @@
 automatically whenever tags are written.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Protocol
+
 import mediafile
 import mutagen
 
 from beets import config, ui, util
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
+
+
+class ScrubCLIOpts(Protocol):
+    write: bool
+
 
 _MUTAGEN_FORMATS = {
     "asf": "ASF",
@@ -30,15 +43,17 @@ _MUTAGEN_FORMATS = {
 class ScrubPlugin(BeetsPlugin):
     """Removes extraneous metadata from files' tags."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"auto": True})
 
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)
 
-    def commands(self):
-        def scrub_func(lib, opts, args):
+    def commands(self) -> list[ui.Subcommand]:
+        def scrub_func(
+            lib: Library, opts: ScrubCLIOpts, args: list[str]
+        ) -> None:
             # Walk through matching files and remove tags.
             for item in lib.items(args):
                 self._log.info("scrubbing: {.filepath}", item)
@@ -58,7 +73,7 @@ class ScrubPlugin(BeetsPlugin):
         return [scrub_cmd]
 
     @staticmethod
-    def _mutagen_classes():
+    def _mutagen_classes() -> list[type[Any]]:
         """Get a list of file type classes from the Mutagen module."""
         classes = []
         for modname, clsname in _MUTAGEN_FORMATS.items():
@@ -66,7 +81,7 @@ class ScrubPlugin(BeetsPlugin):
             classes.append(getattr(mod, clsname))
         return classes
 
-    def _scrub(self, path):
+    def _scrub(self, path: bytes) -> None:
         """Remove all tags from a file."""
         for cls in self._mutagen_classes():
             # Try opening the file with this type, but just skip in the
@@ -93,7 +108,7 @@ class ScrubPlugin(BeetsPlugin):
                     "could not scrub {}: {}", util.displayable_path(path), exc
                 )
 
-    def _scrub_item(self, item, restore):
+    def _scrub_item(self, item: Item, restore: bool) -> None:
         """Remove tags from an Item's associated file and, if `restore`
         is enabled, write the database's tags back to the file.
         """
@@ -126,8 +141,12 @@ class ScrubPlugin(BeetsPlugin):
                 except mediafile.UnreadableFileError as exc:
                     self._log.error("could not write tags: {}", exc)
 
-    def import_task_files(self, session, task):
+    def import_task_files(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         """Automatically scrub imported files."""
+        if not ui.should_write():
+            return
         for item in task.imported_items():
             self._log.debug("auto-scrubbing {.filepath}", item)
-            self._scrub_item(item, ui.should_write())
+            self._scrub_item(item, True)

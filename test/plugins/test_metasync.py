@@ -18,10 +18,8 @@ def _is_windows():
 
 class MetaSyncTest(IOMixin, PluginTestCase):
     plugin = "metasync"
-    itunes_library_unix = os.path.join(_common.RSRC, b"itunes_library_unix.xml")
-    itunes_library_windows = os.path.join(
-        _common.RSRC, b"itunes_library_windows.xml"
-    )
+    itunes_library_unix = _common.RSRC / "itunes_library_unix.xml"
+    itunes_library_windows = _common.RSRC / "itunes_library_windows.xml"
 
     def setUp(self):
         super().setUp()

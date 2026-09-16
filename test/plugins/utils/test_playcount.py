@@ -97,6 +97,40 @@ class TestPlayCount(TestHelper):
 
         assert matched_ids == [item.id]
 
+    def test_get_items_mbid_match_suppresses_title_match(self, log):
+        by_mbid = self.add_item(
+            title="Song", artist="Artist", mb_trackid="track-id"
+        )
+        self.add_item(title="Song", artist="Artist", mb_trackid="other-id")
+
+        matched_ids = [
+            matched.id
+            for matched in get_items(self.lib, self.track(mbid="track-id"), log)
+        ]
+
+        assert matched_ids == [by_mbid.id]
+
+    def test_get_items_prefers_exact_match(self, log):
+        exact_match = self.add_item(title="Song", artist="Artist")
+        self.add_item(title="Song (inst.)", artist="Artist")
+
+        matched_ids = [
+            matched.id for matched in get_items(self.lib, self.track(), log)
+        ]
+
+        assert matched_ids == [exact_match.id]
+
+    def test_get_items_falls_back_to_substring_match(self, log):
+        substring_match = self.add_item(
+            title="Song (feat. Artist)", artist="Artist"
+        )
+
+        matched_ids = [
+            matched.id for matched in get_items(self.lib, self.track(), log)
+        ]
+
+        assert matched_ids == [substring_match.id]
+
     def test_process_track_updates_every_matching_song(self, log):
         first = self.add_item(
             title="Song", artist="Artist", album="First Album", play_count=1

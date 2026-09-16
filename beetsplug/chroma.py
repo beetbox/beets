@@ -8,7 +8,7 @@ import heapq
 import re
 from collections import defaultdict
 from functools import cached_property, partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Protocol
 
 import acoustid
 import confuse
@@ -20,11 +20,24 @@ from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    import optparse
+    from collections.abc import Iterable, Iterator, Sequence
 
-    from beets.autotag import TrackInfo
-    from beets.library.models import Item
+    from beets.autotag import AlbumInfo, TrackInfo
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
+    from beets.logging import BeetsLogger as Logger
     from beetsplug.musicbrainz import MusicBrainzPlugin
+
+    from ._typing import JSONDict
+
+
+class ChromaSearchCLIOpts(Protocol):
+    count: int
+    full: bool | None
+    search: str | None
+    write: bool | None
+
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -47,7 +60,7 @@ _fingerprints: dict[bytes, str] = {}
 _acoustids: dict[bytes, str] = {}
 
 
-def prefix(it, count):
+def prefix(it: Iterable[Any], count: int) -> Iterator[Any]:
     """Truncate an iterable to at most `count` items."""
     for i, v in enumerate(it):
         if i >= count:
@@ -55,7 +68,9 @@ def prefix(it, count):
         yield v
 
 
-def releases_key(release, countries, original_year):
+def releases_key(
+    release: JSONDict, countries: Sequence[re.Pattern[str]], original_year: bool
+) -> tuple[int, int, int, int]:
     """Used as a key to sort releases by date then preferred country"""
     date = release.get("date")
     if date and original_year:
@@ -78,7 +93,7 @@ def releases_key(release, countries, original_year):
     return (year, month, day, country_key)
 
 
-def acoustid_match(log, path):
+def acoustid_match(log: Logger, path: bytes) -> None:
     """Gets metadata for a file from Acoustid and populates the
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
@@ -133,7 +148,7 @@ def acoustid_match(log, path):
     # 'countries' to then sort preferred countries first.
     country_patterns = config["match"]["preferred"]["countries"].as_str_seq()
     countries = [re.compile(pat, re.I) for pat in country_patterns]
-    original_year = config["match"]["preferred"]["original_year"]
+    original_year = config["match"]["preferred"]["original_year"].get(bool)
     releases.sort(
         key=partial(
             releases_key, countries=countries, original_year=original_year
@@ -150,12 +165,12 @@ def acoustid_match(log, path):
 # Plugin structure and autotagging logic.
 
 
-def _all_releases(items):
+def _all_releases(items: Sequence[Item]) -> Iterator[str]:
     """Given an iterable of Items, determines (according to Acoustid)
     which releases the items have in common. Generates release IDs.
     """
     # Count the number of "hits" for each release.
-    relcounts = defaultdict(int)
+    relcounts = defaultdict[str, int](int)
     for item in items:
         if item.path not in _matches:
             continue
@@ -170,7 +185,7 @@ def _all_releases(items):
 
 
 class AcoustidPlugin(MetadataSourcePlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"auto": True})
         config["acoustid"]["apikey"].redact = True
@@ -200,10 +215,12 @@ class AcoustidPlugin(MetadataSourcePlugin):
             )
         return plugin  # type: ignore[return-value]
 
-    def fingerprint_task(self, task, session):
+    def fingerprint_task(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
         return fingerprint_task(self._log, task, session)
 
-    def track_distance(self, item, info):
+    def track_distance(self, item: Item, info: TrackInfo) -> Distance:
         dist = Distance()
         if item.path not in _matches or not info.track_id:
             # Match failed or no track ID.
@@ -213,20 +230,24 @@ class AcoustidPlugin(MetadataSourcePlugin):
         dist.add_expr("track_id", info.track_id not in recording_ids)
         return dist
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
+    ) -> list[AlbumInfo]:
         if self.mb is None:
             return []
 
-        albums = []
-        for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = self.mb.album_for_id(relid)
-            if album:
-                albums.append(album)
+        albums = [
+            a
+            for relid in prefix(_all_releases(items), MAX_RELEASES)
+            if (a := self.mb.album_for_id(relid))
+        ]
 
         self._log.debug("acoustid album candidates: {}", len(albums))
         return albums
 
-    def item_candidates(self, item, artist, title) -> Iterable[TrackInfo]:
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
         if item.path not in _matches:
             return []
 
@@ -242,20 +263,22 @@ class AcoustidPlugin(MetadataSourcePlugin):
         self._log.debug("acoustid item candidates: {}", len(tracks))
         return tracks
 
-    def album_for_id(self, *args, **kwargs):
+    def album_for_id(self, *args, **kwargs) -> None:
         # Lookup by fingerprint ID does not make too much sense.
         return None
 
-    def track_for_id(self, *args, **kwargs):
+    def track_for_id(self, *args, **kwargs) -> None:
         # Lookup by fingerprint ID does not make too much sense.
         return None
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         submit_cmd = ui.Subcommand(
             "submit", help="submit Acoustid fingerprints"
         )
 
-        def submit_cmd_func(lib, opts, args):
+        def submit_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             try:
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
@@ -268,7 +291,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             "fingerprint", help="generate fingerprints for items without them"
         )
 
-        def fingerprint_cmd_func(lib, opts, args):
+        def fingerprint_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             for item in lib.items(args):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
@@ -276,7 +301,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
 
         return [submit_cmd, fingerprint_cmd, self.chromasearch_cmd()]
 
-    def chromasearch_cmd(self):
+    def chromasearch_cmd(self) -> ui.Subcommand:
         cmd = ui.Subcommand(
             "chromasearch", help="search local database by chroma fingerprint"
         )
@@ -312,7 +337,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             help="Write computed fingerprints to files",
         )
 
-        def search_cmd_func(lib, opts, args):
+        def search_cmd_func(
+            lib: Library, opts: ChromaSearchCLIOpts, args: list[str]
+        ) -> None:
             if not opts.search:
                 raise UserError("no --search provided")
             if opts.count <= 0:
@@ -345,8 +372,8 @@ class AcoustidPlugin(MetadataSourcePlugin):
                 if score > 0:
                     top.add(ScoredItem(item, score))
 
-            for item in top:
-                ui.print_(str(item))
+            for scored_item in top:
+                ui.print_(str(scored_item))
 
         cmd.func = search_cmd_func
 
@@ -356,16 +383,17 @@ class AcoustidPlugin(MetadataSourcePlugin):
 # Hooks into import process.
 
 
-def fingerprint_task(log, task, session):
+def fingerprint_task(
+    log: Logger, task: ImportTask, session: ImportSession
+) -> None:
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    items = task.items if task.is_album else [task.item]
-    for item in items:
+    for item in task.items:
         acoustid_match(log, item.path)
 
 
-def apply_acoustid_metadata(task, session):
+def apply_acoustid_metadata(task: ImportTask, session: ImportSession) -> None:
     """Apply Acoustid metadata (fingerprint and ID) to the task's items."""
     for item in task.imported_items():
         if item.path in _fingerprints:
@@ -377,11 +405,14 @@ def apply_acoustid_metadata(task, session):
 # UI commands.
 
 
-def submit_items(log, userkey, items, chunksize=64):
+def submit_items(
+    log: Logger, userkey: str, items: Sequence[Item], chunksize: int = 64
+) -> None:
     """Submit fingerprints for the items to the Acoustid server."""
-    data = []  # The running list of dictionaries to submit.
+    # The running list of dictionaries to submit.
+    data: list[JSONDict] = []
 
-    def submit_chunk():
+    def submit_chunk() -> None:
         """Submit the current accumulated fingerprint data."""
         log.info("submitting {} fingerprints", len(data))
         try:
@@ -422,7 +453,9 @@ def submit_items(log, userkey, items, chunksize=64):
         submit_chunk()
 
 
-def fingerprint_item(log, item, write=False, quiet=False):
+def fingerprint_item(
+    log: Logger, item: Item, write: bool = False, quiet: bool = False
+) -> str | None:
     """Get the fingerprint for an Item. If the item already has a
     fingerprint, it is not regenerated. If fingerprint generation fails,
     return None. If the items are associated with a library, they are
@@ -459,17 +492,17 @@ def fingerprint_item(log, item, write=False, quiet=False):
 
 
 class ScoredItem:
-    def __init__(self, item: Item, score: float):
+    def __init__(self, item: Item, score: float) -> None:
         self.item = item
         self.score = score
 
-    def __lt__(self, other):
-        return self.score < other.score
+    def __lt__(self, other: object) -> bool:
+        return type(self) is type(other) and self.score < other.score
 
-    def __gt__(self, other):
-        return self.score > other.score
+    def __gt__(self, other: object) -> bool:
+        return type(self) is type(other) and self.score > other.score
 
-    def __str__(self):
+    def __str__(self) -> str:
         percent = f"{round(self.score * 100, 2)}%".rjust(6)
         if self.score >= 0.95:
             percent = colorize("text_success", percent)
@@ -482,11 +515,11 @@ class ScoredItem:
 
 
 class TopN:
-    def __init__(self, n: int):
+    def __init__(self, n: int) -> None:
         self.n = n
         self.heap: list[ScoredItem] = []
 
-    def add(self, value: ScoredItem):
+    def add(self, value: ScoredItem) -> None:
         if len(self.heap) < self.n:
             heapq.heappush(self.heap, value)
         else:

@@ -1,7 +1,6 @@
 """Tests for the `filefilter` plugin."""
 
 from beets.test.helper import ImportHelper, PluginMixin
-from beets.util import bytestring_path
 
 
 class FileFilterPluginHelper(PluginMixin, ImportHelper):
@@ -14,7 +13,7 @@ class FileFilterPluginHelper(PluginMixin, ImportHelper):
 
     def prepare_tracks_for_import(self):
         self.album_track, self.other_album_track, self.single_track = (
-            bytestring_path(self.prepare_album_for_import(1, album_path=p)[0])
+            self.prepare_album_for_import(1, album_path=p)[0]
             for p in [
                 self.import_path / "album",
                 self.import_path / "other_album",
@@ -32,7 +31,7 @@ class FileFilterPluginHelper(PluginMixin, ImportHelper):
             self.importer.run()
 
         assert len(self.lib.albums()) == expected_album_count
-        assert {i.path for i in self.lib.items()} == expected_paths
+        assert {i.filepath for i in self.lib.items()} == expected_paths
 
 
 class TestFileFilterPluginNonSingleton(FileFilterPluginHelper):

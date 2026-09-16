@@ -22,7 +22,7 @@ from beets.test.helper import (
     has_program,
     is_importable,
 )
-from beets.util import clean_module_tempdir, syspath
+from beets.util import clean_module_tempdir
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
 
@@ -56,7 +56,7 @@ class DummyRemoteArtSource(fetchart.RemoteArtSource):
         self,
         album,
         plugin: fetchart.FetchArtPlugin,
-        paths: None | Sequence[bytes],
+        paths: Sequence[bytes] | None,
     ) -> Iterator[fetchart.Candidate]:
         return iter(())
 
@@ -87,6 +87,12 @@ class UseThePlugin(TestHelper):
         finally:
             for module in self.modules:
                 clean_module_tempdir(module)
+
+    @pytest.fixture
+    def dpath(self) -> bytes:
+        dpath = self.temp_path / "arttest"
+        dpath.mkdir()
+        return os.fsencode(dpath)
 
 
 class CAAData:
@@ -264,12 +270,6 @@ class TestFSArt(UseThePlugin):
         return Settings(cautious=False, cover_names=("art",), fallback=None)
 
     @pytest.fixture
-    def dpath(self) -> bytes:
-        dpath = os.path.join(self.temp_dir, b"arttest")
-        os.mkdir(syspath(dpath))
-        return dpath
-
-    @pytest.fixture
     def source(self) -> fetchart.FileSystem:
         return fetchart.FileSystem(logger, self.plugin.config)
 
@@ -300,8 +300,8 @@ class TestFSArt(UseThePlugin):
             next(source.get(Album(), settings, [dpath]))
 
     def test_configured_fallback_is_used(self, source, dpath, settings) -> None:
-        fallback = os.path.join(self.temp_dir, b"a.jpg")
-        _common.touch(fallback)
+        fallback = self.temp_path / "a.jpg"
+        fallback.touch()
         settings.fallback = fallback  # type: ignore
         candidate = next(source.get(Album(), settings, [dpath]))
         assert candidate.path == fallback
@@ -329,9 +329,9 @@ class TestFSArt(UseThePlugin):
         self, mock_samefile, source
     ) -> None:
         mock_samefile.side_effect = OSError("os error")
-        fallback = os.path.join(self.temp_dir, b"a.jpg")
+        fallback = self.temp_path / "a.jpg"
         self.plugin.fallback = str(fallback)
-        candidate = fetchart.Candidate(logger, source.ID, fallback)
+        candidate = fetchart.Candidate(logger, source.ID, os.fsencode(fallback))
         result = self.plugin._is_candidate_fallback(candidate)
         mock_samefile.assert_called_once()
         assert not result
@@ -343,12 +343,6 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     AMAZON_URL = f"https://images.amazon.com/images/P/{ASIN}.01.LZZZZZZZ.jpg"
     AMAZON_URL_2 = f"https://images.amazon.com/images/P/{ASIN}.02.LZZZZZZZ.jpg"
     AAO_URL = f"https://www.albumart.org/index_detail.php?asin={ASIN}"
-
-    @pytest.fixture
-    def dpath(self):
-        dpath = os.path.join(self.temp_dir, b"arttest")
-        os.mkdir(syspath(dpath))
-        return dpath
 
     def test_main_interface_returns_amazon_art(self, image_request_mock):
         image_request_mock.get(self.AMAZON_URL)
@@ -851,9 +845,8 @@ class TestFanartTV(UseThePlugin, FetchImageHelper):
 class TestArtImporter(UseThePlugin):
     @pytest.fixture(autouse=True)
     def _setup(self, setup_plugin):
-
         # Mock the album art fetcher to always return our test file.
-        self.art_file = self.temp_dir_path / "tmpcover.jpg"
+        self.art_file = self.temp_path / "tmpcover.jpg"
         self.art_file.touch()
         self.old_afa = self.plugin.art_for_album
         self.afa_response = fetchart.Candidate(
@@ -866,11 +859,9 @@ class TestArtImporter(UseThePlugin):
         self.plugin.art_for_album = art_for_album
 
         # Test library.
-        os.mkdir(syspath(os.path.join(self.libdir, b"album")))
-        itempath = os.path.join(self.libdir, b"album", b"test.mp3")
-        shutil.copyfile(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")), syspath(itempath)
-        )
+        (self.lib_path / "album").mkdir()
+        itempath = self.lib_path / "album" / "test.mp3"
+        shutil.copyfile(_common.RSRC / "full.mp3", itempath)
         self.i = _common.item()
         self.i.path = itempath
         self.album = self.lib.add_album([self.i])
@@ -938,8 +929,8 @@ class TestArtImporter(UseThePlugin):
             config["import"]["move"] = prev_move
 
     def test_do_not_delete_original_if_already_in_place(self):
-        artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
-        shutil.copyfile(self.art_file, syspath(artdest))
+        artdest = self.i.filepath.parent / "cover.jpg"
+        shutil.copyfile(self.art_file, artdest)
         self.afa_response = fetchart.Candidate(
             logger, source_name="test", path=artdest
         )
@@ -967,8 +958,8 @@ class AlbumArtOperationMixin(UseThePlugin):
     up a mock filesystem source that returns a predefined test image.
     """
 
-    IMAGE_PATH = os.path.join(_common.RSRC, b"abbey-similar.jpg")
-    IMAGE_FILESIZE = os.stat(util.syspath(IMAGE_PATH)).st_size
+    IMAGE_PATH = _common.RSRC / "abbey-similar.jpg"
+    IMAGE_FILESIZE = IMAGE_PATH.stat().st_size
     IMAGE_WIDTH = 500
     IMAGE_HEIGHT = 490
     IMAGE_WIDTH_HEIGHT_DIFF = IMAGE_WIDTH - IMAGE_HEIGHT

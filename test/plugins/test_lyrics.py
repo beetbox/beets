@@ -619,10 +619,35 @@ class TestLRCLibLyrics(LyricsBackendTest):
         assert lyrics.backend == backend_name
 
     @pytest.mark.parametrize(
+        "response_data", [[lyrics_match(plainLyrics=None)]]
+    )
+    @pytest.mark.parametrize("plugin_config", [{"synced": False}])
+    def test_null_plain_lyrics_falls_back_to_synced(self, fetch_lyrics):
+        """Use synced lyrics when 'plainLyrics' is null.
+
+        LRCLib may return a null 'plainLyrics' while still providing synced
+        lyrics, so preferring plain text must not discard the data we have.
+        The timestamps are dropped, since this is standing in for plain text.
+        """
+        lyrics = fetch_lyrics()
+
+        assert lyrics
+        assert lyrics.text == "synced"
+
+    @pytest.mark.parametrize(
         "response_data, expected_lyrics",
         [
             pytest.param([], None, id="handle non-matching lyrics"),
             pytest.param([lyrics_match()], SYNCED, id="synced when available"),
+            pytest.param(
+                [
+                    lyrics_match(
+                        syncedLyrics="[00:01.234] 3-decimal synced lyrics"
+                    )
+                ],
+                "[00:01.234] 3-decimal synced lyrics",
+                id="synced with 3-decimal millisecond timestamp",
+            ),
             pytest.param(
                 [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
@@ -633,6 +658,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 [lyrics_match(syncedLyrics=None)],
                 "plain",
                 id="plain by default",
+            ),
+            pytest.param(
+                [lyrics_match(plainLyrics=None, syncedLyrics=None)],
+                None,
+                id="none: no lyrics text despite instrumental being False",
             ),
             pytest.param(
                 [

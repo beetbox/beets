@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -20,13 +21,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import TestHelper
-from beets.util import (
-    as_string,
-    bytestring_path,
-    normpath,
-    path_as_posix,
-    syspath,
-)
+from beets.util import as_string, bytestring_path, normpath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -117,9 +112,7 @@ class TestAdd(PytestItemHelper):
         assert new_grouping == item.grouping
 
     def test_library_add_path_inserts_row(self):
-        item = beets.library.Item.from_path(
-            os.path.join(_common.RSRC, b"full.mp3")
-        )
+        item = beets.library.Item.from_path(_common.RSRC / "full.mp3")
         self.lib.add(item)
         new_grouping = (
             self.lib._connection()
@@ -136,9 +129,7 @@ class TestAdd(PytestItemHelper):
     ):
         """Test library.add emits only one database_change event."""
 
-        item.path = beets.util.normpath(
-            os.path.join(self.temp_dir, b"a", b"b.mp3")
-        )
+        item.path = beets.util.normpath(self.temp_path / "a" / "b.mp3")
         item.album = "a"
         item.title = "b"
 
@@ -385,7 +376,7 @@ class TestDestination(PytestItemHelper):
 
     def test_get_formatted_does_not_replace_separators(self, item_in_db):
         with _common.platform_posix():
-            name = os.path.join("a", "b")
+            name = str(Path("a") / "b")
             item_in_db.title = name
             newname = item_in_db.formatted().get("title")
         assert name == newname
@@ -450,7 +441,7 @@ class TestDestination(PytestItemHelper):
 
     def test_unicode_extension_in_fragment(self, item_in_db):
         self.lib.path_formats = [("default", "foo")]
-        item_in_db.path = util.bytestring_path("bar.caf\xe9")
+        item_in_db.path = Path("bar.caf\xe9")
         with patch("sys.platform", "linux"):
             dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
@@ -469,6 +460,20 @@ class TestDestination(PytestItemHelper):
         item_in_db.title = "foo"
         item_in_db.album = "bar"
         assert item_in_db.destination() == np("base/ber/foo")
+
+    def test_destination_stays_in_basedir_with_empty_leading_field(
+        self, item_in_db
+    ):
+        # Regression test for #4889: an empty leading template field
+        # combined with custom replacements that lack the default
+        # separator rule must not produce an absolute path that escapes
+        # the base directory.
+        self.lib.directory = b"base"
+        self.lib.replacements = [(re.compile(r"a"), "e")]
+        self.lib.path_formats = [("default", "$album/$title")]
+        item_in_db.album = ""
+        item_in_db.title = "three"
+        assert item_in_db.destination() == np("base/three")
 
     @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_component(self, item_in_db):
@@ -1076,18 +1081,18 @@ class TestPathString(PytestItemHelper):
         assert isinstance(self.get_first_item().path, bytes)
 
     def test_special_chars_preserved_in_database(self, item_in_db):
-        path = "b\xe1r".encode()
+        path = Path("b\xe1r")
         item_in_db.path = path
         item_in_db.store()
-        assert self.get_first_item().path == os.path.join(self.libdir, path)
+        assert self.get_first_item().filepath == self.lib_path / path
 
     def test_special_char_path_added_to_database(self, item, item_in_db):
         item_in_db.remove()
-        path = "b\xe1r".encode()
+        path = Path("b\xe1r")
         item = _common.item()
         item.path = path
         self.lib.add(item)
-        assert self.get_first_item().path == os.path.join(self.libdir, path)
+        assert self.get_first_item().filepath == self.lib_path / path
 
     def test_destination_returns_bytestring(self, item_in_db):
         item_in_db.artist = "b\xe1r"
@@ -1101,7 +1106,7 @@ class TestPathString(PytestItemHelper):
         assert isinstance(dest, bytes)
 
     def test_artpath_stores_special_chars(self, item_in_db):
-        path = bytestring_path("b\xe1r")
+        path = Path("b\xe1r")
         alb = self.lib.add_album([item_in_db])
         alb.artpath = path
         alb.store()
@@ -1111,8 +1116,8 @@ class TestPathString(PytestItemHelper):
             .fetchone()[0]
         )
         alb = self.lib.get_album(item_in_db)
-        assert stored_path == path
-        assert alb.artpath == os.path.join(self.libdir, path)
+        assert stored_path == os.fsencode(path)
+        assert alb.art_filepath == self.lib_path / path
 
     def test_sanitize_path_with_special_chars(self):
         path = "b\xe1r?"
@@ -1138,8 +1143,8 @@ class TestPathString(PytestItemHelper):
         assert isinstance(alb.artpath, bytes)
 
     def test_relative_path_is_stored(self, item_in_db):
-        relative_path = os.path.join(b"abc", b"foo.mp3")
-        absolute_path = os.path.join(self.libdir, relative_path)
+        relative_path = Path("abc") / "foo.mp3"
+        absolute_path = self.lib_path / relative_path
         item_in_db.path = absolute_path
         item_in_db.store()
         stored_path = (
@@ -1149,27 +1154,24 @@ class TestPathString(PytestItemHelper):
         )
         album = self.lib.add_album([item_in_db])
 
-        assert item_in_db.path == absolute_path
-        assert stored_path == path_as_posix(relative_path)
-        assert album.path == os.path.dirname(absolute_path)
+        assert item_in_db.filepath == absolute_path
+        assert stored_path == util.path_as_posix(os.fsencode(relative_path))
+        assert album.filepath == absolute_path.parent
 
 
 class TestMtime(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
-        self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
-        shutil.copy(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")),
-            syspath(self.ipath),
-        )
+        self.ipath = self.temp_path / "testfile.mp3"
+        shutil.copy(_common.RSRC / "full.mp3", self.ipath)
         item = beets.library.Item.from_path(self.ipath)
         self.lib.add(item)
         yield item
-        if os.path.exists(self.ipath):
-            os.remove(self.ipath)
+        if self.ipath.exists():
+            self.ipath.unlink()
 
     def _mtime(self):
-        return int(os.path.getmtime(self.ipath))
+        return int(self.ipath.stat().st_mtime)
 
     def test_mtime_initially_up_to_date(self, item):
         assert item.mtime >= self._mtime()
@@ -1233,9 +1235,7 @@ class TestTemplate(PytestItemHelper):
 
 class TestUnicodePath(PytestItemHelper):
     def test_unicode_path(self, item_in_db):
-        item_in_db.path = os.path.join(
-            _common.RSRC, "unicode\u2019d.mp3".encode()
-        )
+        item_in_db.path = _common.RSRC / "unicode\u2019d.mp3"
         # If there are any problems with unicode paths, we will raise
         # here and fail.
         item_in_db.read()
@@ -1251,8 +1251,7 @@ class TestWrite(TestHelper):
 
     def test_no_write_permission(self):
         item = self.add_item_fixture()
-        path = syspath(item.path)
-        os.chmod(path, stat.S_IRUSR)
+        item.filepath.chmod(stat.S_IRUSR)
 
         try:
             with pytest.raises(beets.library.WriteError) as exc_info:
@@ -1261,32 +1260,32 @@ class TestWrite(TestHelper):
 
         finally:
             # Restore write permissions so the file can be cleaned up.
-            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+            item.filepath.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
-        custom_path = os.path.join(self.temp_dir, b"custom.mp3")
-        shutil.copy(syspath(item.path), syspath(custom_path))
+        custom_path = self.temp_path / "custom.mp3"
+        shutil.copy(item.filepath, custom_path)
 
         item["artist"] = "new artist"
-        assert MediaFile(syspath(custom_path)).artist != "new artist"
-        assert MediaFile(syspath(item.path)).artist != "new artist"
+        assert MediaFile(custom_path).artist != "new artist"
+        assert MediaFile(item.filepath).artist != "new artist"
 
         item.write(custom_path)
-        assert MediaFile(syspath(custom_path)).artist == "new artist"
-        assert MediaFile(syspath(item.path)).artist != "new artist"
+        assert MediaFile(custom_path).artist == "new artist"
+        assert MediaFile(item.filepath).artist != "new artist"
 
     def test_write_custom_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artist": "new artist"})
         assert item.artist != "new artist"
-        assert MediaFile(syspath(item.path)).artist == "new artist"
+        assert MediaFile(item.filepath).artist == "new artist"
 
     def test_write_multi_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artists": ["old artist", "another artist"]})
 
-        assert MediaFile(syspath(item.path)).artists == [
+        assert MediaFile(item.filepath).artists == [
             "old artist",
             "another artist",
         ]
@@ -1297,9 +1296,7 @@ class TestWrite(TestHelper):
             tags={"artists": ["old artist", "another artist"]}, id3v23=True
         )
 
-        assert MediaFile(syspath(item.path)).artists == [
-            "old artist/another artist"
-        ]
+        assert MediaFile(item.filepath).artists == ["old artist/another artist"]
 
     def test_write_date_field(self):
         # Since `date` is not a MediaField, this should do nothing.
@@ -1307,12 +1304,12 @@ class TestWrite(TestHelper):
         clean_year = item.year
         item.date = "foo"
         item.write()
-        assert MediaFile(syspath(item.path)).year == clean_year
+        assert MediaFile(item.filepath).year == clean_year
 
 
 class TestItemRead(PytestItemHelper):
     def test_unreadable_raise_read_error(self, item_in_db):
-        unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
+        unreadable = _common.RSRC / "image-2x3.png"
         with pytest.raises(beets.library.ReadError) as exc_info:
             item_in_db.read(unreadable)
         assert isinstance(exc_info.value.reason, UnreadableFileError)
@@ -1322,7 +1319,7 @@ class TestItemRead(PytestItemHelper):
             item_in_db.read("/thisfiledoesnotexist")
 
     def test_read_error_str_includes_reason(self, item_in_db):
-        unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
+        unreadable = _common.RSRC / "image-2x3.png"
         with pytest.raises(beets.library.ReadError) as exc_info:
             item_in_db.read(unreadable)
         message = str(exc_info.value)
@@ -1334,7 +1331,7 @@ class TestItemReadGenre(TestHelper):
     def test_read_semicolon_delimited_genres(self):
         """Semicolon-delimited genre tags are split into individual genres on read."""
         path = self.create_mediafile_fixture()
-        mf = MediaFile(syspath(path))
+        mf = MediaFile(path)
         mf.genres = ["Jazz; Funk; Soul"]
         mf.save()
         item = beets.library.Item.from_path(path)
@@ -1354,18 +1351,17 @@ class TestFilesize(TestHelper):
 class TestItemPruneDirsClutter(TestHelper):
     """Regression tests: prune_dirs respects config["clutter"] during move/remove."""
 
-    def _drop_clutter(self, directory, filename=b"unwanted.log"):
+    def _drop_clutter(self, directory: Path) -> Path:
         """Create a clutter file in *directory* (bytes path)."""
-        path = os.path.join(directory, filename)
-        with open(syspath(path), "w"):
-            pass
+        path = directory / "unwanted.log"
+        path.touch()
         return path
 
     def test_move_prunes_dir_with_config_clutter(self):
         """After moving an item, old dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         # Change artist so the destination path differs, forcing a real move.
@@ -1373,18 +1369,18 @@ class TestItemPruneDirsClutter(TestHelper):
         item.store()
         item.move()
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
     def test_remove_prunes_dir_with_config_clutter(self):
         """After deleting an item, its dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         item.remove(delete=True)
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
 
 class TestParseQuery:

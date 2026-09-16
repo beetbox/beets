@@ -1,7 +1,5 @@
 """Various tests for querying the library database."""
 
-import os
-
 import pytest
 
 import beets.library
@@ -15,8 +13,8 @@ from beets.test import _common
 _p = pytest.param
 
 
-def abs_test_path(path: str) -> str:
-    return os.fsdecode(util.normpath(path))
+def abs_test_path(path: str) -> bytes:
+    return util.normpath(path)
 
 
 @pytest.fixture(scope="class")
@@ -36,6 +34,7 @@ def setup_library(request: pytest.FixtureRequest, helper):
                 flex1=flex1,
                 flex2=flex2,
                 albumartist=albumartist,
+                artpath=abs_test_path(f"{id_}cover.jpg"),
             )
         )
         for id_, album, genres, year, flex1, flex2, albumartist in (
@@ -114,6 +113,8 @@ class TestSort:
             _p(Album, "path+ year+", [1, 2, 3], id="computed"),
             _p(Album, "year+ path+", [1, 2, 3], id="computed-reverse"),
             _p(Item, "flex2- flex1+", [1, 2, 4, 3], id="item-multi-flex-field"),
+            _p(Item, "artpath+", [1, 2, 3, 4], id="item-album-field"),
+            _p(Item, "artpath-", [4, 3, 1, 2], id="item-album-field-reverse"),
         ],
     )
     def test_sort(self, model, query, expected_ids):

@@ -44,9 +44,9 @@ When editing an album during import (i.e., after you have chosen ``eDit`` or
 ``edit Candidates`` for an album import), the fields listed in ``albumfields``
 are shown as a YAML header section before the per-track documents. This allows
 you to edit album-level fields (such as ``album``, ``albumartist``, or any
-configured ``albumfields`` entry) for all tracks at once. Fields that appear in
-both ``itemfields`` and ``albumfields`` are shown only in the header section,
-not per-track.
+configured ``albumfields`` entry) for all tracks at once. Fields accepted into
+the album header are omitted from the per-track documents. Fields unsuitable for
+the header remain per-track when also configured in ``itemfields``.
 
 Also, please be aware that the ``edit Candidates`` choice can only be used with
 the matches found during the initial search (and currently not supporting the

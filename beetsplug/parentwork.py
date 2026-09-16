@@ -14,11 +14,17 @@ from beets.plugins import BeetsPlugin
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 
 if TYPE_CHECKING:
+    import optparse
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
     from beetsplug._utils.musicbrainz import Work
+
+    from ._typing import JSONDict
 
 
 class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add({"auto": False, "force": False})
@@ -26,8 +32,8 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
-    def commands(self):
-        def func(lib, opts, args):
+    def commands(self) -> list[ui.Subcommand]:
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()
@@ -55,7 +61,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         command.func = func
         return [command]
 
-    def imported(self, session, task):
+    def imported(self, session: ImportSession, task: ImportTask) -> None:
         """Import hook for fetching parent works automatically."""
         force_parent = self.config["force"].get(bool)
 
@@ -63,7 +69,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self.find_work(item, force_parent, verbose=False)
             item.store()
 
-    def get_info(self, item, work_info):
+    def get_info(self, item: Item, work_info: Work) -> JSONDict:
         """Given the parent work info dict, fetch parent_composer,
         parent_composer_sort, parentwork, parentwork_disambig, mb_workid and
         composer_ids.
@@ -106,7 +112,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         return parentwork_info
 
-    def find_work(self, item, force, verbose):
+    def find_work(self, item: Item, force: bool, verbose: bool) -> bool | None:
         """Finds the parent work of a recording and populates the tags
         accordingly.
 

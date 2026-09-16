@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from functools import reduce
+from operator import or_
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.dbcore.db import AnyModel, Model
 
 
@@ -13,14 +17,19 @@ class Sort:
     the database.
     """
 
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return set()
+
     def order_clause(self) -> str | None:
         """Generates a SQL fragment to be used in a ORDER BY clause, or
         None if no fragment is used (i.e., this is a slow sort).
         """
         return None
 
-    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
-        """Sort the list of objects and return a list."""
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        """Sort the given sequence of model objects."""
         return sorted(items)
 
     def is_slow(self) -> bool:
@@ -44,6 +53,11 @@ class MultipleSort(Sort):
 
     def __init__(self, sorts: list[Sort] | None = None) -> None:
         self.sorts = sorts or []
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return reduce(or_, (s.field_names for s in self.sorts), set())
 
     def add_sort(self, sort: Sort) -> None:
         self.sorts.append(sort)
@@ -72,7 +86,7 @@ class MultipleSort(Sort):
                 return True
         return False
 
-    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
         slow_sorts = []
         switch_slow = False
         for sort in reversed(self.sorts):
@@ -108,22 +122,36 @@ class FieldSort(Sort):
     """
 
     def __init__(
-        self, field: str, ascending: bool = True, case_insensitive: bool = True
+        self,
+        field_name: str,
+        ascending: bool = True,
+        case_insensitive: bool = True,
     ) -> None:
-        self.field = field
+        self.table, _, self.field_name = field_name.rpartition(".")
         self.ascending = ascending
         self.case_insensitive = case_insensitive
 
-    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
+    @property
+    def field(self) -> str:
+        return (
+            f"{self.table}.{self.field_name}" if self.table else self.field_name
+        )
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return {self.field_name}
+
+    def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
         # TODO: Support flexible attributes with different types (e.g. a mix
         # of strings and numbers) without falling over.
 
         def key(obj: Model) -> Any:
-            field_val = obj.get(self.field, None)
+            field_val = obj.get(self.field_name, None)
             if field_val is None:
-                if _type := obj._types.get(self.field):
+                if _type := obj._types.get(self.field_name):
                     # If the field is typed, use its null value.
-                    field_val = obj._types[self.field].null
+                    field_val = obj._types[self.field_name].null
                 else:
                     # If not, fall back to using an empty string.
                     field_val = ""
@@ -186,7 +214,7 @@ class SlowFieldSort(FieldSort):
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
 
-    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
         return items
 
     def __nonzero__(self) -> bool:
@@ -214,7 +242,7 @@ class SmartArtistSort(FieldSort):
 
         return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
 
-    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
+    def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
         def key(obj: Model) -> str | bytes:
             val = obj[f"{self.field}_sort"] or obj[self.field]
             return val.lower() if self.case_insensitive else val

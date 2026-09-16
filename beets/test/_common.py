@@ -5,44 +5,28 @@ from __future__ import annotations
 import os
 import sys
 from contextlib import contextmanager
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import beets
 import beets.library
 
 # Make sure the development versions of the plugins are used
-import beetsplug
-from beets import importer, logging, util
+from beets import importer, logging
 from beets.ui import commands
 from beets.util import syspath
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
     import pytest
 
-beetsplug.__path__ = [
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "beetsplug",
-        )
-    )
-]
+    from beets.dbcore import Query
+    from beets.library import Item, Library
 
 # Test resources path.
-RSRC = util.bytestring_path(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "test",
-            "rsrc",
-        )
-    )
-)
-PLUGINPATH = os.path.join(RSRC.decode(), "beetsplug")
+RSRC = (Path(__file__).parent.parent.parent / "test" / "rsrc").resolve()
+PLUGINPATH = str(RSRC / "beetsplug")
 
 # Propagate to root logger so the test runner can capture it
 log = logging.getLogger("beets")
@@ -54,7 +38,7 @@ HAVE_SYMLINK = sys.platform != "win32"
 HAVE_HARDLINK = sys.platform != "win32"
 
 
-def item(lib=None, **kwargs):
+def item(lib: Library | None = None, **kwargs) -> Item:
     defaults = dict(
         title="the title",
         artist="the artist",
@@ -97,7 +81,13 @@ def item(lib=None, **kwargs):
 
 
 # Dummy import session.
-def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
+def import_session(
+    lib: Library,
+    loghandler: logging.Handler | None = None,
+    paths: Sequence[bytes] | None = None,
+    query: str | Sequence[str] | Query | None = None,
+    cli: bool = False,
+) -> importer.ImportSession:
     cls = (
         commands.import_.session.TerminalImportSession
         if cli
@@ -163,7 +153,7 @@ class DummyIO:
 # Utility.
 
 
-def touch(path):
+def touch(path: bytes) -> None:
     open(syspath(path), "a").close()
 
 
@@ -171,7 +161,7 @@ def touch(path):
 
 
 @contextmanager
-def platform_windows():
+def platform_windows() -> Iterator[None]:
     import ntpath
 
     old_path = os.path
@@ -183,7 +173,7 @@ def platform_windows():
 
 
 @contextmanager
-def platform_posix():
+def platform_posix() -> Iterator[None]:
     import posixpath
 
     old_path = os.path
@@ -195,7 +185,7 @@ def platform_posix():
 
 
 @contextmanager
-def system_mock(name):
+def system_mock(name: str) -> Iterator[None]:
     import platform
 
     old_system = platform.system

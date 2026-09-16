@@ -1,7 +1,11 @@
 """List duplicate tracks or albums."""
 
+from __future__ import annotations
+
 import os
 import shlex
+from functools import partial
+from typing import TYPE_CHECKING, Any
 
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
@@ -14,13 +18,20 @@ from beets.util import (
     subprocess,
 )
 
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Callable, Iterator, Sequence
+
+    from beets.library import AlbumOrItem, LibModel, Library
+
+
 PLUGIN = "duplicates"
 
 
 class DuplicatesPlugin(BeetsPlugin):
     """List duplicate tracks or albums"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -127,143 +138,158 @@ class DuplicatesPlugin(BeetsPlugin):
         )
         self._command.parser.add_all_common_options()
 
-    def commands(self):
-        def _dup(lib, opts, args):
+    def commands(self) -> list[Subcommand]:
+        def _dup(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             self.config.set_args(opts)
-            album = self.config["album"].get(bool)
-            checksum = self.config["checksum"].get(str)
-            copy = bytestring_path(self.config["copy"].as_str())
-            count = self.config["count"].get(bool)
-            delete = self.config["delete"].get(bool)
-            remove = self.config["remove"].get(bool)
-            fmt_tmpl = self.config["format"].get(str)
-            full = self.config["full"].get(bool)
             keys = self.config["keys"].as_str_seq()
-            merge = self.config["merge"].get(bool)
-            move = bytestring_path(self.config["move"].as_str())
-            path = self.config["path"].get(bool)
-            tiebreak = self.config["tiebreak"].get(dict)
-            strict = self.config["strict"].get(bool)
-            tag = self.config["tag"].get(str)
 
-            if album:
-                if not keys:
-                    keys = ["mb_albumid"]
-                items = lib.albums(args)
+            if self.config["album"].get(bool):
+                self._run_command(
+                    lib.albums(args),
+                    keys or ["mb_albumid"],
+                    "$albumartist - $album",
+                    merge_func=self._merge_albums,
+                )
             else:
-                if not keys:
-                    keys = ["mb_trackid", "mb_albumid"]
-                items = lib.items(args)
-
-            # If there's nothing to do, return early. The code below assumes
-            # `items` to be non-empty.
-            if not items:
-                return
-
-            if path:
-                fmt_tmpl = "$path"
-            elif not fmt_tmpl:
-                if album:
-                    fmt_tmpl = "$albumartist - $album"
-                else:
-                    fmt_tmpl = "$albumartist - $album - $title"
-
-            if checksum:
-                for i in items:
-                    k, _ = self._checksum(i, checksum)
-                keys = [k]
-
-            for obj_id, obj_count, objs in self._duplicates(
-                items,
-                keys=keys,
-                full=full,
-                strict=strict,
-                tiebreak=tiebreak,
-                merge=merge,
-            ):
-                if obj_id:  # Skip empty IDs.
-                    for o in objs:
-                        self._process_item(
-                            o,
-                            copy=copy,
-                            move=move,
-                            delete=delete,
-                            remove=remove,
-                            tag=tag,
-                            fmt=(
-                                fmt_tmpl
-                                if not count
-                                else f"{fmt_tmpl}: {obj_count}"
-                            ),
-                        )
+                self._run_command(
+                    lib.items(args),
+                    keys or ["mb_trackid", "mb_albumid"],
+                    "$albumartist - $album - $title",
+                    merge_func=self._merge_items,
+                )
 
         self._command.func = _dup
         return [self._command]
 
+    def _run_command(
+        self,
+        items: Sequence[AlbumOrItem],
+        keys: list[str],
+        fmt_tmpl_fallback: str,
+        *,
+        merge_func: Callable[[list[AlbumOrItem]], list[AlbumOrItem]],
+    ) -> None:
+        """Process one homogeneous set of duplicate candidates."""
+        checksum = self.config["checksum"].get(str)
+        copy = bytestring_path(self.config["copy"].as_str())
+        count = self.config["count"].get(bool)
+        delete = self.config["delete"].get(bool)
+        remove = self.config["remove"].get(bool)
+        fmt_tmpl = self.config["format"].get(str)
+        full = self.config["full"].get(bool)
+        merge = self.config["merge"].get(bool)
+        move = bytestring_path(self.config["move"].as_str())
+        path = self.config["path"].get(bool)
+        tiebreak = self.config["tiebreak"].get(dict)
+        strict = self.config["strict"].get(bool)
+        tag = self.config["tag"].get(str)
+
+        # If there's nothing to do, return early. The code below assumes
+        # `items` to be non-empty.
+        if not items:
+            return
+
+        if path:
+            fmt_tmpl = "$path"
+        elif not fmt_tmpl:
+            fmt_tmpl = fmt_tmpl_fallback
+
+        if checksum:
+            for i in items:
+                k, _ = self._checksum(i, checksum)
+            keys = [k]
+
+        for obj_id, obj_count, objs in self._duplicates(
+            items,
+            keys=keys,
+            full=full,
+            strict=strict,
+            tiebreak=tiebreak,
+            merge_func=merge_func if merge else None,
+        ):
+            if obj_id:  # Skip empty IDs.
+                for o in objs:
+                    self._process_item(
+                        o,
+                        copy=copy,
+                        move=move,
+                        delete=delete,
+                        remove=remove,
+                        tag=tag,
+                        fmt=(
+                            fmt_tmpl
+                            if not count
+                            else f"{fmt_tmpl}: {obj_count}"
+                        ),
+                    )
+
     def _process_item(
         self,
-        item,
-        copy=False,
-        move=False,
-        delete=False,
-        tag=False,
-        fmt="",
-        remove=False,
-    ):
-        """Process Item `item`."""
-        print_(format(item, fmt))
+        model: LibModel,
+        *,
+        copy: bytes,
+        move: bytes,
+        delete: bool,
+        tag: str,
+        fmt: str,
+        remove: bool,
+    ) -> None:
+        """Process one library model."""
+        print_(format(model, fmt))
         if copy:
-            item.move(basedir=copy, operation=MoveOperation.COPY)
-            item.store()
+            model.move(basedir=copy, operation=MoveOperation.COPY)
+            model.store()
         if move:
-            item.move(basedir=move)
-            item.store()
+            model.move(basedir=move)
+            model.store()
         if delete:
-            item.remove(delete=True)
+            model.remove(delete=True)
         elif remove:
-            item.remove(delete=False)
+            model.remove(delete=False)
         if tag:
             try:
                 k, v = tag.split("=")
             except Exception:
                 raise UserError(f"{PLUGIN}: can't parse k=v tag: {tag}")
-            setattr(item, k, v)
-            item.store()
+            setattr(model, k, v)
+            model.store()
 
-    def _checksum(self, item, prog):
-        """Run external `prog` on file path associated with `item`, cache
+    def _checksum(self, model: LibModel, prog: str) -> tuple[str, Any]:
+        """Run external `prog` on file path associated with `model`, cache
         output as flexattr on a key that is the name of the program, and
         return the key, checksum tuple.
         """
         args = [
-            p.format(file=os.fsdecode(item.path)) for p in shlex.split(prog)
+            p.format(file=os.fsdecode(model.path)) for p in shlex.split(prog)
         ]
         key = args[0]
-        checksum = getattr(item, key, False)
+        checksum = getattr(model, key, False)
         if not checksum:
             self._log.debug(
-                "key {} on item {.filepath} not cached:computing checksum",
+                "key {} on model {.filepath} not cached:computing checksum",
                 key,
-                item,
+                model,
             )
             try:
                 checksum = command_output(args).stdout
-                setattr(item, key, checksum)
-                item.store()
+                setattr(model, key, checksum)
+                model.store()
                 self._log.debug(
-                    "computed checksum for {.title} using {}", item, key
+                    "computed checksum for {.title} using {}", model, key
                 )
             except subprocess.CalledProcessError as e:
-                self._log.debug("failed to checksum {.filepath}: {}", item, e)
+                self._log.debug("failed to checksum {.filepath}: {}", model, e)
         else:
             self._log.debug(
                 "key {} on item {.filepath} cached:not computing checksum",
                 key,
-                item,
+                model,
             )
         return key, checksum
 
-    def _group_by(self, objs, keys, strict):
+    def _group_by(
+        self, objs: Sequence[AlbumOrItem], keys: Sequence[str], strict: bool
+    ) -> dict[tuple[Any, ...], list[AlbumOrItem]]:
         """Return a dictionary with keys arbitrary concatenations of attributes
         and values lists of objects (Albums or Items) with those keys.
 
@@ -293,7 +319,11 @@ class DuplicatesPlugin(BeetsPlugin):
 
         return counts
 
-    def _order(self, objs, tiebreak=None):
+    def _order(
+        self,
+        objs: Sequence[AlbumOrItem],
+        tiebreak: dict[str, list[str]] | None = None,
+    ) -> list[AlbumOrItem]:
         """Return the objects (Items or Albums) sorted by descending
         order of priority.
 
@@ -304,33 +334,30 @@ class DuplicatesPlugin(BeetsPlugin):
         """
         kind = "items" if all(isinstance(o, Item) for o in objs) else "albums"
 
+        sort = partial(sorted, reverse=True)
         if tiebreak and kind in tiebreak.keys():
+            return sort(
+                objs, key=lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
+            )
+        if kind == "items":
 
-            def key(x):
-                return tuple(getattr(x, k) for k in tiebreak[kind])
-        else:
-            if kind == "items":
+            def truthy(v: object) -> bool:
+                # Avoid a Unicode warning by avoiding comparison
+                # between a bytes object and the empty Unicode
+                # string ''.
+                return v is not None and (
+                    v != "" if isinstance(v, str) else True
+                )
 
-                def truthy(v):
-                    # Avoid a Unicode warning by avoiding comparison
-                    # between a bytes object and the empty Unicode
-                    # string ''.
-                    return v is not None and (
-                        v != "" if isinstance(v, str) else True
-                    )
+            fields = Item.all_keys()
 
-                fields = Item.all_keys()
+            return sort(
+                objs,
+                key=lambda x: sum(1 for f in fields if truthy(getattr(x, f))),
+            )
+        return sort(objs, key=lambda x: len(x.items()))
 
-                def key(x):
-                    return sum(1 for f in fields if truthy(getattr(x, f)))
-            else:
-
-                def key(x):
-                    return len(x.items())
-
-        return sorted(objs, key=key, reverse=True)
-
-    def _merge_items(self, objs):
+    def _merge_items(self, objs: list[Item]) -> list[Item]:
         """Merge Item objs by copying missing fields from items in the tail to
         the head item.
 
@@ -354,7 +381,7 @@ class DuplicatesPlugin(BeetsPlugin):
                         break
         return objs
 
-    def _merge_albums(self, objs):
+    def _merge_albums(self, objs: list[Album]) -> list[Album]:
         """Merge Album objs by copying missing items from albums in the tail
         to the head album.
 
@@ -377,23 +404,20 @@ class DuplicatesPlugin(BeetsPlugin):
                     missing.move(operation=MoveOperation.COPY)
         return objs
 
-    def _merge(self, objs):
-        """Merge duplicate items. See ``_merge_items`` and ``_merge_albums``
-        for the relevant strategies.
-        """
-        kind = Item if all(isinstance(o, Item) for o in objs) else Album
-        if kind is Item:
-            objs = self._merge_items(objs)
-        else:
-            objs = self._merge_albums(objs)
-        return objs
-
-    def _duplicates(self, objs, keys, full, strict, tiebreak, merge):
+    def _duplicates(
+        self,
+        objs: Sequence[AlbumOrItem],
+        keys: Sequence[str],
+        full: bool,
+        strict: bool,
+        tiebreak: dict[str, list[str]] | None,
+        merge_func: Callable[[list[AlbumOrItem]], list[AlbumOrItem]] | None,
+    ) -> Iterator[tuple[tuple[Any, ...], int, Sequence[AlbumOrItem]]]:
         """Generate triples of keys, duplicate counts, and constituent objects."""
         offset = 0 if full else 1
         for k, objs in self._group_by(objs, keys, strict).items():
             if len(objs) > 1:
                 objs = self._order(objs, tiebreak)
-                if merge:
-                    objs = self._merge(objs)
+                if merge_func:
+                    objs = merge_func(objs)
                 yield (k, len(objs) - offset, objs[offset:])

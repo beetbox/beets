@@ -9,7 +9,6 @@ import pytest
 from beets.autotag import (
     AlbumInfo,
     AlbumMatch,
-    AttrDict,
     Distance,
     TrackInfo,
     TrackMatch,
@@ -17,6 +16,7 @@ from beets.autotag import (
 )
 from beets.library import Item
 from beets.test.helper import BeetsTestCase
+from beets.util import AttrDict
 
 str_field_deprecation = pytest.warns(
     DeprecationWarning, match="The 'genre' field is deprecated"
@@ -28,6 +28,13 @@ _p = pytest.param
 @pytest.mark.parametrize(
     "str_value, list_value, expected_warning, expected_list_value",
     [
+        _p(
+            "",
+            None,
+            str_field_deprecation,
+            None,
+            id="empty str value should become None, warning raised",
+        ),
         _p(
             "value",
             None,

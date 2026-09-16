@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
     from beets import dbcore, library
     from beets.autotag import AlbumMatch, TrackMatch
-    from beets.library import AnyLibModel
+    from beets.library import AlbumOrItem
     from beets.util import PathBytes
 
     from .tasks import ImportTask, SingletonImportTask
@@ -52,7 +52,7 @@ class ImportSession:
         lib: library.Library,
         loghandler: logging.Handler | None,
         paths: Sequence[PathBytes] | None,
-        query: dbcore.Query | None,
+        query: str | Sequence[str] | dbcore.Query | None = None,
     ) -> None:
         """Create a session.
 
@@ -173,7 +173,7 @@ class ImportSession:
         raise NotImplementedError
 
     def get_duplicate_action(
-        self, task: ImportTask, found_duplicates: list[AnyLibModel]
+        self, task: ImportTask, found_duplicates: list[AlbumOrItem]
     ) -> DuplicateAction:
         """Get the configured duplicate action."""
         choice = config["import"]["duplicate_action"].as_choice(

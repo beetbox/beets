@@ -1,24 +1,25 @@
 """Warns you about things you hate (or even blocks import)."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from beets.importer import Action
 from beets.library import Album, Item, parse_query_string
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from beets.importer import ImportSession, ImportTask
+
 
 __author__ = "baobab@heresiarch.info"
 __version__ = "2.0"
 
 
-def summary(task):
-    """Given an ImportTask, produce a short string identifying the
-    object.
-    """
-    if task.is_album:
-        return f"{task.cur_artist} - {task.cur_album}"
-    return f"{task.item.artist} - {task.item.title}"
-
-
 class IHatePlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.register_listener(
             "import_task_choice", self.import_task_choice_event
@@ -26,7 +27,9 @@ class IHatePlugin(BeetsPlugin):
         self.config.add({"warn": [], "skip": []})
 
     @classmethod
-    def do_i_hate_this(cls, task, action_patterns):
+    def do_i_hate_this(
+        cls, task: ImportTask, action_patterns: Iterable[str]
+    ) -> bool:
         """Process group of patterns (warn or skip) and returns True if
         task is hated and not whitelisted.
         """
@@ -39,7 +42,9 @@ class IHatePlugin(BeetsPlugin):
                     return True
         return False
 
-    def import_task_choice_event(self, session, task):
+    def import_task_choice_event(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         skip_queries = self.config["skip"].as_str_seq()
         warn_queries = self.config["warn"].as_str_seq()
 
@@ -48,10 +53,10 @@ class IHatePlugin(BeetsPlugin):
                 self._log.debug("processing your hate")
                 if self.do_i_hate_this(task, skip_queries):
                     task.choice_flag = Action.SKIP
-                    self._log.info("skipped: {}", summary(task))
+                    self._log.info("skipped: {}", task.source.desc)
                     return
                 if self.do_i_hate_this(task, warn_queries):
-                    self._log.info("you may hate this: {}", summary(task))
+                    self._log.info("you may hate this: {}", task.source.desc)
             else:
                 self._log.debug("nothing to do")
         else:

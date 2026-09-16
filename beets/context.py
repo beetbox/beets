@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from contextvars import ContextVar
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # Holds the music dir context
 _music_dir_var: ContextVar[bytes] = ContextVar("music_dir", default=b"")
@@ -16,7 +22,7 @@ def set_music_dir(value: bytes) -> None:
 
 
 @contextmanager
-def music_dir(value: bytes):
+def music_dir(value: bytes) -> Iterator[None]:
     """Temporarily bind the active music directory for query parsing."""
     token = _music_dir_var.set(value)
     try:

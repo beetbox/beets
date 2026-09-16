@@ -5,7 +5,7 @@ import os
 import re
 import time
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, overload
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, overload
 
 import confuse
 
@@ -19,13 +19,11 @@ from beets.metadata_plugins import MetadataSourcePlugin
 from .api import TidalAPI
 
 if TYPE_CHECKING:
-    import optparse
     from collections.abc import Callable, Iterable, Sequence
 
     from beets.autotag import Info
-    from beets.dbcore.db import Results
-    from beets.library import Library
-    from beets.library.models import Album, Item
+    from beets.importer import ImportSession
+    from beets.library import Album, Item, LibModel, Library
 
     from .api_types import (
         AlbumAttributes,
@@ -38,7 +36,30 @@ if TYPE_CHECKING:
     )
 
 
+class TidalCLIOpts(Protocol):
+    auth: bool
+
+
+class TidalSyncCLIOpts(Protocol):
+    album: bool
+    force: bool
+    write: bool
+
+
 log = getLogger("beets.tidal")
+
+_normalize_label_re = re.compile(
+    r"""
+    ^(?:.*(?:©|℗|\([cp]\))\s*)?                   # optional copyright marker
+    (?:\d{4}\s+)?                                 # optional year
+    (?:.*?\ under\ exclusive\ licen[sc]e\ to\ )?  # optional license prefix
+    (.*?)                                         # text to keep
+    (?:,?\ (?:inc|llc|ltd|co)\.?)?                # optional legal suffix
+    (?:,\ a\ .*)?                                 # optional corporate clause
+    (?:,?\ for\ the\ united\ states\ and\ .*)?    # optional territorial clause
+    $""",
+    re.IGNORECASE | re.VERBOSE,
+)
 
 
 class TidalPlugin(MetadataSourcePlugin):
@@ -79,7 +100,7 @@ class TidalPlugin(MetadataSourcePlugin):
         """Return the configured path to the token file in the app directory."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-    def require_authentication(self) -> None:
+    def require_authentication(self, session: ImportSession) -> None:
         if not os.path.isfile(self._tokenfile()):
             raise UserError(
                 "Please login to TIDAL"
@@ -175,6 +196,9 @@ class TidalPlugin(MetadataSourcePlugin):
     def search_tracks_by_query(self, query: str) -> Iterable[TrackInfo]:
         """Search for tracks given a string query."""
         search_doc = self.api.search_results(query, include=["tracks.artists"])
+        if not search_doc["data"]:
+            return
+
         track_by_id: dict[str, TidalTrack] = {
             item["id"]: item
             for item in search_doc.get("included", [])
@@ -185,7 +209,9 @@ class TidalPlugin(MetadataSourcePlugin):
             for item in search_doc.get("included", [])
             if item["type"] == "artists"
         }
-        for track_rel in search_doc["data"]["relationships"]["tracks"]["data"]:
+        for track_rel in search_doc["data"][0]["relationships"]["tracks"][
+            "data"
+        ]:
             if track := track_by_id.get(track_rel["id"]):
                 yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
@@ -202,9 +228,12 @@ class TidalPlugin(MetadataSourcePlugin):
             # This is a bit inconvenient, but we fetch the items and artists
             # for all albums separately.
         )
+        if not search_doc["data"]:
+            return
+
         album_ids = [
             album_rel["id"]
-            for album_rel in search_doc["data"]["relationships"]["albums"][
+            for album_rel in search_doc["data"][0]["relationships"]["albums"][
                 "data"
             ]
         ]
@@ -393,6 +422,13 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     @staticmethod
+    def _normalize_label(text: str) -> str:
+        """Reduce a raw copyright string to a concise label name."""
+        if match := _normalize_label_re.match(text):
+            return match.group(1)
+        return text
+
+    @staticmethod
     def _parse_artwork_url(
         album: TidalAlbum, artwork_by_id: dict[str, TidalArtwork]
     ) -> str | None:
@@ -426,7 +462,7 @@ class TidalPlugin(MetadataSourcePlugin):
             isrc=track["attributes"]["isrc"],
             artist=", ".join(artist_names),
             artists=artist_names,
-            duration=self._duration_to_seconds(track["attributes"]["duration"]),
+            length=self._duration_to_seconds(track["attributes"]["duration"]),
             label=self._parse_label(track["attributes"]),
             # Flexattrs
             tidal_track_id=track["id"],
@@ -487,7 +523,7 @@ class TidalPlugin(MetadataSourcePlugin):
     @staticmethod
     def _parse_label(attributes: MediaAttributes) -> str | None:
         if copyright_ := attributes.get("copyright"):
-            return copyright_["text"]
+            return TidalPlugin._normalize_label(copyright_["text"])
         return None
 
     @staticmethod
@@ -509,7 +545,7 @@ class TidalPlugin(MetadataSourcePlugin):
         return round(attributes["popularity"] * 100)
 
     def sync_item_popularity(
-        self, results: Results[Item], write: bool, force: bool = False
+        self, results: Sequence[Item], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library items."""
         self._sync_popularity(
@@ -523,7 +559,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
     def sync_album_popularity(
-        self, results: Results[Album], write: bool, force: bool = False
+        self, results: Sequence[Album], write: bool, force: bool = False
     ) -> None:
         """Sync Tidal popularity data for library albums."""
         self._sync_popularity(
@@ -539,7 +575,7 @@ class TidalPlugin(MetadataSourcePlugin):
     def _sync_popularity(
         self,
         *,
-        results: Results[Item] | Results[Album],
+        results: Sequence[LibModel],
         write: bool,
         force: bool,
         id_field: str,
@@ -593,7 +629,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
         def auth_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: TidalCLIOpts, args: list[str]
         ) -> None:
             if opts.auth:
                 self.api.ui_authenticate_flow()
@@ -633,7 +669,7 @@ class TidalPlugin(MetadataSourcePlugin):
         )
 
         def sync_func(
-            lib: Library, opts: optparse.Values, args: list[str]
+            lib: Library, opts: TidalSyncCLIOpts, args: list[str]
         ) -> None:
             query = ["data_source:tidal", *args]
 

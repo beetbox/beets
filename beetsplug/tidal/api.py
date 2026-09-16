@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import urllib.parse
 import webbrowser
 from contextlib import suppress
 from functools import cached_property
@@ -61,15 +60,13 @@ class TidalAPI(RequestHandler):
         https://tidal-music.github.io/tidal-api-reference/#/searchResults
         """
         params = {
+            "filter[query]": query,
             "explicitFilter": explicit_filter,
             "countryCode": country_code,
             "include": include or [],
         }
 
-        return self.get_json(
-            f"{API_BASE}/searchResults/{urllib.parse.quote(query)}",
-            params=params,
-        )
+        return self.get_json(f"{API_BASE}/searchResults", params=params)
 
     def get_tracks(
         self,

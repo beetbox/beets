@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from beets.dbcore.db import FormattedMapping
-    from beets.library.models import LibModel
+    from beets.library import LibModel
 
 
 def colordiff(a: str, b: str) -> tuple[str, str]:

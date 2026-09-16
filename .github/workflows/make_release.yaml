@@ -30,7 +30,10 @@ jobs:
         run: poe install --group release --group docs
 
       - name: Bump project version
-        run: poe bump "${{ env.NEW_VERSION }}"
+        run: |
+          poe bump "${{ env.NEW_VERSION }}"
+          # make sure project version is updated in the lock file as well
+          uv lock
 
       - uses: EndBug/add-and-commit@v9
         id: commit_and_tag

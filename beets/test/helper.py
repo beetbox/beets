@@ -38,13 +38,7 @@ from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
-from beets.util import (
-    MoveOperation,
-    bytestring_path,
-    clean_module_tempdir,
-    syspath,
-)
-from beets.util.functemplate import template
+from beets.util import MoveOperation, clean_module_tempdir, syspath
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
@@ -168,10 +162,10 @@ class IOMixin(RunMixin):
 
 
 class PathsMixin:
-    resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
+    resource_path = _common.RSRC / "full.mp3"
 
     @cached_property
-    def temp_dir_path(self) -> Path:
+    def temp_path(self) -> Path:
         return Path(self.create_temp_dir())
 
     def create_temp_dir(self, **kwargs: Any) -> str:
@@ -179,7 +173,7 @@ class PathsMixin:
 
     def remove_temp_dir(self) -> None:
         """Delete the temporary directory created by `create_temp_dir`."""
-        shutil.rmtree(self.temp_dir_path)
+        shutil.rmtree(self.temp_path)
 
 
 class TestHelper(RunMixin, PathsMixin, ConfigMixin):
@@ -222,18 +216,10 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
     db_on_disk: ClassVar[bool] = False
 
     @cached_property
-    def temp_dir(self) -> bytes:
-        return util.bytestring_path(self.temp_dir_path)
-
-    @cached_property
     def lib_path(self) -> Path:
-        lib_path = self.temp_dir_path / "libdir"
+        lib_path = self.temp_path / "libdir"
         lib_path.mkdir(exist_ok=True)
         return lib_path
-
-    @cached_property
-    def libdir(self) -> bytes:
-        return bytestring_path(self.lib_path)
 
     # TODO automate teardown through hook registration
 
@@ -246,10 +232,10 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         Sets the following properties on itself.
 
-        - ``temp_dir`` Path to a temporary directory containing all
+        - ``temp_path`` Path to a temporary directory containing all
           files specific to beets
 
-        - ``libdir`` Path to a subfolder of ``temp_dir``, containing the
+        - ``lib_path`` Path to a subfolder of ``temp_path``, containing the
           library's media files. Same as ``config['directory']``.
 
         - ``lib`` Library instance created with the settings from
@@ -257,7 +243,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
-        temp_dir_str = str(self.temp_dir_path)
+        temp_dir_str = str(self.temp_path)
         self.env_patcher = patch.dict(
             "os.environ",
             {
@@ -270,9 +256,9 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         self.config["directory"] = str(self.lib_path)
 
         dbpath = (
-            util.bytestring_path(self.config["library"].as_filename())
+            self.config["library"].as_path()
             if self.db_on_disk
-            else ":memory:"
+            else Path(":memory:")
         )
         self.lib = Library(dbpath, str(self.lib_path))
 
@@ -337,9 +323,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         """Add an item with an actual audio file to the library."""
         item = self.create_item(**values)
         extension = item["format"].lower()
-        item["path"] = os.path.join(
-            _common.RSRC, util.bytestring_path(f"min.{extension}")
-        )
+        item["path"] = _common.RSRC / f"min.{extension}"
         item.add(self.lib)
         item.move(operation=MoveOperation.COPY)
         item.store()
@@ -353,7 +337,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         """Add a number of items with files to the database."""
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
+        path = _common.RSRC / f"full.{ext}"
         for i in range(count):
             item = Item.from_path(path)
             item.album = f"\u00e4lbum {i}"  # Check unicode paths
@@ -375,9 +359,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
     ) -> Album:
         """Add an album with files to the database."""
         items = []
-        path = os.path.join(
-            _common.RSRC, util.bytestring_path(f"{fname}.{ext}")
-        )
+        path = _common.RSRC / f"{fname}.{ext}"
         for discnumber in range(1, disc_count + 1):
             for i in range(track_count):
                 item = Item.from_path(path)
@@ -397,18 +379,18 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
         ext: str = "mp3",
         images: list[str] | None = None,
         target_dir: util.PathLike | None = None,
-    ) -> bytes:
-        """Copy a fixture mediafile with the extension to `temp_dir`.
+    ) -> Path:
+        """Copy a fixture mediafile with the extension to `temp_path`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
         if not target_dir:
-            target_dir = self.temp_dir
-        src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
-        handle, path = mkstemp(dir=target_dir)
-        path = bytestring_path(path)
+            target_dir = self.temp_path
+        src = _common.RSRC / f"full.{ext}"
+        handle, str_path = mkstemp(dir=target_dir)
+        path = Path(os.fsdecode(str_path))
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
 
@@ -416,43 +398,13 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
             mediafile = MediaFile(path)
             imgs = []
             for img_ext in images:
-                file = util.bytestring_path(f"image-2x3.{img_ext}")
-                img_path = os.path.join(_common.RSRC, file)
-                with open(img_path, "rb") as f:
+                img_path = _common.RSRC / f"image-2x3.{img_ext}"
+                with img_path.open("rb") as f:
                     imgs.append(Image(f.read()))
             mediafile.images = imgs
             mediafile.save()
 
         return path
-
-    # Safe file operations
-
-    def touch(
-        self,
-        path: util.PathLike,
-        dir_: util.PathLike | None = None,
-        content: str = "",
-    ) -> bytes:
-        """Create a file at `path` with given content.
-
-        If `dir_` is given, it is prepended to `path`. After that, if the
-        path is relative, it is resolved with respect to
-        `self.temp_dir`.
-        """
-        bytes_path = os.fsencode(path)
-        if dir_:
-            bytes_path = os.path.join(os.fsencode(dir_), bytes_path)
-
-        if not os.path.isabs(bytes_path):
-            bytes_path = os.path.join(self.temp_dir, bytes_path)
-
-        parent = os.path.dirname(bytes_path)
-        if not os.path.isdir(syspath(parent)):
-            os.makedirs(syspath(parent))
-
-        with open(syspath(bytes_path), "a+") as f:
-            f.write(content)
-        return bytes_path
 
 
 # A test harness for all beets tests.
@@ -579,13 +531,9 @@ class ImporterMixin(PathsMixin, ConfigMixin):
 
     @cached_property
     def import_path(self) -> Path:
-        import_path = self.temp_dir_path / "import"
+        import_path = self.temp_path / "import"
         import_path.mkdir(exist_ok=True)
         return import_path
-
-    @cached_property
-    def import_dir(self) -> bytes:
-        return bytestring_path(self.import_path)
 
     def prepare_track_for_import(
         self, track_id: int, album_path: Path, album_id: int | None = None
@@ -641,16 +589,19 @@ class ImporterMixin(PathsMixin, ConfigMixin):
         for album_id in range(base_idx, count + base_idx):
             self.prepare_album_for_import(1, album_id=album_id)
 
-    def _get_import_session(self, import_dir: bytes) -> ImportSession:
+    def _get_import_session(self, import_dir: Path) -> ImportSession:
         return ImportSessionFixture(
-            self.lib, loghandler=None, query=None, paths=[import_dir]
+            self.lib,
+            loghandler=None,
+            query=None,
+            paths=[os.fsencode(import_dir)],
         )
 
     def setup_importer(
-        self, import_dir: bytes | None = None, **kwargs: Any
+        self, import_dir: Path | None = None, **kwargs: Any
     ) -> ImportSession:
         self.config["import"].set_args({**self.default_import_config, **kwargs})
-        self.importer = self._get_import_session(import_dir or self.import_dir)
+        self.importer = self._get_import_session(import_dir or self.import_path)
         return self.importer
 
     def setup_singleton_importer(self, **kwargs: Any) -> ImportSession:
@@ -662,12 +613,9 @@ class ImportHelper(TestHelper, ImporterMixin):
         super().setup_beets()
         self.import_media = []
         self.lib.path_formats = [
-            ("default", template(os.path.join("$artist", "$album", "$title"))),
-            ("singleton:true", template(os.path.join("singletons", "$title"))),
-            (
-                "comp:true",
-                template(os.path.join("compilations", "$album", "$title")),
-            ),
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
         ]
 
 
@@ -728,14 +676,18 @@ class ImportSessionFixture(ImportSession):
         assert not isinstance(choice, int), f"Invalid choice: {choice}"
         return choice
 
-    choose_item = choose_match  # type: ignore[assignment]
+    choose_item = choose_match  # type: ignore[arg-type, assignment]
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
-    def __init__(self, *args, **kwargs):
+    _choices: list[importer.Action | int]
+    _duplicate_actions: list[importer.DuplicateAction]
+
+    def __init__(self, *args, **kwargs) -> None:
         self.io = kwargs.pop("io")
         super().__init__(*args, **kwargs)
         self._choices = []
+        self._duplicate_actions = []
 
     default_choice = importer.Action.APPLY
 
@@ -744,6 +696,17 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
     def clear_choices(self) -> None:
         self._choices = []
+        self._duplicate_actions = []
+
+    def add_duplicate_action(self, action: importer.DuplicateAction) -> None:
+        self._duplicate_actions.append(action)
+
+    def _get_duplicate_action_from_user(
+        self, task: importer.ImportTask, found_duplicates: list[Any]
+    ) -> str:
+        if self._duplicate_actions:
+            self.io.addinput(self._duplicate_actions.pop(0).value)
+        return super()._get_duplicate_action_from_user(task, found_duplicates)
 
     def choose_match(
         self, task: importer.ImportTask
@@ -752,7 +715,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
         return super().choose_match(task)
 
     def choose_item(
-        self, task: importer.ImportTask
+        self, task: importer.SingletonImportTask
     ) -> TrackMatch | importer.Action:
         self._add_choice_input()
         return super().choose_item(task)
@@ -782,13 +745,13 @@ class TerminalImportSessionFixture(TerminalImportSession):
 class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
 
-    def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
+    def _get_import_session(self, import_dir: Path) -> importer.ImportSession:
         return TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,
             io=self.request.getfixturevalue("io"),
-            paths=[import_dir],
+            paths=[os.fsencode(import_dir)],
         )
 
 

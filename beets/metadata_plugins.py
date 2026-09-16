@@ -60,7 +60,9 @@ def get_metadata_source(name: str) -> MetadataSourcePlugin | None:
 
 
 @contextmanager
-def maybe_handle_plugin_error(plugin: MetadataSourcePlugin, method_name: str):
+def maybe_handle_plugin_error(
+    plugin: MetadataSourcePlugin, method_name: str
+) -> Iterator[None]:
     """Safely call a plugin method, catching and logging exceptions."""
     if config["raise_on_error"]:
         yield
@@ -411,6 +413,10 @@ class SearchApiMetadataSourcePlugin(
         """
         if self.config["search_query_ascii"].get():
             query = unidecode.unidecode(query)
+
+        if not query and not filters:
+            self._log.debug("Skipping search with empty query and filters")
+            return ()
 
         limit = self.config["search_limit"].get(int)
         params = SearchParams(query_type, query, filters, limit)
