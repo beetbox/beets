@@ -831,7 +831,7 @@ Default:
 For MusicBrainz-tagged libraries, adding ``mb_albumid`` to the album keys
 distinguishes separate releases that have the same album artist and title:
 
-::
+.. code-block:: yaml
 
     album: albumartist album mb_albumid
     item: artist title
