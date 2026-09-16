@@ -731,16 +731,18 @@ class TestSearchLimit(TidalPluginTest):
         # Single query returns 2 album IDs; only the first should be used.
         self.tidal.api.search_results = Mock(
             return_value={
-                "data": {
-                    "relationships": {
-                        "albums": {
-                            "data": [
-                                {"id": "1", "type": "albums"},
-                                {"id": "2", "type": "albums"},
-                            ]
+                "data": [
+                    {
+                        "relationships": {
+                            "albums": {
+                                "data": [
+                                    {"id": "1", "type": "albums"},
+                                    {"id": "2", "type": "albums"},
+                                ]
+                            }
                         }
                     }
-                }
+                ]
             }
         )
 
@@ -794,18 +796,26 @@ class TestSearchLimit(TidalPluginTest):
         self.tidal.api.search_results = Mock(
             side_effect=[
                 {
-                    "data": {
-                        "relationships": {
-                            "albums": {"data": [{"id": "10", "type": "albums"}]}
+                    "data": [
+                        {
+                            "relationships": {
+                                "albums": {
+                                    "data": [{"id": "10", "type": "albums"}]
+                                }
+                            }
                         }
-                    }
+                    ]
                 },
                 {
-                    "data": {
-                        "relationships": {
-                            "albums": {"data": [{"id": "20", "type": "albums"}]}
+                    "data": [
+                        {
+                            "relationships": {
+                                "albums": {
+                                    "data": [{"id": "20", "type": "albums"}]
+                                }
+                            }
                         }
-                    }
+                    ]
                 },
             ]
         )
@@ -846,11 +856,13 @@ class TestSearchLimit(TidalPluginTest):
         # Each returns one track; only the first query's result should be kept.
         self.tidal.api.search_results = Mock(
             return_value={
-                "data": {
-                    "relationships": {
-                        "tracks": {"data": [{"id": "1", "type": "tracks"}]}
+                "data": [
+                    {
+                        "relationships": {
+                            "tracks": {"data": [{"id": "1", "type": "tracks"}]}
+                        }
                     }
-                },
+                ],
                 "included": [
                     _make_track("1", "Track One", "PT3M", "ISRC001", ["1001"]),
                     _make_artist("1001", "Query Artist"),

@@ -76,6 +76,7 @@ def round_robin(iterables: Iterable[Iterable[T]]) -> Iterator[T]:
         else:
             iterators.rotate(-1)
 
+
 class TidalPlugin(MetadataSourcePlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "tidal_track_id": types.STRING,

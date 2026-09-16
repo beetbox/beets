@@ -30,6 +30,8 @@ Bug fixes
   custom ``replace`` configuration no longer produce an absolute destination
   path that escapes the library or :doc:`plugins/convert` destination directory;
   leading path separators are now stripped from the rendered path. :bug:`4889`
+- :doc:`plugins/tidal`: ``candidates()`` and ``item_candidates()`` now respect
+  the ``search_limit`` config option. :bug:`6770`
 
 ..
     For plugin developers
@@ -164,8 +166,6 @@ Bug fixes
   title.
 - :doc:`plugins/limit` Deprecate the ``limit`` plugin in favor of the new ``-l``
   / ``--limit`` flag for the :ref:`list-cmd` command.
-- :doc:`plugins/tidal`: ``candidates()`` and ``item_candidates()`` now respect
-  the ``search_limit`` config option. :bug:`6770`
 
 ..
     For plugin developers
