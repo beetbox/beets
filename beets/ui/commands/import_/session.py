@@ -73,7 +73,7 @@ class TerminalImportSession(importer.ImportSession):
             match = task.candidates[0]
             # TODO: introduce AlbumImportTask to remove this assertion
             assert isinstance(match, AlbumMatch)
-            show_change(task.source, match)
+            show_change(match, task.source)
             return match
         if action is not None:
             return action
@@ -137,7 +137,7 @@ class TerminalImportSession(importer.ImportSession):
             match = task.candidates[0]
             # TODO: introduce AlbumImportTask to remove this assertion
             assert isinstance(match, TrackMatch)
-            show_change(task.source, match)
+            show_change(match, task.source)
             return match
         if action is not None:
             return action
@@ -489,7 +489,7 @@ def choose_candidate(
         bypass_candidates = False
 
         # Show what we're about to do.
-        show_change(source, match)
+        show_change(match, source)
 
         # Exact match => tag automatically if we're not in timid mode.
         if rec == Recommendation.strong and not config["import"]["timid"]:

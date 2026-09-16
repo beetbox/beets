@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 import textwrap
 from dataclasses import dataclass
-from functools import cached_property
+from functools import cached_property, singledispatch
 from typing import TYPE_CHECKING
 
 from beets import config, ui
-from beets.autotag import AlbumMatch, TrackInfo
+from beets.autotag import AlbumMatch, Source, TrackInfo, TrackMatch
 from beets.util import displayable_path
 from beets.util.color import colorize
 from beets.util.diff import colordiff
@@ -17,7 +17,7 @@ from beets.util.units import human_seconds_short
 if TYPE_CHECKING:
     import confuse
 
-    from beets.autotag import Match, Source, TrackMatch
+    from beets.autotag import Match
     from beets.library import Item
     from beets.util.color import ColorName
 
@@ -32,19 +32,8 @@ class Change:
     TrackMatch object, accordingly.
     """
 
-    original_artist: str
-    original_name: str
     match: Match
-
-    @classmethod
-    def from_match(cls, match: Match, source: Source) -> Change:
-        """Construct a Change object from a Match object."""
-        _class = AlbumChange if isinstance(match, AlbumMatch) else TrackChange
-        return _class(
-            original_artist=source.artist,
-            original_name=source.name,
-            match=match,
-        )
+    source: Source
 
     @cached_property
     def changed_prefix(self) -> str:
@@ -105,10 +94,7 @@ class Change:
         and artist name.
         """
         # Artist.
-        artist_l, artist_r = (
-            self.original_artist,
-            self.match.info.artist or "",
-        )
+        artist_l, artist_r = self.source.artist, self.match.info.artist or ""
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
@@ -121,10 +107,10 @@ class Change:
         else:
             ui.print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
-        if self.original_name:
+        if self.source.name:
             type_ = self.match.type
-            name_l, name_r = self.original_name, self.match.info.name
-            if self.original_name != self.match.info.name != VARIOUS_ARTISTS:
+            name_l, name_r = self.source.name, self.match.info.name
+            if self.source.name != self.match.info.name != VARIOUS_ARTISTS:
                 name_l, name_r = colordiff(name_l, name_r)
                 left = Side(f"{self.changed_prefix} {type_}: ", name_l, "")
                 right = Side("", name_r, "")
@@ -384,6 +370,19 @@ class TrackChange(Change):
     match: TrackMatch
 
 
-def show_change(source: Source, match: Match) -> None:
+@singledispatch
+def show_change(match: Match, source: Source) -> None:
     """Print out a representation of the changes."""
-    Change.from_match(match, source).show()
+    raise NotImplementedError
+
+
+@show_change.register
+def _(match: AlbumMatch, source: Source) -> None:
+    """Print out a representation of the changes."""
+    AlbumChange(match, source).show()
+
+
+@show_change.register
+def _(match: TrackMatch, source: Source) -> None:
+    """Print out a representation of the changes."""
+    TrackChange(match, source).show()
