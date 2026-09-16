@@ -45,6 +45,8 @@ Other changes
   option: explain how the external command is run, remove the broken ``md5sum
   {file}`` example and show how to use such commands through a wrapper script.
   :bug:`3979`
+- Use ``bytes`` instead of ``memoryview`` for SQLite path storage and query
+  parameters.
 
 2.14.0 (September 07, 2026)
 ---------------------------
