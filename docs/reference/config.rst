@@ -60,6 +60,14 @@ directory
 The directory to which files will be copied/moved when adding them to the
 library. Defaults to a folder called ``Music`` in your home directory.
 
+tempfile_prefix
+~~~~~~~~~~~~~~~
+
+The prefix used for temporary files when moving files across filesystems. If
+unset, temporary files use a leading dot (``.``). This can be changed when
+moving files to a Windows or Samba share, where a leading dot may cause the file
+to be treated as hidden.
+
 editor
 ~~~~~~
 
@@ -827,6 +835,18 @@ Default:
 
     album: albumartist album
     item: artist title
+
+For MusicBrainz-tagged libraries, adding ``mb_albumid`` to the album keys
+distinguishes separate releases that have the same album artist and title:
+
+.. code-block:: yaml
+
+    album: albumartist album mb_albumid
+    item: artist title
+
+All configured fields must match. Albums with different MusicBrainz release IDs
+will therefore not be considered duplicates. An album without a MusicBrainz
+release ID will also not match an otherwise identical album that has one.
 
 .. _duplicate_action:
 

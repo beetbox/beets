@@ -30,6 +30,9 @@ Bug fixes
   custom ``replace`` configuration no longer produce an absolute destination
   path that escapes the library or :doc:`plugins/convert` destination directory;
   leading path separators are now stripped from the rendered path. :bug:`4889`
+- Add a configurable ``tempfile_prefix`` for temporary files created during
+  cross-filesystem moves, avoiding hidden-file behavior on Windows and Samba
+  shares caused by a hard-coded leading dot ('.'). :bug:`7033`
 - :doc:`/plugins/importadded`: The ``preserve_write_mtimes`` option no longer
   writes to the item's source file when ``beet convert`` writes the converted
   file, which previously crashed with a :class:`PermissionError` when the source
@@ -46,6 +49,8 @@ Other changes
   option: explain how the external command is run, remove the broken ``md5sum
   {file}`` example and show how to use such commands through a wrapper script.
   :bug:`3979`
+- Use ``bytes`` instead of ``memoryview`` for SQLite path storage and query
+  parameters.
 
 2.14.0 (September 07, 2026)
 ---------------------------
