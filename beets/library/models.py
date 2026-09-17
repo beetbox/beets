@@ -34,7 +34,7 @@ from .queries import parse_query_string
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, KeysView, Mapping
 
-    from beets.dbcore import Results
+    from beets.dbcore import Results, types
     from beets.dbcore.query import FieldQuery, FieldQueryType
     from beets.dbcore.sort import FieldSort
     from beets.util.functemplate import FieldTFuncs
@@ -831,11 +831,8 @@ class Item(LibModel):
     def __setitem__(self, key: str, value: Any) -> None:
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
-        if key == "path":
-            if isinstance(value, str):
-                value = bytestring_path(value)
-            elif isinstance(value, types.BLOB_TYPE):
-                value = bytes(value)
+        if key == "path" and isinstance(value, str):
+            value = bytestring_path(value)
         elif key == "album_id":
             self._cached_album = None
 
@@ -1290,6 +1287,11 @@ class Item(LibModel):
                 "the filename.",
                 subpath,
             )
+        # The fragment is always relative to the base directory. Strip
+        # leading separators (left by empty leading template fields when
+        # the replacements do not remove them) which would otherwise make
+        # `os.path.join` discard `basedir`.
+        lib_path_str = lib_path_str.lstrip(os.sep + (os.altsep or ""))
         lib_path_bytes = util.bytestring_path(lib_path_str)
 
         if relative_to_libdir:

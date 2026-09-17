@@ -16,8 +16,25 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
-- Fix interactive importer ignoring candidates from manual search (``e``) and
-  manual ID (``i``) entry. :bug:`7000`
+- :doc:`plugins/lyrics`: Support 3-decimal millisecond timestamps (e.g.
+  ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
+  millisecond precision were erroneously rejected and fell back to plain lyrics.
+  :bug:`7001`
+- Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
+  their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
+  available. :bug:`7002`
+- :doc:`plugins/discogs`: Read the release month and day from the API's
+  ``released`` field instead of only the year. Fix Discogs match overwriting
+  month and day tags on import.
+- Empty leading path-format fields (e.g. from missing metadata) combined with a
+  custom ``replace`` configuration no longer produce an absolute destination
+  path that escapes the library or :doc:`plugins/convert` destination directory;
+  leading path separators are now stripped from the rendered path. :bug:`4889`
+- Add a configurable ``tempfile_prefix`` for temporary files created during
+  cross-filesystem moves, avoiding hidden-file behavior on Windows and Samba
+  shares caused by a hard-coded leading dot ('.'). :bug:`7033`
+- :ref:`import-cmd` Fix interactive importer ignoring candidates from manual
+  search (``e``) and manual ID (``i``) entry. :bug:`7000`
 
 Other changes
 ~~~~~~~~~~~~~
@@ -26,6 +43,8 @@ Other changes
   option: explain how the external command is run, remove the broken ``md5sum
   {file}`` example and show how to use such commands through a wrapper script.
   :bug:`3979`
+- Use ``bytes`` instead of ``memoryview`` for SQLite path storage and query
+  parameters.
 
 2.14.0 (September 07, 2026)
 ---------------------------
