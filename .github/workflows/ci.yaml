@@ -60,7 +60,7 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          choco install ffmpeg flac -y --no-progress
+          choco install ffmpeg flac imagemagick -y --no-progress
           if ($LASTEXITCODE -ne 0) {
             throw "Windows system dependency installation failed."
           }
@@ -112,7 +112,7 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poe install --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
+          poe install --group test --extra autobpm --extra discogs --extra embedart --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
@@ -120,7 +120,7 @@ jobs:
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poe install --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate --group docs
+          poe install --group test --extra autobpm --extra discogs --extra embedart --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate --group docs
           poe docs
           poe test-with-coverage
 

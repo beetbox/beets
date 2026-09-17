@@ -163,23 +163,24 @@ class IMBackend(LocalBackend):
         Raises `LocalBackendNotAvailableError` if not available.
         """
         if cls._version is None:
+            # Stop at the first binary that reports an ImageMagick version:
+            # trying `convert` afterwards would find an unrelated program on
+            # Windows, where it names the built-in filesystem conversion tool.
+            cls._version = _NOT_AVAILABLE
             for cmd_name, legacy in (("magick", False), ("convert", True)):
                 try:
                     out = util.command_output([cmd_name, "--version"]).stdout
                 except (subprocess.CalledProcessError, OSError) as exc:
                     log.debug("ImageMagick version check failed: {}", exc)
-                    cls._version = _NOT_AVAILABLE
-                else:
-                    if b"imagemagick" in out.lower():
-                        pattern = rb".+ (\d+)\.(\d+)\.(\d+).*"
-                        match = re.search(pattern, out)
-                        if match:
-                            cls._version = (
-                                int(match.group(1)),
-                                int(match.group(2)),
-                                int(match.group(3)),
-                            )
-                            cls._legacy = legacy
+                    continue
+
+                if b"imagemagick" not in out.lower():
+                    continue
+
+                if match := re.search(rb".+ (\d+)\.(\d+)\.(\d+).*", out):
+                    cls._version = (int(match[1]), int(match[2]), int(match[3]))
+                    cls._legacy = legacy
+                    break
 
         # cls._version is never None here, but mypy doesn't get that
         if cls._version is _NOT_AVAILABLE or cls._version is None:
