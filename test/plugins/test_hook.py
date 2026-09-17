@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 
 from beets import plugins
+from beets.events import ALL_EVENTS
 from beets.test.helper import PluginTestHelper
 
 if TYPE_CHECKING:
@@ -114,3 +115,13 @@ class TestHookCommand(HookTestCase):
     def test_hook_bytes_interpolation(self):
         self.paths = [p.encode() for p in self.paths]
         self._test_command(lambda *_: "{path}", send_path_kwarg=True)
+
+
+class TestHookCustomEvents(HookTestCase):
+    def test_plugin_defined_event_loads_and_registers(self):
+        event = "alternatives.item_updated"
+        assert event not in ALL_EVENTS
+
+        with self.configure_plugin({"hooks": [self._get_hook(event, "true")]}):
+            assert event in plugins.BeetsPlugin.listeners
+            assert plugins.BeetsPlugin.listeners[event]

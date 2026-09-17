@@ -13,9 +13,12 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/hook`: Accept plugin-defined event names again. Restricting
+  ``event`` to ``ALL_EVENTS`` rejected hooks for events such as
+  ``alternatives.item_updated`` and failed to load the plugin. :bug:`7036`
 
 ..
     For plugin developers
