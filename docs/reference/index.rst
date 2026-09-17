@@ -12,3 +12,4 @@ started with beets as a new user, though, you may want to read the
     config
     pathformat
     query
+    logging
