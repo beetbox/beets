@@ -33,6 +33,8 @@ Bug fixes
 - Add a configurable ``tempfile_prefix`` for temporary files created during
   cross-filesystem moves, avoiding hidden-file behavior on Windows and Samba
   shares caused by a hard-coded leading dot ('.'). :bug:`7033`
+- :ref:`import-cmd` Fix interactive importer ignoring candidates from manual
+  search (``e``) and manual ID (``i``) entry. :bug:`7000`
 
 ..
     For plugin developers
