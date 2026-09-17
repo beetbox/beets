@@ -21,16 +21,21 @@ log = logging.getLogger("beets")
 
 class WriteCLIOpts(Protocol):
     force: bool
+    limit: int | None
     pretend: bool
 
 
 def write_items(
-    lib: Library, query: Sequence[str], pretend: bool, force: bool
+    lib: Library,
+    query: Sequence[str],
+    pretend: bool,
+    force: bool,
+    limit: int | None,
 ) -> None:
     """Write tag information from the database to the respective files
     in the filesystem.
     """
-    items = lib.items(query)
+    items = lib.items(query, limit=limit)
 
     if not items:
         raise UserError("No matching items to write.")
@@ -59,7 +64,7 @@ def write_items(
 
 
 def write_func(lib: Library, opts: WriteCLIOpts, args: list[str]) -> None:
-    write_items(lib, args, opts.pretend, opts.force)
+    write_items(lib, args, opts.pretend, opts.force, opts.limit)
 
 
 write_cmd = ui.Subcommand("write", help="write tag information to files")
@@ -77,4 +82,5 @@ write_cmd.parser.add_option(
     default=False,
     help="write tags even if the existing tags match the database",
 )
+write_cmd.parser.add_limit_option()
 write_cmd.func = write_func

@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 class FetchArtCLIOpts(Protocol):
     force: bool
+    limit: int | None
     quiet: bool
 
 
@@ -1563,9 +1564,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             default=False,
             help="quiet mode: do not output albums that already have artwork",
         )
+        cmd.parser.add_limit_option()
 
         def func(lib: Library, opts: FetchArtCLIOpts, args: list[str]) -> None:
-            self.batch_fetch_art(lib, lib.albums(args), opts.force, opts.quiet)
+            self.batch_fetch_art(
+                lib, lib.albums(args, limit=opts.limit), opts.force, opts.quiet
+            )
 
         cmd.func = func
         return [cmd]

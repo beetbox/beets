@@ -216,7 +216,7 @@ Use the ``beet replaygain`` command:
 
 ::
 
-    $ beet replaygain [-Waf] [QUERY]
+    $ beet replaygain [-Waf] [-l LIMIT] [QUERY]
 
 The ``-a`` flag analyzes whole albums instead of individual tracks. Provide a
 query (see :doc:`/reference/query`) to indicate which items or albums to
@@ -224,14 +224,15 @@ analyze. Files that already have ReplayGain values are skipped unless ``-f`` is
 supplied. Use ``-w`` (write tags) or ``-W`` (don't write tags) to control
 whether ReplayGain tags are written into the music files, or stored in the beets
 database only (the default is to use :ref:`the importer's configuration
-<config-import-write>`).
+<config-import-write>`). Use ``-l``/``--limit`` to cap the matched tracks or
+albums before analysis.
 
 To execute with a different number of threads, call ``beet replaygain --threads
 N``:
 
 ::
 
-    $ beet replaygain --threads N [-Waf] [QUERY]
+    $ beet replaygain --threads N [-Waf] [-l LIMIT] [QUERY]
 
 with N any integer. To disable parallelism, use ``--threads 0``.
 

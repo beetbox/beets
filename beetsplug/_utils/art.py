@@ -212,9 +212,12 @@ def clear_item(item: Item, log: Logger) -> None:
 
 
 def clear(
-    log: Logger, lib: Library, query: str | Sequence[str] | Query | None = None
+    log: Logger,
+    lib: Library,
+    query: str | Sequence[str] | Query | None = None,
+    limit: int | None = None,
 ) -> None:
-    items = lib.items(query)
+    items = lib.items(query, limit=limit)
     log.info("Clearing album art from {} items", len(items))
     for item in items:
         clear_item(item, log)

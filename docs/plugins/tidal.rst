@@ -165,6 +165,7 @@ Options:
 - ``-f``, ``--force`` -- re-fetch all items, even those already synced.
 - ``-a``, ``--album`` -- sync albums instead of individual tracks.
 - ``-w``, ``--write`` -- write updated metadata to media files.
+- ``-l``, ``--limit`` -- cap the matched items or albums before syncing.
 
 You can also pass a query to narrow the scope:
 

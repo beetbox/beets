@@ -21,11 +21,14 @@ log = logging.getLogger("beets")
 
 class StatsCLIOpts(Protocol):
     exact: bool
+    limit: int | None
 
 
-def show_stats(lib: Library, query: Sequence[str], exact: bool) -> None:
+def show_stats(
+    lib: Library, query: Sequence[str], exact: bool, limit: int | None
+) -> None:
     """Shows some statistics about the matched items."""
-    items = lib.items(query)
+    items = lib.items(query, limit=limit)
 
     total_size = 0
     total_time = 0.0
@@ -63,7 +66,7 @@ Album artists: {len(album_artists)}""")
 
 
 def stats_func(lib: Library, opts: StatsCLIOpts, args: list[str]) -> None:
-    show_stats(lib, args, opts.exact)
+    show_stats(lib, args, opts.exact, opts.limit)
 
 
 stats_cmd = ui.Subcommand(
@@ -76,4 +79,5 @@ stats_cmd.parser.add_option(
     default=False,
     help="exact size and time",
 )
+stats_cmd.parser.add_limit_option()
 stats_cmd.func = stats_func

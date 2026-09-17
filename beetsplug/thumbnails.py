@@ -60,6 +60,7 @@ class ThumbnailsPlugin(BeetsPlugin):
             default=False,
             help="create Dolphin-compatible thumbnail information (for KDE)",
         )
+        thumbnails_command.parser.add_limit_option()
         thumbnails_command.func = self.process_query
 
         return [thumbnails_command]
@@ -69,7 +70,7 @@ class ThumbnailsPlugin(BeetsPlugin):
     ) -> None:
         self.config.set_args(opts)
         if self._check_local_ok():
-            for album in lib.albums(args):
+            for album in lib.albums(args, limit=opts.limit):
                 self.process_album(album)
 
     def _check_local_ok(self) -> bool:
