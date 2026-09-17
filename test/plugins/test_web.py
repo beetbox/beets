@@ -675,91 +675,226 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         assert response.status_code == 200
 
+    def test_item_list_ignores_paging_params(self):
+        # /item/ must not paginate even when params are passed.
+        full = json.loads(self.client.get("/item/").data)["items"]
+        resp = self.client.get("/item/?limit=1&offset=1")
+        assert json.loads(resp.data)["items"] == full
+        assert "X-Total-Count" not in resp.headers
+
+    def test_item_query_limit_caps_results(self):
+        # A broad query on a large library must be cappable so it doesn't
+        # serialize every match; ``limit`` bounds the result set. Without it,
+        # every match is returned (unchanged behavior).
+        for i in range(5):
+            self.lib.add(
+                Item(
+                    title=f"lim_{i}",
+                    artist="LimitArtist",
+                    path=self.path_prefix / f"lim_{i}",
+                )
+            )
+        full = json.loads(self.client.get("/item/query/LimitArtist").data)[
+            "results"
+        ]
+        assert len(full) == 5
+
+        limited = json.loads(
+            self.client.get("/item/query/LimitArtist?limit=2").data
+        )["results"]
+        assert len(limited) == 2
+        # the capped items are drawn from the full match set
+        assert {r["id"] for r in limited} <= {r["id"] for r in full}
+
+    def test_item_query_limit_keeps_flexible_field_matches(self):
+        # A limited query must apply flexible-field predicates before the
+        # limit, so a match beyond the first N database rows is not dropped.
+        # Regression: a SQL limit applied to candidate rows before Python
+        # filtering returned an empty set here.
+        for i in range(6):
+            self.lib.add(
+                Item(
+                    title=f"mood_{i}",
+                    mood="target" if i == 5 else "other",
+                    path=self.path_prefix / f"mood_{i}",
+                )
+            )
+        results = json.loads(
+            self.client.get("/item/query/mood%3Atarget?limit=2").data
+        )["results"]
+        assert len(results) == 1
+        assert results[0]["title"] == "mood_5"
+
+    def test_album_query_exact_match(self):
+        # The artist page relies on exact albumartist matching so selecting
+        # "Air" does not also return "Air Supply".
+        self.lib.add(Album(album="exact_a", albumartist="Air"))
+        self.lib.add(Album(album="exact_b", albumartist="Air Supply"))
+        # albumartist:=Air , url-encoded (%3A=":", %3D="=")
+        results = json.loads(
+            self.client.get("/album/query/albumartist%3A%3DAir").data
+        )["results"]
+        assert sorted({a["albumartist"] for a in results}) == ["Air"]
+
+    def test_all_albums_limit_offset(self):
+        for i in range(4):
+            self.lib.add(
+                Album(album=f"pg_album_{i}", albumartist=f"pg_artist_{i}")
+            )
+        full = json.loads(self.client.get("/album/").data)["albums"]
+        total = len(full)
+        assert total >= 4
+
+        resp = self.client.get("/album/?offset=1&limit=2")
+        body = json.loads(resp.data)["albums"]
+        assert [a["id"] for a in body] == [full[1]["id"], full[2]["id"]]
+        assert resp.headers.get("X-Total-Count") == str(total)
+
+        # offset alone (no limit) pages from offset to the end
+        tail = json.loads(self.client.get(f"/album/?offset={total - 1}").data)[
+            "albums"
+        ]
+        assert [a["id"] for a in tail] == [full[-1]["id"]]
+
+    def test_all_albums_no_params_unchanged(self):
+        # Backward compat: no params -> identical to today, no X-Total-Count.
+        plain = self.client.get("/album/")
+        assert "X-Total-Count" not in plain.headers
+        plain_albums = json.loads(plain.data)["albums"]
+        empty_query = json.loads(self.client.get("/album/?").data)["albums"]
+        assert plain_albums == empty_query
+
+    def test_all_albums_limit_clamped_and_garbage_ignored(self):
+        for i in range(3):
+            self.lib.add(Album(album=f"clamp_album_{i}"))
+        all_albums = json.loads(self.client.get("/album/").data)["albums"]
+        clamped = json.loads(self.client.get("/album/?limit=99999").data)[
+            "albums"
+        ]
+        assert len(clamped) == len(all_albums)
+        assert len(clamped) <= 500
+        # garbage limit is ignored -> treated as "no limit" -> returns all
+        garbage = json.loads(self.client.get("/album/?limit=abc").data)[
+            "albums"
+        ]
+        assert len(garbage) == len(all_albums)
+
+    def test_all_artists_limit_offset(self):
+        for i in range(3):
+            self.lib.add(
+                Album(album=f"art_album_{i}", albumartist=f"zz_artist_{i}")
+            )
+        full = json.loads(self.client.get("/artist/").data)["artist_names"]
+        resp = self.client.get("/artist/?limit=2")
+        assert json.loads(resp.data)["artist_names"] == full[:2]
+        assert resp.headers.get("X-Total-Count") == str(len(full))
+
+    def test_artist_art_maps_artist_to_a_cover_album(self):
+        # Artists have no art of their own; /artist/ maps each artist that has
+        # any album art to one of that artist's album ids so the UI can show a
+        # cover as the artist avatar. Artists without art are absent.
+        with_art = Album(
+            album="has_art",
+            albumartist="ArtistWithArt",
+            artpath=b"/x/cover.jpg",
+        )
+        self.lib.add(with_art)
+        self.lib.add(Album(album="no_art", albumartist="ArtistNoArt"))
+
+        data = json.loads(self.client.get("/artist/").data)
+        art = data["artist_art"]
+
+        # both artists are listed by name
+        assert "ArtistWithArt" in data["artist_names"]
+        assert "ArtistNoArt" in data["artist_names"]
+        # the art map points the art-having artist at its album, and the id
+        # really belongs to one of that artist's albums
+        assert art["ArtistWithArt"] == with_art.id
+        # an artist with no album art gets no entry
+        assert "ArtistNoArt" not in art
+
+    def test_page_params_edges(self):
+        from beetsplug import web as webmod
+
+        with webmod.app.test_request_context("/x?limit=99999&offset=-5"):
+            assert webmod._page_params() == (0, 500)
+        with webmod.app.test_request_context("/x?offset=3"):
+            assert webmod._page_params() == (3, None)
+        with webmod.app.test_request_context("/x?limit=abc"):
+            assert webmod._page_params() == (0, None)
+        with webmod.app.test_request_context("/x"):
+            assert webmod._page_params() == (0, None)
+
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):
-    """Tests for XSS vulnerability in the web plugin templates.
+    """Tests for XSS vulnerability in the web plugin's metadata rendering.
 
-    These tests verify that the Underscore.js templates in index.html use
-    the escaping syntax (<%- %) instead of the non-escaping syntax (<%= %).
-
-    In Underscore.js 1.2.2 (used by beets):
-    - <%= variable %> does NOT escape HTML (vulnerable to XSS)
-    - <%- variable %> DOES escape HTML (safe)
-
-    This was reported in
+    The web UI renders metadata client-side in ``static/app.js``, which
+    HTML-escapes user-controlled fields through an ``esc()`` helper. This
+    guards the security contract from
     https://github.com/beetbox/beets/security/advisories/GHSA-3gxm-wfjx-m847
-    and remediated in
-    https://github.com/beetbox/beets/commit/75f0d8f4899e61afb939adf02dcfb078aed23a6a
+    (user metadata must be HTML-escaped) under the current architecture; the
+    contract previously lived in server-side Underscore.js templates in
+    index.html, which no longer interpolate metadata at all.
     """
 
-    def test_templates_use_escaping_syntax(self):
-        """Verify that all Underscore.js templates use <%- %> for escaping.
+    def test_app_js_escapes_user_metadata(self):
+        """Guard GHSA-3gxm-wfjx-m847 under the client-render architecture.
 
-        This test requests the index.html page and checks that all
-        user data interpolations in the Underscore.js templates use
-        the escaping syntax (<%- %) rather than the non-escaping syntax (<%= %).
+        The redesigned UI renders metadata in ``static/app.js`` rather than in
+        server-side templates, so verify that app.js routes user-controlled
+        text fields through its ``esc()`` HTML-escaping helper wherever it
+        builds HTML. (The server template no longer interpolates metadata at
+        all, so the original server-template vector is structurally gone.)
         """
         import re
+        from pathlib import Path
 
-        # Request the index.html page
-        response = self.client.get("/")
-        html = response.data.decode("utf-8")
-
-        # Extract the template scripts from the HTML
-        # The templates are in <script type="text/template"> blocks
-        template_pattern = r'<script type="text/template"[^>]*>(.*?)</script>'
-        templates = re.findall(template_pattern, html, re.DOTALL)
-
-        # Combine all template content for checking
-        all_template_content = "\n".join(templates)
-
-        # Check that no <%= %> (non-escaping) tags exist for user data
-        # We look for <%= followed by a variable name (word characters)
-        non_escaping_pattern = r"<%=\s*(\w+)\s*%>"
-        non_escaping_matches = re.findall(
-            non_escaping_pattern, all_template_content
+        src = (Path(web.__file__).parent / "static" / "app.js").read_text(
+            encoding="utf-8"
         )
 
-        # List of fields that should be escaped (user-controlled data)
-        user_data_fields = [
+        # The escaping helper must exist.
+        assert re.search(r"const\s+esc\s*=", src), (
+            "esc() helper missing from app.js"
+        )
+
+        # Free-text, user-controlled fields that must be HTML-escaped when
+        # interpolated into markup.
+        free_text = [
             "title",
             "artist",
             "album",
-            "year",
-            "track",
-            "tracktotal",
-            "disc",
-            "disctotal",
-            "length",
-            "format",
-            "bitrate",
-            "mb_trackid",
-            "id",
+            "albumartist",
             "lyrics",
             "comments",
+            "genre",
+            "label",
+            "mb_trackid",
+            "mb_albumid",
         ]
+        offenders = []
+        for line in src.splitlines():
+            # Assignments to .textContent never interpret HTML, so they are
+            # XSS-safe by construction and are exempt.
+            if ".textContent" in line:
+                continue
+            for m in re.finditer(r"\$\{([^}]*)\}", line):
+                expr = m.group(1)
+                # Safe sinks: esc() escapes for HTML; encodeURIComponent()
+                # percent-encodes for URL/attribute contexts; coverStyle() uses
+                # the value only as a hash seed for a gradient, so the value
+                # never reaches the output.
+                if any(
+                    sink in expr
+                    for sink in ("esc(", "encodeURIComponent(", "coverStyle(")
+                ):
+                    continue
+                for field in free_text:
+                    if re.search(r"\b(?:t|a|item)\." + field + r"\b", expr):
+                        offenders.append(expr.strip())
 
-        # Check if any user data fields are using non-escaping <%= %>
-        vulnerable_fields = [
-            field for field in non_escaping_matches if field in user_data_fields
-        ]
-
-        # If we found any user data fields using <%= %>, the templates are vulnerable
-        assert len(vulnerable_fields) == 0, (
-            "Found non-escaping <%= %> tags for user data fields: "
-            f"{vulnerable_fields}. "
-            "These should use <%- %> for HTML escaping to prevent XSS."
-        )
-
-        # Also verify that escaping tags (<%- %>) are present for user data
-        escaping_pattern = r"<%-\s*(\w+)\s*%>"
-        escaping_matches = re.findall(escaping_pattern, all_template_content)
-
-        # At least some user data fields should use escaping
-        safe_fields = [
-            field for field in escaping_matches if field in user_data_fields
-        ]
-        assert len(safe_fields) > 0, (
-            "No escaping <%- %> tags found for user data fields. "
-            "Templates should use <%- %> for HTML escaping."
+        assert not offenders, (
+            "Unescaped user-metadata interpolation(s) into HTML in app.js "
+            "(these must be wrapped in esc()): " + repr(offenders)
         )
