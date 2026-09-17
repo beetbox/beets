@@ -71,6 +71,7 @@ databases. They share the following configuration options:
     chroma
     convert
     deezer
+    missingfiles
     discogs
     duplicates
     edit
@@ -351,6 +352,10 @@ Miscellaneous
 :doc:`convert <convert>`
     Transcode music and embed album art while exporting to a different
     directory.
+
+:doc:`missingfiles <missingfiles>`
+    Detect library entries with missing files, folders, or album art, and
+    optionally delete them.
 
 :doc:`duplicates <duplicates>`
     List duplicate tracks or albums.
