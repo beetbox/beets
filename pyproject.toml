@@ -25,7 +25,7 @@ classifiers = [
 
 dependencies = [
     "colorama ; sys_platform == 'win32'",
-    "confuse>=2.2.0",
+    "confuse>=2.2.1",
     "jellyfish",
     "lap>=0.5.12",
     "mediafile>=0.17.0",
