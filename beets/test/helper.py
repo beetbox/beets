@@ -1,8 +1,6 @@
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
 
-- `has_program` checks the presence of a command on the system.
-
 - The `ImportSessionFixture` allows one to run importer code while
   controlling the interactions through code.
 
@@ -15,7 +13,6 @@ import importlib.util
 import os
 import os.path
 import shutil
-import subprocess
 import sys
 import unittest
 from contextlib import contextmanager
@@ -55,22 +52,6 @@ if TYPE_CHECKING:
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
-def has_program(cmd: str, args: Iterable[str] = ("--version",)) -> bool:
-    """Returns `True` if `cmd` can be executed."""
-    full_cmd = [cmd, *args]
-    try:
-        with open(os.devnull, "wb") as devnull:
-            subprocess.check_call(
-                full_cmd, stderr=devnull, stdout=devnull, stdin=devnull
-            )
-    except OSError:
-        return False
-    except subprocess.CalledProcessError:
-        return False
-    else:
-        return True
-
-
 @cache
 def is_importable(modname: str) -> bool:
     return bool(importlib.util.find_spec(modname))
@@ -89,7 +70,7 @@ NEEDS_REFLINK = pytest.mark.skipif(
     not check_reflink_support(gettempdir()), reason="need reflink"
 )
 NEEDS_FFPROBE = pytest.mark.skipif(
-    not has_program("ffprobe", ("-version",)) and not RUNNING_IN_CI,
+    not shutil.which("ffprobe") and not RUNNING_IN_CI,
     reason="ffprobe (ffmpeg) is not available",
 )
 

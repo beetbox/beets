@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -6,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from beets.test import _common
-from beets.test.helper import RUNNING_IN_CI, IOMixin, has_program
+from beets.test.helper import RUNNING_IN_CI, IOMixin
 from beets.ui.commands.completion import BASH_COMPLETION_PATHS
 
 from ..test_ui import TestPluginTestCase
@@ -26,7 +27,7 @@ class CompletionTest(IOMixin, TestPluginTestCase):
         # Open a `bash` process to run the tests in. We'll pipe in bash
         # commands via stdin.
         cmd = os.environ.get("BEETS_TEST_SHELL", "/bin/bash --norc").split()
-        if not has_program(cmd[0]):
+        if not shutil.which(cmd[0]):
             self.skipTest("bash not available")
         tester = subprocess.Popen(
             cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env
