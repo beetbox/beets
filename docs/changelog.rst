@@ -33,6 +33,10 @@ Bug fixes
 - Add a configurable ``tempfile_prefix`` for temporary files created during
   cross-filesystem moves, avoiding hidden-file behavior on Windows and Samba
   shares caused by a hard-coded leading dot ('.'). :bug:`7033`
+- :doc:`/plugins/importadded`: The ``preserve_write_mtimes`` option no longer
+  writes to the item's source file when ``beet convert`` writes the converted
+  file, which previously crashed with a :class:`PermissionError` when the source
+  file was read-only. :bug:`6954`
 
 ..
     For plugin developers
