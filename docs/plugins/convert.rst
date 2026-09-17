@@ -75,7 +75,7 @@ files. If an original file is newer than a converted file, the converted file
 will be removed from the filesystem, and the original file will be converted
 once again.
 
-The ``-r`` (or ``--remove-missing``) option will remove files in the destination
+The ``-s`` (or ``--remove-missing``) option will remove files in the destination
 folder that are not present in the library.
 
 Plugin Event
