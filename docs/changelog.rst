@@ -13,9 +13,11 @@ Unreleased
     New features
     ~~~~~~~~~~~~
 
-..
-    Bug fixes
-    ~~~~~~~~~
+Bug fixes
+~~~~~~~~~
+
+- Add ``alternatives.item_updated`` to the typed event list so
+  :doc:`plugins/hook` can listen to it. :bug:`7036`
 
 ..
     For plugin developers
