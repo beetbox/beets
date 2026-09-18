@@ -19,7 +19,7 @@ copyright = "2016, Adrian Sampson"  # noqa: A001
 master_doc = "index"
 language = "en"
 version = "2.14"
-release = "2.14.0"
+release = "2.14.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

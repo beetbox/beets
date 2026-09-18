@@ -21,6 +21,27 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Add ``alternatives.item_updated`` to the typed event list so
+  :doc:`plugins/hook` can listen to it. :bug:`7036`
+
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
+
+..
+    Other changes
+    ~~~~~~~~~~~~~
+
+2.14.1 (September 17, 2026)
+---------------------------
+
+..
+    New features
+    ~~~~~~~~~~~~
+
+Bug fixes
+~~~~~~~~~
+
 - :doc:`plugins/lyrics`: Support 3-decimal millisecond timestamps (e.g.
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
@@ -38,6 +59,8 @@ Bug fixes
 - Add a configurable ``tempfile_prefix`` for temporary files created during
   cross-filesystem moves, avoiding hidden-file behavior on Windows and Samba
   shares caused by a hard-coded leading dot ('.'). :bug:`7033`
+- :ref:`import-cmd` Fix interactive importer ignoring candidates from manual
+  search (``e``) and manual ID (``i``) entry. :bug:`7000`
 
 ..
     For plugin developers
@@ -50,6 +73,8 @@ Other changes
   option: explain how the external command is run, remove the broken ``md5sum
   {file}`` example and show how to use such commands through a wrapper script.
   :bug:`3979`
+- Use ``bytes`` instead of ``memoryview`` for SQLite path storage and query
+  parameters.
 
 2.14.0 (September 07, 2026)
 ---------------------------
