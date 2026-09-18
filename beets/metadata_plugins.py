@@ -8,12 +8,14 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
+import inspect
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import cache, cached_property, wraps
 from typing import (
     TYPE_CHECKING,
+    Any,
     Generic,
     Literal,
     NamedTuple,
@@ -26,6 +28,7 @@ from confuse import NotFoundError
 
 from beets import config, logging
 from beets.util import cached_classproperty
+from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.id_extractors import extract_release_id
 
 from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
@@ -36,7 +39,9 @@ QueryType = Literal["album", "track"]
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
 
-    from .autotag import AlbumInfo, TrackInfo
+    from beets.util import Likelies
+
+    from .autotag import AlbumInfo, SearchQuery, Source, TrackInfo
     from .library.models import Item
 
 # Global logger.
@@ -77,61 +82,132 @@ def maybe_handle_plugin_error(
 
 
 def _yield_from_plugins(
-    func: Callable[..., Iterable[Ret]],
-) -> Callable[..., Iterator[Ret]]:
-    method_name = func.__name__
+    *, deprecate_converter: Callable[..., tuple[Any, ...]] | None = None
+) -> Callable[[Callable[..., Iterable[Ret]]], Callable[..., Iterator[Ret]]]:
+    """Decorate a dispatcher to invoke the same method on every metadata
+    source plugin concurrently, yielding each plugin's results.
 
-    def materialize(
-        plugin: MetadataSourcePlugin, method_name: str, *args, **kwargs
-    ) -> list[Ret]:
-        method = getattr(plugin, method_name)
-        return list(method(*args, **kwargs))
+    When ``deprecate_converter`` is given, plugins whose methods still
+    declare the deprecated argument list are called with the current
+    arguments converted to the deprecated ones, along with a deprecation
+    warning.
+    """
 
-    @wraps(func)
-    def wrapper(*args, **kwargs) -> Iterator[Ret]:
-        # Run plugin methods concurrently for faster I/O-bound lookups.
-        with ThreadPoolExecutor() as executor:
-            futures = {
-                executor.submit(
-                    # Evaluate iterator with list such that results are ready when
-                    # future.result() is called.
-                    materialize,
-                    plugin,
-                    method_name,
-                    *args,
-                    **kwargs,
-                ): plugin
-                for plugin in find_metadata_source_plugins()
-            }
+    def decorator(
+        func: Callable[..., Iterable[Ret]],
+    ) -> Callable[..., Iterator[Ret]]:
+        method_name = func.__name__
 
-            for future in as_completed(futures):
-                plugin = futures[future]
-                with maybe_handle_plugin_error(plugin, method_name):
-                    yield from filter(None, future.result())
+        def materialize(
+            plugin: MetadataSourcePlugin, method_name: str, *args, **kwargs
+        ) -> list[Ret]:
+            method = getattr(plugin, method_name)
+            if deprecate_converter:
+                signature = inspect.signature(method)
+                try:
+                    signature.bind(*args, **kwargs)
+                except TypeError:
+                    # The plugin still implements the deprecated argument
+                    # list: convert and warn.
+                    deprecate_for_maintainers(
+                        old=f"'{plugin.data_source}.{method_name}{signature}'"
+                    )
+                    if not kwargs:
+                        args = deprecate_converter(*args)
+            return list(method(*args, **kwargs))
 
-    return wrapper
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Iterator[Ret]:
+            # Run plugin methods concurrently for faster I/O-bound lookups.
+            with ThreadPoolExecutor() as executor:
+                futures = {
+                    executor.submit(
+                        # Evaluate iterator with list such that results are ready when
+                        # future.result() is called.
+                        materialize,
+                        plugin,
+                        method_name,
+                        *args,
+                        **kwargs,
+                    ): plugin
+                    for plugin in find_metadata_source_plugins()
+                }
+
+                for future in as_completed(futures):
+                    plugin = futures[future]
+                    with maybe_handle_plugin_error(plugin, method_name):
+                        yield from filter(None, future.result())
+
+        return wrapper
+
+    return decorator
+
+
+def _deprecate_candidates_args(
+    source: Source, search_query: SearchQuery | None = None
+) -> tuple[Sequence[Item], str, str, bool]:
+    """Convert the new ``candidates`` arguments to the legacy signature.
+
+    Legacy signature:
+    candidates(self, items: Sequence[Item], artist: str, album: str, va_likely: bool):
+
+    .. deprecated:: 2.14.0
+       This function will be removed in 3.0.0.
+    """
+
+    # Search query had precedence over source/likelies
+    if search_query is not None:
+        artist = search_query.artist or ""
+        album = search_query.title or ""
+        va_likely = search_query.va_likely
+    else:
+        artist = source.artist or ""
+        album = source.name or ""
+        va_likely = source.va_likely
+
+    return source.items, artist, album, va_likely
 
 
 @notify_info_yielded("albuminfo_received")
-@_yield_from_plugins
+@_yield_from_plugins(deprecate_converter=_deprecate_candidates_args)
 def candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
     yield from ()
 
 
+def _deprecate_item_candidates_args(
+    source: Source, search_query: SearchQuery | None = None
+) -> tuple[Item, str, str]:
+    """Convert the new ``item_candidates`` arguments to the legacy signature.
+
+    Legacy signature:
+    item_candidates(self, item: Item, artist: str, title: str):
+
+    .. deprecated:: 2.14.0
+       This function will be removed in 3.0.0.
+    """
+    if search_query is not None:
+        artist = search_query.artist or ""
+        title = search_query.title or ""
+    else:
+        artist = source.artist or ""
+        title = source.name or ""
+    return source.items[0], artist, title
+
+
 @notify_info_yielded("trackinfo_received")
-@_yield_from_plugins
+@_yield_from_plugins(deprecate_converter=_deprecate_item_candidates_args)
 def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
     yield from ()
 
 
 @notify_info_yielded("albuminfo_received")
-@_yield_from_plugins
+@_yield_from_plugins()
 def albums_for_ids(*args, **kwargs) -> Iterator[AlbumInfo]:
     yield from ()
 
 
 @notify_info_yielded("trackinfo_received")
-@_yield_from_plugins
+@_yield_from_plugins()
 def tracks_for_ids(*args, **kwargs) -> Iterator[TrackInfo]:
     yield from ()
 
@@ -222,30 +298,46 @@ class MetadataSourcePlugin(BeetsPlugin, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def candidates(
-        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
+        self, source: Source, search_query: SearchQuery | None
     ) -> Iterable[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
-        Used in the autotag functionality to search for albums.
+        Used in the autotag functionality to search for albums. Two
+        signatures are supported::
 
-        :param items: List of items in the album
-        :param artist: Album artist
-        :param album: Album name
-        :param va_likely: Whether the album is likely to be by various artists
+            candidates(source, search_query)
+
+            candidates(items, artist, album, va_likely)
+
+        :param source: Source object containing the items to search for
+        :param search_query: SearchQuery object containing manually specified search
+        parameters, or None if no manual search was requested
+
+        .. deprecated:: 2.14.0
+           The ``(items, artist, album, va_likely)`` signature will be
+           removed in 3.0.0.
         """
         raise NotImplementedError
 
     @abc.abstractmethod
     def item_candidates(
-        self, item: Item, artist: str, title: str
+        self, source: Source, search_query: SearchQuery | None
     ) -> Iterable[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
-        Used in the autotag functionality to search for tracks.
+        Used in the autotag functionality to search for tracks. Two
+        signatures are supported::
 
-        :param item: Track item
-        :param artist: Track artist
-        :param title: Track title
+            item_candidates(source search_query)
+
+            item_candidates(item, artist, title)
+
+        :param item: Item object containing the track to search for
+        :param search_query: SearchQuery object containing manually specified search
+        parameters, or None if no manual search was requested
+
+        .. deprecated:: 2.14.0
+           The ``(item, artist, title)`` signature will be removed in 3.0.0.
         """
         raise NotImplementedError
 
