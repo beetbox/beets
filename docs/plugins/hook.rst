@@ -25,8 +25,8 @@ Configuring Each Hook
 Each element under ``hooks`` should have these keys:
 
 - **event**: The name of the event that will trigger this hook. See the
-  :ref:`plugin events <plugin_events>` documentation for built-in events;
-  plugin-defined event names are also accepted.
+  :ref:`plugin events <plugin_events>` documentation for a list of possible
+  values.
 - **command**: The command to run when this hook executes.
 
 .. _command-substitution:

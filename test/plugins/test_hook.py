@@ -120,7 +120,7 @@ class TestHookCommand(HookTestCase):
 class TestHookCustomEvents(HookTestCase):
     def test_plugin_defined_event_loads_and_registers(self):
         event = "alternatives.item_updated"
-        assert event not in ALL_EVENTS
+        assert event in ALL_EVENTS
 
         with self.configure_plugin({"hooks": [self._get_hook(event, "true")]}):
             assert event in plugins.BeetsPlugin.listeners
