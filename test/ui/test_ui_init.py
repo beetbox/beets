@@ -24,16 +24,12 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
 
         # Test no
         self.io.addinput("n")
-        items = ui.input_select_objects(
-            "Prompt", full_items, self._print_helper
-        )
+        items = ui.input_select_objects("Prompt", full_items, self._print_helper)
         assert items == []
 
         # Test yes
         self.io.addinput("y")
-        items = ui.input_select_objects(
-            "Prompt", full_items, self._print_helper
-        )
+        items = ui.input_select_objects("Prompt", full_items, self._print_helper)
         assert items == full_items
 
         # Test selective 1
@@ -43,9 +39,7 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
         self.io.addinput("n")
         self.io.addinput("y")
         self.io.addinput("n")
-        items = ui.input_select_objects(
-            "Prompt", full_items, self._print_helper
-        )
+        items = ui.input_select_objects("Prompt", full_items, self._print_helper)
         assert items == ["2", "4"]
 
         # Test selective 2
@@ -66,9 +60,7 @@ class InputMethodsTest(IOMixin, unittest.TestCase):
         self.io.addinput("n")
         self.io.addinput("y")
         self.io.addinput("q")
-        items = ui.input_select_objects(
-            "Prompt", full_items, self._print_helper
-        )
+        items = ui.input_select_objects("Prompt", full_items, self._print_helper)
         assert items == ["1", "3"]
 
 
@@ -97,3 +89,29 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
         with pytest.raises(UserError):
             ui._open_library(test_config)
         assert not non_exist_path_parent.exists()
+
+
+def test_open_library_unable_to_open_permissions_hint(monkeypatch):
+    import sqlite3
+
+    from beets import config, ui
+
+    def boom(*_a, **_k):
+        raise sqlite3.OperationalError("unable to open database file")
+
+    monkeypatch.setattr("beets.library.Library", boom)
+    with pytest.raises(ui.UserError, match="permissions"):
+        ui._open_library(config)
+
+
+def test_open_library_readonly_permissions_hint(monkeypatch):
+    import sqlite3
+
+    from beets import config, ui
+
+    def boom(*_a, **_k):
+        raise sqlite3.OperationalError("attempt to write a readonly database")
+
+    monkeypatch.setattr("beets.library.Library", boom)
+    with pytest.raises(ui.UserError, match="permissions"):
+        ui._open_library(config)
