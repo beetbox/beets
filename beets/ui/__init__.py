@@ -150,8 +150,7 @@ def should_move(move_opt: bool | None = None) -> bool:
     """
     return _bool_fallback(
         move_opt,
-        config["import"]["move"].get(bool)
-        or config["import"]["copy"].get(bool),
+        config["import"]["move"].get(bool) or config["import"]["copy"].get(bool),
     )
 
 
@@ -265,10 +264,7 @@ def input_options(
         # Mark the option's shortcut letter for display.
         if not require and (
             (default is None and not numrange and first)
-            or (
-                isinstance(default, str)
-                and found_letter.lower() == default.lower()
-            )
+            or (isinstance(default, str) and found_letter.lower() == default.lower())
         ):
             # The first option is the default; mark it.
             show_letter = f"[{found_letter.upper()}]"
@@ -313,9 +309,7 @@ def input_options(
                 default_name = colorize("action_default", default_name)
                 tmpl = "# selection (default {})"
                 prompt_parts.append(tmpl.format(default_name))
-                prompt_part_lengths.append(
-                    len(tmpl) - 2 + len(str(default_choice))
-                )
+                prompt_part_lengths.append(len(tmpl) - 2 + len(str(default_choice)))
             else:
                 prompt_parts.append("# selection")
                 prompt_part_lengths.append(len(prompt_parts[-1]))
@@ -326,9 +320,7 @@ def input_options(
         # Start prompt with U+279C: Heavy Round-Tipped Rightwards Arrow
         prompt = colorize("action", "\u279c ")
         line_length = 0
-        for i, (part, length) in enumerate(
-            zip(prompt_parts, prompt_part_lengths)
-        ):
+        for i, (part, length) in enumerate(zip(prompt_parts, prompt_part_lengths)):
             # Add punctuation.
             if i == len(prompt_parts) - 1:
                 part += colorize("action_description", "?")
@@ -501,9 +493,7 @@ class CommonOptionsParser(optparse.OptionParser):
         # us to check whether it has been specified on the CLI - bypassing the
         # fact that arguments may be in any order
 
-    def add_album_option(
-        self, flags: Sequence[str] = ("-a", "--album")
-    ) -> None:
+    def add_album_option(self, flags: Sequence[str] = ("-a", "--album")) -> None:
         """Add a -a/--album option to match albums instead of tracks.
 
         If used then the format option can auto-detect whether we're setting
@@ -670,9 +660,7 @@ class Subcommand:
     @root_parser.setter
     def root_parser(self, root_parser: optparse.OptionParser) -> None:
         self._root_parser = root_parser
-        self.parser.prog = (
-            f"{as_string(root_parser.get_prog_name())} {self.name}"
-        )
+        self.parser.prog = f"{as_string(root_parser.get_prog_name())} {self.name}"
 
 
 class SubcommandsOptionParser(CommonOptionsParser):
@@ -709,9 +697,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
             self.subcommands.append(cmd)
 
     # Add the list of subcommands to the help message.
-    def format_help(
-        self, formatter: optparse.HelpFormatter | None = None
-    ) -> str:
+    def format_help(self, formatter: optparse.HelpFormatter | None = None) -> str:
         # Get the original help message, to which we will append.
         out = super().format_help(formatter)
         if formatter is None:
@@ -754,9 +740,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
             help_lines = textwrap.wrap(subcommand.help, help_width)
             help_line = help_lines[0] if help_lines else ""
             result.append(f"{' ' * indent_first}{help_line}\n")
-            result.extend(
-                [f"{' ' * help_position}{line}\n" for line in help_lines[1:]]
-            )
+            result.extend([f"{' ' * help_position}{line}\n" for line in help_lines[1:]])
         formatter.dedent()
 
         # Concatenate the original help message with the subcommand
@@ -857,11 +841,26 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
         lib = library.Library(dbpath, config["directory"].as_filename())
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
-        log.debug("{}", traceback.format_exc())
+        log.debug("database open failed", exc_info=True)
+        error_str = str(db_error).lower()
+        dbpath_display = util.displayable_path(dbpath)
+        if (
+            "unable to open" in error_str
+            or "readonly" in error_str
+            or "read-only" in error_str
+            or "attempt to write a readonly" in error_str
+        ):
+            # Prefer directory of the db path for a helpful permissions hint.
+            db_dir = os.path.dirname(os.fspath(dbpath)) or os.curdir
+            raise UserError(
+                f"database file {dbpath_display} could not be opened. "
+                f"This may be due to a permissions issue. If the database "
+                f"does not exist yet, please check that the file or directory "
+                f"{util.displayable_path(db_dir)} is writable."
+            ) from db_error
         raise UserError(
-            f"database file {util.displayable_path(dbpath)} cannot not be"
-            f" opened: {db_error}"
-        )
+            f"database file {dbpath_display} could not be opened: {db_error}"
+        ) from db_error
     log.debug(
         "library database: {}\nlibrary directory: {}",
         util.displayable_path(lib.path),
@@ -944,11 +943,7 @@ def _raw_main(args: list[str] | None) -> None:
     deferred_error = _bootstrap_config(options)
     _bootstrap_logging()
 
-    if (
-        subargs
-        and subargs[0] == "config"
-        and ("-e" in subargs or "--edit" in subargs)
-    ):
+    if subargs and subargs[0] == "config" and ("-e" in subargs or "--edit" in subargs):
         from beets.ui.commands.config import config_edit
 
         return config_edit(options)
@@ -1010,9 +1005,7 @@ def _get_logging_handler() -> logging.Handler:
 def _bootstrap_logging() -> None:
     if not log.handlers:
         handler = _get_logging_handler()
-        handler.setFormatter(
-            logging.LegacyFormatter("%(legacy_prefix)s%(message)s")
-        )
+        handler.setFormatter(logging.LegacyFormatter("%(legacy_prefix)s%(message)s"))
         log.addHandler(handler)
 
     # Verbosity level set via cli --verbose.
