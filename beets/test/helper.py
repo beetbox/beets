@@ -67,7 +67,11 @@ def check_reflink_support(path: str) -> bool:
 
 
 NEEDS_REFLINK = pytest.mark.skipif(
-    not check_reflink_support(gettempdir()), reason="need reflink"
+    not (
+        (RUNNING_IN_CI and sys.platform != "win32")
+        or check_reflink_support(gettempdir())
+    ),
+    reason="reflink is not supported",
 )
 NEEDS_FFPROBE = pytest.mark.skipif(
     not shutil.which("ffprobe") and not RUNNING_IN_CI,
