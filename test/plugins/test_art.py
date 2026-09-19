@@ -19,7 +19,6 @@ from beets.test.helper import (
     RUNNING_IN_CI,
     FetchImageHelper,
     TestHelper,
-    has_program,
     is_importable,
 )
 from beets.util import clean_module_tempdir
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("beets.test_art")
 
 REQUIRES_ARTRESIZER = pytest.mark.skipif(
-    not (has_program("magick") or is_importable("PIL")) and not RUNNING_IN_CI,
+    not (shutil.which("magick") or is_importable("PIL")) and not RUNNING_IN_CI,
     reason="requires ImageMagick or Pillow",
 )
 

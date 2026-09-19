@@ -65,30 +65,27 @@ test_global_opts() {
 
 
 test_global_file_opts() {
-  # FIXME somehow file completion only works when the completion
-  # function is called by the shell completion utilities. So we can't
-  # test it here
-  initcli --library '' &&
-  completes $(compgen -d) &&
+  initcli --library completion-f &&
+  completes completion-file &&
 
-  initcli -l '' &&
-  completes $(compgen -d) &&
+  initcli -l completion-f &&
+  completes completion-file &&
 
-  initcli --config '' &&
-  completes $(compgen -d) &&
+  initcli --config completion-f &&
+  completes completion-file &&
 
-  initcli -c '' &&
-  completes $(compgen -d) &&
+  initcli -c completion-f &&
+  completes completion-file &&
   true
 }
 
 
 test_global_dir_opts() {
-  initcli --directory '' &&
-  completes $(compgen -d) &&
+  initcli --directory completion-d &&
+  completes completion-directory &&
 
-  initcli -d '' &&
-  completes $(compgen -d) &&
+  initcli -d completion-d &&
+  completes completion-directory &&
   true
 }
 
@@ -97,21 +94,21 @@ test_fields_command() {
   initcli fields - &&
   completes -h --help &&
 
-  initcli fields '' &&
-  completes $(compgen -d) &&
+  initcli fields completion-f &&
+  completes completion-file &&
   true
 }
 
 
 test_import_files() {
-  initcli import '' &&
-  completes $(compgen -d) &&
+  initcli import completion-f &&
+  completes completion-file &&
 
-  initcli import --copy -P '' &&
-  completes $(compgen -d) &&
+  initcli import --copy -P completion-f &&
+  completes completion-file &&
 
-  initcli import --log '' &&
-  completes $(compgen -d) &&
+  initcli import --log completion-f &&
+  completes completion-file &&
   true
 }
 
