@@ -98,7 +98,14 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
     try:
-        duration, fp = acoustid.fingerprint_file(util.syspath(path))
+        # Prefer fpcalc directly to avoid GStreamer fd leaks (#5171).
+        # Fall back to the Chromaprint library for library-only installs.
+        try:
+            duration, fp = acoustid.fingerprint_file(
+                util.syspath(path), force_fpcalc=True
+            )
+        except acoustid.NoBackendError:
+            duration, fp = acoustid.fingerprint_file(util.syspath(path))
     except acoustid.FingerprintGenerationError as exc:
         log.error(
             "fingerprinting of {} failed: {}",
@@ -475,16 +482,22 @@ def fingerprint_item(
     else:
         log.info("{.filepath}: fingerprinting", item)
         try:
-            _, fp = acoustid.fingerprint_file(util.syspath(item.path))
-            item.acoustid_fingerprint = fp.decode()
-            if write:
-                log.info("{.filepath}: writing fingerprint", item)
-                item.try_write()
-            if item._db:
-                item.store()
-            return item.acoustid_fingerprint
+            try:
+                _, fp = acoustid.fingerprint_file(
+                    util.syspath(item.path), force_fpcalc=True
+                )
+            except acoustid.NoBackendError:
+                _, fp = acoustid.fingerprint_file(util.syspath(item.path))
         except acoustid.FingerprintGenerationError as exc:
             log.info("fingerprint generation failed: {}", exc)
+            return None
+        item.acoustid_fingerprint = fp.decode()
+        if write:
+            log.info("{.filepath}: writing fingerprint", item)
+            item.try_write()
+        if item._db:
+            item.store()
+        return item.acoustid_fingerprint
     return None
 
 
