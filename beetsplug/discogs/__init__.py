@@ -81,7 +81,7 @@ FIELDS_TO_DISCOGS_KEYS = {
     "year": "year",
 }
 
-MEDIA_FORMAT_ALIASES = {"digital media": "File", "web": "File"}
+MEDIA_FORMAT_ALIASES = {"digital media", "web"}
 
 
 def parse_release_date(
@@ -308,7 +308,9 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
             if tag == "media":
                 values = (
-                    MEDIA_FORMAT_ALIASES.get(str(value).casefold(), value)
+                    "File"
+                    if str(value).casefold() in MEDIA_FORMAT_ALIASES
+                    else value
                     for value in values
                 )
 
