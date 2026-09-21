@@ -9,9 +9,11 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
+  socket.
 
 Bug fixes
 ~~~~~~~~~
