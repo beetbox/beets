@@ -571,6 +571,27 @@ class TestDGSearchQuery(TestHelper):
         assert filters["format"] == expected
         config["discogs"]["extra_tags"] = []
 
+    def test_extra_tags_normalize_media_before_plurality(self):
+        plugin = DiscogsPlugin()
+        plugin.config["extra_tags"] = ["media"]
+
+        items = [
+            Item(media="Digital Media"),
+            Item(media="Digital Media"),
+            Item(media="WEB"),
+            Item(media="WEB"),
+            Item(media="Vinyl"),
+            Item(media="Vinyl"),
+            Item(media="Vinyl"),
+        ]
+
+        _query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert filters["format"] == "File"
+        config["discogs"]["extra_tags"] = []
+
 
 class TestDGSearchResponse(DiscogsTestMixin):
     @staticmethod
