@@ -16,8 +16,18 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
+  large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
+  (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
+  backend, which leaked fds on fingerprinting errors. :bug:`5171`
 - Add ``alternatives.item_updated`` to the typed event list so
   :doc:`plugins/hook` can listen to it. :bug:`7036`
+- :doc:`/plugins/importadded`: The ``preserve_write_mtimes`` option no longer
+  writes to the item's source file when ``beet convert`` writes the converted
+  file, which previously crashed with a :class:`PermissionError` when the source
+  file was read-only. :bug:`6954`
+- :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
+  ``File`` format when using ``media`` in ``extra_tags`` search filters.
 - :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
