@@ -81,6 +81,8 @@ FIELDS_TO_DISCOGS_KEYS = {
     "year": "year",
 }
 
+MEDIA_FORMAT_ALIASES = {"digital media", "web"}
+
 
 def parse_release_date(
     released: str | None, year: int | None
@@ -302,9 +304,17 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             return query, filters
 
         for tag, api_field in self.extra_discogs_field_by_tag.items():
-            most_common, _count = util.plurality(
-                item.get(tag) for item in items
-            )
+            values = (item.get(tag) for item in items)
+
+            if tag == "media":
+                values = (
+                    "File"
+                    if str(value).casefold() in MEDIA_FORMAT_ALIASES
+                    else value
+                    for value in values
+                )
+
+            most_common, _count = util.plurality(values)
             if most_common is None:
                 continue
 
