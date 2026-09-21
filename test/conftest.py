@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import beets
 from beets import logging
 from beets.autotag import Distance
 from beets.dbcore.query import Query
@@ -16,6 +17,7 @@ from beets.test.helper import is_importable as check_import
 from beets.util import cached_classproperty
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from typing import TextIO
 
 
@@ -187,6 +189,17 @@ def do_not_log_sources(monkeypatch):
 @pytest.fixture(autouse=True)
 def clear_cached_classproperty():
     cached_classproperty.cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def unload_plugins() -> Iterator[None]:
+    """Unload plugins at the end of each test."""
+    yield
+
+    beets.plugins.BeetsPlugin.listeners.clear()
+    beets.plugins.BeetsPlugin._raw_listeners.clear()
+    beets.config["plugins"] = []
+    beets.plugins._instances.clear()
 
 
 @pytest.fixture
