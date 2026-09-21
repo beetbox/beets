@@ -315,6 +315,15 @@ Use ``poe`` to run tests:
 
     $ poe test [pytest options]
 
+The suite is distributed across several processes with pytest-xdist_. How many
+depends on what you ask for: a single path or a ``-k`` filter runs in a single
+process, while a wider run spreads over half of the available CPUs. Give ``-n0``
+to stay in one process, for example when you need a debugger, or ``-n4`` to
+choose the worker count yourself.
+
+Tests are grouped by module and class (``--dist=loadscope``) so that each group,
+including the state shared by a ``unittest`` class, stays within one worker.
+
 Coverage
 ++++++++
 
@@ -419,6 +428,8 @@ contributor.
 .. _pytest: https://docs.pytest.org/en/stable/
 
 .. _pytest-random: https://github.com/klrmn/pytest-random
+
+.. _pytest-xdist: https://pytest-xdist.readthedocs.io/en/stable/
 
 .. _requests-mock: https://requests-mock.readthedocs.io/en/latest/response.html
 

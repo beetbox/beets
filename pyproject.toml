@@ -62,6 +62,7 @@ test = [
     "pytest-factoryboy>=2.8.1",
     "pytest-flask",
     "python-mpd2",
+    "pytest-xdist>=3.8.0",
     "python3-discogs-client>=2.3.15",
     "py7zr",
     "pyxdg",
