@@ -100,6 +100,56 @@ def pytest_assertrepr_compare(op, left, right):
     return None
 
 
+def pytest_xdist_auto_num_workers(config: pytest.Config) -> int:
+    """Choose an xdist worker count that fits the scope of the current test run.
+
+    This keeps focused runs predictable by avoiding parallelism for a single
+    target or filtered selection, while allowing broader runs to scale either
+    from explicit overrides, the number of requested paths, or available CPU
+    capacity.
+
+    Notably, for a single test file -n0 is much faster than -n auto.
+
+    Examples:
+    `pytest -n auto tests/unit/test_service.py`
+        Disables xdist for a single targeted file.
+
+    `pytest -n auto tests/unit tests/integration`
+        Uses up to two workers because two paths were requested.
+
+    `pytest -n auto -k refund`
+        Disables xdist for a filtered run to keep feedback predictable.
+
+    `pytest -n4`
+        Use 4 workers, skipping this logic.
+    """
+    should_log = config.getoption("verbose") > 0
+
+    def log(message: str) -> None:
+        if should_log:
+            print(f"[xdist] {message}", file=sys.stderr)
+
+    # Use half of the logical CPUs available to this process.
+    #
+    # Half the logical CPUs performed best for the full Beets and
+    # DB-backed Django test suites on both 4-core Intel and 15-core M5 machines.
+    logical = (os.cpu_count() or 0) // 2
+    args: list[str]
+    if len(
+        args := (config.getoption("file_or_dir") or [])
+    ) == 1 or config.getoption("-k"):
+        log("Using single worker: '-k' option or single path provided.")
+        count = 0
+    elif args:
+        count = min(len(args), config.getoption("maxprocesses") or logical)
+        log(f"Using {count} workers for {len(args)} args")
+    else:
+        log(f"No args specified, using default ({logical}) workers")
+        return logical
+
+    return count
+
+
 class _CurrentStderrHandler(logging.StreamHandler):  # type: ignore[type-arg]
     """Write CLI logs to the active standard error stream.
 
