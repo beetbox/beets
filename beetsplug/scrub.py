@@ -140,6 +140,16 @@ class ScrubPlugin(BeetsPlugin):
                     mf.save()
                 except mediafile.UnreadableFileError as exc:
                     self._log.error("could not write tags: {}", exc)
+                except (ValueError, OSError, mutagen.MutagenError) as exc:
+                    # MP4 only accepts JPEG/PNG covers. Other embedded
+                    # formats (GIF, TIFF, BMP) extract fine but cannot be
+                    # written back; dropping art is better than aborting
+                    # the whole import. See #2498.
+                    self._log.error(
+                        "could not restore art for {}: {}",
+                        util.displayable_path(item.path),
+                        exc,
+                    )
 
     def import_task_files(
         self, session: ImportSession, task: ImportTask
