@@ -68,9 +68,7 @@ log = logging.getLogger("beets")
 
 
 def _is_deletable(item: library.Item) -> bool:
-    """Whether removing ``item`` may delete its file too, i.e. whether the
-    file lives inside its library's directory.
-    """
+    """Whether ``item``'s file lives inside its library's directory."""
     return item.db.directory in util.ancestry(item.path)
 
 
@@ -176,11 +174,9 @@ def resolve_upgrade_target(
 
 @dataclass
 class TrackDuplicates:
-    """The tracks of an import task that duplicate existing library items.
-
-    ``duplicates`` maps each item of the task to the existing library items
-    it duplicates; ``actions`` maps the same items to the action chosen for
-    them.
+    """The tracks of an import task that duplicate existing library items:
+    ``duplicates`` maps each task item to the library items it duplicates,
+    ``actions`` maps the same items to the action chosen for them.
     """
 
     duplicates: dict[library.Item, list[library.Item]] = dataclass_field(
@@ -194,14 +190,9 @@ class TrackDuplicates:
     def _candidate_pairs(
         task: ImportTask, lib: library.Library
     ) -> Iterator[tuple[library.Item, library.Item]]:
-        """Yield ``(item, tagged_item)`` pairs for duplicate detection, where
-        ``tagged_item`` carries the metadata the import would end up with.
-
-        For an applied album match this is a temporary copy carrying the
-        chosen candidate's per-track metadata, built the same way
-        ``apply_metadata`` would modify the item; for as-is and retag imports
-        it is the item itself. Nothing is yielded for choices that do not
-        import any metadata.
+        """Yield ``(item, tagged_item)`` pairs for duplicate detection,
+        where ``tagged_item`` carries the metadata the import would end up
+        with: a temporary copy for an applied match, the item itself otherwise.
         """
         if task.choice_flag is Action.APPLY and isinstance(
             task.match, AlbumMatch
@@ -221,21 +212,9 @@ class TrackDuplicates:
         lib: library.Library,
         seen_keys: set[tuple[Any, ...]] | None = None,
     ) -> TrackDuplicates:
-        """Find the existing library items duplicated by ``task``'s items.
-
-        Items are compared on the ``import.duplicate_keys.item`` fields using
-        the metadata the import would end up with. Existing items with the
-        same path as a task item (i.e. re-imports) are not considered
-        duplicates: unlike ``Item.duplicates_query`` the search is not
-        restricted to singletons, since an existing album member duplicates
-        an incoming track just the same.
-
-        ``seen_keys`` holds the duplicate keys claimed by earlier tasks of the
-        same import run (see :attr:`ImportSession.seen_track_keys`). A track
-        whose key is in there counts as a duplicate even when nothing in the
-        library matches it yet, and this task's own keys are added to the set.
-        That covers the default threaded import, where a later task may reach
-        this check before an earlier one has been added to the library.
+        """Find the library items duplicated by ``task``'s items, comparing
+        ``import.duplicate_keys.item`` and ignoring the task's own paths. Keys
+        in ``seen_keys`` also count as duplicates; this task's are added to it.
         """
         keys: list[str] = config["import"]["duplicate_keys"][
             "item"
@@ -257,8 +236,7 @@ class TrackDuplicates:
             ]
             if found or (seen_keys is not None and item_key in seen_keys):
                 duplicates[item] = found
-            # Claimed only once the whole task has been checked, so that two
-            # copies of the same track *within* one album are left alone.
+            # Claimed for later tasks only, not for this one.
             claimed.add(item_key)
 
         if seen_keys is not None:
