@@ -47,10 +47,8 @@ class ImportSession:
     _merged_items: set[PathBytes]
     _merged_dirs: set[PathBytes]
 
-    #: Per-track duplicate keys claimed by the tasks of this run, so that a
-    #: track imported earlier in the *same* run is recognised as a duplicate
-    #: before it reaches the database. Only the single ``resolve_duplicates``
-    #: pipeline stage touches it, so it needs no locking.
+    #: Per-track duplicate keys claimed by the tasks of this run. Touched
+    #: only by the single ``resolve_duplicates`` stage, so it needs no lock.
     seen_track_keys: set[tuple[Any, ...]]
 
     def __init__(
@@ -205,14 +203,10 @@ class ImportSession:
         task: ImportTask,
         track_duplicates: dict[library.Item, list[library.Item]],
     ) -> dict[library.Item, DuplicateAction]:
-        """Get the configured action for each track that duplicates items
-        already in the library.
-
-        ``track_duplicates`` maps each :class:`~beets.library.Item` of the
-        task to the existing library items it duplicates.
+        """Get the configured action for each duplicating track, given a
+        map of each task item to the library items it duplicates.
         """
-        # A caller-supplied config need not carry our defaults, so a missing
-        # option counts as unset and falls back to `duplicate_action`.
+        # A missing option counts as unset: fall back to `duplicate_action`.
         tracks_action = self.config["duplicate_tracks_action"]
         if tracks_action.exists() and tracks_action.get():
             action = self._configured_duplicate_action(
@@ -237,16 +231,9 @@ class ImportSession:
         found_duplicates: list[AlbumOrItem],
         track_duplicates: dict[library.Item, list[library.Item]],
     ) -> None:
-        """Decide, at a single point, what to do about the album- and
-        track-level duplicates found for ``task``.
-
-        Sets ``task.duplicate_action`` from the album-level duplicates or
-        ``task.track_duplicates.actions`` from the track-level ones. When only
-        *some* tracks duplicate existing items, the import is a partial
-        overlap (e.g. completing a partially-imported album), so per-track
-        resolution applies and the whole-album action is suppressed. When
-        every track is a duplicate, the task is a whole-album duplicate and
-        the album-level action decides.
+        """Decide what to do about ``task``'s album- and track-level
+        duplicates: the album-level action applies when every track is a
+        duplicate, per-track resolution when only some are.
         """
         partial = 0 < len(track_duplicates) < len(task.imported_items())
 
