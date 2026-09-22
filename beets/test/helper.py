@@ -260,7 +260,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
             if self.db_on_disk
             else Path(":memory:")
         )
-        self.lib = Library(dbpath, str(self.lib_path))
+        self.lib = Library(dbpath, self.lib_path)
 
     def teardown_beets(self) -> None:
         self.env_patcher.stop()
