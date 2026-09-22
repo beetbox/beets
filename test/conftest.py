@@ -203,9 +203,18 @@ def unload_plugins() -> Iterator[None]:
 
 
 @pytest.fixture
-def config():
-    """Provide a fresh beets configuration when requested."""
-    return ConfigMixin().config
+def config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Iterator[beets.IncludeLazyConfig]:
+    """Provide fresh defaults and restore the previous configuration afterward."""
+    with monkeypatch.context() as patch:
+        # Preserve state that ConfigMixin resets on the shared config object.
+        patch.setattr(beets.config, "sources", [])
+        patch.setattr(beets.config, "redactions", set())
+        patch.setattr(beets.config, "_lazy_prefix", [])
+        patch.setattr(beets.config, "_lazy_suffix", [])
+        patch.setattr(beets.config, "_materialized", True)
+        yield ConfigMixin().config
 
 
 @pytest.fixture

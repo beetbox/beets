@@ -494,6 +494,7 @@ class TestAsciifyPath:
         assert util.asciify_path("caf\xe9\\na\xefve") == "cafe/naive"
 
 
+@pytest.mark.usefixtures("config")
 class EditorCommandTest(unittest.TestCase):
     def test_editor_command_from_config(self):
         """editor config option takes priority over environment variables."""
