@@ -449,6 +449,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly" },
     { name = "pytest-xdist" },
     { name = "python-mpd2" },
     { name = "python3-discogs-client" },
@@ -507,6 +508,7 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly" },
     { name = "pytest-xdist" },
     { name = "python-mpd2" },
     { name = "python3-discogs-client" },
@@ -601,6 +603,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy", specifier = ">=2.8.1" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "python-mpd2" },
     { name = "python3-discogs-client", specifier = ">=2.3.15" },
@@ -654,6 +657,7 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy", specifier = ">=2.8.1" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "python-mpd2" },
     { name = "python3-discogs-client", specifier = ">=2.3.15" },
@@ -3008,6 +3012,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fb/23/32b36d2f769805c0f3069ca8d9eeee77b27fcf86d41d40c6061ddce51c7d/pytest-flask-1.3.0.tar.gz", hash = "sha256:58be1c97b21ba3c4d47e0a7691eb41007748506c36bf51004f78df10691fa95e", size = 35816, upload-time = "2023-10-23T14:53:20.696Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/de/03/7a917fda3d0e96b4e80ab1f83a6628ec4ee4a882523b49417d3891bacc9e/pytest_flask-1.3.0-py3-none-any.whl", hash = "sha256:c0e36e6b0fddc3b91c4362661db83fa694d1feb91fa505475be6732b5bc8c253", size = 13105, upload-time = "2023-10-23T14:53:18.959Z" },
+]
+
+[[package]]
+name = "pytest-randomly"
+version = "5.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/01/3b/6a40e1b9d925651e601e056a97f60d8a1daeddeac03d5609be60cb4362ce/pytest_randomly-5.0.0.tar.gz", hash = "sha256:e9c575a5873ef168ddbe340ed9e97ce9edb4492ccc821e4b2ac6bb1f0ed515d2", size = 8542, upload-time = "2026-09-01T22:34:20.441Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/b4/47e939285caad9a623d021512912ac08dc92a467ad075d179f43729d2934/pytest_randomly-5.0.0-py3-none-any.whl", hash = "sha256:8a0d4703115c0c25b38b6e129fc16b1947b9643ff26a41bc1d185d7e5a7689c1", size = 8920, upload-time = "2026-09-01T22:34:19.227Z" },
 ]
 
 [[package]]
