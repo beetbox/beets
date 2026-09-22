@@ -51,6 +51,14 @@ New features
   the candidate list.
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
+- :ref:`duplicate_tracks`: When enabled, each track of an album import is
+  checked against the library using the chosen candidate's metadata and the
+  :ref:`duplicate_keys` ``item`` fields, and matches are resolved together with
+  the whole-album duplicate check via the :ref:`duplicate_tracks_action` option
+  (falling back to :ref:`duplicate_action` when unset), including per-track
+  decisions. ``skip`` drops already-imported tracks and adds the remaining new
+  tracks to the existing album, completing a partially-imported album. Disabled
+  by default.
 
 Bug fixes
 ~~~~~~~~~
@@ -267,14 +275,6 @@ New features
   prompt, without restarting the whole ``beet import`` run.
 - :ref:`list-cmd` Add ``-l / --limit LIMIT`` flag to the ``list`` command to
   limit query results. :bug:`5076`
-- :ref:`duplicate_tracks`: When enabled, each track of an album import is
-  checked against the library using the chosen candidate's metadata and the
-  :ref:`duplicate_keys` ``item`` fields, and matches are resolved together with
-  the whole-album duplicate check via the :ref:`duplicate_tracks_action` option
-  (falling back to :ref:`duplicate_action` when unset), including per-track
-  decisions. ``skip`` drops already-imported tracks and adds the remaining new
-  tracks to the existing album, completing a partially-imported album. Disabled
-  by default.
 
 Bug fixes
 ~~~~~~~~~
