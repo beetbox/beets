@@ -99,7 +99,7 @@ def setup_library(request: pytest.FixtureRequest, helper):
     request.cls.lib = helper.lib
 
 
-@pytest.mark.usefixtures("setup_library")
+@pytest.mark.usefixtures("setup_library", "config")
 class TestSort:
     @pytest.mark.parametrize(
         "model,query,expected_ids",
