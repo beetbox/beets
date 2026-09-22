@@ -343,9 +343,11 @@ You can find project coverage status on Codecov_.
 Red Flags
 +++++++++
 
-The pytest-random_ plugin makes it easy to randomize the order of tests. ``poe
-test --random`` will occasionally turn up failing tests that reveal ordering
-dependencies—which are bad news!
+The pytest-randomly_ plugin shuffles the order of tests on every run, which
+occasionally turns up failing tests that reveal ordering dependencies—which are
+bad news! Each run reports the seed it used, so an interesting order can be
+replayed with ``poe test --randomly-seed=<seed>``. Use ``poe test -p
+no:randomly`` to keep the original order.
 
 Test Dependencies
 +++++++++++++++++
@@ -427,7 +429,7 @@ contributor.
 
 .. _pytest: https://docs.pytest.org/en/stable/
 
-.. _pytest-random: https://github.com/klrmn/pytest-random
+.. _pytest-randomly: https://github.com/pytest-dev/pytest-randomly
 
 .. _pytest-xdist: https://pytest-xdist.readthedocs.io/en/stable/
 
