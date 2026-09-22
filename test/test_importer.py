@@ -2140,14 +2140,41 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
 
     def test_within_run_dedup(self):
         # Two identical albums imported in one run: the second album's tracks
-        # are caught against the first, so only two items land overall. This
-        # holds because tasks are resolved in order, after the previous task's
-        # items have been added to the library.
+        # are caught against the first, so only two items land overall. The
+        # session's seen-key cache makes this hold regardless of whether the
+        # first album has reached the library yet (see the test below).
         self.prepare_album_for_import(2, album_id=2)  # a second album dir
         self._import(action="skip")
 
         titles = sorted(i.title for i in self.lib.items())
         assert titles == ["Tag Track 1", "Tag Track 2"]
+
+    def test_seen_keys_catch_duplicate_not_yet_in_library(self):
+        # Under the default threaded import a later task can be checked
+        # before an earlier one has been added to the library. Drive the
+        # detection over two tasks with no add() in between, against an empty
+        # library: the second task's track is caught by the seen-key cache
+        # alone.
+        from beets.importer.actions import Action
+        from beets.importer.tasks import ImportTask, TrackDuplicates
+
+        def make_task(path):
+            item = Item(artist="Tag Artist", title="Tag Track 1", path=path)
+            task = ImportTask(None, [path], [item])
+            task.set_choice(Action.ASIS)
+            return task
+
+        seen: set = set()
+        first = make_task(b"/import/a/track.mp3")
+        second = make_task(b"/import/b/track.mp3")
+
+        assert not TrackDuplicates.find(first, self.lib, seen)
+        assert seen
+
+        found = TrackDuplicates.find(second, self.lib, seen)
+        assert [i.title for i in found.duplicates] == ["Tag Track 1"]
+        # Nothing in the library matched -- the cache alone caught it.
+        assert not self.lib.items()
 
     def test_inherits_duplicate_action_when_unset(self):
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")

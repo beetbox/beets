@@ -215,7 +215,12 @@ class TrackDuplicates:
                 yield item, item
 
     @classmethod
-    def find(cls, task: ImportTask, lib: library.Library) -> TrackDuplicates:
+    def find(
+        cls,
+        task: ImportTask,
+        lib: library.Library,
+        seen_keys: set[tuple[Any, ...]] | None = None,
+    ) -> TrackDuplicates:
         """Find the existing library items duplicated by ``task``'s items.
 
         Items are compared on the ``import.duplicate_keys.item`` fields using
@@ -224,24 +229,40 @@ class TrackDuplicates:
         duplicates: unlike ``Item.duplicates_query`` the search is not
         restricted to singletons, since an existing album member duplicates
         an incoming track just the same.
+
+        ``seen_keys`` holds the duplicate keys claimed by earlier tasks of the
+        same import run (see :attr:`ImportSession.seen_track_keys`). A track
+        whose key is in there counts as a duplicate even when nothing in the
+        library matches it yet, and this task's own keys are added to the set.
+        That covers the default threaded import, where a later task may reach
+        this check before an earlier one has been added to the library.
         """
         keys: list[str] = config["import"]["duplicate_keys"][
             "item"
         ].as_str_seq()
         task_paths = {i.path for i in task.items if i}
         duplicates: dict[library.Item, list[library.Item]] = {}
+        claimed: set[tuple[Any, ...]] = set()
         for item, tmp_item in cls._candidate_pairs(task, lib):
             if not any(tmp_item.get(k) for k in keys):
                 continue
+            item_key = tuple(tmp_item.get(k) for k in keys)
             # `Item.duplicates_query` restricts the search to singletons;
             # the base implementation does not.
             dup_query = library.LibModel.duplicates_query(tmp_item, keys)
-            if found := [
+            found = [
                 other
                 for other in lib.items(dup_query)
                 if other.path not in task_paths
-            ]:
+            ]
+            if found or (seen_keys is not None and item_key in seen_keys):
                 duplicates[item] = found
+            # Claimed only once the whole task has been checked, so that two
+            # copies of the same track *within* one album are left alone.
+            claimed.add(item_key)
+
+        if seen_keys is not None:
+            seen_keys |= claimed
 
         return cls(duplicates)
 

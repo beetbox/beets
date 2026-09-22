@@ -449,47 +449,47 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
     # option counts as disabled.
     dup_tracks = session.config["duplicate_tracks"]
     if task.is_album and dup_tracks.exists() and dup_tracks.get():
-        track_duplicates = TrackDuplicates.find(task, session.lib)
-
-    if not found_duplicates and not track_duplicates:
-        return
-
-    if found_duplicates:
-        log.debug("found duplicates: {}", [o.id for o in found_duplicates])
-    if track_duplicates:
-        log.debug(
-            "found track duplicates: {}",
-            [
-                o.id
-                for matches in track_duplicates.duplicates.values()
-                for o in matches
-            ],
+        track_duplicates = TrackDuplicates.find(
+            task, session.lib, session.seen_track_keys
         )
 
-    task.track_duplicates = track_duplicates
-    session.resolve_duplicates(
-        task, found_duplicates, track_duplicates.duplicates
-    )
+    if found_duplicates or track_duplicates:
+        if found_duplicates:
+            log.debug("found duplicates: {}", [o.id for o in found_duplicates])
+        if track_duplicates:
+            log.debug(
+                "found track duplicates: {}",
+                [
+                    o.id
+                    for matches in track_duplicates.duplicates.values()
+                    for o in matches
+                ],
+            )
 
-    if task.duplicate_action is DuplicateAction.UPGRADE:
-        if task.apply:
-            # Apply metadata early so items carry their final (post-tag)
-            # identity before we match them against old library items,
-            # which store post-tag metadata too. `_apply_choice`
-            # re-applies it later, which is harmless (metadata
-            # application is idempotent).
-            task.apply_metadata()
-        keys = config["import"]["duplicate_keys"]["item"].as_str_seq()
-        kept, superseded, old_album_ids = resolve_upgrade_target(
-            task.imported_items(), found_duplicates, keys
+        task.track_duplicates = track_duplicates
+        session.resolve_duplicates(
+            task, found_duplicates, track_duplicates.duplicates
         )
-        if not kept:
-            log.debug("upgrade: no track was an improvement, declining")
-            task.duplicate_action = DuplicateAction.SKIP
-        else:
-            task.apply_upgrade(kept, superseded, old_album_ids)
 
-    session.log_choice(task, True)
+        if task.duplicate_action is DuplicateAction.UPGRADE:
+            if task.apply:
+                # Apply metadata early so items carry their final (post-tag)
+                # identity before we match them against old library items,
+                # which store post-tag metadata too. `_apply_choice`
+                # re-applies it later, which is harmless (metadata
+                # application is idempotent).
+                task.apply_metadata()
+            keys = config["import"]["duplicate_keys"]["item"].as_str_seq()
+            kept, superseded, old_album_ids = resolve_upgrade_target(
+                task.imported_items(), found_duplicates, keys
+            )
+            if not kept:
+                log.debug("upgrade: no track was an improvement, declining")
+                task.duplicate_action = DuplicateAction.SKIP
+            else:
+                task.apply_upgrade(kept, superseded, old_album_ids)
+
+        session.log_choice(task, True)
 
 
 def _apply_track_duplicate_skips(task: ImportTask) -> list[library.Item]:
@@ -498,21 +498,22 @@ def _apply_track_duplicate_skips(task: ImportTask) -> list[library.Item]:
     whole task. Returns the dropped items.
     """
     skipped = task.track_duplicates.items_with_action(DuplicateAction.SKIP)
-    if not skipped:
-        return skipped
+    if skipped:
+        for item in skipped:
+            log.info(
+                "Skipping duplicate track: {}", displayable_path(item.path)
+            )
+            if item in task.items:
+                task.items.remove(item)
+            if isinstance(task.match, AlbumMatch):
+                task.match.mapping.pop(item, None)
 
-    for item in skipped:
-        log.info("Skipping duplicate track: {}", displayable_path(item.path))
-        if item in task.items:
-            task.items.remove(item)
-        if isinstance(task.match, AlbumMatch):
-            task.match.mapping.pop(item, None)
-
-    if not task.imported_items():
-        log.info(
-            "Skipping album, all tracks are duplicates: {}", skipped[0].album
-        )
-        task.set_choice(Action.SKIP)
+        if not task.imported_items():
+            log.info(
+                "Skipping album, all tracks are duplicates: {}",
+                skipped[0].album,
+            )
+            task.set_choice(Action.SKIP)
 
     return skipped
 
@@ -546,16 +547,15 @@ def _fold_into_existing_album(
             "cannot fold tracks into a single existing album; "
             "keeping them as a new album"
         )
-        return
-
-    new_album = task.album
-    for item in task.imported_items():
-        item.album_id = existing_album.id
-        item.store()
-    task.album = existing_album
-    if new_album is not None and new_album.id != existing_album.id:
-        # The freshly created album container is now empty.
-        new_album.remove(with_items=False)
+    else:
+        new_album = task.album
+        for item in task.imported_items():
+            item.album_id = existing_album.id
+            item.store()
+        task.album = existing_album
+        if new_album is not None and new_album.id != existing_album.id:
+            # The freshly created album container is now empty.
+            new_album.remove(with_items=False)
 
 
 def _freshen_items(items: Iterable[library.Item]) -> None:

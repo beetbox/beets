@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets import config, logging, plugins, util
 from beets.util import displayable_path, normpath, pipeline, syspath
@@ -47,6 +47,12 @@ class ImportSession:
     _merged_items: set[PathBytes]
     _merged_dirs: set[PathBytes]
 
+    #: Per-track duplicate keys claimed by the tasks of this run, so that a
+    #: track imported earlier in the *same* run is recognised as a duplicate
+    #: before it reaches the database. Only the single ``resolve_duplicates``
+    #: pipeline stage touches it, so it needs no locking.
+    seen_track_keys: set[tuple[Any, ...]]
+
     def __init__(
         self,
         lib: library.Library,
@@ -74,6 +80,7 @@ class ImportSession:
         self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
+        self.seen_track_keys = set()
 
         # Normalize the paths.
         self.paths = list(map(normpath, paths or []))
@@ -252,7 +259,7 @@ class ImportSession:
                 task, track_duplicates
             )
 
-    def run(self):
+    def run(self) -> None:
         """Run the import task."""
         self.logger.info("import started {}", time.asctime())
         self.set_config(config["import"])
