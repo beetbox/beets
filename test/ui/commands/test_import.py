@@ -61,9 +61,7 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
         item = _common.item(title='Touch Me (Original 12")')
         track_info = TrackInfo(title="Touch Me (original 12')")
 
-        _, _, changed = ChangeRepresentation.make_track_titles(
-            item, track_info
-        )
+        _, _, changed = ChangeRepresentation.make_track_titles(item, track_info)
 
         assert not changed
 
