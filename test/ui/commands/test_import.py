@@ -10,7 +10,7 @@ from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.import_ import paths_from_logfile
-from beets.ui.commands.import_.display import show_change
+from beets.ui.commands.import_.display import ChangeRepresentation, show_change
 from beets.ui.commands.import_.session import summarize_items
 
 
@@ -57,6 +57,26 @@ class ImportTest(BeetsTestCase):
 
 @patch("beets.ui.term_width", Mock(return_value=54))
 class ShowChangeTestCase(IOMixin, BeetsTestCase):
+    def test_track_title_normalization(self):
+        item = _common.item(title='Touch Me (Original 12")')
+        track_info = TrackInfo(title="Touch Me (original 12')")
+
+        _, _, changed = ChangeRepresentation.make_track_titles(
+            item, track_info
+        )
+
+        assert not changed
+
+    def test_track_number_per_disc_tolerance(self):
+        self.config["per_disc_numbering"] = False
+        item = _common.item(track=1)
+        track_info = TrackInfo(index=19, medium_index=1)
+        change = ChangeRepresentation("", "", Mock(info=Mock(mediums=2)))
+
+        _, _, changed = change.make_track_numbers(item, track_info)
+
+        assert not changed
+
     def _show_change(self):
         """Return an unicode string representing the changes"""
         long_name = f"a{' very' * 10} long name"
