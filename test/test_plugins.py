@@ -1,7 +1,7 @@
 import importlib
 import itertools
-import logging
 import pkgutil
+import subprocess
 import sys
 from typing import ClassVar
 from unittest.mock import ANY, Mock, patch
@@ -471,7 +471,7 @@ def get_available_plugins():
     ]
 
 
-class TestImportPlugin(PluginMixin):
+class TestImportPlugin:
     @pytest.fixture(params=get_available_plugins())
     def plugin_name(self, request):
         """Fixture to provide the name of each available plugin."""
@@ -484,20 +484,6 @@ class TestImportPlugin(PluginMixin):
 
         return name
 
-    def unload_plugins(self):
-        """Unimport plugins before each test to avoid conflicts."""
-        super().unload_plugins()
-        for mod in list(sys.modules):
-            if mod.startswith("beetsplug."):
-                del sys.modules[mod]
-
-    @pytest.fixture(autouse=True)
-    def cleanup(self):
-        """Ensure plugins are unimported before and after each test."""
-        self.unload_plugins()
-        yield
-        self.unload_plugins()
-
     @pytest.mark.skipif(
         not RUNNING_IN_CI,
         reason=(
@@ -505,14 +491,20 @@ class TestImportPlugin(PluginMixin):
             " guarantee in the local environment."
         ),
     )
-    def test_import_plugin(self, caplog, plugin_name):
-        """Test that a plugin is importable without an error."""
-        caplog.set_level(logging.WARNING)
-        self.load_plugins(plugin_name)
-
-        assert "PluginImportError" not in caplog.text, (
-            f"Plugin '{plugin_name}' has issues during import."
+    def test_import_plugin(self, plugin_name):
+        """Check that each plugin imports in a fresh interpreter."""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import importlib, sys; importlib.import_module(sys.argv[1])",
+                f"beetsplug.{plugin_name}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
+        assert result.returncode == 0, result.stdout + result.stderr
 
 
 class TestDeprecationCopy:
