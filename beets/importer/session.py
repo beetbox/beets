@@ -4,8 +4,6 @@ import os
 import time
 from typing import TYPE_CHECKING
 
-import confuse
-
 from beets import config, logging, plugins, util
 from beets.util import displayable_path, normpath, pipeline, syspath
 
@@ -15,6 +13,8 @@ from .state import ImportState
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Sequence
+
+    import confuse
 
     from beets import dbcore, library
     from beets.autotag import AlbumMatch, TrackMatch
@@ -206,9 +206,8 @@ class ImportSession:
         """
         # A caller-supplied config need not carry our defaults, so a missing
         # option counts as unset and falls back to `duplicate_action`.
-        if self.config["duplicate_tracks_action"].get(
-            confuse.Optional(str, "")
-        ):
+        tracks_action = self.config["duplicate_tracks_action"]
+        if tracks_action.exists() and tracks_action.get():
             action = self._configured_duplicate_action(
                 "duplicate_tracks_action", DuplicateAction.track_choices()
             )

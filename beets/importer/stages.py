@@ -6,8 +6,6 @@ import logging
 import os
 from typing import TYPE_CHECKING, TypeAlias
 
-import confuse
-
 from beets import config, plugins
 from beets.autotag import AlbumMatch
 from beets.util import MoveOperation, displayable_path, pipeline
@@ -447,9 +445,10 @@ def _resolve_duplicates(session: ImportSession, task: ImportTask) -> None:
     found_duplicates = task.find_duplicates(session.lib)
 
     track_duplicates = TrackDuplicates()
-    if task.is_album and session.config["duplicate_tracks"].get(
-        confuse.Optional(bool, False)
-    ):
+    # A caller-supplied config need not carry our defaults, so a missing
+    # option counts as disabled.
+    dup_tracks = session.config["duplicate_tracks"]
+    if task.is_album and dup_tracks.exists() and dup_tracks.get():
         track_duplicates = TrackDuplicates.find(task, session.lib)
 
     if not found_duplicates and not track_duplicates:
