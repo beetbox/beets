@@ -628,25 +628,113 @@ lyrics_pages = [
     LyricsPage.make(
         "https://genius.com/Caparezza-argenti-vive-lyrics",
         """
+        [Testo di "Argenti vive"]
+
+        [Intro]
+        Mentre solcavamo l'immobile palude, mi si parò davanti uno spirito coperto di fango. Allungò verso la barca entrambe le mani, ma Virgilio, pronto, lo respinse, dicendogli: "Via di qui, vattene a stare con gli altri maledetti!"
+        E io: "Maestro, sarei molto desideroso, prima di uscire dalla palude, di vederlo immergere in questa melma."
+        Poco dopo vidi gli iracondi fare di lui un tale scempio che per esso ancora glorifico e rendo grazie a Dio. Tutti insieme gridavano:
+        "A Filippo Argenti
+        A Filippo Argenti"
+
+        [Strofa 1]
         Ciao Dante, ti ricordi di me? Sono Filippo Argenti
         Il vicino di casa che nella Commedia ponesti tra questi violenti
         Sono quello che annega nel fango, pestato dai demoni intorno
         Cos'è, vuoi provocarmi, sommo? Puoi solo provocarmi sonno!
-        """,
+        Alighieri, vedi, tremi
+        Mi temi come gli eritemi, eri te che mi deridevi
+        Devi combattere, ma te la dai a gambe levate
+        Ma quale vate? Vattene!
+        Ehi, quando quando vuoi, dimmi dimmi dove
+        Sono dannato, ma te le do di santa ragione
+        Così impari a rimare male di me
+        Io non ti maledirei, ti farei male, Alighieri
+        Non sei divino, individuo
+        Se t'individuo, ti divido
+        Inutile che decanti l'amante, Dante
+        Provochi solo cali di libido
+        Il mondo non è dei poeti (No)
+        Il mondo è di noi prepotenti
+        Vai rimando alla genti che mi getti nel fango
+        Ma io rimango l'Argenti
+
+        [Pre-Ritornello 1]
+        Argenti vive, vive e vivrà
+        Sono ancora il più temuto della città
+        Sono ancora il più rispettato, quindi cosa t'inventi?
+        Se questo mondo è l'Inferno, allora sappi che appartiene
+
+        [Ritornello]
+        A Filippo Argenti
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+
+        [Strofa 2]
+        Non è vero che la lingua ferisce più della spada, è una cazzata
+        Cosa pensi tenga più a bada: rima baciata o mazza chiodata?
+        Non c'è dittatore che abdichi perché persuaso
+        Pare che più nessuno sappia nemmeno che significhi "abdicare", ma di che parliamo?
+        Attaccare me non ti redime (No)
+        Eri tu che davi direttive (Oh)
+        Per annichilire ogni ghibellino
+        Cerchio 7, Giro primo
+        "Fatti non foste per vivere come bruti"
+        Ben detta, ma sputi vendetta
+        Dalla barchetta di Flegias
+        Complimenti per la regia
+
+        [Pre-Ritornello 2]
+        Argenti vive, vive e vivrà
+        Alla gente piace la mia ferocità
+        Persino tu che mi anneghi a furia di calci sui denti
+        Ti chiami Dante Alighieri, ma somigli negli atteggiamenti
+
+        [Ritornello]
+        A Filippo Argenti
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+
+        [Bridge]
+        Stai lontano dalle fiamme perché ti bruci
+        Guardati le spalle, caro Dante, è pieno di Bruti
+        Tutti i grandi oratori sono stati fatti fuori
+        Da signori, violenti e nerboruti
+        Anche gli alberi sgomitano per un po' di sole
+        Il resto sono solo inutili, belle parole
+        Sono sicuro che in futuro le giovani menti
+        Saranno come l'Argenti e l'arte porterà il mio nome
+
+        [Outro]
+        Filippo Argenti
+        Filippo Argenti
+        Filippo Argenti
+        Filippo Argenti
+        "Lo lasciammo là, nella palude e non racconto altro."
+        """,  # noqa: E501
         artist="Caparezza",
         track_title="Argenti vive",
-        marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
-    ),
-    LyricsPage.make(
-        "https://genius.com/Arctic-monkeys-r-u-mine-lyrics",
-        """
-        I go crazy 'cause here isn't where I wanna be
-        And satisfaction feels like a distant memory
-        And I can't help myself, all I
-        Wanna hear her say is "Are you mine?"
-        """,
-        artist="Arctic Monkeys",
-        track_title="R U Mine?",
+        language="IT",
         marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
     ),
     LyricsPage.make(
