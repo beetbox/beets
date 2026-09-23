@@ -167,7 +167,7 @@ class RequestHandler:
         HTTPNotFoundError
     ]
 
-    def create_session(self) -> TimeoutAndRetrySession:
+    def create_session(self) -> requests.Session:
         """Create a new HTTP session instance.
 
         Can be overridden by subclasses to provide custom session types.
@@ -175,7 +175,7 @@ class RequestHandler:
         return TimeoutAndRetrySession()
 
     @cached_property
-    def session(self) -> TimeoutAndRetrySession:
+    def session(self) -> requests.Session:
         return self.create_session()
 
     def status_to_error(

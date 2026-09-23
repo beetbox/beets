@@ -36,7 +36,7 @@ from .requests import BeetsHTTPError, RequestHandler, TimeoutAndRetrySession
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from requests import Response
+    import requests
 
     from beets.metadata_plugins import IDResponse
 
@@ -616,10 +616,10 @@ class MusicBrainzAPI(RequestHandler):
     def api_root(self) -> str:
         return f"{self.api_host}/ws/2"
 
-    def create_session(self) -> LimiterTimeoutSession:
+    def create_session(self) -> requests.Session:
         return LimiterTimeoutSession(per_second=self.rate_limit)
 
-    def request(self, *args, **kwargs) -> Response:
+    def request(self, *args, **kwargs) -> requests.Response:
         """Ensure all requests specify JSON response format by default."""
         kwargs.setdefault("params", {})
         kwargs["params"]["fmt"] = "json"

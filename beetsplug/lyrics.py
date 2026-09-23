@@ -10,6 +10,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
+from http import HTTPStatus
 from itertools import filterfalse, groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
@@ -29,6 +30,7 @@ from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
 from ._utils.requests import (
+    BeetsHTTPError,
     HTTPNotFoundError,
     RequestHandler,
     TimeoutAndRetrySession,
@@ -62,6 +64,10 @@ class LyricsCLIOpts(Protocol):
 class CaptchaError(requests.exceptions.HTTPError):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__("Captcha is required", *args, **kwargs)
+
+
+class TooManyRequestsHTTPError(BeetsHTTPError):
+    STATUS = HTTPStatus.TOO_MANY_REQUESTS
 
 
 class GeniusHTTPError(requests.exceptions.HTTPError):
@@ -166,7 +172,7 @@ def slug(text: str) -> str:
 class LyricsRequestHandler(RequestHandler):
     _log: Logger
 
-    def create_session(self) -> TimeoutAndRetrySession:
+    def create_session(self) -> requests.Session:
         """Return a rate-limited session for lyrics HTTP requests."""
         return TimeoutAndRetrySession()
 
@@ -189,7 +195,7 @@ class LyricsRequestHandler(RequestHandler):
 
     def warn(self, message: str, *args) -> None:
         """Log warning with the class name."""
-        self._log.warning(f"{self.__class__.__name__}: {message}", *args)
+        self._log.error(f"{self.__class__.__name__}: {message}", *args)
 
     @staticmethod
     def format_url(url: str, params: JSONDict | None) -> str:
@@ -670,11 +676,20 @@ class Genius(SearchBackend):
         return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
     def get_json(self, *args, **kwargs) -> GeniusAPI.Search:
-        response: GeniusAPI.Response = super().get_json(*args, **kwargs)
+        try:
+            response: GeniusAPI.Response = super().get_json(*args, **kwargs)
+        except requests.HTTPError as exc:
+            response = exc.response.json()
+
         if "response" in response:
             return response  # type: ignore[return-value]
 
         meta = response["meta"]
+        if meta["status"] == HTTPStatus.TOO_MANY_REQUESTS:
+            raise TooManyRequestsHTTPError(
+                message=meta["message"], response=kwargs.get("response")
+            )
+
         raise GeniusHTTPError(f"{meta['message']} Status: {meta['status']}")
 
     def get_text(
