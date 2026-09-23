@@ -165,6 +165,30 @@ genres remain, set ``whitelist: no``).
     If ``force`` is disabled the ``keep_existing`` option is simply ignored
     (since ``force: no`` means ``not touching`` existing tags anyway).
 
+Original Genre Fallback
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This stage only applies with both ``force: yes`` and ``keep_existing: yes``
+(**Setup 3** above): if none of the configured sources (track, album, artist)
+yield a usable genre, the plugin falls back to the *original*, pre-existing tags
+rather than giving up immediately. What exactly happens at this stage depends on
+your ``whitelist``, ``canonical`` and ``aliases`` settings:
+
+- **Aliases are applied first, always** (unless ``aliases: no``). Existing tags
+  are normalized (e.g. ``hip-hop`` → ``hip hop``) before anything else happens,
+  and duplicates are removed.
+- **Whitelist off**: every remaining existing tag is kept as-is. Note that
+  neither ``count`` nor canonicalization are applied at this point, since
+  there's nothing to filter or prune against.
+- **Whitelist on**: existing tags are checked directly against the whitelist
+  (and ignorelist); any that match are kept, again without applying ``count``.
+- **Whitelist on, but no existing tag matches directly**: if ``canonical`` is
+  also enabled, the plugin tries to canonicalize the existing tags, looking for
+  a whitelisted parent genre. This is the only path in this stage where
+  ``count`` is honored.
+- If none of the above produces a genre, the configured ``fallback`` is used
+  instead.
+
 Genre Ignorelist
 ----------------
 
