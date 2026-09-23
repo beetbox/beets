@@ -61,3 +61,4 @@ class TestScrubbedImport(AsIsImporterMixin, PluginMixin, ImportHelper):
 
         restored = MediaFile(item.filepath)
         assert restored.title == item.title
+        assert not restored.images

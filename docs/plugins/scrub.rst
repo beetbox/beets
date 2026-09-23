@@ -22,8 +22,8 @@ When importing new files (with ``import.write`` turned on) or modifying files'
 tags with the ``beet modify`` command, beets will first strip all types of tags
 entirely and then write the database-tracked metadata to the file. Embedded
 album art is restored afterwards when possible. If the format cannot store the
-original image (MP4/M4A only accepts JPEG and PNG covers), the error is logged
-and import continues without the art.
+original image (MP4/M4A only accepts JPEG and PNG covers), that art is skipped
+and import continues without it.
 
 This behavior can be disabled with the ``auto`` config option (see below).
 

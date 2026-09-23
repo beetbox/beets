@@ -108,6 +108,33 @@ class ScrubPlugin(BeetsPlugin):
                     "could not scrub {}: {}", util.displayable_path(path), exc
                 )
 
+    # MPEG-4 covr atoms only store JPEG or PNG. mediafile raises
+    # ValueError for any other MIME type (#2498).
+    _MP4_ART_MIMES = frozenset({"image/jpeg", "image/png"})
+
+    def _images_for_restore(
+        self,
+        mf: mediafile.MediaFile,
+        images: list[mediafile.Image] | None,
+        path: bytes,
+    ) -> list[mediafile.Image] | None:
+        """Drop art the container cannot store, instead of failing on write."""
+        if not images or mf.type not in ("aac", "alac"):
+            return images
+        kept: list[mediafile.Image] = []
+        for img in images:
+            mime = img.mime_type or ""
+            if mime in self._MP4_ART_MIMES:
+                kept.append(img)
+            else:
+                self._log.error(
+                    "could not restore art for {}: "
+                    "MP4 files only supports PNG and JPEG images ({})",
+                    util.displayable_path(path),
+                    mime or "unknown",
+                )
+        return kept
+
     def _scrub_item(self, item: Item, restore: bool) -> None:
         """Remove tags from an Item's associated file and, if `restore`
         is enabled, write the database's tags back to the file.
@@ -130,6 +157,7 @@ class ScrubPlugin(BeetsPlugin):
         if restore:
             self._log.debug("writing new tags after scrub")
             item.try_write()
+            images = self._images_for_restore(mf, images, item.path)
             if images:
                 self._log.debug("restoring art")
                 try:
@@ -140,16 +168,6 @@ class ScrubPlugin(BeetsPlugin):
                     mf.save()
                 except mediafile.UnreadableFileError as exc:
                     self._log.error("could not write tags: {}", exc)
-                except (ValueError, OSError, mutagen.MutagenError) as exc:
-                    # MP4 only accepts JPEG/PNG covers. Other embedded
-                    # formats (GIF, TIFF, BMP) extract fine but cannot be
-                    # written back; dropping art is better than aborting
-                    # the whole import. See #2498.
-                    self._log.error(
-                        "could not restore art for {}: {}",
-                        util.displayable_path(item.path),
-                        exc,
-                    )
 
     def import_task_files(
         self, session: ImportSession, task: ImportTask
