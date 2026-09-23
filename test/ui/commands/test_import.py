@@ -93,7 +93,7 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
         )
         change_dist._penalties = {"album": [0.1], "artist": [0.1]}
         show_change(
-            source, AlbumMatch(change_dist, info, dict(item_info_pairs))
+            AlbumMatch(change_dist, info, dict(item_info_pairs)), source
         )
         return self.io.getoutput()
 
