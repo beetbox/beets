@@ -9,9 +9,17 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- :doc:`plugins/web`: Redesign the web interface as a modern, buildless
+  single-page UI: search (a simple mode and full beets-query support),
+  Songs/Albums/Artists browsing, album and track metadata views with album art,
+  playback, and automatic light/dark theming. The ``/album/`` and ``/artist/``
+  list endpoints also gained optional ``offset``/``limit`` paging, capped at a
+  ``limit`` of 500 and reported via an ``X-Total-Count`` response header;
+  omitting the parameters returns every result as before, and ``/item/`` is
+  unaffected.
 
 Bug fixes
 ~~~~~~~~~
