@@ -97,3 +97,29 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
         with pytest.raises(UserError):
             ui._open_library(test_config)
         assert not non_exist_path_parent.exists()
+
+
+def test_open_library_unable_to_open_permissions_hint(monkeypatch):
+    import sqlite3
+
+    from beets import config, ui
+
+    def boom(*_a, **_k):
+        raise sqlite3.OperationalError("unable to open database file")
+
+    monkeypatch.setattr("beets.library.Library", boom)
+    with pytest.raises(ui.UserError, match="permissions"):
+        ui._open_library(config)
+
+
+def test_open_library_readonly_permissions_hint(monkeypatch):
+    import sqlite3
+
+    from beets import config, ui
+
+    def boom(*_a, **_k):
+        raise sqlite3.OperationalError("attempt to write a readonly database")
+
+    monkeypatch.setattr("beets.library.Library", boom)
+    with pytest.raises(ui.UserError, match="permissions"):
+        ui._open_library(config)
