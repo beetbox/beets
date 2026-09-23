@@ -254,8 +254,8 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
         # Set up a little pipeline for dealing with the singletons.
         def emitter(task: ImportTask) -> Iterator[BaseImportTask]:
             for item in task.items:
-                task = SingletonImportTask(task.toppath, item)
-                yield from task.handle_created(session)
+                singleton = SingletonImportTask(task.toppath, item)
+                yield from singleton.handle_created(session)
             yield SentinelImportTask(task.toppath, task.paths)
 
         return _extend_pipeline(

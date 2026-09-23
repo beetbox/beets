@@ -649,6 +649,24 @@ class ImportTracksTest(AutotagImportTestCase):
 
         assert (self.lib_path / "singletons" / "Applied Track 1.mp3").exists()
 
+    def test_apply_tracks_records_album_dir_for_resume(self):
+        """Importing an album as tracks must mark its directory as done in
+        the resume state, or a resumed import prompts for it again.
+        """
+        self.setup_importer(resume=True)
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        # A completed import resets all progress at the end; suppress that
+        # so the recorded entries can be inspected.
+        with patch.object(ImportState, "progress_reset"):
+            self.importer.run()
+
+        album_dir = bytestring_path(os.path.dirname(self.import_media[0].path))
+        recorded = [p for ps in ImportState().tagprogress.values() for p in ps]
+        assert album_dir in recorded
+
 
 class ImportRescanTest(AutotagImportTestCase):
     """Test the Rescan directory action.
