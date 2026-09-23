@@ -14,9 +14,9 @@ Bug fixes
 
 - :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
   after configured data and video filters. :bug:`6836`
-- :ref:`import-cmd` Resumed imports no longer prompt again for albums that
-  were imported using the "as Tracks" option. Their directories were never
-  recorded as finished in the resume state.
+- :ref:`import-cmd` Resumed imports no longer prompt again for albums that were
+  imported using the "as Tracks" option. Their directories were never recorded
+  as finished in the resume state.
 
 ..
     New features
