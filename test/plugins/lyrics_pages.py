@@ -8,11 +8,12 @@ from urllib.parse import urlparse
 import pytest
 
 
-def xfail_on_ci(msg: str) -> pytest.MarkDecorator:
+def xfail_on_ci(msg: str, strict: bool = True) -> pytest.MarkDecorator:
     return pytest.mark.xfail(
         bool(os.environ.get("GITHUB_ACTIONS")),
         reason=msg,
         raises=AssertionError,
+        strict=strict,
     )
 
 
@@ -114,7 +115,7 @@ lyrics_pages = [
         Wonder how you manage to make ends meet
         """,
         url_title="The Beatles - Lady Madonna Lyrics | AZLyrics.com",
-        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare")],
+        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare", strict=False)],
     ),
     LyricsPage.make(
         "https://www.dainuzodziai.lt/m/mergaites-nori-mylet-atlanta/",
@@ -879,6 +880,6 @@ lyrics_pages = [
         artist="Derivakat",
         track_title="Bounty Hunter",
         url_title="Derivakat - Bounty Hunter Lyrics | AZLyrics.com",
-        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare")],
+        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare", strict=False)],
     ),
 ]

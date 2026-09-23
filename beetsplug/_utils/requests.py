@@ -74,7 +74,9 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
+        self.setup_adapter()
 
+    def setup_adapter(self) -> None:
         retry = Retry(
             total=6,
             backoff_factor=0.5,
