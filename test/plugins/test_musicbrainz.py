@@ -411,23 +411,32 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
         assert mb.album_info(release).mediums == 2
 
     @pytest.mark.parametrize(
-        "beets_match_config, expected_titles",
+        "beets_match_config, expected_titles, expected_medium_total",
         [
-            _p({}, ("Audio",), id="only audio tracks by default"),
+            _p({}, ("Audio",), 1, id="only audio tracks by default"),
             _p(
                 {"ignore_data_tracks": False},
                 ("Audio", "Data"),
+                2,
                 id="include data tracks",
             ),
             _p(
                 {"ignore_data_tracks": False, "ignore_video_tracks": False},
                 ("Audio", "Video: Video", "Data"),
+                3,
                 id="include data and video tracks",
             ),
-            _p({"ignored_media": "Vinyl"}, (), id="ignore all tracks"),
+            _p({"ignored_media": "Vinyl"}, (), 0, id="ignore all tracks"),
         ],
     )
-    def test_data_tracks(self, config, beets_match_config, mb, expected_titles):
+    def test_data_tracks(
+        self,
+        config,
+        beets_match_config,
+        mb,
+        expected_titles,
+        expected_medium_total,
+    ):
         medium = medium_factory(
             format="Vinyl",
             tracks=[
@@ -441,9 +450,11 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
 
         config.set({"match": beets_match_config})
 
-        actual_titles = tuple(t.title for t in mb.album_info(release).tracks)
+        tracks = mb.album_info(release).tracks
+        actual_titles = tuple(t.title for t in tracks)
 
         assert actual_titles == expected_titles
+        assert all(t.medium_total == expected_medium_total for t in tracks)
 
 
 class TestParseRelease(MusicBrainzPluginTestMixin):
