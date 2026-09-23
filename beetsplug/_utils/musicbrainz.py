@@ -561,11 +561,11 @@ class UnauthorizedMBError(BeetsHTTPError):
     STATUS = HTTPStatus.UNAUTHORIZED
 
     def __init__(self, *args, message: str | None = None, **kwargs) -> None:
-        message = (
-            f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}."
-            " Check your musicbrainz.user and musicbrainz.pass configuration"
+        super().__init__(
+            *args,
+            message="Check your musicbrainz.user and musicbrainz.pass configuration",
+            **kwargs,
         )
-        super().__init__(*args, message=message, **kwargs)
 
 
 @dataclass

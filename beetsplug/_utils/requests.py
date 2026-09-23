@@ -22,9 +22,10 @@ class BeetsHTTPError(requests.exceptions.HTTPError):
     STATUS: ClassVar[HTTPStatus]
 
     def __init__(self, *args, message: str | None = None, **kwargs) -> None:
-        if not message:
-            message = f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}"
-
+        status_message = (
+            f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}."
+        )
+        message = f"{status_message} {message}" if message else status_message
         super().__init__(message, *args, **kwargs)
 
 
