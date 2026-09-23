@@ -18,7 +18,8 @@ class LRCLibAPI:
         albumName: str
         duration: float | None
         instrumental: bool
-        plainLyrics: str
+        # Both lyrics fields may be null, even when 'instrumental' is False.
+        plainLyrics: str | None
         syncedLyrics: str | None
 
 
@@ -84,6 +85,15 @@ class GeniusAPI:
 
     class Search(TypedDict):
         response: GeniusAPI.SearchResponse
+
+    class StatusResponse(TypedDict):
+        status: int
+        message: str
+
+    class Meta(TypedDict):
+        meta: GeniusAPI.StatusResponse
+
+    Response = Search | Meta
 
 
 class GoogleCustomSearchAPI:

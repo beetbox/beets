@@ -6,15 +6,16 @@ ListenBrainz Plugin
 The ListenBrainz plugin for beets allows you to interact with the ListenBrainz
 service.
 
-Installation
-------------
+Configuration
+-------------
 
-To use the ``listenbrainz`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install ``beets`` with ``listenbrainz`` extra
+To enable the ListenBrainz plugin, add the following to your beets configuration
+file (config.yaml_):
 
-.. code-block:: bash
+.. code-block:: yaml
 
-    pip install "beets[listenbrainz]"
+    plugins:
+        - listenbrainz
 
 You can then configure the plugin by providing your Listenbrainz token (see
 intructions here_) and username:
@@ -30,6 +31,25 @@ Usage
 
 Once the plugin is enabled, you can import the listening history using the
 ``lbimport`` command in beets.
+
+The command has two command-line options:
+
+- To import the listening history from a ListenBrainz export file, use the
+  ``-f`` (``--export-file``) flag followed by the path to the export file.
+- To limit the number of listens fetched via the API during import, the
+  ``--max`` flag can be used. By default, the plugin will fetch all listens.
+  This option will be ignored when an export file is provided.
+
+Matched tracks are populated with the ``listenbrainz_play_count`` field, which
+you can use in queries and templates. For example:
+
+::
+
+    $ beet ls -f '$title: $listenbrainz_play_count' listenbrainz_play_count:1..
+
+This field is separate from ``lastfm_play_count`` used by :doc:`lastimport` and
+``play_count`` used by :doc:`mpdstats`, so importing play counts from one plugin
+does not overwrite the others.
 
 .. _config.yaml: ../reference/config.rst
 

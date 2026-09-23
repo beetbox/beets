@@ -25,3 +25,14 @@
    {% endblock %}
 
    .. rubric:: {{ _('Methods definition') }}
+
+{% if objname in related_typeddicts %}
+Related TypedDicts
+------------------
+
+{% for typeddict in related_typeddicts[objname] %}
+.. autotypeddict:: {{ typeddict }}
+   :show-inheritance:
+
+{% endfor %}
+{% endif %}

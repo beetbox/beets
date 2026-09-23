@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Jesse Weinstein
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the play plugin"""
 
 import os
@@ -21,22 +7,34 @@ from unittest.mock import ANY, patch
 
 import pytest
 
-from beets.test.helper import CleanupModulesMixin, PluginTestCase, control_stdin
+from beets.test.helper import (
+    AutotagImportTestCase,
+    BeetsTestCase,
+    CleanupModulesMixin,
+    IOMixin,
+    PluginMixin,
+    TerminalImportMixin,
+)
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
 
 
-@patch("beetsplug.play.util.interactive_open")
-class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
+class PlayPluginMixin(CleanupModulesMixin, PluginMixin):
     modules = (PlayPlugin.__module__,)
     plugin = "play"
 
     def setUp(self):
         super().setUp()
+        self.config["play"]["command"] = "echo"
+
+
+@patch("beetsplug.play.util.interactive_open")
+class PlayPluginTest(IOMixin, PlayPluginMixin, BeetsTestCase):
+    def setUp(self):
+        super().setUp()
         self.item = self.add_item(album="a nice älbum", title="aNiceTitle")
         self.lib.add_album([self.item])
-        self.config["play"]["command"] = "echo"
 
     def run_and_assert(
         self,
@@ -127,8 +125,8 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
         self.config["play"]["warning_threshold"] = 1
         self.add_item(title="another NiceTitle")
 
-        with control_stdin("a"):
-            self.run_command("play", "nice")
+        self.io.addinput("a")
+        self.run_command("play", "nice")
 
         open_mock.assert_not_called()
 
@@ -138,15 +136,77 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
 
         expected_playlist = f"{self.item.filepath}\n{self.other_item.filepath}"
 
-        with control_stdin("a"):
-            self.run_and_assert(
-                open_mock,
-                ["-y", "NiceTitle"],
-                expected_playlist=expected_playlist,
+        self.io.addinput("a")
+        self.run_and_assert(
+            open_mock, ["-y", "NiceTitle"], expected_playlist=expected_playlist
+        )
+
+    def _playlist_lines(self, open_mock):
+        """Read the playlist file passed to interactive_open and return its lines."""
+        # interactive_open is called as: interactive_open([playlist_path], command)
+        playlist_path = open_mock.call_args[0][0][0]
+        with open(playlist_path, "rb") as playlist:
+            return playlist.read().decode("utf-8").splitlines()
+
+    def _add_many_ordered_items(self, *, count, album):
+        items = []
+        for track in range(1, count + 1):
+            items.append(
+                self.add_item(
+                    album=album,
+                    artist="randomize artist",
+                    title=f"randomize {track:03d}",
+                    track=track,
+                )
             )
+        return items
+
+    def test_randomize(self, open_mock):
+        album = "randomize_test"
+        items = self._add_many_ordered_items(count=100, album=album)
+        baseline = [str(item.filepath) for item in items]
+
+        self.run_command("play", "-R", f"album:{album}")
+        lines = self._playlist_lines(open_mock)
+        assert sorted(lines) == sorted(baseline), (
+            "playlist items are not the same"
+        )
+        assert lines != baseline, "playlist order hasn't changed"
 
     def test_command_failed(self, open_mock):
         open_mock.side_effect = OSError("some reason")
 
         with pytest.raises(UserError):
             self.run_command("play", "title:aNiceTitle")
+
+
+class PlayOnImportTest(
+    TerminalImportMixin, PlayPluginMixin, AutotagImportTestCase
+):
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer()
+
+    def test_play_on_import(self):
+        self.importer.add_choice("y")
+        self.importer.add_choice("1")
+
+        playlist_path = self.temp_path / "beetsplug_play" / "playlist.m3u"
+        playlist_path.parent.mkdir(parents=True)
+        playlist_path.touch()
+        playlist_path_bytes = os.fsencode(playlist_path)
+
+        with (
+            patch(
+                "beetsplug.play.get_temp_filename",
+                side_effect=lambda *_, **__: playlist_path_bytes,
+            ),
+            patch("beetsplug.play.subprocess.call") as subprocess_call_mock,
+        ):
+            self.importer.run()
+
+        # note that the call has mixed types (str and bytes)
+        subprocess_call_mock.assert_called_once_with(
+            ["echo", playlist_path_bytes]
+        )

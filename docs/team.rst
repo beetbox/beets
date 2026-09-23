@@ -42,12 +42,11 @@ of what you can expect from these *knowledge owners*.
 -----
 
 - The Discogs plugin
-- Other metadata source plugins
-- Generalization of source plugin logic (The MetaDataSourcePlugin abstract
-  class)
 - Good documentation throughout the project
 - The smartplaylist plugin
-- Things around m3u and other playlist formats
+- The lastgenre plugin
+- Support for M3U and other playlist formats
+- beets as a DJ companion tool (BPM, audio features, key)
 
 @RollingStar
 ------------
@@ -73,6 +72,17 @@ of what you can expect from these *knowledge owners*.
 - Experienced in test-driven-development
 - Code quality
 - Typing
+
+@snejus
+-------
+
+- Grug-minded approach: simple, obvious solutions over clever complexity
+- MusicBrainz/autotagger internals and source-plugin behavior
+- Query/path handling and SQL-backed lookup behavior
+- Typing and tooling modernization (mypy, Ruff, annotations)
+- Test architecture, CI reliability, and coverage improvements
+- Release and packaging workflows (Poetry/pyproject, dependencies, changelog)
+- Cross-plugin refactors (especially metadata and lyrics-related internals)
 
 @wisp3rwind
 -----------

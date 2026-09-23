@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 class Conf(ObjectDescription[str]):
     """Directive for documenting a single configuration value."""
 
-    option_spec: ClassVar[OptionSpec] = {
-        "default": directives.unchanged,
+    option_spec: ClassVar[OptionSpec] = {  # type: ignore[misc]
+        "default": directives.unchanged
     }
 
     def handle_signature(self, sig: str, signode: desc_signature) -> str:
@@ -72,10 +72,10 @@ class ConfDomain(Domain):
 
     name = "conf"
     label = "Simple Configuration"
-    object_types = {"conf": ObjType("conf", "conf")}
-    directives = {"conf": Conf}
-    roles = {"conf": XRefRole()}
-    initial_data: dict[str, Any] = {"objects": {}}
+    object_types = {"conf": ObjType("conf", "conf")}  # noqa: RUF012
+    directives = {"conf": Conf}  # noqa: RUF012
+    roles = {"conf": XRefRole()}  # noqa: RUF012
+    initial_data: dict[str, Any] = {"objects": {}}  # noqa: RUF012
 
     def get_objects(self) -> Iterable[tuple[str, str, str, str, str, int]]:
         """Return an iterable of object tuples for the inventory."""

@@ -1,30 +1,13 @@
 """Tests for the 'subsonic' plugin."""
 
-import unittest
-from urllib.parse import parse_qs, urlparse
-
 import responses
 
 from beets import config
+from beets.test.helper import TestHelper
 from beetsplug import subsonicupdate
 
 
-class ArgumentsMock:
-    """Argument mocks for tests."""
-
-    def __init__(self, mode, show_failures):
-        """Constructs ArgumentsMock."""
-        self.mode = mode
-        self.show_failures = show_failures
-        self.verbose = 1
-
-
-def _params(url):
-    """Get the query parameters from a URL."""
-    return parse_qs(urlparse(url).query)
-
-
-class SubsonicPluginTest(unittest.TestCase):
+class SubsonicPluginTest(TestHelper):
     """Test class for subsonicupdate."""
 
     @responses.activate
@@ -97,7 +80,7 @@ class SubsonicPluginTest(unittest.TestCase):
             body=self.SUCCESS_BODY,
         )
 
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
 
     @responses.activate
     def test_start_scan_failed_bad_credentials(self):
@@ -109,7 +92,7 @@ class SubsonicPluginTest(unittest.TestCase):
             body=self.FAILED_BODY,
         )
 
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
 
     @responses.activate
     def test_start_scan_failed_not_found(self):
@@ -121,11 +104,11 @@ class SubsonicPluginTest(unittest.TestCase):
             body=self.ERROR_BODY,
         )
 
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
 
     def test_start_scan_failed_unreachable(self):
         """Tests failed path based on service not available."""
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
 
     @responses.activate
     def test_url_with_context_path(self):
@@ -139,7 +122,7 @@ class SubsonicPluginTest(unittest.TestCase):
             body=self.SUCCESS_BODY,
         )
 
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
 
     @responses.activate
     def test_url_with_trailing_forward_slash_url(self):
@@ -153,7 +136,7 @@ class SubsonicPluginTest(unittest.TestCase):
             body=self.SUCCESS_BODY,
         )
 
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
 
     @responses.activate
     def test_url_with_missing_port(self):
@@ -167,7 +150,7 @@ class SubsonicPluginTest(unittest.TestCase):
             body=self.SUCCESS_BODY,
         )
 
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
 
     @responses.activate
     def test_url_with_missing_schema(self):
@@ -181,4 +164,22 @@ class SubsonicPluginTest(unittest.TestCase):
             body=self.SUCCESS_BODY,
         )
 
-        self.subsonicupdate.start_scan()
+        self.subsonicupdate.start_scan(self.lib)
+
+    @responses.activate
+    def test_start_scan_failed_non_json_response(self):
+        """Tests failed path based on a non-JSON server response."""
+        responses.add(
+            responses.GET,
+            "http://localhost:4040/rest/startScan",
+            status=503,
+            body="<html>server unavailable</html>",
+            content_type="text/html",
+        )
+
+        with self.assertLogs("beets", level="ERROR") as logs:
+            self.subsonicupdate.start_scan(self.lib)
+
+        assert "Subsonic server returned a non-JSON response" in "\n".join(
+            logs.output
+        )

@@ -21,7 +21,7 @@ a dollars sign. As with `Python template strings`_, ``${title}`` is equivalent
 to ``$title``; you can use this if you need to separate a field name from the
 text that follows it.
 
-.. _python template strings: https://docs.python.org/library/string.html#template-strings
+.. _python template strings: https://docs.python.org/3/library/string.html#template-strings-strings
 
 A Note About Artists
 --------------------
@@ -34,7 +34,7 @@ Continuing with the Stop Making Sense example, you'll end up with most of the
 tracks in a "Talking Heads" directory and one in a "Tom Tom Club" directory. You
 probably don't want that! So use ``$albumartist``.
 
-.. _stop making sense: https://musicbrainz.org/release/798dcaab-0f1a-4f02-a9cb-61d5b0ddfd36.html
+.. _stop making sense: https://musicbrainz.org/release/798dcaab-0f1a-4f02-a9cb-61d5b0ddfd36
 
 As a convenience, however, beets allows ``$albumartist`` to fall back to the
 value for ``$artist`` and vice-versa if one tag is present but the other is not.
@@ -62,9 +62,9 @@ These functions are built in to beets:
 - ``%left{text,n}``: Return the first ``n`` characters of ``text``.
 - ``%right{text,n}``: Return the last ``n`` characters of ``text``.
 - ``%if{condition,text}`` or ``%if{condition,truetext,falsetext}``: If
-  ``condition`` is nonempty (or nonzero, if it's a number), then returns the
-  second argument. Otherwise, returns the third argument if specified (or
-  nothing if ``falsetext`` is left off).
+  ``condition`` is not empty, and not one of the values ``0`` or ``false`` (case
+  insensitive), then returns the second argument. Otherwise, returns the third
+  argument if specified (or nothing if ``falsetext`` is left off).
 - ``%asciify{text}``: Convert non-ASCII characters to their ASCII equivalents.
   For example, "café" becomes "cafe". Uses the mapping provided by the
   `unidecode module`_. See the :ref:`asciify-paths` configuration option.
@@ -75,11 +75,34 @@ These functions are built in to beets:
 - ``%time{date_time,format}``: Return the date and time in any format accepted
   by strftime_. For example, to get the year some music was added to your
   library, use ``%time{$added,%Y}``.
-- ``%first{text}``: Returns the first item, separated by ``;`` (a semicolon
-  followed by a space). You can use ``%first{text,count,skip}``, where ``count``
-  is the number of items (default 1) and ``skip`` is number to skip (default 0).
-  You can also use ``%first{text,count,skip,sep,join}`` where ``sep`` is the
-  separator, like ``;`` or ``/`` and join is the text to concatenate the items.
+- ``%first{text,count,skip,sep,join}``: Extract a subset of items from a
+  delimited string. Splits ``text`` by ``sep``, skips the first ``skip`` items,
+  then returns the next ``count`` items joined by ``join``.
+
+  This is especially useful for multi-valued fields like ``artists``,
+  ``genres``, ``remixers``, ``lyricists``, ``composers``, or ``arrangers`` where
+  you may only want the first value or a limited number of values in a path.
+
+  Defaults:
+
+  ..
+      Comically, you need to follow |semicolon_space| with some punctuation to
+      make sure it gets rendered correctly as '; ' in the docs.
+
+  - **count**: 1,
+  - **skip**: 0,
+  - **sep**: |semicolon_space|,
+  - **join**: |semicolon_space|.
+
+  Examples:
+
+  ::
+
+      %first{$genres}             →  returns the first genre
+      %first{$genres,2}           →  returns the first two genres, joined by "; "
+      %first{$genres,2,1}         →  skips the first genre, returns the next two
+      %first{$genres,2,0, , -> }  →  splits by space, joins with " -> "
+
 - ``%ifdef{field}``, ``%ifdef{field,truetext}`` or
   ``%ifdef{field,truetext,falsetext}``: Checks if an flexible attribute
   ``field`` is defined. If it exists, then return ``truetext`` or ``field``
@@ -204,14 +227,21 @@ Ordinary metadata:
   "White, Jack").
 - artist_credit: The track-specific `artist credit`_ name, which may be a
   variation of the artist's "canonical" name.
+- artists: The track artists as a multi-valued field.
 - album
 - albumartist: The artist for the entire album, which may be different from the
   artists for the individual tracks.
+- albumartists: The album artists as a multi-valued field.
 - albumartist_sort
 - albumartist_credit
 - genre
-- composer
+- genres: The track genres as a multi-valued field.
+- arrangers: The track arrangers as a multi-valued field.
+- composers: The track composers as a multi-valued field.
+- lyricists: The track lyricists as a multi-valued field.
+- remixers: The track remixers as a multi-valued field.
 - grouping
+- subtitle
 - year, month, day: The release date of the specific release.
 - original_year, original_month, original_day: The release date of the original
   version of the album.
@@ -287,6 +317,8 @@ constructs include:
   it belongs to.
 - ``%the{text}`` by :doc:`/plugins/the`: Moves English articles to ends of
   strings.
+- ``%titlecase{text}`` by :doc:`/plugins/titlecase`: Format text according to
+  title case guidelines.
 
 The :doc:`/plugins/inline` lets you define template fields in your beets
 configuration file using Python snippets. And for more advanced processing, you

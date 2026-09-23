@@ -1,6 +1,6 @@
 import pytest
 
-from beets.util.config import sanitize_choices, sanitize_pairs
+from beets.util.config import UnknownPairError, sanitize_choices, sanitize_pairs
 
 
 @pytest.mark.parametrize(
@@ -24,15 +24,19 @@ def test_sanitize_pairs():
             ("*", "*"),
             ("discard", "bye"),
         ],
-        [
-            ("foo", "bar"),
-            ("foo", "baz"),
-            ("foo", "foobar"),
-            ("key", "value"),
-        ],
-    ) == [
-        ("foo", "baz"),
-        ("foo", "bar"),
-        ("key", "value"),
-        ("foo", "foobar"),
-    ]
+        [("foo", "bar"), ("foo", "baz"), ("foo", "foobar"), ("key", "value")],
+    ) == [("foo", "baz"), ("foo", "bar"), ("key", "value"), ("foo", "foobar")]
+
+
+def test_sanitize_pairs_unknown_key():
+    with pytest.raises(UnknownPairError):
+        sanitize_pairs(
+            [("bar", "foo")], [("key", "value")], raise_on_unknown=True
+        )
+
+
+def test_sanitize_pairs_unknown_key_wildcard_value():
+    with pytest.raises(UnknownPairError):
+        sanitize_pairs(
+            [("foo", "*")], [("key", "value")], raise_on_unknown=True
+        )

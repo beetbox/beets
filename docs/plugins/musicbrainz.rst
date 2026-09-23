@@ -42,6 +42,7 @@ Default
             tidal: no
         data_source_mismatch_penalty: 0.5
         search_limit: 5
+        aliases_as_credits: no
 
 .. conf:: host
     :default: musicbrainz.org
@@ -86,22 +87,31 @@ Default
 .. conf:: extra_tags
     :default: []
 
-    By default, beets will use only the artist, album, and track count to query
-    MusicBrainz. Additional tags to be queried can be supplied with the
-    ``extra_tags`` setting.
+    By default, beets will use only the album and either artist or
+    the MusicBrainz Various Artists ID to query MusicBrainz. Additional
+    tags, including track count, can be queried by using the ``extra_tags``
+    setting.
 
     This setting should improve the autotagger results if the metadata with the
     given tags match the metadata returned by MusicBrainz.
 
-    Note that the only tags supported by this setting are: ``barcode``,
-    ``catalognum``, ``country``, ``label``, ``media``, and ``year``.
+    Tags supported by this setting:
+
+    * ``alias`` (also search for release aliases matching the query)
+    * ``barcode``
+    * ``catalognum``
+    * ``country``
+    * ``label``
+    * ``media``
+    * ``tracks`` (number of tracks on the release)
+    * ``year``
 
     Example:
 
     .. code-block:: yaml
 
         musicbrainz:
-            extra_tags: [barcode, catalognum, country, label, media, year]
+            extra_tags: [alias, barcode, catalognum, country, label, media, tracks, year]
 
 .. conf:: genres
     :default: no
@@ -142,9 +152,14 @@ Default
     Either ``genre`` or ``tag``. Specify ``genre`` to use just musicbrainz genre and
     ``tag`` to use all user-supplied musicbrainz tags.
 
+.. conf:: aliases_as_credits
+    :default: no
+
+    Use the "aliases" data from MusicBrainz as the value for ``*_credit`` fields.
+
 .. include:: ./shared_metadata_source_config.rst
 
-.. _building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
+.. _building search indexes: https://wiki.musicbrainz.org/History:Development/Search_server_setup
 
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 

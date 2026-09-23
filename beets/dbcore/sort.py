@@ -1,0 +1,250 @@
+"""Module for representing sorting criteria for database queries."""
+
+from __future__ import annotations
+
+from functools import reduce
+from operator import or_
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets.dbcore.db import AnyModel, Model
+
+
+class Sort:
+    """An abstract class representing a sort operation for a query into
+    the database.
+    """
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return set()
+
+    def order_clause(self) -> str | None:
+        """Generates a SQL fragment to be used in a ORDER BY clause, or
+        None if no fragment is used (i.e., this is a slow sort).
+        """
+        return None
+
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        """Sort the given sequence of model objects."""
+        return sorted(items)
+
+    def is_slow(self) -> bool:
+        """Indicate whether this query is *slow*, meaning that it cannot
+        be executed in SQL and must be executed in Python.
+        """
+        return False
+
+    def __hash__(self) -> int:
+        return 0
+
+    def __eq__(self, other: object) -> bool:
+        return type(self) is type(other)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
+
+
+class MultipleSort(Sort):
+    """Sort that encapsulates multiple sub-sorts."""
+
+    def __init__(self, sorts: list[Sort] | None = None) -> None:
+        self.sorts = sorts or []
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return reduce(or_, (s.field_names for s in self.sorts), set())
+
+    def add_sort(self, sort: Sort) -> None:
+        self.sorts.append(sort)
+
+    def order_clause(self) -> str:
+        """Return the list SQL clauses for those sub-sorts for which we can be
+        (at least partially) fast.
+
+        A contiguous suffix of fast (SQL-capable) sub-sorts are
+        executable in SQL. The remaining, even if they are fast
+        independently, must be executed slowly.
+        """
+        order_strings = []
+        for sort in reversed(self.sorts):
+            clause = sort.order_clause()
+            if clause is None:
+                break
+            order_strings.append(clause)
+        order_strings.reverse()
+
+        return ", ".join(order_strings)
+
+    def is_slow(self) -> bool:
+        for sort in self.sorts:
+            if sort.is_slow():
+                return True
+        return False
+
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        slow_sorts = []
+        switch_slow = False
+        for sort in reversed(self.sorts):
+            if switch_slow:
+                slow_sorts.append(sort)
+            elif sort.order_clause() is None:
+                switch_slow = True
+                slow_sorts.append(sort)
+            else:
+                pass
+
+        for sort in slow_sorts:
+            items = sort.sort(items)
+        return items
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.sorts!r})"
+
+    def __hash__(self) -> int:
+        return hash(tuple(self.sorts))
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, MultipleSort)
+            and super().__eq__(other)
+            and self.sorts == other.sorts
+        )
+
+
+class FieldSort(Sort):
+    """An abstract sort criterion that orders by a specific field (of
+    any kind).
+    """
+
+    def __init__(
+        self,
+        field_name: str,
+        ascending: bool = True,
+        case_insensitive: bool = True,
+    ) -> None:
+        self.table, _, self.field_name = field_name.rpartition(".")
+        self.ascending = ascending
+        self.case_insensitive = case_insensitive
+
+    @property
+    def field(self) -> str:
+        return (
+            f"{self.table}.{self.field_name}" if self.table else self.field_name
+        )
+
+    @property
+    def field_names(self) -> set[str]:
+        """A set with fields in this sort."""
+        return {self.field_name}
+
+    def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        # TODO: Support flexible attributes with different types (e.g. a mix
+        # of strings and numbers) without falling over.
+
+        def key(obj: Model) -> Any:
+            field_val = obj.get(self.field_name, None)
+            if field_val is None:
+                if _type := obj._types.get(self.field_name):
+                    # If the field is typed, use its null value.
+                    field_val = obj._types[self.field_name].null
+                else:
+                    # If not, fall back to using an empty string.
+                    field_val = ""
+            if self.case_insensitive and isinstance(field_val, str):
+                field_val = field_val.lower()
+            # Nullable types (e.g. ``NullInteger``/``NullFloat``) use ``None``
+            # as their null value, so a field may be missing on some objects
+            # and present on others. Comparing ``None`` with a real value
+            # raises a ``TypeError``, so group all missing values together:
+            # this places them first when sorting ascending and last when
+            # descending, matching SQLite's default ordering of NULLs.
+            return (field_val is not None, field_val)
+
+        return sorted(objs, key=key, reverse=not self.ascending)
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}"
+            f"({self.field!r}, ascending={self.ascending!r})"
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.field, self.ascending))
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, FieldSort)
+            and super().__eq__(other)
+            and self.field == other.field
+            and self.ascending == other.ascending
+        )
+
+
+class FixedFieldSort(FieldSort):
+    """Sort object to sort on a fixed field."""
+
+    def order_clause(self) -> str:
+        order = "ASC" if self.ascending else "DESC"
+        if self.case_insensitive:
+            field = (
+                "(CASE "
+                f"WHEN TYPEOF({self.field})='text' THEN LOWER({self.field}) "
+                f"WHEN TYPEOF({self.field})='blob' THEN LOWER({self.field}) "
+                f"ELSE {self.field} END)"
+            )
+        else:
+            field = self.field
+        return f"{field} {order}"
+
+
+class SlowFieldSort(FieldSort):
+    """A sort criterion by some model field other than a fixed field:
+    i.e., a computed or flexible field.
+    """
+
+    def is_slow(self) -> bool:
+        return True
+
+
+class NullSort(Sort):
+    """No sorting. Leave results unsorted."""
+
+    def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        return items
+
+    def __nonzero__(self) -> bool:
+        return self.__bool__()
+
+    def __bool__(self) -> bool:
+        return False
+
+    def __eq__(self, other: object) -> bool:
+        return type(self) is type(other) or other is None
+
+    def __hash__(self) -> int:
+        return 0
+
+
+class SmartArtistSort(FieldSort):
+    """Sort by artist (either album artist or track artist),
+    prioritizing the sort field over the raw field.
+    """
+
+    def order_clause(self) -> str:
+        order = "ASC" if self.ascending else "DESC"
+        collate = "COLLATE NOCASE" if self.case_insensitive else ""
+        field = self.field
+
+        return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
+
+    def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        def key(obj: Model) -> str | bytes:
+            val = obj[f"{self.field}_sort"] or obj[self.field]
+            return val.lower() if self.case_insensitive else val
+
+        return sorted(objs, key=key, reverse=not self.ascending)

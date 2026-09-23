@@ -1,19 +1,6 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for BPD's implementation of the MPD protocol."""
 
+import asyncio
 import multiprocessing as mp
 import os
 import socket
@@ -22,6 +9,7 @@ import threading
 import time
 import unittest
 from contextlib import contextmanager
+from typing import ClassVar
 from unittest.mock import MagicMock, patch
 
 import confuse
@@ -29,9 +17,15 @@ import pytest
 import yaml
 
 from beets.test.helper import PluginTestCase
-from beets.util import bluelet
 
-bpd = pytest.importorskip("beetsplug.bpd")
+bpd = pytest.importorskip("beetsplug.bpd", exc_type=ImportError)
+
+if hasattr(mp, "set_start_method"):
+    try:
+        mp.set_start_method("fork", force=True)
+    except RuntimeError:
+        # Already set, which is fine
+        pass
 
 
 class CommandParseTest(unittest.TestCase):
@@ -85,15 +79,14 @@ class MPCResponse:
 
     def _parse_status(self, status):
         """Parses the first response line, which contains the status."""
-        if status.startswith("OK") or status.startswith("list_OK"):
+        if status.startswith(("OK", "list_OK")):
             return True, None
-        elif status.startswith("ACK"):
+        if status.startswith("ACK"):
             code, rest = status[5:].split("@", 1)
             pos, rest = rest.split("]", 1)
             cmd, rest = rest[2:].split("}")
             return False, (int(code), int(pos), cmd, rest[1:])
-        else:
-            raise RuntimeError(f"Unexpected status: {status!r}")
+        raise RuntimeError(f"Unexpected status: {status!r}")
 
     def _parse_body(self, body):
         """Messages are generally in the format "header: content".
@@ -139,15 +132,14 @@ class MPCClient:
         while True:
             line = self.readline()
             response += line
-            if line.startswith(b"OK") or line.startswith(b"ACK"):
+            if line.startswith((b"OK", b"ACK")):
                 if force_multi or any(responses):
                     if line.startswith(b"ACK"):
                         responses.append(MPCResponse(response))
                         n_remaining = force_multi - len(responses)
                         responses.extend([None] * n_remaining)
                     return responses
-                else:
-                    return MPCResponse(response)
+                return MPCResponse(response)
             if line.startswith(b"list_OK"):
                 responses.append(MPCResponse(response))
                 response = b""
@@ -214,24 +206,101 @@ def implements(commands, fail=False):
     return unittest.expectedFailure(_test) if fail else _test
 
 
-bluelet_listener = bluelet.Listener
+class MemoryStreamWriter:
+    """Capture writes and optionally hold them at the drain boundary."""
+
+    def __init__(self, block_drain=False):
+        self.data = bytearray()
+        self.drain_started = asyncio.Event()
+        self.can_drain = asyncio.Event()
+        if not block_drain:
+            self.can_drain.set()
+
+    def get_extra_info(self, name):
+        return ("localhost", 6600) if name == "peername" else None
+
+    def write(self, data):
+        self.data.extend(data)
+
+    async def drain(self):
+        self.drain_started.set()
+        await self.can_drain.wait()
 
 
-@patch("beets.util.bluelet.Listener")
-def start_server(args, assigned_port, listener_patch):
+class AsyncServerTest(unittest.TestCase):
+    def test_dispatch_events_sends_one_notification_at_a_time(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            writer = MemoryStreamWriter(block_drain=True)
+            conn = bpd.MPDConnection(server, asyncio.StreamReader(), writer)
+            conn.notifications.add("player")
+            conn.idle_subscriptions.add("player")
+            server.connect(conn)
+
+            server.dispatch_events()
+            await writer.drain_started.wait()
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            tasks = tuple(server._notification_tasks.values())
+
+            writer.can_drain.set()
+            await asyncio.gather(*tasks)
+
+            assert bytes(writer.data) == b"changed: player\nOK\n"
+
+        asyncio.run(exercise())
+
+    def test_dispatch_events_sends_event_queued_while_task_finishes(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            writer = MemoryStreamWriter()
+            conn = bpd.MPDConnection(server, asyncio.StreamReader(), writer)
+            conn.idle_subscriptions.add("player")
+            server.connect(conn)
+
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            conn.notify("player")
+            server.dispatch_events()
+            await asyncio.sleep(0)
+            await asyncio.gather(*server._notification_tasks.values())
+
+            assert bytes(writer.data) == b"changed: player\nOK\n"
+
+        asyncio.run(exercise())
+
+    def test_idle_error_disconnects_client(self):
+        async def exercise():
+            server = bpd.BaseServer("localhost", 0, None, 0, MagicMock())
+            reader = asyncio.StreamReader()
+            reader.feed_data(b"idle\nnotacommand\n")
+            reader.feed_eof()
+            conn = bpd.MPDConnection(server, reader, MemoryStreamWriter())
+
+            await conn.run()
+
+            assert conn not in server.connections
+
+        asyncio.run(exercise())
+
+
+asyncio_start_server = asyncio.start_server
+
+
+@patch("beetsplug.bpd.asyncio.start_server")
+def start_server(args, assigned_port, start_server_patch):
     """Start the bpd server, writing the port to `assigned_port`."""
 
-    def listener_wrap(host, port):
-        """Wrap `bluelet.Listener`, writing the port to `assigend_port`."""
-        # `bluelet.Listener` has previously been saved to
-        # `bluelet_listener` as this function will replace it at its
-        # original location.
-        listener = bluelet_listener(host, port)
-        # read port assigned by OS
-        assigned_port.put_nowait(listener.sock.getsockname()[1])
-        return listener
+    async def start_server_wrap(callback, host, port, **kwargs):
+        """Start an asyncio server and report its assigned port."""
+        # `asyncio.start_server` has previously been saved because this
+        # function replaces it at its original location.
+        server = await asyncio_start_server(callback, host, port, **kwargs)
+        # Read the port assigned by the OS.
+        assigned_port.put_nowait(server.sockets[0].getsockname()[1])
+        return server
 
-    listener_patch.side_effect = listener_wrap
+    start_server_patch.side_effect = start_server_wrap
 
     import beets.ui
 
@@ -272,7 +341,7 @@ class BPDTestHelper(PluginTestCase):
         """
         # Create a config file:
         config = {
-            "pluginpath": [str(self.temp_dir_path)],
+            "pluginpath": [str(self.temp_path)],
             "plugins": "bpd",
             # use port 0 to let the OS choose a free port
             "bpd": {"host": host, "port": 0, "control_port": 0},
@@ -280,10 +349,7 @@ class BPDTestHelper(PluginTestCase):
         if password:
             config["bpd"]["password"] = password
         config_file = tempfile.NamedTemporaryFile(
-            mode="wb",
-            dir=str(self.temp_dir_path),
-            suffix=".yaml",
-            delete=False,
+            mode="wb", dir=str(self.temp_path), suffix=".yaml", delete=False
         )
         config_file.write(
             yaml.dump(config, Dumper=confuse.Dumper, encoding="utf-8")
@@ -299,7 +365,7 @@ class BPDTestHelper(PluginTestCase):
                     "--library",
                     self.config["library"].as_filename(),
                     "--directory",
-                    os.fsdecode(self.libdir),
+                    str(self.lib_path),
                     "--config",
                     os.fsdecode(config_file.name),
                     "bpd",
@@ -334,7 +400,10 @@ class BPDTestHelper(PluginTestCase):
                 sock.close()
         finally:
             server.terminate()
-            server.join(timeout=0.2)
+            server.join(timeout=2)  # give coverage time to write data
+            if server.is_alive():
+                server.kill()  # force kill if still stuck (SIGKILL on POSIX)
+                server.join(timeout=2)
 
     def _assert_ok(self, *responses):
         for response in responses:
@@ -358,13 +427,7 @@ class BPDTestHelper(PluginTestCase):
     def _bpd_add(self, client, *items, **kwargs):
         """Add the given item to the BPD playlist or queue."""
         paths = [
-            "/".join(
-                [
-                    item.artist,
-                    item.album,
-                    os.fsdecode(os.path.basename(item.path)),
-                ]
-            )
+            os.fsdecode(item.destination(relative_to_libdir=True))
             for item in items
         ]
         playlist = kwargs.get("playlist")
@@ -408,11 +471,7 @@ class BPDTest(BPDTestHelper):
 
 
 class BPDQueryTest(BPDTestHelper):
-    test_implements_query = implements(
-        {
-            "clearerror",
-        }
-    )
+    test_implements_query = implements({"clearerror"})
 
     def test_cmd_currentsong(self):
         with self.run_bpd() as client:
@@ -526,11 +585,7 @@ class BPDQueryTest(BPDTestHelper):
 
 
 class BPDPlaybackTest(BPDTestHelper):
-    test_implements_playback = implements(
-        {
-            "random",
-        }
-    )
+    test_implements_playback = implements({"random"})
 
     def test_cmd_consume(self):
         with self.run_bpd() as client:
@@ -719,12 +774,7 @@ class BPDPlaybackTest(BPDTestHelper):
 
 class BPDControlTest(BPDTestHelper):
     test_implements_control = implements(
-        {
-            "seek",
-            "seekid",
-            "seekcur",
-        },
-        fail=True,
+        {"seek", "seekid", "seekcur"}, fail=True
     )
 
     def test_cmd_play(self):
@@ -837,7 +887,7 @@ class BPDQueueTest(BPDTestHelper):
         fail=True,
     )
 
-    METADATA = {"Pos", "Time", "Id", "file", "duration"}
+    METADATA: ClassVar[set[str]] = {"Pos", "Time", "Id", "file", "duration"}
 
     def test_cmd_add(self):
         with self.run_bpd() as client:
@@ -960,6 +1010,12 @@ class BPDDatabaseTest(BPDTestHelper):
         self._assert_ok(response)
         assert self.item1.title == response.data["Title"]
 
+    def test_cmd_search_any(self):
+        with self.run_bpd() as client:
+            response = client.send_command("search", "any", "1")
+        self._assert_ok(response)
+        assert self.item1.title == response.data["Title"]
+
     def test_cmd_list(self):
         with self.run_bpd() as client:
             responses = client.send_commands(
@@ -1005,34 +1061,18 @@ class BPDDatabaseTest(BPDTestHelper):
 
 class BPDMountsTest(BPDTestHelper):
     test_implements_mounts = implements(
-        {
-            "mount",
-            "unmount",
-            "listmounts",
-            "listneighbors",
-        },
-        fail=True,
+        {"mount", "unmount", "listmounts", "listneighbors"}, fail=True
     )
 
 
 class BPDStickerTest(BPDTestHelper):
-    test_implements_stickers = implements(
-        {
-            "sticker",
-        },
-        fail=True,
-    )
+    test_implements_stickers = implements({"sticker"}, fail=True)
 
 
 class BPDConnectionTest(BPDTestHelper):
-    test_implements_connection = implements(
-        {
-            "close",
-            "kill",
-        }
-    )
+    test_implements_connection = implements({"close", "kill"})
 
-    ALL_MPD_TAGTYPES = {
+    ALL_MPD_TAGTYPES: ClassVar[set[str]] = {
         "Artist",
         "ArtistSort",
         "Album",
@@ -1057,7 +1097,7 @@ class BPDConnectionTest(BPDTestHelper):
         "MUSICBRAINZ_RELEASETRACKID",
         "MUSICBRAINZ_WORKID",
     }
-    UNSUPPORTED_TAGTYPES = {
+    UNSUPPORTED_TAGTYPES: ClassVar[set[str]] = {
         "MUSICBRAINZ_WORKID",  # not tracked by beets
         "Performer",  # not tracked by beets
         "AlbumSort",  # not tracked by beets
@@ -1098,36 +1138,19 @@ class BPDConnectionTest(BPDTestHelper):
 
 class BPDPartitionTest(BPDTestHelper):
     test_implements_partitions = implements(
-        {
-            "partition",
-            "listpartitions",
-            "newpartition",
-        },
-        fail=True,
+        {"partition", "listpartitions", "newpartition"}, fail=True
     )
 
 
 class BPDDeviceTest(BPDTestHelper):
     test_implements_devices = implements(
-        {
-            "disableoutput",
-            "enableoutput",
-            "toggleoutput",
-            "outputs",
-        },
-        fail=True,
+        {"disableoutput", "enableoutput", "toggleoutput", "outputs"}, fail=True
     )
 
 
 class BPDReflectionTest(BPDTestHelper):
     test_implements_reflection = implements(
-        {
-            "config",
-            "commands",
-            "notcommands",
-            "urlhandlers",
-        },
-        fail=True,
+        {"config", "commands", "notcommands", "urlhandlers"}, fail=True
     )
 
     @patch(
@@ -1145,12 +1168,6 @@ class BPDReflectionTest(BPDTestHelper):
 
 class BPDPeersTest(BPDTestHelper):
     test_implements_peers = implements(
-        {
-            "subscribe",
-            "unsubscribe",
-            "channels",
-            "readmessages",
-            "sendmessage",
-        },
+        {"subscribe", "unsubscribe", "channels", "readmessages", "sendmessage"},
         fail=True,
     )

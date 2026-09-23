@@ -1,24 +1,31 @@
-import unittest
+import re
 
+import pytest
 from mediafile import MediaFile
 
-from beets.test.helper import BeetsTestCase, control_stdin
-from beets.ui.commands.modify import modify_parse_args
-from beets.util import syspath
+from beets import logging
+from beets.exceptions import UserError
+from beets.test.helper import BeetsTestCase, IOMixin, TestHelper
+from beets.ui.commands.modify import ModifyOperation, modify_parse_args
+
+_p = pytest.param
 
 
-class ModifyTest(BeetsTestCase):
+class ModifyHelper(IOMixin):
+    def modify_inp(self, inp: list[str], *args):
+        for chat in inp:
+            self.io.addinput(chat)
+        self.run_command("modify", *args)
+
+    def modify(self, *args):
+        self.modify_inp(["y"], *args)
+
+
+class ModifyTest(ModifyHelper, BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.album = self.add_album_fixture()
         [self.item] = self.album.items()
-
-    def modify_inp(self, inp, *args):
-        with control_stdin(inp):
-            self.run_command("modify", *args)
-
-    def modify(self, *args):
-        self.modify_inp("y", *args)
 
     # Item tests
 
@@ -30,14 +37,14 @@ class ModifyTest(BeetsTestCase):
     def test_modify_item_abort(self):
         item = self.lib.items().get()
         title = item.title
-        self.modify_inp("n", "title=newTitle")
+        self.modify_inp(["n"], "title=newTitle")
         item = self.lib.items().get()
         assert item.title == title
 
     def test_modify_item_no_change(self):
         title = "Tracktitle"
         item = self.add_item_fixture(title=title)
-        self.modify_inp("y", "title", f"title={title}")
+        self.modify_inp(["y"], "title", f"title={title}")
         item = self.lib.items(title).get()
         assert item.title == title
 
@@ -91,20 +98,40 @@ class ModifyTest(BeetsTestCase):
         album = "album"
         original_artist = "composer"
         new_artist = "coverArtist"
-        for i in range(0, 10):
+        for i in range(10):
             self.add_item_fixture(
                 title=f"{title}{i}", artist=original_artist, album=album
             )
         self.modify_inp(
-            "s\ny\ny\ny\nn\nn\ny\ny\ny\ny\nn", title, f"artist={new_artist}"
+            ["s", "y", "y", "y", "n", "n", "y", "y", "y", "y", "n"],
+            title,
+            f"artist={new_artist}",
         )
         original_items = self.lib.items(f"artist:{original_artist}")
         new_items = self.lib.items(f"artist:{new_artist}")
         assert len(list(original_items)) == 3
         assert len(list(new_items)) == 7
 
+    def test_selective_modify_output(self):
+        """Test that the output shows the correct changes.
+
+        See #4880 where attempts to modify 'added' field resulted in TypeError.
+        Modifying simple fields, like 'artist' resulted in the following output:
+        $ beet modify artist:OLD artist=NEW
+          artist: OLD -> ModifyOperation(operator=None, value='NEW')
+        """
+        self.io.addinput("s")  # select
+        self.io.addinput("y")  # yes
+        new_added = "2020-01-01 00:00:00"
+        pattern = re.compile(rf"added: .* -> {new_added}")
+
+        output = self.run_with_output("modify", f"added={new_added}")
+
+        # we expect to see this printed twice
+        assert len(pattern.findall(output)) == 2
+
     def test_modify_formatted(self):
-        for i in range(0, 3):
+        for i in range(3):
             self.add_item_fixture(
                 title=f"title{i}", artist="artist", album="album"
             )
@@ -153,12 +180,27 @@ class ModifyTest(BeetsTestCase):
         item.load()
         assert item.album == f"{orig_album} - append"
 
+    def test_album_modify_artists_not_split(self):
+        self.modify("--album", "artists=Charli XCX")
+        for item in self.lib.items():
+            assert item.artists == ["Charli XCX"], (
+                f"artists should be a list with one element, "
+                f"got {item.artists!r}"
+            )
+
+    def test_album_modify_genres_not_split(self):
+        self.modify("--album", "genres=Rock")
+        for item in self.lib.items():
+            assert item.genres == ["Rock"], (
+                f"genres should be a list with one element, got {item.genres!r}"
+            )
+
     # Misc
 
     def test_write_initial_key_tag(self):
         self.modify("initial_key=C#m")
         item = self.lib.items().get()
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key == "C#m"
 
     def test_set_flexattr(self):
@@ -175,42 +217,127 @@ class ModifyTest(BeetsTestCase):
         item = self.lib.items().get()
         assert "flexattr" not in item
 
-    @unittest.skip("not yet implemented")
     def test_delete_initial_key_tag(self):
-        item = self.lib.items().get()
+        item = self.add_item_fixture()
         item.initial_key = "C#m"
         item.write()
         item.store()
 
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key == "C#m"
 
         self.modify("initial_key!")
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key is None
 
     def test_arg_parsing_colon_query(self):
-        (query, mods, dels) = modify_parse_args(
-            ["title:oldTitle", "title=newTitle"]
+        query, mods, _ = modify_parse_args(
+            ["title:oldTitle", "title=newTitle"], is_album=False
         )
         assert query == ["title:oldTitle"]
-        assert mods == {"title": "newTitle"}
+        assert mods == {"title": ModifyOperation(None, "newTitle")}
 
     def test_arg_parsing_delete(self):
-        (query, mods, dels) = modify_parse_args(["title:oldTitle", "title!"])
+        query, _, dels = modify_parse_args(
+            ["title:oldTitle", "title!"], is_album=False
+        )
         assert query == ["title:oldTitle"]
         assert dels == ["title"]
 
     def test_arg_parsing_query_with_exclaimation(self):
-        (query, mods, dels) = modify_parse_args(
-            ["title:oldTitle!", "title=newTitle!"]
+        query, mods, _ = modify_parse_args(
+            ["title:oldTitle!", "title=newTitle!"], is_album=False
         )
         assert query == ["title:oldTitle!"]
-        assert mods == {"title": "newTitle!"}
+        assert mods == {"title": ModifyOperation(None, "newTitle!")}
 
     def test_arg_parsing_equals_in_value(self):
-        (query, mods, dels) = modify_parse_args(
-            ["title:foo=bar", "title=newTitle"]
+        query, mods, _ = modify_parse_args(
+            ["title:foo=bar", "title=newTitle"], is_album=False
         )
         assert query == ["title:foo=bar"]
-        assert mods == {"title": "newTitle"}
+        assert mods == {"title": ModifyOperation(None, "newTitle")}
+
+
+class TestMultiValue(ModifyHelper, TestHelper):
+    @pytest.fixture
+    def item(self):
+        album = self.add_album_fixture()
+        [item] = album.items()
+        return item
+
+    @pytest.mark.parametrize(
+        "initial_genres, modify_arg, expected_genres",
+        [
+            _p([], "genres=Jazz; Blues", ["Jazz", "Blues"], id="assign"),
+            _p(
+                ["Jazz", "Blues"],
+                "genres+=Funk",
+                ["Jazz", "Blues", "Funk"],
+                id="append",
+            ),
+            _p(
+                ["Jazz", "Funk"],
+                "genres+=Funk",
+                ["Jazz", "Funk"],
+                id="append-duplicate",
+            ),
+            _p(
+                ["Jazz", "Blues", "Funk"],
+                "genres-=Blues",
+                ["Jazz", "Funk"],
+                id="remove-exact",
+            ),
+            _p(
+                ["Jazz", "Blues Rock", "Blues"],
+                "genres-=Blues",
+                ["Jazz", "Blues Rock"],
+                id="remove-no-partial-match",
+            ),
+            _p(
+                ["Jazz", "Blues"],
+                "genres+=Funk; Soul",
+                ["Jazz", "Blues", "Funk", "Soul"],
+                id="append-preserves-order",
+            ),
+        ],
+    )
+    def test_modify_multi_value(
+        self, item, initial_genres, modify_arg, expected_genres
+    ):
+        item.genres = initial_genres
+        item.store()
+
+        self.modify("--nowrite", "--nomove", modify_arg)
+        item.load()
+        assert item.genres == expected_genres
+
+    def test_modify_scalar_operator_error(self):
+        with pytest.raises(UserError, match="field 'title' does not support"):
+            self.modify("--nowrite", "--nomove", "title+=foo")
+
+
+@pytest.mark.parametrize(
+    "is_album, legacy_field, list_field",
+    [
+        _p(True, "genre", "genres", id="album-genre"),
+        _p(False, "genre", "genres", id="item-genre"),
+        _p(False, "composer", "composers", id="item-composer"),
+    ],
+)
+def test_arg_parsing_rewrites_legacy_list_fields(
+    is_album, legacy_field, list_field, caplog
+):
+    with caplog.at_level(logging.WARNING, logger="beets"):
+        query, mods, dels = modify_parse_args(
+            [f"{legacy_field}=value1; value2"], is_album=is_album
+        )
+
+    assert query == []
+    assert mods == {list_field: ModifyOperation(None, "value1; value2")}
+    assert dels == []
+    assert caplog.records, "No log records were captured"
+    assert len(caplog.records) == 1
+    message = str(caplog.records[0].msg)
+    assert f"The '{legacy_field}' field is deprecated" in message
+    assert f"Use '{list_field}' (separate values by '; ') instead." in message

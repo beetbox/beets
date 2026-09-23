@@ -1,22 +1,5 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
-
-- The `control_stdin` and `capture_stdout` context managers allow one to
-  interact with the user interface.
 
 - `has_program` checks the presence of a command on the system.
 
@@ -28,6 +11,7 @@ information or mock the environment.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import os.path
 import shutil
@@ -35,92 +19,45 @@ import subprocess
 import sys
 import unittest
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass
-from enum import Enum
-from functools import cached_property
-from io import StringIO
+from functools import cache, cached_property
 from pathlib import Path
 from tempfile import gettempdir, mkdtemp, mkstemp
-from typing import Any, ClassVar
-from unittest.mock import patch
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from unittest.mock import Mock, patch
 
-import responses
+import pytest
 from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import importer, logging, util
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets import importer, util
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Item, Library
 from beets.test import _common
 from beets.ui.commands.import_.session import TerminalImportSession
-from beets.util import (
-    MoveOperation,
-    bytestring_path,
-    clean_module_tempdir,
-    syspath,
-)
+from beets.util import MoveOperation, clean_module_tempdir, syspath
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Sequence
+    from types import TracebackType
+    from unittest.mock import _patch
+
+    from confuse import ConfigSource
+    from requests_mock.mocker import Mocker
+    from typing_extensions import Self
+
+    from beets.autotag import AlbumMatch, TrackMatch
+    from beets.library import Album
+
+RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
 
 
-class LogCapture(logging.Handler):
-    def __init__(self):
-        logging.Handler.__init__(self)
-        self.messages = []
-
-    def emit(self, record):
-        self.messages.append(str(record.msg))
-
-
-@contextmanager
-def capture_log(logger="beets"):
-    capture = LogCapture()
-    log = logging.getLogger(logger)
-    log.addHandler(capture)
-    try:
-        yield capture.messages
-    finally:
-        log.removeHandler(capture)
-
-
-@contextmanager
-def control_stdin(input=None):
-    """Sends ``input`` to stdin.
-
-    >>> with control_stdin('yes'):
-    ...     input()
-    'yes'
-    """
-    org = sys.stdin
-    sys.stdin = StringIO(input)
-    try:
-        yield sys.stdin
-    finally:
-        sys.stdin = org
-
-
-@contextmanager
-def capture_stdout():
-    """Save stdout in a StringIO.
-
-    >>> with capture_stdout() as output:
-    ...     print('spam')
-    ...
-    >>> output.getvalue()
-    'spam'
-    """
-    org = sys.stdout
-    sys.stdout = capture = StringIO()
-    try:
-        yield sys.stdout
-    finally:
-        sys.stdout = org
-        print(capture.getvalue())
-
-
-def has_program(cmd, args=["--version"]):
+def has_program(cmd: str, args: Iterable[str] = ("--version",)) -> bool:
     """Returns `True` if `cmd` can be executed."""
-    full_cmd = [cmd] + args
+    full_cmd = [cmd, *args]
     try:
         with open(os.devnull, "wb") as devnull:
             subprocess.check_call(
@@ -134,6 +71,11 @@ def has_program(cmd, args=["--version"]):
         return True
 
 
+@cache
+def is_importable(modname: str) -> bool:
+    return bool(importlib.util.find_spec(modname))
+
+
 def check_reflink_support(path: str) -> bool:
     try:
         import reflink
@@ -143,72 +85,145 @@ def check_reflink_support(path: str) -> bool:
     return reflink.supported_at(path)
 
 
-class ConfigMixin:
-    @cached_property
-    def config(self) -> beets.IncludeLazyConfig:
-        """Base beets configuration for tests."""
-        config = beets.config
-        config.sources = []
-        config.read(user=False, defaults=True)
-
-        config["plugins"] = []
-        config["verbose"] = 1
-        config["ui"]["color"] = False
-        config["threaded"] = False
-        return config
-
-
-NEEDS_REFLINK = unittest.skipUnless(
-    check_reflink_support(gettempdir()), "no reflink support for libdir"
+NEEDS_REFLINK = pytest.mark.skipif(
+    not check_reflink_support(gettempdir()), reason="need reflink"
+)
+NEEDS_FFPROBE = pytest.mark.skipif(
+    not has_program("ffprobe", ("-version",)) and not RUNNING_IN_CI,
+    reason="ffprobe (ffmpeg) is not available",
 )
 
 
-class IOMixin:
+class ConfigMixin:
+    """Provide isolated configuration for tests."""
+
+    _default_config_sources: ClassVar[list[ConfigSource] | None] = None
+
+    @classmethod
+    def default_config_sources(cls) -> list[ConfigSource]:
+        """Return a reusable default configuration baseline.
+
+        This way, we only need to call very expensive ``config.read`` once per
+        test session.
+
+        NOTE: we're not using ``util.cached_classproperty`` here because its cache is
+        reset on every test.
+        """
+        if cls._default_config_sources is not None:
+            return deepcopy(cls._default_config_sources)
+
+        config = beets.IncludeLazyConfig("beets", beets.__name__)
+        config.read(user=False, defaults=True)
+
+        config["plugins"] = []
+        config["verbose"] = 2
+        config["ui"]["color"] = False
+        config["threaded"] = False
+        config["create_backup_before_migrations"] = False
+        cls._default_config_sources = deepcopy(config.sources)
+        return deepcopy(cls._default_config_sources)
+
     @cached_property
-    def io(self) -> _common.DummyIO:
-        return _common.DummyIO()
-
-    def setUp(self):
-        super().setUp()
-        self.io.install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.io.restore()
+    def config(self) -> beets.IncludeLazyConfig:
+        """Reset the shared config to a fresh test baseline."""
+        config = beets.config
+        config.clear()
+        config._materialized = True
+        config.sources.extend(self.default_config_sources())
+        return config
 
 
-class TestHelper(ConfigMixin):
+class RunMixin:
+    lib: Library
+
+    def run_command(self, *args: str, lib: Library | None = None) -> None:
+        """Run a beets command with an arbitrary amount of arguments. The
+        Library` defaults to `self.lib`, but can be overridden with
+        the keyword argument `lib`.
+        """
+        sys.argv = ["beet", *args]  # avoid leakage from test suite args
+        lib = lib or self.lib
+
+        with (
+            patch.object(lib, "_close", Mock()),
+            patch("beets.ui._open_library", return_value=lib),
+        ):
+            beets.ui._raw_main(list(args))
+
+
+@pytest.mark.usefixtures("io")
+class IOMixin(RunMixin):
+    io: _common.DummyIO
+
+    def run_with_output(self, *args: str) -> str:
+        self.io.getoutput()
+        self.run_command(*args)
+        return self.io.getoutput()
+
+
+class PathsMixin:
+    resource_path = _common.RSRC / "full.mp3"
+
+    @cached_property
+    def temp_path(self) -> Path:
+        return Path(self.create_temp_dir())
+
+    def create_temp_dir(self, **kwargs: Any) -> str:
+        return mkdtemp(**kwargs)
+
+    def remove_temp_dir(self) -> None:
+        """Delete the temporary directory created by `create_temp_dir`."""
+        shutil.rmtree(self.temp_path)
+
+
+class TestHelper(RunMixin, PathsMixin, ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
-    This mixin provides methods to isolate beets' global state provide
-    fixtures.
+    This mixin provides methods to isolate beets' global state.
+
+    You may use it as a context manager in pytest fixtures in order to setup
+    tests at a class or module level. See ``module_helper`` and ``class_helper``
+    fixtures, for example.
     """
 
-    resource_path = Path(os.fsdecode(_common.RSRC)) / "full.mp3"
+    request: pytest.FixtureRequest
+
+    def __enter__(self) -> Self:
+        self.setup_beets()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> Literal[False]:
+        self.teardown_beets()
+        # return False/None to propagate exceptions
+        return False
+
+    @pytest.fixture(autouse=True)
+    def setup(self, request: pytest.FixtureRequest) -> Iterator[None]:
+        self.request = request
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
+
+    lib: Library
 
     db_on_disk: ClassVar[bool] = False
 
     @cached_property
-    def temp_dir_path(self) -> Path:
-        return Path(self.create_temp_dir())
-
-    @cached_property
-    def temp_dir(self) -> bytes:
-        return util.bytestring_path(self.temp_dir_path)
-
-    @cached_property
     def lib_path(self) -> Path:
-        lib_path = self.temp_dir_path / "libdir"
+        lib_path = self.temp_path / "libdir"
         lib_path.mkdir(exist_ok=True)
         return lib_path
 
-    @cached_property
-    def libdir(self) -> bytes:
-        return bytestring_path(self.lib_path)
-
     # TODO automate teardown through hook registration
 
-    def setup_beets(self):
+    def setup_beets(self) -> None:
         """Setup pristine global configuration and library for testing.
 
         Sets ``beets.config`` so we can safely use any functionality
@@ -217,10 +232,10 @@ class TestHelper(ConfigMixin):
 
         Sets the following properties on itself.
 
-        - ``temp_dir`` Path to a temporary directory containing all
+        - ``temp_path`` Path to a temporary directory containing all
           files specific to beets
 
-        - ``libdir`` Path to a subfolder of ``temp_dir``, containing the
+        - ``lib_path`` Path to a subfolder of ``temp_path``, containing the
           library's media files. Same as ``config['directory']``.
 
         - ``lib`` Library instance created with the settings from
@@ -228,7 +243,7 @@ class TestHelper(ConfigMixin):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
-        temp_dir_str = str(self.temp_dir_path)
+        temp_dir_str = str(self.temp_path)
         self.env_patcher = patch.dict(
             "os.environ",
             {
@@ -240,20 +255,21 @@ class TestHelper(ConfigMixin):
 
         self.config["directory"] = str(self.lib_path)
 
-        if self.db_on_disk:
-            dbpath = util.bytestring_path(self.config["library"].as_filename())
-        else:
-            dbpath = ":memory:"
-        self.lib = Library(dbpath, self.libdir)
+        dbpath = (
+            self.config["library"].as_path()
+            if self.db_on_disk
+            else Path(":memory:")
+        )
+        self.lib = Library(dbpath, str(self.lib_path))
 
-    def teardown_beets(self):
+    def teardown_beets(self) -> None:
         self.env_patcher.stop()
         self.lib._close()
         self.remove_temp_dir()
 
     # Library fixtures methods
 
-    def create_item(self, **values):
+    def create_item(self, **values: Any) -> Item:
         """Return an `Item` instance with sensible default values.
 
         The item receives its attributes from `**values` paratmeter. The
@@ -265,15 +281,14 @@ class TestHelper(ConfigMixin):
 
         The item is attached to the database from `self.lib`.
         """
-        values_ = {
-            "title": "t\u00eftle {}",
+        values_: dict[str, Any] = {
+            "title": "t\u00eftle 1",
             "artist": "the \u00e4rtist",
             "album": "the \u00e4lbum",
             "track": 1,
             "format": "MP3",
         }
         values_.update(values)
-        values_["title"] = values_["title"].format(1)
         values_["db"] = self.lib
         item = Item(**values_)
         if "path" not in values:
@@ -282,7 +297,7 @@ class TestHelper(ConfigMixin):
         item.mtime = 12345
         return item
 
-    def add_item(self, **values):
+    def add_item(self, **values: Any) -> Item:
         """Add an item to the library and return it.
 
         Creates the item by passing the parameters to `create_item()`.
@@ -304,27 +319,25 @@ class TestHelper(ConfigMixin):
 
         return item
 
-    def add_item_fixture(self, **values):
+    def add_item_fixture(self, **values: Any) -> Item:
         """Add an item with an actual audio file to the library."""
         item = self.create_item(**values)
         extension = item["format"].lower()
-        item["path"] = os.path.join(
-            _common.RSRC, util.bytestring_path(f"min.{extension}")
-        )
+        item["path"] = _common.RSRC / f"min.{extension}"
         item.add(self.lib)
         item.move(operation=MoveOperation.COPY)
         item.store()
         return item
 
-    def add_album(self, **values):
+    def add_album(self, **values: Any) -> Album:
         item = self.add_item(**values)
         return self.lib.add_album([item])
 
-    def add_item_fixtures(self, ext="mp3", count=1):
+    def add_item_fixtures(self, ext: str = "mp3", count: int = 1) -> list[Item]:
         """Add a number of items with files to the database."""
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
+        path = _common.RSRC / f"full.{ext}"
         for i in range(count):
             item = Item.from_path(path)
             item.album = f"\u00e4lbum {i}"  # Check unicode paths
@@ -339,17 +352,14 @@ class TestHelper(ConfigMixin):
 
     def add_album_fixture(
         self,
-        track_count=1,
-        fname="full",
-        ext="mp3",
-        disc_count=1,
-    ):
+        track_count: int = 1,
+        fname: str = "full",
+        ext: str = "mp3",
+        disc_count: int = 1,
+    ) -> Album:
         """Add an album with files to the database."""
         items = []
-        path = os.path.join(
-            _common.RSRC,
-            util.bytestring_path(f"{fname}.{ext}"),
-        )
+        path = _common.RSRC / f"{fname}.{ext}"
         for discnumber in range(1, disc_count + 1):
             for i in range(track_count):
                 item = Item.from_path(path)
@@ -364,16 +374,23 @@ class TestHelper(ConfigMixin):
                 items.append(item)
         return self.lib.add_album(items)
 
-    def create_mediafile_fixture(self, ext="mp3", images=[]):
-        """Copy a fixture mediafile with the extension to `temp_dir`.
+    def create_mediafile_fixture(
+        self,
+        ext: str = "mp3",
+        images: list[str] | None = None,
+        target_dir: util.PathLike | None = None,
+    ) -> Path:
+        """Copy a fixture mediafile with the extension to `temp_path`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
-        src = os.path.join(_common.RSRC, util.bytestring_path(f"full.{ext}"))
-        handle, path = mkstemp(dir=self.temp_dir)
-        path = bytestring_path(path)
+        if not target_dir:
+            target_dir = self.temp_path
+        src = _common.RSRC / f"full.{ext}"
+        handle, str_path = mkstemp(dir=target_dir)
+        path = Path(os.fsdecode(str_path))
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
 
@@ -381,62 +398,12 @@ class TestHelper(ConfigMixin):
             mediafile = MediaFile(path)
             imgs = []
             for img_ext in images:
-                file = util.bytestring_path(f"image-2x3.{img_ext}")
-                img_path = os.path.join(_common.RSRC, file)
-                with open(img_path, "rb") as f:
+                img_path = _common.RSRC / f"image-2x3.{img_ext}"
+                with img_path.open("rb") as f:
                     imgs.append(Image(f.read()))
             mediafile.images = imgs
             mediafile.save()
 
-        return path
-
-    # Running beets commands
-
-    def run_command(self, *args, **kwargs):
-        """Run a beets command with an arbitrary amount of arguments. The
-        Library` defaults to `self.lib`, but can be overridden with
-        the keyword argument `lib`.
-        """
-        sys.argv = ["beet"]  # avoid leakage from test suite args
-        lib = None
-        if hasattr(self, "lib"):
-            lib = self.lib
-        lib = kwargs.get("lib", lib)
-        beets.ui._raw_main(list(args), lib)
-
-    def run_with_output(self, *args):
-        with capture_stdout() as out:
-            self.run_command(*args)
-        return out.getvalue()
-
-    # Safe file operations
-
-    def create_temp_dir(self, **kwargs) -> str:
-        return mkdtemp(**kwargs)
-
-    def remove_temp_dir(self):
-        """Delete the temporary directory created by `create_temp_dir`."""
-        shutil.rmtree(self.temp_dir_path)
-
-    def touch(self, path, dir=None, content=""):
-        """Create a file at `path` with given content.
-
-        If `dir` is given, it is prepended to `path`. After that, if the
-        path is relative, it is resolved with respect to
-        `self.temp_dir`.
-        """
-        if dir:
-            path = os.path.join(dir, path)
-
-        if not os.path.isabs(path):
-            path = os.path.join(self.temp_dir, path)
-
-        parent = os.path.dirname(path)
-        if not os.path.isdir(syspath(parent)):
-            os.makedirs(syspath(parent))
-
-        with open(syspath(path), "a+") as f:
-            f.write(content)
         return path
 
 
@@ -448,13 +415,9 @@ class BeetsTestCase(unittest.TestCase, TestHelper):
     modifications that will then be automatically removed when the test
     completes. Also provides some additional assertion methods, a
     temporary directory, and a DummyIO.
+
+    DEPRECATED: Use TestHelper instead.
     """
-
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
 
 
 class ItemInDBTestCase(BeetsTestCase):
@@ -462,22 +425,34 @@ class ItemInDBTestCase(BeetsTestCase):
     an item added to the library (`i`).
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.i = _common.item(self.lib)
+
+
+class PytestTestHelper(TestHelper):
+    """Same as the BeetsTestCase unittest setup but for pytest."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self) -> Iterator[None]:
+        self.setup_beets()
+        try:
+            yield
+        finally:
+            self.teardown_beets()
 
 
 class PluginMixin(ConfigMixin):
     plugin: ClassVar[str]
     preload_plugin: ClassVar[bool] = True
 
-    def setup_beets(self):
-        super().setup_beets()
+    def setup_beets(self) -> None:
+        super().setup_beets()  # type: ignore[misc]
         if self.preload_plugin:
             self.load_plugins()
 
-    def teardown_beets(self):
-        super().teardown_beets()
+    def teardown_beets(self) -> None:
+        super().teardown_beets()  # type: ignore[misc]
         self.unload_plugins()
 
     def register_plugin(
@@ -505,7 +480,7 @@ class PluginMixin(ConfigMixin):
         beets.plugins._instances.clear()
 
     @contextmanager
-    def configure_plugin(self, config: Any):
+    def configure_plugin(self, config: Any) -> Iterator[None]:
         self.config[self.plugin].set(config)
         self.load_plugins(self.plugin)
 
@@ -515,16 +490,31 @@ class PluginMixin(ConfigMixin):
 
 
 class PluginTestCase(PluginMixin, BeetsTestCase):
-    pass
+    """
+    DEPRECATED: Use PluginTestHelper instead.
+    """
 
 
-class ImportHelper(TestHelper):
+class PluginTestHelper(PluginMixin, TestHelper):
+    """Helper mixin for pytest-based plugin tests.
+
+    This mixin provides the standard beets test setup and automatically
+    initializes and tears down plugin state for each test.
+
+    .. code-block:: python
+
+        class TestMyPlugin(PluginTestHelper):
+            plugin: ClassVar[str] = "myplugin"
+    """
+
+
+class ImporterMixin(PathsMixin, ConfigMixin):
     """Provides tools to setup a library, a directory containing files that are
     to be imported and an import session. The class also provides stubs for the
     autotagging library and several assertions for the library.
     """
 
-    default_import_config = {
+    default_import_config: ClassVar[dict[str, Any]] = {
         "autotag": True,
         "copy": True,
         "hardlink": False,
@@ -537,31 +527,16 @@ class ImportHelper(TestHelper):
 
     lib: Library
     importer: ImportSession
+    import_media: list[MediaFile]
 
     @cached_property
     def import_path(self) -> Path:
-        import_path = self.temp_dir_path / "import"
+        import_path = self.temp_path / "import"
         import_path.mkdir(exist_ok=True)
         return import_path
 
-    @cached_property
-    def import_dir(self) -> bytes:
-        return bytestring_path(self.import_path)
-
-    def setUp(self):
-        super().setUp()
-        self.import_media = []
-        self.lib.path_formats = [
-            ("default", os.path.join("$artist", "$album", "$title")),
-            ("singleton:true", os.path.join("singletons", "$title")),
-            ("comp:true", os.path.join("compilations", "$album", "$title")),
-        ]
-
     def prepare_track_for_import(
-        self,
-        track_id: int,
-        album_path: Path,
-        album_id: int | None = None,
+        self, track_id: int, album_path: Path, album_id: int | None = None
     ) -> Path:
         track_path = album_path / f"track_{track_id}.mp3"
         shutil.copy(self.resource_path, track_path)
@@ -614,38 +589,45 @@ class ImportHelper(TestHelper):
         for album_id in range(base_idx, count + base_idx):
             self.prepare_album_for_import(1, album_id=album_id)
 
-    def _get_import_session(self, import_dir: bytes) -> ImportSession:
+    def _get_import_session(self, import_dir: Path) -> ImportSession:
         return ImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,
-            paths=[import_dir],
+            paths=[os.fsencode(import_dir)],
         )
 
     def setup_importer(
-        self, import_dir: bytes | None = None, **kwargs
+        self, import_dir: Path | None = None, **kwargs: Any
     ) -> ImportSession:
         self.config["import"].set_args({**self.default_import_config, **kwargs})
-        self.importer = self._get_import_session(import_dir or self.import_dir)
+        self.importer = self._get_import_session(import_dir or self.import_path)
         return self.importer
 
-    def setup_singleton_importer(self, **kwargs) -> ImportSession:
+    def setup_singleton_importer(self, **kwargs: Any) -> ImportSession:
         return self.setup_importer(singletons=True, **kwargs)
 
 
-class AsIsImporterMixin:
-    def setUp(self):
-        super().setUp()
+class ImportHelper(TestHelper, ImporterMixin):
+    def setup_beets(self) -> None:
+        super().setup_beets()
+        self.import_media = []
+        self.lib.path_formats = [
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
+        ]
+
+
+class AsIsImporterMixin(ImporterMixin):
+    def setup_beets(self) -> None:
+        super().setup_beets()  # type: ignore[misc]
         self.prepare_album_for_import(1)
 
-    def run_asis_importer(self, **kwargs):
+    def run_asis_importer(self, **kwargs: Any) -> ImportSession:
         importer = self.setup_importer(autotag=False, **kwargs)
         importer.run()
         return importer
-
-
-class ImportTestCase(ImportHelper, BeetsTestCase):
-    pass
 
 
 class ImportSessionFixture(ImportSession):
@@ -663,75 +645,82 @@ class ImportSessionFixture(ImportSession):
     remaining albums, the metadata from the autotagger will be applied.
     """
 
-    def __init__(self, *args, **kwargs):
+    _choices: list[importer.Action | int]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._choices = []
-        self._resolutions = []
 
     default_choice = importer.Action.APPLY
 
-    def add_choice(self, choice):
+    def add_choice(self, choice: importer.Action | int) -> None:
         self._choices.append(choice)
 
-    def clear_choices(self):
+    def clear_choices(self) -> None:
         self._choices = []
 
-    def choose_match(self, task):
+    def choose_match(
+        self, task: importer.ImportTask
+    ) -> AlbumMatch | importer.Action:
         try:
             choice = self._choices.pop(0)
         except IndexError:
             choice = self.default_choice
 
-        if choice == importer.Action.APPLY:
-            return task.candidates[0]
-        elif isinstance(choice, int):
-            return task.candidates[choice - 1]
-        else:
-            return choice
+        if task.candidates:
+            if choice == importer.Action.APPLY:
+                return task.candidates[0]  # type: ignore[return-value]
+            if isinstance(choice, int):
+                return task.candidates[choice - 1]  # type: ignore[return-value]
 
-    choose_item = choose_match
+        assert not isinstance(choice, int), f"Invalid choice: {choice}"
+        return choice
 
-    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
-
-    default_resolution = "REMOVE"
-
-    def resolve_duplicate(self, task, found_duplicates):
-        try:
-            res = self._resolutions.pop(0)
-        except IndexError:
-            res = self.default_resolution
-
-        if res == self.Resolution.SKIP:
-            task.set_choice(importer.Action.SKIP)
-        elif res == self.Resolution.REMOVE:
-            task.should_remove_duplicates = True
-        elif res == self.Resolution.MERGE:
-            task.should_merge_duplicates = True
+    choose_item = choose_match  # type: ignore[arg-type, assignment]
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
-    def __init__(self, *args, **kwargs):
+    _choices: list[importer.Action | int]
+    _duplicate_actions: list[importer.DuplicateAction]
+
+    def __init__(self, *args, **kwargs) -> None:
         self.io = kwargs.pop("io")
         super().__init__(*args, **kwargs)
         self._choices = []
+        self._duplicate_actions = []
 
     default_choice = importer.Action.APPLY
 
-    def add_choice(self, choice):
+    def add_choice(self, choice: importer.Action | int) -> None:
         self._choices.append(choice)
 
-    def clear_choices(self):
+    def clear_choices(self) -> None:
         self._choices = []
+        self._duplicate_actions = []
 
-    def choose_match(self, task):
+    def add_duplicate_action(self, action: importer.DuplicateAction) -> None:
+        self._duplicate_actions.append(action)
+
+    def _get_duplicate_action_from_user(
+        self, task: importer.ImportTask, found_duplicates: list[Any]
+    ) -> str:
+        if self._duplicate_actions:
+            self.io.addinput(self._duplicate_actions.pop(0).value)
+        return super()._get_duplicate_action_from_user(task, found_duplicates)
+
+    def choose_match(
+        self, task: importer.ImportTask
+    ) -> AlbumMatch | importer.Action:
         self._add_choice_input()
         return super().choose_match(task)
 
-    def choose_item(self, task):
+    def choose_item(
+        self, task: importer.SingletonImportTask
+    ) -> TrackMatch | importer.Action:
         self._add_choice_input()
         return super().choose_item(task)
 
-    def _add_choice_input(self):
+    def _add_choice_input(self) -> None:
         try:
             choice = self._choices.pop(0)
         except IndexError:
@@ -756,16 +745,13 @@ class TerminalImportSessionFixture(TerminalImportSession):
 class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
 
-    io: _common.DummyIO
-
-    def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
-        self.io.install()
+    def _get_import_session(self, import_dir: Path) -> importer.ImportSession:
         return TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,
-            io=self.io,
-            paths=[import_dir],
+            io=self.request.getfixturevalue("io"),
+            paths=[os.fsencode(import_dir)],
         )
 
 
@@ -784,8 +770,8 @@ class AutotagStub:
 
     length = 2
 
-    def install(self):
-        self.patchers = [
+    def install(self) -> Self:
+        self.patchers: list[_patch[Any]] = [
             patch("beets.metadata_plugins.album_for_id", lambda *_: None),
             patch("beets.metadata_plugins.track_for_id", lambda *_: None),
             patch("beets.metadata_plugins.candidates", self.candidates),
@@ -798,11 +784,13 @@ class AutotagStub:
 
         return self
 
-    def restore(self):
+    def restore(self) -> None:
         for p in self.patchers:
             p.stop()
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(
+        self, items: Sequence[Item], artist: str, album: str, _: bool
+    ) -> Iterable[AlbumInfo]:
         if self.matching == self.IDENT:
             yield self._make_album_match(artist, album, len(items))
 
@@ -817,7 +805,9 @@ class AutotagStub:
         elif self.matching == self.MISSING:
             yield self._make_album_match(artist, album, len(items), missing=1)
 
-    def item_candidates(self, item, artist, title):
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
         yield TrackInfo(
             title=title.replace("Tag", "Applied"),
             track_id="trackid",
@@ -827,7 +817,9 @@ class AutotagStub:
             index=0,
         )
 
-    def _make_track_match(self, artist, album, number):
+    def _make_track_match(
+        self, artist: str, album: str, number: int
+    ) -> TrackInfo:
         return TrackInfo(
             title=f"Applied Track {number}",
             track_id=f"match {number}",
@@ -836,14 +828,18 @@ class AutotagStub:
             index=0,
         )
 
-    def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
-        id = f" {'M' * distance}" if distance else ""
+    def _make_album_match(
+        self,
+        artist: str,
+        album: str,
+        tracks: int,
+        distance: int = 0,
+        missing: int = 0,
+    ) -> AlbumInfo:
+        id_ = f" {'M' * distance}" if distance else ""
 
-        if artist is None:
-            artist = "Various Artists"
-        else:
-            artist = f"{artist.replace('Tag', 'Applied')}{id}"
-        album = f"{album.replace('Tag', 'Applied')}{id}"
+        artist = f"{artist.replace('Tag', 'Applied')}{id_}"
+        album = f"{album.replace('Tag', 'Applied')}{id_}"
 
         track_infos = []
         for i in range(tracks - missing):
@@ -854,33 +850,36 @@ class AutotagStub:
             album=album,
             tracks=track_infos,
             va=False,
-            album_id=f"albumid{id}",
-            artist_id=f"artistid{id}",
+            album_id=f"albumid{id_}",
+            artist_id=f"artistid{id_}",
             albumtype="soundtrack",
             data_source="match_source",
             bandcamp_album_id="bc_url",
         )
 
 
-class AutotagImportTestCase(ImportTestCase):
+class AutotagImportHelper(ImportHelper):
     matching = AutotagStub.IDENT
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self) -> None:
+        super().setup_beets()
         self.matcher = AutotagStub(self.matching).install()
-        self.addCleanup(self.matcher.restore)
+
+    def teardown_beets(self) -> None:
+        self.matcher.restore()
+        super().teardown_beets()
 
 
-class FetchImageHelper:
-    """Helper mixin for mocking requests when fetching images
-    with remote art sources.
-    """
+class AutotagImportTestCase(AutotagImportHelper, BeetsTestCase):
+    """DEPRECATED: Use AutotagImportHelper instead."""
 
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
 
-    IMAGEHEADER: dict[str, bytes] = {
+@dataclass(slots=True)
+class ImageRequestMocker:
+    mocker: Mocker
+
+    # Image types and their file headers
+    IMAGE_HEADERS: ClassVar[dict[str, bytes]] = {
         "image/jpeg": b"\xff\xd8\xff\x00\x00\x00JFIF",
         "image/png": b"\211PNG\r\n\032\n",
         "image/gif": b"GIF89a",
@@ -892,32 +891,43 @@ class FetchImageHelper:
         ),
     }
 
-    def mock_response(
+    def get(
         self,
         url: str,
+        *,
         content_type: str = "image/jpeg",
-        file_type: None | str = None,
+        file_type: str | None = None,
+        content: str | bytes | None = None,
     ) -> None:
-        # Potentially return a file of a type that differs from the
-        # server-advertised content type to mimic misbehaving servers.
-        if file_type is None:
-            file_type = content_type
+        actual_file_type = file_type or content_type
 
-        try:
-            # imghdr reads 32 bytes
-            header = self.IMAGEHEADER[file_type].ljust(32, b"\x00")
-        except KeyError:
-            # If we can't return a file that looks like real file of the requested
-            # type, better fail the test than returning something else, which might
-            # violate assumption made when writing a test.
-            raise AssertionError(f"Mocking {file_type} responses not supported")
+        if content is None:
+            try:
+                content = self.IMAGE_HEADERS[actual_file_type].ljust(
+                    32, b"\x00"
+                )
+            except KeyError as exc:
+                # If we can't return a file that looks like real file of the requested
+                # type, better fail the test than returning something else, which might
+                # violate assumption made when writing a test.
+                raise AssertionError(
+                    f"Mocking {actual_file_type!r} responses not supported"
+                ) from exc
 
-        responses.add(
-            responses.GET,
-            url,
-            content_type=content_type,
-            body=header,
+        if isinstance(content, str):
+            content = content.encode()
+
+        self.mocker.get(
+            url, headers={"Content-Type": content_type}, content=content
         )
+
+
+class FetchImageHelper:
+    """Pytest mixin providing image response mocking utilities."""
+
+    @pytest.fixture
+    def image_request_mock(self, requests_mock: Mocker) -> ImageRequestMocker:
+        return ImageRequestMocker(requests_mock)
 
 
 class CleanupModulesMixin:

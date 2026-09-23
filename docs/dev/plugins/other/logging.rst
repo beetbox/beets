@@ -3,15 +3,20 @@
 Logging
 =======
 
-Each plugin object has a ``_log`` attribute, which is a ``Logger`` from the
-`standard Python logging module`_. The logger is set up to `PEP 3101`_,
-str.format-style string formatting. So you can write logging calls like this:
+Each plugin object has a ``_log`` attribute, which behaves like a logger from
+the `standard Python logging module`_ but is provided by beets' ``BeetsLogger``
+class. The logger is set up to `PEP 3101`_, str.format-style string formatting.
+So you can write logging calls like this:
 
 .. code-block:: python
 
     self._log.debug("Processing {0.title} by {0.artist}", item)
 
-.. _pep 3101: https://www.python.org/dev/peps/pep-3101/
+For especially noisy diagnostics, plugins can use
+``self._log.extra_debug(...)``. These messages are logged at ``DEBUG`` level
+only when beets is run with verbosity level 3 or higher, such as ``-vvv``.
+
+.. _pep 3101: https://peps.python.org/pep-3101/
 
 .. _standard python logging module: https://docs.python.org/3/library/logging.html
 

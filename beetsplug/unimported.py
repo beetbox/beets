@@ -1,38 +1,35 @@
-# This file is part of beets.
-# Copyright 2019, Joris Jensen
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """
 List all files in the library folder which are not listed in the
  beets library database, including art files
 """
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from beets import util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
 
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+
+
 __author__ = "https://github.com/MrNuggelz"
 
 
 class Unimported(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add({"ignore_extensions": [], "ignore_subdirectories": []})
 
-    def commands(self):
-        def print_unimported(lib, opts, args):
+    def commands(self) -> list[Subcommand]:
+        def print_unimported(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             ignore_exts = [
                 f".{x}".encode()
                 for x in self.config["ignore_extensions"].as_str_seq()

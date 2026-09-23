@@ -4,6 +4,9 @@ FetchArt Plugin
 The ``fetchart`` plugin retrieves album art images from various sources on the
 Web and stores them as image files.
 
+``fetchart`` supports fetching images in ``JPEG``, ``PNG``, and ``WebP``
+formats.
+
 To use the ``fetchart`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). Then, install ``beets`` with ``fetchart`` extra
 
@@ -35,6 +38,9 @@ file. The available options are:
   ``cover front art album folder``.
 - **fallback**: Path to a fallback album art file if no album art was found
   otherwise. Default: ``None`` (disabled).
+- **fetch_for_asis**: Fetch album art from online sources during import, even
+  when the as-is option is selected in the Auto-Tagger. When ``no``, only local
+  filesystem sources of art are considered for as-is imports. Default: ``no``.
 - **minwidth**: Only images with a width bigger or equal to ``minwidth`` are
   considered as valid album art candidates. Default: 0.
 - **maxwidth**: A maximum image width to downscale fetched images if they are
@@ -87,7 +93,7 @@ file. The available options are:
   to store cover art as non-progressive JPEG. You might need this if you use
   DAPs that don't support progressive images. Default: ``no``.
 - **cover_format**: If enabled, forced the cover image into the specified
-  format. Most often, this will be either ``JPEG`` or ``PNG`` (see
+  format. Most often, this will be either ``JPEG``, ``PNG``, or ``WEBP`` (see
   image-formats_). Also respects ``deinterlace``. Default: None (leave
   unchanged).
 
@@ -112,7 +118,7 @@ Pillow_.
     PIL.features.pilinfo() to print a list of all supported formats in Pillow
     (``python3 -c 'import PIL.features as f; f.pilinfo()'``).
 
-.. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
+.. _beets custom search engine: https://cse.google.com/cse?cx=001442825323518660753:hrh5ch1gjzm
 
 Here's an example that makes plugin select only images that contain ``front`` or
 ``back`` keywords in their filenames and prioritizes the iTunes source over
@@ -218,13 +224,13 @@ To use the google image search backend you need to `register for a Google API
 key`_. Set the ``google_key`` configuration option to your key, then add
 ``google`` to the list of sources in your configuration.
 
-.. _register for a google api key: https://console.developers.google.com.
+.. _register for a google api key: https://console.cloud.google.com/apis/credentials
 
 Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine`` configuration option. The default
 engine searches the entire web for cover art.
 
-.. _define a custom search engine: https://www.google.com/cse/all
+.. _define a custom search engine: https://programmablesearchengine.google.com/about/
 
 Note that the Google custom search API is limited to 100 queries per day. After
 that, the fetchart plugin will fall back on other declared data sources.
@@ -294,6 +300,6 @@ do
 The values written to ``art_source`` are the same names used in the ``sources``
 configuration value.
 
-.. _imagemagick: https://www.imagemagick.org/
+.. _imagemagick: https://imagemagick.org/
 
 .. _pillow: https://github.com/python-pillow/Pillow

@@ -14,12 +14,12 @@ sys.path.insert(0, str(Path(__file__).parent / "extensions"))
 
 project = "beets"
 AUTHOR = "Adrian Sampson"
-copyright = "2016, Adrian Sampson"
+copyright = "2016, Adrian Sampson"  # noqa: A001
 
 master_doc = "index"
 language = "en"
-version = "2.5"
-release = "2.5.1"
+version = "2.14"
+release = "2.14.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -32,9 +32,23 @@ extensions = [
     "sphinx_design",
     "sphinx_copybutton",
     "conf",
+    "sphinx_toolbox.more_autodoc.autotypeddict",
+    "sphinx_toolbox.more_autodoc.autonamedtuple",
 ]
 
 autosummary_generate = True
+autosummary_context = {
+    "related_typeddicts": {
+        "MusicBrainzAPI": [
+            "beetsplug._utils.musicbrainz.LookupKwargs",
+            "beetsplug._utils.musicbrainz.SearchKwargs",
+            "beetsplug._utils.musicbrainz.BrowseKwargs",
+            "beetsplug._utils.musicbrainz.BrowseRecordingsKwargs",
+            "beetsplug._utils.musicbrainz.BrowseReleaseGroupsKwargs",
+        ]
+    }
+}
+autodoc_member_order = "bysource"
 exclude_patterns = ["_build"]
 templates_path = ["_templates"]
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
@@ -56,6 +70,26 @@ linkcheck_ignore = [
     r"https?://127\.0\.0\.1",
     r"https://www.musixmatch.com/",  # blocks requests
     r"https://genius.com/",  # blocks requests
+    r"https://sourceforge\.net/",  # blocks requests
+    r"https://[^/]*fanart\.tv/",  # blocks requests
+    r"https://[^/]*fandom\.com/",  # blocks requests
+    r"https://imgur\.com/",  # not accessible from the UK
+    r"https://(www\.)?discogs.com.*",  # blocks requests
+    r"https://essentia.upf.edu/",  # times out in CI
+    r"https://flask.palletsprojects.com.*",  # times out in CI
+    r"https://search.worldcat.org.*",  # blocks requests
+    r"https://tidal.com.*",  # blocks requests
+    r"https://www.tekstowo.pl/",  # blocks requests
+    r"https://www.gnu.org.*",  # sometimes unreachable
+    r"https://www.nongnu.org.*",  # sometimes unreachable
+    r"https://web.archive.org.*",  # sometimes unreachable
+    r"https://www.sonos.com.*",  # blocks requests
+    r"https://stackoverflow.com.*",  # blocks requests
+    r"https://superuser.com.*",  # blocks requests
+    r"https://support.discogs.com.*",  # blocks requests
+    r"https://forge\.kanis\.fr.*",  # SSL cert issues
+    r"https://id3\.org.*",  # intermittent server errors
+    r"https://aka\.ms/.*",  # Microsoft short links block crawlers
 ]
 
 # Options for HTML output
@@ -63,7 +97,7 @@ htmlhelp_basename = "beetsdoc"
 
 # Options for LaTeX output
 latex_documents = [
-    ("index", "beets.tex", "beets Documentation", AUTHOR, "manual"),
+    ("index", "beets.tex", "beets Documentation", AUTHOR, "manual")
 ]
 
 # Options for manual page output
@@ -85,7 +119,7 @@ man_pages = [
 ]
 
 # Global substitutions that can be used anywhere in the documentation.
-rst_epilog = """
+rst_epilog = r"""
 .. |Album| replace:: :class:`~beets.library.models.Album`
 .. |AlbumInfo| replace:: :class:`beets.autotag.hooks.AlbumInfo`
 .. |BeetsPlugin| replace:: :class:`beets.plugins.BeetsPlugin`
@@ -95,6 +129,7 @@ rst_epilog = """
 .. |Library| replace:: :class:`~beets.library.library.Library`
 .. |Model| replace:: :class:`~beets.dbcore.db.Model`
 .. |TrackInfo| replace:: :class:`beets.autotag.hooks.TrackInfo`
+.. |semicolon_space| replace:: :literal:`; \ `
 """
 
 # -- Options for HTML output -------------------------------------------------
@@ -114,11 +149,11 @@ html_static_path = ["_static"]
 html_css_files = ["beets.css"]
 
 
-def skip_member(app, what, name, obj, skip, options):
+def skip_member(app, what, name: str, obj, skip, options):
     if name.startswith("_"):
         return True
     return skip
 
 
-def setup(app):
+def setup(app) -> None:
     app.connect("autodoc-skip-member", skip_member)

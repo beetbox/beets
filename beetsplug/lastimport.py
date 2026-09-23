@@ -1,52 +1,49 @@
-# This file is part of beets.
-# Copyright 2016, Rafael Bodill https://github.com/rafi
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, NamedTuple
 
 import pylast
-from pylast import TopItem, _extract, _number
+from pylast import _extract, _number
 
-from beets import config, dbcore, plugins, ui
+from beets import config, plugins, ui
 from beets.dbcore import types
+from beets.exceptions import UserError
+
+from ._utils.playcount import update_play_counts
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.library import Library
+    from beets.logging import BeetsLogger as Logger
+
+    from ._utils.playcount import Track
 
 API_URL = "https://ws.audioscrobbler.com/2.0/"
 
 
+class OurTrack(pylast.Track):
+    mbid: str
+
+
+class OurTopItem(NamedTuple):
+    item: OurTrack
+    weight: float
+
+
 class LastImportPlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        config["lastfm"].add(
-            {
-                "user": "",
-                "api_key": plugins.LASTFM_KEY,
-            }
-        )
+        config["lastfm"].add({"user": "", "api_key": plugins.LASTFM_KEY})
         config["lastfm"]["user"].redact = True
         config["lastfm"]["api_key"].redact = True
-        self.config.add(
-            {
-                "per_page": 500,
-                "retry_limit": 3,
-            }
-        )
-        self.item_types = {
-            "play_count": types.INTEGER,
-        }
+        self.config.add({"per_page": 500, "retry_limit": 3})
+        self.item_types = {"lastfm_play_count": types.INTEGER}
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("lastimport", help="import last.fm play-count")
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             import_lastfm(lib, self._log)
 
         cmd.func = func
@@ -60,12 +57,17 @@ class CustomUser(pylast.User):
     tracks.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
     def _get_things(
-        self, method, thing, thing_type, params=None, cacheable=True
-    ):
+        self,
+        method: str,
+        thing_type: type[pylast.Track | pylast.Album],
+        params: type[pylast._Opus] | None = None,
+        cacheable: bool = True,
+        stream: bool = False,
+    ) -> tuple[list[OurTopItem], int]:
         """Returns a list of the most played thing_types by this thing, in a
         tuple with the total number of pages of results. Includes an MBID, if
         found.
@@ -76,21 +78,25 @@ class CustomUser(pylast.User):
         total_pages = int(toptracks_node.getAttribute("totalPages"))
 
         seq = []
-        for node in doc.getElementsByTagName(thing):
+        for node in doc.getElementsByTagName(thing_type.__name__.lower()):
             title = _extract(node, "name")
             artist = _extract(node, "name", 1)
             mbid = _extract(node, "mbid")
             playcount = _number(_extract(node, "playcount"))
 
-            thing = thing_type(artist, title, self.network)
-            thing.mbid = mbid
-            seq.append(TopItem(thing, playcount))
+            thing = OurTrack(artist, title, self.network)
+            thing.mbid = mbid  # type: ignore[union-attr]
+            seq.append(OurTopItem(thing, playcount))
 
         return seq, total_pages
 
     def get_top_tracks_by_page(
-        self, period=pylast.PERIOD_OVERALL, limit=None, page=1, cacheable=True
-    ):
+        self,
+        period: str = pylast.PERIOD_OVERALL,
+        limit: int | None = None,
+        page: int = 1,
+        cacheable: bool = True,
+    ) -> tuple[list[OurTopItem], int]:
         """Returns the top tracks played by a user, in a tuple with the total
         number of pages of results.
         * period: The period of time. Possible values:
@@ -108,17 +114,15 @@ class CustomUser(pylast.User):
         if limit:
             params["limit"] = limit
 
-        return self._get_things(
-            "getTopTracks", "track", pylast.Track, params, cacheable
-        )
+        return self._get_things("getTopTracks", pylast.Track, params, cacheable)
 
 
-def import_lastfm(lib, log):
+def import_lastfm(lib: Library, log: Logger) -> None:
     user = config["lastfm"]["user"].as_str()
     per_page = config["lastimport"]["per_page"].get(int)
 
     if not user:
-        raise ui.UserError("You must specify a user name for lastimport")
+        raise UserError("You must specify a user name for lastimport")
 
     log.info("Fetching last.fm library for @{}", user)
 
@@ -135,33 +139,32 @@ def import_lastfm(lib, log):
             f"/{page_total}" if page_total > 1 else "",
         )
 
-        for retry in range(0, retry_limit):
+        for retry in range(retry_limit):
             tracks, page_total = fetch_tracks(user, page_current + 1, per_page)
             if page_total < 1:
                 # It means nothing to us!
-                raise ui.UserError("Last.fm reported no data.")
+                raise UserError("Last.fm reported no data.")
 
             if tracks:
-                found, unknown = process_tracks(lib, tracks, log)
+                found, unknown = update_play_counts(lib, tracks, log, "lastfm")
                 found_total += found
                 unknown_total += unknown
                 break
+            log.error("ERROR: unable to read page #{}", page_current + 1)
+            if retry < retry_limit:
+                log.info(
+                    "Retrying page #{}... ({}/{} retry)",
+                    page_current + 1,
+                    retry + 1,
+                    retry_limit,
+                )
             else:
-                log.error("ERROR: unable to read page #{}", page_current + 1)
-                if retry < retry_limit:
-                    log.info(
-                        "Retrying page #{}... ({}/{} retry)",
-                        page_current + 1,
-                        retry + 1,
-                        retry_limit,
-                    )
-                else:
-                    log.error(
-                        "FAIL: unable to fetch page #{}, ",
-                        "tried {} times",
-                        page_current,
-                        retry + 1,
-                    )
+                log.error(
+                    "FAIL: unable to fetch page #{}, ",
+                    "tried {} times",
+                    page_current,
+                    retry + 1,
+                )
         page_current += 1
 
     log.info("... done!")
@@ -170,123 +173,20 @@ def import_lastfm(lib, log):
     log.info("{} play-counts imported", found_total)
 
 
-def fetch_tracks(user, page, limit):
-    """JSON format:
-    [
-        {
-            "mbid": "...",
-            "artist": "...",
-            "title": "...",
-            "playcount": "..."
-        }
-    ]
-    """
-    network = pylast.LastFMNetwork(api_key=config["lastfm"]["api_key"])
+def fetch_tracks(user: str, page: int, limit: int) -> tuple[list[Track], int]:
+    network = pylast.LastFMNetwork(api_key=config["lastfm"]["api_key"].get(str))
     user_obj = CustomUser(user, network)
     results, total_pages = user_obj.get_top_tracks_by_page(
         limit=limit, page=page
     )
     return [
         {
-            "mbid": track.item.mbid if track.item.mbid else "",
-            "artist": {"name": track.item.artist.name},
-            "name": track.item.title,
-            "playcount": track.weight,
+            "mbid": t.item.mbid or "",
+            "artist": (
+                n.strip() if ((a := t.item.artist) and (n := a.name)) else ""
+            ),
+            "name": ti.strip() if ((i := t.item) and (ti := i.title)) else "",
+            "playcount": int(t.weight),
         }
-        for track in results
+        for t in results
     ], total_pages
-
-
-def process_tracks(lib, tracks, log):
-    total = len(tracks)
-    total_found = 0
-    total_fails = 0
-    log.info("Received {} tracks in this page, processing...", total)
-
-    for num in range(0, total):
-        song = None
-        trackid = tracks[num]["mbid"].strip() if tracks[num]["mbid"] else None
-        artist = (
-            tracks[num]["artist"].get("name", "").strip()
-            if tracks[num]["artist"].get("name", "")
-            else None
-        )
-        title = tracks[num]["name"].strip() if tracks[num]["name"] else None
-        album = ""
-        if "album" in tracks[num]:
-            album = (
-                tracks[num]["album"].get("name", "").strip()
-                if tracks[num]["album"]
-                else None
-            )
-
-        log.debug("query: {} - {} ({})", artist, title, album)
-
-        # First try to query by musicbrainz's trackid
-        if trackid:
-            song = lib.items(
-                dbcore.query.MatchQuery("mb_trackid", trackid)
-            ).get()
-
-        # If not, try just album/title
-        if song is None:
-            log.debug(
-                "no album match, trying by album/title: {} - {}", album, title
-            )
-            query = dbcore.AndQuery(
-                [
-                    dbcore.query.SubstringQuery("album", album),
-                    dbcore.query.SubstringQuery("title", title),
-                ]
-            )
-            song = lib.items(query).get()
-
-        # If not, try just artist/title
-        if song is None:
-            log.debug("no album match, trying by artist/title")
-            query = dbcore.AndQuery(
-                [
-                    dbcore.query.SubstringQuery("artist", artist),
-                    dbcore.query.SubstringQuery("title", title),
-                ]
-            )
-            song = lib.items(query).get()
-
-        # Last resort, try just replacing to utf-8 quote
-        if song is None:
-            title = title.replace("'", "\u2019")
-            log.debug("no title match, trying utf-8 single quote")
-            query = dbcore.AndQuery(
-                [
-                    dbcore.query.SubstringQuery("artist", artist),
-                    dbcore.query.SubstringQuery("title", title),
-                ]
-            )
-            song = lib.items(query).get()
-
-        if song is not None:
-            count = int(song.get("play_count", 0))
-            new_count = int(tracks[num].get("playcount", 1))
-            log.debug(
-                "match: {0.artist} - {0.title} ({0.album}) updating:"
-                " play_count {1} => {2}",
-                song,
-                count,
-                new_count,
-            )
-            song["play_count"] = new_count
-            song.store()
-            total_found += 1
-        else:
-            total_fails += 1
-            log.info("  - No match: {} - {} ({})", artist, title, album)
-
-    if total_fails > 0:
-        log.info(
-            "Acquired {}/{} play-counts ({} unknown)",
-            total_found,
-            total,
-            total_fails,
-        )
-
-    return total_found, total_fails

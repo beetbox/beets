@@ -6,6 +6,7 @@ on:
       version:
         description: 'Version of the new release, just as a number with no prepended "v"'
         required: true
+        type: string
 
 env:
   PYTHON_VERSION: "3.10"
@@ -17,19 +18,34 @@ jobs:
     name: Bump version, commit and create tag
     runs-on: ubuntu-latest
     steps:
+      - name: Generate release app token
+        id: release-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+
       - uses: actions/checkout@v5
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+        with:
+          token: ${{ steps.release-token.outputs.token }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --with=release --extras=docs
+        run: poe install --group release --group docs
 
       - name: Bump project version
-        run: poe bump "${{ env.NEW_VERSION }}"
+        run: |
+          poe bump "${{ env.NEW_VERSION }}"
+          # make sure project version is updated in the lock file as well
+          uv lock
 
       - uses: EndBug/add-and-commit@v9
         id: commit_and_tag
@@ -49,15 +65,16 @@ jobs:
         with:
           ref: ${{ env.NEW_TAG }}
 
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v1.0.3
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: poetry
+
+      - name: Install Python tools
+        run: uv tool install "poethepoet>=0.26,<0.47.0"
 
       - name: Install dependencies
-        run: poetry install --with=release --extras=docs
+        run: poe install --group release --group docs
 
       - name: Install pandoc
         run: sudo apt update && sudo apt install pandoc -y

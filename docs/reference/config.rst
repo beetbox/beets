@@ -60,6 +60,33 @@ directory
 The directory to which files will be copied/moved when adding them to the
 library. Defaults to a folder called ``Music`` in your home directory.
 
+tempfile_prefix
+~~~~~~~~~~~~~~~
+
+The prefix used for temporary files when moving files across filesystems. If
+unset, temporary files use a leading dot (``.``). This can be changed when
+moving files to a Windows or Samba share, where a leading dot may cause the file
+to be treated as hidden.
+
+editor
+~~~~~~
+
+The text editor to use when editing configuration files (e.g., via ``beet config
+-e``). Overrides the ``$VISUAL`` and ``$EDITOR`` environment variables. If none
+of these are set, beets falls back to the platform default. Example:
+
+::
+
+    editor: nano
+
+create_backup_before_migrations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether a backup of the database file
+should be created before applying any pending schema migrations after a beets
+upgrade. The backup is only made when there are actually migrations to run.
+Defaults to ``yes``.
+
 .. _plugins-config:
 
 plugins
@@ -467,14 +494,20 @@ Available attributes:
 
 Foreground colors
     ``black``, ``red``, ``green``, ``yellow``, ``blue``, ``magenta``, ``cyan``,
-    ``white``
+    ``white``, ``bright_black``, ``bright_red``, ``bright_green``,
+    ``bright_yellow``, ``bright_blue``, ``bright_magenta``, ``bright_cyan``,
+    ``bright_white``
 
 Background colors
     ``bg_black``, ``bg_red``, ``bg_green``, ``bg_yellow``, ``bg_blue``,
-    ``bg_magenta``, ``bg_cyan``, ``bg_white``
+    ``bg_magenta``, ``bg_cyan``, ``bg_white``, ``bg_bright_black``,
+    ``bg_bright_red``, ``bg_bright_green``, ``bg_bright_yellow``,
+    ``bg_bright_blue``, ``bg_bright_magenta``, ``bg_bright_cyan``,
+    ``bg_bright_white``
 
 Text styles
-    ``normal``, ``bold``, ``faint``, ``underline``, ``reverse``
+    ``normal``, ``bold``, ``faint``, ``italic``, ``underline``, ``blink_slow``,
+    ``blink_rapid``, ``inverse``, ``conceal``, ``crossed_out``
 
 terminal_width
 ~~~~~~~~~~~~~~
@@ -574,6 +607,9 @@ of the imported file. ("Moving" works even across filesystems; if necessary,
 beets will copy and then delete when a simple rename is impossible.) Moving
 files can be risky—it's a good idea to keep a backup in case beets doesn't do
 what you expect with your files.
+
+In the case of a ``move`` when importing an archive, the archive will be removed
+if all contents were successfully imported.
 
 This option *overrides* ``copy``, so enabling it will always move (and not copy)
 files. The ``-c`` switch to the ``beet import`` command, however, still takes
@@ -732,6 +768,9 @@ MusicBrainz. You can use a space-separated list of language abbreviations, like
 ``en jp es``, to specify a preference order. Defaults to an empty list, meaning
 that no language is preferred.
 
+The alias is used for artist name, track title, release group title and album
+title.
+
 .. _ignored_alias_types:
 
 ignored_alias_types
@@ -797,16 +836,39 @@ Default:
     album: albumartist album
     item: artist title
 
+For MusicBrainz-tagged libraries, adding ``mb_albumid`` to the album keys
+distinguishes separate releases that have the same album artist and title:
+
+.. code-block:: yaml
+
+    album: albumartist album mb_albumid
+    item: artist title
+
+All configured fields must match. Albums with different MusicBrainz release IDs
+will therefore not be considered duplicates. An album without a MusicBrainz
+release ID will also not match an otherwise identical album that has one.
+
 .. _duplicate_action:
 
 duplicate_action
 ~~~~~~~~~~~~~~~~
 
-Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``. Controls how
-duplicates are treated in import task. "skip" means that new item(album or
-track) will be skipped; "keep" means keep both old and new items; "remove" means
-remove old item; "merge" means merge into one album; "ask" means the user should
-be prompted for the action each time. The default is ``ask``.
+Either ``skip``, ``keep``, ``remove``, ``merge``, ``upgrade`` or ``ask``.
+Controls how duplicates are treated in import task. "skip" means that new
+item(album or track) will be skipped; "keep" means keep both old and new items;
+"remove" means remove old item; "merge" means merge into one album; "ask" means
+the user should be prompted for the action each time. The default is ``ask``.
+
+"upgrade" compares each newly-imported track against any existing duplicate with
+the same :ref:`duplicate_keys`: a track only replaces its old counterpart if it
+has a higher bitrate, and tracks with no old counterpart are always added. The
+rest of the existing album is left untouched, and the kept tracks are added to
+that same album rather than a new one. If the import matches more than one
+existing album (e.g. two differently-encoded copies of the same release already
+in the library), only the album it overlaps with the most is upgraded; every
+other candidate album is left completely untouched, since a track can only ever
+be added to one album. When ``duplicate_action`` is ``ask``, "upgrade" is one of
+the available interactive choices.
 
 .. _duplicate_verbose_prompt:
 
@@ -826,7 +888,7 @@ is applied, which would, considering the default, look like this:
     New: 2 items, MP3, 320kbps, 7:18, 17.1 MiB
       Artist Name - Album Name - First Track Title
       Artist Name - Album Name - Second Track Title
-    [S]kip new, Keep all, Remove old, Merge all?
+    [S]kip new, Merge all, Remove old, Keep all, Upgrade?
 
 Default: ``no``.
 
@@ -847,11 +909,11 @@ set_fields
 A dictionary indicating fields to set to values for newly imported music. Here's
 an example:
 
-::
+.. code-block:: yaml
 
     set_fields:
-        genre: 'To Listen'
-        collection: 'Unordered'
+        genres: To Listen
+        collection: Unordered
 
 Other field/value pairs supplied via the ``--set`` option on the command-line
 override any settings here for fields with the same name.
@@ -874,6 +936,36 @@ appended to the disambiguation string of matching track candidates. For example:
 ``The Artist - The Title (Discogs, Index 3, Track B1, [The Album]``. This
 feature is currently supported by the :doc:`/plugins/discogs` and the
 :doc:`/plugins/spotify`.
+
+Default: ``yes``.
+
+.. _fix_ext_inplace:
+
+fix_ext_inplace
+~~~~~~~~~~~~~~~
+
+The extension of each file is checked at import. If a file has no extension and
+its binary matches a music format, beets will look for a file with the same name
+and matching extension in the same directory. For example, when importing an mp3
+file named ``asdf``, beets look for ``asdf.mp3``. If found, that file will be
+imported instead. Otherwise, if ``fix_ext_inplace`` is ``yes``, then the file
+will be renamed to contain the extension. If ``fix_ext_inplace`` is ``no``, then
+the original will be left untouched and a copy with extension will be created in
+the same directory. This is only done if the user has ``ffprobe`` (bundled with
+FFmpeg)
+
+Default: ``no``.
+
+.. _remux_mp3_in_wav:
+
+remux_mp3_in_wav
+~~~~~~~~~~~~~~~~
+
+Some WAV files contain MP3 audio streams (``WAVE_FORMAT_MPEGLAYER3``) rather
+than the standard PCM format. When this option is enabled, beets will
+automatically extract the MP3 stream into a proper ``.mp3`` file during import,
+removing the WAV container. The original WAV file is deleted after successful
+extraction.
 
 Default: ``yes``.
 
@@ -906,6 +998,55 @@ match is below the *medium* recommendation threshold or the distance between it
 and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.
+
+.. _distance-weights:
+
+distance_weights
+~~~~~~~~~~~~~~~~
+
+The ``distance_weights`` option allows you to customize how much each field
+contributes to the overall distance score when matching albums and tracks.
+Higher weights mean that differences in that field are penalized more heavily,
+making them more important in the matching decision.
+
+The defaults are:
+
+.. code-block:: yaml
+
+    match:
+        distance_weights:
+            data_source: 2.0
+            artist: 3.0
+            album: 3.0
+            media: 1.0
+            mediums: 1.0
+            year: 1.0
+            country: 0.5
+            label: 0.5
+            catalognum: 0.5
+            albumdisambig: 0.5
+            album_id: 5.0
+            tracks: 2.0
+            missing_tracks: 0.9
+            unmatched_tracks: 0.6
+            track_title: 3.0
+            track_artist: 2.0
+            track_index: 1.0
+            track_length: 2.0
+            track_id: 5.0
+            medium: 1.0
+
+For example, if you don't care as much about matching the exact release year,
+you can reduce its weight:
+
+.. code-block:: yaml
+
+    match:
+        distance_weights:
+            year: 0.1
+
+You only need to specify the fields you want to override; unspecified fields
+keep their default weights.
 
 .. _max_rec:
 
@@ -1096,6 +1237,9 @@ config file like this:
 will place soundtrack albums in a separate directory. The queries are tested in
 the order they appear in the configuration file, meaning that if an item matches
 multiple queries, beets will use the path format for the *first* matching query.
+Queries on multi-value fields, such as ``genres``, match each individual value,
+so an exact string query like ``genres:=Classical`` can match an item whose
+genres are ``Classical`` and ``Baroque`` without also matching ``Neoclassical``.
 
 Note that the special ``singleton`` and ``comp`` path format conditions are, in
 fact, just shorthand for the explicit queries ``singleton:true`` and
@@ -1166,9 +1310,9 @@ Here's an example file:
         color: yes
 
     paths:
-        default: $genre/$albumartist/$album/$track $title
+        default: %first{$genres}/$albumartist/$album/$track $title
         singleton: Singletons/$artist - $title
-        comp: $genre/$album/$track $title
+        comp: %first{$genres}/$album/$track $title
         albumtype:soundtrack: Soundtracks/$album/$track $title
 
 .. only:: man

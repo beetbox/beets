@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import threading
+import time
 from contextlib import contextmanager
 from functools import cached_property
 from http import HTTPStatus
@@ -20,12 +21,11 @@ if TYPE_CHECKING:
 class BeetsHTTPError(requests.exceptions.HTTPError):
     STATUS: ClassVar[HTTPStatus]
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(
-            f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}",
-            *args,
-            **kwargs,
-        )
+    def __init__(self, *args, message: str | None = None, **kwargs) -> None:
+        if not message:
+            message = f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}"
+
+        super().__init__(message, *args, **kwargs)
 
 
 class HTTPNotFoundError(BeetsHTTPError):
@@ -67,7 +67,7 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
 
     * default beets User-Agent header
     * default request timeout
-    * automatic retries on transient connection errors
+    * automatic retries on transient connection or server errors
     * raises exceptions for HTTP error status codes
     """
 
@@ -75,12 +75,22 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         super().__init__(*args, **kwargs)
         self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
 
-        retry = Retry(connect=2, total=2, backoff_factor=1)
-        adapter = HTTPAdapter(max_retries=retry)
+        retry = Retry(
+            total=6,
+            backoff_factor=0.5,
+            status_forcelist=[
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+                HTTPStatus.TOO_MANY_REQUESTS,
+            ],
+        )
+        adapter = RateLimitAdapter(rate_limit=0.25, max_retries=retry)
         self.mount("https://", adapter)
         self.mount("http://", adapter)
 
-    def request(self, *args, **kwargs):
+    def request(self, *args, **kwargs) -> requests.Response:
         """Execute HTTP request with automatic timeout and status validation.
 
         Ensures all requests have a timeout (defaults to 10 seconds) and raises
@@ -93,6 +103,40 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
         return r
 
 
+class RateLimitAdapter(HTTPAdapter):
+    """HTTPAdapter that enforces minimum interval between requests.
+
+    Prevents server overload and 429 errors by sleeping when requests
+    come too fast. Thread-safe via lock.
+
+    Attributes:
+        rate_limit: Minimum seconds between requests. Default 0.25 (4/sec).
+
+    Override `_wait_time()` for custom strategies (token bucket, burst, etc.).
+    """
+
+    def __init__(self, rate_limit: float = 0.25, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.rate_limit = rate_limit
+        self._last_request_time = 0.0
+        self._lock = threading.Lock()
+
+    def _wait_time(self, elapsed: float) -> float:
+        """Return seconds to wait. Override for custom rate limiting."""
+        return max(0, self.rate_limit - elapsed)
+
+    def send(
+        self, request: requests.PreparedRequest, *args, **kwargs
+    ) -> requests.Response:
+        with self._lock:
+            elapsed = time.monotonic() - self._last_request_time
+            wait = self._wait_time(elapsed)
+            if wait > 0:
+                time.sleep(wait)
+            self._last_request_time = time.monotonic()
+        return super().send(request, *args, **kwargs)
+
+
 class RequestHandler:
     """Manages HTTP requests with custom error handling and session management.
 
@@ -102,18 +146,20 @@ class RequestHandler:
     subclasses.
 
     Usage:
-        Subclass and override :class:`RequestHandler.session_type`,
+        Subclass and override :class:`RequestHandler.create_session`,
         :class:`RequestHandler.explicit_http_errors` or
         :class:`RequestHandler.status_to_error()` to customize behavior.
 
-        Use
-        * :class:`RequestHandler.get_json()` to get JSON response data
-        * :class:`RequestHandler.get()` to get HTTP response object
-        * :class:`RequestHandler.request()` to invoke arbitrary HTTP methods
+    Use
 
-        Feel free to define common methods that are used in multiple plugins.
+    - :class:`RequestHandler.get_json()` to get JSON response data
+    - :class:`RequestHandler.get()` to get HTTP response object
+    - :class:`RequestHandler.request()` to invoke arbitrary HTTP methods
+
+    Feel free to define common methods that are used in multiple plugins.
     """
 
+    #: List of custom exceptions to be raised for specific status codes.
     explicit_http_errors: ClassVar[list[type[BeetsHTTPError]]] = [
         HTTPNotFoundError
     ]
@@ -127,7 +173,6 @@ class RequestHandler:
 
     @cached_property
     def session(self) -> TimeoutAndRetrySession:
-        """Lazily initialize and cache the HTTP session."""
         return self.create_session()
 
     def status_to_error(
@@ -155,6 +200,7 @@ class RequestHandler:
         except requests.exceptions.HTTPError as e:
             if beets_error := self.status_to_error(e.response.status_code):
                 raise beets_error(response=e.response) from e
+
             raise
 
     def request(self, *args, **kwargs) -> requests.Response:
@@ -170,6 +216,14 @@ class RequestHandler:
         """Perform HTTP GET request with automatic error handling."""
         return self.request("get", *args, **kwargs)
 
-    def get_json(self, *args, **kwargs):
+    def put(self, *args, **kwargs) -> requests.Response:
+        """Perform HTTP PUT request with automatic error handling."""
+        return self.request("put", *args, **kwargs)
+
+    def delete(self, *args, **kwargs) -> requests.Response:
+        """Perform HTTP DELETE request with automatic error handling."""
+        return self.request("delete", *args, **kwargs)
+
+    def get_json(self, *args, **kwargs) -> Any:
         """Fetch and parse JSON data from an HTTP endpoint."""
         return self.get(*args, **kwargs).json()

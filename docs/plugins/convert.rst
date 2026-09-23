@@ -54,7 +54,8 @@ embedding is disabled for files that are linked. Refer to the ``link`` and
 The ``-F`` (or ``--force``) option forces transcoding even when safety options
 such as ``no_convert``, ``never_convert_lossy_files``, or ``max_bitrate`` would
 normally cause a file to be copied or skipped instead. This can be combined with
-``--format`` to explicitly transcode lossy inputs to a chosen target format.
+``--format`` to explicitly transcode lossy inputs to a chosen target format. The
+default value for this flag comes from the ``force`` configuration option.
 
 The ``-m`` (or ``--playlist``) option enables the plugin to create an m3u8
 playlist file in the destination folder given by the ``-d`` (``--dest``) option
@@ -63,11 +64,22 @@ absolute or relative to the ``dest`` directory. The contents will always be
 relative paths to media files, which tries to ensure compatibility when read
 from external drives or on computers other than the one used for the conversion.
 There is one caveat though: A list generated on Unix/macOS can't be read on
-Windows and vice versa.
+Windows and vice versa. Depending on the beets user's settings a generated
+playlist potentially could contain unicode characters. This is supported,
+playlists are written in `M3U8 format`_.
 
-Depending on the beets user's settings a generated playlist potentially could
-contain unicode characters. This is supported, playlists are written in `M3U8
-format`_.
+The ``-r`` (or ``--refresh``) option allows to refresh the converted files if
+the originals ones are modified. It instructs the plugin to compare the
+timestamps of the latest modification for both the originals and the converted
+files. If an original file is newer than a converted file, the converted file
+will be removed from the filesystem, and the original file will be converted
+once again.
+
+Plugin Event
+------------
+
+After successfully converting or copying an item, this plugin sends the
+``after_convert`` event. See :ref:`plugin_events` for its listener parameters.
 
 Configuration
 -------------
@@ -81,7 +93,8 @@ The available options are:
   them to your library. Default: ``no``.
 - **auto_keep**: Convert your files automatically on import to **dest** but
   import the non transcoded version. It uses the default format you have defined
-  in your config file. Default: ``no``.
+  in your config file. Default: ``no``. This import behavior is fixed and is not
+  affected by ``keep_new``.
 
   .. note::
 
@@ -109,21 +122,30 @@ The available options are:
   with high bitrates, even if they are already in the same format as the output.
   Note that this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration. Default: none.
-  This option will be overridden by the ``--force`` flag
+  This option is ignored when ``force`` is enabled (via config or ``--force``).
 - **no_convert**: Does not transcode items matching the query string provided
   (see :doc:`/reference/query`). For example, to not convert AAC or WMA formats,
   you can use ``format:AAC, format:WMA`` or ``path::\.(m4a|wma)$``. If you only
   want to transcode WMA format, you can use a negative query, e.g.,
   ``^path::\.(wma)$``, to not convert any other format except WMA. This option
-  will be overridden by the ``--force`` flag
+  is ignored when ``force`` is enabled (via config or ``--force``).
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied. Default:
   ``no``. When ``never_convert_lossy_files`` is enabled, lossy source files (for
   example MP3 or Ogg Vorbis) are normally not transcoded and are instead copied
   or linked as-is. To explicitly transcode lossy files in spite of this, use the
-  ``--force`` option with the ``convert`` command (optionally together with
-  ``--format`` to choose a target format)
+  ``force`` setting (from config or ``--force``) with the ``convert`` command
+  (optionally together with ``--format`` to choose a target format)
+- **force**: Force transcoding by default. When enabled, items are transcoded
+  even when ``no_convert``, ``never_convert_lossy_files``, or ``max_bitrate``
+  would otherwise copy or skip them. This applies to both ``beet convert`` and
+  automatic conversion during import (``auto`` and ``auto_keep``). Default:
+  ``false``.
+- **keep_new**: Enable ``--keep-new`` behavior by default for ``beet convert``.
+  Converted files stay in your library and originals are moved to the external
+  destination. This option applies only to ``beet convert`` and does not change
+  ``auto_keep`` import semantics. Default: ``false``.
 - **paths**: The directory structure and naming scheme for the converted files.
   Uses the same format as the top-level ``paths`` section (see
   :ref:`path-format-config`). Default: Reuse your top-level path format
@@ -151,6 +173,9 @@ The available options are:
   as well. The final destination of the playlist file will always be relative to
   the destination path (``dest``, ``--dest``, ``-d``). This configuration is
   overridden by the ``-m`` (``--playlist``) command line option. Default: none.
+- **refresh**: Refresh the converted files if needed by re-converting modified
+  original files. This configuration is overridden by the ``-r`` (``--refresh``)
+  command line option. Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next section):
 
@@ -230,12 +255,12 @@ use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
 documentation_ and the `HydrogenAudio wiki`_ for other LAME configuration
 options and a thorough discussion of MP3 encoding.
 
-.. _documentation: https://lame.sourceforge.io/index.php
+.. _documentation: https://sourceforge.net/projects/lame/
 
-.. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
+.. _gapless: https://wiki.hydrogenaudio.org/index.php?title=Gapless_playback
 
-.. _hydrogenaudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
+.. _hydrogenaudio wiki: https://wiki.hydrogenaudio.org/index.php?title=LAME
 
-.. _lame: https://lame.sourceforge.io/index.php
+.. _lame: https://sourceforge.net/projects/lame/
 
 .. _m3u8 format: https://en.wikipedia.org/wiki/M3U#M3U8

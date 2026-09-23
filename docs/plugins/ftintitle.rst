@@ -19,7 +19,8 @@ Configuration
 To configure the plugin, make a ``ftintitle:`` section in your configuration
 file. The available options are:
 
-- **auto**: Enable metadata rewriting during import. Default: ``yes``.
+- **auto**: Enable metadata rewriting during import and when fetched metadata is
+  later applied by commands such as ``mbsync``. Default: ``yes``.
 - **drop**: Remove featured artists entirely instead of adding them to the title
   field. Default: ``no``.
 - **format**: Defines the format for the featuring X part of the new title
@@ -32,6 +33,18 @@ file. The available options are:
   skip the ftintitle processing. Default: ``yes``.
 - **custom_words**: List of additional words that will be treated as a marker
   for artist features. Default: ``[]``.
+- **bracket_keywords**: Controls where the featuring text is inserted when the
+  title includes bracketed qualifiers such as ``(Remix)`` or ``[Live]``.
+  FtInTitle inserts the new text before the first bracket whose contents match
+  any of these keywords. Supply a list of words to fine-tune the behavior or set
+  the list to ``[]`` to match *any* bracket regardless of its contents. Default:
+
+  ::
+
+      ["abridged", "acapella", "club", "demo", "edit", "edition", "extended",
+       "instrumental", "live", "mix", "radio", "release", "remaster",
+       "remastered", "remix", "rmx", "unabridged", "unreleased",
+       "version", "vip"]
 
 Path Template Values
 --------------------

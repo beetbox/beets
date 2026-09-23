@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2017, Pauli Kettunen.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Updates a Kodi library whenever the beets library is changed.
 This is based on the Plex Update plugin.
 
@@ -23,12 +9,21 @@ Put something like the following in your config.yaml to configure:
         pwd: secret
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import requests
 
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
 
-def update_kodi(host, port, user, password):
+
+def update_kodi(
+    host: str, port: int, user: str, password: str
+) -> requests.Response:
     """Sends request to the Kodi api to start a library refresh."""
     url = f"http://{host}:{port}/jsonrpc"
 
@@ -39,19 +34,13 @@ def update_kodi(host, port, user, password):
 
     # Create the payload. Id seems to be mandatory.
     payload = {"jsonrpc": "2.0", "method": "AudioLibrary.Scan", "id": 1}
-    r = requests.post(
-        url,
-        auth=(user, password),
-        json=payload,
-        headers=headers,
-        timeout=10,
+    return requests.post(
+        url, auth=(user, password), json=payload, headers=headers, timeout=10
     )
-
-    return r
 
 
 class KodiUpdate(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("kodi")
 
         # Adding defaults.
@@ -63,11 +52,11 @@ class KodiUpdate(BeetsPlugin):
         self.config["pwd"].redact = True
         self.register_listener("database_change", self.listen_for_db_change)
 
-    def listen_for_db_change(self, lib, model):
+    def listen_for_db_change(self, lib: Library, model: LibModel) -> None:
         """Listens for beets db change and register the update"""
         self.register_listener("cli_exit", self.update)
 
-    def update(self, lib):
+    def update(self, lib: Library) -> None:
         """When the client exists try to send refresh request to Kodi server."""
         self._log.info("Requesting a Kodi library update...")
 

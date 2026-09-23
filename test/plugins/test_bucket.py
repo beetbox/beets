@@ -1,24 +1,11 @@
-# This file is part of beets.
-# Copyright 2016, Fabrice Laporte.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the 'bucket' plugin."""
 
 from datetime import datetime
 
 import pytest
 
-from beets import config, ui
+from beets import config
+from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase
 from beetsplug import bucket
 
@@ -140,21 +127,21 @@ class BucketPluginTest(BeetsTestCase):
 
     def test_bad_alpha_range_def(self):
         """If bad alpha range definition, a UserError is raised."""
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             self._setup_config(bucket_alpha=["$%"])
 
     def test_bad_year_range_def_no4digits(self):
         """If bad year range definition, a UserError is raised.
         Range origin must be expressed on 4 digits.
         """
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             self._setup_config(bucket_year=["62-64"])
 
     def test_bad_year_range_def_nodigits(self):
         """If bad year range definition, a UserError is raised.
         At least the range origin must be declared.
         """
-        with pytest.raises(ui.UserError):
+        with pytest.raises(UserError):
             self._setup_config(bucket_year=["nodigits"])
 
     def check_span_from_str(self, sstr, dfrom, dto):

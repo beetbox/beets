@@ -143,7 +143,7 @@ directory:
         proxy_set_header X-Script-Name /beets;
     }
 
-.. _nginx: https://www.nginx.com
+.. _nginx: https://www.f5.com/products/nginx
 
 JSON API
 --------
@@ -295,4 +295,4 @@ Responds with the number of tracks and albums in the database.
       "albums": 3
     }
 
-.. _flask: https://flask.palletsprojects.com/en/1.1.x/
+.. _flask: https://flask.palletsprojects.com/en/stable/

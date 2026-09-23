@@ -1,46 +1,100 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import re
+from collections.abc import Sequence
+from contextlib import contextmanager
+from functools import cached_property
+from pathlib import Path
+from typing import TYPE_CHECKING, TypeVar
 
 import platformdirs
 
 import beets
-from beets import dbcore
+from beets import config, context, dbcore
+from beets.dbcore.query import Query
+from beets.dbcore.sort import NullSort
+from beets.exceptions import UserError
 from beets.util import normpath
+from beets.util.pathformats import get_path_formats
 
+from . import migrations
 from .models import Album, Item
-from .queries import PF_KEY_DEFAULT, parse_query_parts, parse_query_string
+from .queries import parse_query_parts, parse_query_string
 
 if TYPE_CHECKING:
-    from beets.dbcore import Results
+    from collections.abc import Iterator
+
+    from beets.dbcore.sort import Sort
+    from beets.util import PathLike, Replacements
+    from beets.util.pathformats import PathFormat
+
+    from .models import LibModel
+
+    LM = TypeVar("LM", bound=LibModel)
 
 
 class Library(dbcore.Database):
     """A database of music containing songs and albums."""
 
     _models = (Item, Album)
+    _migrations = (
+        (migrations.MultiGenreFieldMigration, (Item, Album)),
+        (migrations.LyricsMetadataInFlexFieldsMigration, (Item,)),
+        (migrations.MultiRemixerFieldMigration, (Item,)),
+        (migrations.MultiLyricistFieldMigration, (Item,)),
+        (migrations.MultiComposerFieldMigration, (Item,)),
+        (migrations.MultiArrangerFieldMigration, (Item,)),
+        (migrations.RelativePathMigration, (Item, Album)),
+        (migrations.RemoveInheritedArtpathMigration, (Item,)),
+        (migrations.InstrumentalLyricsInFlexFieldMigration, (Item,)),
+    )
+
+    # Used for template substitution performance.
+    _memotable: dict[tuple[str | None, str | None, str | None, int | None], str]
+    replacements: Replacements
+
+    @cached_property
+    def path_formats(self) -> list[PathFormat]:
+        return get_path_formats(config["paths"])
+
+    @staticmethod
+    def get_replacements() -> Replacements:
+        """Build regex/string replacement pairs from config."""
+        replacements = []
+        for pattern, repl in beets.config["replace"].get(dict).items():
+            repl = repl or ""
+            try:
+                replacements.append((re.compile(pattern), repl))
+            except re.error:
+                raise UserError(
+                    f"Malformed regular expression in replace: {pattern}"
+                )
+        return replacements
 
     def __init__(
         self,
-        path="library.blb",
+        path: PathLike = Path("library.blb"),
         directory: str | None = None,
-        path_formats=((PF_KEY_DEFAULT, "$artist/$album/$track $title"),),
-        replacements=None,
-    ):
-        timeout = beets.config["timeout"].as_number()
-        super().__init__(path, timeout=timeout)
-
+        set_music_dir: bool = True,
+    ) -> None:
         self.directory = normpath(directory or platformdirs.user_music_path())
+        if set_music_dir:
+            context.set_music_dir(self.directory)
 
-        self.path_formats = path_formats
-        self.replacements = replacements
+        super().__init__(path, timeout=beets.config["timeout"].as_number())
 
-        # Used for template substitution performance.
-        self._memotable: dict[tuple[str, ...], str] = {}
+        self.replacements = self.get_replacements()
+        self._memotable = {}
+
+    @contextmanager
+    def music_dir_context(self) -> Iterator[Library]:
+        """Temporarily bind this library's directory to path conversion."""
+        with context.music_dir(self.directory):
+            yield self
 
     # Adding objects to the database.
 
-    def add(self, obj):
+    def add(self, obj: LibModel) -> int | None:
         """Add the :class:`Item` or :class:`Album` object to the library
         database.
 
@@ -50,7 +104,7 @@ class Library(dbcore.Database):
         self._memotable = {}
         return obj.id
 
-    def add_album(self, items):
+    def add_album(self, items: Sequence[Item]) -> Album:
         """Create a new album consisting of a list of items.
 
         The items are added to the database if they don't yet have an
@@ -79,50 +133,80 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort=None):
+    def _fetch(
+        self,
+        model_cls: type[LM],
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+        limit: int | None = None,
+    ) -> dbcore.Results[LM]:
         """Parse a query and fetch.
 
         If an order specification is present in the query string
         the `sort` argument is ignored.
         """
         # Parse the query, if necessary.
+        parsed_sort = None
+        parsed_query = None
         try:
-            parsed_sort = None
-            if isinstance(query, str):
-                query, parsed_sort = parse_query_string(query, model_cls)
-            elif isinstance(query, (list, tuple)):
-                query, parsed_sort = parse_query_parts(query, model_cls)
+            # Query parsing needs the library root, but keeping it scoped here
+            # avoids leaking one Library's directory into another's work.
+            with context.music_dir(self.directory):
+                if isinstance(query, Query):
+                    parsed_query = query
+                if isinstance(query, str):
+                    parsed_query, parsed_sort = parse_query_string(
+                        query, model_cls
+                    )
+                elif isinstance(query, Sequence):
+                    parsed_query, parsed_sort = parse_query_parts(
+                        query, model_cls
+                    )
         except dbcore.query.InvalidQueryArgumentValueError as exc:
             raise dbcore.InvalidQueryError(query, exc)
 
         # Any non-null sort specified by the parsed query overrides the
         # provided sort.
-        if parsed_sort and not isinstance(parsed_sort, dbcore.query.NullSort):
+        if parsed_sort and not isinstance(parsed_sort, NullSort):
             sort = parsed_sort
 
-        return super()._fetch(model_cls, query, sort)
+        return super()._get_results(model_cls, parsed_query, sort, limit)
 
     @staticmethod
-    def get_default_album_sort():
+    def get_default_album_sort() -> Sort:
         """Get a :class:`Sort` object for albums from the config option."""
         return dbcore.sort_from_strings(
             Album, beets.config["sort_album"].as_str_seq()
         )
 
     @staticmethod
-    def get_default_item_sort():
+    def get_default_item_sort() -> Sort:
         """Get a :class:`Sort` object for items from the config option."""
         return dbcore.sort_from_strings(
             Item, beets.config["sort_item"].as_str_seq()
         )
 
-    def albums(self, query=None, sort=None) -> Results[Album]:
+    def albums(
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+        limit: int | None = None,
+    ) -> dbcore.Results[Album]:
         """Get :class:`Album` objects matching the query."""
-        return self._fetch(Album, query, sort or self.get_default_album_sort())
+        return self._fetch(
+            Album, query, sort or self.get_default_album_sort(), limit
+        )
 
-    def items(self, query=None, sort=None) -> Results[Item]:
+    def items(
+        self,
+        query: str | Sequence[str] | Query | None = None,
+        sort: Sort | None = None,
+        limit: int | None = None,
+    ) -> dbcore.Results[Item]:
         """Get :class:`Item` objects matching the query."""
-        return self._fetch(Item, query, sort or self.get_default_item_sort())
+        return self._fetch(
+            Item, query, sort or self.get_default_item_sort(), limit
+        )
 
     # Convenience accessors.
     def get_item(self, id_: int) -> Item | None:

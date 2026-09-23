@@ -1,14 +1,12 @@
-[tool.poetry]
+[project]
 name = "beets"
-version = "2.5.1"
+version = "2.14.1"
 description = "music tagger and library organizer"
-authors = ["Adrian Sampson <adrian@radbox.org>"]
-maintainers = ["Serene-Arc"]
-license = "MIT"
+authors = [{ name = "Adrian Sampson", email = "adrian@radbox.org" }]
+maintainers = [{ name = "Serene-Arc" }]
+license = { text = "MIT" }
 readme = "README.rst"
-homepage = "https://beets.io/"
-repository = "https://github.com/beetbox/beets"
-documentation = "https://beets.readthedocs.io/en/stable/"
+requires-python = ">=3.10,<3.15"
 classifiers = [
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Multimedia :: Sound/Audio :: Players :: MP3",
@@ -21,141 +19,97 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
-packages = [
-    { include = "beets" },
-    { include = "beetsplug" },
+
+dependencies = [
+    "colorama ; sys_platform == 'win32'",
+    "confuse>=2.2.0",
+    "jellyfish",
+    "lap>=0.5.12",
+    "mediafile>=0.17.0",
+    "numpy>=2.0.2 ; python_version < '3.13'",
+    "numpy>=2.3.5 ; python_version >= '3.13'",
+    "packaging>=24.0",
+    "platformdirs>=3.5.0",
+    "pyyaml",
+    "requests>=2.32.5",
+    "requests-ratelimiter>=0.7.0",
+    "typing_extensions",
+    "unidecode>=1.3.6",
 ]
-include = [ # extra files to include in the sdist
-    { path = "docs", format = "sdist" },
-    { path = "extra", format = "sdist" },
-    { path = "man/**/*", format = "sdist" },
-    { path = "test/*.py", format = "sdist" },
-    { path = "test/rsrc/**/*", format = "sdist" },
+
+[dependency-groups]
+docs = [
+    "docutils>=0.20.1",
+    "pydata-sphinx-theme",
+    "sphinx<9",
+    "sphinx-lint>=1.0.0",
+    "sphinx-design>=0.6.1",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-toolbox>=4.1.0",
+    "titlecase>=2.4.1,<3",
 ]
-exclude = ["docs/_build", "docs/modd.conf", "docs/**/*.css"]
-
-[tool.poetry.urls]
-Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
-"Bug Tracker" = "https://github.com/beetbox/beets/issues"
-
-[tool.poetry.dependencies]
-python = ">=3.10,<4"
-
-colorama = { version = "*", markers = "sys_platform == 'win32'" }
-confuse = ">=2.1.0"
-jellyfish = "*"
-lap = ">=0.5.12"
-mediafile = ">=0.12.0"
-numpy = [
-    { python = "<3.13", version = ">=2.0.2" },
-    { python = ">=3.13", version = ">=2.3.4" },
+test = [
+    "beautifulsoup4",
+    "codecov>=2.1.13",
+    "flask",
+    "langdetect",
+    "pylast",
+    "pytest",
+    "pytest-cov",
+    "pytest-factoryboy>=2.8.1",
+    "pytest-flask",
+    "python-mpd2",
+    "python3-discogs-client>=2.3.15",
+    "py7zr",
+    "pyxdg",
+    "rarfile",
+    "requests-mock>=1.12.1",
+    "requests-oauthlib",
+    "responses>=0.3.0",
+    "titlecase>=2.4.1,<3",
 ]
-platformdirs = ">=3.5.0"
-pyyaml = "*"
-requests = ">=2.32.5"
-requests-ratelimiter = ">=0.7.0"
-typing_extensions = "*"
-unidecode = ">=1.3.6"
-
-beautifulsoup4 = { version = "*", optional = true }
-dbus-python = { version = "*", optional = true }
-flask = { version = "*", optional = true }
-flask-cors = { version = "*", optional = true }
-langdetect = { version = "*", optional = true }
-librosa = { version = ">=0.11", optional = true }
-scipy = [ # for librosa
-    { python = "<3.13", version = ">=1.13.1", optional = true },
-    { python = ">=3.13", version = ">=1.16.1", optional = true },
+lint = [
+    "docstrfmt>=2.0.2",
+    "ruff>=0.13.0",
+    "sphinx-lint>=1.0.0",
 ]
-musicbrainzngs = { version = ">=0.4", optional = true }
-numba = [ # for librosa
-    { python = "<3.13", version = ">=0.60", optional = true },
-    { python = ">=3.13", version = ">=0.62.1", optional = true },
+typing = [
+    "mypy",
+    "types-beautifulsoup4",
+    "types-docutils>=0.22.2.20251006",
+    "types-Flask-Cors",
+    "types-Pillow",
+    "types-PyYAML",
+    "types-requests",
+    "types-urllib3",
 ]
-mutagen = { version = ">=1.33", optional = true }
-Pillow = { version = "*", optional = true }
-py7zr = { version = "*", optional = true }
-pyacoustid = { version = "*", optional = true }
-PyGObject = { version = "*", optional = true }
-pylast = { version = "*", optional = true }
-python-mpd2 = { version = ">=0.4.2", optional = true }
-python3-discogs-client = { version = ">=2.3.15", optional = true }
-pyxdg = { version = "*", optional = true }
-rarfile = { version = "*", optional = true }
-reflink = { version = "*", optional = true }
-resampy = { version = ">=0.4.3", optional = true }
-requests-oauthlib = { version = ">=0.6.1", optional = true }
-soco = { version = "*", optional = true }
+release = [
+    "click>=8.1.7",
+    "tomli>=2.0.1",
+]
+dev = [
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
+    { include-group = "typing" },
+]
 
-docutils = { version = ">=0.20.1", optional = true }
-pydata-sphinx-theme = { version = "*", optional = true }
-sphinx = { version = "*", optional = true }
-sphinx-design = { version = ">=0.6.1", optional = true }
-sphinx-copybutton = { version = ">=0.5.2", optional = true }
-titlecase = { version = "^2.4.1", optional = true }
-
-[tool.poetry.group.test.dependencies]
-beautifulsoup4 = "*"
-codecov = ">=2.1.13"
-flask = "*"
-langdetect = "*"
-mock = "*"
-pylast = "*"
-pytest = "*"
-pytest-cov = "*"
-pytest-flask = "*"
-python-mpd2 = "*"
-python3-discogs-client = ">=2.3.15"
-py7zr = "*"
-pyxdg = "*"
-rarfile = "*"
-requests-mock = ">=1.12.1"
-requests_oauthlib = "*"
-responses = ">=0.3.0"
-titlecase = "^2.4.1"
-
-[tool.poetry.group.lint.dependencies]
-docstrfmt = ">=1.11.1"
-ruff = ">=0.6.4"
-sphinx-lint = ">=1.0.0"
-
-[tool.poetry.group.typing.dependencies]
-mypy = "*"
-types-beautifulsoup4 = "*"
-types-docutils = ">=0.22.2.20251006"
-types-mock = "*"
-types-Flask-Cors = "*"
-types-Pillow = "*"
-types-PyYAML = "*"
-types-requests = "*"
-types-urllib3 = "*"
-
-[tool.poetry.group.release.dependencies]
-click = ">=8.1.7"
-packaging = ">=24.0"
-tomli = ">=2.0.1"
-
-[tool.poetry.extras]
+[project.optional-dependencies]
 # inline comments note required external / non-python dependencies
 absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
 aura = ["flask", "flask-cors", "Pillow"]
-autobpm = ["librosa", "resampy"]
+autobpm = ["librosa>=0.11", "resampy>=0.4.3", "numba>=0.65.1"]
 # badfiles # mp3val and flac
-beatport = ["requests-oauthlib"]
-bpd = ["PyGObject"] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
-chroma = ["pyacoustid"] # chromaprint or fpcalc
+beatport = ["requests-oauthlib>=0.6.1"]
+bpd = [
+    "PyGObject ; sys_platform != 'win32'",
+] # gobject-introspection, gstreamer1.0-plugins-base, python3-gst-1.0
+chroma = ["pyacoustid>=1.3.1,<2"] # chromaprint or fpcalc
 # convert # ffmpeg
-docs = [
-    "docutils",
-    "pydata-sphinx-theme",
-    "sphinx",
-    "sphinx-lint",
-    "sphinx-design",
-    "sphinx-copybutton",
-]
-discogs = ["python3-discogs-client"]
+discogs = ["python3-discogs-client>=2.3.15"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
 fetchart = ["beautifulsoup4", "langdetect", "Pillow", "requests"]
@@ -165,34 +119,57 @@ import = ["py7zr", "rarfile"]
 kodiupdate = ["requests"]
 lastgenre = ["pylast"]
 lastimport = ["pylast"]
-listenbrainz = ["musicbrainzngs"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
-mbcollection = ["musicbrainzngs"]
-metasync = ["dbus-python"]
-missing = ["musicbrainzngs"]
-mpdstats = ["python-mpd2"]
-parentwork = ["musicbrainzngs"]
+metasync = ["dbus-python ; sys_platform != 'win32'"]
+mpdstats = ["python-mpd2>=0.4.2"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = [
-    "PyGObject",
+    "PyGObject ; sys_platform != 'win32'",
 ] # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
-scrub = ["mutagen"]
+scrub = ["mutagen>=1.33"]
 sonosupdate = ["soco"]
+tidal = ["requests-oauthlib>=0.6.1"]
 titlecase = ["titlecase"]
 thumbnails = ["Pillow", "pyxdg"]
 web = ["flask", "flask-cors"]
 
-[tool.poetry.scripts]
+[project.scripts]
 beet = "beets.ui:main"
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Homepage = "https://beets.io/"
+Repository = "https://github.com/beetbox/beets"
+Documentation = "https://beets.readthedocs.io/en/stable/"
+Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
+"Bug Tracker" = "https://github.com/beetbox/beets/issues"
 
-[tool.pipx-install]
-poethepoet = ">=0.26"
-poetry = ">=1.8,<2"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+artifacts = [
+    "man/**",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["beets", "beetsplug"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "beets/",
+    "beetsplug/",
+    "docs/",
+    "extra/",
+    "man/",
+    "test/",
+]
+exclude = [
+    "docs/_build/",
+    "docs/modd.conf",
+    "docs/**/*.css",
+]
 
 [tool.poe.tasks.build]
 help = "Build the package"
@@ -200,7 +177,7 @@ shell = """
 make -C docs man
 rm -rf man
 mv docs/_build/man .
-poetry build
+uv build
 """
 
 [tool.poe.tasks.bump]
@@ -231,27 +208,41 @@ cmd = "make -C docs $COMMANDS"
 
 [tool.poe.tasks.format]
 help = "Format the codebase"
-cmd = "ruff format"
+cmd = "ruff format --config=pyproject.toml"
 
 [tool.poe.tasks.format-docs]
 help = "Format the documentation"
-cmd = "docstrfmt docs *.rst"
+cmd = "docstrfmt --preserve-adornments docs *.rst"
+
+[tool.poe.tasks.install]
+help = "Install project dependencies"
+cmd = "uv sync --locked"
 
 [tool.poe.tasks.lint]
 help = "Check the code for linting issues. Accepts ruff options."
-cmd = "ruff check"
+cmd = "ruff check --config=pyproject.toml"
 
 [tool.poe.tasks.lint-docs]
 help = "Lint the documentation"
-shell = "sphinx-lint --enable all --disable default-role $(git ls-files '*.rst')"
+interpreter = "bash"
+shell = """
+set -o pipefail
+files=$(git ls-files '*.rst')
+
+grep -Eno ' `[^`][^`]+`[^_]' $files |
+    sed 's/ .*/ Use double backticks for inline literal (double-backticks-required)/' && failed=1
+sphinx-lint --enable all --disable default-role $files || failed=1
+
+exit ${failed:-0}
+"""
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
-cmd = "poetry update -vv"
+cmd = "uv sync --upgrade"
 
 [tool.poe.tasks.test]
 help = "Run tests with pytest"
-cmd = "pytest $OPTS"
+cmd = "uv run pytest $OPTS"
 env.OPTS.default = "-p no:cov"
 
 [tool.poe.tasks.test-with-coverage]
@@ -263,8 +254,7 @@ ref = "test"
 # measure coverage across logical branches
 # show which tests cover specific lines in the code (see the HTML report)
 env.OPTS = """
---cov=beets
---cov=beetsplug
+--cov=.
 --cov-report=xml:.reports/coverage.xml
 --cov-report=html:.reports/html
 --cov-branch
@@ -295,11 +285,17 @@ extend-exclude = [
 ]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 80
 
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+
 [tool.ruff.lint]
+future-annotations = true
 select = [
+    "A", # flake8-builtins
+    "ANN", # flake8-annotations
     # "ARG", # flake8-unused-arguments
     # "C4", # flake8-comprehensions
     "E", # pycodestyle
@@ -309,26 +305,42 @@ select = [
     "I", # isort
     "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
+    "PIE", # flake8-pie
     "PT", # flake8-pytest-style
-    # "RUF", # ruff
+    "RET", # flake8-return
+    "RUF", # ruff
     "UP", # pyupgrade
-    "TCH", # flake8-type-checking
+    "TC", # flake8-type-checking
     "W", # pycodestyle
 ]
 ignore = [
+    "ANN002", # no need to document *args due to noise
+    "ANN003", # no need to document **kwargs due to noise
+    "ANN401", # we use Any type in the codebase
     "TC006", # no need to quote 'cast's since we use 'from __future__ import annotations'
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "beets/**" = ["PT"]
+"docs/conf.py" = ["ANN"]
+"test/plugins/test_ftintitle.py" = ["E501"]
 "test/test_util.py" = ["E501"]
-"test/ui/test_field_diff.py" = ["E501"]
+"test/util/test_diff.py" = ["E501"]
+"test/util/test_id_extractors.py" = ["E501"]
+"test/**" = [
+    "RUF001", # we use Unicode characters in tests
+    "ANN", # we don't annotate test functions
+]
 
 [tool.ruff.lint.isort]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.pycodestyle]
 max-line-length = 88
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+suppress-dummy-args = true
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

@@ -27,6 +27,14 @@ af102c3e2f1c7a49e99839e2825906fe01780eec
 910354a6c617ed5aa643cff666205b43e1557373
 # pyupgrade beetsplug and tests
 1ec87a3bdd737abe46c6e614051bf9e314db4619
+# Updates docstrings in library.py.
+8c5ced3ee11a353546034189736c6001115135a4
+# Fixes inconsistencies in ending quote placements for single-line docstrings.
+bbd32639b4c469fe3d6668f1e3bb17d8ba7a70ce
+# Fixes linting errors by removing trailing whitespaces.
+acf576c455e59e8197359d4517f8c0a5a9f362bb
+# Alters docstrings in library.py to be imperative-style.
+2f42c8b1c019a90448d33d940b609c18ba644cbc
 
 # 2022
 # Reformat flake8 config comments
@@ -37,18 +45,58 @@ abc3dfbf429b179fac25bd1dff72d577cd4d04c7
 a6e5201ff3fad4c69bf24d17bace2ef744b9f51b
 
 # 2024
+# Replace assertTrue
+0ecc345143cf89fabe74bb2e95eedfa1114857a3
+# Replace assertFalse
+cb82917fe0d5476c74bb946f91ea0d9a9f019c9b
+# Replace assertIsNone
+5d4911e905d3a89793332eb851035e6529c0725e
+# Replace assertIsNotNone
+2616bcc950e592745713f28db0192293410ed3e3
+# Replace assertIn
+11e948121cde969f9ea27caa545a6508145572fb
+# Replace assertNotIn
+6631b6aef6da3e09d3531de6df7995dd5396398f
+# Replace assertEqual
+9a05d27acfef3788d10dd0a8db72a6c8c15dfbe9
+# Replace assertNotEqual
+f9359df0d15ea8ee8e3c80bc198e779f185160cb
+# Replace assertIsInstance
+eda0ef11d67f482fe50bbe581685b8b6a284afb9
+# Replace assertLess and assertLessEqual
+6a3380bcb5e803e825bd9485fcc4b70d352947eb
+# Replace assertGreater and assertGreaterEqual
+46bdb84b464ffec3f0ce88d53467391be7b7046f
+# Replace assertCountEqual
+fdb8c28271e8b22d458330598a524067ca37026e
+# Replace assertListEqual
+fcc4d8481df295019945ac7973906f960c58c9fb
+# Use f-string syntax
+4b69b493d2630b723684f259ee9e7e07c480e8ee
 # Reformat the codebase
 85a17ee5039628a6f3cdcb7a03d7d1bd530fbe89
 # Fix lint issues
 f36bc497c8c8f89004f3f6879908d3f0b25123e1
 # Remove some lint exclusions and fix the issues
 5f78d1b82b2292d5ce0c99623ba0ec444b80d24c
+# Use PEP585 lowercase collections typing annotations
+51f9dd229e64f5106d69f87906a94e75604f346b
+# Remove unnecessary quotes from types
+fbfdfd54446fab6782ef0629da303f14f0a2ecdf
+# Replace Union types by PEP604 pipe character
+7ef1b61070ed4ed79c4720d019968baf38e38050
+# Update deprecated imports
+161b0522bbf7f4984173fee4128416b05f6cc5f3
+# Move imports required for typing under the TYPE_CHECKING block
+5c81f94cf7ced476673d0fa948cc7ecda00bae99
 
 # 2025
 # Fix formatting
 c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 # Importer restructure
 9147577b2b19f43ca827e9650261a86fb0450cef
+# Renamed all `action` occurrences with `Action`.
+68acaa6470a04474a2aefe9b1de71ae7fa10b861
 # Move functionality under MusicBrainz plugin
 529aaac7dced71266c6d69866748a7d044ec20ff
 # musicbrainz: reorder methods
@@ -57,6 +105,20 @@ c490ac5810b70f3cf5fd8649669838e8fdb19f4d
 1a045c91668c771686f4c871c84f1680af2e944b
 # Library restructure (split library.py into multiple modules)
 0ad4e19d4f870db757373f44d12ff3be2441363a
+# Split library file into different files inside library folder.
+98377ab5f6fc1829d79211b376bfd8d82bafaf33
+# Use pathlib.Path in test_smartplaylist.py
+d017270196dc8e0e2a4051afa5d05213946cbbbc
+# Replace assertIsFile
+ca4fa6ba10807f4a48a428d23e45c023c15dfa7d
+# Replace assertIsDir
+43b8cce063b1a1ef079266f362272307fb328d73
+# Replace assertFileTag and assertNoFileTag
+c6b5b3bed31704f7fe8632a6aef1a2348028348f
+# Replace assertAlbumImport
+3c8179a762c4387f9c40a12e3b9e560ff1c194ec
+# Replace assertCount
+72caf0d2cdc8fcefe1c252bdb0ac9b11b90cc649
 # Docs: fix linting issues
 769dcdc88a1263638ae25944ba6b2be3e8933666
 # Reformat all docs using docstrfmt
@@ -81,7 +143,179 @@ d93ddf8dd43e4f9ed072a03829e287c78d2570a2
 59c93e70139f70e9fd1c6f3c1bceb005945bec33
 # Moved ui.commands._utils into ui.commands.utils
 25ae330044abf04045e3f378f72bbaed739fb30d
-# Refactor test_ui_command.py into multiple modules 
+# Refactor test_ui_command.py into multiple modules
 a59e41a88365e414db3282658d2aa456e0b3468a
 # pyupgrade Python 3.10
 301637a1609831947cb5dd90270ed46c24b1ab1b
+# Fix changelog formatting
+658b184c59388635787b447983ecd3a575f4fe56
+# Configure future-annotations
+ac7f3d9da95c2d0a32e5c908ea68480518a1582d
+# Configure ruff for py310
+c46069654628040316dea9db85d01b263db3ba9e
+# Enable RUF rules
+4749599913a42e02e66b37db9190de11d6be2cdf
+# Address RUF012
+bc71ec308eb938df1d349f6857634ddf2a82e339
+
+# 2026
+# Move changelog note under Unreleased section
+1fe5bad4b27d2845aad16f0afae91fe389f299fb
+# Replace http URLs with https
+3d0d032987c4c2e9550529fd25e79581b06ade73
+# Fix broken URLs
+441c8383873d72d4bb0387cdf1863c0fe9e11098
+# Fix redirect URLs
+ae3a2e5729e3c0a5acbd8967ba2f11f4c53acd09
+# Format docs
+192217da5d70621089b06b06fff3dbcbeb4c0c4d
+# Add a changelog note
+b3f558584910ab4fc6aa185ec4a4c8554001ba24
+# Fix references to color utils
+a6fcb7ba0f237530ff394a423a7cbe2ac4853c91
+# Fix diff references
+1d54f2bf66506e7a45ce5e962106897e3c98f67a
+# Fix layout references
+ffb43290066c78cb72603b7e2a0a1c90056361dd
+# lastgenre: Move fetching to client module
+b4beee8ff3754b001e7504c05a2b838bfa689022
+# autotag: use explicit imports
+b8def07121431421118ff7d569f8187aae0520f2
+# sort: Update imports
+d4fd36a03384b0f71144932833d9c633c1f9545f
+# sort: Update dotted sort references
+0cd20798aa585f162433423f767c047b7474a70e
+# Reformat using skip-magic-trailing-comma
+adfb73b66dba0fc799880af176ef6f9ac0a7ee68
+# Refactor test_library
+6493d4dd018e08eb5d16d5381ebff47deea98bb1
+# Import everything from parent beets.autotag
+29580d2f00eb02f1ce77ebe3e1435804f7252ba1
+# Move Match classes to beets.autotag.match
+fd46e5b7738a3e11ef01e6fa8dc6fb8e0c7c82ec
+# Add setup fixture to TestHelper
+7bad226c33c2d48b5102cff213c67f16eeb09a7b
+# Fix mbcollection tests
+544ea3af5d85df187e080f407d3aaf84eac4ee63
+# Fix ftintitle tests
+ca8544d4bcab503e1e4c2cd6688655c8211aa7a1
+# Fix autobpm tests
+5804a21620098e8da78b1f4a5f85063033586632
+# Enable and fix flake8-pie
+3a419c6a347803fc962f018f5ad027b5399ab3ae
+# Enable and fix flake8-return
+d0dc5f86a626765c86cdadc348595429f4c6e6ef
+# Enable and fix flake8-builtins
+b7974ace83ab193b6417bdcecaf68a742bf5a1a8
+# Preserve importer config views
+c9ad80dad2528af67cdb76c35d7ba5e4824b7600
+# Type _reduce_and_log
+c070b29e14cd06419e129b76a6d42a82fe51e190
+# Add missing types to importer
+e4baceae1fa03dfd6db9e0bab88ddd2812963ad3
+# Add missing types to beets.util.pipeline
+f0105bef73053098f8755376c88f38cc90d9b23f
+# Rip out util tests from test_files
+b1ae461723316b738f301406198382913207e100
+# Rip out queryparse tests away from test_dbcore
+88202493adb769e667f64a96a3ec0270f46ca60e
+# Define DB fixtures in a shared place
+816cddbfd5d0976a31e9d0788db0944c62ad16db
+# Move test modules under folders that they belong to
+900543baca4cf5fa4dbe52dbe748f98a0371d0ed
+# Move DummyIMBackend to fixtures
+aef9c64cb07c8f828d0dd6e69a5485abf2c43396
+# typing: add types to beets.util
+94ef7d8d1f37d87268abed6a4bd5df054912092f
+# typing: make path utils more flexible re path types
+1418a80e0531fba1e01d0ad2a4decdefaed6b365
+# typing: add types to beets.test.helper
+29c887db5bff1cfc4c6ea60505636742fa41cccf
+# typing: type beets.dbcore.db
+8d03803fcf1b18385e477cb9273553e2431447ce
+# typing: type beets.dbcore.sort
+ca8e9f69a8a0254aa767dc86f6d808d02f6af05d
+# typing: type beets.dbcore.query
+b1701c2e12b2de8e5462affe46ecc6816a5fc508
+# typing: type beets.dbcore.types
+ea3d6af6169d33be009b86bf5607baae7cf9652a
+# Fix #6177, remove derived types, refactor coalesce tracks
+9efe87101ce03706660129633e03147a222765cf
+# typing: type beets.library.exceptions
+fcee48fb0a11003afab1f4eb7334dca1e4842606
+# typing: type beets.library.queries
+c6b87e869e44bd53fccc9603b682351c96612583
+# dbcore: rename Database._fetch to Database.get_results
+856087258b3466f09d557a054e4b7cc4cdc25638
+# typing: type beets.library.library
+f167dc29e41439e342c04c073758102b2a2e1af8
+# typing: add return types to beets.library.models
+8949562ef8f4e83ef281674c6125b041991d3d26
+# typing: type models in beets.library.models
+9b375d0b2d2dc9388892f1b901aae67ab0ad8290
+# typing: type the rest of beets.library.models
+9022cb5ed7fddf60c1156dc3ca7e3a540dc8f7f2
+# Replace ImporterMixin.import_dir attribute with ImporterMixin.import_path
+7970a90214fcd64ab5fef1c71b7bf1413ad6ce86
+# Replace TestHelper.libdir attribute with TestHelper.lib_path
+dc2826fa4b32b625eb4ac9d71934176edde2443e
+# Replace PathsMixin.temp_dir attribute with PathsMixin.temp_dir_path
+2e9ace7b20e776ad10127b2f6ac76791e2a19704
+# Rename PathsMixin.temp_dir_path to PathsMixin.temp_path for consistency
+d24c0d341ec6074c343cd8054083fe358da8fa14
+# Fix yoda typedefs
+5dcc35112d17976a11ffc468cf436bc3e2342e54
+# Replace item.path with item.filepath in tests
+04c2304879d088ea9be1fad475caf022608a3145
+# Use pathlib.Path wherever possible in tests
+951e32a852b48f87e3dd2ccf71753ee8f7ac2e34
+# Remove syspath
+b2f52ac12443c102712b735e456fd07a6525786b
+# Return Path from TestHelper.create_mediafile_fixture
+bb66b0c378e9bf7d97622a1582d93c4dfcf20fdd
+# Move AttrDict under beets.util
+ea334bd977ee8ed0cdbd627b7e9564dd08dd43f7
+# typing: type handlers and listeners explicitly
+88627e062b452e936bf0e7e90554cd56e3713288
+# typing: Define events in a separate module, import explicitly
+e9021e17e9f14af8b4805ce1ec7f32843ada7970
+# typing: Import events module instead
+dcc1fd0e4a3e7137d126f224d8f5d9911291652e
+# typing: add types to event handlers
+5039c8f6cff474bec54b2106dd7c7d0cd39878f2
+# typing: make dbcore.db.Results a Sequence
+9adcb601f86b8758cb179ac5d39ca4857846cb27
+# typing: add types to embedart
+26713de0d64b8412ac922d0402929504f6f3c6c7
+# typing: add types to beetsplug._utils.art
+6acef1d5864716300f2c4add4e19cc6e737cce46
+# typing: add types to beets.ui.import_
+2a9786aad7bc8114276e1fda2a3d141abf2608f3
+# typing: add types to beets.util.functemplate
+d8fc064e9c3b428ee6aad5f50d34dc66aba742f2
+# typing: remove redundant types
+f37306b0cc17f17291ea5010178f190a95b29fd5
+# Prefer imports from modules that provide import aliases
+27900f58fbeba06483b77c677045ad1df8e9af45
+# typing: rename AnyLibModel -> AlbumOrItem
+33a01fe0b37942a38c8b88d0fc8167edd02ca81b
+# typing: add types to command handlers
+14eabc60600ff3c8ef1908100ae7abd3aa998bc4
+# typing: add missing core annotations
+029de94b206bd64aecc24f24bf011413b86d78e7
+# typing: add annotations to bpd plugin
+1ae87783858f53b62ccdc4f9400e035ef03f843a
+# typing: add annotations to API and export plugins
+ee4d6eef36269fbf99e0f566487ab21069be279f
+# typing: add annotations to metadata source plugins
+21e045795d2478a7f45a81bbc095ccf3aa69d59f
+# typing: add annotations to mpdstats
+4f0ac15b99cc240a6b611d2b70f29f1e576d6418
+# typing: add annotations to thumbnails
+6b4f8fa25b744adf05a3e9199e470d663f297502
+# typing: add types to duplicates plugin
+8e4fa56acb73216f36769090b322088ff2ed5364
+# typing: add missing types to plugins
+11d41aee7d3253ae702d1519a1b8f78df4596132
+# typing: various consistency fixes
+5c3695da262ec64e52ec8057302fe2d852b62afa

@@ -46,7 +46,7 @@ Non-Programming
   <https://github.com/beetbox/beets/discussions/categories/show-and-tell>`__
   under the “Show and Tell” category for a chance to get featured in `the docs
   <https://beets.readthedocs.io/en/stable/guides/advanced.html>`__.
-- Consider helping out fellow users by by `responding to support requests
+- Consider helping out fellow users by `responding to support requests
   <https://github.com/beetbox/beets/discussions/categories/q-a>`__ .
 
 Programming
@@ -65,34 +65,20 @@ Development Tools
 
 In order to develop beets, you will need a few tools installed:
 
-- poetry_ for packaging, virtual environment and dependency management
+- uv_ for packaging, virtual environment and dependency management
 - poethepoet_ to run tasks, such as linting, formatting, testing
 
-Python community recommends using pipx_ to install stand-alone command-line
-applications such as above. pipx_ installs each application in an isolated
-virtual environment, where its dependencies will not interfere with your system
-and other CLI tools.
+Follow the `uv installation instructions
+<https://docs.astral.sh/uv/getting-started/installation/>`__ to install uv_.
 
-If you do not have pipx_ installed in your system, follow `pipx installation
-instructions <https://pipx.pypa.io/stable/installation/>`__ or
+poethepoet_ is a stand-alone CLI tool. uv can install such tools in isolated
+environments so their dependencies don't interfere with your system.
 
-.. code-block:: sh
-
-    $ python3 -m pip install --user pipx
-
-Install poetry_ and poethepoet_ using pipx_:
+Then install poethepoet_:
 
 ::
 
-    $ pipx install poetry poethepoet
-
-.. admonition:: Check ``tool.pipx-install`` section in ``pyproject.toml`` to see supported versions
-
-    .. code-block:: toml
-
-        [tool.pipx-install]
-        poethepoet = ">=0.26"
-        poetry = "<2"
+    $ uv tool install "poethepoet>=0.26,<0.47.0"
 
 .. _getting-the-source:
 
@@ -100,36 +86,31 @@ Getting the Source
 ++++++++++++++++++
 
 The easiest way to get started with the latest beets source is to clone the
-repository and install ``beets`` in a local virtual environment using poetry_.
-This can be done with:
+repository and install ``beets`` in a local virtual environment using uv_. This
+can be done with:
 
 .. code-block:: bash
 
     $ git clone https://github.com/beetbox/beets.git
     $ cd beets
-    $ poetry install
+    $ uv sync
 
-This will install ``beets`` and all development dependencies into its own
-virtual environment in your ``$POETRY_CACHE_DIR``. See ``poetry install --help``
-for installation options, including installing ``extra`` dependencies for
-plugins.
+This will install ``beets`` and all development dependencies into a ``.venv``
+virtual environment. See ``uv sync --help`` for options, including installing
+``extra`` dependencies for plugins (e.g. ``uv sync --extra fetchart``).
 
-In order to run something within this virtual environment, start the command
-with ``poetry run`` to them, for example ``poetry run pytest``.
-
-On the other hand, it may get tedious to type ``poetry run`` before every
-command. Instead, you can activate the virtual environment in your shell with:
+To run commands within this virtual environment, either activate it:
 
 ::
 
-    $ poetry shell
+    $ source .venv/bin/activate
+    $ pytest
 
-You should see ``(beets-py3.10)`` prefix in your shell prompt. Now you can run
-commands directly, for example:
+Or prefix commands with ``uv run``:
 
 ::
 
-    $ (beets-py3.10) pytest
+    $ uv run pytest
 
 Additionally, poethepoet_ task runner assists us with the most common
 operations. Formatting, linting, testing are defined as ``poe`` tasks in
@@ -157,10 +138,10 @@ Code Contribution Ideas
   <https://github.com/beetbox/beets/labels/good%20first%20issue>`__. These are
   issues that would serve as a good introduction to the codebase. Claim one and
   start exploring!
-- Like testing? Our `test coverage <https://codecov.io/github/beetbox/beets>`__
-  is somewhat low. You can help out by finding low-coverage modules or checking
-  out other `testing-related issues
-  <https://github.com/beetbox/beets/labels/testing>`__.
+- Like testing? Our `test coverage
+  <https://app.codecov.io/github/beetbox/beets>`__ is somewhat low. You can help
+  out by finding low-coverage modules or checking out other `testing-related
+  issues <https://github.com/beetbox/beets/labels/testing>`__.
 - There are several ways to improve the tests in general (see :ref:`testing` and
   some places to think about performance optimization (see `Optimization
   <https://github.com/beetbox/beets/wiki/Optimization>`__).
@@ -169,8 +150,8 @@ Code Contribution Ideas
   <https://beets.readthedocs.io/en/stable/dev/library.html>`__ are currently
   quite sparse. You can help by adding to the docstrings in the code and to the
   documentation pages themselves. beets follows `PEP-257
-  <https://www.python.org/dev/peps/pep-0257/>`__ for docstrings and in some
-  places, we also sometimes use `ReST autodoc syntax for Sphinx
+  <https://peps.python.org/pep-0257/>`__ for docstrings and in some places, we
+  also sometimes use `ReST autodoc syntax for Sphinx
   <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`__ to,
   for example, refer to a class name.
 
@@ -179,7 +160,7 @@ Your First Contribution
 
 If this is your first time contributing to an open source project, welcome! If
 you are confused at all about how to contribute or what to contribute, take a
-look at `this great tutorial <http://makeapullrequest.com/>`__, or stop by our
+look at `this great tutorial <https://makeapullrequest.com/>`__, or stop by our
 `discussion board`_ if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source labeled
@@ -263,13 +244,13 @@ There are a few coding conventions we use in beets:
 - f-strings should be used instead of the ``%`` operator and ``str.format()``
   calls.
 - Never ``print`` informational messages; use the `logging
-  <http://docs.python.org/library/logging.html>`__ module instead. In
+  <https://docs.python.org/3/library/logging.html>`__ module instead. In
   particular, we have our own logging shim, so you’ll see ``from beets import
   logging`` in most files.
 
   - The loggers use `str.format
-    <http://docs.python.org/library/stdtypes.html#str.format>`__-style logging
-    instead of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
+    <https://docs.python.org/3/library/stdtypes.html>`__-style logging instead
+    of ``%``-style, so you can type ``log.debug("{}", obj)`` to do your
     formatting.
 
 - Exception handlers must use ``except A as B:`` instead of ``except A, B:``.
@@ -285,6 +266,25 @@ according to the specifications required by the project.
 
 Similarly, run ``poe format-docs`` and ``poe lint-docs`` to ensure consistent
 documentation formatting and check for any issues.
+
+Blame Ignore Revisions
+~~~~~~~~~~~~~~~~~~~~~~
+
+The ``.git-blame-ignore-revs`` file lists mechanical commits that make history
+harder to inspect, such as repository-wide formatting changes, large renames,
+and other behavior-preserving rewrites.
+
+Configure Git to use this file locally:
+
+.. code-block:: sh
+
+    $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+When you make a mechanical-only change that should not distract future ``git
+blame`` output, keep it in its own commit. Then, add its **commit summary** with
+the commit hash to ``.git-blame-ignore-revs`` under the appropriate year. Do not
+add commits that mix mechanical edits with behavior changes; those should remain
+visible in blame output.
 
 Editor Settings
 ~~~~~~~~~~~~~~~
@@ -315,13 +315,6 @@ Use ``poe`` to run tests:
 
     $ poe test [pytest options]
 
-You can disable a hand-selected set of "slow" tests by setting the environment
-variable ``SKIP_SLOW_TESTS``, for example:
-
-::
-
-    $ SKIP_SLOW_TESTS=1 poe test
-
 Coverage
 ++++++++
 
@@ -351,16 +344,15 @@ Test Dependencies
 The tests have a few more dependencies than beets itself. (The additional
 dependencies consist of testing utilities and dependencies of non-default
 plugins exercised by the test suite.) The dependencies are listed under the
-``tool.poetry.group.test.dependencies`` section in pyproject.toml_.
+``test`` group in the ``dependency-groups`` section of pyproject.toml_.
 
 Writing Tests
 ~~~~~~~~~~~~~
 
 Writing tests is done by adding or modifying files in folder test_. Take a look
-at `https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_ to
-get a basic view on how tests are written. Since we are currently migrating the
-tests from unittest_ to pytest_, new tests should be written using pytest_.
-Contributions migrating existing tests are welcome!
+at test-query_ to get a basic view on how tests are written. Since we are
+currently migrating the tests from unittest_ to pytest_, new tests should be
+written using pytest_. Contributions migrating existing tests are welcome!
 
 External API requests under test should be mocked with requests-mock_, However,
 we still want to know whether external APIs are up and that they return expected
@@ -375,23 +367,54 @@ In order to add such a test, mark your test with the ``integration_test`` marker
 
 This way, the test will be run only in the integration test suite.
 
-.. _codecov: https://codecov.io/github/beetbox/beets
+beets also defines custom pytest markers in ``test/conftest.py``:
+
+- ``integration_test``: runs only when ``INTEGRATION_TEST=true`` is set.
+- ``on_lyrics_update``: runs only when ``LYRICS_UPDATED=true`` is set.
+- ``requires_import("module", force_ci=True)``: runs the test only when the
+  module is importable. With the default ``force_ci=True``, this import check is
+  bypassed on GitHub Actions for ``beetbox/beets`` so CI still runs the test.
+  Set ``force_ci=False`` to allow CI to skip when the module is missing.
+
+.. code-block:: python
+
+    @pytest.mark.integration_test
+    def test_external_api_call(): ...
+
+
+    @pytest.mark.on_lyrics_update
+    def test_real_lyrics_backend(): ...
+
+
+    @pytest.mark.requires_import("langdetect")
+    def test_language_detection(): ...
+
+
+    @pytest.mark.requires_import("librosa", force_ci=False)
+    def test_autobpm_command(): ...
+
+Notes on AI Usage
+-----------------
+
+We are not opposed to AI-generated contributions, but communication should be
+handled by a real person. We will likely have questions about your PR, and we
+need you to understand the proposed changes in order to discuss with us what the
+implications are.
+
+> Currently we value human oversight and accountability, AI as a tool, not a
+contributor.
+
+.. _codecov: https://app.codecov.io/github/beetbox/beets
 
 .. _discussion board: https://github.com/beetbox/beets/discussions
 
 .. _documentation: https://beets.readthedocs.io/en/stable/
 
-.. _https://github.com/beetbox/beets/blob/master/test/test_template.py#l224: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
-
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
-
-.. _pipx: https://pipx.pypa.io/stable
 
 .. _poethepoet: https://poethepoet.natn.io/index.html
 
-.. _poetry: https://python-poetry.org/docs/
-
-.. _pyproject.toml: https://github.com/beetbox/beets/tree/master/pyproject.toml
+.. _pyproject.toml: https://github.com/beetbox/beets/blob/master/pyproject.toml
 
 .. _pytest: https://docs.pytest.org/en/stable/
 
@@ -401,6 +424,10 @@ This way, the test will be run only in the integration test suite.
 
 .. _test: https://github.com/beetbox/beets/tree/master/test
 
+.. _test-query: https://github.com/beetbox/beets/blob/master/test/dbcore/test_query.py
+
 .. _unittest: https://docs.python.org/3/library/unittest.html
+
+.. _uv: https://docs.astral.sh/uv/
 
 .. _vim: https://www.vim.org/

@@ -1,20 +1,9 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Shows file metadata."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 import mediafile
 
@@ -23,8 +12,30 @@ from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
-def tag_data(lib, args, album=False):
+    from beets.library import LibModel, Library
+
+    from ._typing import JSONDict
+
+    DataEmitter = Callable[
+        [Literal["*"] | list[str]], tuple[JSONDict, LibModel]
+    ]
+
+
+class InfoCLIOpts(Protocol):
+    album: bool
+    format: str | None
+    included_keys: list[str]
+    keys_only: bool | None
+    library: bool | None
+    summarize: bool | None
+
+
+def tag_data(
+    lib: Library, args: Iterable[str], album: bool = False
+) -> Iterator[DataEmitter]:
     query = []
     for arg in args:
         path = normpath(arg)
@@ -38,14 +49,17 @@ def tag_data(lib, args, album=False):
             yield tag_data_emitter(item.path)
 
 
-def tag_fields():
+def tag_fields() -> set[str]:
     fields = set(mediafile.MediaFile.readable_fields())
     fields.add("art")
     return fields
 
 
-def tag_data_emitter(path):
-    def emitter(included_keys):
+def tag_data_emitter(path: bytes) -> DataEmitter:
+    def emitter(
+        included_keys: Literal["*"] | list[str],
+    ) -> tuple[JSONDict, LibModel]:
+        fields: set[str] | list[str]
         if included_keys == "*":
             fields = tag_fields()
         else:
@@ -54,7 +68,7 @@ def tag_data_emitter(path):
             # We can't serialize the image data.
             fields.remove("images")
         mf = mediafile.MediaFile(syspath(path))
-        tags = {}
+        tags: JSONDict = {}
         for field in fields:
             if field == "art":
                 tags[field] = mf.art is not None
@@ -69,21 +83,25 @@ def tag_data_emitter(path):
     return emitter
 
 
-def library_data(lib, args, album=False):
+def library_data(
+    lib: Library, args: Sequence[str], album: bool = False
+) -> Iterator[DataEmitter]:
     for item in lib.albums(args) if album else lib.items(args):
         yield library_data_emitter(item)
 
 
-def library_data_emitter(item):
-    def emitter(included_keys):
-        data = dict(item.formatted(included_keys=included_keys))
+def library_data_emitter(model: LibModel) -> DataEmitter:
+    def emitter(
+        included_keys: Literal["*"] | list[str],
+    ) -> tuple[JSONDict, LibModel]:
+        data = dict(model.formatted(included_keys=included_keys))
 
-        return data, item
+        return data, model
 
     return emitter
 
 
-def update_summary(summary, tags):
+def update_summary(summary: JSONDict, tags: JSONDict) -> JSONDict:
     for key, value in tags.items():
         if key not in summary:
             summary[key] = value
@@ -92,7 +110,9 @@ def update_summary(summary, tags):
     return summary
 
 
-def print_data(data, item=None, fmt=None):
+def print_data(
+    data: JSONDict, item: LibModel | None = None, fmt: str | None = None
+) -> None:
     """Print, with optional formatting, the fields of a single element.
 
     If no format string `fmt` is passed, the entries on `data` are printed one
@@ -128,7 +148,7 @@ def print_data(data, item=None, fmt=None):
         ui.print_(f"{field:>{maxwidth}}: {value}")
 
 
-def print_data_keys(data, item=None):
+def print_data_keys(data: JSONDict, item: LibModel | None = None) -> None:
     """Print only the keys (field names) for an item."""
     path = displayable_path(item.path) if item else None
     formatted = []
@@ -146,20 +166,15 @@ def print_data_keys(data, item=None):
 
 
 class InfoPlugin(BeetsPlugin):
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("info", help="show file metadata")
         cmd.func = self.run
+        cmd.parser.add_album_option()
         cmd.parser.add_option(
             "-l",
             "--library",
             action="store_true",
             help="show library fields instead of tags",
-        )
-        cmd.parser.add_option(
-            "-a",
-            "--album",
-            action="store_true",
-            help='show album fields instead of tracks (implies "--library")',
         )
         cmd.parser.add_option(
             "-s",
@@ -176,15 +191,12 @@ class InfoPlugin(BeetsPlugin):
             help="comma separated list of keys to show",
         )
         cmd.parser.add_option(
-            "-k",
-            "--keys-only",
-            action="store_true",
-            help="show only the keys",
+            "-k", "--keys-only", action="store_true", help="show only the keys"
         )
         cmd.parser.add_format_option(target="item")
         return [cmd]
 
-    def run(self, lib, opts, args):
+    def run(self, lib: Library, opts: InfoCLIOpts, args: list[str]) -> None:
         """Print tag info or library data for each file referenced by args.
 
         Main entry point for the `beet info ARGS...` command.
@@ -210,12 +222,8 @@ class InfoPlugin(BeetsPlugin):
         included_keys = [k for k in included_keys if k != "path"]
 
         first = True
-        summary = {}
-        for data_emitter in data_collector(
-            lib,
-            args,
-            album=opts.album,
-        ):
+        summary: dict[str, Any] = {}
+        for data_emitter in data_collector(lib, args, album=opts.album):
             try:
                 data, item = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:

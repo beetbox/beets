@@ -6,9 +6,9 @@ Flask_ framework. AURA is still a work in progress and doesn't yet have a stable
 version, but this server should be kept up to date. You are advised to read the
 :ref:`aura-issues` section.
 
-.. _aura: https://auraspec.readthedocs.io
+.. _aura: https://auraspec.readthedocs.io/en/latest/
 
-.. _flask: https://palletsprojects.com/p/flask/
+.. _flask: https://palletsprojects.com/projects/flask/
 
 Install
 -------
@@ -26,7 +26,7 @@ is used, which will give a warning about using it in a production environment.
 It is safe to ignore this warning if the server will have only a few users.
 
 Alternatively, you can use ``beet aura -d`` to start the server in `development
-mode <https://flask.palletsprojects.com/en/1.1.x/server>`__, which will reload
+mode <https://flask.palletsprojects.com/en/stable/server>`__, which will reload
 the server every time the AURA plugin file is changed.
 
 You can specify the hostname and port number used by the server in your
@@ -122,7 +122,7 @@ what you need.
 
 .. _gunicorn: https://gunicorn.org
 
-.. _uwsgi: https://uwsgi-docs.readthedocs.io
+.. _uwsgi: https://uwsgi-docs.readthedocs.io/en/latest/
 
 Reverse Proxy Support
 ---------------------
@@ -131,7 +131,7 @@ The plugin should work behind a reverse proxy without further configuration,
 however this has not been tested extensively. For details of what headers must
 be rewritten and a sample NGINX configuration see `Flask proxy setups`_.
 
-.. _flask proxy setups: https://flask.palletsprojects.com/en/1.1.x/deploying/wsgi-standalone/#proxy-setups
+.. _flask proxy setups: https://flask.palletsprojects.com/en/stable/deploying/proxy_fix/
 
 It is (reportedly) possible to run the application under a URL prefix (for
 example so you could have ``/foo/aura/server`` rather than ``/aura/server``),

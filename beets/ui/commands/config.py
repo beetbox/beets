@@ -1,12 +1,27 @@
 """The 'config' command: show and edit user configuration."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Protocol
 
 from beets import config, ui
+from beets.exceptions import UserError
 from beets.util import displayable_path, editor_command, interactive_open
 
+if TYPE_CHECKING:
+    from beets.library import Library
 
-def config_func(lib, opts, args):
+
+class ConfigCLIOpts(Protocol):
+    paths: bool | None
+    defaults: bool
+    edit: bool | None
+    redact: bool
+    config: str | None
+
+
+def config_func(lib: Library, opts: ConfigCLIOpts, args: list[str]) -> None:
     # Make sure lazy configuration is loaded
     config.resolve()
 
@@ -44,23 +59,26 @@ def config_func(lib, opts, args):
             print("Empty configuration")
 
 
-def config_edit(cli_options):
+def config_edit(cli_options: ConfigCLIOpts) -> None:
     """Open a program to edit the user configuration.
     An empty config file is created if no existing config file exists.
     """
     path = cli_options.config or config.user_config_path()
     editor = editor_command()
+
+    if not editor:
+        raise UserError(
+            "Please set the VISUAL or EDITOR environment variable to edit"
+            " configuration."
+        )
     try:
         if not os.path.isfile(path):
             open(path, "w+").close()
         interactive_open([path], editor)
+    except FileNotFoundError:
+        raise UserError(f"Editor {editor!r} not found.")
     except OSError as exc:
-        message = f"Could not edit configuration: {exc}"
-        if not editor:
-            message += (
-                ". Please set the VISUAL (or EDITOR) environment variable"
-            )
-        raise ui.UserError(message)
+        raise UserError(f"Could not edit configuration: {exc}")
 
 
 config_cmd = ui.Subcommand("config", help="show or edit the user configuration")
@@ -80,6 +98,7 @@ config_cmd.parser.add_option(
     "-d",
     "--defaults",
     action="store_true",
+    default=False,
     help="include the default configuration",
 )
 config_cmd.parser.add_option(

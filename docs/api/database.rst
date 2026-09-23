@@ -29,6 +29,7 @@ Transactions
 .. autosummary::
     :toctree: generated/
 
+    Migration
     Transaction
 
 Queries

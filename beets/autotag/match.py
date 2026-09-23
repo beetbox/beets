@@ -1,39 +1,33 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Matches existing metadata with canonical information to identify
 releases and tracks.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
+from functools import cached_property
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, TypeVar
 
 import lap
 import numpy as np
 
 from beets import config, logging, metadata_plugins, plugins
-from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo, TrackMatch, hooks
-from beets.util import get_most_common_tags
 
 from .distance import VA_ARTISTS, distance, track_distance
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
 
-    from beets.library import Item
+    from beets.autotag import Source
+    from beets.library import Album, Item
+
+    from .distance import Distance
+    from .hooks import AlbumInfo, Info, TrackInfo
+
+    JSONDict = dict[str, Any]
+    AnyMatch = TypeVar("AnyMatch", "TrackMatch", "AlbumMatch")
+    Candidates = dict[Info.Identifier, AnyMatch]
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -53,22 +47,11 @@ class Recommendation(IntEnum):
     strong = 3
 
 
-# A structure for holding a set of possible matches to choose between. This
-# consists of a list of possible candidates (i.e., AlbumInfo or TrackInfo
-# objects) and a recommendation value.
-
-
-class Proposal(NamedTuple):
-    candidates: Sequence[AlbumMatch | TrackMatch]
-    recommendation: Recommendation
-
-
 # Primary matching functionality.
 
 
 def assign_items(
-    items: Sequence[Item],
-    tracks: Sequence[TrackInfo],
+    items: Sequence[Item], tracks: Sequence[TrackInfo]
 ) -> tuple[list[tuple[Item, TrackInfo]], list[Item], list[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
@@ -98,28 +81,189 @@ def assign_items(
     return list(mapping.items()), extra_items, extra_tracks
 
 
-def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
-    """If the items are tagged with an external source ID, return an
-    AlbumInfo object for the corresponding album. Otherwise, returns
-    None.
+# Structures that compose all the information for a candidate match.
+@dataclass
+class Match:
+    """Represent a chosen metadata candidate and its application behavior."""
+
+    disambig_fields_key: ClassVar[str]
+
+    distance: Distance
+    info: Info
+
+    def apply_metadata(self) -> None:
+        """Apply this match's metadata to its target library objects."""
+        raise NotImplementedError
+
+    @cached_property
+    def type(self) -> str:
+        return self.info.type
+
+    @cached_property
+    def config_from_scratch(self) -> bool:
+        return bool(config["import"]["from_scratch"])
+
+    def from_scratch(self, override: bool | None) -> bool:
+        if override is not None:
+            return override
+
+        return self.config_from_scratch
+
+    @property
+    def disambig_fields(self) -> Sequence[str]:
+        """Return configured disambiguation fields that exist on this match."""
+        chosen_fields = config["match"][self.disambig_fields_key].as_str_seq()
+        valid_fields = [f for f in chosen_fields if f in self.info]
+        if missing_fields := set(chosen_fields) - set(valid_fields):
+            log.warning(
+                "Disambiguation string keys {} do not exist.", missing_fields
+            )
+
+        return valid_fields
+
+    @property
+    def base_disambig_data(self) -> JSONDict:
+        """Return supplemental values used when formatting disambiguation."""
+        return {}
+
+    @property
+    def disambig_string(self) -> str:
+        """Build a display string from the candidate's disambiguation fields.
+
+        Merges base disambiguation data with instance-specific field values,
+        then formats them as a comma-separated string in field definition order.
+        """
+        data = {
+            k: self.info[k] for k in self.disambig_fields
+        } | self.base_disambig_data
+        return ", ".join(str(data[k]) for k in self.disambig_fields)
+
+
+@dataclass
+class AlbumMatch(Match):
+    """Represent an album candidate together with its item-to-track mapping."""
+
+    disambig_fields_key = "album_disambig_fields"
+
+    info: AlbumInfo
+    mapping: dict[Item, TrackInfo]
+    extra_items: list[Item] = field(default_factory=list)
+    extra_tracks: list[TrackInfo] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        """Notify listeners when an album candidate has been matched."""
+        plugins.send("album_matched", match=self)
+
+    @property
+    def item_info_pairs(self) -> list[tuple[Item, TrackInfo]]:
+        """Return matched items together with their selected track metadata."""
+        return list(self.mapping.items())
+
+    @property
+    def items(self) -> list[Item]:
+        """Return the items that participate in this album match."""
+        return [i for i, _ in self.item_info_pairs]
+
+    @property
+    def base_disambig_data(self) -> JSONDict:
+        """Return album-specific values used in disambiguation displays."""
+        return {
+            "media": (
+                f"{mediums}x{self.info.media}"
+                if (mediums := self.info.mediums) and mediums > 1
+                else self.info.media
+            )
+        }
+
+    @property
+    def merged_pairs(self) -> list[tuple[Item, JSONDict]]:
+        """Generate item-data pairs with album-level fallback values."""
+        return [
+            (i, ti.merge_with_album(self.info))
+            for i, ti in self.item_info_pairs
+        ]
+
+    def apply_metadata(self, from_scratch: bool | None = None) -> None:
+        """Apply metadata to each of the items.
+
+        If ``from_scratch`` is provided, its value determines whether the
+        items existing metadata are cleared before applying new metadata.
+        Otherwise, the configured ``from_scratch`` setting is used.
+        """
+        for item, data in self.merged_pairs:
+            if self.from_scratch(from_scratch):
+                item.clear()
+
+            item.update(data)
+
+    def apply_album_metadata(self, album: Album) -> None:
+        """Apply album-level metadata to the Album object."""
+        album.update(self.info.item_data)
+
+
+@dataclass
+class TrackMatch(Match):
+    """Represent a singleton candidate and the item it updates."""
+
+    disambig_fields_key = "singleton_disambig_fields"
+
+    info: TrackInfo
+    item: Item
+
+    @property
+    def base_disambig_data(self) -> JSONDict:
+        """Return singleton-specific values used in disambiguation displays."""
+        return {
+            "index": f"Index {self.info.index}",
+            "track_alt": f"Track {self.info.track_alt}",
+            "album": (
+                f"[{self.info.album}]"
+                if (
+                    config["import"]["singleton_album_disambig"].get()
+                    and self.info.album
+                )
+                else ""
+            ),
+        }
+
+    def apply_metadata(self, from_scratch: bool | None = None) -> None:
+        """Apply metadata to the item.
+
+        If ``from_scratch`` is provided, its value determines whether the
+        item's existing metadata is cleared before applying new metadata.
+        Otherwise, the configured ``from_scratch`` setting is used.
+        """
+        if self.from_scratch(from_scratch):
+            self.item.clear()
+
+        self.item.update(self.info.item_data)
+
+
+# A structure for holding a set of possible matches to choose between. This
+# consists of a list of possible candidates (i.e., AlbumInfo or TrackInfo
+# objects) and a recommendation value.
+
+
+class Proposal(NamedTuple):
+    candidates: Sequence[AlbumMatch | TrackMatch]
+    recommendation: Recommendation
+
+
+def match_by_id(album_id: str | None, consensus: bool) -> Iterable[AlbumInfo]:
+    """Return album candidates for the given album id.
+
+    Make sure that the ID is present and that there is consensus on it among
+    the items being tagged.
     """
-    albumids = (item.mb_albumid for item in items if item.mb_albumid)
-
-    # Did any of the items have an MB album ID?
-    try:
-        first = next(albumids)
-    except StopIteration:
+    if not album_id:
         log.debug("No album ID found.")
-        return None
+    elif not consensus:
+        log.debug("No album ID consensus.")
+    else:
+        log.debug("Searching for discovered album ID: {}", album_id)
+        return metadata_plugins.albums_for_ids([album_id])
 
-    # Is there a consensus on the MB album ID?
-    for other in albumids:
-        if other != first:
-            log.debug("No album ID consensus.")
-            return None
-    # If all album IDs are equal, look up the album.
-    log.debug("Searching for discovered album ID: {}", first)
-    return metadata_plugins.album_for_id(first)
+    return ()
 
 
 def _recommendation(
@@ -160,7 +304,7 @@ def _recommendation(
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
     keys = set(min_dist.keys())
-    if isinstance(results[0], hooks.AlbumMatch):
+    if isinstance(results[0], AlbumMatch):
         for track_dist in min_dist.tracks.values():
             keys.update(list(track_dist.keys()))
     max_rec_view = config["match"]["max_rec"]
@@ -179,25 +323,23 @@ def _recommendation(
     return rec
 
 
-AnyMatch = TypeVar("AnyMatch", TrackMatch, AlbumMatch)
-
-
 def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
     """Sort candidates by distance."""
     return sorted(candidates, key=lambda match: match.distance)
 
 
 def _add_candidate(
-    items: Sequence[Item],
-    results: dict[Any, AlbumMatch],
-    info: AlbumInfo,
-):
+    source: Source, results: Candidates[AlbumMatch], info: AlbumInfo
+) -> None:
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
     checking the track count, ordering the items, checking for
     duplicates, and calculating the distance.
     """
-    log.debug("Candidate: {0.artist} - {0.album} ({0.album_id})", info)
+    log.debug(
+        "Candidate: {0.artist} - {0.album} ({0.album_id}) from {0.data_source}",
+        info,
+    )
 
     # Discard albums with zero tracks.
     if not info.tracks:
@@ -205,12 +347,12 @@ def _add_candidate(
         return
 
     # Prevent duplicates.
-    if info.album_id and info.album_id in results:
+    if info.album_id and info.identifier in results:
         log.debug("Duplicate.")
         return
 
     # Discard matches without required tags.
-    required_tags: Sequence[str] = config["match"]["required"].as_str_seq()
+    required_tags = config["match"]["required"].as_str_seq()
     for req_tag in required_tags:
         if getattr(info, req_tag) is None:
             log.debug("Ignored. Missing required tag: {}", req_tag)
@@ -218,37 +360,33 @@ def _add_candidate(
 
     # Find mapping between the items and the track info.
     item_info_pairs, extra_items, extra_tracks = assign_items(
-        items, info.tracks
+        source.items, info.tracks
     )
 
     # Get the change distance.
-    dist = distance(items, info, item_info_pairs)
+    dist = distance(source.data, info, item_info_pairs, len(extra_items))
 
     # Skip matches with ignored penalties.
     penalties = [key for key, _ in dist]
-    ignored_tags: Sequence[str] = config["match"]["ignored"].as_str_seq()
+    ignored_tags = config["match"]["ignored"].as_str_seq()
     for penalty in ignored_tags:
         if penalty in penalties:
             log.debug("Ignored. Penalty: {}", penalty)
             return
 
     log.debug("Success. Distance: {}", dist)
-    results[info.album_id] = hooks.AlbumMatch(
+    results[info.identifier] = AlbumMatch(
         dist, info, dict(item_info_pairs), extra_items, extra_tracks
     )
 
 
 def tag_album(
-    items,
+    source: Source,
     search_artist: str | None = None,
     search_name: str | None = None,
     search_ids: list[str] = [],
-) -> tuple[str, str, Proposal]:
-    """Return a tuple of the current artist name, the current album
-    name, and a `Proposal` containing `AlbumMatch` candidates.
-
-    The artist and album are the most common values of these fields
-    among `items`.
+) -> Proposal:
+    """Return `Proposal` containing `AlbumMatch` candidates.
 
     The `AlbumMatch` objects are generated by searching the metadata
     backends. By default, the metadata of the items is used for the
@@ -262,76 +400,59 @@ def tag_album(
     candidates.
     """
     # Get current metadata.
-    likelies, consensus = get_most_common_tags(items)
-    cur_artist: str = likelies["artist"]
-    cur_album: str = likelies["album"]
-    log.debug("Tagging {} - {}", cur_artist, cur_album)
+    log.debug("Tagging {}", source.desc)
 
-    # The output result, keys are the MB album ID.
-    candidates: dict[Any, AlbumMatch] = {}
+    # The output result, keys are (data_source, album_id) pairs, values are
+    # AlbumMatch objects.
+    candidates: Candidates[AlbumMatch] = {}
 
     # Search by explicit ID.
     if search_ids:
-        for search_id in search_ids:
-            log.debug("Searching for album ID: {}", search_id)
-            if info := metadata_plugins.album_for_id(search_id):
-                _add_candidate(items, candidates, info)
-                if opt_candidate := candidates.get(info.album_id):
-                    plugins.send("album_matched", match=opt_candidate)
+        log.debug("Searching for album IDs: {}", ", ".join(search_ids))
+        for _info in metadata_plugins.albums_for_ids(search_ids):
+            _add_candidate(source, candidates, _info)
 
     # Use existing metadata or text search.
     else:
         # Try search based on current ID.
-        if info := match_by_id(items):
-            _add_candidate(items, candidates, info)
-            for candidate in candidates.values():
-                plugins.send("album_matched", match=candidate)
+        for info in match_by_id(source.id, source.id_consensus):
+            _add_candidate(source, candidates, info)
 
-            rec = _recommendation(list(candidates.values()))
-            log.debug("Album ID match recommendation is {}", rec)
-            if candidates and not config["import"]["timid"]:
-                # If we have a very good MBID match, return immediately.
-                # Otherwise, this match will compete against metadata-based
-                # matches.
-                if rec == Recommendation.strong:
-                    log.debug("ID match.")
-                    return (
-                        cur_artist,
-                        cur_album,
-                        Proposal(list(candidates.values()), rec),
-                    )
+        rec = _recommendation(list(candidates.values()))
+        log.debug("Album ID match recommendation is {}", rec)
+        if candidates and not config["import"]["timid"]:
+            # If we have a very good MBID match, return immediately.
+            # Otherwise, this match will compete against metadata-based
+            # matches.
+            if rec == Recommendation.strong:
+                log.debug("ID match.")
+                return Proposal(list(candidates.values()), rec)
 
         # Search terms.
         if not (search_artist and search_name):
             # No explicit search terms -- use current metadata.
-            search_artist, search_name = cur_artist, cur_album
+            search_artist, search_name = source.artist, source.name
         log.debug("Search terms: {} - {}", search_artist, search_name)
 
         # Is this album likely to be a "various artist" release?
-        va_likely = (
-            (not consensus["artist"])
-            or (search_artist.lower() in VA_ARTISTS)
-            or any(item.comp for item in items)
-        )
+        va_likely = source.va_likely or (search_artist.lower() in VA_ARTISTS)
         log.debug("Album might be VA: {}", va_likely)
 
         # Get the results from the data sources.
         for matched_candidate in metadata_plugins.candidates(
-            items, search_artist, search_name, va_likely
+            source.items, search_artist, search_name, va_likely
         ):
-            _add_candidate(items, candidates, matched_candidate)
-            if opt_candidate := candidates.get(matched_candidate.album_id):
-                plugins.send("album_matched", match=opt_candidate)
+            _add_candidate(source, candidates, matched_candidate)
 
     log.debug("Evaluating {} candidates.", len(candidates))
     # Sort and get the recommendation.
     candidates_sorted = _sort_candidates(candidates.values())
     rec = _recommendation(candidates_sorted)
-    return cur_artist, cur_album, Proposal(candidates_sorted, rec)
+    return Proposal(candidates_sorted, rec)
 
 
 def tag_item(
-    item,
+    source: Source,
     search_artist: str | None = None,
     search_name: str | None = None,
     search_ids: list[str] | None = None,
@@ -343,39 +464,36 @@ def tag_item(
     metadata in the search query. `search_ids` may be used for restricting the
     search to a list of metadata backend IDs.
     """
-    # Holds candidates found so far: keys are MBIDs; values are
-    # (distance, TrackInfo) pairs.
-    candidates = {}
+    # Holds candidates found so far: keys are (data_source, track_id) pairs,
+    # values TrackMatch objects
+    candidates: Candidates[TrackMatch] = {}
     rec: Recommendation | None = None
 
+    item = source.items[0]
     # First, try matching by the external source ID.
-    trackids = search_ids or [t for t in [item.mb_trackid] if t]
+    trackids = search_ids or [t for t in [source.id] if t]
     if trackids:
-        for trackid in trackids:
-            log.debug("Searching for track ID: {}", trackid)
-            if info := metadata_plugins.track_for_id(trackid):
-                dist = track_distance(item, info, incl_artist=True)
-                candidates[info.track_id] = hooks.TrackMatch(dist, info)
-                # If this is a good match, then don't keep searching.
-                rec = _recommendation(_sort_candidates(candidates.values()))
-                if (
-                    rec == Recommendation.strong
-                    and not config["import"]["timid"]
-                ):
-                    log.debug("Track ID match.")
-                    return Proposal(_sort_candidates(candidates.values()), rec)
+        log.debug("Searching for track IDs: {}", ", ".join(trackids))
+        for info in metadata_plugins.tracks_for_ids(trackids):
+            dist = track_distance(item, info, incl_artist=True)
+            candidates[info.identifier] = TrackMatch(dist, info, item)
+
+        # If this is a good match, then don't keep searching.
+        rec = _recommendation(_sort_candidates(candidates.values()))
+        if rec == Recommendation.strong and not config["import"]["timid"]:
+            log.debug("Track ID match.")
+            return Proposal(_sort_candidates(candidates.values()), rec)
 
     # If we're searching by ID, don't proceed.
     if search_ids:
         if candidates:
             assert rec is not None
             return Proposal(_sort_candidates(candidates.values()), rec)
-        else:
-            return Proposal([], Recommendation.none)
+        return Proposal([], Recommendation.none)
 
     # Search terms.
-    search_artist = search_artist or item.artist
-    search_name = search_name or item.title
+    search_artist = search_artist or source.artist
+    search_name = search_name or source.name
     log.debug("Item search terms: {} - {}", search_artist, search_name)
 
     # Get and evaluate candidate metadata.
@@ -383,7 +501,7 @@ def tag_item(
         item, search_artist, search_name
     ):
         dist = track_distance(item, track_info, incl_artist=True)
-        candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
+        candidates[track_info.identifier] = TrackMatch(dist, track_info, item)
 
     # Sort by distance and return with recommendation.
     log.debug("Found {} candidates.", len(candidates))

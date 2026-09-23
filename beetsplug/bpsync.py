@@ -1,37 +1,43 @@
-# This file is part of beets.
-# Copyright 2019, Rahul Ahuja.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Update library's tags using Beatport."""
 
-from beets import autotag, library, ui, util
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal, Protocol
+
+from beets import library, ui, util
+from beets.autotag import AlbumMatch, Distance, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
+from beets.util.deprecation import deprecate_for_user
 
 from .beatport import BeatportPlugin
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets.library import Album, Item, Library
+
+
+class BPSyncCLIOpts(Protocol):
+    move: bool | None
+    pretend: bool
+    write: bool | None
+
 
 class BPSyncPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
+        deprecate_for_user(self._log, "The 'bpsync' plugin")
         self.beatport_plugin = BeatportPlugin()
+        # this would cause an error but this plugin is dead
         self.beatport_plugin.setup()
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("bpsync", help="update metadata from Beatport")
         cmd.parser.add_option(
             "-p",
             "--pretend",
             action="store_true",
+            default=False,
             help="show all changes but do nothing",
         )
         cmd.parser.add_option(
@@ -60,7 +66,7 @@ class BPSyncPlugin(BeetsPlugin):
         cmd.func = self.func
         return [cmd]
 
-    def func(self, lib, opts, args):
+    def func(self, lib: Library, opts: BPSyncCLIOpts, args: list[str]) -> None:
         """Command handler for the bpsync function."""
         move = ui.should_move(opts.move)
         pretend = opts.pretend
@@ -69,11 +75,18 @@ class BPSyncPlugin(BeetsPlugin):
         self.singletons(lib, args, move, pretend, write)
         self.albums(lib, args, move, pretend, write)
 
-    def singletons(self, lib, query, move, pretend, write):
+    def singletons(
+        self,
+        lib: Library,
+        query: Sequence[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ) -> None:
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items(query + ["singleton:true"]):
+        for item in lib.items([*query, "singleton:true"]):
             if not item.mb_trackid:
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
@@ -89,19 +102,21 @@ class BPSyncPlugin(BeetsPlugin):
                 continue
 
             # Apply.
-            trackinfo = self.beatport_plugin.track_for_id(item.mb_trackid)
-            with lib.transaction():
-                autotag.apply_item_metadata(item, trackinfo)
-                apply_item_changes(lib, item, move, pretend, write)
+            if trackinfo := self.beatport_plugin.track_for_id(item.mb_trackid):
+                with lib.transaction():
+                    TrackMatch(Distance(), trackinfo, item).apply_metadata(
+                        from_scratch=False
+                    )
+                    apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
-    def is_beatport_track(item):
+    def is_beatport_track(item: Item) -> bool:
         return (
             item.get("data_source") == BeatportPlugin.data_source
             and item.mb_trackid.isnumeric()
         )
 
-    def get_album_tracks(self, album):
+    def get_album_tracks(self, album: Album) -> list[Item] | Literal[False]:
         if not album.mb_albumid:
             self._log.info("Skipping album with no mb_albumid: {}", album)
             return False
@@ -124,7 +139,14 @@ class BPSyncPlugin(BeetsPlugin):
             return False
         return items
 
-    def albums(self, lib, query, move, pretend, write):
+    def albums(
+        self,
+        lib: Library,
+        query: Sequence[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ) -> None:
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
@@ -146,9 +168,7 @@ class BPSyncPlugin(BeetsPlugin):
             beatport_trackid_to_trackinfo = {
                 track.track_id: track for track in albuminfo.tracks
             }
-            library_trackid_to_item = {
-                int(item.mb_trackid): item for item in items
-            }
+            library_trackid_to_item = {item.mb_trackid: item for item in items}
             item_info_pairs = [
                 (item, beatport_trackid_to_trackinfo[track_id])
                 for track_id, item in library_trackid_to_item.items()
@@ -156,7 +176,9 @@ class BPSyncPlugin(BeetsPlugin):
 
             self._log.info("applying changes to {}", album)
             with lib.transaction():
-                autotag.apply_metadata(albuminfo, item_info_pairs)
+                AlbumMatch(
+                    Distance(), albuminfo, dict(item_info_pairs)
+                ).apply_metadata(from_scratch=False)
                 changed = False
                 # Find any changed item to apply Beatport changes to album.
                 any_changed_item = items[0]

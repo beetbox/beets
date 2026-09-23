@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Support for beets plugins."""
 
 from __future__ import annotations
@@ -24,10 +10,10 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, overload
 
 import mediafile
-from typing_extensions import ParamSpec
+from typing_extensions import Never, ParamSpec, Unpack
 
 import beets
 from beets import logging
@@ -35,22 +21,25 @@ from beets.util import unique_list
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_for_user
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
-    from confuse import ConfigView
+    from confuse import Subview
 
-    from beets.dbcore import Query
+    from beets.autotag import AlbumInfo, TrackInfo
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
-    from beets.importer import ImportSession, ImportTask
+    from beets.importer import Action, ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
+    from beets.util import PromptChoice
+
+    from . import events
 
     # TYPE_CHECKING guard is needed for any derived type
     # which uses an import from `beets.library` and `beets.imported`
     ImportStageFunc = Callable[[ImportSession, ImportTask], None]
     T = TypeVar("T", Album, Item, str)
-    TFunc = Callable[[T], str]
+    TFunc = Callable[[T], object]
     TFuncMap = dict[str, TFunc[T]]
 
     AnyModel = TypeVar("AnyModel", Album, Item)
@@ -58,7 +47,6 @@ if TYPE_CHECKING:
     P = ParamSpec("P")
     Ret = TypeVar("Ret", bound=Any)
     Listener = Callable[..., Any]
-    IterF = Callable[P, Iterable[Ret]]
 
 
 PLUGIN_NAMESPACE = "beetsplug"
@@ -66,38 +54,6 @@ PLUGIN_NAMESPACE = "beetsplug"
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = "2dc3914abf35f0d9c92d97d8f8e42b43"
 
-EventType = Literal[
-    "after_write",
-    "album_imported",
-    "album_removed",
-    "albuminfo_received",
-    "album_matched",
-    "before_choose_candidate",
-    "before_item_moved",
-    "cli_exit",
-    "database_change",
-    "import",
-    "import_begin",
-    "import_task_apply",
-    "import_task_before_choice",
-    "import_task_choice",
-    "import_task_created",
-    "import_task_files",
-    "import_task_start",
-    "item_copied",
-    "item_hardlinked",
-    "item_imported",
-    "item_linked",
-    "item_moved",
-    "item_reflinked",
-    "item_removed",
-    "library_opened",
-    "mb_album_extract",
-    "mb_track_extract",
-    "pluginload",
-    "trackinfo_received",
-    "write",
-]
 # Global logger.
 log = logging.getLogger("beets")
 
@@ -117,51 +73,43 @@ class PluginImportError(ImportError):
     from other errors.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         super().__init__(f"Could not import plugin {name}")
-
-
-class PluginLogFilter(logging.Filter):
-    """A logging filter that identifies the plugin that emitted a log
-    message.
-    """
-
-    def __init__(self, plugin):
-        self.prefix = f"{plugin.name}: "
-
-    def filter(self, record):
-        if hasattr(record.msg, "msg") and isinstance(record.msg.msg, str):
-            # A _LogMessage from our hacked-up Logging replacement.
-            record.msg.msg = f"{self.prefix}{record.msg.msg}"
-        elif isinstance(record.msg, str):
-            record.msg = f"{self.prefix}{record.msg}"
-        return True
 
 
 # Managing the plugins themselves.
 
 
-class BeetsPlugin(metaclass=abc.ABCMeta):
+class BeetsPluginMeta(abc.ABCMeta):
+    template_funcs: ClassVar[TFuncMap[str]] = {}
+    template_fields: ClassVar[TFuncMap[Item]] = {}
+    album_template_fields: ClassVar[TFuncMap[Album]] = {}
+
+
+class BeetsPlugin(metaclass=BeetsPluginMeta):
     """The base class for all beets plugins. Plugins provide
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
 
-    _raw_listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(
+    _raw_listeners: ClassVar[dict[events.EventType, list[Listener]]] = (
+        defaultdict(list)
+    )
+    listeners: ClassVar[dict[events.EventType, list[Listener]]] = defaultdict(
         list
     )
-    listeners: ClassVar[dict[EventType, list[Listener]]] = defaultdict(list)
-    template_funcs: ClassVar[TFuncMap[str]] | TFuncMap[str] = {}  # type: ignore[valid-type]
-    template_fields: ClassVar[TFuncMap[Item]] | TFuncMap[Item] = {}  # type: ignore[valid-type]
-    album_template_fields: ClassVar[TFuncMap[Album]] | TFuncMap[Album] = {}  # type: ignore[valid-type]
+
+    template_funcs: TFuncMap[str]
+    template_fields: TFuncMap[Item]
+    album_template_fields: TFuncMap[Album]
 
     name: str
-    config: ConfigView
+    config: Subview
     early_import_stages: list[ImportStageFunc]
     import_stages: list[ImportStageFunc]
 
     def __init_subclass__(cls) -> None:
-        """Enable legacy metadata‐source plugins to work with the new interface.
+        """Enable legacy metadata source plugins to work with the new interface.
 
         When a plugin subclass of BeetsPlugin defines a `data_source` attribute
         but does not inherit from MetadataSourcePlugin, this hook:
@@ -214,28 +162,22 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         ):
             setattr(cls, name, method)
 
-    def __init__(self, name: str | None = None):
+    def __init__(self, name: str | None = None) -> None:
         """Perform one-time plugin setup."""
 
         self.name = name or self.__module__.split(".")[-1]
         self.config = beets.config[self.name]
 
-        # If the class attributes are not set, initialize as instance attributes.
-        # TODO: Revise with v3.0.0, see also type: ignore[valid-type] above
-        if not self.template_funcs:
-            self.template_funcs = {}
-        if not self.template_fields:
-            self.template_fields = {}
-        if not self.album_template_fields:
-            self.album_template_fields = {}
+        # create per-instance storage for template fields and functions
+        self.template_funcs = {}
+        self.template_fields = {}
+        self.album_template_fields = {}
 
         self.early_import_stages = []
         self.import_stages = []
 
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
-        if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
-            self._log.addFilter(PluginLogFilter(self))
 
         # In order to verify the config we need to make sure the plugin is fully
         # configured (plugins usually add the default configuration *after*
@@ -278,8 +220,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         return ()
 
     def _set_stage_log_level(
-        self,
-        stages: list[ImportStageFunc],
+        self, stages: list[ImportStageFunc]
     ) -> list[ImportStageFunc]:
         """Adjust all the stages in `stages` to WARNING logging level."""
         return [
@@ -308,9 +249,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         return self._set_stage_log_level(self.import_stages)
 
     def _set_log_level_and_params(
-        self,
-        base_log_level: int,
-        func: Callable[P, Ret],
+        self, base_log_level: int, func: Callable[P, Ret]
     ) -> Callable[P, Ret]:
         """Wrap `func` to temporarily set this plugin's logger level to
         `base_log_level` + config options (and restore it to its previous
@@ -336,7 +275,7 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
 
         return wrapper
 
-    def queries(self) -> dict[str, type[Query]]:
+    def queries(self) -> dict[str, FieldQueryType]:
         """Return a dict mapping prefixes to Query subclasses."""
         return {}
 
@@ -356,7 +295,143 @@ class BeetsPlugin(metaclass=abc.ABCMeta):
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
-    def register_listener(self, event: EventType, func: Listener) -> None:
+    @overload
+    def register_listener(
+        self,
+        event: events.AfterWriteEventType,
+        func: Callable[[Unpack[events.AfterWriteEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ItemPathEventType,
+        func: Callable[[Unpack[events.ItemPathEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.BeforeChooseCandidateEventType,
+        func: Callable[
+            [Unpack[events.ImportTaskEventArgs]], list[PromptChoice]
+        ],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ImportTaskBeforeChoiceEventType,
+        func: Callable[[Unpack[events.ImportTaskEventArgs]], Action | None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ImportTaskCreatedEventType,
+        func: Callable[
+            [Unpack[events.ImportTaskEventArgs]], list[ImportTask] | None
+        ],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ImportTaskEventType,
+        func: Callable[[Unpack[events.ImportTaskEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ImportEventType,
+        func: Callable[[Unpack[events.ImportEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.AlbumImportedEventType,
+        func: Callable[[Unpack[events.AlbumImportedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.AlbumEventType,
+        func: Callable[[Unpack[events.AlbumEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.AlbumInfoReceivedEventType,
+        func: Callable[[Unpack[events.AlbumInfoReceivedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.TrackInfoReceivedEventType,
+        func: Callable[[Unpack[events.TrackInfoReceivedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.AlbumMatchedEventType,
+        func: Callable[[Unpack[events.AlbumMatchedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.LibraryEventType,
+        func: Callable[[Unpack[events.LibraryEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.DatabaseChangeEventType,
+        func: Callable[[Unpack[events.DatabaseChangeEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ImportBeginEventType,
+        func: Callable[[Unpack[events.ImportBeginEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ItemImportedEventType,
+        func: Callable[[Unpack[events.ItemImportedEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.ItemEventType,
+        func: Callable[[Unpack[events.ItemEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.WriteEventType,
+        func: Callable[[Unpack[events.WriteEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.MusicBrainzExtractEventType,
+        func: Callable[[Unpack[events.MusicBrainzExtractEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self, event: events.NoArgsEventType, func: Callable[[], None]
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.AfterConvertEventType,
+        func: Callable[[Unpack[events.AfterConvertEventArgs]], None],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.AlternativesItemUpdatedEventType,
+        func: Callable[[Unpack[events.AlternativesItemUpdatedEventArgs]], None],
+    ) -> None: ...
+    def register_listener(
+        self, event: events.EventType, func: Listener
+    ) -> None:
         """Add a function as a listener for the specified event."""
         if func not in self._raw_listeners[event]:
             self._raw_listeners[event].append(func)
@@ -506,14 +581,11 @@ def commands() -> list[Subcommand]:
     return out
 
 
-def queries() -> dict[str, type[Query]]:
-    """Returns a dict mapping prefix strings to Query subclasses all loaded
-    plugins.
-    """
-    out: dict[str, type[Query]] = {}
-    for plugin in find_plugins():
-        out.update(plugin.queries())
-    return out
+def queries() -> dict[str, FieldQueryType]:
+    """Return configured query prefixes from all plugins."""
+    return {
+        p: q for plugin in find_plugins() for p, q in plugin.queries().items()
+    }
 
 
 def types(model_cls: type[AnyModel]) -> dict[str, Type]:
@@ -543,9 +615,21 @@ def named_queries(model_cls: type[AnyModel]) -> dict[str, FieldQueryType]:
     }
 
 
+@overload
 def notify_info_yielded(
-    event: EventType,
-) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
+    event: events.AlbumInfoReceivedEventType,
+) -> Callable[
+    [Callable[P, Iterable[AlbumInfo]]], Callable[P, Iterator[AlbumInfo]]
+]: ...
+@overload
+def notify_info_yielded(
+    event: events.TrackInfoReceivedEventType,
+) -> Callable[
+    [Callable[P, Iterable[TrackInfo]]], Callable[P, Iterator[TrackInfo]]
+]: ...
+def notify_info_yielded(
+    event: events.MetadataReceivedEventType,
+) -> Callable[[Callable[P, Iterable[Ret]]], Callable[P, Iterator[Ret]]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
     returning an iterable should work.
@@ -553,11 +637,13 @@ def notify_info_yielded(
     'send'.
     """
 
-    def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
+    def decorator(
+        func: Callable[P, Iterable[Ret]],
+    ) -> Callable[P, Iterator[Ret]]:
         @wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
             for v in func(*args, **kwargs):
-                send(event, info=v)
+                send(event, info=v)  # type: ignore[call-overload]
                 yield v
 
         return wrapper
@@ -634,7 +720,109 @@ def album_field_getters() -> TFuncMap[Album]:
 # Event dispatch.
 
 
-def send(event: EventType, **arguments: Any) -> list[Any]:
+@overload
+def send(
+    event: events.AfterWriteEventType,
+    **arguments: Unpack[events.AfterWriteEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.ItemPathEventType,
+    **arguments: Unpack[events.ItemPathEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.BeforeChooseCandidateEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
+) -> list[list[PromptChoice]]: ...
+@overload
+def send(
+    event: events.ImportTaskBeforeChoiceEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
+) -> list[Action]: ...
+@overload
+def send(
+    event: events.ImportTaskCreatedEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
+) -> list[list[ImportTask]]: ...
+@overload
+def send(
+    event: events.ImportTaskEventType,
+    **arguments: Unpack[events.ImportTaskEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.ImportEventType, **arguments: Unpack[events.ImportEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.AlbumImportedEventType,
+    **arguments: Unpack[events.AlbumImportedEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.AlbumEventType, **arguments: Unpack[events.AlbumEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.AlbumInfoReceivedEventType,
+    **arguments: Unpack[events.AlbumInfoReceivedEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.TrackInfoReceivedEventType,
+    **arguments: Unpack[events.TrackInfoReceivedEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.AlbumMatchedEventType,
+    **arguments: Unpack[events.AlbumMatchedEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.LibraryEventType, **arguments: Unpack[events.LibraryEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.DatabaseChangeEventType,
+    **arguments: Unpack[events.DatabaseChangeEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.ImportBeginEventType,
+    **arguments: Unpack[events.ImportBeginEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.ItemImportedEventType,
+    **arguments: Unpack[events.ItemImportedEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.ItemEventType, **arguments: Unpack[events.ItemEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.WriteEventType, **arguments: Unpack[events.WriteEventArgs]
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.MusicBrainzExtractEventType,
+    **arguments: Unpack[events.MusicBrainzExtractEventArgs],
+) -> list[dict[str, Any]]: ...
+@overload
+def send(event: events.NoArgsEventType) -> list[Never]: ...
+@overload
+def send(
+    event: events.AfterConvertEventType,
+    **arguments: Unpack[events.AfterConvertEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.AlternativesItemUpdatedEventType,
+    **arguments: Unpack[events.AlternativesItemUpdatedEventArgs],
+) -> list[Never]: ...
+def send(event: events.EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
     `event` is the name of  the event to send, all other named arguments
@@ -663,9 +851,10 @@ def feat_tokens(
         feat_words += custom_words
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return (
-        rf"(?<=[\s(\[])(?:{'|'.join(re.escape(x) for x in feat_words)})(?=\s)"
-    )
+    tokens = "|".join(re.escape(x) for x in feat_words)
+    bracketed = rf"(?:(?<=\s)|^)(?:\(|\[)(?:{tokens})(?=\s)"
+    plain = rf"(?<=[\s(\[])(?:{tokens})(?=\s)"
+    return rf"(?:{bracketed}|{plain})"
 
 
 def apply_item_changes(

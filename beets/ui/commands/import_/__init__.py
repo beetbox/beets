@@ -1,17 +1,34 @@
 """The `import` command: import new music into the library."""
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING, Protocol
 
 from beets import config, logging, plugins, ui
+from beets.exceptions import UserError
 from beets.util import displayable_path, normpath, syspath
 
 from .session import TerminalImportSession
+
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Iterator
+
+    from beets.library import Library
+    from beets.ui import SubcommandsOptionParser
 
 # Global logger.
 log = logging.getLogger("beets")
 
 
-def paths_from_logfile(path):
+class ImportCLIOpts(Protocol):
+    copy: bool | None
+    library: bool | None
+    from_logfiles: list[str] | None
+
+
+def paths_from_logfile(path: str) -> Iterator[str]:
     """Parse the logfile and yield skipped paths to pass to the `import`
     command.
     """
@@ -31,28 +48,30 @@ def paths_from_logfile(path):
             yield os.path.commonpath(paths.split("; "))
 
 
-def parse_logfiles(logfiles):
+def parse_logfiles(logfiles: list[str]) -> Iterator[str]:
     """Parse all `logfiles` and yield paths from it."""
     for logfile in logfiles:
         try:
             yield from paths_from_logfile(syspath(normpath(logfile)))
         except ValueError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"malformed logfile {displayable_path(logfile)}: {err}"
             ) from err
         except OSError as err:
-            raise ui.UserError(
+            raise UserError(
                 f"unreadable logfile {displayable_path(logfile)}: {err}"
             ) from err
 
 
-def import_files(lib, paths: list[bytes], query):
+def import_files(
+    lib: Library, paths: list[bytes], query: list[str] | None
+) -> None:
     """Import the files in the given list of paths or matching the
     query.
     """
     # Check parameter consistency.
     if config["import"]["quiet"] and config["import"]["timid"]:
-        raise ui.UserError("can't be both quiet and timid")
+        raise UserError("can't be both quiet and timid")
 
     # Open the log.
     if config["import"]["log"].get() is not None:
@@ -60,7 +79,7 @@ def import_files(lib, paths: list[bytes], query):
         try:
             loghandler = logging.FileHandler(logpath, encoding="utf-8")
         except OSError:
-            raise ui.UserError(
+            raise UserError(
                 "Could not open log file for writing:"
                 f" {displayable_path(logpath)}"
             )
@@ -78,8 +97,8 @@ def import_files(lib, paths: list[bytes], query):
     plugins.send("import", lib=lib, paths=paths)
 
 
-def import_func(lib, opts, args: list[str]):
-    config["import"].set_args(opts)
+def import_func(lib: Library, opts: ImportCLIOpts, args: list[str]) -> None:
+    config["import"].set_args(vars(opts))
 
     # Special case: --copy flag suppresses import_move (which would
     # otherwise take precedence).
@@ -98,15 +117,15 @@ def import_func(lib, opts, args: list[str]):
         paths_from_logfiles = list(parse_logfiles(opts.from_logfiles or []))
 
         if not paths and not paths_from_logfiles:
-            raise ui.UserError("no path specified")
+            raise UserError("no path specified")
 
         byte_paths = [os.fsencode(p) for p in paths]
-        paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
+        byte_paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
 
         # Check the user-specified directories.
         for path in byte_paths:
             if not os.path.exists(syspath(normpath(path))):
-                raise ui.UserError(
+                raise UserError(
                     f"no such file or directory: {displayable_path(path)}"
                 )
 
@@ -114,7 +133,7 @@ def import_func(lib, opts, args: list[str]):
         # case those paths don't exist. Maybe some of those paths have already
         # been imported and moved separately, so logging a warning should
         # suffice.
-        for path in paths_from_logfiles:
+        for path in byte_paths_from_logfiles:
             if not os.path.exists(syspath(normpath(path))):
                 log.warning(
                     "No such file or directory: {}", displayable_path(path)
@@ -126,17 +145,22 @@ def import_func(lib, opts, args: list[str]):
         # If all paths were read from a logfile, and none of them exist, throw
         # an error
         if not byte_paths:
-            raise ui.UserError("none of the paths are importable")
+            raise UserError("none of the paths are importable")
 
     import_files(lib, byte_paths, query)
 
 
-def _store_dict(option, opt_str, value, parser):
+def _store_dict(
+    option: optparse.Option,
+    opt_str: str,
+    value: str,
+    parser: SubcommandsOptionParser,
+) -> None:
     """Custom action callback to parse options which have ``key=value``
     pairs as values. All such pairs passed for this option are
     aggregated into a dictionary.
     """
-    dest = option.dest
+    dest: str = option.dest  # type: ignore[assignment]
     option_values = getattr(parser.values, dest, None)
 
     if option_values is None:
@@ -150,7 +174,7 @@ def _store_dict(option, opt_str, value, parser):
         if not (key and value):
             raise ValueError
     except ValueError:
-        raise ui.UserError(
+        raise UserError(
             f"supplied argument `{value}' is not of the form `key=value'"
         )
 
@@ -180,6 +204,13 @@ import_cmd.parser.add_option(
     action="store_true",
     dest="move",
     help="move tracks into the library (overrides -c)",
+)
+import_cmd.parser.add_option(
+    "-M",
+    "--nomove",
+    action="store_false",
+    dest="move",
+    help="don't move tracks into the library (overrides -m)",
 )
 import_cmd.parser.add_option(
     "-w",

@@ -1,16 +1,28 @@
 """The 'completion' command: print shell script for command line completion."""
 
+from __future__ import annotations
+
 import os
 import re
+from typing import TYPE_CHECKING
 
 from beets import library, logging, plugins, ui
 from beets.util import syspath
+
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Iterator, Sequence
+
+    from beets.library import Library
+
 
 # Global logger.
 log = logging.getLogger("beets")
 
 
-def print_completion(*args):
+def print_completion(
+    lib: Library, opts: optparse.Values, args: list[str]
+) -> None:
     from beets.ui.commands import default_commands
 
     for line in completion_script(default_commands + plugins.commands()):
@@ -41,7 +53,7 @@ BASH_COMPLETION_PATHS = [
 ]
 
 
-def completion_script(commands):
+def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
     """Yield the full completion shell script as strings.
 
     ``commands`` is alist of ``ui.Subcommand`` instances to generate
@@ -50,10 +62,10 @@ def completion_script(commands):
     base_script = os.path.join(
         os.path.dirname(__file__), "./completion_base.sh"
     )
-    with open(base_script) as base_script:
-        yield base_script.read()
+    with open(base_script) as f:
+        yield f.read()
 
-    options = {}
+    options: dict[str, dict[str, list[str]]] = {}
     aliases = {}
     command_names = []
 
@@ -95,8 +107,8 @@ def completion_script(commands):
 
     # Command aliases
     yield f"  local aliases={' '.join(aliases.keys())!r}\n"
-    for alias, cmd in aliases.items():
-        yield f"  local alias__{alias.replace('-', '_')}={cmd}\n"
+    for alias, _cmd in aliases.items():
+        yield f"  local alias__{alias.replace('-', '_')}={_cmd}\n"
     yield "\n"
 
     # Fields
@@ -104,13 +116,12 @@ def completion_script(commands):
     yield f"  fields={' '.join(fields)!r}\n"
 
     # Command options
-    for cmd, opts in options.items():
-        for option_type, option_list in opts.items():
+    for _cmd, _opts in options.items():
+        for option_type, option_list in _opts.items():
             if option_list:
-                option_list = " ".join(option_list)
                 yield (
-                    "  local"
-                    f" {option_type}__{cmd.replace('-', '_')}='{option_list}'\n"
+                    f"  local {option_type}__{_cmd.replace('-', '_')}"
+                    f"='{' '.join(option_list)}'\n"
                 )
 
     yield "  _beet_dispatch\n"

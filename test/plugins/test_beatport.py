@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests for the 'beatport' plugin."""
 
 import unittest
@@ -31,7 +17,7 @@ class BeatportTest(BeetsTestCase):
         The list of elements on the returned dict is incomplete, including just
         those required for the tests on this class.
         """
-        results = {
+        return {
             "id": 1742984,
             "type": "release",
             "name": "Charade",
@@ -61,7 +47,6 @@ class BeatportTest(BeetsTestCase):
                 {"id": 9, "name": "Breaks", "slug": "breaks", "type": "genre"}
             ],
         }
-        return results
 
     def _make_tracks_response(self):
         """Return a list that mimics a response from the beatport API.
@@ -71,7 +56,7 @@ class BeatportTest(BeetsTestCase):
         The list of elements on the returned list is incomplete, including just
         those required for the tests on this class.
         """
-        results = [
+        return [
             {
                 "id": 7817567,
                 "type": "track",
@@ -445,7 +430,6 @@ class BeatportTest(BeetsTestCase):
                 },
             },
         ]
-        return results
 
     def setUp(self):
         super().setUp()
@@ -474,7 +458,7 @@ class BeatportTest(BeetsTestCase):
             item.year = 2016
             item.comp = False
             item.label_name = "Gravitas Recordings"
-            item.genre = "Glitch Hop"
+            item.genres = ["Glitch Hop", "Breaks"]
             item.year = 2016
             item.month = 4
             item.day = 11
@@ -559,18 +543,12 @@ class BeatportTest(BeetsTestCase):
 
     def test_track_url_applied(self):
         # Specify beatport ids here because an 'item.id' is beets-internal.
-        ids = [
-            7817567,
-            7817568,
-            7817569,
-            7817570,
-            7817571,
-            7817572,
-        ]
+        ids = [7817567, 7817568, 7817569, 7817570, 7817571, 7817572]
         # Concatenate with 'id' to pass strict equality test.
-        for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
+        for track, test_track, id_ in zip(self.tracks, self.test_tracks, ids):
             assert (
-                track.url == f"https://beatport.com/track/{test_track.url}/{id}"
+                track.url
+                == f"https://beatport.com/track/{test_track.url}/{id_}"
             )
 
     def test_bpm_applied(self):
@@ -583,12 +561,12 @@ class BeatportTest(BeetsTestCase):
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            assert track.genre == test_track.genre
+            assert track.genres == test_track.genres
 
 
 class BeatportResponseEmptyTest(unittest.TestCase):
     def _make_tracks_response(self):
-        results = [
+        return [
             {
                 "id": 7817567,
                 "name": "Mirage a Trois",
@@ -610,7 +588,6 @@ class BeatportResponseEmptyTest(unittest.TestCase):
                 ],
             }
         ]
-        return results
 
     def setUp(self):
         super().setUp()
@@ -634,7 +611,7 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["subGenres"] = []
 
-        assert tracks[0].genre == self.test_tracks[0]["genres"][0]["name"]
+        assert tracks[0].genres == [self.test_tracks[0]["genres"][0]["name"]]
 
     def test_genre_empty(self):
         """No 'genre' is provided. Test if 'sub_genre' is applied."""
@@ -643,4 +620,4 @@ class BeatportResponseEmptyTest(unittest.TestCase):
 
         self.test_tracks[0]["genres"] = []
 
-        assert tracks[0].genre == self.test_tracks[0]["subGenres"][0]["name"]
+        assert tracks[0].genres == [self.test_tracks[0]["subGenres"][0]["name"]]

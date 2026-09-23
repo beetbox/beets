@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Moves patterns in path formats (suitable for moving articles)."""
 
 import re
@@ -27,9 +13,9 @@ FORMAT = "{}, {}"
 
 
 class ThePlugin(BeetsPlugin):
-    patterns: list[str] = []
+    patterns: list[str]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.template_funcs["the"] = self.the_template_func
@@ -54,17 +40,16 @@ class ThePlugin(BeetsPlugin):
                 else:
                     if not (p.startswith("^") or p.endswith("$")):
                         self._log.warning(
-                            'warning: "{}" will not match string start/end',
-                            p,
+                            'warning: "{}" will not match string start/end', p
                         )
         if self.config["a"]:
-            self.patterns = [PATTERN_A] + self.patterns
+            self.patterns = [PATTERN_A, *self.patterns]
         if self.config["the"]:
-            self.patterns = [PATTERN_THE] + self.patterns
+            self.patterns = [PATTERN_THE, *self.patterns]
         if not self.patterns:
             self._log.warning("no patterns defined!")
 
-    def unthe(self, text, pattern):
+    def unthe(self, text: str, pattern: str) -> str:
         """Moves pattern in the path format string or strips it
 
         text -- text to handle
@@ -72,22 +57,21 @@ class ThePlugin(BeetsPlugin):
         strip -- if True, pattern will be removed
         """
         if text:
-            r = re.compile(pattern, flags=re.IGNORECASE)
+            m = re.compile(pattern, flags=re.IGNORECASE)
             try:
-                t = r.findall(text)[0]
+                t = m.findall(text)[0]
             except IndexError:
                 return text
             else:
-                r = re.sub(r, "", text).strip()
+                r = re.sub(m, "", text).strip()
                 if self.config["strip"]:
                     return r
-                else:
-                    fmt = self.config["format"].as_str()
-                    return fmt.format(r, t.strip()).strip()
+                fmt = self.config["format"].as_str()
+                return fmt.format(r, t.strip()).strip()
         else:
             return ""
 
-    def the_template_func(self, text):
+    def the_template_func(self, text: str) -> str:
         if not self.patterns:
             return text
         if text:
@@ -97,5 +81,4 @@ class ThePlugin(BeetsPlugin):
                     self._log.debug('"{}" -> "{}"', text, r)
                     break
             return r
-        else:
-            return ""
+        return ""

@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """A simple utility for constructing filesystem-like trees from beets
 libraries.
 """
@@ -23,6 +9,8 @@ from typing import TYPE_CHECKING, NamedTuple
 from beets import util
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
 
 
@@ -34,7 +22,7 @@ class Node(NamedTuple):
     # Maps directory names to child nodes.
 
 
-def _insert(node: Node, path: list[str], itemid: int):
+def _insert(node: Node, path: Sequence[str], itemid: int) -> None:
     """Insert an item into a virtual filesystem node."""
     if len(path) == 1:
         # Last component. Insert file.
@@ -57,6 +45,8 @@ def libtree(lib: Library) -> Node:
     """
     root = Node({}, {})
     for item in lib.items():
+        if item.id is None:
+            continue
         dest = item.destination(relative_to_libdir=True)
         parts = util.components(util.as_string(dest))
         _insert(root, parts, item.id)

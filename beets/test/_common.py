@@ -1,57 +1,32 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Some common functionality for beets' test cases."""
+
+from __future__ import annotations
 
 import os
 import sys
-import unittest
 from contextlib import contextmanager
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import beets
 import beets.library
 
 # Make sure the development versions of the plugins are used
-import beetsplug
-from beets import importer, logging, util
+from beets import importer, logging
 from beets.ui import commands
 from beets.util import syspath
 
-beetsplug.__path__ = [
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "beetsplug",
-        )
-    )
-]
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
+    import pytest
+
+    from beets.dbcore import Query
+    from beets.library import Item, Library
 
 # Test resources path.
-RSRC = util.bytestring_path(
-    os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "test",
-            "rsrc",
-        )
-    )
-)
-PLUGINPATH = os.path.join(RSRC.decode(), "beetsplug")
+RSRC = (Path(__file__).parent.parent.parent / "test" / "rsrc").resolve()
+PLUGINPATH = str(RSRC / "beetsplug")
 
 # Propagate to root logger so the test runner can capture it
 log = logging.getLogger("beets")
@@ -63,16 +38,16 @@ HAVE_SYMLINK = sys.platform != "win32"
 HAVE_HARDLINK = sys.platform != "win32"
 
 
-def item(lib=None, **kwargs):
+def item(lib: Library | None = None, **kwargs) -> Item:
     defaults = dict(
         title="the title",
         artist="the artist",
         albumartist="the album artist",
         album="the album",
-        genre="the genre",
-        lyricist="the lyricist",
-        composer="the composer",
-        arranger="the arranger",
+        genres=["the genre"],
+        lyricists=["the lyricist"],
+        composers=["the composer"],
+        arrangers=["the arranger"],
         grouping="the grouping",
         work="the work title",
         mb_workid="the work musicbrainz id",
@@ -106,7 +81,13 @@ def item(lib=None, **kwargs):
 
 
 # Dummy import session.
-def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
+def import_session(
+    lib: Library,
+    loghandler: logging.Handler | None = None,
+    paths: Sequence[bytes] | None = None,
+    query: str | Sequence[str] | Query | None = None,
+    cli: bool = False,
+) -> importer.ImportSession:
     cls = (
         commands.import_.session.TerminalImportSession
         if cli
@@ -118,112 +99,69 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
 # Mock I/O.
 
 
-class InputError(Exception):
-    def __init__(self, output=None):
-        self.output = output
-
-    def __str__(self):
-        msg = "Attempt to read with no input provided."
-        if self.output is not None:
-            msg += f" Output: {self.output!r}"
-        return msg
-
-
-class DummyOut:
-    encoding = "utf-8"
-
-    def __init__(self):
-        self.buf = []
-
-    def write(self, s):
-        self.buf.append(s)
-
-    def get(self):
-        return "".join(self.buf)
-
-    def flush(self):
-        self.clear()
-
-    def clear(self):
-        self.buf = []
+class InputError(IOError):
+    def __str__(self) -> str:
+        return "Attempt to read with no input provided."
 
 
 class DummyIn:
     encoding = "utf-8"
 
-    def __init__(self, out=None):
-        self.buf = []
-        self.reads = 0
-        self.out = out
+    def __init__(self) -> None:
+        self.buf: list[str] = []
 
-    def add(self, s):
+    def add(self, s: str) -> None:
         self.buf.append(f"{s}\n")
 
-    def close(self):
+    def close(self) -> None:
         pass
 
-    def readline(self):
+    def readline(self) -> str:
         if not self.buf:
-            if self.out:
-                raise InputError(self.out.get())
-            else:
-                raise InputError()
-        self.reads += 1
+            raise InputError
+
         return self.buf.pop(0)
 
 
 class DummyIO:
-    """Mocks input and output streams for testing UI code."""
+    """Test helper that manages standard input and output."""
 
-    def __init__(self):
-        self.stdout = DummyOut()
-        self.stdin = DummyIn(self.stdout)
+    def __init__(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capteesys: pytest.CaptureFixture[str],
+    ) -> None:
+        self._capteesys = capteesys
+        self.stdin = DummyIn()
 
-    def addinput(self, s):
-        self.stdin.add(s)
+        monkeypatch.setattr("sys.stdin", self.stdin)
 
-    def getoutput(self):
-        res = self.stdout.get()
-        self.stdout.clear()
-        return res
+    def addinput(self, text: str) -> None:
+        """Simulate user typing into stdin."""
+        self.stdin.add(text)
 
-    def readcount(self):
-        return self.stdin.reads
+    def getoutput(self) -> str:
+        """Get the standard output captured so far.
 
-    def install(self):
-        sys.stdin = self.stdin
-        sys.stdout = self.stdout
-
-    def restore(self):
-        sys.stdin = sys.__stdin__
-        sys.stdout = sys.__stdout__
+        Note: it clears the internal buffer, so subsequent calls will only
+        return *new* output.
+        """
+        # Using capteesys allows you to see output in the console if the test fails
+        return self._capteesys.readouterr().out
 
 
 # Utility.
 
 
-def touch(path):
+def touch(path: bytes) -> None:
     open(syspath(path), "a").close()
-
-
-class Bag:
-    """An object that exposes a set of fields given as keyword
-    arguments. Any field not found in the dictionary appears to be None.
-    Used for mocking Album objects and the like.
-    """
-
-    def __init__(self, **fields):
-        self.fields = fields
-
-    def __getattr__(self, key):
-        return self.fields.get(key)
 
 
 # Platform mocking.
 
 
 @contextmanager
-def platform_windows():
+def platform_windows() -> Iterator[None]:
     import ntpath
 
     old_path = os.path
@@ -235,7 +173,7 @@ def platform_windows():
 
 
 @contextmanager
-def platform_posix():
+def platform_posix() -> Iterator[None]:
     import posixpath
 
     old_path = os.path
@@ -247,7 +185,7 @@ def platform_posix():
 
 
 @contextmanager
-def system_mock(name):
+def system_mock(name: str) -> Iterator[None]:
     import platform
 
     old_system = platform.system
@@ -256,12 +194,3 @@ def system_mock(name):
         yield
     finally:
         platform.system = old_system
-
-
-def slow_test(unused=None):
-    def _id(obj):
-        return obj
-
-    if "SKIP_SLOW_TESTS" in os.environ:
-        return unittest.skip("test is slow")
-    return _id

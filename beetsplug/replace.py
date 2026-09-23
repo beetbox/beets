@@ -1,24 +1,35 @@
+from __future__ import annotations
+
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import mediafile
 
 from beets import ui, util
-from beets.library import Item, Library
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Sequence
+
+    from beets.library import Item, Library
 
 
 class ReplacePlugin(BeetsPlugin):
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "replace", help="replace audio file while keeping tags"
         )
         cmd.func = self.run
         return [cmd]
 
-    def run(self, lib: Library, args: list[str]) -> None:
+    def run(
+        self, lib: Library, _opts: optparse.Values, args: list[str]
+    ) -> None:
         if len(args) < 2:
-            raise ui.UserError("Usage: beet replace <query> <new_file_path>")
+            raise UserError("Usage: beet replace <query> <new_file_path>")
 
         new_file_path: Path = Path(args[-1])
         item_query: list[str] = args[:-1]
@@ -28,7 +39,7 @@ class ReplacePlugin(BeetsPlugin):
         item_list = list(lib.items(item_query))
 
         if not item_list:
-            raise ui.UserError("No matching songs found.")
+            raise UserError("No matching songs found.")
 
         song = self.select_song(item_list)
 
@@ -45,16 +56,16 @@ class ReplacePlugin(BeetsPlugin):
     def file_check(self, filepath: Path) -> None:
         """Check if the file exists and is supported"""
         if not filepath.is_file():
-            raise ui.UserError(
+            raise UserError(
                 f"'{util.displayable_path(filepath)}' is not a valid file."
             )
 
         try:
             mediafile.MediaFile(util.syspath(filepath))
         except mediafile.FileTypeError as fte:
-            raise ui.UserError(fte)
+            raise UserError(fte)
 
-    def select_song(self, items: list[Item]):
+    def select_song(self, items: Sequence[Item]) -> Item | None:
         """Present a menu of matching songs and get user selection."""
         ui.print_("\nMatching songs:")
         for i, item in enumerate(items, 1):
@@ -79,12 +90,12 @@ class ReplacePlugin(BeetsPlugin):
             except ValueError:
                 ui.print_("Invalid input. Please type in a number.")
 
-    def confirm_replacement(self, new_file_path: Path, song: Item):
+    def confirm_replacement(self, new_file_path: Path, song: Item) -> bool:
         """Get user confirmation for the replacement."""
         original_file_path: Path = Path(song.path.decode())
 
         if not original_file_path.exists():
-            raise ui.UserError("The original song file was not found.")
+            raise UserError("The original song file was not found.")
 
         ui.print_(
             f"\nReplacing: {util.displayable_path(new_file_path)} "
@@ -105,7 +116,7 @@ class ReplacePlugin(BeetsPlugin):
         try:
             shutil.move(util.syspath(new_file_path), util.syspath(dest))
         except Exception as e:
-            raise ui.UserError(f"Error replacing file: {e}")
+            raise UserError(f"Error replacing file: {e}")
 
         if (
             new_file_path.suffix != original_file_path.suffix
@@ -114,7 +125,7 @@ class ReplacePlugin(BeetsPlugin):
             try:
                 original_file_path.unlink()
             except Exception as e:
-                raise ui.UserError(f"Could not delete original file: {e}")
+                raise UserError(f"Could not delete original file: {e}")
 
         song.path = str(dest).encode()
         song.store()

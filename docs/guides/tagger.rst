@@ -50,8 +50,8 @@ all of these limitations.
 
   First, directories that look like separate parts of a *multi-disc album* are
   tagged together as a single release. If two adjacent albums have a common
-  prefix, followed by "disc," "disk," or "CD" and then a number, they are tagged
-  together.
+  prefix, followed by "disc," "disk," "CD," "cassette," "digital media," or
+  "vinyl" and then a number, they are tagged together.
 
   Second, if you have jumbled directories containing more than one album, you
   can ask beets to split them apart for you based on their metadata. Use either
@@ -98,6 +98,8 @@ command-line options you should know:
   them where they are
 - ``beet import -m``: move imported files to your music directory (overrides the
   ``-c`` option)
+- ``beet import -M``: don't move imported files to your music directory
+  (overrides the ``-m`` option)
 - ``beet import -l LOGFILE``: write a message to ``LOGFILE`` every time you skip
   an album or choose to take its tags "as-is" (see below) or the album is
   skipped as a duplicate; this lets you come back later and reexamine albums
@@ -163,10 +165,10 @@ When beets needs your input about a match, it says something like this:
         Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
-    [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, enter Id, or aBort?
+    [A]pply, More candidates, Skip, Use as-is, as Tracks, Group albums, Rescan directory, Enter search, enter Id, or aBort?
 
 When beets asks you this question, it wants you to enter one of the capital
-letters: A, M, S, U, T, G, E, I or B. That is, you can choose one of the
+letters: A, M, S, U, T, G, R, E, I or B. That is, you can choose one of the
 following:
 
 - *A*: Apply the suggested changes shown and move on.
@@ -183,6 +185,10 @@ following:
   groups as albums. If the album artist for a track is not set then the artist
   is used to group that track. For each group importing proceeds as for
   directories. This is helpful if a directory contains multiple albums.
+- *R*: Rescan the directory from disk and re-run the match. Use this if you want
+  to clean up the files (remove duplicates or junk, add missing tracks, etc.)
+  without restarting the whole ``beet import`` run---just make your changes on
+  disk before choosing this option.
 - *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
   or untagged.
@@ -230,10 +236,10 @@ one you're importing, you may see a prompt like this:
 ::
 
     This album is already in the library!
-    [S]kip new, Keep all, Remove old, Merge all?
+    [S]kip new, Merge all, Remove old, Keep all, Upgrade?
 
 Beets wants to keep you safe from duplicates, which can be a real pain, so you
-have four choices in this situation. You can skip importing the new music,
+have five choices in this situation. You can skip importing the new music,
 choosing to keep the stuff you already have in your library; you can keep both
 the old and the new music; you can remove the existing music and choose the new
 stuff; or you can merge all the new and old tracks into a single album. If you
@@ -246,6 +252,11 @@ as one bundle together. This is particularly helpful when you have an album
 that's missing some tracks and then want to import the remaining songs. The
 importer will ask you the same questions as it would if you were importing all
 tracks at once.
+
+If you choose "upgrade", beets compares each new track with its existing
+counterpart and replaces the old track only when the new one has a higher
+bitrate. New tracks without an existing counterpart are still added, while the
+rest of the existing album remains untouched.
 
 If you choose to keep two identically-named albums, beets can avoid storing both
 in the same directory. See :ref:`aunique` for details.

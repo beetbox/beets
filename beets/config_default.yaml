@@ -3,12 +3,16 @@
 library: library.db
 directory: ~/Music
 statefile: state.pickle
+create_backup_before_migrations: yes
+tempfile_prefix: '.'
 
 # --------------- Plugins ---------------
 
 plugins: [musicbrainz]
 
 pluginpath: []
+
+raise_on_error: no
 
 # --------------- Import ---------------
 
@@ -54,6 +58,8 @@ import:
     set_fields: {}
     ignored_alias_types: []
     singleton_album_disambig: yes
+    fix_ext_inplace: no
+    remux_mp3_in_wav: yes
 
 # --------------- Paths ---------------
 

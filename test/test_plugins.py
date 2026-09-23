@@ -1,24 +1,9 @@
-# This file is part of beets.
-# Copyright 2016, Thomas Scholtes.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 import importlib
 import itertools
 import logging
-import os
 import pkgutil
 import sys
+from typing import ClassVar
 from unittest.mock import ANY, Mock, patch
 
 import pytest
@@ -26,27 +11,23 @@ from mediafile import MediaFile
 
 from beets import config, plugins, ui
 from beets.dbcore import types
-from beets.importer import (
-    Action,
-    ArchiveImportTask,
-    SentinelImportTask,
-    SingletonImportTask,
-)
+from beets.importer import Action, SingletonImportTask
 from beets.library import Item
-from beets.test import helper
 from beets.test.helper import (
+    RUNNING_IN_CI,
     AutotagStub,
     ImportHelper,
+    IOMixin,
     PluginMixin,
-    PluginTestCase,
+    PluginTestHelper,
     TerminalImportMixin,
 )
-from beets.util import PromptChoice, displayable_path, syspath
+from beets.util import PromptChoice, displayable_path
 
 
-class TestPluginRegistration(PluginTestCase):
+class TestPluginRegistration(IOMixin, PluginTestHelper):
     class RatingPlugin(plugins.BeetsPlugin):
-        item_types = {
+        item_types: ClassVar[dict[str, types.Type]] = {
             "rating": types.Float(),
             "multi_value": types.MULTI_VALUE_DSV,
         }
@@ -60,9 +41,8 @@ class TestPluginRegistration(PluginTestCase):
             if tags["artist"] == "XXX":
                 tags["artist"] = "YYY"
 
-    def setUp(self):
-        super().setUp()
-
+    @pytest.fixture(autouse=True)
+    def _setup(self):
         self.register_plugin(self.RatingPlugin)
 
     def test_field_type_registered(self):
@@ -70,7 +50,9 @@ class TestPluginRegistration(PluginTestCase):
 
     def test_duplicate_type(self):
         class DuplicateTypePlugin(plugins.BeetsPlugin):
-            item_types = {"rating": types.INTEGER}
+            item_types: ClassVar[dict[str, types.Type]] = {
+                "rating": types.INTEGER
+            }
 
         self.register_plugin(DuplicateTypePlugin)
         with pytest.raises(
@@ -84,7 +66,7 @@ class TestPluginRegistration(PluginTestCase):
 
         item.write()
 
-        assert MediaFile(syspath(item.path)).artist == "YYY"
+        assert MediaFile(item.filepath).artist == "YYY"
 
     def test_multi_value_flex_field_type(self):
         item = Item(path="apath", artist="aaa")
@@ -92,35 +74,38 @@ class TestPluginRegistration(PluginTestCase):
         item.add(self.lib)
 
         out = self.run_with_output("ls", "-f", "$multi_value")
-        delimiter = types.MULTI_VALUE_DSV.delimiter
-        assert out == f"one{delimiter}two{delimiter}three\n"
+        assert out == "one; two; three\n"
 
 
-class PluginImportTestCase(ImportHelper, PluginTestCase):
-    def setUp(self):
-        super().setUp()
+class PluginImportHelper(PluginMixin, ImportHelper):
+    def setup_beets(self):
+        super().setup_beets()
         self.prepare_album_for_import(2)
 
 
-class EventsTest(PluginImportTestCase):
-    def test_import_task_created(self):
+class TestEvents(PluginImportHelper):
+    def test_import_task_created(self, caplog):
         self.importer = self.setup_importer(pretend=True)
 
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        assert logs.count("Sending event: import_task_created") == 1
+        assert caplog.text.count("Sending event: import_task_created") == 1
 
-        logs = [line for line in logs if not line.startswith("Sending event:")]
+        logs = [
+            msg
+            for msg in caplog.messages
+            if not msg.startswith("Sending event:")
+        ]
         assert logs == [
-            f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
+            f"Album: {self.import_path / 'album'}",
             f"  {displayable_path(self.import_media[0].path)}",
             f"  {displayable_path(self.import_media[1].path)}",
         ]
 
-    def test_import_task_created_with_plugin(self):
+    def test_import_task_created_with_plugin(self, caplog):
         class ToSingletonPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()
@@ -130,39 +115,34 @@ class EventsTest(PluginImportTestCase):
                 )
 
             def import_task_created_event(self, session, task):
-                if (
-                    isinstance(task, SingletonImportTask)
-                    or isinstance(task, SentinelImportTask)
-                    or isinstance(task, ArchiveImportTask)
-                ):
-                    return task
-
-                new_tasks = []
-                for item in task.items:
-                    new_tasks.append(SingletonImportTask(task.toppath, item))
-
-                return new_tasks
+                return [
+                    SingletonImportTask(task.toppath, i) for i in task.items
+                ]
 
         to_singleton_plugin = ToSingletonPlugin
         self.register_plugin(to_singleton_plugin)
 
         self.importer = self.setup_importer(pretend=True)
 
-        with helper.capture_log() as logs:
+        with caplog.at_level("DEBUG"):
             self.importer.run()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        assert logs.count("Sending event: import_task_created") == 1
+        assert caplog.text.count("Sending event: import_task_created") == 1
 
-        logs = [line for line in logs if not line.startswith("Sending event:")]
+        logs = [
+            msg
+            for msg in caplog.messages
+            if not msg.startswith("Sending event:")
+        ]
         assert logs == [
             f"Singleton: {displayable_path(self.import_media[0].path)}",
             f"Singleton: {displayable_path(self.import_media[1].path)}",
         ]
 
 
-class ListenersTest(PluginTestCase):
+class TestListeners(PluginTestHelper):
     def test_register(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -264,21 +244,19 @@ class ListenersTest(PluginTestCase):
         plugins.send("event9", foo=5)
 
 
-class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
-    def setUp(self):
-        super().setUp()
+class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
+    @pytest.fixture(autouse=True)
+    def setup_prompt_choice(self, io):
         self.setup_importer()
         self.matcher = AutotagStub(AutotagStub.IDENT).install()
-        self.addCleanup(self.matcher.restore)
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
             "beets.ui.input_options", side_effect=ui.input_options
         )
         self.mock_input_options = self.input_options_patcher.start()
-
-    def tearDown(self):
-        super().tearDown()
+        yield
         self.input_options_patcher.stop()
+        self.matcher.restore()
 
     def test_plugin_choices_in_ui_input_options_album(self):
         """Test the presence of plugin choices on the prompt (album)."""
@@ -293,7 +271,7 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             def return_choices(self, session, task):
                 return [
                     PromptChoice("f", "Foo", None),
-                    PromptChoice("r", "baR", None),
+                    PromptChoice("z", "baZ", None),
                 ]
 
         self.register_plugin(DummyPlugin)
@@ -305,10 +283,13 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo", "baR")
+            "Foo",
+            "baZ",
+        )
 
         self.importer.add_choice(Action.SKIP)
         self.importer.run()
@@ -342,7 +323,9 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo", "baR")
+            "Foo",
+            "baR",
+        )
 
         config["import"]["singletons"] = True
         self.importer.add_choice(Action.SKIP)
@@ -378,10 +361,12 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("baZ",)
+            "baZ",
+        )
         self.importer.add_choice(Action.SKIP)
         self.importer.run()
         self.mock_input_options.assert_called_once_with(
@@ -413,15 +398,18 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo",)
+            "Foo",
+        )
 
         # DummyPlugin.foo() should be called once
         with patch.object(DummyPlugin, "foo", autospec=True) as mock_foo:
-            with helper.control_stdin("\n".join(["f", "s"])):
-                self.importer.run()
+            self.io.addinput("f")
+            self.io.addinput("n")
+            self.importer.run()
             assert mock_foo.call_count == 1
 
         # input_options should be called twice, as foo() returns None
@@ -455,14 +443,16 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
-        ) + ("Foo",)
+            "Foo",
+        )
 
         # DummyPlugin.foo() should be called once
-        with helper.control_stdin("f\n"):
-            self.importer.run()
+        self.io.addinput("f")
+        self.importer.run()
 
         # input_options should be called once, as foo() returns SKIP
         self.mock_input_options.assert_called_once_with(
@@ -509,7 +499,7 @@ class TestImportPlugin(PluginMixin):
         self.unload_plugins()
 
     @pytest.mark.skipif(
-        os.environ.get("GITHUB_ACTIONS") != "true",
+        not RUNNING_IN_CI,
         reason=(
             "Requires all dependencies to be installed, which we can't"
             " guarantee in the local environment."

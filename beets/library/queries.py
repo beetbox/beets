@@ -1,20 +1,26 @@
 from __future__ import annotations
 
 import shlex
+from typing import TYPE_CHECKING
 
 import beets
 from beets import dbcore, logging, plugins
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets.dbcore.queryparse import Prefixes
+    from beets.library import LibModel
+
 log = logging.getLogger("beets")
 
-
-# Special path format key.
-PF_KEY_DEFAULT = "default"
 
 # Query construction helpers.
 
 
-def parse_query_parts(parts, model_cls):
+def parse_query_parts(
+    parts: Sequence[str], model_cls: type[LibModel]
+) -> tuple[dbcore.query.Query, dbcore.sort.Sort]:
     """Given a beets query string as a list of components, return the
     `Query` and `Sort` they represent.
 
@@ -22,7 +28,7 @@ def parse_query_parts(parts, model_cls):
     ensuring that implicit path queries are made explicit with 'path::<query>'
     """
     # Get query types and their prefix characters.
-    prefixes = {
+    prefixes: Prefixes = {
         ":": dbcore.query.RegexpQuery,
         "=~": dbcore.query.StringQuery,
         "=": dbcore.query.MatchQuery,
@@ -46,7 +52,9 @@ def parse_query_parts(parts, model_cls):
     return query, sort
 
 
-def parse_query_string(s, model_cls):
+def parse_query_string(
+    s: str, model_cls: type[LibModel]
+) -> tuple[dbcore.query.Query, dbcore.sort.Sort]:
     """Given a beets query string, return the `Query` and `Sort` they
     represent.
 

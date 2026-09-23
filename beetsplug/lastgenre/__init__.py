@@ -1,18 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 """Gets genres for imported music based on Last.fm tags.
 
 Uses a provided whitelist file to determine which tags are valid genres.
@@ -25,39 +10,51 @@ https://gist.github.com/1241307
 from __future__ import annotations
 
 import os
-import traceback
-from functools import singledispatchmethod
+import re
+from collections import defaultdict
+from functools import cached_property, singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Protocol
 
-import pylast
+import confuse
 import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
 from beets.util import plurality, unique_list
+from beetsplug.lastgenre.utils import is_ignored, normalize_genre
+
+from .client import LastFmClient
 
 if TYPE_CHECKING:
-    import optparse
+    from collections.abc import Iterable
 
+    from beets.importer import ImportSession, ImportTask
     from beets.library import LibModel
 
-LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
+    from .utils import AliasPatternWithReplacement, IgnorePatternsByArtist
 
-PYLAST_EXCEPTIONS = (
-    pylast.WSError,
-    pylast.MalformedResponseError,
-    pylast.NetworkError,
-)
+    Whitelist = set[str]
+    """Set of valid genre names (lowercase). Empty set means all genres allowed."""
+
+    CanonTree = list[list[str]]
+    #: Genre hierarchy as list of paths from general to specific.
+    #: Example: [['electronic', 'house'], ['electronic', 'techno']]
+
+    GenresWithLabel = tuple[list[str], str]
+    #: A pair of ``(genre list, label)`` returned by a genre resolution stage.
+    #: The label is used for logging and describes the source and filtering applied.
+
+
+class LastGenreCLIOpts(Protocol):
+    album: bool
 
 
 # Canonicalization tree processing.
 
 
 def flatten_tree(
-    elem: dict[Any, Any] | list[Any] | str,
-    path: list[str],
-    branches: list[list[str]],
+    elem: dict[Any, Any] | list[Any] | str, path: list[str], branches: CanonTree
 ) -> None:
     """Flatten nested lists/dictionaries into lists of strings
     (branches).
@@ -67,15 +64,15 @@ def flatten_tree(
 
     if isinstance(elem, dict):
         for k, v in elem.items():
-            flatten_tree(v, path + [k], branches)
+            flatten_tree(v, [*path, k], branches)
     elif isinstance(elem, list):
         for sub in elem:
             flatten_tree(sub, path, branches)
     else:
-        branches.append(path + [str(elem)])
+        branches.append([*path, str(elem)])
 
 
-def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
+def find_parents(candidate: str, branches: CanonTree) -> list[str]:
     """Find parents genre of a given genre, ordered from the closest to
     the further parent.
     """
@@ -88,10 +85,27 @@ def find_parents(candidate: str, branches: list[list[str]]) -> list[str]:
     return [candidate]
 
 
+def get_depth(tag: str, branches: CanonTree) -> int | None:
+    """Find the depth of a tag in the genres tree."""
+    for branch in branches:
+        if tag in branch:
+            return branch.index(tag)
+    return None
+
+
+def sort_by_depth(tags: list[str], branches: CanonTree) -> list[str]:
+    """Given a list of tags, sort the tags by their depths in the genre tree."""
+    depth_tag_pairs = [(get_depth(t, branches), t) for t in tags]
+    depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
+    depth_tag_pairs.sort(reverse=True)
+    return [p[1] for p in depth_tag_pairs]
+
+
 # Main plugin logic.
 
 WHITELIST = os.path.join(os.path.dirname(__file__), "genres.txt")
 C14N_TREE = os.path.join(os.path.dirname(__file__), "genres-tree.yaml")
+ALIASES_FILE = os.path.join(os.path.dirname(__file__), "aliases.yaml")
 
 
 class LastGenrePlugin(plugins.BeetsPlugin):
@@ -105,14 +119,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "count": 1,
                 "fallback": None,
                 "canonical": False,
+                "cleanup_existing": False,
                 "source": "album",
                 "force": False,
                 "keep_existing": False,
                 "auto": True,
-                "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
                 "pretend": False,
+                "ignorelist": {},
+                "aliases": True,
             }
         )
         self.setup()
@@ -122,11 +138,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
-        self._genre_cache: dict[str, list[str]] = {}
-        self.whitelist = self._load_whitelist()
+        self.whitelist: Whitelist = self._load_whitelist()
+        self.c14n_branches: CanonTree
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
+        self.ignore_patterns: IgnorePatternsByArtist = self._load_ignorelist()
+        self.alias_patterns: list[AliasPatternWithReplacement] = (
+            self._load_aliases()
+        )
+        self.client = LastFmClient(
+            self._log,
+            self.config["min_weight"].get(int),
+            self.ignore_patterns,
+            self.alias_patterns,
+        )
 
-    def _load_whitelist(self) -> set[str]:
+    def _load_whitelist(self) -> Whitelist:
         """Load the whitelist from a text file.
 
         Default whitelist is used if config is True, empty string or set to "nothing".
@@ -144,13 +170,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return whitelist
 
-    def _load_c14n_tree(self) -> tuple[list[list[str]], bool]:
+    def _load_c14n_tree(self) -> tuple[CanonTree, bool]:
         """Load the canonicalization tree from a YAML file.
 
         Default tree is used if config is True, empty string, set to "nothing"
         or if prefer_specific is enabled.
         """
-        c14n_branches: list[list[str]] = []
+        c14n_branches: CanonTree = []
         c14n_filename = self.config["canonical"].get()
         canonicalize = c14n_filename is not False
         # Default tree
@@ -167,52 +193,135 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
 
-    def _tunelog(self, msg: str, *args: Any, **kwargs: Any) -> None:
-        """Log tuning messages at DEBUG level when verbosity level is high enough."""
-        if config["verbose"].as_number() >= 3:
-            self._log.debug(msg, *args, **kwargs)
+    def _load_ignorelist(self) -> IgnorePatternsByArtist:
+        r"""Load patterns from configuration and compile them.
+
+        Mapping of artist names to regex or literal patterns. Use the
+        quoted ``'*'`` key to define globally ignored genres::
+
+            lastgenre:
+                ignorelist:
+                    '*':
+                        - spoken word
+                        - comedy
+                    Artist Name:
+                        - .*rock.*
+                        - .*metal.*
+
+        Matching is case-insensitive and full-match. Because patterns are
+        parsed as plain YAML scalars, backslashes (e.g. ``\w``) should
+        not be double-escaped. Quotes are primarily needed for special
+        YAML characters (e.g., ``*`` or ``[``); prefer single-quotes.
+
+        Raises:
+            Several confuse.ConfigError's that tell the user about the expected
+            format when the config is invalid.
+        """
+        if not self.config["ignorelist"].get():
+            return {}
+
+        raw_ignorelist = self.config["ignorelist"].get(
+            confuse.MappingValues(confuse.Sequence(str))
+        )
+
+        compiled_ignorelist: IgnorePatternsByArtist = defaultdict(list)
+        for artist, patterns in raw_ignorelist.items():
+            artist_patterns = []
+            for pattern in patterns:
+                try:
+                    artist_patterns.append(re.compile(pattern, re.IGNORECASE))
+                except re.error:
+                    artist_patterns.append(
+                        re.compile(re.escape(pattern), re.IGNORECASE)
+                    )
+            self._log.extra_debug(
+                "ignore for {}: {}",
+                artist,
+                [p.pattern for p in artist_patterns],
+            )
+
+            compiled_ignorelist[artist.lower()] = artist_patterns
+
+        return compiled_ignorelist
+
+    def _load_aliases(self) -> list[AliasPatternWithReplacement]:
+        """Load the genre alias table from the beets config.
+
+        ``lastgenre.aliases`` is a tri-state option:
+
+        - ``yes`` (default): load the built-in aliases.
+        - ``no``: disable alias normalization entirely.
+        - mapping: an inline dict of canonical genre names to lists of regex
+          patterns.
+
+        The key (genre name) is used as a ``re.Match.expand()`` template,
+        so ``\\1`` / ``\\g<N>`` back-references to capture groups are supported.
+
+        Raises:
+            confuse.ConfigTypeError: when the config value is not a bool or
+            mapping, or when a mapping value is not a list.
+            re.error: when a pattern is not valid regex syntax.
+        """
+        aliases_config = self.config["aliases"].get()
+        if aliases_config is False:
+            return []
+
+        # Define view with either built-in or user-configured
+        aliases_view = confuse.Configuration(
+            self.config["aliases"].name, read=False
+        )
+        if aliases_config in (True, "", None):
+            self._log.debug("Loading built-in aliases")
+            with Path(ALIASES_FILE).open(encoding="utf-8") as f:
+                aliases_view.set(yaml.safe_load(f))
+        elif not isinstance(aliases_config, dict):
+            raise confuse.ConfigTypeError(
+                f"{self.config['aliases'].name} must be a dict or bool."
+            )
+        else:
+            aliases_view.set(aliases_config)
+
+        # Parse and compile. Raise for invalid regex!
+        raw_aliases = aliases_view.get(
+            confuse.MappingValues(confuse.Sequence(str))
+        )
+        compiled_aliases: list[AliasPatternWithReplacement] = []
+        for canonical, patterns in raw_aliases.items():
+            lower_canonical = canonical.lower()
+            compiled_aliases.extend(
+                (re.compile(p, re.IGNORECASE), lower_canonical)
+                for p in patterns
+            )
+
+        self._log.debug("Loaded {} alias entries", len(compiled_aliases))
+        return compiled_aliases
 
     @property
     def sources(self) -> tuple[str, ...]:
         """A tuple of allowed genre sources. May contain 'track',
         'album', or 'artist.'
         """
-        source = self.config["source"].as_choice(("track", "album", "artist"))
-        if source == "track":
-            return "track", "album", "artist"
-        if source == "album":
-            return "album", "artist"
-        if source == "artist":
-            return ("artist",)
-        return tuple()
+        return self.config["source"].as_choice(
+            {
+                "track": ("track", "album", "artist"),
+                "album": ("album", "artist"),
+                "artist": ("artist",),
+            }
+        )
 
-    # More canonicalization and general helpers.
+    # Genre list processing.
 
-    def _get_depth(self, tag: str) -> int | None:
-        """Find the depth of a tag in the genres tree."""
-        depth = None
-        for key, value in enumerate(self.c14n_branches):
-            if tag in value:
-                depth = value.index(tag)
-                break
-        return depth
-
-    def _sort_by_depth(self, tags: list[str]) -> list[str]:
-        """Given a list of tags, sort the tags by their depths in the
-        genre tree.
-        """
-        depth_tag_pairs = [(self._get_depth(t), t) for t in tags]
-        depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
-        depth_tag_pairs.sort(reverse=True)
-        return [p[1] for p in depth_tag_pairs]
-
-    def _resolve_genres(self, tags: list[str]) -> list[str]:
+    def _resolve_genres(
+        self, tags: list[str], artist: str | None = None
+    ) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
 
         - Returns an empty list if the input tags list is empty.
+        - If aliases are configured, variant spellings are normalised first
+          (e.g. 'hip-hop' → 'hip hop', 'dnb' → 'drum and bass').
         - If canonicalization is enabled, it extends the list by incorporating
           parent genres from the canonicalization tree. When a whitelist is set,
-          only parent tags that pass a validity check (_is_valid) are included;
+          only parent tags that pass the whitelist filter are included;
           otherwise, it adds the oldest ancestor. Adding parent tags is stopped
           when the count of tags reaches the configured limit (count).
         - The tags list is then deduplicated to ensure only unique genres are
@@ -221,10 +330,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
           by the specificity (depth in the canonicalization tree) of the genres.
         - Finally applies whitelist filtering to ensure that only valid
           genres are kept. (This may result in no genres at all being retained).
+        - Ignorelist is applied at each stage: ignored input tags skip ancestry
+          entirely, ignored ancestor tags are dropped, and ignored tags are
+          removed in the final filter.
         - Returns the filtered list of genres, limited to the configured count.
         """
         if not tags:
             return []
+
+        # Normalize variant spellings before any other processing.
+        if self.alias_patterns:
+            tags = [
+                normalize_genre(self._log, self.alias_patterns, tag)
+                for tag in tags
+            ]
 
         count = self.config["count"].get(int)
 
@@ -233,16 +352,28 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
             for tag in tags:
-                # Add parents that are in the whitelist, or add the oldest
-                # ancestor if no whitelist
+                # Skip ignored tags entirely — don't walk their ancestry.
+                if is_ignored(self._log, self.ignore_patterns, tag, artist):
+                    continue
+
+                # Add parents that pass whitelist (and are not ignored, which
+                # is checked in _filter_valid). With whitelist, we may include
+                # multiple parents
                 if self.whitelist:
-                    parents = [
-                        x
-                        for x in find_parents(tag, self.c14n_branches)
-                        if self._is_valid(x)
-                    ]
+                    parents = self._filter_valid(
+                        find_parents(tag, self.c14n_branches), artist=artist
+                    )
                 else:
-                    parents = [find_parents(tag, self.c14n_branches)[-1]]
+                    # No whitelist: take only the oldest ancestor, skipping it
+                    # if it is in the ignorelist
+                    oldest = find_parents(tag, self.c14n_branches)[-1]
+                    parents = (
+                        []
+                        if is_ignored(
+                            self._log, self.ignore_patterns, oldest, artist
+                        )
+                        else [oldest]
+                    )
 
                 tags_all += parents
                 # Stop if we have enough tags already, unless we need to find
@@ -258,108 +389,198 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Sort the tags by specificity.
         if self.config["prefer_specific"]:
-            tags = self._sort_by_depth(tags)
+            tags = sort_by_depth(tags, self.c14n_branches)
 
-        # c14n only adds allowed genres but we may have had forbidden genres in
-        # the original tags list
-        valid_tags = [t for t in tags if self._is_valid(t)]
+        # Final filter: applies when c14n is disabled, or when c14n ran without
+        # whitelist filtering in the loop (no-whitelist path).
+        valid_tags = self._filter_valid(tags, artist=artist)
         return valid_tags[:count]
 
-    def fetch_genre(
-        self, lastfm_obj: pylast.Album | pylast.Artist | pylast.Track
+    def _filter_valid(
+        self, genres: Iterable[str], artist: str | None = None
     ) -> list[str]:
-        """Return genres for a pylast entity. Returns an empty list if
-        no suitable genres are found.
+        """Filter genres through whitelist and ignorelist.
+
+        Strips leading/trailing whitespace and drops empty strings, then
+        applies whitelist and ignorelist checks. Whitelist is checked first
+        for performance reasons (ignorelist regex matching is more expensive
+        and for some call sites ignored genres were already filtered).
         """
-        min_weight = self.config["min_weight"].get(int)
-        return self._tags_for(lastfm_obj, min_weight)
+        non_blank = [s for g in genres if (s := g.strip())]
+        return [
+            g
+            for g in non_blank
+            if (not self.whitelist or g.lower() in self.whitelist)
+            and not is_ignored(self._log, self.ignore_patterns, g, artist)
+        ]
 
-    def _is_valid(self, genre: str) -> bool:
-        """Check if the genre is valid.
+    # Genre resolution pipeline.
 
-        Depending on the whitelist property, valid means a genre is in the
-        whitelist or any genre is allowed.
-        """
-        if genre and (not self.whitelist or genre.lower() in self.whitelist):
-            return True
-        return False
-
-    # Cached last.fm entity lookups.
-
-    def _last_lookup(
-        self, entity: str, method: Callable[..., Any], *args: str
-    ) -> list[str]:
-        """Get genres based on the named entity using the callable `method`
-        whose arguments are given in the sequence `args`. The genre lookup
-        is cached based on the entity name and the arguments.
-
-        Before the lookup, each argument has the "-" Unicode character replaced
-        with its rough ASCII equivalents in order to return better results from
-        the Last.fm database.
-        """
-        # Shortcut if we're missing metadata.
-        if any(not s for s in args):
-            return []
-
-        key = f"{entity}.{'-'.join(str(a) for a in args)}"
-        if key not in self._genre_cache:
-            args_replaced = [a.replace("\u2010", "-") for a in args]
-            self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
-
-        genre = self._genre_cache[key]
-        self._tunelog("last.fm (unfiltered) {} tags: {}", entity, genre)
-        return genre
-
-    def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
-        """Return genres from Last.fm for the album by albumartist."""
-        return self._last_lookup(
-            "album", LASTFM.get_album, albumartist, albumtitle
-        )
-
-    def fetch_artist_genre(self, artist: str) -> list[str]:
-        """Return genres from Last.fm for the artist."""
-        return self._last_lookup("artist", LASTFM.get_artist, artist)
-
-    def fetch_track_genre(self, trackartist: str, tracktitle: str) -> list[str]:
-        """Return genres from Last.fm for the track by artist."""
-        return self._last_lookup(
-            "track", LASTFM.get_track, trackartist, tracktitle
-        )
-
-    # Main processing: _get_genre() and helpers.
-
-    def _format_and_stringify(self, tags: list[str]) -> str:
-        """Format to title_case if configured and return as delimited string."""
+    def _format_genres(self, tags: list[str]) -> list[str]:
+        """Format to title case if configured."""
         if self.config["title_case"]:
-            formatted = [tag.title() for tag in tags]
-        else:
-            formatted = tags
+            return [tag.title() for tag in tags]
+        return tags
 
-        return self.config["separator"].as_str().join(formatted)
+    def _artist_for_filter(self, obj: LibModel) -> str | None:
+        """Return the representative artist for genre resolution and filtering."""
+        return (
+            obj.artist
+            if isinstance(obj, library.Item)
+            else obj.albumartist or obj.get("artist")
+        )
 
     def _get_existing_genres(self, obj: LibModel) -> list[str]:
-        """Return a list of genres for this Item or Album. Empty string genres
-        are removed."""
-        separator = self.config["separator"].get()
+        """Return a list of genres for this Item or Album."""
         if isinstance(obj, library.Item):
-            item_genre = obj.get("genre", with_album=False).split(separator)
+            genres_list = obj.get("genres", with_album=False)
         else:
-            item_genre = obj.get("genre").split(separator)
+            genres_list = obj.get("genres")
 
-        # Filter out empty strings
-        return [g for g in item_genre if g]
+        return genres_list
 
     def _combine_resolve_and_log(
-        self, old: list[str], new: list[str]
+        self, old: list[str], new: list[str], artist: str | None = None
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
         self._log.debug("raw last.fm tags: {}", new)
         self._log.debug("existing genres taken into account: {}", old)
         combined = old + new
-        return self._resolve_genres(combined)
+        return self._resolve_genres(combined, artist=artist)
 
-    def _get_genre(self, obj: LibModel) -> tuple[str | None, ...]:
-        """Get the final genre string for an Album or Item object.
+    @cached_property
+    def fallback(self) -> GenresWithLabel:
+        """Return the configured fallback genre and label."""
+        if fallback := self.config["fallback"].get():
+            return [fallback], "fallback"
+        return [], "fallback unconfigured"
+
+    def _try_resolve_stage(
+        self,
+        stage_label: str,
+        keep_genres: list[str],
+        new_genres: list[str],
+        artist: str | None = None,
+    ) -> GenresWithLabel | None:
+        """Try to resolve genres for a given stage and log the result.
+
+        If any newly fetched genres and/or existing genres are resolved, return
+        a tuple of the resolved genres and a label describing the source and
+        filtering applied. Otherwise, return ``None``.
+        """
+        resolved_genres = self._combine_resolve_and_log(
+            keep_genres, new_genres, artist=artist
+        )
+        if resolved_genres:
+            suffix = "whitelist" if self.whitelist else "any"
+            label = f"{stage_label}, {suffix}"
+            if keep_genres:
+                label = f"keep + {label}"
+            return self._format_genres(resolved_genres), label
+        return None
+
+    def _try_resolve_existing_genres(
+        self, obj: LibModel, genres: list[str]
+    ) -> GenresWithLabel | None:
+        """Handle existing genres when not forcing.
+
+        Clean up existing genres if enabled, or return them unchanged. Return
+        ``None`` if cleanup is enabled but fails to resolve, leaving fallback
+        handling to the caller.
+        """
+        if self.config["cleanup_existing"]:
+            keep_genres = [g.lower() for g in genres]
+            return self._try_resolve_stage(
+                "cleanup", keep_genres, [], artist=self._artist_for_filter(obj)
+            )
+
+        return genres, "keep any, no-force"  # type: ignore
+
+    def _try_resolve_original_fallback(
+        self, obj: LibModel, genres: list[str], keep_genres: list[str]
+    ) -> GenresWithLabel | None:
+        """Attempt to fall back to existing original genres if configured.
+
+        ``genres`` are the original unchanged values and are checked as-is
+        first, then ``keep_genres`` are used for a lowercased canonicalization
+        retry.
+        """
+        if genres and self.config["keep_existing"].get():
+            artist = self._artist_for_filter(obj)
+            if valid_genres := self._filter_valid(genres, artist=artist):
+                return valid_genres, "original fallback"
+            # If the original genre doesn't match a whitelisted genre, check
+            # if we can canonicalize it to find a matching, whitelisted genre!
+            if resolved := self._try_resolve_stage(
+                "original fallback", keep_genres, [], artist=artist
+            ):
+                return resolved
+        return None
+
+    def _fetch_va_genres(self, album: Album) -> list[str]:
+        """Fetch the most popular track or artist genre for a Various Artists album."""
+        item_genres = []
+        for item in album.items():
+            item_genre = None
+            if "track" in self.sources:
+                item_genre = self.client.fetch("track", item)
+            if not item_genre:
+                item_genre = self.client.fetch("artist", item)
+            if item_genre:
+                item_genres += item_genre
+
+        if item_genres:
+            most_popular, rank = plurality(item_genres)
+            self._log.debug(
+                'Most popular track genre "{}" ({}) for VA album.',
+                most_popular,
+                rank,
+            )
+            return [most_popular]
+
+        return []
+
+    def _fetch_artist_stage(
+        self, obj: LibModel
+    ) -> tuple[str, list[str], str | None]:
+        """Fetch artist genres for an Item or Album object.
+
+        Return a tuple of ``(stage_label, genres, stage_artist)``.
+        """
+        if isinstance(obj, library.Item):
+            return "artist", self.client.fetch("artist", obj), obj.artist
+
+        if obj.albumartist != config["va_name"].as_str():
+            new_genres = self.client.fetch("album_artist", obj)
+            if new_genres:
+                return "album artist", new_genres, obj.albumartist
+
+            self._log.extra_debug(
+                'No album artist genre found for "{}", '
+                "trying multi-valued field...",
+                obj.albumartist,
+            )
+            for albumartist in obj.albumartists:
+                self._log.extra_debug(
+                    'Fetching artist genre for "{}"', albumartist
+                )
+                new_genres += self.client.fetch(
+                    "album_artist", obj, albumartist
+                )
+            if new_genres:
+                # Already filtered per-artist in client
+                return "multi-valued album artist", new_genres, None
+            return "album artist", [], None
+
+        # For "Various Artists", pick the most popular track genre.
+        assert isinstance(obj, Album)  # Type narrowing for mypy
+        if va_genres := self._fetch_va_genres(obj):
+            return "most popular track", va_genres, None
+
+        return "most popular track", [], None
+
+    def _get_genre(self, obj: LibModel) -> GenresWithLabel:
+        """Get the final genre list for an Album or Item object.
 
         `self.sources` specifies allowed genre sources. Starting with the first
         source in this tuple, the following stages run through until a genre is
@@ -369,135 +590,73 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             - artist, albumartist or "most popular track genre" (for VA-albums)
             - original fallback
             - configured fallback
-            - None
+            - empty list
 
-        A `(genre, label)` pair is returned, where `label` is a string used for
+        A `(genres, label)` pair is returned, where `label` is a string used for
         logging. For example, "keep + artist, whitelist" indicates that existing
         genres were combined with new last.fm genres and whitelist filtering was
         applied, while "artist, any" means only new last.fm genres are included
         and the whitelist feature was disabled.
         """
 
-        def _try_resolve_stage(
-            stage_label: str, keep_genres: list[str], new_genres: list[str]
-        ) -> tuple[str, str] | None:
-            """Try to resolve genres for a given stage and log the result."""
-            resolved_genres = self._combine_resolve_and_log(
-                keep_genres, new_genres
-            )
-            if resolved_genres:
-                suffix = "whitelist" if self.whitelist else "any"
-                label = f"{stage_label}, {suffix}"
-                if keep_genres:
-                    label = f"keep + {label}"
-                return self._format_and_stringify(resolved_genres), label
-            return None
-
-        keep_genres = []
         new_genres = []
-        genres = self._get_existing_genres(obj)
+        existing_genres = self._get_existing_genres(obj)
 
-        if genres and not self.config["force"]:
-            # Without force pre-populated tags are returned as-is.
-            label = "keep any, no-force"
-            if isinstance(obj, library.Item):
-                return obj.get("genre", with_album=False), label
-            return obj.get("genre"), label
+        if existing_genres and not self.config["force"]:
+            if resolved := self._try_resolve_existing_genres(
+                obj, existing_genres
+            ):
+                return resolved
+            return self.fallback
 
-        if self.config["force"]:
-            # Force doesn't keep any unless keep_existing is set.
-            # Whitelist validation is handled in _resolve_genres.
-            if self.config["keep_existing"]:
-                keep_genres = [g.lower() for g in genres]
+        keep_genres = (
+            [g.lower() for g in existing_genres]
+            if self.config["keep_existing"] and self.config["force"]
+            else []
+        )
 
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
         if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.fetch_track_genre(obj.artist, obj.title):
-                if result := _try_resolve_stage(
-                    "track", keep_genres, new_genres
+            if new_genres := self.client.fetch("track", obj):
+                if resolved := self._try_resolve_stage(
+                    "track", keep_genres, new_genres, artist=obj.artist
                 ):
-                    return result
+                    return resolved
 
         if "album" in self.sources:
-            if new_genres := self.fetch_album_genre(obj.albumartist, obj.album):
-                if result := _try_resolve_stage(
-                    "album", keep_genres, new_genres
+            if new_genres := self.client.fetch("album", obj):
+                if resolved := self._try_resolve_stage(
+                    "album", keep_genres, new_genres, artist=obj.albumartist
                 ):
-                    return result
+                    return resolved
 
         if "artist" in self.sources:
-            new_genres = []
-            if isinstance(obj, library.Item):
-                new_genres = self.fetch_artist_genre(obj.artist)
-                stage_label = "artist"
-            elif obj.albumartist != config["va_name"].as_str():
-                new_genres = self.fetch_artist_genre(obj.albumartist)
-                stage_label = "album artist"
-                if not new_genres:
-                    self._tunelog(
-                        'No album artist genre found for "{}", '
-                        "trying multi-valued field...",
-                        obj.albumartist,
-                    )
-                    for albumartist in obj.albumartists:
-                        self._tunelog(
-                            'Fetching artist genre for "{}"', albumartist
-                        )
-                        new_genres += self.fetch_artist_genre(albumartist)
-                    if new_genres:
-                        stage_label = "multi-valued album artist"
-            else:
-                # For "Various Artists", pick the most popular track genre.
-                item_genres = []
-                assert isinstance(obj, Album)  # Type narrowing for mypy
-                for item in obj.items():
-                    item_genre = None
-                    if "track" in self.sources:
-                        item_genre = self.fetch_track_genre(
-                            item.artist, item.title
-                        )
-                    if not item_genre:
-                        item_genre = self.fetch_artist_genre(item.artist)
-                    if item_genre:
-                        item_genres += item_genre
-                if item_genres:
-                    most_popular, rank = plurality(item_genres)
-                    new_genres = [most_popular]
-                    stage_label = "most popular track"
-                    self._log.debug(
-                        'Most popular track genre "{}" ({}) for VA album.',
-                        most_popular,
-                        rank,
-                    )
-
+            stage_label, new_genres, stage_artist = self._fetch_artist_stage(
+                obj
+            )
             if new_genres:
-                if result := _try_resolve_stage(
-                    stage_label, keep_genres, new_genres
+                if resolved := self._try_resolve_stage(
+                    stage_label, keep_genres, new_genres, artist=stage_artist
                 ):
-                    return result
+                    return resolved
 
-        # Nothing found, leave original if configured and valid.
-        if obj.genre and self.config["keep_existing"]:
-            if not self.whitelist or self._is_valid(obj.genre.lower()):
-                return obj.genre, "original fallback"
+        if resolved := self._try_resolve_original_fallback(
+            obj, existing_genres, keep_genres
+        ):
+            return resolved
 
-        # Return fallback string.
-        if fallback := self.config["fallback"].get():
-            return fallback, "fallback"
-
-        # No fallback configured.
-        return None, "fallback unconfigured"
+        return self.fallback
 
     # Beets plugin hooks and CLI.
 
     def _fetch_and_log_genre(self, obj: LibModel) -> None:
         """Fetch genre and log it."""
         self._log.info(str(obj))
-        obj.genre, label = self._get_genre(obj)
-        self._log.debug("Resolved ({}): {}", label, obj.genre)
+        obj.genres, label = self._get_genre(obj)
+        self._log.debug("Resolved ({}): {}", label, obj.genres)
 
-        ui.show_model_changes(obj, fields=["genre"], print_obj=False)
+        ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
     @singledispatchmethod
     def _process(self, obj: LibModel, write: bool) -> None:
@@ -584,9 +743,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.parser.set_defaults(album=True)
 
         def lastgenre_func(
-            lib: library.Library, opts: optparse.Values, args: list[str]
+            lib: library.Library, opts: LastGenreCLIOpts, args: list[str]
         ) -> None:
-            self.config.set_args(opts)
+            self.config.set_args(vars(opts))
 
             method = lib.albums if opts.album else lib.items
             for obj in method(args):
@@ -595,47 +754,5 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
-    def imported(
-        self, session: library.Session, task: library.ImportTask
-    ) -> None:
-        self._process(task.album if task.is_album else task.item, write=False)
-
-    def _tags_for(
-        self,
-        obj: pylast.Album | pylast.Artist | pylast.Track,
-        min_weight: int | None = None,
-    ) -> list[str]:
-        """Core genre identification routine.
-
-        Given a pylast entity (album or track), return a list of
-        tag names for that entity. Return an empty list if the entity is
-        not found or another error occurs.
-
-        If `min_weight` is specified, tags are filtered by weight.
-        """
-        # Work around an inconsistency in pylast where
-        # Album.get_top_tags() does not return TopItem instances.
-        # https://github.com/pylast/pylast/issues/86
-        obj_to_query: Any = obj
-        if isinstance(obj, pylast.Album):
-            obj_to_query = super(pylast.Album, obj)
-
-        try:
-            res: Any = obj_to_query.get_top_tags()
-        except PYLAST_EXCEPTIONS as exc:
-            self._log.debug("last.fm error: {}", exc)
-            return []
-        except Exception as exc:
-            # Isolate bugs in pylast.
-            self._log.debug("{}", traceback.format_exc())
-            self._log.error("error in pylast library: {}", exc)
-            return []
-
-        # Filter by weight (optionally).
-        if min_weight:
-            res = [el for el in res if (int(el.weight or 0)) >= min_weight]
-
-        # Get strings from tags.
-        tags: list[str] = [el.item.get_name().lower() for el in res]
-
-        return tags
+    def imported(self, _: ImportSession, task: ImportTask) -> None:
+        self._process(task.album if task.is_album else task.item, write=False)  # type: ignore[attr-defined]

@@ -20,6 +20,8 @@ You can also add custom commands for a specific extension, like this:
 
     badfiles:
         check_on_import: yes
+        import_action_on_error: skip
+        import_action_on_warning: continue
         commands:
             ogg: myoggchecker --opt1 --opt2
             flac: flac --test --warnings-as-errors --silent
@@ -32,9 +34,14 @@ You can run the checkers when importing files by using the ``check_on_import``
 option. When on, checkers will be run against every imported file and warnings
 and errors will be presented when selecting a tagging option.
 
+``import_action_on_error`` and ``import_action_on_warning`` can be used to take
+automatic action on warnings and errors. Both options default to ``ask``. Valid
+options for both ``import_action_on_(warning|error)`` are ``ask skip abort
+continue``.
+
 .. _flac: https://xiph.org/flac/
 
-.. _mp3val: http://mp3val.sourceforge.net/
+.. _mp3val: https://sourceforge.net/projects/mp3val/
 
 Using
 -----

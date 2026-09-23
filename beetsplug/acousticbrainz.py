@@ -1,25 +1,28 @@
-# This file is part of beets.
-# Copyright 2015-2016, Ohm Patel.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Fetch various AcousticBrainz metadata using MBID."""
 
+from __future__ import annotations
+
 from collections import defaultdict
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import requests
 
 from beets import plugins, ui
 from beets.dbcore import types
+from beets.exceptions import UserError
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
+
+    from ._typing import JSONDict
+
+
+class AcousticBrainzCLIOpts(Protocol):
+    force_refetch: bool
+
 
 LEVELS = ["/low-level", "/high-level"]
 ABSCHEME = {
@@ -55,7 +58,7 @@ ABSCHEME = {
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
-    item_types = {
+    item_types: ClassVar[dict[str, types.Type]] = {
         "average_loudness": types.Float(6),
         "chords_changes_rate": types.Float(6),
         "chords_key": types.STRING,
@@ -80,7 +83,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         "voice_instrumental": types.STRING,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self._log.warning("This plugin is deprecated.")
@@ -92,17 +95,17 @@ class AcousticPlugin(plugins.BeetsPlugin):
         self.base_url = self.config["base_url"].as_str()
         if self.base_url:
             if not self.base_url.startswith("http"):
-                raise ui.UserError(
+                raise UserError(
                     "AcousticBrainz server base URL must start "
                     "with an HTTP scheme"
                 )
-            elif self.base_url[-1] != "/":
+            if self.base_url[-1] != "/":
                 self.base_url = f"{self.base_url}/"
 
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "acousticbrainz", help="fetch metadata from AcousticBrainz"
         )
@@ -115,24 +118,28 @@ class AcousticPlugin(plugins.BeetsPlugin):
             help="re-download data when already present",
         )
 
-        def func(lib, opts, args):
+        def func(
+            lib: Library, opts: AcousticBrainzCLIOpts, args: list[str]
+        ) -> None:
             items = lib.items(args)
             self._fetch_info(
                 items,
                 ui.should_write(),
-                opts.force_refetch or self.config["force"],
+                opts.force_refetch or self.config["force"].get(bool),
             )
 
         cmd.func = func
         return [cmd]
 
-    def import_task_files(self, session, task):
+    def import_task_files(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         """Function is called upon beet import."""
         self._fetch_info(task.imported_items(), False, True)
 
-    def _get_data(self, mbid):
+    def _get_data(self, mbid: str) -> JSONDict:
         if not self.base_url:
-            raise ui.UserError(
+            raise UserError(
                 "This plugin is deprecated since AcousticBrainz has shut "
                 "down. See the base_url configuration option."
             )
@@ -158,7 +165,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         return data
 
-    def _fetch_info(self, items, write, force):
+    def _fetch_info(
+        self, items: Sequence[Item], write: bool, force: bool
+    ) -> None:
         """Fetch additional information from AcousticBrainz for the `item`s."""
         tags = self.config["tags"].as_str_seq()
         for item in items:
@@ -197,7 +206,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 if write:
                     item.try_write()
 
-    def _map_data_to_scheme(self, data, scheme):
+    def _map_data_to_scheme(
+        self, data: JSONDict, scheme: JSONDict
+    ) -> Iterator[tuple[str, Any]]:
         """Given `data` as a structure of nested dictionaries, and
         `scheme` as a structure of nested dictionaries , `yield` tuples
         `(attr, val)` where `attr` and `val` are corresponding leaf
@@ -251,7 +262,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         # `composites = {'initial_key': ['B', 'minor']}`.
 
         # The recursive traversal.
-        composites = defaultdict(list)
+        composites = defaultdict[str, list[str]](list)
         yield from self._data_to_scheme_child(data, scheme, composites)
 
         # When composites has been populated, yield the composite attributes
@@ -259,7 +270,12 @@ class AcousticPlugin(plugins.BeetsPlugin):
         for composite_attr, value_parts in composites.items():
             yield composite_attr, " ".join(value_parts)
 
-    def _data_to_scheme_child(self, subdata, subscheme, composites):
+    def _data_to_scheme_child(
+        self,
+        subdata: JSONDict,
+        subscheme: JSONDict,
+        composites: dict[str, list[str]],
+    ) -> Iterator[tuple[str, Any]]:
         """The recursive business logic of :meth:`_map_data_to_scheme`:
         Traverse two structures of nested dictionaries in parallel and `yield`
         tuples of corresponding leaf nodes.
@@ -297,7 +313,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                 )
 
 
-def _generate_urls(base_url, mbid):
+def _generate_urls(base_url: str, mbid: str) -> Iterator[str]:
     """Generates AcousticBrainz end point urls for given `mbid`."""
     for level in LEVELS:
         yield f"{base_url}{mbid}{level}"

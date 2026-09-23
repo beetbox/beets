@@ -3,10 +3,10 @@ LastImport Plugin
 
 The ``lastimport`` plugin downloads play-count data from your Last.fm_ library
 into beets' database. You can later create :doc:`smart playlists
-</plugins/smartplaylist>` by querying ``play_count`` and do other fun stuff with
-this field.
+</plugins/smartplaylist>` by querying ``lastfm_play_count`` and do other fun
+stuff with this field.
 
-.. _last.fm: https://last.fm
+.. _last.fm: https://www.last.fm/
 
 Installation
 ------------
@@ -32,16 +32,21 @@ Simply run ``beet lastimport`` and wait for the plugin to request tracks from
 Last.fm and match them to your beets library. (You will be notified of tracks in
 your Last.fm profile that do not match any songs in your library.)
 
-Then, your matched tracks will be populated with the ``play_count`` field, which
-you can use in any query or template. For example:
+Then, your matched tracks will be populated with the ``lastfm_play_count``
+field, which you can use in any query or template. For example:
 
 ::
 
-    $ beet ls -f '$title: $play_count' play_count:5..
+    $ beet ls -f '$title: $lastfm_play_count' lastfm_play_count:5..
     Eple (Melody A.M.): 60
 
 To see more information (namely, the specific play counts for matched tracks),
 use the ``-v`` option.
+
+.. versionchanged:: 2.8.0
+
+    The ``play_count`` field was renamed to ``lastfm_play_count`` to avoid
+    confusion with ``play_count`` field populated by :doc:`mpdstats` plugin.
 
 Configuration
 -------------

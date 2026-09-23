@@ -1,27 +1,13 @@
-# This file is part of beets.
-# Copyright 2016
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
+from typing import Any, ClassVar
 from unittest.mock import ANY, Mock, call, patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import PluginTestCase
-from beetsplug.mpdstats import MPDStats
+from beets.test.helper import PluginTestHelper
+from beetsplug.mpdstats import MPDStats, mpd_config
 
 
-class MPDStatsTest(PluginTestCase):
+class TestMPDStats(PluginTestHelper):
     plugin = "mpdstats"
 
     def test_update_rating(self):
@@ -46,9 +32,7 @@ class MPDStatsTest(PluginTestCase):
         assert mpdstats.get_item("/some/non-existing/path") is None
         assert "item not found:" in log.info.call_args[0][0]
 
-    FAKE_UNKNOWN_STATE = "some-unknown-one"
-    STATUSES = [
-        {"state": FAKE_UNKNOWN_STATE},
+    STATUSES: ClassVar[list[dict[str, Any]]] = [
         {"state": "pause"},
         {"state": "play", "songid": 1, "time": "0:1"},
         {"state": "stop"},
@@ -77,7 +61,23 @@ class MPDStatsTest(PluginTestCase):
         except KeyboardInterrupt:
             pass
 
-        log.debug.assert_has_calls([call('unhandled status "{}"', ANY)])
         log.info.assert_has_calls(
             [call("pause"), call("playing {}", ANY), call("stop")]
         )
+
+    @patch("beetsplug.mpdstats.MPDStats.run")
+    def test_cli_options_override_config(self, run_mock):
+        self.run_command(
+            "mpdstats",
+            "--host",
+            "somehost",
+            "--port",
+            "5000",
+            "--password",
+            "secret",
+        )
+
+        assert mpd_config["host"].as_str() == "somehost"
+        assert mpd_config["port"].get(int) == 5000
+        assert mpd_config["password"].as_str() == "secret"
+        run_mock.assert_called_once_with()

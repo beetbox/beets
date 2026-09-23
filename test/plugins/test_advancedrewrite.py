@@ -1,28 +1,12 @@
-# This file is part of beets.
-# Copyright 2023, Max Rumpf.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Test the advancedrewrite plugin for various configurations."""
 
 import pytest
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestHelper
 from beets.ui import UserError
 
-PLUGIN_NAME = "advancedrewrite"
 
-
-class AdvancedRewritePluginTest(PluginTestCase):
+class TestAdvancedRewritePlugin(PluginTestHelper):
     plugin = "advancedrewrite"
     preload_plugin = False
 
@@ -31,11 +15,16 @@ class AdvancedRewritePluginTest(PluginTestCase):
             [{"artist ODD EYE CIRCLE": "이달의 소녀 오드아이써클"}]
         ):
             item = self.add_item(
-                artist="ODD EYE CIRCLE",
-                albumartist="ODD EYE CIRCLE",
+                artist="ODD EYE CIRCLE", albumartist="ODD EYE CIRCLE"
             )
 
             assert item.artist == "이달의 소녀 오드아이써클"
+
+    def test_list_field(self):
+        with self.configure_plugin([{"genres rock": "techno"}]):
+            item = self.add_item(genres=["rock", "pop"])
+
+            assert item.genres == ["techno", "pop"]
 
     def test_advanced_rewrite_example(self):
         with self.configure_plugin(
@@ -46,7 +35,7 @@ class AdvancedRewritePluginTest(PluginTestCase):
                         "artist": "이달의 소녀 오드아이써클",
                         "artist_sort": "LOONA / ODD EYE CIRCLE",
                     },
-                },
+                }
             ]
         ):
             item_a = self.add_item(
@@ -76,12 +65,11 @@ class AdvancedRewritePluginTest(PluginTestCase):
                 {
                     "match": "artist:배유빈 feat. 김미현",
                     "replacements": {"artists": ["유빈", "미미"]},
-                },
+                }
             ]
         ):
             item = self.add_item(
-                artist="배유빈 feat. 김미현",
-                artists=["배유빈", "김미현"],
+                artist="배유빈 feat. 김미현", artists=["배유빈", "김미현"]
             )
 
             assert item.artists == ["유빈", "미미"]
@@ -107,7 +95,7 @@ class AdvancedRewritePluginTest(PluginTestCase):
                     {
                         "match": "artist:'A & B'",
                         "replacements": {"artist": ["C", "D"]},
-                    },
+                    }
                 ]
             ),
         ):

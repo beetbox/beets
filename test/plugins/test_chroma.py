@@ -1,0 +1,240 @@
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from beets import metadata_plugins
+from beets.autotag import AlbumInfo, TrackInfo
+from beets.library import Item
+from beets.test.helper import ImportHelper, IOMixin, PluginMixin
+
+acoustid = pytest.importorskip("acoustid", exc_type=ImportError)
+chroma = pytest.importorskip("beetsplug.chroma", exc_type=ImportError)
+
+TEST_TITLE_1 = "TEST_TITLE_1"
+TEST_TITLE_2 = "TEST_TITLE_2"
+FINGERPRINT_1 = "FP_1"
+FINGERPRINT_1_CLOSE = "FP_1_CLOSE"
+FINGERPRINT_2 = "FP_2"
+
+
+@patch("acoustid.compare_fingerprints")
+class TestChroma(IOMixin, PluginMixin, ImportHelper):
+    plugin = "chroma"
+
+    def setup_lib(self):
+        item1 = Item(path="/file")
+        item1.length = 30
+        item1.title = TEST_TITLE_1
+        item1.acoustid_fingerprint = FINGERPRINT_1
+        item1.add(self.lib)
+
+        item2 = Item(path="/file")
+        item2.length = 30
+        item2.title = TEST_TITLE_2
+        item2.acoustid_fingerprint = FINGERPRINT_2
+        item2.add(self.lib)
+
+    def run_search(self, fp):
+        return self.run_with_output("chromasearch", "-s", fp, "-f", "$title")
+
+    def line_count(self, str_):
+        return len(
+            [line for line in str_.split("\n") if line.strip(" \n") != ""]
+        )
+
+    def compare_fingerprints(self, *args, **kwargs):
+        if args[0][1] == args[1][1]:
+            return 1
+
+        if args[0][1] == FINGERPRINT_1_CLOSE and args[1][1] == FINGERPRINT_1:
+            return 0.9
+
+        return 0.1
+
+    def test_chroma_search_exact(self, compare_fingerprints):
+        self.setup_lib()
+        compare_fingerprints.side_effect = self.compare_fingerprints
+
+        output = self.run_search(FINGERPRINT_2)
+        assert self.line_count(output) == 1
+        assert TEST_TITLE_2 in output
+
+        output = self.run_search(FINGERPRINT_1)
+        assert self.line_count(output) == 1
+        assert TEST_TITLE_1 in output
+
+    def test_chroma_search_close(self, compare_fingerprints):
+        self.setup_lib()
+        compare_fingerprints.side_effect = self.compare_fingerprints
+
+        output = self.run_search(FINGERPRINT_1_CLOSE)
+        assert self.line_count(output) == 2
+        assert TEST_TITLE_1 in output.split("\n")[0]
+
+
+class TestAcoustidMatch:
+    """Tests for acoustid_match() covering the force_fpcalc fix (#5171)."""
+
+    def _make_log(self):
+        log = MagicMock()
+        log.error = MagicMock()
+        return log
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_fingerprint_file_called_with_force_fpcalc(self, mock_fp):
+        """acoustid_match must pass force_fpcalc=True to avoid GStreamer fd leak."""
+        mock_fp.return_value = (30, b"FINGERPRINT")
+        with patch("beetsplug.chroma.acoustid.lookup") as mock_lookup:
+            mock_lookup.return_value = {"status": "ok", "results": []}
+            chroma.acoustid_match(self._make_log(), b"/fake/path.mp3")
+        mock_fp.assert_called_once()
+        _, kwargs = mock_fp.call_args
+        assert kwargs.get("force_fpcalc") is True
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_no_backend_falls_back_to_library(self, mock_fp):
+        """When fpcalc is absent, acoustid_match falls back to the library."""
+        mock_fp.side_effect = [acoustid.NoBackendError(), (30, b"FINGERPRINT")]
+        with patch("beetsplug.chroma.acoustid.lookup") as mock_lookup:
+            mock_lookup.return_value = {"status": "ok", "results": []}
+            chroma.acoustid_match(self._make_log(), b"/fake/path.mp3")
+        assert mock_fp.call_count == 2
+        first_kwargs = mock_fp.call_args_list[0][1]
+        assert first_kwargs.get("force_fpcalc") is True
+        second_kwargs = mock_fp.call_args_list[1][1]
+        assert "force_fpcalc" not in second_kwargs
+
+
+class TestFingerprintItem:
+    """Tests for fingerprint_item() covering the force_fpcalc fix (#5171)."""
+
+    def _make_log(self):
+        log = MagicMock()
+        log.info = MagicMock()
+        return log
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_fingerprint_file_called_with_force_fpcalc(self, mock_fp):
+        """fingerprint_item must pass force_fpcalc=True."""
+        mock_fp.return_value = (30, b"FINGERPRINT")
+        item = MagicMock()
+        item.length = 30
+        item.acoustid_fingerprint = None
+        item._db = None
+        chroma.fingerprint_item(self._make_log(), item)
+        mock_fp.assert_called_once()
+        _, kwargs = mock_fp.call_args
+        assert kwargs.get("force_fpcalc") is True
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_no_backend_falls_back_to_library(self, mock_fp):
+        """When fpcalc is absent, fingerprint_item falls back to the library."""
+        mock_fp.side_effect = [acoustid.NoBackendError(), (30, b"FINGERPRINT")]
+        item = MagicMock()
+        item.length = 30
+        item.acoustid_fingerprint = None
+        item._db = None
+        result = chroma.fingerprint_item(self._make_log(), item)
+        assert result == "FINGERPRINT"
+        assert mock_fp.call_count == 2
+
+
+def _seed_acoustid_match(item_path: bytes = b"/fake/path.mp3") -> Item:
+    """Seed the chroma module-level match cache as if acoustid had run."""
+    chroma._matches[item_path] = (
+        ["rec-id-1"],
+        ["rel-id-1", "rel-id-1", "rel-id-1"],
+    )
+    return Item(path=item_path)
+
+
+class TestChromaCandidates(PluginMixin):
+    """Regression tests for issue #6212: chroma must respect which metadata
+    source plugins are enabled.
+
+    When the musicbrainz plugin is not loaded, chroma must not produce any
+    MusicBrainz-sourced candidates (via either ``candidates`` or
+    ``item_candidates``). When it IS loaded, chroma resolves acoustid
+    matches through the registered plugin instance.
+
+    ``plugin`` is intentionally not set on the class so that
+    :py:meth:`PluginMixin.load_plugins` honours explicit plugin-name
+    arguments and each test can choose its own combination. The autouse
+    fixture clears the ``@cache``-decorated metadata-source registry and
+    the chroma match state between tests.
+    """
+
+    preload_plugin = False
+
+    @pytest.fixture(autouse=True)
+    def _setup_chroma(self):
+        metadata_plugins.find_metadata_source_plugins.cache_clear()
+        metadata_plugins.get_metadata_source.cache_clear()
+        chroma._matches.clear()
+        yield
+        chroma._matches.clear()
+        self.unload_plugins()
+        metadata_plugins.find_metadata_source_plugins.cache_clear()
+        metadata_plugins.get_metadata_source.cache_clear()
+
+    def test_candidates_returns_empty_without_musicbrainz(self):
+        self.load_plugins("chroma")
+        plugin = chroma.AcoustidPlugin()
+        item = _seed_acoustid_match()
+
+        result = plugin.candidates(
+            [item], artist="A", album="B", va_likely=False
+        )
+
+        assert list(result) == []
+
+    def test_item_candidates_returns_empty_without_musicbrainz(self):
+        self.load_plugins("chroma")
+        plugin = chroma.AcoustidPlugin()
+        item = _seed_acoustid_match()
+
+        result = plugin.item_candidates(item, artist="A", title="B")
+
+        assert list(result) == []
+
+    def test_candidates_returns_mb_albums_with_musicbrainz(self, monkeypatch):
+        self.load_plugins("chroma", "musicbrainz")
+
+        fake_album = AlbumInfo(
+            tracks=[], album_id="rel-id-1", album="Fake Album"
+        )
+        mb_plugin = metadata_plugins.get_metadata_source("musicbrainz")
+        assert mb_plugin is not None
+        monkeypatch.setattr(
+            mb_plugin, "album_for_id", MagicMock(return_value=fake_album)
+        )
+
+        plugin = chroma.AcoustidPlugin()
+        item = _seed_acoustid_match()
+
+        result = list(
+            plugin.candidates([item], artist="A", album="B", va_likely=False)
+        )
+
+        assert result == [fake_album]
+        mb_plugin.album_for_id.assert_called_with("rel-id-1")
+
+    def test_item_candidates_returns_mb_tracks_with_musicbrainz(
+        self, monkeypatch
+    ):
+        self.load_plugins("chroma", "musicbrainz")
+
+        fake_track = TrackInfo(title="Fake Track", track_id="rec-id-1")
+        mb_plugin = metadata_plugins.get_metadata_source("musicbrainz")
+        assert mb_plugin is not None
+        monkeypatch.setattr(
+            mb_plugin, "track_for_id", MagicMock(return_value=fake_track)
+        )
+
+        plugin = chroma.AcoustidPlugin()
+        item = _seed_acoustid_match()
+
+        result = list(plugin.item_candidates(item, artist="A", title="B"))
+
+        assert result == [fake_track]
+        mb_plugin.track_for_id.assert_called_with("rec-id-1")

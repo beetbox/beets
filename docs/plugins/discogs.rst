@@ -11,6 +11,23 @@ later on.
 
 .. _discogs: https://discogs.com
 
+Genre Mapping
+-------------
+
+Discogs uses ``styles`` for the more specific classifications and ``genres`` for
+the broader ones. The plugin therefore uses Discogs ``styles`` as the primary
+source for the beets ``genres`` field, because beets treats ``genres`` as the
+main multi-valued genre field.
+
+The broader Discogs ``genres`` values are written to the beets ``style`` field.
+If :conf:`plugins.discogs:append_style_genre` is enabled, those broader Discogs
+``genres`` values are also appended to beets ``genres``.
+
+For example, a Discogs release with ``styles`` set to ``["Techno"]`` and
+``genres`` set to ``["Electronic"]`` becomes beets ``genres`` = ``["Techno"]``
+and ``style`` = ``"Electronic"`` by default. With ``append_style_genre``
+enabled, beets ``genres`` becomes ``["Techno", "Electronic"]``.
+
 Installation
 ------------
 
@@ -80,6 +97,7 @@ Default
         separator: ', '
         strip_disambiguation: yes
         featured_string: Feat.
+        extra_tags: []
         anv:
             artist_credit: yes
             artist: no
@@ -116,17 +134,20 @@ Default
 .. conf:: append_style_genre
     :default: no
 
-    Appends the Discogs style (if found) to the genre tag. This can be useful if
-    you want more granular genres to categorize your music. For example,
-    a release in Discogs might have a genre of "Electronic" and a style of
-    "Techno": enabling this setting would set the genre to be "Electronic,
-    Techno" (assuming default separator of ``", "``) instead of just
-    "Electronic".
+    Appends the broader Discogs ``genres`` values to beets ``genres`` after
+    the specific Discogs ``styles`` values already stored there. See the
+    Genre Mapping section above for the default field mapping and an example.
 
 .. conf:: separator
     :default: ", "
 
-    How to join multiple genre and style values from Discogs into a string.
+    How to join multiple Discogs ``genres`` values when writing the beets
+    ``style`` field.
+
+    .. versionchanged:: 2.7.0
+
+       This option now only applies to the ``style`` field as beets now only
+       handles lists of ``genres``.
 
 .. conf:: strip_disambiguation
     :default: yes
@@ -139,6 +160,35 @@ Default
     :default: Feat.
 
     Configure the string used for noting featured artists. Useful if you prefer ``Featuring`` or ``ft.``.
+
+.. conf:: extra_tags
+    :default: []
+
+    By default, beets will use only the artist and album to query Discogs.
+    Additional tags to be queried can be supplied with the
+    ``extra_tags`` setting.
+
+    This setting should improve the autotagger results if the metadata with the
+    given tags match the metadata returned by Discogs.
+
+    Tags supported by this setting:
+
+    * ``barcode``
+    * ``catalognum``
+    * ``country``
+    * ``label``
+    * ``media``
+    * ``year``
+
+    When ``media`` is included, ``Digital Media`` and ``WEB`` are normalized to
+    Discogs' ``File`` format when constructing the search query.
+
+    Example:
+
+    .. code-block:: yaml
+
+        discogs:
+            extra_tags: [barcode, catalognum, country, label, media, year]
 
 .. conf:: anv
 
@@ -157,11 +207,25 @@ Default
                artist: no
                album_artist: no
 
+Contributor credits
+~~~~~~~~~~~~~~~~~~~
+
+When Discogs provides artist roles on a track, beets uses them to separate main
+artists from other credited contributors. Main artist fields such as ``artist``,
+``artists``, ``artist_credit``, ``artists_credit``, ``artist_id``, and
+``artists_ids`` keep the primary artist credits, while featured artists from
+track roles are appended using :conf:`plugins.discogs:featured_string`.
+
+Discogs contributor roles are also imported into beets' multi-value performer
+fields when available. This includes remixer, lyricist, composer, and arranger
+credits, which populate ``remixers``, ``lyricists``, ``composers``, and
+``arrangers`` respectively.
+
 .. include:: ./shared_metadata_source_config.rst
 
 .. _discogs guidelines: https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings
 
-.. _divisions album: https://www.discogs.com/Handel-Sutherland-Kirkby-Kwella-Nelson-Watkinson-Bowman-Rolfe-Johnson-Elliott-Partridge-Thomas-The-A/release/2026070
+.. _divisions album: https://www.discogs.com/release/2026070-Handel-Sutherland-Kirkby-Kwella-Nelson-Watkinson-Bowman-Rolfe-Johnson-Elliott-Partridge-Thomas-The-A
 
 Troubleshooting
 ---------------

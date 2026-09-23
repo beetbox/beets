@@ -1,32 +1,25 @@
-# This file is part of beets.
-# Copyright 2025, Henry Oberholtzer
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Apply NYT manual of style title case rules, to text.
 Title case logic is derived from the python-titlecase library.
 Provides a template function and a tag modification function."""
 
+from __future__ import annotations
+
 import re
 from functools import cached_property
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from titlecase import titlecase
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, Info
-from beets.importer import ImportSession, ImportTask
-from beets.library import Item
+from beets.autotag import AlbumInfo
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.autotag import Info
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
 
 __author__ = "henryoberholtzer@gmail.com"
 __version__ = "1.0"
@@ -99,7 +92,7 @@ class TitlecasePlugin(BeetsPlugin):
 
     @cached_property
     def replace(self) -> list[tuple[str, str]]:
-        return self.config["replace"].as_pairs()
+        return self.config["replace"].as_pairs(default_value="")
 
     @cached_property
     def the_artist(self) -> bool:
@@ -148,13 +141,13 @@ class TitlecasePlugin(BeetsPlugin):
     def the_artist_regexp(self) -> re.Pattern[str]:
         return re.compile(r"\bthe\b")
 
-    def titlecase_callback(self, word, **kwargs) -> str | None:
+    def titlecase_callback(self, word: str, **kwargs) -> str | None:
         """Callback function for words to preserve case of."""
         if preserved_word := self.preserve["words"].get(word.upper(), ""):
             return preserved_word
         return None
 
-    def received_info_handler(self, info: Info):
+    def received_info_handler(self, info: Info) -> None:
         """Calls titlecase fields for AlbumInfo or TrackInfo
         Processes the tracks field for AlbumInfo
         """
@@ -164,7 +157,7 @@ class TitlecasePlugin(BeetsPlugin):
                 self.titlecase_fields(track)
 
     def commands(self) -> list[ui.Subcommand]:
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             write = ui.should_write()
             for item in lib.items(args):
                 self._log.info(f"titlecasing {item.title}:")
@@ -221,7 +214,7 @@ class TitlecasePlugin(BeetsPlugin):
         # Check if A-Z is all uppercase or all lowercase
         if self.all_lowercase and text.islower():
             return text
-        elif self.all_caps and text.isupper():
+        if self.all_caps and text.isupper():
             return text
         # Any necessary replacements go first, mainly punctuation.
         titlecased = text.lower() if self.force_lowercase else text

@@ -1,67 +1,50 @@
-# This file is part of beets.
-# Copyright 2016, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 """Warns you about things you hate (or even blocks import)."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from beets.importer import Action
 from beets.library import Album, Item, parse_query_string
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from beets.importer import ImportSession, ImportTask
+
+
 __author__ = "baobab@heresiarch.info"
 __version__ = "2.0"
 
 
-def summary(task):
-    """Given an ImportTask, produce a short string identifying the
-    object.
-    """
-    if task.is_album:
-        return f"{task.cur_artist} - {task.cur_album}"
-    else:
-        return f"{task.item.artist} - {task.item.title}"
-
-
 class IHatePlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.register_listener(
             "import_task_choice", self.import_task_choice_event
         )
-        self.config.add(
-            {
-                "warn": [],
-                "skip": [],
-            }
-        )
+        self.config.add({"warn": [], "skip": []})
 
     @classmethod
-    def do_i_hate_this(cls, task, action_patterns):
+    def do_i_hate_this(
+        cls, task: ImportTask, action_patterns: Iterable[str]
+    ) -> bool:
         """Process group of patterns (warn or skip) and returns True if
         task is hated and not whitelisted.
         """
         if action_patterns:
             for query_string in action_patterns:
                 query, _ = parse_query_string(
-                    query_string,
-                    Album if task.is_album else Item,
+                    query_string, Album if task.is_album else Item
                 )
                 if any(query.match(item) for item in task.imported_items()):
                     return True
         return False
 
-    def import_task_choice_event(self, session, task):
+    def import_task_choice_event(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         skip_queries = self.config["skip"].as_str_seq()
         warn_queries = self.config["warn"].as_str_seq()
 
@@ -70,10 +53,10 @@ class IHatePlugin(BeetsPlugin):
                 self._log.debug("processing your hate")
                 if self.do_i_hate_this(task, skip_queries):
                     task.choice_flag = Action.SKIP
-                    self._log.info("skipped: {}", summary(task))
+                    self._log.info("skipped: {}", task.source.desc)
                     return
                 if self.do_i_hate_this(task, warn_queries):
-                    self._log.info("you may hate this: {}", summary(task))
+                    self._log.info("you may hate this: {}", task.source.desc)
             else:
                 self._log.debug("nothing to do")
         else:

@@ -46,7 +46,7 @@ import
 
 ::
 
-    beet import [-CWAPRqst] [-l LOGPATH] PATH...
+    beet import [-CMWAPRqst] [-l LOGPATH] PATH...
     beet import [options] -L QUERY
 
 Add music to your library, attempting to get correct tags for it from
@@ -71,9 +71,11 @@ Optional command flags:
 
 - By default, the command copies files to your library directory and updates the
   ID3 tags on your music. In order to move the files, instead of copying, use
-  the ``-m`` (move) option. If you'd like to leave your music files untouched,
-  try the ``-C`` (don't copy) and ``-W`` (don't write tags) options. You can
-  also disable this behavior by default in the configuration file (below).
+  the ``-m`` (move) option. When importing an archive with ``-m``, if all files
+  are imported, the archive is removed from disk. If you'd like to leave your
+  music files untouched, try the ``-C`` (don't copy), ``-M`` (don't move), and
+  ``-W`` (don't write tags) options. You can also disable this behavior by
+  default in the configuration file (below).
 - Also, you can disable the autotagging behavior entirely using ``-A`` (don't
   autotag)---then your music will be imported with its existing metadata.
 - During a long tagging import, it can be useful to keep track of albums that
@@ -143,13 +145,13 @@ Optional command flags:
   :ref:`set_fields` configuration dictionary. You can use the option multiple
   times on the command line, like so:
 
-  ::
+.. code-block:: sh
 
-      beet import --set genre="Alternative Rock" --set mood="emotional"
+    beet import --set genres="Alternative Rock" --set mood="emotional"
 
 .. _py7zr: https://pypi.org/project/py7zr/
 
-.. _rarfile: https://pypi.python.org/pypi/rarfile/
+.. _rarfile: https://pypi.org/project/rarfile/
 
 .. only:: html
 
@@ -173,6 +175,11 @@ Optional command flags:
     structure will be updated to reflect the new tags if copying is enabled; you
     never end up with two copies of the file.
 
+    Using ``-C`` (don't copy) in combination with ``-M`` (don't move) will retag
+    music while leaving the files where they are. This is useful for players/music
+    servers that get confused when an item changes path and tags at the same time.
+    One can later use the :ref:`move-cmd` command to move items based on their new tags.
+
     The ``-L`` (``--library``) flag is also useful for retagging. Instead of
     listing paths you want to import on the command line, specify a :doc:`query
     string <query>` that matches items from your library. In this case, the
@@ -192,7 +199,7 @@ list
 
 ::
 
-    beet list [-apf] QUERY
+    beet list [-apf] [-l LIMIT] QUERY
 
 :doc:`Queries <query>` the database for music.
 
@@ -206,6 +213,9 @@ In this case, the queries you use are restricted to album-level fields: for
 example, you can search for ``year:1969`` but query parts for item-level fields
 like ``title:foo`` will be ignored. Remember that ``artist`` is an item-level
 field; ``albumartist`` is the corresponding album field.
+
+Use the ``-l LIMIT`` (``--limit=LIMIT``) flag when you want to cap the maximum
+number of items that are returned.
 
 The ``-p`` option makes beets print out filenames of matched items, which might
 be useful for piping into other Unix commands (such as `xargs
@@ -252,7 +262,7 @@ modify
 
 ::
 
-    beet modify [-IMWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
+    beet modify [-IMWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD+=VALUE...] [FIELD-=VALUE...] [FIELD!...]
 
 Change the metadata for items or albums in the database.
 
@@ -266,6 +276,26 @@ Values can also be *templates*, using the same syntax as :doc:`path formats
 <pathformat>`. For example, ``beet modify artist='$artist_sort'`` will copy the
 artist sort name into the artist field for all your tracks, and ``beet modify
 title='$track $title'`` will add track numbers to their title metadata.
+
+To adjust a multi-valued field, such as ``genres``, ``remixers``, ``lyricists``,
+``composers``, or ``arrangers``, separate the values with |semicolon_space|. For
+example, ``beet modify genres="rock; pop"``.
+
+For these multi-valued fields, you can also use ``+=`` to add values and ``-=``
+to remove values, instead of replacing the whole field. For example, ``beet
+modify genres+=Funk`` adds "Funk" to the existing genres (without duplicating it
+if already present), and ``beet modify genres-=Pop`` removes "Pop" from the
+list, leaving the other values untouched. These operators are only valid for
+multi-valued fields.
+
+When modifying albums with ``-a``, multi-valued fields such as ``artists``,
+``genres``, ``composers`` are also supported with the same semicolon-separated
+syntax.
+
+For compatibility, ``modify`` assignments and query expressions still accept
+legacy singular names such as ``genre``, ``composer``, ``lyricist``,
+``remixer``, and ``arranger``, but beets will warn and translate them to the
+plural multi-valued fields. Prefer the plural field names in new commands.
 
 The ``-a`` option changes to querying album fields instead of track fields and
 also enables to operate on albums in addition to the individual tracks. Without

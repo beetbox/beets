@@ -1,82 +1,81 @@
 """Tests for the 'web' plugin"""
 
 import json
-import os.path
 import platform
 import shutil
 from collections import Counter
+from pathlib import Path
 
-from beets import logging
+import pytest
+
 from beets.library import Album, Item
 from beets.test import _common
-from beets.test.helper import ItemInDBTestCase
+from beets.test.helper import PluginMixin, PytestTestHelper
 from beetsplug import web
 
 
-class WebPluginTest(ItemInDBTestCase):
-    def setUp(self):
-        super().setUp()
-        self.log = logging.getLogger("beets.web")
+class WebPluginMixin(PluginMixin):
+    """Mixin to configure the web plugin for testing."""
 
-        if platform.system() == "Windows":
-            self.path_prefix = "C:"
-        else:
-            self.path_prefix = ""
+    plugin = "web"
 
-        # Add fixtures
-        for track in self.lib.items():
-            track.remove()
+    @pytest.fixture(autouse=True)
+    def setup_web_app(self, setup):
+        """Configure the web plugin's Flask app for testing.
 
-        # Add library elements. Note that self.lib.add overrides any "id=<n>"
-        # and assigns the next free id number.
-        # The following adds will create items #1, #2 and #3
-        path1 = (
-            self.path_prefix + os.sep + os.path.join(b"path_1").decode("utf-8")
-        )
-        self.lib.add(
-            Item(title="title", path=path1, album_id=2, artist="AAA Singers")
-        )
-        path2 = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere", b"a").decode("utf-8")
-        )
-        self.lib.add(
-            Item(title="another title", path=path2, artist="AAA Singers")
-        )
-        path3 = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere", b"abc").decode("utf-8")
-        )
-        self.lib.add(
-            Item(title="and a third", testattr="ABC", path=path3, album_id=2)
-        )
-        # The following adds will create albums #1 and #2
-        self.lib.add(Album(album="album", albumtest="xyz"))
-        path4 = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere2", b"art_path_2").decode("utf-8")
-        )
-        self.lib.add(Album(album="other album", artpath=path4))
-
+        This fixture sets up the Flask test client and configures the app
+        with the test library. It runs after the base setup fixture from
+        PytestTestHelper.
+        """
+        # Set up the web app config - we modify self.config["web"] for beets config
+        # but also need to directly configure the Flask app for tests
         web.app.config["TESTING"] = True
         web.app.config["lib"] = self.lib
         web.app.config["INCLUDE_PATHS"] = False
         web.app.config["READONLY"] = True
         self.client = web.app.test_client()
 
+        # Set platform-specific path prefix
+        self.path_prefix = Path(
+            "C:\\" if platform.system() == "Windows" else "/"
+        )
+
+        # Add library elements. Note that self.lib.add overrides any "id=<n>"
+        # and assigns the next free id number.
+        # The following adds will create items #1, #2 and #3
+        self.path1 = self.path_prefix / "path_1"
+        self.lib.add(
+            Item(
+                title="title", path=self.path1, album_id=2, artist="AAA Singers"
+            )
+        )
+        self.path2 = self.path_prefix / "somewhere" / "a"
+        self.lib.add(
+            Item(title="another title", path=self.path2, artist="AAA Singers")
+        )
+        self.path3 = self.path_prefix / "somewhere" / "abc"
+        self.lib.add(
+            Item(
+                title="and a third", testattr="ABC", path=self.path3, album_id=2
+            )
+        )
+        # The following adds will create albums #1 and #2
+        self.lib.add(Album(album="album", albumtest="xyz"))
+        self.path4 = self.path_prefix / "somewhere2" / "art_path_2"
+        self.lib.add(Album(album="other album", artpath=self.path4))
+
+        return
+
+
+class TestWebPlugin(WebPluginMixin, PytestTestHelper):
+    """Tests for the web plugin."""
+
     def test_config_include_paths_true(self):
         web.app.config["INCLUDE_PATHS"] = True
         response = self.client.get("/item/1")
         res_json = json.loads(response.data.decode("utf-8"))
-        expected_path = (
-            self.path_prefix + os.sep + os.path.join(b"path_1").decode("utf-8")
-        )
-
         assert response.status_code == 200
-        assert res_json["path"] == expected_path
+        assert res_json["path"] == str(self.path1)
 
         web.app.config["INCLUDE_PATHS"] = False
 
@@ -84,14 +83,9 @@ class WebPluginTest(ItemInDBTestCase):
         web.app.config["INCLUDE_PATHS"] = True
         response = self.client.get("/album/2")
         res_json = json.loads(response.data.decode("utf-8"))
-        expected_path = (
-            self.path_prefix
-            + os.sep
-            + os.path.join(b"somewhere2", b"art_path_2").decode("utf-8")
-        )
 
         assert response.status_code == 200
-        assert res_json["artpath"] == expected_path
+        assert res_json["artpath"] == str(self.path4)
 
         web.app.config["INCLUDE_PATHS"] = False
 
@@ -147,19 +141,19 @@ class WebPluginTest(ItemInDBTestCase):
         assert response.status_code == 404
 
     def test_get_single_item_by_path(self):
-        data_path = os.path.join(_common.RSRC, b"full.mp3")
+        data_path = _common.RSRC / "full.mp3"
         self.lib.add(Item.from_path(data_path))
-        response = self.client.get(f"/item/path/{data_path.decode('utf-8')}")
+        response = self.client.get(f"/item/path/{data_path}")
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
         assert res_json["title"] == "full"
 
     def test_get_single_item_by_path_not_found_if_not_in_library(self):
-        data_path = os.path.join(_common.RSRC, b"full.mp3")
+        data_path = _common.RSRC / "full.mp3"
         # data_path points to a valid file, but we have not added the file
         # to the library.
-        response = self.client.get(f"/item/path/{data_path.decode('utf-8')}")
+        response = self.client.get(f"/item/path/{data_path}")
 
         assert response.status_code == 404
 
@@ -211,9 +205,8 @@ class WebPluginTest(ItemInDBTestCase):
         from the root all the way to a directory, so this matches 1 item"""
         """ Note: filesystem separators in the query must be '\' """
 
-        response = self.client.get(
-            "/item/query/path:" + self.path_prefix + "\\somewhere\\a"
-        )
+        prefix = "C:" if platform.system() == "Windows" else ""
+        response = self.client.get(f"/item/query/path:{prefix}\\somewhere\\a")
         res_json = json.loads(response.data.decode("utf-8"))
 
         assert response.status_code == 200
@@ -338,9 +331,9 @@ class WebPluginTest(ItemInDBTestCase):
         web.app.config["READONLY"] = False
 
         # Create an item with a file
-        ipath = os.path.join(self.temp_dir, b"testfile1.mp3")
-        shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
-        assert os.path.exists(ipath)
+        ipath = self.temp_path / "testfile1.mp3"
+        shutil.copy(_common.RSRC / "full.mp3", ipath)
+        assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
         # Check we can find the temporary item we just created
@@ -359,16 +352,16 @@ class WebPluginTest(ItemInDBTestCase):
         assert response.status_code == 404
 
         # Check the file has not gone
-        assert os.path.exists(ipath)
-        os.remove(ipath)
+        assert ipath.exists()
+        ipath.unlink()
 
     def test_delete_item_with_file(self):
         web.app.config["READONLY"] = False
 
         # Create an item with a file
-        ipath = os.path.join(self.temp_dir, b"testfile2.mp3")
-        shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
-        assert os.path.exists(ipath)
+        ipath = self.temp_path / "testfile2.mp3"
+        shutil.copy(_common.RSRC / "full.mp3", ipath)
+        assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
         # Check we can find the temporary item we just created
@@ -387,7 +380,7 @@ class WebPluginTest(ItemInDBTestCase):
         assert response.status_code == 404
 
         # Check the file has gone
-        assert not os.path.exists(ipath)
+        assert not ipath.exists()
 
     def test_delete_item_query(self):
         web.app.config["READONLY"] = False
@@ -673,11 +666,100 @@ class WebPluginTest(ItemInDBTestCase):
         self.lib.get_item(item_id).remove()
 
     def test_get_item_file(self):
-        ipath = os.path.join(self.temp_dir, b"testfile2.mp3")
-        shutil.copy(os.path.join(_common.RSRC, b"full.mp3"), ipath)
-        assert os.path.exists(ipath)
+        ipath = self.temp_path / "testfile2.mp3"
+        shutil.copy(_common.RSRC / "full.mp3", ipath)
+        assert ipath.exists()
         item_id = self.lib.add(Item.from_path(ipath))
 
         response = self.client.get(f"/item/{item_id}/file")
 
         assert response.status_code == 200
+
+
+class TestWebXSS(WebPluginMixin, PytestTestHelper):
+    """Tests for XSS vulnerability in the web plugin templates.
+
+    These tests verify that the Underscore.js templates in index.html use
+    the escaping syntax (<%- %) instead of the non-escaping syntax (<%= %).
+
+    In Underscore.js 1.2.2 (used by beets):
+    - <%= variable %> does NOT escape HTML (vulnerable to XSS)
+    - <%- variable %> DOES escape HTML (safe)
+
+    This was reported in
+    https://github.com/beetbox/beets/security/advisories/GHSA-3gxm-wfjx-m847
+    and remediated in
+    https://github.com/beetbox/beets/commit/75f0d8f4899e61afb939adf02dcfb078aed23a6a
+    """
+
+    def test_templates_use_escaping_syntax(self):
+        """Verify that all Underscore.js templates use <%- %> for escaping.
+
+        This test requests the index.html page and checks that all
+        user data interpolations in the Underscore.js templates use
+        the escaping syntax (<%- %) rather than the non-escaping syntax (<%= %).
+        """
+        import re
+
+        # Request the index.html page
+        response = self.client.get("/")
+        html = response.data.decode("utf-8")
+
+        # Extract the template scripts from the HTML
+        # The templates are in <script type="text/template"> blocks
+        template_pattern = r'<script type="text/template"[^>]*>(.*?)</script>'
+        templates = re.findall(template_pattern, html, re.DOTALL)
+
+        # Combine all template content for checking
+        all_template_content = "\n".join(templates)
+
+        # Check that no <%= %> (non-escaping) tags exist for user data
+        # We look for <%= followed by a variable name (word characters)
+        non_escaping_pattern = r"<%=\s*(\w+)\s*%>"
+        non_escaping_matches = re.findall(
+            non_escaping_pattern, all_template_content
+        )
+
+        # List of fields that should be escaped (user-controlled data)
+        user_data_fields = [
+            "title",
+            "artist",
+            "album",
+            "year",
+            "track",
+            "tracktotal",
+            "disc",
+            "disctotal",
+            "length",
+            "format",
+            "bitrate",
+            "mb_trackid",
+            "id",
+            "lyrics",
+            "comments",
+        ]
+
+        # Check if any user data fields are using non-escaping <%= %>
+        vulnerable_fields = [
+            field for field in non_escaping_matches if field in user_data_fields
+        ]
+
+        # If we found any user data fields using <%= %>, the templates are vulnerable
+        assert len(vulnerable_fields) == 0, (
+            "Found non-escaping <%= %> tags for user data fields: "
+            f"{vulnerable_fields}. "
+            "These should use <%- %> for HTML escaping to prevent XSS."
+        )
+
+        # Also verify that escaping tags (<%- %>) are present for user data
+        escaping_pattern = r"<%-\s*(\w+)\s*%>"
+        escaping_matches = re.findall(escaping_pattern, all_template_content)
+
+        # At least some user data fields should use escaping
+        safe_fields = [
+            field for field in escaping_matches if field in user_data_fields
+        ]
+        assert len(safe_fields) > 0, (
+            "No escaping <%- %> tags found for user data fields. "
+            "Templates should use <%- %> for HTML escaping."
+        )

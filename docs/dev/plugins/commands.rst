@@ -34,14 +34,14 @@ but it defaults to an empty parser (you can extend it later). ``help`` is a
 description of your command, and ``aliases`` is a list of shorthand versions of
 your command name.
 
-.. _optionparser instance: https://docs.python.org/library/optparse.html
+.. _optionparser instance: https://docs.python.org/3/library/optparse.html
 
 You'll need to add a function to your command by saying ``mycommand.func =
 myfunction``. This function should take the following parameters: ``lib`` (a
 beets ``Library`` object) and ``opts`` and ``args`` (command-line options and
 arguments as returned by OptionParser.parse_args_).
 
-.. _optionparser.parse_args: https://docs.python.org/library/optparse.html#parsing-arguments
+.. _optionparser.parse_args: https://docs.python.org/3/library/optparse.html#parsing-arguments
 
 The function should use any of the utility functions defined in ``beets.ui``.
 Try running ``pydoc beets.ui`` to see what's available.

@@ -29,10 +29,10 @@ searched in the playlist_dir and the ".m3u" extension is appended to the name:
     $ beet ls playlist:anotherplaylist
 
 A playlist query will use the paths found in the playlist file to match items in
-the beets library. ``playlist:`` submits a regular beets :ref:`query<queries>`
-similar to a :ref:`specific fields query<fieldsquery>`. If you want the list in
+the beets library. ``playlist:`` submits a regular beets :ref:`query <queries>`
+similar to a :ref:`specific fields query <fieldsquery>`. If you want the list in
 any particular order, you can use the standard beets query syntax for
-:ref:`sorting<query-sort>`:
+:ref:`sorting <query-sort>`:
 
 ::
 

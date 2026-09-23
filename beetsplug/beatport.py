@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Adds Beatport release and track search support to the autotagger"""
 
 from __future__ import annotations
@@ -31,13 +17,16 @@ from requests_oauthlib.oauth1_session import (
 
 import beets
 import beets.ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets import config
+from beets.autotag import AlbumInfo, TrackInfo
+from beets.exceptions import UserError
 from beets.metadata_plugins import MetadataSourcePlugin
+from beets.util import unique_list
+from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
-    from beets.importer import ImportSession
     from beets.library import Item
 
     from ._typing import JSONDict
@@ -53,7 +42,13 @@ class BeatportAPIError(Exception):
 class BeatportClient:
     _api_base = "https://oauth-api.beatport.com"
 
-    def __init__(self, c_key, c_secret, auth_key=None, auth_secret=None):
+    def __init__(
+        self,
+        c_key: str,
+        c_secret: str,
+        auth_key: str | None = None,
+        auth_secret: str | None = None,
+    ) -> None:
         """Initiate the client with OAuth information.
 
         For the initial authentication with the backend `auth_key` and
@@ -114,25 +109,19 @@ class BeatportClient:
 
     @overload
     def search(
-        self,
-        query: str,
-        release_type: Literal["release"],
-        details: bool = True,
+        self, query: str, release_type: Literal["release"], details: bool = True
     ) -> Iterator[BeatportRelease]: ...
 
     @overload
     def search(
-        self,
-        query: str,
-        release_type: Literal["track"],
-        details: bool = True,
+        self, query: str, release_type: Literal["track"], details: bool = True
     ) -> Iterator[BeatportTrack]: ...
 
     def search(
         self,
         query: str,
         release_type: Literal["release", "track"],
-        details=True,
+        details: bool = True,
     ) -> Iterator[BeatportRelease | BeatportTrack]:
         """Perform a search of the Beatport catalogue.
 
@@ -224,7 +213,7 @@ class BeatportObject:
     artists: list[tuple[str, str]] | None = None
     # tuple of artist id and artist name
 
-    def __init__(self, data: JSONDict):
+    def __init__(self, data: JSONDict) -> None:
         self.beatport_id = str(data["id"])  # given as int in the response
         self.name = str(data["name"])
         if "releaseDate" in data:
@@ -233,8 +222,11 @@ class BeatportObject:
             )
         if "artists" in data:
             self.artists = [(x["id"], str(x["name"])) for x in data["artists"]]
-        if "genres" in data:
-            self.genres = [str(x["name"]) for x in data["genres"]]
+
+        self.genres = unique_list(
+            x["name"]
+            for x in (*data.get("subGenres", []), *data.get("genres", []))
+        )
 
     def artists_str(self) -> str | None:
         if self.artists is not None:
@@ -253,17 +245,15 @@ class BeatportRelease(BeatportObject):
     label_name: str | None
     category: str | None
     url: str | None
-    genre: str | None
 
     tracks: list[BeatportTrack] | None = None
 
-    def __init__(self, data: JSONDict):
+    def __init__(self, data: JSONDict) -> None:
         super().__init__(data)
 
         self.catalog_number = data.get("catalogNumber")
         self.label_name = data.get("label", {}).get("name")
         self.category = data.get("category")
-        self.genre = data.get("genre")
 
         if "slug" in data:
             self.url = (
@@ -285,9 +275,8 @@ class BeatportTrack(BeatportObject):
     track_number: int | None
     bpm: str | None
     initial_key: str | None
-    genre: str | None
 
-    def __init__(self, data: JSONDict):
+    def __init__(self, data: JSONDict) -> None:
         super().__init__(data)
         if "title" in data:
             self.title = str(data["title"])
@@ -296,8 +285,8 @@ class BeatportTrack(BeatportObject):
         self.length = timedelta(milliseconds=data.get("lengthMs", 0) or 0)
         if not self.length:
             try:
-                min, sec = data.get("length", "0:0").split(":")
-                self.length = timedelta(minutes=int(min), seconds=int(sec))
+                min_, sec = data.get("length", "0:0").split(":")
+                self.length = timedelta(minutes=int(min_), seconds=int(sec))
             except ValueError:
                 pass
         if "slug" in data:
@@ -306,18 +295,13 @@ class BeatportTrack(BeatportObject):
         self.bpm = data.get("bpm")
         self.initial_key = str((data.get("key") or {}).get("shortName"))
 
-        # Use 'subgenre' and if not present, 'genre' as a fallback.
-        if data.get("subGenres"):
-            self.genre = str(data["subGenres"][0].get("name"))
-        elif data.get("genres"):
-            self.genre = str(data["genres"][0].get("name"))
-
 
 class BeatportPlugin(MetadataSourcePlugin):
     _client: BeatportClient | None = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
+        deprecate_for_user(self._log, "The 'beatport' plugin")
         self.config.add(
             {
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",
@@ -327,7 +311,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         )
         self.config["apikey"].redact = True
         self.config["apisecret"].redact = True
-        self.register_listener("import_begin", self.setup)
+        self.setup()
 
     @property
     def client(self) -> BeatportClient:
@@ -337,9 +321,9 @@ class BeatportPlugin(MetadataSourcePlugin):
             )
         return self._client
 
-    def setup(self, session: ImportSession):
-        c_key: str = self.config["apikey"].as_str()
-        c_secret: str = self.config["apisecret"].as_str()
+    def setup(self) -> None:
+        c_key = self.config["apikey"].as_str()
+        c_secret = self.config["apisecret"].as_str()
 
         # Get the OAuth token from a file or log in.
         try:
@@ -361,7 +345,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             url = auth_client.get_authorize_url()
         except AUTH_ERRORS as e:
             self._log.debug("authentication error: {}", e)
-            raise beets.ui.UserError("communication with Beatport failed")
+            raise UserError("communication with Beatport failed")
 
         beets.ui.print_("To authenticate with Beatport, visit:")
         beets.ui.print_(url)
@@ -372,7 +356,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             token, secret = auth_client.get_access_token(data)
         except AUTH_ERRORS as e:
             self._log.debug("authentication error: {}", e)
-            raise beets.ui.UserError("Beatport token request failed")
+            raise UserError("Beatport token request failed")
 
         # Save the token for later use.
         self._log.debug("Beatport token {}, secret {}", token, secret)
@@ -386,11 +370,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def candidates(
-        self,
-        items: Sequence[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterator[AlbumInfo]:
         if va_likely:
             query = album
@@ -412,7 +392,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             self._log.debug("API Error: {} (query: {})", e, query)
             return []
 
-    def album_for_id(self, album_id: str):
+    def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Fetches a release by its Beatport ID and returns an AlbumInfo object
         or None if the query is not a valid ID or release is not found.
         """
@@ -427,7 +407,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             return self._get_album_info(release)
         return None
 
-    def track_for_id(self, track_id: str):
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
         """Fetches a track by its Beatport ID and returns a TrackInfo object
         or None if the track is not a valid Beatport ID or track is not found.
         """
@@ -462,7 +442,7 @@ class BeatportPlugin(MetadataSourcePlugin):
         va = release.artists is not None and len(release.artists) > 3
         artist, artist_id = self._get_artist(release.artists)
         if va:
-            artist = "Various Artists"
+            artist = config["va_name"].as_str()
         tracks: list[TrackInfo] = []
         if release.tracks is not None:
             tracks = [self._get_track_info(x) for x in release.tracks]
@@ -483,7 +463,7 @@ class BeatportPlugin(MetadataSourcePlugin):
             media="Digital",
             data_source=self.data_source,
             data_url=release.url,
-            genre=release.genre,
+            genres=release.genres,
             year=release_date.year if release_date else None,
             month=release_date.month if release_date else None,
             day=release_date.day if release_date else None,
@@ -508,17 +488,18 @@ class BeatportPlugin(MetadataSourcePlugin):
             data_url=track.url,
             bpm=track.bpm,
             initial_key=track.initial_key,
-            genre=track.genre,
+            genres=track.genres,
         )
 
-    def _get_artist(self, artists):
+    def _get_artist(
+        self, artists: Iterable[tuple[str, str]] | None
+    ) -> tuple[str, str | None]:
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Beatport release or track artists.
         """
-        return self.get_artist(artists=artists, id_key=0, name_key=1)
+        return self.get_artist(artists or [], id_key=0, name_key=1)  # type: ignore[arg-type]
 
-    def _get_tracks(self, query):
+    def _get_tracks(self, query: str) -> list[TrackInfo]:
         """Returns a list of TrackInfo objects for a Beatport query."""
         bp_tracks = self.client.search(query, release_type="track")
-        tracks = [self._get_track_info(x) for x in bp_tracks]
-        return tracks
+        return [self._get_track_info(x) for x in bp_tracks]

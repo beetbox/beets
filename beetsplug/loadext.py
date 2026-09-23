@@ -1,27 +1,19 @@
-# This file is part of beets.
-# Copyright 2019, Jack Wilsdon <jack.wilsdon@gmail.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Load SQLite extensions."""
 
+from __future__ import annotations
+
 import sqlite3
+from typing import TYPE_CHECKING
 
 from beets.dbcore import Database
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.library import Library
+
 
 class LoadExtPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         if not Database.supports_extensions:
@@ -33,8 +25,8 @@ class LoadExtPlugin(BeetsPlugin):
 
         self.register_listener("library_opened", self.library_opened)
 
-    def library_opened(self, lib):
-        for v in self.config:
+    def library_opened(self, lib: Library) -> None:
+        for v in self.config.sequence():
             ext = v.as_filename()
 
             self._log.debug("loading extension {}", ext)

@@ -26,6 +26,6 @@ file. The available options are:
 - **overwrite**: Calculate a key even for files that already have an
   ``initial_key`` value. Default: ``no``.
 
-.. _keyfinder: http://www.ibrahimshaath.co.uk/keyfinder/
+.. _keyfinder: https://www.ibrahimshaath.co.uk/keyfinder/
 
 .. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli/

@@ -54,7 +54,7 @@ class Ref(NamedTuple):
         if len(line_parts := line.split(" ", 1)) == 1:
             return cls(line, None, None)
 
-        id, path_with_name = line_parts
+        id_, path_with_name = line_parts
         parts = [p.strip() for p in path_with_name.split(":", 1)]
 
         if len(parts) == 1:
@@ -62,7 +62,7 @@ class Ref(NamedTuple):
         else:
             name, path = parts
 
-        return cls(id, path, name)
+        return cls(id_, path, name)
 
     @property
     def url(self) -> str:
@@ -99,8 +99,14 @@ def create_rst_replacements() -> list[Replacement]:
     refs = get_refs()
 
     def make_ref_link(ref_id: str, name: str | None = None) -> str:
-        ref = refs[ref_id]
-        return rf"`{name or ref.name} <{ref.url}>`_"
+        if ref_id.endswith("-cmd"):
+            name = f"{ref_id.removesuffix('-cmd')} command"
+        try:
+            ref = refs[ref_id]
+        except KeyError:
+            return f"``{name or ref_id}``"
+        else:
+            return rf"`{name or ref.name} <{ref.url}>`_"
 
     commands = "|".join(r.split("-")[0] for r in refs if r.endswith("-cmd"))
     plugins = "|".join(
@@ -113,18 +119,16 @@ def create_rst_replacements() -> list[Replacement]:
     return [
         # Replace explicitly defined substitutions from rst_epilog
         #    |BeetsPlugin| -> :class:`beets.plugins.BeetsPlugin`
-        (
-            r"\|\w[^ ]*\|",
-            lambda m: explicit_replacements.get(m[0], m[0]),
-        ),
+        (r"\|\w[^ ]*\|", lambda m: explicit_replacements.get(m[0], m[0])),
         # Replace Sphinx directives by documentation URLs, e.g.,
-        #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)
+        #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)  # noqa: E501
+        #   :ref:`list-cmd` -> [list command](DOCS/reference/cli.html#list-cmd)
         (
-            r":(?:ref|doc|class|conf):`+(?:([^`<]+)<)?/?([\w.:/_-]+)>?`+",
+            r":(?:ref|doc|class|conf):`+~?(?:([^`<]+)<)?/?([\w.:/_-]+)>?`+",
             lambda m: make_ref_link(m[2], m[1]),
         ),
         # Convert command references to documentation URLs
-        #   `beet move` or `move` command -> [import](DOCS/reference/cli.html#import)
+        #   `beet move` or `move` command -> [move command](DOCS/reference/cli.html#move-cmd)  # noqa: E501
         (
             rf"`+beet ({commands})`+|`+({commands})`+(?= command)",
             lambda m: make_ref_link(f"{m[1] or m[2]}-cmd"),
@@ -139,14 +143,9 @@ def create_rst_replacements() -> list[Replacement]:
     ]
 
 
-MD_REPLACEMENTS: list[Replacement] = [
-    (r"^(\w[^\n]{,80}):(?=\n\n[^ ])", r"### \1"),  # format section headers
-    (r"^(\w[^\n]{81,}):(?=\n\n[^ ])", r"**\1**"),  # and bolden too long ones
-    (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
-]
 order_bullet_points = partial(
     re.compile(r"(\n- .*?(?=\n(?! *(-|\d\.) )|$))", flags=re.DOTALL).sub,
-    lambda m: "\n- ".join(sorted(m.group().split("\n- "))),
+    lambda m: "\n- ".join(sorted(m.group().split("\n- "), key=str.lower)),
 )
 
 
@@ -165,13 +164,21 @@ def update_changelog(text: str, new: Version) -> str:
 Unreleased
 ----------
 
-New features:
+..
+    New features
+    ~~~~~~~~~~~~
 
-Bug fixes:
+..
+    Bug fixes
+    ~~~~~~~~~
 
-For packagers:
+..
+    For plugin developers
+    ~~~~~~~~~~~~~~~~~~~~~
 
-Other changes:
+..
+    Other changes
+    ~~~~~~~~~~~~~
 
 {new_header}
 {"-" * len(new_header)}
@@ -202,7 +209,7 @@ def validate_new_version(
 ) -> Version:
     """Validate the version is newer than the current one."""
     with PYPROJECT.open("rb") as f:
-        current = parse(tomli.load(f)["tool"]["poetry"]["version"])
+        current = parse(tomli.load(f)["project"]["version"])
 
     if not value > current:
         msg = f"version must be newer than {current}"
@@ -247,16 +254,13 @@ def changelog_as_markdown(rst: str) -> str:
 
     md = rst2md(rst)
 
-    for pattern, repl in MD_REPLACEMENTS:
-        md = re.sub(pattern, repl, md, flags=re.M | re.DOTALL)
-
     # order bullet points in each of the lists alphabetically to
     # improve readability
     return order_bullet_points(md)
 
 
 @click.group()
-def cli():
+def cli() -> None:
     pass
 
 
@@ -268,7 +272,7 @@ def bump(version: Version) -> None:
 
 
 @cli.command()
-def changelog():
+def changelog() -> None:
     """Get the most recent version's changelog as Markdown."""
     if changelog := get_changelog_contents():
         try:

@@ -2,9 +2,11 @@ import re
 
 import pytest
 
-from beets.autotag import AlbumInfo, TrackInfo
-from beets.autotag.distance import (
+from beets.autotag import (
+    AlbumInfo,
     Distance,
+    Source,
+    TrackInfo,
     distance,
     string_dist,
     track_distance,
@@ -17,7 +19,7 @@ _p = pytest.param
 
 
 class TestDistance:
-    @pytest.fixture(autouse=True, scope="class")
+    @pytest.fixture(autouse=True)
     def setup_config(self, config):
         config["match"]["distance_weights"]["data_source"] = 2.0
         config["match"]["distance_weights"]["album"] = 4.0
@@ -124,6 +126,12 @@ class TestDistance:
         dist.add("medium", 0.75)
         assert dist.items() == [("album", 0.25), ("medium", 0.25)]
 
+    def test_generic_penalty_keys_excludes_zero_penalties(self, dist):
+        dist.add("album", 0.5)
+        dist.add("label", 0.0)
+        dist.add("medium", 0.25)
+        assert dist.generic_penalty_keys == ["album", "medium"]
+
     def test_update(self, dist):
         dist1 = dist
         dist1.add("album", 0.5)
@@ -180,7 +188,12 @@ class TestAlbumDistance:
     @pytest.fixture
     def get_dist(self, items):
         def inner(info: AlbumInfo):
-            return distance(items, info, list(zip(items, info.tracks)))
+            return distance(
+                Source.from_items(items).data,
+                info,
+                list(zip(items, info.tracks)),
+                len(items) - len(info.tracks),
+            )
 
         return inner
 
@@ -276,6 +289,23 @@ class TestStringDistance:
         assert string_dist("Some String", "Totally Different") != 0.0
 
     @pytest.mark.parametrize(
+        "string1, string2",
+        [
+            ("Draft Beer", "Draft Whiskey"),
+            ("Left Field", "Left Symphony"),
+            ("Gift Ideas", "Gift Cards"),
+            ("Craft Beer", "Craft Wine"),
+        ],
+    )
+    def test_featuring_pattern_does_not_match_mid_word(self, string1, string2):
+        # The "featuring"/"feat"/"ft" pattern must not match "ft" embedded
+        # inside an ordinary word (draft, left, gift, craft, ...) -- doing so
+        # would treat everything after "ft" as a low-weight suffix and make
+        # genuinely different strings look almost identical instead of
+        # correctly registering as a large distance.
+        assert string_dist(string1, string2) > 0.3
+
+    @pytest.mark.parametrize(
         "string1, string2, reference",
         [
             ("XXX Band Name", "The Band Name", "Band Name"),
@@ -337,15 +367,15 @@ class TestDataSourceDistance:
             _p("Original", "Original", 0.5, 1.0, True, MATCH, id="match"),
             _p("Original", "Other", 0.5, 1.0, True, MISMATCH, id="mismatch"),
             _p("Other", "Original", 0.5, 1.0, True, MISMATCH, id="mismatch"),
-            _p("Original", "unknown", 0.5, 1.0, True, MISMATCH, id="mismatch-unknown"),  # noqa: E501
-            _p("Original", None, 0.5, 1.0, True, MISMATCH, id="mismatch-no-info"),  # noqa: E501
+            _p("Original", "unknown", 0.5, 1.0, True, MISMATCH, id="mismatch-unknown"),
+            _p("Original", None, 0.5, 1.0, True, MISMATCH, id="mismatch-no-info"),
             _p(None, "Other", 0.5, 1.0, True, MISMATCH, id="mismatch-no-original-multiple-sources"),  # noqa: E501
             _p(None, "Other", 0.5, 1.0, False, MATCH, id="match-no-original-but-single-source"),  # noqa: E501
             _p("unknown", "unknown", 0.5, 1.0, True, MATCH, id="match-unknown"),
-            _p("Original", "Other", 1.0, 1.0, True, 0.25, id="mismatch-max-penalty"),  # noqa: E501
-            _p("Original", "Other", 0.5, 5.0, True, 0.3125, id="mismatch-high-weight"),  # noqa: E501
-            _p("Original", "Other", 0.0, 1.0, True, MATCH, id="match-no-penalty"),  # noqa: E501
-            _p("Original", "Other", 0.5, 0.0, True, MATCH, id="match-no-weight"),  # noqa: E501
+            _p("Original", "Other", 1.0, 1.0, True, 0.25, id="mismatch-max-penalty"),
+            _p("Original", "Other", 0.5, 5.0, True, 0.3125, id="mismatch-high-weight"),
+            _p("Original", "Other", 0.0, 1.0, True, MATCH, id="match-no-penalty"),
+            _p("Original", "Other", 0.5, 0.0, True, MATCH, id="match-no-weight"),
         ],
     )  # fmt: skip
     def test_distance(self, item, info, expected_distance):

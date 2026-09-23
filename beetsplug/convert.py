@@ -1,18 +1,6 @@
-# This file is part of beets.
-# Copyright 2016, Jakob Schnitzer.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Converts tracks or albums to external directory"""
+
+from __future__ import annotations
 
 import logging
 import os
@@ -20,32 +8,53 @@ import shlex
 import subprocess
 import tempfile
 import threading
+from functools import cached_property
 from string import Template
+from typing import TYPE_CHECKING, Literal, NamedTuple, Protocol
 
 import mediafile
 from confuse import ConfigTypeError, Optional
 
-from beets import config, plugins, ui, util
+from beets import plugins, ui, util
+from beets.exceptions import UserError
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
-from beets.util import par_map
+from beets.util import pipeline
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
+from beets.util.pathformats import get_path_formats
 from beetsplug._utils import art
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Album, Library
+    from beets.util.pathformats import PathFormat
+
 _fs_lock = threading.Lock()
-_temp_files = []  # Keep track of temporary transcoded files for deletion.
+# Keep track of temporary transcoded files for deletion.
+_temp_files: list[bytes] = []
+
+
+class ConvertCLIOpts(Protocol):
+    album: bool
+    keep_new: bool
+    yes: bool | None
+
 
 # Some convenient alternate names for formats.
-ALIASES = {
-    "windows media": "wma",
-    "vorbis": "ogg",
-}
+ALIASES = {"windows media": "wma", "vorbis": "ogg"}
 
 LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
 
 
-def replace_ext(path, ext):
+class FormatCommand(NamedTuple):
+    command: bytes
+    ext: bytes
+
+
+def replace_ext(path: bytes, ext: bytes) -> bytes:
     """Return the path with its extension replaced by `ext`.
 
     The new extension must not contain a leading dot.
@@ -54,70 +63,8 @@ def replace_ext(path, ext):
     return os.path.splitext(path)[0] + ext_dot
 
 
-def get_format(fmt=None):
-    """Return the command template and the extension from the config."""
-    if not fmt:
-        fmt = config["convert"]["format"].as_str().lower()
-    fmt = ALIASES.get(fmt, fmt)
-
-    try:
-        format_info = config["convert"]["formats"][fmt].get(dict)
-        command = format_info["command"]
-        extension = format_info.get("extension", fmt)
-    except KeyError:
-        raise ui.UserError(f'convert: format {fmt} needs the "command" field')
-    except ConfigTypeError:
-        command = config["convert"]["formats"][fmt].get(str)
-        extension = fmt
-
-    # Convenience and backwards-compatibility shortcuts.
-    keys = config["convert"].keys()
-    if "command" in keys:
-        command = config["convert"]["command"].as_str()
-    elif "opts" in keys:
-        # Undocumented option for backwards compatibility with < 1.3.1.
-        command = (
-            f"ffmpeg -i $source -y {config['convert']['opts'].as_str()} $dest"
-        )
-    if "extension" in keys:
-        extension = config["convert"]["extension"].as_str()
-
-    return (command.encode("utf-8"), extension.encode("utf-8"))
-
-
-def in_no_convert(item: Item) -> bool:
-    no_convert_query = config["convert"]["no_convert"].as_str()
-
-    if no_convert_query:
-        query, _ = parse_query_string(no_convert_query, Item)
-        return query.match(item)
-    else:
-        return False
-
-
-def should_transcode(item, fmt, force: bool = False):
-    """Determine whether the item should be transcoded as part of
-    conversion (i.e., its bitrate is high or it has the wrong format).
-
-    If ``force`` is True, safety checks like ``no_convert`` and
-    ``never_convert_lossy_files`` are ignored and the item is always
-    transcoded.
-    """
-    if force:
-        return True
-    if in_no_convert(item) or (
-        config["convert"]["never_convert_lossy_files"].get(bool)
-        and item.format.lower() not in LOSSLESS_FORMATS
-    ):
-        return False
-    maxbr = config["convert"]["max_bitrate"].get(Optional(int))
-    if maxbr is not None and item.bitrate >= 1000 * maxbr:
-        return True
-    return fmt.lower() != item.format.lower()
-
-
 class ConvertPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -165,18 +112,22 @@ class ConvertPlugin(BeetsPlugin):
                 "album_art_maxwidth": 0,
                 "delete_originals": False,
                 "playlist": None,
+                "force": False,
+                "refresh": False,
+                "keep_new": False,
             }
         )
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
 
         self.register_listener("import_task_files", self._cleanup)
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("convert", help="convert to external location")
         cmd.parser.add_option(
             "-p",
             "--pretend",
             action="store_true",
+            default=self.config["pretend"].get(),
             help="show actions but do nothing",
         )
         cmd.parser.add_option(
@@ -184,47 +135,60 @@ class ConvertPlugin(BeetsPlugin):
             "--threads",
             action="store",
             type="int",
+            default=self.config["threads"].get(),
             help=(
                 "change the number of threads, defaults to maximum available"
                 " processors"
             ),
         )
         cmd.parser.add_option(
+            "-r",
+            "--refresh",
+            action="store_true",
+            dest="refresh",
+            default=self.config["refresh"].get(),
+            help="reconvert if original file is newer than converted file",
+        )
+        cmd.parser.add_option(
             "-k",
             "--keep-new",
             action="store_true",
             dest="keep_new",
+            default=self.config["keep_new"].get(),
             help="keep only the converted and move the old files",
         )
         cmd.parser.add_option(
-            "-d", "--dest", action="store", help="set the destination directory"
+            "-d",
+            "--dest",
+            action="store",
+            default=self.config["dest"].get(),
+            help="set the destination directory",
         )
         cmd.parser.add_option(
             "-f",
             "--format",
             action="store",
-            dest="format",
+            default=self.config["format"].get(),
             help="set the target format of the tracks",
         )
         cmd.parser.add_option(
             "-y",
             "--yes",
             action="store_true",
-            dest="yes",
             help="do not ask for confirmation",
         )
         cmd.parser.add_option(
             "-l",
             "--link",
             action="store_true",
-            dest="link",
+            default=self.config["link"].get(),
             help="symlink files that do not need transcoding.",
         )
         cmd.parser.add_option(
             "-H",
             "--hardlink",
             action="store_true",
-            dest="hardlink",
+            default=self.config["hardlink"].get(),
             help=(
                 "hardlink files that do not need transcoding. Overrides --link."
             ),
@@ -233,20 +197,21 @@ class ConvertPlugin(BeetsPlugin):
             "-m",
             "--playlist",
             action="store",
-            help="""create an m3u8 playlist file containing
-                              the converted files. The playlist file will be
-                              saved below the destination directory, thus
-                              PLAYLIST could be a file name or a relative path.
-                              To ensure a working playlist when transferred to
-                              a different computer, or opened from an external
-                              drive, relative paths pointing to media files
-                              will be used.""",
+            default=self.config["playlist"].get(),
+            help=(
+                "create an m3u8 playlist file containing the converted files."
+                " The playlist file will be saved below the destination"
+                " directory, thus PLAYLIST could be a file name or a relative"
+                " path. To ensure a working playlist when transferred to a"
+                " different computer, or opened from an external drive,"
+                " relative paths pointing to media files will be used."
+            ),
         )
         cmd.parser.add_option(
             "-F",
             "--force",
             action="store_true",
-            dest="force",
+            default=self.config["force"].get(),
             help=(
                 "force transcoding. Ignores no_convert, "
                 "never_convert_lossy_files, and max_bitrate"
@@ -256,73 +221,124 @@ class ConvertPlugin(BeetsPlugin):
         cmd.func = self.convert_func
         return [cmd]
 
-    def auto_convert(self, config, task):
+    @cached_property
+    def dest(self) -> bytes:
+        dest = self.config["dest"].get()
+        if not dest:
+            raise UserError("no convert destination set")
+        return util.bytestring_path(dest)
+
+    @cached_property
+    def threads(self) -> int:
+        return self.config["threads"].get(int)
+
+    @cached_property
+    def path_formats(self) -> list[PathFormat]:
+        return get_path_formats(self.config["paths"])
+
+    @cached_property
+    def fmt(self) -> str:
+        return self.config["format"].as_str().lower()
+
+    @cached_property
+    def playlist(self) -> bytes | None:
+        if (playlist := self.config["playlist"].get()) is not None:
+            return os.path.join(self.dest, util.bytestring_path(playlist))
+
+        return None
+
+    @cached_property
+    def pretend(self) -> bool:
+        return self.config["pretend"].get(bool)
+
+    @cached_property
+    def force(self) -> bool:
+        return self.config["force"].get(bool)
+
+    @cached_property
+    def refresh(self) -> bool:
+        return self.config["refresh"].get(bool)
+
+    @cached_property
+    def hardlink(self) -> bool:
+        return self.config["hardlink"].get(bool)
+
+    @cached_property
+    def link(self) -> bool:
+        return not self.hardlink and self.config["link"].get(bool)
+
+    @cached_property
+    def command(self) -> FormatCommand:
+        """Return the command template and the extension from the config."""
+        fmt = ALIASES.get(self.fmt, self.fmt)
+
+        try:
+            format_info = self.config["formats"][fmt].get(dict)
+            command = format_info["command"]
+            extension = format_info.get("extension", fmt)
+        except KeyError:
+            raise UserError(f'convert: format {fmt} needs the "command" field')
+        except ConfigTypeError:
+            command = self.config["formats"][fmt].get(str)
+            extension = fmt
+
+        # Convenience and backwards-compatibility shortcuts.
+        keys = self.config.keys()
+        if "command" in keys:
+            command = self.config["command"].as_str()
+        elif "opts" in keys:
+            # Undocumented option for backwards compatibility with < 1.3.1.
+            command = (
+                f"ffmpeg -i $source -y {self.config['opts'].as_str()} $dest"
+            )
+        if "extension" in keys:
+            extension = self.config["extension"].as_str()
+
+        return FormatCommand(command.encode("utf-8"), extension.encode("utf-8"))
+
+    def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
         if self.config["auto"]:
-            par_map(
-                lambda item: self.convert_on_import(config.lib, item),
+            util.par_map(
+                lambda item: self.convert_on_import(session.lib, item),
                 task.imported_items(),
             )
 
-    def auto_convert_keep(self, config, task):
+    def auto_convert_keep(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         if self.config["auto_keep"]:
-            empty_opts = self.commands()[0].parser.get_default_values()
-            (
-                dest,
-                threads,
-                path_formats,
-                fmt,
-                pretend,
-                hardlink,
-                link,
-                playlist,
-                force,
-            ) = self._get_opts_and_config(empty_opts)
-
             items = task.imported_items()
-            self._parallel_convert(
-                dest,
-                False,
-                path_formats,
-                fmt,
-                pretend,
-                link,
-                hardlink,
-                threads,
-                items,
-                force,
-            )
+
+            # Filter items based on should_transcode function
+            items = [item for item in items if self.should_transcode(item)]
+
+            self._parallel_convert(items, keep_new=False)
 
     # Utilities converted from functions to methods on logging overhaul
 
-    def encode(self, command, source, dest, pretend=False):
-        """Encode `source` to `dest` using command template `command`.
+    def encode(
+        self, command_bytes: bytes, source_bytes: bytes, dest_bytes: bytes
+    ) -> None:
+        """Encode source to destination using given command template.
 
         Raises `subprocess.CalledProcessError` if the command exited with a
         non-zero status code.
         """
-        # The paths and arguments must be bytes.
-        assert isinstance(command, bytes)
-        assert isinstance(source, bytes)
-        assert isinstance(dest, bytes)
-
-        quiet = self.config["quiet"].get(bool)
+        pretend, quiet = self.pretend, self.config["quiet"].get(bool)
 
         if not quiet and not pretend:
-            self._log.info("Encoding {}", util.displayable_path(source))
+            self._log.info("Encoding {}", util.displayable_path(source_bytes))
 
-        command = os.fsdecode(command)
-        source = os.fsdecode(source)
-        dest = os.fsdecode(dest)
+        command = os.fsdecode(command_bytes)
+        source = os.fsdecode(source_bytes)
+        dest = os.fsdecode(dest_bytes)
 
         # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
         encode_cmd = []
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute(
-                {
-                    "source": source,
-                    "dest": dest,
-                }
+                {"source": source, "dest": dest}
             )
             encode_cmd.append(os.fsdecode(args[i]))
 
@@ -347,7 +363,7 @@ class ConvertPlugin(BeetsPlugin):
             util.prune_dirs(os.path.dirname(dest))
             raise
         except OSError as exc:
-            raise ui.UserError(
+            raise UserError(
                 f"convert: couldn't invoke {' '.join(args)!r}: {exc}"
             )
 
@@ -356,165 +372,231 @@ class ConvertPlugin(BeetsPlugin):
                 "Finished encoding {}", util.displayable_path(source)
             )
 
-    def convert_item(
-        self,
-        dest_dir,
-        keep_new,
-        path_formats,
-        fmt,
-        pretend=False,
-        link=False,
-        hardlink=False,
-        force=False,
-    ):
-        """A pipeline thread that converts `Item` objects from a
-        library.
+    def in_no_convert(self, item: Item) -> bool:
+        no_convert_query = self.config["no_convert"].as_str()
+
+        if no_convert_query:
+            query, _ = parse_query_string(no_convert_query, Item)
+            return query.match(item)
+        return False
+
+    def should_transcode(self, item: Item) -> bool:
+        """Determine whether the item should be transcoded as part of
+        conversion (i.e., its bitrate is high or it has the wrong format).
+
+        If ``force`` is True, safety checks like ``no_convert`` and
+        ``never_convert_lossy_files`` are ignored and the item is always
+        transcoded.
         """
-        command, ext = get_format(fmt)
-        item, original, converted = None, None, None
-        while True:
-            item = yield (item, original, converted)
-            dest = item.destination(basedir=dest_dir, path_formats=path_formats)
+        if self.force:
+            return True
+        if self.in_no_convert(item) or (
+            self.config["never_convert_lossy_files"].get(bool)
+            and item.format.lower() not in LOSSLESS_FORMATS
+        ):
+            return False
+        maxbr = self.config["max_bitrate"].get(Optional(int))
+        if maxbr is not None and item.bitrate >= 1000 * maxbr:
+            return True
+        return self.fmt != item.format.lower()
 
-            # Ensure that desired item is readable before processing it. Needed
-            # to avoid any side-effect of the conversion (linking, keep_new,
-            # refresh) if we already know that it will fail.
-            try:
-                mediafile.MediaFile(util.syspath(item.path))
-            except mediafile.UnreadableFileError as exc:
-                self._log.error("Could not open file to convert: {}", exc)
-                continue
+    def get_item_destination(self, item: Item) -> bytes:
+        extension = (
+            os.fsdecode(self.command.ext)
+            if (
+                self.should_transcode(item)
+                and not self.config["keep_new"].get(bool)
+            )
+            else None
+        )
+        return item.destination(
+            basedir=self.dest,
+            path_formats=self.path_formats,
+            extension=extension,
+        )
 
-            # When keeping the new file in the library, we first move the
-            # current (pristine) file to the destination. We'll then copy it
-            # back to its old path or transcode it to a new path.
-            if keep_new:
-                original = dest
-                converted = item.path
-                if should_transcode(item, fmt, force):
-                    converted = replace_ext(converted, ext)
-            else:
-                original = item.path
-                if should_transcode(item, fmt, force):
-                    dest = replace_ext(dest, ext)
-                converted = dest
+    @pipeline.mutator_stage
+    def convert_item(self, keep_new: bool, item: Item) -> None:
+        """Convert an Item from the library."""
+        pretend, link, hardlink, refresh = (
+            self.pretend,
+            self.link,
+            self.hardlink,
+            self.refresh,
+        )
+        command, ext = self.command
 
-            # Ensure that only one thread tries to create directories at a
-            # time. (The existence check is not atomic with the directory
-            # creation inside this function.)
-            if not pretend:
-                with _fs_lock:
-                    util.mkdirall(dest)
+        dest = self.get_item_destination(item)
 
-            if os.path.exists(util.syspath(dest)):
+        # Ensure that desired item is readable before processing it. Needed
+        # to avoid any side-effect of the conversion (linking, keep_new,
+        # refresh) if we already know that it will fail.
+        try:
+            mediafile.MediaFile(util.syspath(item.path))
+        except mediafile.UnreadableFileError as exc:
+            self._log.error("Could not open file to convert: {}", exc)
+            return
+
+        # When keeping the new file in the library, we first move the
+        # current (pristine) file to the destination. We'll then copy it
+        # back to its old path or transcode it to a new path.
+        if keep_new:
+            original = dest
+            converted = item.path
+            if self.should_transcode(item):
+                converted = replace_ext(converted, ext)
+        else:
+            original = item.path
+            if self.should_transcode(item):
+                dest = replace_ext(dest, ext)
+            converted = dest
+
+        # If the destination file exists, we have to choose between:
+        # 1) Skipping current conversion
+        # 2) Removing the target file to start a fresh conversion
+        if os.path.exists(util.syspath(dest)):
+            # Test to skip the conversion, whether because:
+            # 1) `refresh` is false (default)
+            # 2) `keep_new` is true (incompatible with `refresh`)
+            # 3) The original file is older than the destination file
+            if (
+                not refresh
+                or keep_new
+                or os.path.getmtime(item.path) <= os.path.getmtime(dest)
+            ):
                 self._log.info(
-                    "Skipping {.filepath} (target file exists)", item
+                    "Skipping {.filepath} (destination file exists)", item
                 )
-                continue
-
-            if keep_new:
-                if pretend:
-                    self._log.info(
-                        "mv {.filepath} {}",
-                        item,
-                        util.displayable_path(original),
-                    )
-                else:
-                    self._log.info(
-                        "Moving to {}", util.displayable_path(original)
-                    )
-                    util.move(item.path, original)
-
-            if should_transcode(item, fmt, force):
-                linked = False
-                try:
-                    self.encode(command, original, converted, pretend)
-                except subprocess.CalledProcessError:
-                    continue
-            else:
-                linked = link or hardlink
-                if pretend:
-                    msg = "ln" if hardlink else ("ln -s" if link else "cp")
-
-                    self._log.info(
-                        "{} {} {}",
-                        msg,
-                        util.displayable_path(original),
-                        util.displayable_path(converted),
-                    )
-                else:
-                    # No transcoding necessary.
-                    msg = (
-                        "Hardlinking"
-                        if hardlink
-                        else ("Linking" if link else "Copying")
-                    )
-
-                    self._log.info("{} {.filepath}", msg, item)
-
-                    if hardlink:
-                        util.hardlink(original, converted)
-                    elif link:
-                        util.link(original, converted)
-                    else:
-                        util.copy(original, converted)
-
-            if pretend:
-                continue
-
-            id3v23 = self.config["id3v23"].as_choice([True, False, "inherit"])
-            if id3v23 == "inherit":
-                id3v23 = None
-
-            # Write tags from the database to the file if requested
-            if self.config["write_metadata"].get(bool):
-                item.try_write(path=converted, id3v23=id3v23)
-
-            if keep_new:
-                # If we're keeping the transcoded file, read it again (after
-                # writing) to get new bitrate, duration, etc.
-                item.path = converted
-                item.read()
-                item.store()  # Store new path and audio data.
-
-            if self.config["embed"] and not linked:
-                album = item._cached_album
-                if album and album.artpath:
-                    maxwidth = self._get_art_resize(album.artpath)
+                if keep_new and refresh:
                     self._log.debug(
-                        "embedding album art from {.art_filepath}", album
+                        "Skipping refresh: not supported with keep_new"
                     )
-                    art.embed_item(
-                        self._log,
-                        item,
-                        album.artpath,
-                        maxwidth,
-                        itempath=converted,
-                        id3v23=id3v23,
-                    )
+                return
+            # If reached, `refresh` is true, `keep_new` is false, and original file
+            # is newer than the destination file: we should consider deleting the
+            # existing destination files. If we pretend to convert files, only inform
+            # user about what would be removed without removing anything.
+            if pretend:
+                self._log.info(
+                    "Pretend to remove {0} (original file modified)",
+                    util.displayable_path(dest),
+                )
+            # Otherwise, actually remove the destination file
+            else:
+                self._log.info(
+                    "Removing {0} (original file modified)",
+                    util.displayable_path(dest),
+                )
+                util.remove(dest)
 
-            if keep_new:
-                plugins.send(
-                    "after_convert", item=item, dest=dest, keepnew=True
+        # Ensure that only one thread tries to create directories at a
+        # time. (The existence check is not atomic with the directory
+        # creation inside this function.)
+        if not pretend:
+            with _fs_lock:
+                util.mkdirall(dest)
+
+        if keep_new:
+            if pretend:
+                self._log.info(
+                    "Pretend to move {.filepath} to {}",
+                    item,
+                    util.displayable_path(original),
                 )
             else:
-                plugins.send(
-                    "after_convert", item=item, dest=converted, keepnew=False
+                self._log.info("Moving to {}", util.displayable_path(original))
+                util.move(item.path, original)
+
+        if self.should_transcode(item):
+            linked = False
+            try:
+                self.encode(command, original, converted)
+            except subprocess.CalledProcessError:
+                return
+        else:
+            linked = link or hardlink
+            if pretend:
+                msg = "ln" if hardlink else ("ln -s" if link else "cp")
+
+                self._log.info(
+                    "{} {} {}",
+                    msg,
+                    util.displayable_path(original),
+                    util.displayable_path(converted),
+                )
+            else:
+                # No transcoding necessary.
+                msg = (
+                    "Hardlinking"
+                    if hardlink
+                    else ("Linking" if link else "Copying")
                 )
 
-    def copy_album_art(
-        self,
-        album,
-        dest_dir,
-        path_formats,
-        pretend=False,
-        link=False,
-        hardlink=False,
-    ):
+                self._log.info("{} {.filepath}", msg, item)
+
+                if hardlink:
+                    util.hardlink(original, converted)
+                elif link:
+                    util.link(original, converted)
+                else:
+                    util.copy(original, converted)
+
+        if pretend:
+            return
+
+        id3v23: bool | Literal["inherit"] | None = self.config[
+            "id3v23"
+        ].as_choice([True, False, "inherit"])
+        if id3v23 == "inherit":
+            id3v23 = None
+
+        # Write tags from the database to the file if requested
+        if self.config["write_metadata"].get(bool):
+            item.try_write(path=converted, id3v23=id3v23)
+
+        if keep_new:
+            # If we're keeping the transcoded file, read it again (after
+            # writing) to get new bitrate, duration, etc.
+            item.path = converted
+            item.read()
+            item.store()  # Store new path and audio data.
+
+        if self.config["embed"] and not linked:
+            album = item._cached_album
+            if album and album.artpath:
+                maxwidth = self._get_art_resize(album.artpath)
+                self._log.debug(
+                    "embedding album art from {.art_filepath}", album
+                )
+                art.embed_item(
+                    self._log,
+                    item,
+                    album.artpath,
+                    maxwidth,
+                    itempath=converted,
+                    id3v23=id3v23,
+                )
+
+        if keep_new:
+            plugins.send("after_convert", item=item, dest=dest, keepnew=True)
+        else:
+            plugins.send(
+                "after_convert", item=item, dest=converted, keepnew=False
+            )
+
+    def copy_album_art(self, album: Album) -> None:
         """Copies or converts the associated cover art of the album. Album must
         have at least one track.
         """
         if not album or not album.artpath:
+            return
+
+        # The stored art path may point to a missing file (e.g. the cover
+        # lives in the album's root directory rather than a per-disc one).
+        if not os.path.isfile(util.syspath(album.artpath)):
+            self._log.info(
+                "Skipping {.art_filepath} (source file not found)", album
+            )
             return
 
         album_item = album.items().get()
@@ -524,9 +606,7 @@ class ConvertPlugin(BeetsPlugin):
 
         # Get the destination of the first item (track) of the album, we use
         # this function to format the path accordingly to path_formats.
-        dest = album_item.destination(
-            basedir=dest_dir, path_formats=path_formats
-        )
+        dest = self.get_item_destination(album_item)
 
         # Remove item from the path.
         dest = os.path.join(*util.components(dest)[:-1])
@@ -535,12 +615,12 @@ class ConvertPlugin(BeetsPlugin):
         if album.artpath == dest:
             return
 
-        if not pretend:
+        if not (pretend := self.pretend):
             util.mkdirall(dest)
 
         if os.path.exists(util.syspath(dest)):
             self._log.info(
-                "Skipping {.art_filepath} (target file exists)", album
+                "Skipping {.art_filepath} (destination file exists)", album
             )
             return
 
@@ -557,6 +637,7 @@ class ConvertPlugin(BeetsPlugin):
             if not pretend:
                 ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
+            link, hardlink = self.link, self.hardlink
             if pretend:
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
@@ -586,18 +667,11 @@ class ConvertPlugin(BeetsPlugin):
                 else:
                     util.copy(album.artpath, dest)
 
-    def convert_func(self, lib, opts, args):
-        (
-            dest,
-            threads,
-            path_formats,
-            fmt,
-            pretend,
-            hardlink,
-            link,
-            playlist,
-            force,
-        ) = self._get_opts_and_config(opts)
+    def convert_func(
+        self, lib: Library, opts: ConvertCLIOpts, args: list[str]
+    ) -> None:
+        self.config.set(vars(opts))
+        pretend = self.pretend
 
         if opts.album:
             albums = lib.albums(args)
@@ -619,56 +693,50 @@ class ConvertPlugin(BeetsPlugin):
 
         if opts.album and self.config["copy_album_art"]:
             for album in albums:
-                self.copy_album_art(
-                    album, dest, path_formats, pretend, link, hardlink
-                )
+                self.copy_album_art(album)
 
-        self._parallel_convert(
-            dest,
-            opts.keep_new,
-            path_formats,
-            fmt,
-            pretend,
-            link,
-            hardlink,
-            threads,
-            items,
-            force,
-        )
-
-        if playlist:
+        # If the user supplied a playlist name, create a playlist for files
+        # copied to the destination.
+        pl_normpath = None
+        items_paths = None
+        if playlist := self.playlist:
             # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
+            items_paths = []
+            for item in items:
+                item_path = self.get_item_destination(item)
+
+                # When keeping new files in the library, destination paths
+                # keep original files and extensions.
+                if not opts.keep_new and self.should_transcode(item):
+                    item_path = replace_ext(item_path, self.command.ext)
+
+                items_paths.append(os.path.relpath(item_path, pl_dir))
+
+        self._parallel_convert(
+            items, keep_new=self.config["keep_new"].get(bool)
+        )
+
+        if playlist:
             self._log.info("Creating playlist file {}", pl_normpath)
-            # Generates a list of paths to media files, ensures the paths are
-            # relative to the playlist's location and translates the unicode
-            # strings we get from item.destination to bytes.
-            items_paths = [
-                os.path.relpath(
-                    item.destination(basedir=dest, path_formats=path_formats),
-                    pl_dir,
-                )
-                for item in items
-            ]
             if not pretend:
                 m3ufile = M3UFile(playlist)
                 m3ufile.set_contents(items_paths)
                 m3ufile.write()
 
-    def convert_on_import(self, lib, item):
+    def convert_on_import(self, _: Library, item: Item) -> None:
         """Transcode a file automatically after it is imported into the
         library.
         """
-        fmt = self.config["format"].as_str().lower()
-        if should_transcode(item, fmt):
-            command, ext = get_format()
+        if self.should_transcode(item):
+            command, ext = self.command
 
             # Create a temporary file for the conversion.
             tmpdir = self.config["tmpdir"].get()
             if tmpdir:
-                tmpdir = os.fsdecode(util.bytestring_path(tmpdir))
-            fd, dest = tempfile.mkstemp(f".{os.fsdecode(ext)}", dir=tmpdir)
+                tmpdir = util.bytestring_path(tmpdir)
+            fd, dest = tempfile.mkstemp(b"." + ext, dir=tmpdir)
             os.close(fd)
             dest = util.bytestring_path(dest)
             _temp_files.append(dest)  # Delete the transcode later.
@@ -695,7 +763,7 @@ class ConvertPlugin(BeetsPlugin):
                 )
                 util.remove(source_path, False)
 
-    def _get_art_resize(self, artpath):
+    def _get_art_resize(self, artpath: bytes) -> int | None:
         """For a given piece of album art, determine whether or not it needs
         to be resized according to the user's settings. If so, returns the
         new size. If not, returns None.
@@ -715,88 +783,16 @@ class ConvertPlugin(BeetsPlugin):
                 )
         return newwidth
 
-    def _cleanup(self, task, session):
+    def _cleanup(self, task: ImportTask, session: ImportSession) -> None:
         for path in task.old_paths:
             if path in _temp_files:
                 if os.path.isfile(util.syspath(path)):
                     util.remove(path)
                 _temp_files.remove(path)
 
-    def _get_opts_and_config(self, opts):
-        """Returns parameters needed for convert function.
-        Get parameters from command line if available,
-        default to config if not available.
-        """
-        dest = opts.dest or self.config["dest"].get()
-        if not dest:
-            raise ui.UserError("no convert destination set")
-        dest = util.bytestring_path(dest)
-
-        threads = opts.threads or self.config["threads"].get(int)
-
-        path_formats = ui.get_path_formats(self.config["paths"] or None)
-
-        fmt = opts.format or self.config["format"].as_str().lower()
-
-        playlist = opts.playlist or self.config["playlist"].get()
-        if playlist is not None:
-            playlist = os.path.join(dest, util.bytestring_path(playlist))
-
-        if opts.pretend is not None:
-            pretend = opts.pretend
-        else:
-            pretend = self.config["pretend"].get(bool)
-
-        if opts.hardlink is not None:
-            hardlink = opts.hardlink
-            link = False
-        elif opts.link is not None:
-            hardlink = False
-            link = opts.link
-        else:
-            hardlink = self.config["hardlink"].get(bool)
-            link = self.config["link"].get(bool)
-        force = getattr(opts, "force", False)
-        return (
-            dest,
-            threads,
-            path_formats,
-            fmt,
-            pretend,
-            hardlink,
-            link,
-            playlist,
-            force,
-        )
-
-    def _parallel_convert(
-        self,
-        dest,
-        keep_new,
-        path_formats,
-        fmt,
-        pretend,
-        link,
-        hardlink,
-        threads,
-        items,
-        force,
-    ):
+    def _parallel_convert(self, items: Iterable[Item], keep_new: bool) -> None:
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """
-        convert = [
-            self.convert_item(
-                dest,
-                keep_new,
-                path_formats,
-                fmt,
-                pretend,
-                link,
-                hardlink,
-                force,
-            )
-            for _ in range(threads)
-        ]
-        pipe = util.pipeline.Pipeline([iter(items), convert])
-        pipe.run_parallel()
+        convert = [self.convert_item(keep_new) for _ in range(self.threads)]
+        pipeline.Pipeline([iter(items), convert]).run_parallel()

@@ -1,34 +1,43 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Adds Chromaprint/Acoustid acoustic fingerprinting support to the
 autotagger. Requires the pyacoustid library.
 """
 
+from __future__ import annotations
+
+import heapq
 import re
 from collections import defaultdict
-from collections.abc import Iterable
 from functools import cached_property, partial
+from typing import TYPE_CHECKING, Any, Protocol
 
 import acoustid
 import confuse
 
 from beets import config, ui, util
-from beets.autotag.distance import Distance
-from beets.autotag.hooks import TrackInfo
-from beets.metadata_plugins import MetadataSourcePlugin
-from beetsplug.musicbrainz import MusicBrainzPlugin
+from beets.autotag import Distance
+from beets.exceptions import UserError
+from beets.metadata_plugins import MetadataSourcePlugin, get_metadata_source
+from beets.util.color import colorize
+
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Iterable, Iterator, Sequence
+
+    from beets.autotag import AlbumInfo, TrackInfo
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
+    from beets.logging import BeetsLogger as Logger
+    from beetsplug.musicbrainz import MusicBrainzPlugin
+
+    from ._typing import JSONDict
+
+
+class ChromaSearchCLIOpts(Protocol):
+    count: int
+    full: bool | None
+    search: str | None
+    write: bool | None
+
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
@@ -42,16 +51,16 @@ MAX_RELEASES = 5
 # candidates. It maps audio file paths to (recording_ids, release_ids)
 # pairs. If a given path is not present in the mapping, then no match
 # was found.
-_matches = {}
+_matches: dict[bytes, tuple[list[str], list[str]]] = {}
 
 # Stores the fingerprint and Acoustid ID for each track. This is stored
 # as metadata for each track for later use but is not relevant for
 # autotagging.
-_fingerprints = {}
-_acoustids = {}
+_fingerprints: dict[bytes, str] = {}
+_acoustids: dict[bytes, str] = {}
 
 
-def prefix(it, count):
+def prefix(it: Iterable[Any], count: int) -> Iterator[Any]:
     """Truncate an iterable to at most `count` items."""
     for i, v in enumerate(it):
         if i >= count:
@@ -59,7 +68,9 @@ def prefix(it, count):
         yield v
 
 
-def releases_key(release, countries, original_year):
+def releases_key(
+    release: JSONDict, countries: Sequence[re.Pattern[str]], original_year: bool
+) -> tuple[int, int, int, int]:
     """Used as a key to sort releases by date then preferred country"""
     date = release.get("date")
     if date and original_year:
@@ -82,19 +93,26 @@ def releases_key(release, countries, original_year):
     return (year, month, day, country_key)
 
 
-def acoustid_match(log, path):
+def acoustid_match(log: Logger, path: bytes) -> None:
     """Gets metadata for a file from Acoustid and populates the
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
     try:
-        duration, fp = acoustid.fingerprint_file(util.syspath(path))
+        # Prefer fpcalc directly to avoid GStreamer fd leaks (#5171).
+        # Fall back to the Chromaprint library for library-only installs.
+        try:
+            duration, fp = acoustid.fingerprint_file(
+                util.syspath(path), force_fpcalc=True
+            )
+        except acoustid.NoBackendError:
+            duration, fp = acoustid.fingerprint_file(util.syspath(path))
     except acoustid.FingerprintGenerationError as exc:
         log.error(
             "fingerprinting of {} failed: {}",
             util.displayable_path(repr(path)),
             exc,
         )
-        return None
+        return
     fp = fp.decode()
     _fingerprints[path] = fp
     try:
@@ -107,23 +125,23 @@ def acoustid_match(log, path):
             util.displayable_path(repr(path)),
             exc,
         )
-        return None
+        return
     log.debug("chroma: fingerprinted {}", util.displayable_path(repr(path)))
 
     # Ensure the response is usable and parse it.
     if res["status"] != "ok" or not res.get("results"):
         log.debug("no match found")
-        return None
+        return
     result = res["results"][0]  # Best match.
     if result["score"] < SCORE_THRESH:
         log.debug("no results above threshold")
-        return None
+        return
     _acoustids[path] = result["id"]
 
     # Get recording and releases from the result
     if not result.get("recordings"):
         log.debug("no recordings found")
-        return None
+        return
     recording_ids = []
     releases = []
     for recording in result["recordings"]:
@@ -137,7 +155,7 @@ def acoustid_match(log, path):
     # 'countries' to then sort preferred countries first.
     country_patterns = config["match"]["preferred"]["countries"].as_str_seq()
     countries = [re.compile(pat, re.I) for pat in country_patterns]
-    original_year = config["match"]["preferred"]["original_year"]
+    original_year = config["match"]["preferred"]["original_year"].get(bool)
     releases.sort(
         key=partial(
             releases_key, countries=countries, original_year=original_year
@@ -154,12 +172,12 @@ def acoustid_match(log, path):
 # Plugin structure and autotagging logic.
 
 
-def _all_releases(items):
+def _all_releases(items: Sequence[Item]) -> Iterator[str]:
     """Given an iterable of Items, determines (according to Acoustid)
     which releases the items have in common. Generates release IDs.
     """
     # Count the number of "hits" for each release.
-    relcounts = defaultdict(int)
+    relcounts = defaultdict[str, int](int)
     for item in items:
         if item.path not in _matches:
             continue
@@ -174,13 +192,9 @@ def _all_releases(items):
 
 
 class AcoustidPlugin(MetadataSourcePlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self.config.add(
-            {
-                "auto": True,
-            }
-        )
+        self.config.add({"auto": True})
         config["acoustid"]["apikey"].redact = True
 
         if self.config["auto"]:
@@ -188,13 +202,32 @@ class AcoustidPlugin(MetadataSourcePlugin):
         self.register_listener("import_task_apply", apply_acoustid_metadata)
 
     @cached_property
-    def mb(self) -> MusicBrainzPlugin:
-        return MusicBrainzPlugin()
+    def mb(self) -> MusicBrainzPlugin | None:
+        """The loaded MusicBrainz plugin, or ``None``.
 
-    def fingerprint_task(self, task, session):
+        Acoustid lookups return MusicBrainz IDs, so chroma needs the
+        ``musicbrainz`` plugin to resolve them into album/track
+        candidates. When the user has not enabled ``musicbrainz``,
+        chroma must not produce any candidates.
+
+        Uses the plugin registry so that any plugin that swaps the
+        musicbrainz instance at runtime (e.g. :doc:`plugins/mbpseudo`)
+        is respected.
+        """
+        plugin = get_metadata_source("musicbrainz")
+        if plugin is None:
+            self._log.debug(
+                "musicbrainz plugin not enabled; "
+                "acoustid matches will not produce candidates"
+            )
+        return plugin  # type: ignore[return-value]
+
+    def fingerprint_task(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
         return fingerprint_task(self._log, task, session)
 
-    def track_distance(self, item, info):
+    def track_distance(self, item: Item, info: TrackInfo) -> Distance:
         dist = Distance()
         if item.path not in _matches or not info.track_id:
             # Match failed or no track ID.
@@ -204,18 +237,28 @@ class AcoustidPlugin(MetadataSourcePlugin):
         dist.add_expr("track_id", info.track_id not in recording_ids)
         return dist
 
-    def candidates(self, items, artist, album, va_likely):
-        albums = []
-        for relid in prefix(_all_releases(items), MAX_RELEASES):
-            album = self.mb.album_for_id(relid)
-            if album:
-                albums.append(album)
+    def candidates(
+        self, items: Sequence[Item], artist: str, album: str, va_likely: bool
+    ) -> list[AlbumInfo]:
+        if self.mb is None:
+            return []
+
+        albums = [
+            a
+            for relid in prefix(_all_releases(items), MAX_RELEASES)
+            if (a := self.mb.album_for_id(relid))
+        ]
 
         self._log.debug("acoustid album candidates: {}", len(albums))
         return albums
 
-    def item_candidates(self, item, artist, title) -> Iterable[TrackInfo]:
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterable[TrackInfo]:
         if item.path not in _matches:
+            return []
+
+        if self.mb is None:
             return []
 
         recording_ids, _ = _matches[item.path]
@@ -227,24 +270,26 @@ class AcoustidPlugin(MetadataSourcePlugin):
         self._log.debug("acoustid item candidates: {}", len(tracks))
         return tracks
 
-    def album_for_id(self, *args, **kwargs):
+    def album_for_id(self, *args, **kwargs) -> None:
         # Lookup by fingerprint ID does not make too much sense.
         return None
 
-    def track_for_id(self, *args, **kwargs):
+    def track_for_id(self, *args, **kwargs) -> None:
         # Lookup by fingerprint ID does not make too much sense.
         return None
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         submit_cmd = ui.Subcommand(
             "submit", help="submit Acoustid fingerprints"
         )
 
-        def submit_cmd_func(lib, opts, args):
+        def submit_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             try:
                 apikey = config["acoustid"]["apikey"].as_str()
             except confuse.NotFoundError:
-                raise ui.UserError("no Acoustid user API key provided")
+                raise UserError("no Acoustid user API key provided")
             submit_items(self._log, apikey, lib.items(args))
 
         submit_cmd.func = submit_cmd_func
@@ -253,28 +298,109 @@ class AcoustidPlugin(MetadataSourcePlugin):
             "fingerprint", help="generate fingerprints for items without them"
         )
 
-        def fingerprint_cmd_func(lib, opts, args):
+        def fingerprint_cmd_func(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             for item in lib.items(args):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
         fingerprint_cmd.func = fingerprint_cmd_func
 
-        return [submit_cmd, fingerprint_cmd]
+        return [submit_cmd, fingerprint_cmd, self.chromasearch_cmd()]
+
+    def chromasearch_cmd(self) -> ui.Subcommand:
+        cmd = ui.Subcommand(
+            "chromasearch", help="search local database by chroma fingerprint"
+        )
+        cmd.parser.add_path_option()
+        cmd.parser.add_format_option()
+        cmd.parser.add_option(
+            "-s",
+            "--search",
+            dest="search",
+            action="store",
+            help="Fingerprint to search for (from the output of fpcalc -plain)",
+        )
+        cmd.parser.add_option(
+            "-c",
+            "--count",
+            dest="count",
+            action="store",
+            default=5,
+            type=int,
+            help="Number of items in result",
+        )
+        cmd.parser.add_option(
+            "--full",
+            dest="full",
+            action="store_true",
+            help="Don't stop searching once we found an exact match",
+        )
+        cmd.parser.add_option(
+            "-w",
+            "--write",
+            dest="write",
+            action="store_true",
+            help="Write computed fingerprints to files",
+        )
+
+        def search_cmd_func(
+            lib: Library, opts: ChromaSearchCLIOpts, args: list[str]
+        ) -> None:
+            if not opts.search:
+                raise UserError("no --search provided")
+            if opts.count <= 0:
+                raise UserError("--count must be > 0")
+
+            target = (0, opts.search.encode("utf-8"))
+            top = TopN(opts.count)
+
+            for item in lib.items(args):
+                fp = fingerprint_item(
+                    self._log,
+                    item,
+                    write=ui.should_write(opts.write),
+                    quiet=True,
+                )
+                if fp is None:
+                    self._log.warning(f"{item}: could not compute fingerprint")
+                    continue
+
+                score = acoustid.compare_fingerprints(
+                    target, (0, fp.encode("utf-8"))
+                )
+
+                if score == 1 and not opts.full:
+                    ui.print_(
+                        f"{colorize('text_success', 'Found exact match')}: {item}"
+                    )
+                    return
+
+                if score > 0:
+                    top.add(ScoredItem(item, score))
+
+            for scored_item in top:
+                ui.print_(str(scored_item))
+
+        cmd.func = search_cmd_func
+
+        return cmd
 
 
 # Hooks into import process.
 
 
-def fingerprint_task(log, task, session):
+def fingerprint_task(
+    log: Logger, task: ImportTask, session: ImportSession
+) -> None:
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    items = task.items if task.is_album else [task.item]
-    for item in items:
+    for item in task.items:
         acoustid_match(log, item.path)
 
 
-def apply_acoustid_metadata(task, session):
+def apply_acoustid_metadata(task: ImportTask, session: ImportSession) -> None:
     """Apply Acoustid metadata (fingerprint and ID) to the task's items."""
     for item in task.imported_items():
         if item.path in _fingerprints:
@@ -286,11 +412,14 @@ def apply_acoustid_metadata(task, session):
 # UI commands.
 
 
-def submit_items(log, userkey, items, chunksize=64):
+def submit_items(
+    log: Logger, userkey: str, items: Sequence[Item], chunksize: int = 64
+) -> None:
     """Submit fingerprints for the items to the Acoustid server."""
-    data = []  # The running list of dictionaries to submit.
+    # The running list of dictionaries to submit.
+    data: list[JSONDict] = []
 
-    def submit_chunk():
+    def submit_chunk() -> None:
         """Submit the current accumulated fingerprint data."""
         log.info("submitting {} fingerprints", len(data))
         try:
@@ -303,10 +432,7 @@ def submit_items(log, userkey, items, chunksize=64):
         fp = fingerprint_item(log, item, write=ui.should_write())
 
         # Construct a submission dictionary for this item.
-        item_data = {
-            "duration": int(item.length),
-            "fingerprint": fp,
-        }
+        item_data = {"duration": int(item.length), "fingerprint": fp}
         if item.mb_trackid:
             item_data["mbid"] = item.mb_trackid
             log.debug("submitting MBID")
@@ -334,7 +460,9 @@ def submit_items(log, userkey, items, chunksize=64):
         submit_chunk()
 
 
-def fingerprint_item(log, item, write=False):
+def fingerprint_item(
+    log: Logger, item: Item, write: bool = False, quiet: bool = False
+) -> str | None:
     """Get the fingerprint for an Item. If the item already has a
     fingerprint, it is not regenerated. If fingerprint generation fails,
     return None. If the items are associated with a library, they are
@@ -345,21 +473,71 @@ def fingerprint_item(log, item, write=False):
     if not item.length:
         log.info("{.filepath}: no duration available", item)
     elif item.acoustid_fingerprint:
-        if write:
-            log.info("{.filepath}: fingerprint exists, skipping", item)
-        else:
-            log.info("{.filepath}: using existing fingerprint", item)
+        if not quiet:
+            if write:
+                log.info("{.filepath}: fingerprint exists, skipping", item)
+            else:
+                log.info("{.filepath}: using existing fingerprint", item)
         return item.acoustid_fingerprint
     else:
         log.info("{.filepath}: fingerprinting", item)
         try:
-            _, fp = acoustid.fingerprint_file(util.syspath(item.path))
-            item.acoustid_fingerprint = fp.decode()
-            if write:
-                log.info("{.filepath}: writing fingerprint", item)
-                item.try_write()
-            if item._db:
-                item.store()
-            return item.acoustid_fingerprint
+            try:
+                _, fp = acoustid.fingerprint_file(
+                    util.syspath(item.path), force_fpcalc=True
+                )
+            except acoustid.NoBackendError:
+                _, fp = acoustid.fingerprint_file(util.syspath(item.path))
         except acoustid.FingerprintGenerationError as exc:
             log.info("fingerprint generation failed: {}", exc)
+            return None
+        item.acoustid_fingerprint = fp.decode()
+        if write:
+            log.info("{.filepath}: writing fingerprint", item)
+            item.try_write()
+        if item._db:
+            item.store()
+        return item.acoustid_fingerprint
+    return None
+
+
+# Classes for search.
+
+
+class ScoredItem:
+    def __init__(self, item: Item, score: float) -> None:
+        self.item = item
+        self.score = score
+
+    def __lt__(self, other: object) -> bool:
+        return type(self) is type(other) and self.score < other.score
+
+    def __gt__(self, other: object) -> bool:
+        return type(self) is type(other) and self.score > other.score
+
+    def __str__(self) -> str:
+        percent = f"{round(self.score * 100, 2)}%".rjust(6)
+        if self.score >= 0.95:
+            percent = colorize("text_success", percent)
+        elif self.score >= 0.85:
+            percent = colorize("text_warning", percent)
+        else:
+            percent = colorize("text_error", percent)
+
+        return f"[{percent}] {self.item}"
+
+
+class TopN:
+    def __init__(self, n: int) -> None:
+        self.n = n
+        self.heap: list[ScoredItem] = []
+
+    def add(self, value: ScoredItem) -> None:
+        if len(self.heap) < self.n:
+            heapq.heappush(self.heap, value)
+        else:
+            if value > self.heap[0]:
+                heapq.heapreplace(self.heap, value)
+
+    def __iter__(self) -> Iterator[ScoredItem]:
+        return iter(sorted(self.heap, reverse=True))

@@ -23,8 +23,9 @@ class LyricsPage(NamedTuple):
     lyrics: str
     artist: str = "The Beatles"
     track_title: str = "Lady Madonna"
+    language: str = "EN"
     url_title: str | None = None  # only relevant to the Google backend
-    marks: list[str] = []  # markers for pytest.param
+    marks: list[str] = []  # markers for pytest.param  # noqa: RUF012
 
     def __str__(self) -> str:
         """Return name of this test case."""
@@ -40,11 +41,18 @@ class LyricsPage(NamedTuple):
 
     @property
     def source(self) -> str:
-        return self.root_url.replace("www.", "").split(".")[0]
+        return (
+            self.root_url.replace("www.", "").replace("api.", "").split(".")[0]
+        )
 
     @property
     def backend(self) -> str:
-        if (source := self.source) in {"genius", "tekstowo", "lrclib"}:
+        if (source := self.source) in {
+            "genius",
+            "tekstowo",
+            "lrclib",
+            "lrcmux",
+        }:
             return source
         return "google"
 
@@ -127,21 +135,20 @@ lyrics_pages = [
         """,
         artist="Atlanta",
         track_title="Mergaitės Nori Mylėt",
+        language="LT",
         url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",
         marks=[xfail_on_ci("Expired SSL certificate")],
     ),
     LyricsPage.make(
         "https://genius.com/The-beatles-lady-madonna-lyrics",
         """
-        [Intro: Instrumental]
-
         [Verse 1: Paul McCartney]
         Lady Madonna, children at your feet
         Wonder how you manage to make ends meet
         Who finds the money when you pay the rent?
         Did you think that money was heaven sent?
 
-        [Bridge: Paul McCartney]
+        [Bridge: Paul McCartney, Paul McCartney, John Lennon & George Harrison]
         Friday night arrives without a suitcase
         Sunday morning creeping like a nun
         Monday's child has learned to tie his bootlace
@@ -150,27 +157,28 @@ lyrics_pages = [
         [Verse 2: Paul McCartney]
         Lady Madonna, baby at your breast
         Wonders how you manage to feed the rest
-
-        [Bridge: Paul McCartney, John Lennon & George Harrison]
         [Tenor Saxophone Solo: Ronnie Scott]
+
+        [Bridge: John Lennon & George Harrison, Paul McCartney, John Lennon & George Harrison]
+        Pa-pa-pa-pa, pa-pa-pa-pa-pa
+        Pa-pa-pa-pa-pa, pa-pa-pa, pa-pa, pa-pa
+        Pa-pa-pa-pa, pa-pa-pa-pa-pa
         See how they run
 
         [Verse 3: Paul McCartney]
         Lady Madonna, lying on the bed
         Listen to the music playing in your head
 
-        [Bridge: Paul McCartney]
-        Tuesday afternoon is never ending
-        Wednesday morning papers didn't come
-        Thursday night your stockings needed mending
+        [Bridge: Paul McCartney, John Lennon & George Harrison, Paul McCartney, John Lennon & George Harrison]
+        Tuesday afternoon is never ending (Pa-pa-pa-pa, pa-pa-pa-pa-pa)
+        Wednesday morning, papers didn't come (Pa-pa-pa-pa-pa, pa-pa-pa, pa-pa, pa-pa)
+        Thursday night, your stockings needed mending (Pa-pa-pa-pa, pa-pa-pa-pa-pa)
         See how they run
 
         [Verse 4: Paul McCartney]
         Lady Madonna, children at your feet
         Wonder how you manage to make ends meet
-
-        [Outro: Instrumental]
-        """,
+        """,  # noqa: E501
         marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
     ),
     LyricsPage.make(
@@ -222,6 +230,7 @@ lyrics_pages = [
         Je me demande comment vous vous débrouillez pour joindre les deux bouts
         """,
         url_title="Paroles et traduction The Beatles : Lady Madonna - paroles de chanson",  # noqa: E501
+        language="FR",
     ),
     LyricsPage.make(
         # note that this URL needs to be followed with a slash, otherwise it
@@ -269,7 +278,7 @@ lyrics_pages = [
         url_title="Lady Madonna - The Beatles - LETRAS.MUS.BR",
     ),
     LyricsPage.make(
-        "https://lrclib.net/api/get/14038",
+        "https://lrclib.net/api/get/23863037",
         """
         [00:08.35] Lady Madonna, children at your feet
         [00:12.85] Wonder how you manage to make ends meet
@@ -296,6 +305,36 @@ lyrics_pages = [
         [01:53.73] Lady Madonna, children at your feet
         [01:58.65] Wonder how you manage to make ends meet
         [02:06.04]
+        """,
+    ),
+    LyricsPage.make(
+        "https://api.lrcmux.dev/get?artist=The+Beatles&title=Lady+Madonna&duration=186&format=lrc&level=line&sources=ytmusic",
+        """
+        [00:00.00]
+        [00:08.71] Lady Madonna, children at your feet
+        [00:13.08] Wonder how you manage to make ends meet
+        [00:17.43] Who finds the money when you pay the rent?
+        [00:21.92] Did you think that money was Heaven-sent?
+        [00:26.21] Friday night arrives without a suitcase
+        [00:30.54] Sunday morning creeping like a nun
+        [00:35.07] Monday's child has learned to tie his bootlace
+        [00:39.37] See how they run
+        [00:43.80] Lady Madonna, baby at your breast
+        [00:48.23] Wonders how you manage to feed the rest
+        [00:55.32]
+        [01:01.30] Pa-pa-pa-pa, pa-pa-pa-pa-pa
+        [01:05.68] Pa-pa-pa-pa, pa-pa-pa-pa-pa-pa-pa
+        [01:09.86] Pa-pa-pa-pa, pa-pa-pa-pa-pa
+        [01:14.40] See how they run
+        [01:18.81] Lady Madonna lying on the bed
+        [01:23.25] Listen to the music playing in your head
+        [01:30.21]
+        [01:36.40] Tuesday afternoon is never ending
+        [01:40.78] Wednesday morning papers didn't come
+        [01:45.06] Thursday night you stocking needed mending
+        [01:49.48] See how they run
+        [01:53.90] Lady Madonna, children at your feet
+        [01:58.42] Wonder how you manage to make ends meet
         """,
     ),
     LyricsPage.make(
@@ -424,6 +463,16 @@ lyrics_pages = [
     LyricsPage.make(
         "https://www.musica.com/letras.asp?letra=59862",
         """
+        Lady Madonna, children at your feet
+        Wonder how you manage to make ends meet
+        Who finds the money when you pay the rent?
+        Did you think that money was heaven sent?
+
+        Friday night arrives without a suitcase
+        Sunday morning creeping like a nun
+        Monday's child has learned to tie his bootlace
+        See how they run
+
         Lady Madonna, baby at your breast
         Wonders how you manage to feed the rest
 

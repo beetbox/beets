@@ -1,31 +1,30 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """High-level utilities for manipulating image files associated with
 music and items' embedded album art.
 """
 
+from __future__ import annotations
+
 import os
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING
 
 import mediafile
 
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
-def mediafile_image(image_path, maxwidth=None):
+    from beets.dbcore import Query
+    from beets.library import Album, Item, Library
+    from beets.logging import BeetsLogger as Logger
+    from beets.util import PathLike
+
+
+def mediafile_image(
+    image_path: bytes, maxwidth: int | None = None
+) -> mediafile.Image:
     """Return a `mediafile.Image` object for the path."""
 
     with open(syspath(image_path), "rb") as f:
@@ -33,29 +32,29 @@ def mediafile_image(image_path, maxwidth=None):
     return mediafile.Image(data, type=mediafile.ImageType.front)
 
 
-def get_art(log, item):
+def get_art(log: Logger, item: Item) -> bytes | None:
     # Extract the art.
     try:
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
         log.warning("Could not extract art from {.filepath}: {}", item, exc)
-        return
+        return None
 
     return mf.art
 
 
 def embed_item(
-    log,
-    item,
-    imagepath,
-    maxwidth=None,
-    itempath=None,
-    compare_threshold=0,
-    ifempty=False,
-    as_album=False,
-    id3v23=None,
-    quality=0,
-):
+    log: Logger,
+    item: Item,
+    imagepath: bytes,
+    maxwidth: int | None = None,
+    itempath: bytes | None = None,
+    compare_threshold: int = 0,
+    ifempty: bool = False,
+    as_album: bool = False,
+    id3v23: bool | None = None,
+    quality: int = 0,
+) -> None:
     """Embed an image into the item's media file."""
     # Conditions.
     if compare_threshold:
@@ -65,7 +64,7 @@ def embed_item(
         if is_similar is None:
             log.warning("Error while checking art similarity; skipping.")
             return
-        elif not is_similar:
+        if not is_similar:
             log.info("Image not similar; skipping.")
             return
 
@@ -95,14 +94,14 @@ def embed_item(
 
 
 def embed_album(
-    log,
-    album,
-    maxwidth=None,
-    quiet=False,
-    compare_threshold=0,
-    ifempty=False,
-    quality=0,
-):
+    log: Logger,
+    album: Album,
+    maxwidth: int | None = None,
+    quiet: bool = False,
+    compare_threshold: int = 0,
+    ifempty: bool = False,
+    quality: int = 0,
+) -> None:
     """Embed album art into all of the album's items."""
     imagepath = album.artpath
     if not imagepath:
@@ -134,7 +133,9 @@ def embed_album(
         )
 
 
-def resize_image(log, imagepath, maxwidth, quality):
+def resize_image(
+    log: Logger, imagepath: bytes, maxwidth: int, quality: int
+) -> bytes:
     """Returns path to an image resized to maxwidth and encoded with the
     specified quality level.
     """
@@ -143,19 +144,16 @@ def resize_image(log, imagepath, maxwidth, quality):
         maxwidth,
         quality,
     )
-    imagepath = ArtResizer.shared.resize(
-        maxwidth, syspath(imagepath), quality=quality
-    )
-    return imagepath
+    return ArtResizer.shared.resize(maxwidth, imagepath, quality=quality)
 
 
 def check_art_similarity(
-    log,
-    item,
-    imagepath,
-    compare_threshold,
-    artresizer=None,
-):
+    log: Logger,
+    item: Item,
+    imagepath: bytes,
+    compare_threshold: int,
+    artresizer: ArtResizer | None = None,
+) -> bool | None:
     """A boolean indicating if an image is similar to embedded item art.
 
     If no embedded art exists, always return `True`. If the comparison fails
@@ -175,40 +173,48 @@ def check_art_similarity(
         return artresizer.compare(art, imagepath, compare_threshold)
 
 
-def extract(log, outpath, item):
+def extract(log: Logger, outpath: PathLike, item: Item) -> bytes | None:
     art = get_art(log, item)
     outpath = bytestring_path(outpath)
     if not art:
         log.info("No album art present in {}, skipping.", item)
-        return
+        return None
 
     # Add an extension to the filename.
     ext = mediafile.image_extension(art)
     if not ext:
         log.warning("Unknown image type in {.filepath}.", item)
-        return
+        return None
     outpath += bytestring_path(f".{ext}")
 
     log.info(
-        "Extracting album art from: {} to: {}",
-        item,
-        displayable_path(outpath),
+        "Extracting album art from: {} to: {}", item, displayable_path(outpath)
     )
     with open(syspath(outpath), "wb") as f:
         f.write(art)
     return outpath
 
 
-def extract_first(log, outpath, items):
+def extract_first(
+    log: Logger, outpath: bytes, items: Iterable[Item]
+) -> bytes | None:
     for item in items:
         real_path = extract(log, outpath, item)
         if real_path:
             return real_path
+    return None
 
 
-def clear(log, lib, query):
+def clear_item(item: Item, log: Logger) -> None:
+    if mediafile.MediaFile(syspath(item.path)).images:
+        log.debug("Clearing art for {}", item)
+        item.try_write(tags={"images": None})
+
+
+def clear(
+    log: Logger, lib: Library, query: str | Sequence[str] | Query | None = None
+) -> None:
     items = lib.items(query)
     log.info("Clearing album art from {} items", len(items))
     for item in items:
-        log.debug("Clearing art for {}", item)
-        item.try_write(tags={"images": None})
+        clear_item(item, log)

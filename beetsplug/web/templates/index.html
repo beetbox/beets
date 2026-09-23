@@ -39,20 +39,20 @@
         <div id="extra-detail"></div>
         <!-- Templates. -->
         <script type="text/template" id="item-entry-template">
-            <% if (artist) { %><%= artist %><% } %>
+            <% if (artist) { %><%- artist %><% } %>
             <% if (artist && album) { %> &ndash; <% } %>
-            <% if (album) { %><%= album %><% } %>
+            <% if (album) { %><%- album %><% } %>
             <% if ((artist || album) && title) { %> &ndash; <% } %>
-            <%= title %>
+            <%- title %>
             <span class="playing">&#9654;</span>
         </script>
         <script type="text/template" id="item-main-detail-template">
-            <span class="artist"><%= artist %></span>
+            <span class="artist"><%- artist %></span>
             <span class="album">
-                <span class="albumtitle"><%= album %></span>
-                <span class="year">(<%= year %>)</span>
+                <span class="albumtitle"><%- album %></span>
+                <span class="year">(<%- year %>)</span>
             </span>
-            <span class="title"><%= title %></span>
+            <span class="title"><%- title %></span>
 
             <button class="play">&#9654;</button>
 
@@ -61,34 +61,34 @@
         <script type="text/template" id="item-extra-detail-template">
             <dl>
                 <dt>Track</dt>
-                <dd><%= track %>/<%= tracktotal %></dd>
+                <dd><%- track %>/<%- tracktotal %></dd>
                 <% if (disc) { %>
                     <dt>Disc</dt>
-                    <dd><%= disc %>/<%= disctotal %></dd>
+                    <dd><%- disc %>/<%- disctotal %></dd>
                 <% } %>
                 <dt>Length</dt>
-                <dd><%= timeFormat(length) %></dd>
+                <dd><%- timeFormat(length) %></dd>
                 <dt>Format</dt>
-                <dd><%= format %></dd>
+                <dd><%- format %></dd>
                 <dt>Bitrate</dt>
-                <dd><%= Math.round(bitrate/1000) %> kbps</dd>
+                <dd><%- Math.round(bitrate/1000) %> kbps</dd>
                 <% if (mb_trackid) { %>
                     <dt>MusicBrainz entry</dt>
                     <dd>
-                        <a target="_blank" href="http://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
+                        <a target="_blank" href="http://musicbrainz.org/recording/<%- mb_trackid %>">view</a>
                     </dd>
                 <% } %>
                 <dt>File</dt>
                 <dd>
-                    <a target="_blank" class="download" href="item/<%= id %>/file">download</a>
+                    <a target="_blank" class="download" href="item/<%- id %>/file">download</a>
                 </dd>
                 <% if (lyrics) { %>
                     <dt>Lyrics</dt>
-                    <dd class="lyrics"><%= lyrics %></dd>
+                    <dd class="lyrics"><%- lyrics %></dd>
                 <% } %>
                 <% if (comments) { %>
                     <dt>Comments</dt>
-                    <dd><%= comments %></dd>
+                    <dd><%- comments %></dd>
                 <% } %>
             </dl>
         </script>

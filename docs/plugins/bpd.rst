@@ -5,11 +5,11 @@ BPD is a music player using music from a beets library. It runs as a daemon and
 implements the MPD protocol, so it's compatible with all the great MPD clients
 out there. I'm using Theremin_, gmpc_, Sonata_, and Ario_ successfully.
 
-.. _ario: http://ario-player.sourceforge.net/
+.. _ario: https://sourceforge.net/projects/ario-player/
 
-.. _gmpc: https://gmpc.wikia.com/wiki/Gnome_Music_Player_Client
+.. _gmpc: https://gmpc.fandom.com/wiki/Gnome_Music_Player_Client
 
-.. _sonata: http://sonata.berlios.de/
+.. _sonata: https://www.nongnu.org/sonata/
 
 .. _theremin: https://github.com/TheStalwart/Theremin
 
@@ -35,7 +35,7 @@ extra which installs Python bindings for ``GStreamer``:
 
     pip install "beets[bpd]"
 
-.. _gstreamer: https://gstreamer.freedesktop.org/download
+.. _gstreamer: https://gstreamer.freedesktop.org/
 
 .. _homebrew: https://brew.sh
 
@@ -52,7 +52,7 @@ To use the ``bpd`` plugin, first enable it in your configuration (see
 Fire up your favorite MPD client to start playing music. The MPD site has `a
 long list of available clients`_. Here are my favorites:
 
-.. _a long list of available clients: https://mpd.wikia.com/wiki/Clients
+.. _a long list of available clients: https://mpd.fandom.com/wiki/Clients
 
 - Linux: gmpc_, Sonata_
 - Mac: Theremin_
@@ -111,7 +111,7 @@ behaviour to their MPD equivalents. BPD aims to look enough like MPD that it can
 interact with the ecosystem of clients, but doesn't try to be a fully-fledged
 MPD replacement in terms of its playback capabilities.
 
-.. _the mpd protocol: https://www.musicpd.org/doc/protocol/
+.. _the mpd protocol: https://mpd.readthedocs.io/en/latest/protocol.html
 
 These are some of the known differences between BPD and MPD:
 

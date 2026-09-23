@@ -1,21 +1,8 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Miscellaneous utility functions."""
 
 from __future__ import annotations
 
+import contextvars
 import errno
 import fnmatch
 import os
@@ -27,11 +14,13 @@ import subprocess
 import sys
 import tempfile
 import traceback
+import unicodedata
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from contextlib import suppress
+from copy import deepcopy
 from enum import Enum
-from functools import cache
+from functools import cache, cached_property
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -42,29 +31,32 @@ from typing import (
     AnyStr,
     ClassVar,
     Generic,
+    Literal,
     NamedTuple,
     TypeVar,
-    Union,
     cast,
 )
 
+from confuse import Optional
+from typing_extensions import Self
 from unidecode import unidecode
 
 import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
+    from beets.importer import Action, ImportSession, ImportTask
     from beets.library import Item
-
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-PathLike = Union[str, bytes, Path]
-StrPath = Union[str, Path]
+AnyPath = TypeVar("AnyPath", str, bytes, Path)
+StrPath = str | Path
+PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
 
 # Here for now to allow for a easy replace later on
@@ -88,13 +80,15 @@ class HumanReadableError(Exception):
 
     error_kind = "Error"  # Human-readable description of error type.
 
-    def __init__(self, reason, verb, tb=None):
+    def __init__(
+        self, reason: str | Exception, verb: str, tb: str | None = None
+    ) -> None:
         self.reason = reason
         self.verb = verb
         self.tb = tb
         super().__init__(self.get_message())
 
-    def _gerund(self):
+    def _gerund(self) -> str:
         """Generate a (likely) gerund form of the English verb."""
         if " " in self.verb:
             return self.verb
@@ -102,24 +96,23 @@ class HumanReadableError(Exception):
         gerund += "ing"
         return gerund
 
-    def _reasonstr(self):
+    def _reasonstr(self) -> str:
         """Get the reason as a string."""
         if isinstance(self.reason, str):
             return self.reason
-        elif isinstance(self.reason, bytes):
+        if isinstance(self.reason, bytes):
             return self.reason.decode("utf-8", "ignore")
-        elif hasattr(self.reason, "strerror"):  # i.e., EnvironmentError
-            return self.reason.strerror
-        else:
-            return f'"{self.reason}"'
+        if isinstance(self.reason, OSError):  # i.e., EnvironmentError
+            return self.reason.strerror or str(self.reason)
+        return f'"{self.reason}"'
 
-    def get_message(self):
+    def get_message(self) -> str:
         """Create the human-readable description of the error, sans
         introduction.
         """
         raise NotImplementedError
 
-    def log(self, logger):
+    def log(self, logger: Logger) -> None:
         """Log to the provided `logger` a human-readable message as an
         error and a verbose traceback as a debug message.
         """
@@ -134,11 +127,19 @@ class FilesystemError(HumanReadableError):
     pathnames involved in the operation.
     """
 
-    def __init__(self, reason, verb, paths, tb=None):
+    paths: Sequence[PathLike]
+
+    def __init__(
+        self,
+        reason: str | Exception,
+        verb: str,
+        paths: Sequence[PathLike],
+        tb: str | None = None,
+    ) -> None:
         self.paths = paths
         super().__init__(reason, verb, tb)
 
-    def get_message(self):
+    def get_message(self) -> str:
         # Use a nicer English phrasing for some specific verbs.
         if self.verb in ("move", "copy", "rename"):
             clause = (
@@ -170,14 +171,14 @@ class MoveOperation(Enum):
 class PromptChoice(NamedTuple):
     short: str
     long: str
-    callback: Any
+    callback: Callable[[ImportSession, ImportTask], Action | None] | None
 
 
 def normpath(path: PathLike) -> bytes:
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
-    str_path = syspath(path, prefix=False)
+    str_path = os.fsdecode(path)
     str_path = os.path.normpath(os.path.abspath(os.path.expanduser(str_path)))
     return bytestring_path(str_path)
 
@@ -207,41 +208,33 @@ def ancestry(path: AnyStr) -> list[AnyStr]:
 
 
 def sorted_walk(
-    path: PathLike,
-    ignore: Sequence[PathLike] = (),
+    path: AnyStr,
+    ignore: Sequence[AnyStr] = (),
     ignore_hidden: bool = False,
     logger: Logger | None = None,
-) -> Iterator[tuple[bytes, Sequence[bytes], Sequence[bytes]]]:
+) -> Iterator[tuple[AnyStr, Sequence[AnyStr], Sequence[AnyStr]]]:
     """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
     pattern in `ignore` are skipped. If `logger` is provided, then
     warning messages are logged there when a directory cannot be listed.
     """
-    # Make sure the paths aren't Unicode strings.
-    bytes_path = bytestring_path(path)
-    ignore_bytes = [  # rename prevents mypy variable shadowing issue
-        bytestring_path(i) for i in ignore
-    ]
-
     # Get all the directories and files at this level.
     try:
-        contents = os.listdir(syspath(bytes_path))
+        contents = os.listdir(path)
     except OSError:
         if logger:
             logger.warning(
                 "could not list directory {}",
-                displayable_path(bytes_path),
+                displayable_path(path),
                 exc_info=True,
             )
         return
     dirs = []
     files = []
-    for str_base in contents:
-        base = bytestring_path(str_base)
-
+    for base in contents:
         # Skip ignored filenames.
         skip = False
-        for pat in ignore_bytes:
+        for pat in ignore:
             if fnmatch.fnmatch(base, pat):
                 if logger:
                     logger.debug(
@@ -253,7 +246,7 @@ def sorted_walk(
             continue
 
         # Add to output as either a file or a directory.
-        cur = os.path.join(bytes_path, base)
+        cur = os.path.join(path, base)
         if (ignore_hidden and not hidden.is_hidden(cur)) or not ignore_hidden:
             if os.path.isdir(syspath(cur)):
                 dirs.append(base)
@@ -261,14 +254,15 @@ def sorted_walk(
                 files.append(base)
 
     # Sort lists (case-insensitive) and yield the current level.
-    dirs.sort(key=bytes.lower)
-    files.sort(key=bytes.lower)
-    yield (bytes_path, dirs, files)
+    sort_key = path.__class__.lower
+    dirs.sort(key=sort_key)
+    files.sort(key=sort_key)
+    yield (path, dirs, files)
 
     # Recurse into directories.
     for base in dirs:
-        cur = os.path.join(bytes_path, base)
-        yield from sorted_walk(cur, ignore_bytes, ignore_hidden, logger)
+        cur = os.path.join(path, base)
+        yield from sorted_walk(cur, ignore, ignore_hidden, logger)
 
 
 def path_as_posix(path: bytes) -> bytes:
@@ -278,10 +272,14 @@ def path_as_posix(path: bytes) -> bytes:
     return path.replace(b"\\", b"/")
 
 
-def mkdirall(path: bytes):
+def mkdirall(path: AnyStr | Path) -> None:
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
+    if isinstance(path, Path):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return
+
     for ancestor in ancestry(path):
         if not os.path.isdir(syspath(ancestor)):
             try:
@@ -311,7 +309,7 @@ def prune_dirs(
     path: PathLike,
     root: PathLike | None = None,
     clutter: Sequence[str] = (".DS_Store", "Thumbs.db"),
-):
+) -> None:
     """If path is an empty directory, then remove it. Recursively remove
     path's ancestry up to root (which is never removed) where there are
     empty directories. If path is not contained in root, then nothing is
@@ -407,27 +405,20 @@ def displayable_path(
     path: PathLike | Iterable[PathLike], separator: str = "; "
 ) -> str:
     """Attempts to decode a bytestring path to a unicode object for the
-    purpose of displaying it to the user. If the `path` argument is a
-    list or a tuple, the elements are joined with `separator`.
+    purpose of displaying it to the user. If the `path` argument is an
+    iterable, the elements are joined with `separator`.
     """
 
-    if isinstance(path, (list, tuple)):
-        return separator.join(displayable_path(p) for p in path)
-    elif isinstance(path, str):
-        return path
-    elif not isinstance(path, bytes):
-        # A non-string object: just get its unicode representation.
-        return str(path)
+    if isinstance(path, (Path, str, bytes)):
+        return os.fsdecode(path)
 
-    return os.fsdecode(path)
+    return separator.join(displayable_path(p) for p in path)
 
 
-def syspath(path: PathLike, prefix: bool = True) -> str:
+def syspath(path: PathLike) -> str:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
-    to Unicode before they are sent to the OS. To disable the magic
-    prefix on Windows, set `prefix` to False---but only do this if you
-    *really* know what you're doing.
+    to Unicode before they are sent to the OS.
     """
     str_path = os.fsdecode(path)
     # Don't do anything if we're not on windows
@@ -436,7 +427,7 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
 
     # Add the magic prefix if it isn't already there.
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-    if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
+    if not str_path.startswith(WINDOWS_MAGIC_PREFIX):
         if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
             str_path = f"UNC{str_path[1:]}"
@@ -445,7 +436,7 @@ def syspath(path: PathLike, prefix: bool = True) -> str:
     return str_path
 
 
-def samefile(p1: bytes, p2: bytes) -> bool:
+def samefile(p1: PathLike, p2: PathLike) -> bool:
     """Safer equality for paths."""
     if p1 == p2:
         return True
@@ -455,7 +446,7 @@ def samefile(p1: bytes, p2: bytes) -> bool:
     return False
 
 
-def remove(path: PathLike, soft: bool = True):
+def remove(path: PathLike, soft: bool = True) -> None:
     """Remove the file. If `soft`, then no error will be raised if the
     file does not exist.
     """
@@ -470,7 +461,7 @@ def remove(path: PathLike, soft: bool = True):
         )
 
 
-def copy(path: bytes, dest: bytes, replace: bool = False):
+def copy(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Copy a plain file. Permissions are not copied. If `dest` already
     exists, raises a FilesystemError unless `replace` is True. Has no
     effect if `path` is the same as `dest`. Paths are translated to
@@ -490,7 +481,7 @@ def copy(path: bytes, dest: bytes, replace: bool = False):
         )
 
 
-def move(path: bytes, dest: bytes, replace: bool = False):
+def move(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Rename a file. `dest` may not be a directory. If `dest` already
     exists, raises an OSError unless `replace` is True. Has no effect if
     `path` is the same as `dest`. Paths are translated to system paths.
@@ -511,20 +502,18 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         # Copy the file to a temporary destination.
         basename = os.path.basename(bytestring_path(dest))
         dirname = os.path.dirname(bytestring_path(dest))
+        tempfile_prefix = beets.config["tempfile_prefix"].get(Optional(str))
+        if tempfile_prefix is None:
+            tempfile_prefix = "."
         tmp = tempfile.NamedTemporaryFile(
             suffix=".beets",
-            prefix=f".{os.fsdecode(basename)}.",
+            prefix=f"{tempfile_prefix}{os.fsdecode(basename)}.",
             dir=syspath(dirname),
             delete=False,
         )
         try:
             with open(syspath(path), "rb") as f:
-                # mypy bug:
-                # - https://github.com/python/mypy/issues/15031
-                # - https://github.com/python/mypy/issues/14943
-                # Fix not yet released:
-                # - https://github.com/python/mypy/pull/14975
-                shutil.copyfileobj(f, tmp)  # type: ignore[misc]
+                shutil.copyfileobj(f, tmp)
         finally:
             tmp.close()
 
@@ -551,7 +540,7 @@ def move(path: bytes, dest: bytes, replace: bool = False):
                 os.remove(tmp_filename)
 
 
-def link(path: bytes, dest: bytes, replace: bool = False):
+def link(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Create a symbolic link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
     `path` == `dest`.
@@ -566,7 +555,8 @@ def link(path: bytes, dest: bytes, replace: bool = False):
     except NotImplementedError:
         # raised on python >= 3.2 and Windows versions before Vista
         raise FilesystemError(
-            "OS does not support symbolic links.link",
+            "OS does not support symbolic links.",
+            "link",
             (path, dest),
             traceback.format_exc(),
         )
@@ -574,7 +564,7 @@ def link(path: bytes, dest: bytes, replace: bool = False):
         raise FilesystemError(exc, "link", (path, dest), traceback.format_exc())
 
 
-def hardlink(path: bytes, dest: bytes, replace: bool = False):
+def hardlink(path: PathLike, dest: PathLike, replace: bool = False) -> None:
     """Create a hard link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
     `path` == `dest`.
@@ -592,29 +582,28 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
         dest_path.hardlink_to(origin_path)
     except NotImplementedError:
         raise FilesystemError(
-            "OS does not support hard links.link",
+            "OS does not support hard links.",
+            "link",
             (path, dest),
             traceback.format_exc(),
         )
     except OSError as exc:
         if exc.errno == errno.EXDEV:
             raise FilesystemError(
-                "Cannot hard link across devices.link",
+                "Cannot hard link across devices.",
+                "link",
                 (path, dest),
                 traceback.format_exc(),
             )
-        else:
-            raise FilesystemError(
-                exc, "link", (path, dest), traceback.format_exc()
-            )
+        raise FilesystemError(exc, "link", (path, dest), traceback.format_exc())
 
 
 def reflink(
-    path: bytes,
-    dest: bytes,
+    path: PathLike,
+    dest: PathLike,
     replace: bool = False,
     fallback: bool = False,
-):
+) -> None:
     """Create a reflink from `dest` to `path`.
 
     Raise an `OSError` if `dest` already exists, unless `replace` is
@@ -624,7 +613,7 @@ def reflink(
     Otherwise, errors are re-raised as FilesystemError with an explanation.
     """
     if samefile(path, dest):
-        return
+        return None
 
     if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError("target exists", "rename", (path, dest))
@@ -649,7 +638,7 @@ def reflink(
         ) from exc
 
 
-def unique_path(path: bytes) -> bytes:
+def unique_path(path: AnyStr) -> AnyStr:
     """Returns a version of ``path`` that does not exist on the
     filesystem. Specifically, if ``path` itself already exists, then
     something unique is appended to the path.
@@ -657,8 +646,9 @@ def unique_path(path: bytes) -> bytes:
     if not os.path.exists(syspath(path)):
         return path
 
-    base, ext = os.path.splitext(path)
-    match = re.search(rb"\.(\d)+$", base)
+    byte_path = os.fsencode(path)
+    base, ext = os.path.splitext(byte_path)
+    match = re.search(rb"\.(\d+)$", base)
     if match:
         num = int(match.group(1))
         base = base[: match.start()]
@@ -669,6 +659,8 @@ def unique_path(path: bytes) -> bytes:
         suffix = f".{num}".encode() + ext
         new_path = base + suffix
         if not os.path.exists(new_path):
+            if not isinstance(path, bytes):
+                return os.fsdecode(new_path)
             return new_path
 
 
@@ -801,12 +793,11 @@ def as_string(value: Any) -> str:
     """
     if value is None:
         return ""
-    elif isinstance(value, memoryview):
+    if isinstance(value, memoryview):
         return bytes(value).decode("utf-8", "ignore")
-    elif isinstance(value, bytes):
+    if isinstance(value, bytes):
         return value.decode("utf-8", "ignore")
-    else:
-        return str(value)
+    return str(value)
 
 
 def plurality(objs: Iterable[T]) -> tuple[T, int]:
@@ -820,18 +811,11 @@ def plurality(objs: Iterable[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def get_most_common_tags(
-    items: Sequence[Item],
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Extract the likely current metadata for an album given a list of its
-    items. Return two dictionaries:
-     - The most common value for each field.
-     - Whether each field's value was unanimous (values are booleans).
-    """
+def get_most_common_tags(items: Sequence[Item]) -> Likelies:
+    """Extract the most common value for each field given a list of items."""
     assert items  # Must be nonempty.
 
     likelies = {}
-    consensus = {}
     fields = [
         "artist",
         "album",
@@ -849,14 +833,13 @@ def get_most_common_tags(
     ]
     for field in fields:
         values = [item.get(field) for item in items if item]
-        likelies[field], freq = plurality(values)
-        consensus[field] = freq == len(values)
+        likelies[field], _ = plurality(values)
 
     # If there's an album artist consensus, use this for the artist.
-    if consensus["albumartist"] and likelies["albumartist"]:
+    if len({i.albumartist for i in items}) == 1 and likelies["albumartist"]:
         likelies["artist"] = likelies["albumartist"]
 
-    return likelies, consensus
+    return Likelies(likelies)
 
 
 # stdout and stderr as bytes
@@ -866,7 +849,7 @@ class CommandOutput(NamedTuple):
 
 
 def command_output(
-    cmd: list[str] | list[bytes], shell: bool = False
+    cmd: Sequence[str] | Sequence[bytes], shell: bool = False
 ) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
@@ -923,8 +906,7 @@ def get_max_filename_length() -> int:
         except OSError:
             return limit
         return min(res[9], limit)
-    else:
-        return limit
+    return limit
 
 
 def open_anything() -> str:
@@ -935,7 +917,8 @@ def open_anything() -> str:
     if sys_name == "Darwin":
         base_cmd = "open"
     elif sys_name == "Windows":
-        base_cmd = "start"
+        # `start` is a cmd.exe builtin, so invoke it through the shell.
+        base_cmd = 'cmd /c start ""'
     else:  # Assume Unix
         base_cmd = "xdg-open"
     return base_cmd
@@ -944,17 +927,24 @@ def open_anything() -> str:
 def editor_command() -> str:
     """Get a command for opening a text file.
 
-    First try environment variable `VISUAL` followed by `EDITOR`. As last resort
-    fall back to `open_anything()`, the platform-specific tool for opening files
-    in general.
+    First checks the `editor` config option, then tries environment variable
+    `VISUAL` followed by `EDITOR`. As last resort fall back to `open_anything()`,
+    the platform-specific tool for opening files in general.
 
     """
+    from beets import config
+
     return (
-        os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
+        (config["editor"].get(str) if config["editor"].exists() else None)
+        or os.environ.get("VISUAL")
+        or os.environ.get("EDITOR")
+        or open_anything()
     )
 
 
-def interactive_open(targets: Sequence[str], command: str):
+def interactive_open(
+    targets: Sequence[Path | str | bytes], command: str
+) -> None:
     """Open the files in `targets` by `exec`ing a new `command`, given
     as a Unicode string. (The new program takes over, and Python
     execution ends: this does not fork a subprocess.)
@@ -969,14 +959,13 @@ def interactive_open(targets: Sequence[str], command: str):
     except ValueError:  # Malformed shell tokens.
         args = [command]
 
-    args.insert(0, args[0])  # for argv[0]
+    first, *rest = args
 
-    args += targets
+    # 'first' is duplicated because of argv[0]
+    os.execlp(*[first, first, *rest, *targets])
 
-    return os.execlp(*args)
 
-
-def case_sensitive(path: bytes) -> bool:
+def case_sensitive(path: AnyStr) -> bool:
     """Check whether the filesystem at the given path is case sensitive.
 
     To work best, the path should point to a file or a directory. If the path
@@ -1024,41 +1013,47 @@ def case_sensitive(path: bytes) -> bool:
         return not os.path.samefile(lower_sys, upper_sys)
 
 
-def asciify_path(path: str, sep_replace: str) -> str:
+def asciify_path(path: str) -> str:
     """Decodes all unicode characters in a path into ASCII equivalents.
 
     Substitutions are provided by the unidecode module. Path separators in the
     input are preserved.
-
-    Keyword arguments:
-    path -- The path to be asciified.
-    sep_replace -- the string to be used to replace extraneous path separators.
     """
+    # Prepare path for output: normalize Unicode characters.
+    form: Literal["NFD", "NFC"] = "NFD" if sys.platform == "darwin" else "NFC"
+    path = unicodedata.normalize(form, path)
+    replacements = [os.sep]
     # if this platform has an os.altsep, change it to os.sep.
     if os.altsep:
         path = path.replace(os.altsep, os.sep)
-    path_components: list[str] = path.split(os.sep)
-    for index, item in enumerate(path_components):
-        path_components[index] = unidecode(item).replace(os.sep, sep_replace)
-        if os.altsep:
-            path_components[index] = unidecode(item).replace(
-                os.altsep, sep_replace
-            )
-    return os.sep.join(path_components)
+        replacements.append(os.altsep)
+
+    sep_replace = beets.config["path_sep_replace"].as_str()
+
+    def replace(path: str) -> str:
+        for repl in replacements:
+            path = path.replace(repl, sep_replace)
+        return path
+
+    return os.sep.join(replace(unidecode(p)) for p in path.split(os.sep))
 
 
 def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
-    """Apply the function `transform` to all the elements in the
-    iterable `items`, like `map(transform, items)` but with no return
-    value.
+    """Apply a transformation to each item concurrently using a thread pool.
 
-    The parallelism uses threads (not processes), so this is only useful
-    for IO-bound `transform`s.
+    Propagates the calling thread's context variables into each worker,
+    ensuring that context-dependent state is available during parallel
+    execution.
     """
-    pool = ThreadPool()
-    pool.map(transform, items)
-    pool.close()
-    pool.join()
+    ctx = contextvars.copy_context()  # snapshot parent context at call time
+
+    def _worker(item: T) -> Any:
+        # ThreadPool workers may run concurrently, so each task needs its own
+        # child context rather than sharing one Context instance.
+        return ctx.copy().run(transform, item)
+
+    with ThreadPool() as pool:
+        pool.map(_worker, items)
 
 
 class cached_classproperty(Generic[T]):
@@ -1079,7 +1074,7 @@ class cached_classproperty(Generic[T]):
     # type check, for example:
     # >>> class Album:
     # >>>     @cached_classproperty
-    # >>>     def foo(cls):
+    # >>>     def foo(cls) -> Bar:
     # >>>         reveal_type(cls)  # mypy: revealed type is "Album"
     # >>>         return cls.bar
     #
@@ -1200,3 +1195,72 @@ def get_temp_filename(
 def unique_list(elements: Iterable[T]) -> list[T]:
     """Return a list with unique elements in the original order."""
     return list(dict.fromkeys(elements))
+
+
+def chunks(lst: Sequence[T], n: int) -> Iterator[list[T]]:
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield list(lst[i : i + n])
+
+
+class AttrDict(dict[str, T]):
+    """Mapping enabling attribute-style access to stored metadata values."""
+
+    def copy(self) -> Self:
+        """Return a detached copy preserving subclass-specific behavior."""
+        return deepcopy(self)
+
+    def __getattribute__(self, attr: str) -> T:
+        # Intercept cached_property failures so an AttributeError raised
+        # inside the property body is not masked by __getattr__ fallback.
+        # Reuse the original traceback so the wrapped RuntimeError still
+        # points at the real failing line, but suppress the printed cause
+        # block to keep CLI tracebacks readable. See #6558 (and #6503 /
+        # #6506 for the same masking pattern with different metadata
+        # providers).
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as exc:
+            if not attr.startswith("__"):
+                for klass in type(self).__mro__:
+                    descr = klass.__dict__.get(attr)
+                    if descr is None:
+                        continue
+                    if isinstance(descr, cached_property):
+                        raise RuntimeError(
+                            f"{type(self).__name__}.{attr} failed: {exc}"
+                        ).with_traceback(exc.__traceback__) from None
+                    break
+            raise
+
+    def __getattr__(self, attr: str) -> T:
+        if attr in self:
+            return self[attr]
+
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute '{attr}'"
+        )
+
+    def __setattr__(self, key: str, value: T) -> None:
+        self.__setitem__(key, value)
+
+    def __hash__(self) -> int:  # type: ignore[override]
+        return id(self)
+
+
+class Likelies(AttrDict[Any]):
+    """A dictionary of the most common tags in a list of items."""
+
+    artist: str
+    album: str
+    albumartist: str
+    year: int
+    disctotal: int
+    mb_albumid: str
+    label: str
+    barcode: str
+    catalognum: str
+    country: str
+    media: str
+    albumdisambig: str
+    data_source: str

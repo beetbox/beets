@@ -100,15 +100,15 @@ databases. They share the following configuration options:
     listenbrainz
     loadext
     lyrics
-    mbcollection
-    mbpseudo
-    mbsubmit
     mbsync
     metasync
     missing
     mpdstats
     mpdupdate
     musicbrainz
+    mbcollection
+    mbpseudo
+    mbsubmit
     parentwork
     permissions
     play
@@ -127,6 +127,7 @@ databases. They share the following configuration options:
     substitute
     the
     thumbnails
+    tidal
     titlecase
     types
     unimported
@@ -160,13 +161,18 @@ Autotagger Extensions
 :doc:`spotify <spotify>`
     Search for releases in the Spotify_ database.
 
-.. _deezer: https://www.deezer.com
+:doc:`tidal <tidal>`
+    Search for releases in the Tidal_ catalog.
+
+.. _deezer: https://www.deezer.com/en/
 
 .. _discogs: https://www.discogs.com
 
 .. _musicbrainz: https://www.musicbrainz.com
 
-.. _spotify: https://www.spotify.com
+.. _spotify: https://open.spotify.com/
+
+.. _tidal: https://tidal.com/
 
 Metadata
 --------
@@ -237,7 +243,7 @@ Metadata
 :doc:`zero <zero>`
     Nullify fields by pattern or unconditionally.
 
-.. _keyfinder: http://www.ibrahimshaath.co.uk/keyfinder/
+.. _keyfinder: https://www.ibrahimshaath.co.uk/keyfinder/
 
 .. _librosa: https://github.com/librosa/librosa/
 
@@ -318,7 +324,7 @@ Interoperability
 :doc:`subsonicupdate <subsonicupdate>`
     Automatically notifies Subsonic_ whenever the beets library changes.
 
-.. _aura: https://auraspec.readthedocs.io
+.. _aura: https://auraspec.readthedocs.io/en/latest/
 
 .. _emby: https://emby.media
 
@@ -326,11 +332,11 @@ Interoperability
 
 .. _kodi: https://kodi.tv
 
-.. _plex: https://plex.tv
+.. _plex: https://watch.plex.tv/
 
-.. _sonos: https://sonos.com
+.. _sonos: https://www.sonos.com/
 
-.. _subsonic: http://www.subsonic.org/
+.. _subsonic: https://www.subsonic.org/pages/index.jsp
 
 Miscellaneous
 -------------
@@ -397,7 +403,7 @@ mstream_
 
 .. _mpd: https://www.musicpd.org/
 
-.. _mpd clients: https://mpd.wikia.com/wiki/Clients
+.. _mpd clients: https://mpd.fandom.com/wiki/Clients
 
 .. _mstream: https://github.com/IrosTheBeggar/mStream
 
@@ -420,6 +426,9 @@ Once the plugin is installed, enable it by placing its name on the ``plugins``
 line in your config file.
 
 Here are a few of the plugins written by the beets community:
+
+beets-aisauce_
+    Uses artificial intelligence to clean up or create metadata.
 
 beets-alternatives_
     Manages external files.
@@ -481,12 +490,24 @@ beets-filetote_
     Helps bring non-music extra files, attachments, and artifacts during imports
     and CLI file manipulation actions (``beet move``, etc.).
 
+beets-fillmissing_
+    Interactively prompts you to fill in missing or incomplete metadata fields
+    for music tracks.
+
 beets-follow_
     Lets you check for new albums from artists you like.
 
 beetFs_
     Is a FUSE filesystem for browsing the music in your beets library. (Might be
     out of date.)
+
+beets-genrecanon_
+    Maps existing genres into a separate, user-defined canonical taxonomy while
+    preserving the original genre metadata.
+
+beets-getlrc_
+    Fetches synced and non-synced lyrics and creates .lrc files to be used by
+    compatible music players.
 
 beets-goingrunning_
     Generates playlists to go with your running sessions.
@@ -513,6 +534,10 @@ beets-mosaic_
 beets-mpd-utils_
     Plugins to interface with MPD_. Comes with ``mpd_tracker`` (track play/skip
     counts from MPD) and ``mpd_dj`` (auto-add songs to your queue.)
+
+BeetNik_
+    A desktop music player for beets libraries. Browse and play your collection
+    by album, artist, or recent additions.
 
 beets-noimport_
     Adds and removes directories from the incremental import skip list.
@@ -574,6 +599,10 @@ beets-youtube_
 
 .. _beetfs: https://github.com/jbaiter/beetfs
 
+.. _beetnik: https://forge.kanis.fr/ivan/beetnik-desktop
+
+.. _beets-aisauce: https://github.com/metasauce/beets-aisauce
+
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
@@ -596,7 +625,13 @@ beets-youtube_
 
 .. _beets-filetote: https://github.com/gtronset/beets-filetote
 
+.. _beets-fillmissing: https://github.com/amiv1/beets-fillmissing
+
 .. _beets-follow: https://github.com/nolsto/beets-follow
+
+.. _beets-genrecanon: https://codeberg.org/gbcox/beets-genrecanon
+
+.. _beets-getlrc: https://github.com/jaedonswanson/beets-getlrc
 
 .. _beets-goingrunning: https://pypi.org/project/beets-goingrunning
 
@@ -622,7 +657,7 @@ beets-youtube_
 
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
-.. _beets-usertag: https://github.com/igordertigor/beets-usertag
+.. _beets-usertag: https://github.com/edgars-supe/beets-usertag
 
 .. _beets-webm3u: https://github.com/mgoltzsche/beets-webm3u
 
@@ -640,7 +675,7 @@ beets-youtube_
 
 .. _beetstream: https://github.com/BinaryBrain/Beetstream
 
-.. _cmus: http://cmus.sourceforge.net/
+.. _cmus: https://sourceforge.net/projects/cmus/
 
 .. _drop2beets: https://github.com/martinkirch/drop2beets
 
@@ -648,6 +683,6 @@ beets-youtube_
 
 .. _ibroadcast: https://ibroadcast.com/
 
-.. _subsonic api: http://www.subsonic.org/pages/api.jsp
+.. _subsonic api: https://www.subsonic.org/pages/api.jsp
 
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets

@@ -79,19 +79,17 @@ and you're good to go!
     information, see for example pep-3119_.
 
 .. [3] There are a variety of packaging tools available for python, for example
-    you can use poetry_, setuptools_ or hatchling_.
+    you can use setuptools_ or hatchling_.
 
 .. _hatchling: https://hatch.pypa.io/latest/config/build/#build-system
 
 .. _pep-3119: https://peps.python.org/pep-3119/#rationale
 
-.. _poetry: https://python-poetry.org/docs/pyproject/#packages
-
 .. _setuptools: https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#finding-simple-packages
 
 .. _this article: https://realpython.com/python-namespace-package/#setting-up-some-namespace-packages
 
-.. _this stack overflow question: https://stackoverflow.com/a/27586272/9582674
+.. _this stack overflow question: https://stackoverflow.com/questions/1675734/how-do-i-create-a-namespace-package-in-python/27586272#27586272
 
 More information
 ----------------

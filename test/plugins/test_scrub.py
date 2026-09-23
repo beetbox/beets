@@ -1,11 +1,9 @@
-import os
-
 from mediafile import MediaFile
 
-from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
+from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 
 
-class ScrubbedImportTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
+class TestScrubbedImport(AsIsImporterMixin, PluginMixin, ImportHelper):
     db_on_disk = True
     plugin = "scrub"
 
@@ -14,7 +12,7 @@ class ScrubbedImportTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
             self.run_asis_importer(write=True)
 
         for item in self.lib.items():
-            imported_file = MediaFile(os.path.join(item.path))
+            imported_file = MediaFile(item.filepath)
             assert imported_file.artist == "Tag Artist"
             assert imported_file.album == "Tag Album"
 
@@ -23,15 +21,16 @@ class ScrubbedImportTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
             self.run_asis_importer(write=True)
 
         for item in self.lib.items():
-            imported_file = MediaFile(os.path.join(item.path))
+            imported_file = MediaFile(item.filepath)
             assert imported_file.artist == "Tag Artist"
             assert imported_file.album == "Tag Album"
 
-    def test_tags_not_restored(self):
+    def test_tags_not_scrubbed_when_nowrite(self):
+        """When --nowrite is passed, scrubbing should be skipped entirely."""
         with self.configure_plugin({"auto": True}):
             self.run_asis_importer(write=False)
 
         for item in self.lib.items():
-            imported_file = MediaFile(os.path.join(item.path))
-            assert imported_file.artist is None
-            assert imported_file.album is None
+            imported_file = MediaFile(item.filepath)
+            assert imported_file.artist == "Tag Artist"
+            assert imported_file.album == "Tag Album"

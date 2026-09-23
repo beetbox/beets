@@ -1,62 +1,61 @@
-# This file is part of beets.
-# Copyright 2016, Fabrice Laporte.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
-
 """Write paths of imported files in various formats to ease later import in a
 music player. Also allow printing the new file locations to stdout in case
 one wants to manually add music to a player by its path.
 """
 
+from __future__ import annotations
+
 import datetime
 import os
 import re
+from typing import TYPE_CHECKING
 
 from beets import config
 from beets.plugins import BeetsPlugin
-from beets.util import bytestring_path, link, mkdirall, normpath, syspath
+from beets.util import (
+    FilesystemError,
+    bytestring_path,
+    link,
+    mkdirall,
+    normpath,
+    syspath,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets.importer import ImportSession
+    from beets.library import Album, Item, Library
+
 
 M3U_DEFAULT_NAME = "imported.m3u"
 
 
-def _build_m3u_session_filename(basename):
+def _build_m3u_session_filename(basename: str) -> bytes:
     """Builds unique m3u filename by putting current date between given
     basename and file ending."""
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
     basename = re.sub(r"(\.m3u|\.M3U)", "", basename)
-    path = normpath(
+    return normpath(
         os.path.join(
             config["importfeeds"]["dir"].as_filename(), f"{basename}_{date}.m3u"
         )
     )
-    return path
 
 
-def _build_m3u_filename(basename):
+def _build_m3u_filename(basename: str) -> bytes:
     """Builds unique m3u filename by appending given basename to current
     date."""
     basename = re.sub(r"[\s,/\\'\"]", "_", basename)
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
-    path = normpath(
+    return normpath(
         os.path.join(
-            config["importfeeds"]["dir"].as_filename(),
-            f"{date}_{basename}.m3u",
+            config["importfeeds"]["dir"].as_filename(), f"{date}_{basename}.m3u"
         )
     )
-    return path
 
 
-def _write_m3u(m3u_path, items_paths):
+def _write_m3u(m3u_path: bytes, items_paths: Sequence[bytes]) -> None:
     """Append relative paths to items into m3u file."""
     mkdirall(m3u_path)
     with open(syspath(m3u_path), "ab") as f:
@@ -65,7 +64,7 @@ def _write_m3u(m3u_path, items_paths):
 
 
 class ImportFeedsPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         self.config.add(
@@ -88,13 +87,15 @@ class ImportFeedsPlugin(BeetsPlugin):
         self.register_listener("item_imported", self.item_imported)
         self.register_listener("import_begin", self.import_begin)
 
-    def get_feeds_dir(self):
+    def get_feeds_dir(self) -> str | bytes:
         feeds_dir = self.config["dir"].get()
         if feeds_dir:
             return os.path.expanduser(bytestring_path(feeds_dir))
         return config["directory"].as_filename()
 
-    def _record_items(self, lib, basename, items):
+    def _record_items(
+        self, lib: Library, basename: str, items: Sequence[Item]
+    ) -> None:
         """Records relative paths to the given items for each feed format"""
         feedsdir = bytestring_path(self.get_feeds_dir())
         formats = self.config["formats"].as_str_seq()
@@ -131,20 +132,25 @@ class ImportFeedsPlugin(BeetsPlugin):
             for path in paths:
                 dest = os.path.join(feedsdir, os.path.basename(path))
                 if not os.path.exists(syspath(dest)):
-                    link(path, dest)
+                    try:
+                        link(path, dest)
+                    except FilesystemError as exc:
+                        self._log.warning(
+                            "could not create symlink for {}: {}", path, exc
+                        )
 
         if "echo" in formats:
             self._log.info("Location of imported music:")
             for path in paths:
                 self._log.info("  {}", path)
 
-    def album_imported(self, lib, album):
+    def album_imported(self, lib: Library, album: Album) -> None:
         self._record_items(lib, album.album, album.items())
 
-    def item_imported(self, lib, item):
+    def item_imported(self, lib: Library, item: Item) -> None:
         self._record_items(lib, item.title, [item])
 
-    def import_begin(self, session):
+    def import_begin(self, session: ImportSession) -> None:
         formats = self.config["formats"].as_str_seq()
         if "m3u_session" in formats:
             self.m3u_session = _build_m3u_session_filename(

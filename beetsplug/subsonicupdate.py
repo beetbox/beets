@@ -1,17 +1,3 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Updates Subsonic library on Beets import
 Your Beets configuration file should contain
 a "subsonic" section like the following:
@@ -29,20 +15,27 @@ is not supported, use password instead:
         auth: pass
 """
 
+from __future__ import annotations
+
 import hashlib
 import random
 import string
 from binascii import hexlify
+from typing import TYPE_CHECKING
 
 import requests
 
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
+
+
 __author__ = "https://github.com/maffo999"
 
 
 class SubsonicUpdate(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("subsonic")
         # Set default configuration values
         self.config.add(
@@ -58,13 +51,13 @@ class SubsonicUpdate(BeetsPlugin):
         self.register_listener("database_change", self.db_change)
         self.register_listener("smartplaylist_update", self.spl_update)
 
-    def db_change(self, lib, model):
+    def db_change(self, lib: Library, model: LibModel) -> None:
         self.register_listener("cli_exit", self.start_scan)
 
-    def spl_update(self):
+    def spl_update(self) -> None:
         self.register_listener("cli_exit", self.start_scan)
 
-    def __create_token(self):
+    def __create_token(self) -> tuple[str, str]:
         """Create salt and token from given password.
 
         :return: The generated salt and hashed token
@@ -80,7 +73,7 @@ class SubsonicUpdate(BeetsPlugin):
         # Put together the payload of the request to the server and the URL
         return salt, token
 
-    def __format_url(self, endpoint):
+    def __format_url(self, endpoint: str) -> str:
         """Get the Subsonic URL to trigger the given endpoint.
         Uses either the url config option or the deprecated host, port,
         and context_path config options together.
@@ -103,7 +96,7 @@ class SubsonicUpdate(BeetsPlugin):
 
         return f"{url}/rest/{endpoint}"
 
-    def start_scan(self):
+    def start_scan(self, lib: Library) -> None:
         user = self.config["user"].as_str()
         auth = self.config["auth"].as_str()
         url = self.__format_url("startScan")
@@ -133,13 +126,20 @@ class SubsonicUpdate(BeetsPlugin):
         else:
             return
         try:
-            response = requests.get(
-                url,
-                params=payload,
-                timeout=10,
-            )
+            response = requests.get(url, params=payload, timeout=10)
             json = response.json()
-
+        except requests.exceptions.JSONDecodeError:
+            self._log.error(
+                "Subsonic server returned a non-JSON response from {} "
+                "(HTTP {})",
+                url,
+                response.status_code,
+            )
+            return
+        except requests.exceptions.RequestException as error:
+            self._log.error("Error connecting to Subsonic server: {}", error)
+            return
+        try:
             if (
                 response.status_code == 200
                 and json["subsonic-response"]["status"] == "ok"

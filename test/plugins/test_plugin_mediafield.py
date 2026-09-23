@@ -1,20 +1,5 @@
-# This file is part of beets.
-# Copyright 2016, Adrian Sampson.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Tests the facility that lets plugins add custom field to MediaFile."""
 
-import os
 import shutil
 
 import mediafile
@@ -24,7 +9,7 @@ from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
-from beets.util import bytestring_path, syspath
+from beets.util import syspath
 
 field_extension = mediafile.MediaField(
     mediafile.MP3DescStorageStyle("customtag"),
@@ -43,10 +28,10 @@ list_field_extension = mediafile.ListMediaField(
 
 class ExtendedFieldTestMixin(BeetsTestCase):
     def _mediafile_fixture(self, name, extension="mp3"):
-        name = bytestring_path(f"{name}.{extension}")
-        src = os.path.join(_common.RSRC, name)
-        target = os.path.join(self.temp_dir, name)
-        shutil.copy(syspath(src), syspath(target))
+        name = f"{name}.{extension}"
+        src = _common.RSRC / name
+        target = self.temp_path / name
+        shutil.copy(src, syspath(target))
         return mediafile.MediaFile(target)
 
     def test_extended_field_write(self):

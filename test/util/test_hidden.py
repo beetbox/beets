@@ -1,0 +1,60 @@
+"""Tests for the 'hidden' utility."""
+
+import ctypes
+import errno
+import subprocess
+import sys
+import tempfile
+import unittest
+
+from beets.util import hidden
+
+
+class HiddenFileTest(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_osx_hidden(self):
+        if not sys.platform == "darwin":
+            self.skipTest("sys.platform is not darwin")
+            return
+
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            try:
+                command = ["chflags", "hidden", f.name]
+                subprocess.Popen(command).wait()
+            except OSError as e:
+                if e.errno == errno.ENOENT:
+                    self.skipTest("unable to find chflags")
+                else:
+                    raise e
+
+            assert hidden.is_hidden(f.name)
+
+    def test_windows_hidden(self):
+        if not sys.platform == "win32":
+            self.skipTest("sys.platform is not windows")
+            return
+
+        # FILE_ATTRIBUTE_HIDDEN = 2 (0x2) from GetFileAttributes documentation.
+        hidden_mask = 2
+
+        with tempfile.NamedTemporaryFile() as f:
+            # Hide the file using
+            success = ctypes.windll.kernel32.SetFileAttributesW(
+                f.name, hidden_mask
+            )
+
+            if not success:
+                self.skipTest("unable to set file attributes")
+
+            assert hidden.is_hidden(f.name)
+
+    def test_other_hidden(self):
+        if sys.platform == "darwin" or sys.platform == "win32":
+            self.skipTest("sys.platform is known")
+            return
+
+        with tempfile.NamedTemporaryFile(prefix=".tmp") as f:
+            fn = f.name
+            assert hidden.is_hidden(fn)
