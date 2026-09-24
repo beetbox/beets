@@ -14,6 +14,9 @@ Bug fixes
 
 - :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
   after configured data and video filters. :bug:`6836`
+- :doc:`plugins/edit`: Add a Back option to the "edit Candidates" prompt so
+  it is possible to return to the importer prompt without picking a
+  candidate. :bug:`6701`
 
 ..
     New features
