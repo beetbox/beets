@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import codecs
 import csv
 import json
 import os
@@ -204,7 +203,7 @@ class ExportFormat:
         self.encoding = encoding
         # creates a file object to write/append or sets to stdout
         self.out_stream = (
-            codecs.open(self.path, self.mode, self.encoding)
+            open(self.path, self.mode, encoding=self.encoding, newline="")
             if self.path
             else sys.stdout
         )

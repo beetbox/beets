@@ -67,3 +67,38 @@ class ExportPluginTest(IOMixin, PluginTestCase):
                 txt = details.text
                 assert tag in self.test_values, tag
                 assert self.test_values[tag] == txt, txt
+
+    def test_csv_output_to_file(self):
+        item1 = self.create_item()
+        path = self.temp_path / "export.csv"
+        self.run_command(
+            "export",
+            "-f",
+            "csv",
+            "-i",
+            "title,album",
+            "-o",
+            str(path),
+            item1.artist,
+        )
+        # The csv module ends rows with "\r\n"; the file must not translate
+        # them again (e.g. into "\r\r\n" on Windows).
+        assert path.read_bytes() == b"title,album\r\nxtitle,xalbum\r\n"
+
+    def test_append_to_file(self):
+        item1 = self.create_item()
+        path = self.temp_path / "export.jsonl"
+        for _ in range(2):
+            self.run_command(
+                "export",
+                "-f",
+                "jsonlines",
+                "-i",
+                "title",
+                "--append",
+                "-o",
+                str(path),
+                item1.artist,
+            )
+        lines = path.read_text(encoding="utf-8").splitlines()
+        assert [json.loads(line) for line in lines] == [{"title": "xtitle"}] * 2
