@@ -39,9 +39,12 @@ Bug fixes
     For plugin developers
     ~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/edit`, :doc:`plugins/export`: Replace ``codecs.open()``, which
+  is deprecated as of Python 3.14, with the built-in ``open()``. Export output
+  is unchanged.
 
 2.14.1 (September 17, 2026)
 ---------------------------
