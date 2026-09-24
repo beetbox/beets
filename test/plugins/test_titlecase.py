@@ -87,6 +87,25 @@ class TestTitlecasePlugin(PluginTestCase):
             with self.configure_plugin({"separators": separators}):
                 assert TitlecasePlugin().titlecase(given) == expected
 
+    def test_separators_with_length_changing_replace(self):
+        testcases = [
+            (
+                [("…", "...")],
+                "What Goes Around…/…Comes Around (Interlude)",
+                "What Goes Around.../...Comes Around (Interlude)",
+            ),
+            (
+                [("...", "…")],
+                "What Goes Around.../...Comes Around (Interlude)",
+                "What Goes Around…/…Comes Around (Interlude)",
+            ),
+        ]
+        for replace, given, expected in testcases:
+            with self.configure_plugin(
+                {"separators": ["/"], "replace": replace}
+            ):
+                assert TitlecasePlugin().titlecase(given) == expected
+
     def test_all_caps(self):
         testcases = [
             (True, "Unaffected", "Unaffected"),
