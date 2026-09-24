@@ -34,6 +34,12 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- :doc:`plugins/scrub`: Stop rewriting the whole file on every scrub. Tags were
+  removed on disk with :meth:`mutagen.flac.FLAC.delete`, which saves with the
+  padding stripped, so writing them back had to grow the file again -- shifting
+  the audio stream twice per track. They are now cleared in memory and saved
+  once, reusing the padding the file already reserves. Scrubbing a 44 MB FLAC
+  goes from 88.7 MB written to 0.5 MB, and from 1967 ms to 65 ms over NFS.
 
 ..
     For plugin developers

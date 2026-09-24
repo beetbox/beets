@@ -538,7 +538,9 @@ class ImporterMixin(PathsMixin, ConfigMixin):
     def prepare_track_for_import(
         self, track_id: int, album_path: Path, album_id: int | None = None
     ) -> Path:
-        track_path = album_path / f"track_{track_id}.mp3"
+        # The extension follows `resource_path`, so that a test class can
+        # point at a FLAC or Ogg fixture and still get a readable file.
+        track_path = album_path / f"track_{track_id}{self.resource_path.suffix}"
         shutil.copy(self.resource_path, track_path)
         medium = MediaFile(track_path)
         medium.update(
