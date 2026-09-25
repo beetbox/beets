@@ -55,7 +55,14 @@ class Library(dbcore.Database):
     ]
     # Caches the per-collision-group work shared by every member of a group.
     _group_memotable: dict[
-        tuple[str | None, str | None, str | None, int | None, tuple[str, ...]],
+        tuple[
+            str | None,
+            str | None,
+            str | None,
+            int | None,
+            Query | None,
+            tuple[str, ...],
+        ],
         tuple[int, str | None],
     ]
     replacements: Replacements

@@ -771,6 +771,37 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
 
         self._assert_dest(b"/base/foo [2001]/the title", i1)
 
+    @pytest.mark.parametrize("singleton_first", [True, False])
+    def test_unique_separates_raw_query_groups(self, items, singleton_first):
+        i1, i2 = items
+        for track in items:
+            album = self.lib.get_album(track)
+            album.album = "AC/DC"
+            album.store()
+        i3 = item(album="AC_DC", year=2003)
+        self.lib.add_album([i3])
+
+        expected = [
+            (b"/base/foo/the title", i3),
+            (b"/base/foo [2001]/the title", i1),
+            (b"/base/foo [2002]/the title", i2),
+        ]
+        for path, track in expected if singleton_first else reversed(expected):
+            self._assert_dest(path, track)
+
+    @pytest.mark.parametrize("inherit", [True, False])
+    def test_store_invalidates_uniqueness(self, items, inherit):
+        i1, i2 = items
+        album2 = self.lib.get_album(i2)
+        album2.album = "Different"
+        album2.store()
+        self._assert_dest(b"/base/foo/the title", i1)
+
+        album2.album = i1.album
+        album2.store(inherit=inherit)
+        self._assert_dest(b"/base/foo [2001]/the title", i1)
+        self._assert_dest(b"/base/foo [2002]/the title", i2)
+
     def test_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
         album2 = self.lib.get_album(i2)
@@ -872,6 +903,46 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i2.store()
 
         self._assert_dest(b"/base/foo/the title", i1)
+
+    @pytest.mark.parametrize("singleton_first", [True, False])
+    def test_unique_separates_raw_query_groups(self, items, singleton_first):
+        i1, i2 = items
+        for track in items:
+            track.title = "AC/DC"
+            track.store()
+        i3 = item(title="AC_DC", year=2003)
+        self.lib.add(i3)
+
+        expected = [
+            (b"/base/foo/AC_DC", i3),
+            (b"/base/foo/AC_DC [2001]", i1),
+            (b"/base/foo/AC_DC [2002]", i2),
+        ]
+        for path, track in expected if singleton_first else reversed(expected):
+            self._assert_dest(path, track)
+
+    def test_unique_separates_identically_formatted_query_values(self, items):
+        i1, i2 = items
+        config["format_raw_length"] = False
+        for track in items:
+            track.length = 60.1
+            track.store()
+        i3 = item(length=60.2, year=2003)
+        self.lib.add(i3)
+        assert i1.formatted().get("length") == i3.formatted().get("length")
+        self._setf("foo/$title%sunique{length,year}")
+
+        self._assert_dest(b"/base/foo/the title", i3)
+        self._assert_dest(b"/base/foo/the title [2001]", i1)
+        self._assert_dest(b"/base/foo/the title [2002]", i2)
+
+    def test_store_invalidates_disambiguator(self, items):
+        i1, i2 = items
+        self._assert_dest(b"/base/foo/the title [2001]", i1)
+        i2.year = i1.year
+        i2.store()
+        self._assert_dest(b"/base/foo/the title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/foo/the title [%d]" % i2.id, i2)
 
     def test_sunique_does_not_match_album(self, items):
         i1, i2 = items
@@ -1091,6 +1162,57 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i1, _i2 = items
         self._setf("$title%tunique{title,track,()}%tunique{title,track,[]}")
         self._assert_dest(b"/base/Common Title (07) [07]", i1)
+
+    @pytest.mark.parametrize("distinct_titles", [2, 12, 100])
+    def test_reuses_album_analysis_for_distinct_titles(
+        self, items, distinct_titles
+    ):
+        i1, i2 = items
+        i2.title = "Different"
+        i2.store()
+        tracks = [i1, i2]
+        for number in range(2, distinct_titles):
+            track = item(title=f"Title {number}", album_id=i1.album_id)
+            self.lib.add(track)
+            tracks.append(track)
+
+        with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
+            for track in tracks:
+                self._assert_dest(f"/base/{track.title}".encode(), track)
+
+        assert lib_items.call_count == 1
+
+    def test_reuses_album_analysis_for_mixed_titles(self, items):
+        i1, i2 = items
+        i3 = item(title="Different", album_id=i1.album_id)
+        self.lib.add(i3)
+        with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
+            self._assert_dest(b"/base/Different", i3)
+            self._assert_dest(b"/base/Common Title [07]", i1)
+            self._assert_dest(b"/base/Common Title [11]", i2)
+
+        assert lib_items.call_count == 1
+
+    def test_store_invalidates_collision_group_analysis(self, items):
+        i1, i2 = items
+        i2.title = "Different"
+        i2.store()
+        self._assert_dest(b"/base/Common Title", i1)
+
+        i2.title = i1.title
+        i2.store()
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest(b"/base/Common Title [11]", i2)
+
+        i2.title = "Different"
+        i2.store()
+        self._assert_dest(b"/base/Common Title", i1)
+        self._assert_dest(b"/base/Different", i2)
+
+    def test_unsaved_title_outside_collision_groups(self, items):
+        i1, _i2 = items
+        i1.title = "Unsaved"
+        self._assert_dest(b"/base/Unsaved", i1)
 
     def test_reuses_collision_group_analysis(self, items):
         i1, i2 = items

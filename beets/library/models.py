@@ -89,6 +89,8 @@ class LibModel(dbcore.Model["Library"]):
 
     def store(self, fields: Iterable[str] | None = None) -> None:
         super().store(fields)
+        self.db._memotable = {}
+        self.db._group_memotable = {}
         plugins.send("database_change", lib=self.db, model=self)
 
     def _remove(self) -> None:
@@ -1623,40 +1625,57 @@ class DefaultTemplateFunctions:
         # Every member of a collision group reaches the same conclusion about
         # which disambiguator to use, so compute it once per group.
         key_values = tuple(normalized_field(db_item, key) for key in keys_list)
-        groupkey = (name, keys, disam, scope_id, key_values)
+        # Raw duplicate queries must stay separate even when paths normalize
+        # to the same value. Track queries share the entire album scope.
+        query_identity = (
+            db_item.duplicates_query(keys_list) if query is None else None
+        )
+        groupkey = (name, keys, disam, scope_id, query_identity, key_values)
         if (group := lib._group_memotable.get(groupkey)) is None:
-            scope_query = (
-                db_item.duplicates_query(keys_list) if query is None else query
-            )
+            scope_query = query_identity if query is None else query
             candidate_items = (
                 lib.items(scope_query)
                 if isinstance(db_item, Item)
                 else lib.albums(scope_query)
             )
-            ambiguous_items = [
-                item
-                for item in candidate_items
-                if tuple(normalized_field(item, key) for key in keys_list)
-                == key_values
-            ]
+            collision_groups: dict[tuple[str, ...], list[LibModel]] = {}
+            for item in candidate_items:
+                item_key = tuple(
+                    normalized_field(item, key) for key in keys_list
+                )
+                collision_groups.setdefault(item_key, []).append(item)
 
-            disambiguator = None
-            for candidate in disam_list:
-                disam_values = {
-                    normalized_field(item, candidate)
-                    for item in ambiguous_items
-                }
-                if len(disam_values) == len(ambiguous_items):
-                    disambiguator = candidate
-                    break
+            for item_key, ambiguous_items in collision_groups.items():
+                disambiguator = None
+                if len(ambiguous_items) > 1:
+                    for candidate in disam_list:
+                        disam_values = {
+                            normalized_field(item, candidate)
+                            for item in ambiguous_items
+                        }
+                        if len(disam_values) == len(ambiguous_items):
+                            disambiguator = candidate
+                            break
 
-            group = (len(ambiguous_items), disambiguator)
-            lib._group_memotable[groupkey] = group
+                item_groupkey = (
+                    name,
+                    keys,
+                    disam,
+                    scope_id,
+                    query_identity,
+                    item_key,
+                )
+                lib._group_memotable[item_groupkey] = (
+                    len(ambiguous_items),
+                    disambiguator,
+                )
+
+            # Unsaved key changes can leave the current item outside the query.
+            group = lib._group_memotable.get(groupkey, (0, None))
 
         ambiguous_count, disambiguator = group
 
-        # If there's only one item to matching these details, then do
-        # nothing.
+        # No disambiguation is needed for zero or one matching item.
         if ambiguous_count <= 1:
             lib._memotable[memokey] = ""
             return ""
