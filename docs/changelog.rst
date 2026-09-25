@@ -34,6 +34,9 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Improve the error message when the library database cannot be opened (for
+  example due to permissions or an unwritable path), and fix the ``cannot not``
+  typo in the generic database open failure message. :bug:`1676`
 
 ..
     For plugin developers
