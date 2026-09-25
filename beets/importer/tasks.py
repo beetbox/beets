@@ -8,6 +8,8 @@ import tarfile
 import time
 from collections import defaultdict
 from collections.abc import Callable
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from functools import cached_property
 from tempfile import mkdtemp
 from typing import TYPE_CHECKING, Any, AnyStr, Protocol, cast
@@ -24,7 +26,7 @@ from .actions import Action, DuplicateAction
 from .state import ImportState
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping, Sequence
+    from collections.abc import Iterable, Iterator, Mapping, Sequence
 
     from beets.autotag import Recommendation, TrackMatch
 
@@ -63,6 +65,11 @@ REIMPORT_FRESH_FIELDS_ALBUM = [*REIMPORT_FRESH_FIELDS_ITEM, "media"]
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+def _is_deletable(item: library.Item) -> bool:
+    """Whether ``item``'s file lives inside its library's directory."""
+    return item.db.directory in util.ancestry(item.path)
 
 
 class ImportAbortError(Exception):
@@ -163,6 +170,106 @@ def resolve_upgrade_target(
 
     kept, superseded, album_id = best
     return kept, superseded, [album_id] if album_id else []
+
+
+@dataclass
+class TrackDuplicates:
+    """The tracks of an import task that duplicate existing library items:
+    ``duplicates`` maps each task item to the library items it duplicates,
+    ``actions`` maps the same items to the action chosen for them.
+    """
+
+    duplicates: dict[library.Item, list[library.Item]] = dataclass_field(
+        default_factory=dict
+    )
+    actions: dict[library.Item, DuplicateAction] = dataclass_field(
+        default_factory=dict
+    )
+
+    @staticmethod
+    def _candidate_pairs(
+        task: ImportTask, lib: library.Library
+    ) -> Iterator[tuple[library.Item, library.Item]]:
+        """Yield ``(item, tagged_item)`` pairs for duplicate detection,
+        where ``tagged_item`` carries the metadata the import would end up
+        with: a temporary copy for an applied match, the item itself otherwise.
+        """
+        if task.choice_flag is Action.APPLY and isinstance(
+            task.match, AlbumMatch
+        ):
+            for item, data in task.match.merged_pairs:
+                tmp_item = library.Item(lib, **dict(item))
+                tmp_item.update(data)
+                yield item, tmp_item
+        elif task.choice_flag in (Action.ASIS, Action.RETAG):
+            for item in task.items:
+                yield item, item
+
+    @classmethod
+    def find(
+        cls,
+        task: ImportTask,
+        lib: library.Library,
+        seen_keys: set[tuple[Any, ...]] | None = None,
+    ) -> TrackDuplicates:
+        """Find the library items duplicated by ``task``'s items, comparing
+        ``import.duplicate_keys.item`` and ignoring the task's own paths. Keys
+        in ``seen_keys`` also count as duplicates; this task's are added to it.
+        """
+        keys: list[str] = config["import"]["duplicate_keys"][
+            "item"
+        ].as_str_seq()
+        task_paths = {i.path for i in task.items if i}
+        duplicates: dict[library.Item, list[library.Item]] = {}
+        claimed: set[tuple[Any, ...]] = set()
+        for item, tmp_item in cls._candidate_pairs(task, lib):
+            if not any(tmp_item.get(k) for k in keys):
+                continue
+            item_key = tuple(tmp_item.get(k) for k in keys)
+            # `Item.duplicates_query` restricts the search to singletons;
+            # the base implementation does not.
+            dup_query = library.LibModel.duplicates_query(tmp_item, keys)
+            found = [
+                other
+                for other in lib.items(dup_query)
+                if other.path not in task_paths
+            ]
+            if found or (seen_keys is not None and item_key in seen_keys):
+                duplicates[item] = found
+            # Claimed for later tasks only, not for this one.
+            claimed.add(item_key)
+
+        if seen_keys is not None:
+            seen_keys |= claimed
+
+        return cls(duplicates)
+
+    def __bool__(self) -> bool:
+        return bool(self.duplicates)
+
+    def __len__(self) -> int:
+        return len(self.duplicates)
+
+    def items_with_action(self, action: DuplicateAction) -> list[library.Item]:
+        """The task's items resolved with the given ``action``."""
+        return [i for i, a in self.actions.items() if a is action]
+
+    def old_items(self, item: library.Item) -> list[library.Item]:
+        """The existing library items duplicated by ``item``."""
+        return self.duplicates.get(item, [])
+
+    def remove_old(self) -> None:
+        """Remove the old library items duplicated by tracks whose duplicate
+        action is REMOVE.
+        """
+        seen: set[int] = set()
+        for item in self.items_with_action(DuplicateAction.REMOVE):
+            for old_item in self.old_items(item):
+                if old_item.id is None or old_item.id in seen:
+                    continue
+                seen.add(old_item.id)
+                log.debug("removing duplicate {.filepath}", old_item)
+                old_item.remove(delete=_is_deletable(old_item))
 
 
 class BaseImportTask:
@@ -268,6 +375,7 @@ class ImportTask(BaseImportTask):
     ) -> None:
         super().__init__(toppath, paths, items)
         self.is_album = True
+        self.track_duplicates = TrackDuplicates()
 
     def set_choice(self, choice: Action | AlbumMatch | TrackMatch) -> None:
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -397,15 +505,7 @@ class ImportTask(BaseImportTask):
             artpath = album.artpath
 
             for item in album.items():
-                item.remove(with_album=False)
-                if lib.directory in util.ancestry(item.path):
-                    log.debug("deleting duplicate {.filepath}", item)
-                    util.remove(item.path)
-                    util.prune_dirs(
-                        os.path.dirname(item.path),
-                        lib.directory,
-                        clutter=config["clutter"].as_str_seq(),
-                    )
+                item.remove(delete=_is_deletable(item), with_album=False)
 
             album.remove(with_items=False)
 
@@ -431,15 +531,7 @@ class ImportTask(BaseImportTask):
         superseded = self._upgrade_superseded or []
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
-            item.remove(with_album=False)
-            if lib.directory in util.ancestry(item.path):
-                log.debug("deleting superseded {.filepath}", item)
-                util.remove(item.path)
-                util.prune_dirs(
-                    os.path.dirname(item.path),
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            item.remove(delete=_is_deletable(item), with_album=False)
 
         grafted = False
         for album_id in self._upgrade_old_albums or []:
@@ -933,15 +1025,7 @@ class SingletonImportTask(ImportTask):
         duplicate_items = self.find_duplicates(lib)
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug("deleting duplicate {.filepath}", item)
-                util.remove(item.path)
-                util.prune_dirs(
-                    os.path.dirname(item.path),
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            item.remove(delete=_is_deletable(item))
 
     def _remove_upgrade_duplicates(self, lib: library.Library) -> None:
         """Remove the superseded old item(s).
@@ -953,15 +1037,7 @@ class SingletonImportTask(ImportTask):
         superseded = self._upgrade_superseded or []
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug("deleting superseded {.filepath}", item)
-                util.remove(item.path)
-                util.prune_dirs(
-                    os.path.dirname(item.path),
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            item.remove(delete=_is_deletable(item))
 
     def add(self, lib: library.Library) -> None:
         with lib.transaction():

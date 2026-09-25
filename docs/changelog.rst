@@ -9,19 +9,23 @@ below!
 Unreleased
 ----------
 
+New features
+~~~~~~~~~~~~
+
+- :ref:`duplicate_tracks`: When enabled, each track of an album import is
+  checked against the library using the chosen candidate's metadata and the
+  :ref:`duplicate_keys` ``item`` fields, and matches are resolved together with
+  the whole-album duplicate check via the :ref:`duplicate_tracks_action` option
+  (falling back to :ref:`duplicate_action` when unset), including per-track
+  decisions. ``skip`` drops already-imported tracks and adds the remaining new
+  tracks to the existing album, completing a partially-imported album. Disabled
+  by default.
+
 Bug fixes
 ~~~~~~~~~
 
 - :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
   after configured data and video filters. :bug:`6836`
-
-..
-    New features
-    ~~~~~~~~~~~~
-
-Bug fixes
-~~~~~~~~~
-
 - :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
   large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
   (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer

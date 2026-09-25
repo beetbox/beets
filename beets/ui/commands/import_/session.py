@@ -225,6 +225,65 @@ class TerminalImportSession(importer.ImportSession):
 
         return action
 
+    def get_track_duplicate_actions(
+        self,
+        task: importer.ImportTask,
+        track_duplicates: dict[Item, list[Item]],
+    ) -> dict[Item, DuplicateAction]:
+        """Decide what to do about the tracks that are already in the library.
+
+        The configured action is used as-is unless it is ASK, in which case
+        the user picks one action for all the duplicate tracks or chooses one
+        per track. In quiet mode the duplicate tracks are skipped.
+        """
+        actions = super().get_track_duplicate_actions(task, track_duplicates)
+        if DuplicateAction.ASK not in actions.values():
+            return actions
+
+        log.warning(
+            "Some tracks ({} of {}) are already in the library!",
+            len(track_duplicates),
+            len(task.imported_items()),
+        )
+        if config["import"]["quiet"]:
+            log.info("Skipping duplicate tracks.")
+            choice = "s"
+        else:
+            existing = [
+                item
+                for matches in track_duplicates.values()
+                for item in matches
+            ]
+            self._report_item_summary("Old", existing, is_album=True)
+            self._report_item_summary(
+                "New", list(track_duplicates), is_album=True
+            )
+            choice = ui.input_options(
+                [*DuplicateAction.track_options(), "sElect per track"]
+            )
+
+        if choice == "e":
+            actions = {
+                item: self._get_single_track_duplicate_action(item, matches)
+                for item, matches in track_duplicates.items()
+            }
+        else:
+            actions = dict.fromkeys(
+                track_duplicates,
+                DuplicateAction(choice),  # type: ignore[call-arg]
+            )
+
+        return actions
+
+    def _get_single_track_duplicate_action(
+        self, item: Item, matches: list[Item]
+    ) -> DuplicateAction:
+        self._report_item_summary("Old", matches, is_album=False)
+        self._report_item_summary("New", [item], is_album=False)
+        return DuplicateAction(
+            ui.input_options(DuplicateAction.track_options())
+        )  # type: ignore[call-arg]
+
     def should_resume(self, path: PathBytes) -> bool:
         return ui.input_yn(
             f"Import of the directory:\n{displayable_path(path)}\n"
