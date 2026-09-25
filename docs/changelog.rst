@@ -12,6 +12,9 @@ Unreleased
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
+  gracefully by decoding with error handling and skipping tracks that produce
+  unparseable data, instead of crashing. :bug:`3527`
 - :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
   after configured data and video filters. :bug:`6836`
 
