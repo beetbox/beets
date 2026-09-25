@@ -98,6 +98,11 @@ sunique:
     disambiguators: year trackdisambig
     bracket: '[]'
 
+tunique:
+    keys: title
+    disambiguators: disc track artist
+    bracket: '[]'
+
 # --------------- Tagging ---------------
 
 per_disc_numbering: no
