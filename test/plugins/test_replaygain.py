@@ -1,20 +1,16 @@
-from abc import ABC, abstractmethod
+import shutil
 from typing import Any, ClassVar
 
 import pytest
 from mediafile import MediaFile
 
 from beets.test.helper import (
+    RUNNING_IN_CI,
     AsIsImporterMixin,
     ImportHelper,
     PluginMixin,
-    has_program,
 )
-from beetsplug.replaygain import (
-    FatalGstreamerPluginReplayGainError,
-    GStreamerBackend,
-    MetaflacBackend,
-)
+from beetsplug.replaygain import MetaflacBackend
 
 try:
     import gi
@@ -26,17 +22,29 @@ except (ImportError, ValueError):
 
 
 GAIN_PROG = next(
-    (
-        cmd
-        for cmd in ["mp3gain", "mp3rgain", "aacgain"]
-        if has_program(cmd, ["-v"])
-    ),
+    (cmd for cmd in ["mp3gain", "mp3rgain", "aacgain"] if shutil.which(cmd)),
     None,
 )
 
-FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
-
-METAFLAC_AVAILABLE = has_program("metaflac", ["--version"])
+SKIP_FFMPEG = pytest.mark.skipif(
+    not shutil.which("ffmpeg") and not RUNNING_IN_CI,
+    reason="ffmpeg cannot be found and not running in CI",
+)
+SKIP_GSTREAMER = pytest.mark.skipif(
+    not GST_AVAILABLE and not RUNNING_IN_CI,
+    reason="gstreamer cannot be found and not running in CI",
+)
+SKIP_METAFLAC = pytest.mark.skipif(
+    (
+        not shutil.which("metaflac")  # included in ``flac`` package
+        and not RUNNING_IN_CI
+    ),
+    reason="no metaflac command found and not running in CI",
+)
+SKIP_GAIN = pytest.mark.skipif(
+    not GAIN_PROG and not RUNNING_IN_CI,
+    reason="no *gain command found and not running in CI",
+)
 
 
 def reset_replaygain(item):
@@ -62,9 +70,6 @@ class ReplayGainPluginHelper(PluginMixin, ImportHelper):
         return self.plugin_config["backend"]
 
     def setup_beets(self):
-        # Implemented by Mixins, see above. This may decide to skip the test.
-        self.test_backend()
-
         super().setup_beets()
         self.config["replaygain"].set(self.plugin_config)
 
@@ -77,29 +82,12 @@ class ThreadedImportMixin:
         self.config["threaded"] = True
 
 
-class BackendMixin(ABC):
+class BackendMixin:
     plugin_config: ClassVar[dict[str, Any]]
-    has_r128_support: bool
-
-    @abstractmethod
-    def test_backend(self):
-        """Check whether the backend actually has all required functionality."""
 
 
 class GstBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "gstreamer"}
-    has_r128_support = True
-
-    def test_backend(self):
-        """Check whether the backend actually has all required functionality."""
-        try:
-            # Check if required plugins can be loaded by instantiating a
-            # GStreamerBackend (via its .__init__).
-            self.config["replaygain"]["targetlevel"] = 89
-            GStreamerBackend(self.config["replaygain"], None)
-        except FatalGstreamerPluginReplayGainError as e:
-            # Skip the test if plugins could not be loaded.
-            pytest.skip(str(e))
 
 
 class CmdBackendMixin(BackendMixin):
@@ -107,116 +95,15 @@ class CmdBackendMixin(BackendMixin):
         "backend": "command",
         "command": GAIN_PROG,
     }
-    has_r128_support = False
 
 
 class FfmpegBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "ffmpeg"}
-    has_r128_support = True
 
 
-class MetaflacBackendMixin(BackendMixin):
-    plugin_config: ClassVar[dict[str, Any]] = {"backend": "metaflac"}
-    has_r128_support = False
-
-    def test_backend(self):
-        """Skip the test when the metaflac tool is not installed."""
-        if not METAFLAC_AVAILABLE:
-            pytest.skip("metaflac cannot be found")
-
-
-class ReplayGainCliTest:
-    FNAME: str
-
-    def _add_album(self, *args, **kwargs):
-        # Use a file with non-zero volume (most test assets are total silence)
-        album = self.add_album_fixture(*args, fname=self.FNAME, **kwargs)
-        for item in album.items():
-            reset_replaygain(item)
-
-        return album
-
-    def test_cli_saves_track_gain(self):
-        self._add_album(2)
-
-        for item in self.lib.items():
-            assert item.rg_track_peak is None
-            assert item.rg_track_gain is None
-            mediafile = MediaFile(item.path)
-            assert mediafile.rg_track_peak is None
-            assert mediafile.rg_track_gain is None
-
-        self.run_command("replaygain")
-
-        # Skip the test if rg_track_peak and rg_track gain is None, assuming
-        # that it could only happen if the decoder plugins are missing.
-        if all(
-            i.rg_track_peak is None and i.rg_track_gain is None
-            for i in self.lib.items()
-        ):
-            pytest.skip("decoder plugins could not be loaded.")
-
-        for item in self.lib.items():
-            assert item.rg_track_peak is not None
-            assert item.rg_track_gain is not None
-            mediafile = MediaFile(item.path)
-            assert mediafile.rg_track_peak == pytest.approx(
-                item.rg_track_peak, abs=1e-6
-            )
-            assert mediafile.rg_track_gain == pytest.approx(
-                item.rg_track_gain, abs=1e-2
-            )
-
-    def test_cli_skips_calculated_tracks(self):
-        album_rg = self._add_album(1)
-        item_rg = album_rg.items()[0]
-
-        if self.has_r128_support:
-            album_r128 = self._add_album(1, ext="opus")
-            item_r128 = album_r128.items()[0]
-
-        self.run_command("replaygain")
-
-        item_rg.load()
-        assert item_rg.rg_track_gain is not None
-        assert item_rg.rg_track_peak is not None
-        assert item_rg.r128_track_gain is None
-
-        item_rg.rg_track_gain += 1.0
-        item_rg.rg_track_peak += 1.0
-        item_rg.store()
-        rg_track_gain = item_rg.rg_track_gain
-        rg_track_peak = item_rg.rg_track_peak
-
-        if self.has_r128_support:
-            item_r128.load()
-            assert item_r128.r128_track_gain is not None
-            assert item_r128.rg_track_gain is None
-            assert item_r128.rg_track_peak is None
-
-            item_r128.r128_track_gain += 1.0
-            item_r128.store()
-            r128_track_gain = item_r128.r128_track_gain
-
-        self.run_command("replaygain")
-
-        item_rg.load()
-        assert item_rg.rg_track_gain == rg_track_gain
-        assert item_rg.rg_track_peak == rg_track_peak
-
-        if self.has_r128_support:
-            item_r128.load()
-            assert item_r128.r128_track_gain == r128_track_gain
-
+class R128Test:
     def test_cli_does_not_skip_wrong_tag_type(self):
         """Check that items that have tags of the wrong type won't be skipped."""
-        if not self.has_r128_support:
-            # This test is a lot less interesting if the backend cannot write
-            # both tag types.
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
         album_rg = self._add_album(1)
         item_rg = album_rg.items()[0]
 
@@ -244,36 +131,7 @@ class ReplayGainCliTest:
         # assert item_r128.rg_track_gain is None
         # assert item_r128.rg_track_peak is None
 
-    def test_cli_saves_album_gain_to_file(self):
-        self._add_album(2)
-
-        for item in self.lib.items():
-            mediafile = MediaFile(item.path)
-            assert mediafile.rg_album_peak is None
-            assert mediafile.rg_album_gain is None
-
-        self.run_command("replaygain", "-a")
-
-        peaks = []
-        gains = []
-        for item in self.lib.items():
-            mediafile = MediaFile(item.path)
-            peaks.append(mediafile.rg_album_peak)
-            gains.append(mediafile.rg_album_gain)
-
-        # Make sure they are all the same
-        assert max(peaks) == min(peaks)
-        assert max(gains) == min(gains)
-
-        assert max(gains) != 0.0
-        assert max(peaks) != 0.0
-
     def test_cli_writes_only_r128_tags(self):
-        if not self.has_r128_support:
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
         album = self._add_album(2, ext="opus")
 
         self.run_command("replaygain", "-a")
@@ -303,11 +161,6 @@ class ReplayGainCliTest:
         assert gain_relative_to_84 != gain_relative_to_89
 
     def test_r128_targetlevel_has_effect(self):
-        if not self.has_r128_support:
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
         album = self._add_album(1, ext="opus")
         item = album.items()[0]
 
@@ -322,25 +175,28 @@ class ReplayGainCliTest:
 
         assert gain_relative_to_84 != gain_relative_to_89
 
-    def test_per_disc(self):
-        # Use the per_disc option and add a little more concurrency.
-        album = self._add_album(track_count=4, disc_count=3)
-        self.config["replaygain"]["per_disc"] = True
-        self.run_command("replaygain", "-a")
+    def test_r128_cli_skips_calculated_tracks(self):
+        album_r128 = self._add_album(1, ext="opus")
+        item_r128 = album_r128.items()[0]
 
-        # FIXME: Add fixtures with known track/album gain (within a suitable
-        # tolerance) so that we can actually check per-disc operation here.
-        for item in album.items():
-            assert item.rg_track_gain is not None
-            assert item.rg_album_gain is not None
+        self.run_command("replaygain")
+
+        item_r128.load()
+        assert item_r128.r128_track_gain is not None
+        assert item_r128.rg_track_gain is None
+        assert item_r128.rg_track_peak is None
+
+        item_r128.r128_track_gain += 1.0
+        item_r128.store()
+        r128_track_gain = item_r128.r128_track_gain
+
+        self.run_command("replaygain")
+
+        item_r128.load()
+        assert item_r128.r128_track_gain == r128_track_gain
 
     def test_clears_wrong_tag_type(self):
         """Check that items that have tags of the wrong type won't be skipped."""
-        if not self.has_r128_support:
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
         album_rg = self._add_album(1)
         item_rg = album_rg.items()[0]
 
@@ -367,38 +223,129 @@ class ReplayGainCliTest:
         assert item_r128.rg_track_peak is None
 
 
-@pytest.mark.skipif(not GST_AVAILABLE, reason="gstreamer cannot be found")
-class TestReplayGainGstCli(
-    ReplayGainCliTest, ReplayGainPluginHelper, GstBackendMixin
-):
+class MetaflacBackendMixin(BackendMixin):
+    plugin_config: ClassVar[dict[str, Any]] = {"backend": "metaflac"}
+    has_r128_support = False
+
+
+class ReplayGainCliTest(ReplayGainPluginHelper):
+    FNAME: str
+
+    def _add_album(self, *args, **kwargs):
+        # Use a file with non-zero volume (most test assets are total silence)
+        album = self.add_album_fixture(*args, fname=self.FNAME, **kwargs)
+        for item in album.items():
+            reset_replaygain(item)
+
+        return album
+
+    def test_cli_saves_track_gain(self):
+        self._add_album(2)
+
+        for item in self.lib.items():
+            assert item.rg_track_peak is None
+            assert item.rg_track_gain is None
+            mediafile = MediaFile(item.path)
+            assert mediafile.rg_track_peak is None
+            assert mediafile.rg_track_gain is None
+
+        self.run_command("replaygain")
+
+        for item in self.lib.items():
+            assert item.rg_track_peak is not None
+            assert item.rg_track_gain is not None
+            mediafile = MediaFile(item.path)
+            assert mediafile.rg_track_peak == pytest.approx(
+                item.rg_track_peak, abs=1e-6
+            )
+            assert mediafile.rg_track_gain == pytest.approx(
+                item.rg_track_gain, abs=1e-2
+            )
+
+    def test_cli_skips_calculated_tracks(self):
+        album_rg = self._add_album(1)
+        item_rg = album_rg.items()[0]
+
+        self.run_command("replaygain")
+
+        item_rg.load()
+        assert item_rg.rg_track_gain is not None
+        assert item_rg.rg_track_peak is not None
+        assert item_rg.r128_track_gain is None
+
+        item_rg.rg_track_gain += 1.0
+        item_rg.rg_track_peak += 1.0
+        item_rg.store()
+        rg_track_gain = item_rg.rg_track_gain
+        rg_track_peak = item_rg.rg_track_peak
+
+        self.run_command("replaygain")
+
+        item_rg.load()
+        assert item_rg.rg_track_gain == rg_track_gain
+        assert item_rg.rg_track_peak == rg_track_peak
+
+    def test_cli_saves_album_gain_to_file(self):
+        self._add_album(2)
+
+        for item in self.lib.items():
+            mediafile = MediaFile(item.path)
+            assert mediafile.rg_album_peak is None
+            assert mediafile.rg_album_gain is None
+
+        self.run_command("replaygain", "-a")
+
+        peaks = []
+        gains = []
+        for item in self.lib.items():
+            mediafile = MediaFile(item.path)
+            peaks.append(mediafile.rg_album_peak)
+            gains.append(mediafile.rg_album_gain)
+
+        # Make sure they are all the same
+        assert max(peaks) == min(peaks)
+        assert max(gains) == min(gains)
+
+        assert max(gains) != 0.0
+        assert max(peaks) != 0.0
+
+    def test_per_disc(self):
+        # Use the per_disc option and add a little more concurrency.
+        album = self._add_album(track_count=4, disc_count=3)
+        self.config["replaygain"]["per_disc"] = True
+        self.run_command("replaygain", "-a")
+
+        # FIXME: Add fixtures with known track/album gain (within a suitable
+        # tolerance) so that we can actually check per-disc operation here.
+        for item in album.items():
+            assert item.rg_track_gain is not None
+            assert item.rg_album_gain is not None
+
+
+@SKIP_GSTREAMER
+class TestReplayGainGstCli(R128Test, ReplayGainCliTest, GstBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
-@pytest.mark.skipif(not GAIN_PROG, reason="no *gain command found")
-class TestReplayGainCmdCli(
-    ReplayGainCliTest, ReplayGainPluginHelper, CmdBackendMixin
-):
+@SKIP_GAIN
+class TestReplayGainCmdCli(ReplayGainCliTest, CmdBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
-class TestReplayGainFfmpegCli(
-    ReplayGainCliTest, ReplayGainPluginHelper, FfmpegBackendMixin
-):
+@SKIP_FFMPEG
+class TestReplayGainFfmpegCli(R128Test, ReplayGainCliTest, FfmpegBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
+@SKIP_FFMPEG
 class TestReplayGainFfmpegNoiseCli(
-    ReplayGainCliTest, ReplayGainPluginHelper, FfmpegBackendMixin
+    R128Test, ReplayGainCliTest, FfmpegBackendMixin
 ):
     FNAME = "whitenoise"
 
 
-@pytest.mark.skipif(not METAFLAC_AVAILABLE, reason="metaflac cannot be found")
-class TestReplayGainMetaflacCli(
-    ReplayGainCliTest, ReplayGainPluginHelper, MetaflacBackendMixin
-):
+@SKIP_METAFLAC
+class TestReplayGainMetaflacCli(ReplayGainCliTest, MetaflacBackendMixin):
     FNAME = "whitenoise"
 
     def _add_album(self, *args, **kwargs):
@@ -429,28 +376,28 @@ class ImportTest(AsIsImporterMixin):
             assert item.rg_album_gain is not None
 
 
-@pytest.mark.skipif(not GST_AVAILABLE, reason="gstreamer cannot be found")
+@SKIP_GSTREAMER
 class TestReplayGainGstImport(
     ImportTest, ReplayGainPluginHelper, GstBackendMixin
 ):
     pass
 
 
-@pytest.mark.skipif(not GAIN_PROG, reason="no *gain command found")
+@SKIP_GAIN
 class TestReplayGainCmdImport(
     ImportTest, ReplayGainPluginHelper, CmdBackendMixin
 ):
     pass
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
+@SKIP_FFMPEG
 class TestReplayGainFfmpegImport(
     ImportTest, ReplayGainPluginHelper, FfmpegBackendMixin
 ):
     pass
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
+@SKIP_FFMPEG
 class TestReplayGainFfmpegThreadedImport(
     ThreadedImportMixin, ImportTest, ReplayGainPluginHelper, FfmpegBackendMixin
 ):

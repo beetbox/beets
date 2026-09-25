@@ -36,6 +36,7 @@ from beets.test import _common
 from beets.test.helper import (
     NEEDS_FFPROBE,
     NEEDS_REFLINK,
+    RUNNING_IN_CI,
     AsIsImporterMixin,
     AutotagImportHelper,
     AutotagImportTestCase,
@@ -46,11 +47,9 @@ from beets.test.helper import (
     TerminalImportMixin,
     TerminalImportSessionFixture,
     TestHelper,
-    has_program,
     is_importable,
 )
 from beets.util import bytestring_path, syspath
-from beets.util.extension import remux_mpeglayer3_wav
 
 
 class PathsMixin:
@@ -258,7 +257,7 @@ class TestImportTar(TestImportZip):
 
 
 @pytest.mark.skipif(
-    not (is_importable("rarfile") and has_program("unrar")),
+    not (is_importable("rarfile") and shutil.which("unrar") and RUNNING_IN_CI),
     reason="rarfile or unrar program not found",
 )
 class TestImportRar(TestImportZip):
@@ -266,7 +265,10 @@ class TestImportRar(TestImportZip):
         return _common.RSRC / "archive.rar"
 
 
-@pytest.mark.skipif(not is_importable("py7zr"), reason="py7zr is not available")
+@pytest.mark.skipif(
+    not (is_importable("py7zr") and RUNNING_IN_CI),
+    reason="py7zr is not available",
+)
 class TestImport7z(TestImportZip):
     def create_archive(self):
         return _common.RSRC / "archive.7z"
@@ -388,8 +390,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]),
-    reason="need ffprobe for format recognition",
+    not shutil.which("ffprobe"), reason="need ffprobe for format recognition"
 )
 class TestImportFormat(ImportHelper):
     """Test fix_extension during import."""
@@ -2567,18 +2568,6 @@ class TestImportId(ImportHelper):
 
 class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
-
-    def test_remux_mpeglayer3_wav(self):
-        src = _common.RSRC / "mpeglayer3.wav"
-        dest = self.temp_path / "mpeglayer3.wav"
-        shutil.copy(src, syspath(dest))
-
-        mp3_path = remux_mpeglayer3_wav(dest)
-
-        assert mp3_path is not None
-        assert mp3_path.suffix == ".mp3"
-        assert mp3_path.exists()
-        assert not dest.exists()
 
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""

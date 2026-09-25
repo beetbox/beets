@@ -34,6 +34,13 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- :doc:`plugins/bpd`: Report song paths with ``/`` separators on every platform,
+  so that the paths clients receive can be used to address songs on Windows too.
+- :ref:`import-cmd`: Detect the format of extension-less files on Windows, where
+  the ``ffprobe`` output was left unparsed because of its line endings.
+- Detect ImageMagick on Windows: the version probe kept looking for ``convert``
+  after ``magick`` had answered and picked up the unrelated built-in Windows
+  tool of that name, reporting the backend as unavailable. :bug:`5414`
 
 ..
     For plugin developers
