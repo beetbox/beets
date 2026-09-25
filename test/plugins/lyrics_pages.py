@@ -8,11 +8,12 @@ from urllib.parse import urlparse
 import pytest
 
 
-def xfail_on_ci(msg: str) -> pytest.MarkDecorator:
+def xfail_on_ci(msg: str, strict: bool = True) -> pytest.MarkDecorator:
     return pytest.mark.xfail(
         bool(os.environ.get("GITHUB_ACTIONS")),
         reason=msg,
         raises=AssertionError,
+        strict=strict,
     )
 
 
@@ -114,7 +115,7 @@ lyrics_pages = [
         Wonder how you manage to make ends meet
         """,
         url_title="The Beatles - Lady Madonna Lyrics | AZLyrics.com",
-        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare")],
+        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare", strict=False)],
     ),
     LyricsPage.make(
         "https://www.dainuzodziai.lt/m/mergaites-nori-mylet-atlanta/",
@@ -624,5 +625,261 @@ lyrics_pages = [
         Wonder how you manage to make ends meet
         """,
         marks=[pytest.mark.xfail(reason="Tekstowo seems to be broken again")],
+    ),
+    LyricsPage.make(
+        "https://genius.com/Caparezza-argenti-vive-lyrics",
+        """
+        [Testo di "Argenti vive"]
+
+        [Intro]
+        Mentre solcavamo l'immobile palude, mi si parò davanti uno spirito coperto di fango. Allungò verso la barca entrambe le mani, ma Virgilio, pronto, lo respinse, dicendogli: "Via di qui, vattene a stare con gli altri maledetti!"
+        E io: "Maestro, sarei molto desideroso, prima di uscire dalla palude, di vederlo immergere in questa melma."
+        Poco dopo vidi gli iracondi fare di lui un tale scempio che per esso ancora glorifico e rendo grazie a Dio. Tutti insieme gridavano:
+        "A Filippo Argenti
+        A Filippo Argenti"
+
+        [Strofa 1]
+        Ciao Dante, ti ricordi di me? Sono Filippo Argenti
+        Il vicino di casa che nella Commedia ponesti tra questi violenti
+        Sono quello che annega nel fango, pestato dai demoni intorno
+        Cos'è, vuoi provocarmi, sommo? Puoi solo provocarmi sonno!
+        Alighieri, vedi, tremi
+        Mi temi come gli eritemi, eri te che mi deridevi
+        Devi combattere, ma te la dai a gambe levate
+        Ma quale vate? Vattene!
+        Ehi, quando quando vuoi, dimmi dimmi dove
+        Sono dannato, ma te le do di santa ragione
+        Così impari a rimare male di me
+        Io non ti maledirei, ti farei male, Alighieri
+        Non sei divino, individuo
+        Se t'individuo, ti divido
+        Inutile che decanti l'amante, Dante
+        Provochi solo cali di libido
+        Il mondo non è dei poeti (No)
+        Il mondo è di noi prepotenti
+        Vai rimando alla genti che mi getti nel fango
+        Ma io rimango l'Argenti
+
+        [Pre-Ritornello 1]
+        Argenti vive, vive e vivrà
+        Sono ancora il più temuto della città
+        Sono ancora il più rispettato, quindi cosa t'inventi?
+        Se questo mondo è l'Inferno, allora sappi che appartiene
+
+        [Ritornello]
+        A Filippo Argenti
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+
+        [Strofa 2]
+        Non è vero che la lingua ferisce più della spada, è una cazzata
+        Cosa pensi tenga più a bada: rima baciata o mazza chiodata?
+        Non c'è dittatore che abdichi perché persuaso
+        Pare che più nessuno sappia nemmeno che significhi "abdicare", ma di che parliamo?
+        Attaccare me non ti redime (No)
+        Eri tu che davi direttive (Oh)
+        Per annichilire ogni ghibellino
+        Cerchio 7, Giro primo
+        "Fatti non foste per vivere come bruti"
+        Ben detta, ma sputi vendetta
+        Dalla barchetta di Flegias
+        Complimenti per la regia
+
+        [Pre-Ritornello 2]
+        Argenti vive, vive e vivrà
+        Alla gente piace la mia ferocità
+        Persino tu che mi anneghi a furia di calci sui denti
+        Ti chiami Dante Alighieri, ma somigli negli atteggiamenti
+
+        [Ritornello]
+        A Filippo Argenti
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+        Poeta, tu mostri lo sdegno
+        A Filippo Argenti
+        Ma tutti consacrano questo regno
+        A Filippo Argenti
+        Le tue terzine sono carta straccia
+        Le mie cinquine sulla tua faccia lasciano il segno
+
+        [Bridge]
+        Stai lontano dalle fiamme perché ti bruci
+        Guardati le spalle, caro Dante, è pieno di Bruti
+        Tutti i grandi oratori sono stati fatti fuori
+        Da signori, violenti e nerboruti
+        Anche gli alberi sgomitano per un po' di sole
+        Il resto sono solo inutili, belle parole
+        Sono sicuro che in futuro le giovani menti
+        Saranno come l'Argenti e l'arte porterà il mio nome
+
+        [Outro]
+        Filippo Argenti
+        Filippo Argenti
+        Filippo Argenti
+        Filippo Argenti
+        "Lo lasciammo là, nella palude e non racconto altro."
+        """,  # noqa: E501
+        artist="Caparezza",
+        track_title="Argenti vive",
+        language="IT",
+        marks=[xfail_on_ci("Genius returns 403 FORBIDDEN in CI")],
+    ),
+    LyricsPage.make(
+        "https://www.azlyrics.com/lyrics/derivakat/bountyhunter.html",
+        """
+        [Romanized:]
+
+        Living legend made of myths and made of stories
+        But I'm present, find the mark and I'll take the glory
+        Hit the dead-end, cornered like an animal, it just
+        Takes one second, I'm nothing if not practical
+        But I don't really care if you're right or you're wrong
+        Bùguǎn nǐ de wùhuì or you're just a disgrace
+        Get in the zone when I put on my song
+        Bìrán de xiànshí when I'm up in your face
+        Zhēn tài kě qíng kùn zài lóng lǐ de nǐ
+        But you'll find in the end that I'll leave you erased
+        (If they call?) I'm the one
+        (Got a job?) Get it done
+        All alone, you and me, I'll be leaving no trace
+
+        No place where I won't go to
+        No limits I won't break through
+        No godless deed I won't do
+        If they got problems, then they know to
+
+        Call the bounty hunter
+        Yeah, they got my number
+        I'm the problem solver
+        Leave you six feet under
+        You won't see another
+        Winter, spring or summer
+        Wǒ huì ràng nǐ xiāoshī
+        No way to recover (Hey!)
+
+        Run it up
+        Night or day (Hey!)
+        Hunt you down
+        Run away
+
+        No mercy from this mercenary
+        Take away your sanctuary
+        Shìlì jiù xiàng 20/20
+        Way I see you'll end up buried
+        Don't deviate
+        Zhǎodào nǐ so I terminate
+        Wúlùn, wǒ huì make you pay
+        I'll double tap you like bang, bang
+
+        (Dead lilac) A ghost you only heard in rumor
+        (Dead lilac) But only if you heard me sooner
+        (Dead lilac) Losing your chances and losing your time
+        (Dead lilac) shìjiè wèilái méi nǐ de cúnzài (Yeah)
+
+        No place where I won't go to (I won't go to)
+        No limits I won't break through (I won't break through)
+        No godless deed I won't do (That I won't do)
+        If they got problems, then they know to
+
+        Call the bounty hunter (Hey)
+        Yeah, they got my number
+        I'm the problem solver (Hey)
+        Leave you six feet under
+        You won't see another (Hey)
+        Winter, spring or summer
+        Wǒ huì ràng nǐ xiāoshī (Hey)
+        No way to recover (Hey!)
+
+        Run it up (Run it up)
+        Night or day (Hey!) (Day)
+        Hunt you down (Hunt you down)
+        Run away
+
+        [English/Chinese:]
+
+        Living legend made of myths and made of stories
+        But I'm present, find the mark and I'll take the glory
+        Hit the dead-end, cornered like an animal, it just
+        Takes one second, I'm nothing if not practical
+        But I don't really care if you're right or you're wrong
+        不管你的误会 or you're just a disgrace
+        Get in the zone when I put on my song
+        必然的现实 when I'm up in your face
+        真太可情 困在笼里的你
+        But you'll find in the end that I'll leave you erased
+        (If they call?) I'm the one
+        (Got a job?) Get it done
+        All alone, you and me, I'll be leaving no trace
+
+        No place where I won't go to
+        No limits I won't break through
+        No godless deed I won't do
+        If they got problems, then they know to
+
+        Call the bounty hunter
+        Yeah, they got my number
+        I'm the problem solver
+        Leave you six feet under
+        You won't see another
+        Winter, spring or summer
+        我会让你消失
+        No way to recover (Hey!)
+
+        Run it up
+        Night or day (Hey!)
+        Hunt you down
+        Run away
+
+        No mercy from this mercenary
+        Take away your sanctuary
+        视力就像 20/20
+        Way I see you'll end up buried
+        Don't deviate
+        找到你 so I terminate
+        无论, 我会 make you pay
+        I'll double tap you like bang, bang
+
+        (Dead lilac) A ghost you only heard in rumor
+        (Dead lilac) But only if you heard me sooner
+        (Dead lilac) Losing your chances and losing your time
+        (Dead lilac) 世界未来没你的存在 (Yeah)
+
+        No place where I won't go to (I won't go to)
+        No limits I won't break through (I won't break through)
+        No godless deed I won't do (That I won't do)
+        If they got problems, then they know to
+
+        Call the bounty hunter (Hey)
+        Yeah, they got my number
+        I'm the problem solver (Hey)
+        Leave you six feet under
+        You won't see another (Hey)
+        Winter, spring or summer
+        我会让你消失 (Hey)
+        No way to recover (Hey!)
+
+        Run it up (Run it up)
+        Night or day (Hey!) (Day)
+        Hunt you down (Hunt you down)
+        Run away
+        """,
+        artist="Derivakat",
+        track_title="Bounty Hunter",
+        url_title="Derivakat - Bounty Hunter Lyrics | AZLyrics.com",
+        marks=[xfail_on_ci("AZLyrics is blocked by Cloudflare", strict=False)],
     ),
 ]
