@@ -11,7 +11,6 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
-import requests
 
 from beets.library import Item
 from beets.test.helper import PluginMixin, PluginTestHelper
@@ -441,8 +440,8 @@ class TestLyricsSources(LyricsBackendTest):
     ):
         """Test parsed lyrics from each of the configured lyrics pages."""
         monkeypatch.setattr(
-            "beetsplug.lyrics.LyricsRequestHandler.create_session",
-            lambda _: requests.Session(),
+            "beetsplug.lyrics.TimeoutAndRetrySession.setup_adapter",
+            lambda _: None,
         )
         expected_lyrics = Lyrics(
             lyrics_page.lyrics,
