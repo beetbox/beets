@@ -22,6 +22,10 @@ Bug fixes
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/scrub`: Restoring album art after a scrub no longer aborts the
+  whole import when the file cannot store the original image (for example, an
+  MP4/M4A whose embedded cover is not JPEG or PNG). Unsupported images are
+  skipped and logged; other write errors still propagate. :bug:`2498`
 - :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
   large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
   (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
