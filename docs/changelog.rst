@@ -9,6 +9,12 @@ below!
 Unreleased
 ----------
 
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
+  after configured data and video filters. :bug:`6836`
+
 ..
     New features
     ~~~~~~~~~~~~
