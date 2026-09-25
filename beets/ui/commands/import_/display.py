@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from beets import config, ui
 from beets.autotag import TrackInfo
+from beets.autotag.distance import string_dist, track_index_changed
 from beets.util import displayable_path
 from beets.util.color import colorize
 from beets.util.diff import colordiff
@@ -165,17 +166,17 @@ class ChangeRepresentation:
         """Format colored track indices."""
         cur_track = self.format_index(item)
         new_track = self.format_index(track_info)
-        changed = False
         # Choose color based on change.
         highlight_color: ColorName
         if cur_track != new_track:
-            changed = True
-            if item.track in (track_info.index, track_info.medium_index):
+            if not track_index_changed(item, track_info):
                 highlight_color = "text_highlight_minor"
             else:
                 highlight_color = "text_highlight"
         else:
             highlight_color = "text_faint"
+
+        changed = track_index_changed(item, track_info)
 
         lhs_track = colorize(highlight_color, f"(#{cur_track})")
         rhs_track = colorize(highlight_color, f"(#{new_track})")
@@ -194,7 +195,7 @@ class ChangeRepresentation:
         # If there is a title, highlight differences.
         cur_title = item.title.strip()
         cur_col, new_col = colordiff(cur_title, new_title)
-        return cur_col, new_col, cur_title != new_title
+        return cur_col, new_col, string_dist(cur_title, new_title) != 0
 
     @staticmethod
     def make_track_lengths(
