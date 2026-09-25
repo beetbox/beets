@@ -10,6 +10,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
+from http import HTTPStatus
 from itertools import filterfalse, groupby
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
@@ -29,6 +30,7 @@ from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
 from ._utils.requests import (
+    BeetsHTTPError,
     HTTPNotFoundError,
     RequestHandler,
     TimeoutAndRetrySession,
@@ -62,6 +64,10 @@ class LyricsCLIOpts(Protocol):
 class CaptchaError(requests.exceptions.HTTPError):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__("Captcha is required", *args, **kwargs)
+
+
+class TooManyRequestsHTTPError(BeetsHTTPError):
+    STATUS = HTTPStatus.TOO_MANY_REQUESTS
 
 
 class GeniusHTTPError(requests.exceptions.HTTPError):
@@ -166,7 +172,7 @@ def slug(text: str) -> str:
 class LyricsRequestHandler(RequestHandler):
     _log: Logger
 
-    def create_session(self) -> TimeoutAndRetrySession:
+    def create_session(self) -> requests.Session:
         """Return a rate-limited session for lyrics HTTP requests."""
         return TimeoutAndRetrySession()
 
@@ -189,7 +195,7 @@ class LyricsRequestHandler(RequestHandler):
 
     def warn(self, message: str, *args) -> None:
         """Log warning with the class name."""
-        self._log.warning(f"{self.__class__.__name__}: {message}", *args)
+        self._log.error(f"{self.__class__.__name__}: {message}", *args)
 
     @staticmethod
     def format_url(url: str, params: JSONDict | None) -> str:
@@ -199,17 +205,24 @@ class LyricsRequestHandler(RequestHandler):
         return f"{url}?{urlencode(params)}"
 
     def get_text(
-        self, url: str, params: JSONDict | None = None, **kwargs
+        self,
+        url: str,
+        params: JSONDict | None = None,
+        force_utf8: bool = False,
+        **kwargs,
     ) -> str:
         """Return text / HTML data from the given URL.
 
-        Set the encoding to None to let requests handle it because some sites
-        set it incorrectly.
+        Set encoding to None to let requests auto-detect (works for most sites).
+        For Genius, force UTF-8 to avoid MacRoman misdetection.
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
         r = self.get(url, **kwargs)
-        r.encoding = None
+        if force_utf8:
+            r.encoding = r.encoding or "utf-8"
+        else:
+            r.encoding = None
         return r.text
 
     def get_json(
@@ -663,12 +676,31 @@ class Genius(SearchBackend):
         return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
     def get_json(self, *args, **kwargs) -> GeniusAPI.Search:
-        response: GeniusAPI.Response = super().get_json(*args, **kwargs)
+        try:
+            response: GeniusAPI.Response = super().get_json(*args, **kwargs)
+        except requests.HTTPError as exc:
+            response = exc.response.json()
+
         if "response" in response:
             return response  # type: ignore[return-value]
 
         meta = response["meta"]
+        if meta["status"] == HTTPStatus.TOO_MANY_REQUESTS:
+            raise TooManyRequestsHTTPError(
+                message=meta["message"], response=kwargs.get("response")
+            )
+
         raise GeniusHTTPError(f"{meta['message']} Status: {meta['status']}")
+
+    def get_text(
+        self,
+        url: str,
+        params: JSONDict | None = None,
+        force_utf8: bool = True,
+        **kwargs,
+    ) -> str:
+        """Force UTF-8 encoding for Genius to avoid MacRoman misdetection."""
+        return super().get_text(url, params, force_utf8=force_utf8, **kwargs)
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
         search_data = self.get_json(
@@ -683,7 +715,9 @@ class Genius(SearchBackend):
     def scrape(cls, html: str) -> str | None:
         if m := cls.LYRICS_IN_JSON_RE.search(html):
             html_text = cls.remove_backslash(m[0]).replace(r"\n", "\n")
-            return cls.get_soup(html_text).get_text().strip()
+            lyrics = cls.get_soup(html_text).get_text().strip()
+            # Genius embeds lyrics in JSON; escape sequences remain after parsing
+            return re.sub(r'\\+"', '"', lyrics)
 
         return None
 
