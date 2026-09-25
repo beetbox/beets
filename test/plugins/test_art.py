@@ -507,6 +507,33 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         assert candidate.url == "url_to_the_image"
         assert candidate.match == fetchart.MetadataMatch.EXACT
 
+    def test_itunesstore_artwork_url_resolution(
+        self, source, settings, album, image_request_mock
+    ):
+        json = """{
+                    "results":
+                        [
+                            {
+                                "artistName": "some artist",
+                                "collectionName": "some album",
+                                "artworkUrl100": "https://example.com/image/100x100bb.jpg"
+                            }
+                        ]
+                  }"""
+        image_request_mock.get(
+            fetchart.ITunesStore.API_URL,
+            content=json,
+            content_type="application/json",
+        )
+        # Default: 1200x1200bb
+        candidate = next(source.get(album, settings, []))
+        assert candidate.url == "https://example.com/image/1200x1200bb.jpg"
+
+        # high_resolution: 3000x3000bb
+        source._config["high_resolution"] = True
+        candidate_high = next(source.get(album, settings, []))
+        assert candidate_high.url == "https://example.com/image/3000x3000bb.jpg"
+
     def test_itunesstore_no_result(
         self, source, settings, album, image_request_mock, caplog
     ):

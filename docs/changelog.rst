@@ -34,6 +34,10 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
+  artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
+  fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
+  Request.
 
 ..
     For plugin developers
