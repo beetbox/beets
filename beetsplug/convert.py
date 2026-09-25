@@ -115,6 +115,7 @@ class ConvertPlugin(BeetsPlugin):
                 "force": False,
                 "refresh": False,
                 "keep_new": False,
+                "remove_missing": False,
             }
         )
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
@@ -208,6 +209,16 @@ class ConvertPlugin(BeetsPlugin):
             ),
         )
         cmd.parser.add_option(
+            "-s",
+            "--remove-missing",
+            default=self.config["remove_missing"].get(),
+            action="store_true",
+            help=(
+                "remove all files in the destination directory that are not"
+                " present in the library."
+            ),
+        )
+        cmd.parser.add_option(
             "-F",
             "--force",
             action="store_true",
@@ -266,6 +277,10 @@ class ConvertPlugin(BeetsPlugin):
     @cached_property
     def link(self) -> bool:
         return not self.hardlink and self.config["link"].get(bool)
+
+    @cached_property
+    def remove_missing(self) -> bool:
+        return self.config["remove_missing"].get(bool)
 
     @cached_property
     def command(self) -> FormatCommand:
@@ -695,6 +710,11 @@ class ConvertPlugin(BeetsPlugin):
             for album in albums:
                 self.copy_album_art(album)
 
+        if self.remove_missing:
+            self.remove_non_item_files(
+                items, opts.yes if opts.yes is not None else False
+            )
+
         # If the user supplied a playlist name, create a playlist for files
         # copied to the destination.
         pl_normpath = None
@@ -796,3 +816,37 @@ class ConvertPlugin(BeetsPlugin):
         """
         convert = [self.convert_item(keep_new) for _ in range(self.threads)]
         pipeline.Pipeline([iter(items), convert]).run_parallel()
+
+    def remove_non_item_files(self, items: list[Item], yes: bool) -> None:
+        """
+        Remove all files in the destination directory ``dest`` that do not
+        correspond to an item to be converted.
+
+        If ``pretend`` is set, keep files and report what would be removed.
+        If ``yes`` is set, do not ask for confirmation.
+        """
+        _, ext = self.command
+        item_destinations = {
+            replace_ext(item.destination(basedir=self.dest), ext)
+            for item in items
+        }
+        files_to_remove = list()
+
+        for dirpath, _, filenames in os.walk(self.dest):
+            for filename in filenames:
+                filepath = util.bytestring_path(os.path.join(dirpath, filename))
+                if filepath not in item_destinations:
+                    files_to_remove.append(filepath)
+
+        if not files_to_remove:
+            ui.print_("No files to be removed")
+            return
+
+        ui.print_("Files to be deleted in the destination folder:")
+        for f in files_to_remove:
+            ui.print_(util.displayable_path(f))
+
+        if (not self.pretend) and (yes or ui.input_yn("Delete files? (Y/n)")):
+            for file in files_to_remove:
+                util.remove(file)
+                self._log.info(f'Removed file "{util.displayable_path(file)}"')
