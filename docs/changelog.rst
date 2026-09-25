@@ -16,8 +16,7 @@ Bug fixes
   after configured data and video filters. :bug:`6836`
 - :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
   ``separators`` is combined with a ``replace`` rule that changes the length of
-  the text, e.g. ``What Goes Around…/…Comes Around`` becoming ``What Goes
-  Around.../Omes Around``. :bug:`6300`
+  the text. :bug:`6300`
 
 ..
     New features
