@@ -34,6 +34,8 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Fix a race condition where concurrent writes to ``state.pickle`` could lose
+  tagging progress or incremental-import history.
 
 ..
     For plugin developers
