@@ -133,7 +133,7 @@ scrub = ["mutagen>=1.33"]
 sonosupdate = ["soco"]
 tidal = ["requests-oauthlib>=0.6.1"]
 titlecase = ["titlecase"]
-thumbnails = ["Pillow", "pyxdg"]
+thumbnails = ["Pillow"]
 web = ["flask", "flask-cors"]
 
 [project.scripts]
