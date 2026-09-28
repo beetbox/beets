@@ -43,6 +43,24 @@ class DuplicateAction(str, Enum):
     def choices(cls) -> dict[str, str]:
         return {d.name.lower(): d.value for d in cls}
 
+    @classmethod
+    def track_actions(cls) -> list[Self]:
+        """Actions valid for per-track duplicate resolution.
+
+        MERGE is excluded: merging is defined for whole albums only.
+        """
+        return [d for d in cls if d is not DuplicateAction.MERGE]
+
+    @classmethod
+    def track_choices(cls) -> dict[str, str]:
+        return {d.name.lower(): d.value for d in cls.track_actions()}
+
+    @classmethod
+    def track_options(cls) -> list[str]:
+        return [
+            d.text for d in cls.track_actions() if d is not DuplicateAction.ASK
+        ]
+
     SKIP = "s", "Skip new"
     MERGE = "m", "Merge all"
     REMOVE = "r", "Remove old"
