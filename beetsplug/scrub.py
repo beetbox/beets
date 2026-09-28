@@ -90,7 +90,9 @@ class ScrubPlugin(BeetsPlugin):
                 f = cls(util.syspath(path))
             except Exception:
                 continue
-            if f.tags is None:
+            # Deleting an empty tag block costs a full write for nothing.
+            # `_scrub_item` has normally emptied the native one already.
+            if not f.tags:
                 continue
 
             # Remove the tag for this type.
@@ -108,20 +110,60 @@ class ScrubPlugin(BeetsPlugin):
                     "could not scrub {}: {}", util.displayable_path(path), exc
                 )
 
+    def _clear_native_tags(self, item: Item) -> tuple[bool, list[Any]]:
+        """Empty the file's own tag block in one write.
+
+        Return whether the file could be read, and the art found in it, which
+        the caller must write back.
+
+        `mutagen.flac.FLAC.delete()` saves with ``padding=lambda x: 0``, so the
+        file shrinks and writing the tags back has to grow it again: two
+        rewrites of the audio stream per track. Clearing in memory and saving
+        once reuses the padding the file already reserves. Passing a `padding`
+        hint here would defeat that.
+
+        The art is left out of this save on purpose: MP3 and Ogg keep it inside
+        the tag block, so restoring it here would make the block non-empty and
+        `_scrub` would delete it again.
+        """
+        try:
+            mf = mediafile.MediaFile(
+                util.syspath(item.path), config["id3v23"].get(bool)
+            )
+        except mediafile.UnreadableFileError as exc:
+            self._log.error("could not open file to scrub: {}", exc)
+            return False, []
+
+        images = mf.images or []
+        mgfile = mf.mgfile
+
+        if mgfile.tags is not None:
+            try:
+                mgfile.tags.clear()
+            except (AttributeError, NotImplementedError):
+                # Not a mutable mapping; leave it to `_scrub`.
+                return True, images
+
+            try:
+                mf.save()
+            except (mediafile.UnreadableFileError, mutagen.MutagenError) as exc:
+                self._log.error(
+                    "could not scrub {}: {}",
+                    util.displayable_path(item.path),
+                    exc,
+                )
+
+        return True, images
+
     def _scrub_item(self, item: Item, restore: bool) -> None:
         """Remove tags from an Item's associated file and, if `restore`
         is enabled, write the database's tags back to the file.
         """
-        # Get album art if we need to restore it.
+        images: list[Any] = []
         if restore:
-            try:
-                mf = mediafile.MediaFile(
-                    util.syspath(item.path), config["id3v23"].get(bool)
-                )
-            except mediafile.UnreadableFileError as exc:
-                self._log.error("could not open file to scrub: {}", exc)
+            readable, images = self._clear_native_tags(item)
+            if not readable:
                 return
-            images = mf.images
 
         # Remove all tags.
         self._scrub(item.path)
@@ -129,17 +171,9 @@ class ScrubPlugin(BeetsPlugin):
         # Restore tags, if enabled.
         if restore:
             self._log.debug("writing new tags after scrub")
-            item.try_write()
-            if images:
-                self._log.debug("restoring art")
-                try:
-                    mf = mediafile.MediaFile(
-                        util.syspath(item.path), config["id3v23"].get(bool)
-                    )
-                    mf.images = images
-                    mf.save()
-                except mediafile.UnreadableFileError as exc:
-                    self._log.error("could not write tags: {}", exc)
+            # `tags` is merged into what beets passes to MediaFile.update(), so
+            # the art costs no extra write.
+            item.try_write(tags={"images": images} if images else None)
 
     def import_task_files(
         self, session: ImportSession, task: ImportTask
