@@ -419,7 +419,6 @@ sonosupdate = [
 ]
 thumbnails = [
     { name = "pillow" },
-    { name = "pyxdg" },
 ]
 tidal = [
     { name = "requests-oauthlib" },
@@ -561,7 +560,6 @@ requires-dist = [
     { name = "pylast", marker = "extra == 'lastimport'" },
     { name = "python-mpd2", marker = "extra == 'mpdstats'", specifier = ">=0.4.2" },
     { name = "python3-discogs-client", marker = "extra == 'discogs'", specifier = ">=2.3.15" },
-    { name = "pyxdg", marker = "extra == 'thumbnails'" },
     { name = "pyyaml" },
     { name = "rarfile", marker = "extra == 'import'" },
     { name = "reflink", marker = "extra == 'reflink'" },

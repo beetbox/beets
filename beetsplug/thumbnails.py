@@ -11,10 +11,10 @@ import ctypes.util
 import os
 import shutil
 from hashlib import md5
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any
 
-from xdg import BaseDirectory
+import platformdirs
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -22,12 +22,13 @@ from beets.util.artresizer import ArtResizer
 
 if TYPE_CHECKING:
     import optparse
+    from pathlib import Path
 
     from beets.library import Album, Library
     from beets.util import StrPath
 
 
-BASE_DIR = Path(BaseDirectory.xdg_cache_home) / "thumbnails"
+BASE_DIR = platformdirs.user_cache_path() / "thumbnails"
 NORMAL_DIR = BASE_DIR / "normal"
 LARGE_DIR = BASE_DIR / "large"
 
