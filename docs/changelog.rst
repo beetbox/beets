@@ -67,6 +67,8 @@ Bug fixes
   Picard" (``o``) prompt choices are offered again when the importer has no
   recommendation for a match (for example when no candidates were found).
   :bug:`7031`
+- :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
+  subdirectory holds a file named like one in the album folder.
 
 ..
     For plugin developers
