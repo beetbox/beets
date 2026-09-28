@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -56,7 +55,7 @@ class DummyRemoteArtSource(fetchart.RemoteArtSource):
         self,
         album,
         plugin: fetchart.FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        paths: Sequence[Path] | None,
     ) -> Iterator[fetchart.Candidate]:
         return iter(())
 
@@ -89,10 +88,10 @@ class UseThePlugin(TestHelper):
                 clean_module_tempdir(module)
 
     @pytest.fixture
-    def dpath(self) -> bytes:
+    def dpath(self) -> Path:
         dpath = self.temp_path / "arttest"
         dpath.mkdir()
-        return os.fsencode(dpath)
+        return dpath
 
 
 class CAAData:
@@ -249,8 +248,8 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         image_request_mock.get(self.URL, content_type="image/png")
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
-        assert os.path.splitext(candidate.path)[1] == b".png"
-        assert Path(os.fsdecode(candidate.path)).exists()
+        assert candidate.path.suffix == ".png"
+        assert candidate.path.exists()
 
     def test_does_not_rely_on_server_content_type(
         self, source, candidate, settings, image_request_mock
@@ -260,8 +259,8 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         )
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
-        assert os.path.splitext(candidate.path)[1] == b".png"
-        assert Path(os.fsdecode(candidate.path)).exists()
+        assert candidate.path.suffix == ".png"
+        assert candidate.path.exists()
 
 
 class TestFSArt(UseThePlugin):
@@ -274,27 +273,29 @@ class TestFSArt(UseThePlugin):
         return fetchart.FileSystem(logger, self.plugin.config)
 
     def test_finds_jpg_in_directory(self, source, dpath, settings) -> None:
-        _common.touch(os.path.join(dpath, b"a.jpg"))
+        candidate_path = dpath / "a.jpg"
+        candidate_path.touch()
         candidate = next(source.get(Album(), settings, [dpath]))
-        assert candidate.path == os.path.join(dpath, b"a.jpg")
+        assert candidate.path == candidate_path
 
     def test_appropriately_named_file_takes_precedence(
         self, source, dpath, settings
     ) -> None:
-        _common.touch(os.path.join(dpath, b"a.jpg"))
-        _common.touch(os.path.join(dpath, b"art.jpg"))
+        (dpath / "a.jpg").touch()
+        candidate_path = dpath / "art.jpg"
+        candidate_path.touch()
         candidate = next(source.get(Album(), settings, [dpath]))
-        assert candidate.path == os.path.join(dpath, b"art.jpg")
+        assert candidate.path == candidate_path
 
     def test_non_image_file_not_identified(
         self, source, dpath, settings
     ) -> None:
-        _common.touch(os.path.join(dpath, b"a.txt"))
+        (dpath / "a.txt").touch()
         with pytest.raises(StopIteration):
             next(source.get(Album(), settings, [dpath]))
 
     def test_cautious_skips_fallback(self, source, dpath, settings) -> None:
-        _common.touch(os.path.join(dpath, b"a.jpg"))
+        (dpath / "a.jpg").touch()
         settings.cautious = True
         with pytest.raises(StopIteration):
             next(source.get(Album(), settings, [dpath]))
@@ -313,25 +314,25 @@ class TestFSArt(UseThePlugin):
     def test_precedence_amongst_correct_files(
         self, source, dpath, settings
     ) -> None:
-        images = [b"front-cover.jpg", b"front.jpg", b"back.jpg"]
-        paths = [os.path.join(dpath, i) for i in images]
+        images = ["front-cover.jpg", "front.jpg", "back.jpg"]
+        paths = [dpath / i for i in images]
         for p in paths:
-            _common.touch(p)
-        settings.cover_names = [b"cover", b"front", b"back"]
+            p.touch()
+        settings.cover_names = ["cover", "front", "back"]
         candidates = [
             candidate.path
             for candidate in source.get(Album(), settings, [dpath])
         ]
         assert candidates == paths
 
-    @patch("os.path.samefile")
+    @patch("pathlib.Path.samefile")
     def test_is_candidate_fallback_os_error(
         self, mock_samefile, source
     ) -> None:
         mock_samefile.side_effect = OSError("os error")
         fallback = self.temp_path / "a.jpg"
         self.plugin.fallback = str(fallback)
-        candidate = fetchart.Candidate(logger, source.ID, os.fsencode(fallback))
+        candidate = fetchart.Candidate(logger, source.ID, fallback)
         result = self.plugin._is_candidate_fallback(candidate)
         mock_samefile.assert_called_once()
         assert not result
@@ -358,12 +359,13 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     def test_main_interface_gives_precedence_to_fs_art(
         self, dpath, image_request_mock
     ):
-        _common.touch(os.path.join(dpath, b"art.jpg"))
+        candidate_path = dpath / "art.jpg"
+        candidate_path.touch()
         image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
-        assert candidate.path == os.path.join(dpath, b"art.jpg")
+        assert candidate.path == candidate_path
 
     def test_main_interface_falls_back_to_amazon(
         self, dpath, image_request_mock
@@ -372,7 +374,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
-        assert not candidate.path.startswith(dpath)
+        assert dpath not in candidate.path.parents
 
     def test_main_interface_tries_amazon_before_aao(
         self, dpath, image_request_mock
@@ -424,11 +426,12 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         assert not image_request_mock.mocker.called
 
     def test_local_only_gets_fs_image(self, dpath, image_request_mock):
-        _common.touch(os.path.join(dpath, b"art.jpg"))
+        candidate_path = dpath / "art.jpg"
+        candidate_path.touch()
         album = Album(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath], local_only=True)
         assert candidate is not None
-        assert candidate.path == os.path.join(dpath, b"art.jpg")
+        assert candidate.path == candidate_path
         assert not image_request_mock.mocker.called
 
 
@@ -976,7 +979,7 @@ class AlbumArtOperationMixin(UseThePlugin):
             yield
 
     def get_album_art(self):
-        return self.plugin.art_for_album(Album(), [""], True)
+        return self.plugin.art_for_album(Album(), [Path()], True)
 
 
 @REQUIRES_ARTRESIZER
