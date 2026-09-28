@@ -7,6 +7,7 @@ import re
 import shutil
 import stat
 import sys
+import threading
 import unicodedata
 import unittest
 from contextlib import contextmanager
@@ -1989,6 +1990,31 @@ class TagLogTest(TestHelper):
         session = _common.import_session(self.lib, loghandler=handler)
         session.tag_log("status", "caf\xe9")  # send unicode
         assert "status caf\xe9" in sio.getvalue()
+
+
+class TestImportStateConcurrency:
+    def test_concurrent_history_add(self, tmp_path):
+        state_path = bytestring_path(str(tmp_path / "state.pickle"))
+        n_threads = 20
+        barrier = threading.Barrier(n_threads)
+
+        def add(i):
+            barrier.wait()
+            ImportState(path=state_path).history_add(
+                [bytestring_path(f"path{i}")]
+            )
+
+        threads = [
+            threading.Thread(target=add, args=(i,)) for i in range(n_threads)
+        ]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        assert len(ImportState(path=state_path).taghistory) == n_threads
 
 
 class TestResumeImport(ImportHelper):
