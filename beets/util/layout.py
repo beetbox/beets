@@ -70,6 +70,15 @@ def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
         words = string.split()
     else:
         # Use a regex to find escapes and the text within them.
+        # `pretext` is empty for every match after the first, since the
+        # previous match's `posttext` (being a greedy [^ESC]* group) already
+        # consumed all plain text up to this escape sequence. Whether that
+        # represents a real word boundary depends on whether the text
+        # preceding this escape actually ended in whitespace, so we track it
+        # explicitly across iterations instead of assuming pretext-empty
+        # always means "boundary" (which is only true for the very first
+        # match, i.e. the start of the string).
+        prev_ends_with_space = True
         for m in ESC_TEXT_REGEX.finditer(string):
             # m contains four groups:
             # pretext - any text before escape sequence
@@ -88,8 +97,7 @@ def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
                     # Pretext ended mid-word, ensure next word
                     pass
             else:
-                # pretext empty, treat as if there is a space before
-                space_before_text = True
+                space_before_text = prev_ends_with_space
             if m.group("text")[0] == " ":
                 # First character of the text is a space
                 space_before_text = True
@@ -128,6 +136,15 @@ def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
             else:
                 # Add any words after escape sequence
                 words += m.group("posttext").split()
+            # Determine the boundary state for the next match's pretext-empty
+            # case: look at whatever content immediately precedes the next
+            # escape sequence -- posttext if there is any, otherwise text
+            # itself (posttext being empty means reset is followed directly
+            # by the next escape, with nothing in between).
+            if m.group("posttext"):
+                prev_ends_with_space = m.group("posttext")[-1] == " "
+            else:
+                prev_ends_with_space = m.group("text")[-1] == " "
     result: list[str] = []
     next_substr = ""
     # Iterate over all words.
