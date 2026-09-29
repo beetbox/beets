@@ -9,26 +9,24 @@ from typing import TYPE_CHECKING
 
 import mediafile
 
-from beets.util import bytestring_path, displayable_path, syspath
+from beets.util import as_path, bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Sequence
-    from pathlib import Path
 
     from beets.dbcore import Query
     from beets.library import Album, Item, Library
     from beets.logging import BeetsLogger as Logger
-    from beets.util import PathLike
+    from beets.util import AnyPath, PathLike
 
 
 def mediafile_image(
-    image_path: Path, maxwidth: int | None = None
+    image_path: PathLike, maxwidth: int | None = None
 ) -> mediafile.Image:
     """Return a `mediafile.Image` object for the path."""
 
-    with image_path.open("rb") as f:
-        data = f.read()
+    data = as_path(image_path, "image_path").read_bytes()
     return mediafile.Image(data, type=mediafile.ImageType.front)
 
 
@@ -46,7 +44,7 @@ def get_art(log: Logger, item: Item) -> bytes | None:
 def embed_item(
     log: Logger,
     item: Item,
-    imagepath: Path,
+    imagepath: PathLike,
     maxwidth: int | None = None,
     itempath: bytes | None = None,
     compare_threshold: int = 0,
@@ -57,6 +55,7 @@ def embed_item(
 ) -> None:
     """Embed an image into the item's media file."""
     # Conditions.
+    imagepath = as_path(imagepath, "imagepath")
     if compare_threshold:
         is_similar = check_art_similarity(
             log, item, imagepath, compare_threshold
@@ -130,8 +129,8 @@ def embed_album(
 
 
 def resize_image(
-    log: Logger, imagepath: Path, maxwidth: int, quality: int
-) -> Path:
+    log: Logger, imagepath: AnyPath, maxwidth: int, quality: int
+) -> AnyPath:
     """Returns path to an image resized to maxwidth and encoded with the
     specified quality level.
     """

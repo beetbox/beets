@@ -1,13 +1,27 @@
-"""Tests for image resizing based on filesize."""
+"""Tests for image resizing and path handling."""
 
+import os
 import unittest
+from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from beets.test import _common
 from beets.test.fixtures import DummyIMBackend
 from beets.test.helper import BeetsTestCase, CleanupModulesMixin
 from beets.util import command_output
-from beets.util.artresizer import IMBackend, PILBackend
+from beets.util.artresizer import ArtResizer, IMBackend, PILBackend
+
+
+def test_resize_legacy_path() -> None:
+    source = os.fsencode(_common.RSRC / "abbey.jpg")
+
+    with pytest.warns(DeprecationWarning, match="Passing bytes as 'path_in'"):
+        resized = ArtResizer().resize(100, source)
+
+    assert isinstance(resized, bytes)
+    assert Path(os.fsdecode(resized)).is_file()
 
 
 class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
