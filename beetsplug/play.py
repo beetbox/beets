@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import random
 import shlex
 import subprocess
@@ -230,14 +231,14 @@ class PlayPlugin(BeetsPlugin):
         """Create a temporary .m3u file. Return the filename."""
         utf8_bom = config["play"]["bom"].get(bool)
         filename = get_temp_filename(__name__, suffix=".m3u")
-        with open(filename, "wb") as m3u:
+        with filename.open("wb") as m3u:
             if utf8_bom:
                 m3u.write(b"\xef\xbb\xbf")
 
             for item in paths_list:
                 m3u.write(item + b"\n")
 
-        return filename
+        return os.fsencode(filename)
 
     def before_choose_candidate_listener(
         self, session: ImportSession, task: ImportTask

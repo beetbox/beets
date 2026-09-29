@@ -171,9 +171,4 @@ def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:
     mp3_path.write_bytes(mp3_data)
 
     util.remove(path)
-
-    if isinstance(path, str):
-        return str(mp3_path)
-    if isinstance(path, bytes):
-        return os.fsencode(mp3_path)
-    return mp3_path
+    return util.as_path_like(mp3_path, like=path)

@@ -419,7 +419,6 @@ sonosupdate = [
 ]
 thumbnails = [
     { name = "pillow" },
-    { name = "pyxdg" },
 ]
 tidal = [
     { name = "requests-oauthlib" },
@@ -531,7 +530,7 @@ requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'fetchart'" },
     { name = "beautifulsoup4", marker = "extra == 'lyrics'" },
     { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "confuse", specifier = ">=2.2.0" },
+    { name = "confuse", specifier = ">=2.3.0" },
     { name = "dbus-python", marker = "sys_platform != 'win32' and extra == 'metasync'" },
     { name = "flask", marker = "extra == 'aura'" },
     { name = "flask", marker = "extra == 'web'" },
@@ -561,7 +560,6 @@ requires-dist = [
     { name = "pylast", marker = "extra == 'lastimport'" },
     { name = "python-mpd2", marker = "extra == 'mpdstats'", specifier = ">=0.4.2" },
     { name = "python3-discogs-client", marker = "extra == 'discogs'", specifier = ">=2.3.15" },
-    { name = "pyxdg", marker = "extra == 'thumbnails'" },
     { name = "pyyaml" },
     { name = "rarfile", marker = "extra == 'import'" },
     { name = "reflink", marker = "extra == 'reflink'" },
@@ -1043,15 +1041,15 @@ wheels = [
 
 [[package]]
 name = "confuse"
-version = "2.2.1"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/98/45/3ad821336a7953a2322e7e2d062488cfe179748725e5165117151b88a121/confuse-2.2.1.tar.gz", hash = "sha256:8e7600c3261852122eb5f17b24b06ab8e5437b21d6224853c1420c38ac469d3c", size = 52837, upload-time = "2026-07-19T14:56:24.289Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/89/d4451e170e9c02dd981cfd517b051658aa4d5a53060e57808bec63cf785b/confuse-2.3.0.tar.gz", hash = "sha256:66123bd4b38dec9ae36dd9407a090fd764245fd717cbaa986a68e3a05056920e", size = 7945661, upload-time = "2026-09-22T15:27:26.607Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/9c/65beb352015e520146b3debc9942cfbd5f6ec5aea7fdcedff2edc23954ab/confuse-2.2.1-py3-none-any.whl", hash = "sha256:0705a61938ae48d20c29fdb641f7dbd79aed5325bb7d0bd2df8a4dacb14de2ad", size = 28005, upload-time = "2026-07-19T14:56:22.94Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/b9/8a4263ca5b102a2ea64d58de338e1219509a13f0bf999108c483cda9530e/confuse-2.3.0-py3-none-any.whl", hash = "sha256:8a71f4d3ffb64302ceb7abf81c6340ae1f6906b759f9f8fd29ad9409201cd45c", size = 28083, upload-time = "2026-09-22T15:27:25.32Z" },
 ]
 
 [[package]]

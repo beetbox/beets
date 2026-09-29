@@ -26,14 +26,6 @@ Bug fixes
   unparseable data, instead of crashing. :bug:`3527`
 - :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
   after configured data and video filters. :bug:`6836`
-
-..
-    New features
-    ~~~~~~~~~~~~
-
-Bug fixes
-~~~~~~~~~
-
 - :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
   large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
   (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
@@ -46,14 +38,25 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
+  subdirectory holds a file named like one in the album folder.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+- ``ArtResizer.resize``, ``ArtResizer.deinterlace`` and ``ArtResizer.reformat``
+  now expect :class:`pathlib.Path` arguments. ``str`` and ``bytes`` paths keep
+  working and are returned in the representation they were given in, but emit a
+  :class:`DeprecationWarning` and will be removed in 3.0.0.
+- ``beetsplug._utils.art.embed_item`` and
+  ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
+  arguments, deprecating ``str`` and ``bytes`` in the same way.
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
+  ``platformdirs``, which beets already requires.
 
 2.14.1 (September 17, 2026)
 ---------------------------
