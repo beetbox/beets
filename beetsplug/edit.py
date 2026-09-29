@@ -583,7 +583,12 @@ class EditPlugin(plugins.BeetsPlugin):
         """
         # Prompt the user for a candidate.
         if task.candidates:
-            sel = ui.input_options((), numrange=(1, len(task.candidates)))
+            sel = ui.input_options(
+                ("Back",), numrange=(1, len(task.candidates))
+            )
+            if not isinstance(sel, int):
+                # "Back": return to the previous prompt.
+                return None
             # Force applying the candidate on the items.
             task.match = task.candidates[sel - 1]
             task.apply_metadata()

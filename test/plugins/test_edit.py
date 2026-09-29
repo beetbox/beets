@@ -652,6 +652,25 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         # Ensure album is fetched from a candidate.
         assert "albumid" in self.lib.albums()[0].mb_albumid
 
+    def test_edit_candidate_back(self):
+        """Choosing Back in the candidate prompt returns to the importer
+        prompt without applying a candidate.
+        """
+        self.run_mocked_interpreter(
+            {"replacements": {"Applied Track": "Edited Track"}},
+            # edit Candidates, Back, Use as-is.
+            ["c", "b", "u"],
+        )
+
+        # Check that nothing is modified, the album is imported ASIS.
+        self.assertItemFieldsModified(
+            self.lib.items(),
+            self.items_orig,
+            [],
+            [*self.IGNORED, "albumartist", "mb_albumartistid"],
+        )
+        assert self.lib.albums()[0].mb_albumid == ""
+
     def test_edit_retag_apply(self):
         """Import the album using a candidate, then retag and edit and apply
         changes.
