@@ -663,34 +663,47 @@ class ArtResizer:
     def resize(
         self,
         maxwidth: int,
-        path_in: Path,
-        path_out: Path | None = None,
+        path_in: util.AnyPath,
+        path_out: util.AnyPath | None = None,
         quality: int = 0,
         max_filesize: int = 0,
-    ) -> Path:
+    ) -> util.AnyPath:
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
         temporary file and encodes with the specified quality level.
         For WEBPROXY, returns `path_in` unmodified.
         """
+        source = util.as_path(path_in, "path_in")
         if self.local_method is not None:
-            return self.local_method.resize(
-                maxwidth,
-                path_in,
-                path_out,
-                quality=quality,
-                max_filesize=max_filesize,
+            return util.as_path_like(
+                self.local_method.resize(
+                    maxwidth,
+                    source,
+                    util.as_path(path_out, "path_out") if path_out else None,
+                    quality=quality,
+                    max_filesize=max_filesize,
+                ),
+                like=path_in,
             )
         # Handled by `proxy_url` already.
         return path_in
 
-    def deinterlace(self, path_in: Path, path_out: Path | None = None) -> Path:
+    def deinterlace(
+        self, path_in: util.AnyPath, path_out: util.AnyPath | None = None
+    ) -> util.AnyPath:
         """Deinterlace an image.
 
         Only available locally.
         """
+        source = util.as_path(path_in, "path_in")
         if self.local_method is not None:
-            return self.local_method.deinterlace(path_in, path_out)
+            return util.as_path_like(
+                self.local_method.deinterlace(
+                    source,
+                    util.as_path(path_out, "path_out") if path_out else None,
+                ),
+                like=path_in,
+            )
         # FIXME: Should probably issue a warning?
         return path_in
 
@@ -734,13 +747,15 @@ class ArtResizer:
         return None
 
     def reformat(
-        self, path_in: Path, new_format: str, deinterlaced: bool = True
-    ) -> Path:
+        self, path_in: util.AnyPath, new_format: str, deinterlaced: bool = True
+    ) -> util.AnyPath:
         """Converts image to desired format, updating its extension, but
         keeping the same filename.
 
         Only available locally.
         """
+        source = util.as_path(path_in, "path_in")
+
         if self.local_method is None:
             # FIXME: Should probably issue a warning?
             return path_in
@@ -749,20 +764,20 @@ class ArtResizer:
         # A nonexhaustive map of image "types" to extensions overrides
         new_format = {"jpeg": "jpg"}.get(new_format, new_format)
 
-        path_new = path_in.with_suffix(f".{new_format}")
+        path_new = source.with_suffix(f".{new_format}")
 
         # allows the exception to propagate, while still making sure a changed
         # file path was removed
-        result_path = path_in
+        result_path = source
         try:
             result_path = self.local_method.convert_format(
-                path_in, path_new, deinterlaced
+                source, path_new, deinterlaced
             )
         finally:
-            if result_path != path_in:
+            if result_path != source:
                 with suppress(OSError):
-                    os.unlink(path_in)
-        return result_path
+                    os.unlink(source)
+        return util.as_path_like(result_path, like=path_in)
 
     @property
     def can_compare(self) -> bool:

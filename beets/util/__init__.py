@@ -44,6 +44,7 @@ from unidecode import unidecode
 
 import beets
 from beets.util import hidden
+from beets.util.deprecation import deprecate_for_maintainers
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
@@ -1275,3 +1276,33 @@ class Likelies(AttrDict[Any]):
     media: str
     albumdisambig: str
     data_source: str
+
+
+def as_path_like(path: Path, like: AnyPath) -> AnyPath:
+    """Return the given path in the same representation as ``like``.
+
+    Lets Path-based internals serve callers that still pass ``str`` or
+    ``bytes`` paths.
+    """
+    if isinstance(like, bytes):
+        return os.fsencode(path)
+    if isinstance(like, str):
+        return str(path)
+    return path
+
+
+def as_path(path: PathLike, name: str = "path") -> Path:
+    """Convert a legacy ``str``/``bytes`` path argument to ``Path``.
+
+    Warns maintainers of third-party code that non-``Path`` arguments are on
+    their way out.
+    """
+    if isinstance(path, Path):
+        return path
+
+    deprecate_for_maintainers(
+        f"Passing {type(path).__name__} as '{name}'",
+        "'pathlib.Path'",
+        stacklevel=3,
+    )
+    return Path(os.fsdecode(path))
