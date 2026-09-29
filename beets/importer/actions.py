@@ -17,6 +17,9 @@ class Action(Enum):
     # The RETAG action represents "don't apply any match, but do record
     # new metadata". It's not reachable via the standard command prompt but
     # can be used by plugins.
+    RESCAN = "RESCAN"
+    # RESCAN re-reads the task's directories from disk and re-runs the
+    # match, so the user can clean up files without restarting the import.
 
 
 class DuplicateAction(str, Enum):
@@ -34,7 +37,7 @@ class DuplicateAction(str, Enum):
 
     @classmethod
     def strict_options(cls) -> list[str]:
-        return [d.text for d in set(cls) - {DuplicateAction.ASK}]
+        return [d.text for d in cls if d is not DuplicateAction.ASK]
 
     @classmethod
     def choices(cls) -> dict[str, str]:
@@ -45,3 +48,4 @@ class DuplicateAction(str, Enum):
     REMOVE = "r", "Remove old"
     KEEP = "k", "Keep all"
     ASK = "a", "Ask"
+    UPGRADE = "u", "Upgrade"

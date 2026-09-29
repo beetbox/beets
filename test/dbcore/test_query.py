@@ -9,18 +9,15 @@ from pathlib import Path
 import pytest
 
 from beets import util
-from beets.dbcore import types
+from beets.dbcore import AndQuery, MatchQuery, OrQuery, types
 from beets.dbcore.query import (
-    AndQuery,
     BooleanQuery,
     DateQuery,
     FalseQuery,
     InQuery,
-    MatchQuery,
     NoneQuery,
     NotQuery,
     NumericQuery,
-    OrQuery,
     ParsingError,
     PathQuery,
     RegexpQuery,
@@ -86,6 +83,7 @@ class TestGet:
             comp=False,
             genres=["Hard Rock"],
             comments="caf\xe9",
+            Flex_Attr="flex",
         )
 
         return helper.lib
@@ -115,6 +113,8 @@ class TestGet:
             ("comments:caf\xe9", ["third"]),
             ("comp:true", ["first", "second"]),
             ("comp:false", ["third"]),
+            ("flex_attr:flex", ["third"]),
+            ("Flex_Attr:flex", ["third"]),
             ("genres:=rock", ["first"]),
             ("genres:=Rock", ["second"]),
             ('genres:="Hard Rock"', ["third"]),

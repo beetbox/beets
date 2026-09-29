@@ -54,7 +54,7 @@ class LastFmClient:
         min_weight: int,
         ignore_patterns: IgnorePatternsByArtist,
         alias_patterns: list[AliasPatternWithReplacement],
-    ):
+    ) -> None:
         """Initialize the client.
 
         The min_weight parameter filters tags by their minimum weight.

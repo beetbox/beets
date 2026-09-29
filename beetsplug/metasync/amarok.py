@@ -1,17 +1,27 @@
 """Synchronize information from amarok's library via dbus"""
 
+from __future__ import annotations
+
 from datetime import datetime
 from os.path import basename
 from time import mktime
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 from xml.sax.saxutils import quoteattr
 
 from beets.dbcore import types
 from beets.util import displayable_path
 from beetsplug.metasync import MetaSource
 
+if TYPE_CHECKING:
+    from types import ModuleType
 
-def import_dbus():
+    from confuse import ConfigView
+
+    from beets.library import Item
+    from beets.logging import BeetsLogger as Logger
+
+
+def import_dbus() -> ModuleType | None:
     try:
         return __import__("dbus")
     except ImportError:
@@ -38,7 +48,7 @@ class Amarok(MetaSource):
             </filters>
         </query>"""
 
-    def __init__(self, config, log):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
 
         if not dbus:
@@ -48,7 +58,7 @@ class Amarok(MetaSource):
             "org.kde.amarok", "/Collection"
         )
 
-    def sync_from_source(self, item):
+    def sync_from_source(self, item: Item) -> None:
         path = displayable_path(item.path)
 
         # amarok unfortunately doesn't allow searching for the full path, only

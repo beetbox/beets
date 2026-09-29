@@ -15,9 +15,11 @@ from beets.autotag import AlbumInfo
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.autotag import Info
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
+    from beets.library import Item, Library
 
 __author__ = "henryoberholtzer@gmail.com"
 __version__ = "1.0"
@@ -139,13 +141,13 @@ class TitlecasePlugin(BeetsPlugin):
     def the_artist_regexp(self) -> re.Pattern[str]:
         return re.compile(r"\bthe\b")
 
-    def titlecase_callback(self, word, **kwargs) -> str | None:
+    def titlecase_callback(self, word: str, **kwargs) -> str | None:
         """Callback function for words to preserve case of."""
         if preserved_word := self.preserve["words"].get(word.upper(), ""):
             return preserved_word
         return None
 
-    def received_info_handler(self, info: Info):
+    def received_info_handler(self, info: Info) -> None:
         """Calls titlecase fields for AlbumInfo or TrackInfo
         Processes the tracks field for AlbumInfo
         """
@@ -155,7 +157,7 @@ class TitlecasePlugin(BeetsPlugin):
                 self.titlecase_fields(track)
 
     def commands(self) -> list[ui.Subcommand]:
-        def func(lib, opts, args):
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             write = ui.should_write()
             for item in lib.items(args):
                 self._log.info(f"titlecasing {item.title}:")

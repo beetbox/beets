@@ -6,6 +6,7 @@ import re
 import time
 import typing
 from abc import ABC
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar, cast
 
 import beets
@@ -15,7 +16,6 @@ from beets.util.units import human_seconds_short, raw_seconds_short
 from . import pathutils, query
 
 SQLiteType = query.SQLiteType
-BLOB_TYPE = query.BLOB_TYPE
 MULTI_VALUE_DELIMITER = "\\␀"
 
 
@@ -374,12 +374,14 @@ class BasePathType(Type[bytes, N]):
         return util.normpath(string)
 
     def normalize(self, value: Any) -> bytes | N:
+        if isinstance(value, Path):
+            value = str(value)
+
         if isinstance(value, str):
             # Paths stored internally as encoded bytes.
             return util.bytestring_path(value)
 
-        if isinstance(value, BLOB_TYPE):
-            # We unwrap buffers to bytes.
+        if isinstance(value, memoryview):
             return bytes(value)
 
         return value
@@ -390,12 +392,8 @@ class BasePathType(Type[bytes, N]):
             return pathutils.expand_path_from_db(value)
         return value
 
-    def to_sql(self, value: pathutils.MaybeBytes) -> BLOB_TYPE | None:
-        value = pathutils.normalize_path_for_db(value)
-        if isinstance(value, bytes):
-            return BLOB_TYPE(value)
-
-        return value
+    def to_sql(self, value: pathutils.MaybeBytes) -> bytes | None:
+        return pathutils.normalize_path_for_db(value)
 
 
 class NullPathType(BasePathType[None]):

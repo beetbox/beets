@@ -67,6 +67,6 @@ Default
     Suppress the message indicating that a file already has a ``bpm`` value. Can also be
     set using the ``-q`` or ``--quiet`` flag.
 
-.. _beat_track: https://librosa.org/doc/latest/generated/librosa.beat.beat_track.html
+.. _beat_track: https://librosa.org/doc/latest/api/generated/librosa.beat.beat_track.html
 
 .. _librosa: https://github.com/librosa/librosa/

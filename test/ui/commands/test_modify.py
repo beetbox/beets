@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from mediafile import MediaFile
 
@@ -5,7 +7,6 @@ from beets import logging
 from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase, IOMixin, TestHelper
 from beets.ui.commands.modify import ModifyOperation, modify_parse_args
-from beets.util import syspath
 
 _p = pytest.param
 
@@ -111,6 +112,24 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
         assert len(list(original_items)) == 3
         assert len(list(new_items)) == 7
 
+    def test_selective_modify_output(self):
+        """Test that the output shows the correct changes.
+
+        See #4880 where attempts to modify 'added' field resulted in TypeError.
+        Modifying simple fields, like 'artist' resulted in the following output:
+        $ beet modify artist:OLD artist=NEW
+          artist: OLD -> ModifyOperation(operator=None, value='NEW')
+        """
+        self.io.addinput("s")  # select
+        self.io.addinput("y")  # yes
+        new_added = "2020-01-01 00:00:00"
+        pattern = re.compile(rf"added: .* -> {new_added}")
+
+        output = self.run_with_output("modify", f"added={new_added}")
+
+        # we expect to see this printed twice
+        assert len(pattern.findall(output)) == 2
+
     def test_modify_formatted(self):
         for i in range(3):
             self.add_item_fixture(
@@ -181,7 +200,7 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
     def test_write_initial_key_tag(self):
         self.modify("initial_key=C#m")
         item = self.lib.items().get()
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key == "C#m"
 
     def test_set_flexattr(self):
@@ -204,11 +223,11 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
         item.write()
         item.store()
 
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key == "C#m"
 
         self.modify("initial_key!")
-        mediafile = MediaFile(syspath(item.path))
+        mediafile = MediaFile(item.filepath)
         assert mediafile.initial_key is None
 
     def test_arg_parsing_colon_query(self):

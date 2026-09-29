@@ -1,13 +1,13 @@
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 from beets.test import _common
 from beets.test.helper import RUNNING_IN_CI, IOMixin, has_program
 from beets.ui.commands.completion import BASH_COMPLETION_PATHS
-from beets.util import syspath
 
 from ..test_ui import TestPluginTestCase
 
@@ -33,14 +33,15 @@ class CompletionTest(IOMixin, TestPluginTestCase):
         )
 
         # Load bash_completion library.
-        for path in BASH_COMPLETION_PATHS:
-            if os.path.exists(syspath(path)):
+        completion_paths = map(Path, map(os.fsdecode, BASH_COMPLETION_PATHS))
+        for path in completion_paths:
+            if path.exists():
                 bash_completion = path
                 break
         else:
             self.skipTest("bash-completion script not found")
         try:
-            with open(syspath(bash_completion), "rb") as f:
+            with bash_completion.open("rb") as f:
                 tester.stdin.writelines(f)
         except OSError:
             self.skipTest("could not read bash-completion script")
@@ -51,8 +52,8 @@ class CompletionTest(IOMixin, TestPluginTestCase):
         tester.stdin.writelines(completion_script.splitlines(True))
 
         # Load test suite.
-        test_script_name = os.path.join(_common.RSRC, b"test_completion.sh")
-        with open(test_script_name, "rb") as test_script_file:
+        test_script_name = _common.RSRC / "test_completion.sh"
+        with test_script_name.open("rb") as test_script_file:
             tester.stdin.writelines(test_script_file)
         out, _ = tester.communicate()
         assert tester.returncode == 0

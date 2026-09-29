@@ -1,12 +1,20 @@
 """The 'version' command: show version information."""
 
+from __future__ import annotations
+
 from platform import python_version
+from typing import TYPE_CHECKING
 
 import beets
 from beets import plugins, ui
 
+if TYPE_CHECKING:
+    import optparse
 
-def show_version(*args):
+    from beets.library import Library
+
+
+def show_version(lib: Library, opts: optparse.Values, args: list[str]) -> None:
     ui.print_(f"beets version {beets.__version__}")
     ui.print_(f"Python version {python_version()}")
     # Show plugins.

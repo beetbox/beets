@@ -16,6 +16,7 @@ from ._utils.musicbrainz import MusicBrainzAPI
 from ._utils.requests import BeetsHTTPError
 
 if TYPE_CHECKING:
+    import optparse
     from collections.abc import Iterable, Iterator
 
     from requests import Response
@@ -169,7 +170,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
         return MBCollection(collection, self.mb_api)
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         mbupdate = Subcommand("mbupdate", help="Update MusicBrainz collection")
         mbupdate.parser.add_option(
             "-r",
@@ -182,7 +183,9 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         mbupdate.func = self.update_collection
         return [mbupdate]
 
-    def update_collection(self, lib: Library, opts, args) -> None:
+    def update_collection(
+        self, lib: Library, opts: optparse.Values, args: list[str]
+    ) -> None:
         self.config.set_args(opts)
         remove_missing = self.config["remove"].get(bool)
         self.update_album_list(lib, lib.albums(), remove_missing)

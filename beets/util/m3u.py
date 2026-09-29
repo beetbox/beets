@@ -1,8 +1,14 @@
 """Provides utilities to read, write and manipulate m3u playlist files."""
 
+from __future__ import annotations
+
 import traceback
+from typing import TYPE_CHECKING
 
 from beets.util import FilesystemError, mkdirall, normpath, syspath
+
+if TYPE_CHECKING:
+    from beets.util import PathLike
 
 
 class EmptyPlaylistError(Exception):
@@ -12,7 +18,9 @@ class EmptyPlaylistError(Exception):
 class M3UFile:
     """Reads and writes m3u or m3u8 playlist files."""
 
-    def __init__(self, path):
+    media_list: list[bytes]
+
+    def __init__(self, path: PathLike) -> None:
         """``path`` is the absolute path to the playlist file.
 
         The playlist file type, m3u or m3u8 is determined by 1) the ending
@@ -24,7 +32,7 @@ class M3UFile:
         self.extm3u = False
         self.media_list = []
 
-    def load(self):
+    def load(self) -> None:
         """Reads the m3u file from disk and sets the object's attributes."""
         pl_normpath = normpath(self.path)
         try:
@@ -44,7 +52,9 @@ class M3UFile:
         if not self.media_list:
             raise EmptyPlaylistError
 
-    def set_contents(self, media_list, extm3u=True):
+    def set_contents(
+        self, media_list: list[bytes], extm3u: bool = True
+    ) -> None:
         """Sets self.media_list to a list of media file paths.
 
         Also sets additional flags, changing the final m3u-file's format.
@@ -58,7 +68,7 @@ class M3UFile:
         self.media_list = media_list
         self.extm3u = extm3u
 
-    def write(self):
+    def write(self) -> None:
         """Writes the m3u file to disk.
 
         Handles the creation of potential parent directories.

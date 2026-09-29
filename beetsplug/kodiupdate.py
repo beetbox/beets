@@ -9,12 +9,21 @@ Put something like the following in your config.yaml to configure:
         pwd: secret
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import requests
 
 from beets.plugins import BeetsPlugin
 
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
 
-def update_kodi(host, port, user, password):
+
+def update_kodi(
+    host: str, port: int, user: str, password: str
+) -> requests.Response:
     """Sends request to the Kodi api to start a library refresh."""
     url = f"http://{host}:{port}/jsonrpc"
 
@@ -31,7 +40,7 @@ def update_kodi(host, port, user, password):
 
 
 class KodiUpdate(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("kodi")
 
         # Adding defaults.
@@ -43,11 +52,11 @@ class KodiUpdate(BeetsPlugin):
         self.config["pwd"].redact = True
         self.register_listener("database_change", self.listen_for_db_change)
 
-    def listen_for_db_change(self, lib, model):
+    def listen_for_db_change(self, lib: Library, model: LibModel) -> None:
         """Listens for beets db change and register the update"""
         self.register_listener("cli_exit", self.update)
 
-    def update(self, lib):
+    def update(self, lib: Library) -> None:
         """When the client exists try to send refresh request to Kodi server."""
         self._log.info("Requesting a Kodi library update...")
 

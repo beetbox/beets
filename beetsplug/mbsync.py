@@ -1,22 +1,37 @@
 """Synchronise library metadata with metadata source backends."""
 
+from __future__ import annotations
+
 from collections import defaultdict
+from typing import TYPE_CHECKING, Protocol
 
 from beets import library, metadata_plugins, ui, util
 from beets.autotag import AlbumMatch, Distance, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from beets.library import Library
+
+
+class MBSyncCLIOpts(Protocol):
+    move: bool | None
+    pretend: bool
+    write: bool | None
+
 
 class MBSyncPlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("mbsync", help="update metadata from musicbrainz")
         cmd.parser.add_option(
             "-p",
             "--pretend",
             action="store_true",
+            default=False,
             help="show all changes but do nothing",
         )
         cmd.parser.add_option(
@@ -45,7 +60,7 @@ class MBSyncPlugin(BeetsPlugin):
         cmd.func = self.func
         return [cmd]
 
-    def func(self, lib, opts, args):
+    def func(self, lib: Library, opts: MBSyncCLIOpts, args: list[str]) -> None:
         """Command handler for the mbsync function."""
         move = ui.should_move(opts.move)
         pretend = opts.pretend
@@ -54,7 +69,14 @@ class MBSyncPlugin(BeetsPlugin):
         self.singletons(lib, args, move, pretend, write)
         self.albums(lib, args, move, pretend, write)
 
-    def singletons(self, lib, query, move, pretend, write):
+    def singletons(
+        self,
+        lib: Library,
+        query: Sequence[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ) -> None:
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
@@ -82,7 +104,14 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib, query, move, pretend, write):
+    def albums(
+        self,
+        lib: Library,
+        query: Sequence[str],
+        move: bool,
+        pretend: bool,
+        write: bool,
+    ) -> None:
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """

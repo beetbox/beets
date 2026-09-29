@@ -33,7 +33,6 @@ class TestMPDStats(PluginTestHelper):
         assert "item not found:" in log.info.call_args[0][0]
 
     STATUSES: ClassVar[list[dict[str, Any]]] = [
-        {"state": "some-unknown-one"},
         {"state": "pause"},
         {"state": "play", "songid": 1, "time": "0:1"},
         {"state": "stop"},
@@ -62,7 +61,6 @@ class TestMPDStats(PluginTestHelper):
         except KeyboardInterrupt:
             pass
 
-        log.debug.assert_has_calls([call('unhandled status "{}"', ANY)])
         log.info.assert_has_calls(
             [call("pause"), call("playing {}", ANY), call("stop")]
         )

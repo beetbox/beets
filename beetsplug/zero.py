@@ -1,6 +1,9 @@
 """Clears tag fields in media files."""
 
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING
 
 import confuse
 from mediafile import MediaFile
@@ -9,6 +12,16 @@ from beets.importer import Action
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, input_yn
 
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Iterable
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
+
+    from ._typing import JSONDict
+
+
 __author__ = "baobab@heresiarch.info"
 
 
@@ -16,7 +29,9 @@ ARTWORK_FIELDS = {"images", "art"}
 
 
 class ZeroPlugin(BeetsPlugin):
-    def __init__(self):
+    fields_to_progs: dict[str, list[re.Pattern[str]]]
+
+    def __init__(self) -> None:
         super().__init__()
 
         self.register_listener("write", self.write_event)
@@ -65,10 +80,12 @@ class ZeroPlugin(BeetsPlugin):
                 ):
                     self._set_pattern(field)
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         zero_command = Subcommand("zero", help="set fields to null")
 
-        def zero_fields(lib, opts, args):
+        def zero_fields(
+            lib: Library, opts: optparse.Values, args: list[str]
+        ) -> None:
             if not args and not input_yn(
                 "Remove fields for all items? (Y/n)", True
             ):
@@ -79,7 +96,7 @@ class ZeroPlugin(BeetsPlugin):
         zero_command.func = zero_fields
         return [zero_command]
 
-    def _set_pattern(self, field):
+    def _set_pattern(self, field: str) -> None:
         """Populate `self.fields_to_progs` for a given field.
         Do some sanity checks then compile the regexes.
         """
@@ -98,17 +115,19 @@ class ZeroPlugin(BeetsPlugin):
                 # Matches everything
                 self.fields_to_progs[field] = []
 
-    def import_task_choice_event(self, session, task):
+    def import_task_choice_event(
+        self, session: ImportSession, task: ImportTask
+    ) -> None:
         if task.choice_flag == Action.ASIS and not self.warned:
             self._log.warning('cannot zero in "as-is" mode')
             self.warned = True
         # TODO request write in as-is mode
 
-    def write_event(self, item, path, tags):
+    def write_event(self, item: Item, path: bytes, tags: JSONDict) -> None:
         if self.config["auto"]:
             self.set_fields(item, tags)
 
-    def set_fields(self, item, tags):
+    def set_fields(self, item: Item, tags: JSONDict) -> bool:
         """Set values in `tags` to `None` if the field is in
         `self.fields_to_progs` and any of the corresponding `progs` matches the
         field value.
@@ -141,7 +160,7 @@ class ZeroPlugin(BeetsPlugin):
 
         return fields_set
 
-    def process_item(self, item):
+    def process_item(self, item: Item) -> None:
         tags = dict(item)
 
         if self.set_fields(item, tags):
@@ -150,7 +169,7 @@ class ZeroPlugin(BeetsPlugin):
                 item.store(fields=tags)
 
 
-def _match_progs(value, progs):
+def _match_progs(value: str, progs: Iterable[re.Pattern[str]]) -> bool:
     """Check if `value` (as string) is matching any of the compiled regexes in
     the `progs` list.
     """

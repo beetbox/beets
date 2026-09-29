@@ -36,7 +36,7 @@ from .requests import BeetsHTTPError, RequestHandler, TimeoutAndRetrySession
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from requests import Response
+    import requests
 
     from beets.metadata_plugins import IDResponse
 
@@ -454,6 +454,10 @@ class Recording(TypedDict):
     work_relations: NotRequired[list[WorkRelation]]
 
 
+class RecordingWithReleases(Recording):
+    releases: list[BaseRelease]
+
+
 class Track(TypedDict):
     artist_credit: list[ArtistCredit]
     id: str
@@ -501,30 +505,33 @@ class ReleaseRelation(RelationBase):
     release: ReleaseRelationRelease
 
 
-class Release(TypedDict):
-    aliases: list[Alias]
+class BaseRelease(TypedDict):
     artist_credit: list[ArtistCredit]
-    asin: str | None
     barcode: str | None
-    cover_art_archive: CoverArtArchive
     disambiguation: str
-    genres: list[Genre]
     id: str
-    label_info: list[LabelInfo]
-    media: list[Medium]
     packaging: ReleasePackaging | None
     packaging_id: str | None
-    quality: ReleaseQuality
-    release_group: ReleaseGroup
     status: ReleaseStatus | None
     status_id: str | None
-    tags: list[Tag]
+    quality: ReleaseQuality
     text_representation: TextRepresentation
-    title: str
-    artist_relations: NotRequired[list[ArtistRelation]]
     country: NotRequired[str | None]
     date: NotRequired[str]
+    title: str
     release_events: NotRequired[list[ReleaseEvent]]
+
+
+class Release(BaseRelease):
+    aliases: list[Alias]
+    asin: str | None
+    cover_art_archive: CoverArtArchive
+    genres: list[Genre]
+    label_info: list[LabelInfo]
+    media: list[Medium]
+    release_group: ReleaseGroup
+    tags: list[Tag]
+    artist_relations: NotRequired[list[ArtistRelation]]
     release_relations: NotRequired[list[ReleaseRelation]]
     url_relations: NotRequired[list[UrlRelation]]
 
@@ -554,11 +561,11 @@ class UnauthorizedMBError(BeetsHTTPError):
     STATUS = HTTPStatus.UNAUTHORIZED
 
     def __init__(self, *args, message: str | None = None, **kwargs) -> None:
-        message = (
-            f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}."
-            " Check your musicbrainz.user and musicbrainz.pass configuration"
+        super().__init__(
+            *args,
+            message="Check your musicbrainz.user and musicbrainz.pass configuration",
+            **kwargs,
         )
-        super().__init__(*args, message=message, **kwargs)
 
 
 @dataclass
@@ -609,16 +616,16 @@ class MusicBrainzAPI(RequestHandler):
     def api_root(self) -> str:
         return f"{self.api_host}/ws/2"
 
-    def create_session(self) -> LimiterTimeoutSession:
+    def create_session(self) -> requests.Session:
         return LimiterTimeoutSession(per_second=self.rate_limit)
 
-    def request(self, *args, **kwargs) -> Response:
+    def request(self, *args, **kwargs) -> requests.Response:
         """Ensure all requests specify JSON response format by default."""
         kwargs.setdefault("params", {})
         kwargs["params"]["fmt"] = "json"
         return super().request(*args, **kwargs)
 
-    def get_json(self, *args, **kwargs):
+    def get_json(self, *args, **kwargs) -> JSONDict:
         """Fetch JSON data from MusicBrainz and normalize its field names."""
         return self._normalize_data(super().get_json(*args, **kwargs))
 
@@ -694,6 +701,14 @@ class MusicBrainzAPI(RequestHandler):
     ) -> Recording:
         """Retrieve a recording by its MusicBrainz ID."""
         kwargs.setdefault("includes", RECORDING_INCLUDES)
+        return self._lookup("recording", id_, **kwargs)
+
+    def get_base_recording_with_releases(
+        self, id_: str, **kwargs: Unpack[LookupKwargs]
+    ) -> RecordingWithReleases:
+        """Retrieve a recording by its MusicBrainz ID."""
+        kwargs.setdefault("includes", [])
+        kwargs["includes"].append("releases")
         return self._lookup("recording", id_, **kwargs)
 
     def get_work(self, id_: str, **kwargs: Unpack[LookupKwargs]) -> Work:

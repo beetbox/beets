@@ -1,12 +1,14 @@
 """Synchronize information from iTunes's library"""
 
+from __future__ import annotations
+
 import os
 import plistlib
 import shutil
 import tempfile
 from contextlib import contextmanager
 from time import mktime
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 from urllib.parse import unquote, urlparse
 
 from confuse import ConfigValueError
@@ -16,9 +18,17 @@ from beets.dbcore import types
 from beets.util import bytestring_path, syspath
 from beetsplug.metasync import MetaSource
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from confuse import ConfigView
+
+    from beets.library import Item
+    from beets.logging import BeetsLogger as Logger
+
 
 @contextmanager
-def create_temporary_copy(path):
+def create_temporary_copy(path: util.PathLike) -> Iterator[bytes]:
     temp_dir = bytestring_path(tempfile.mkdtemp())
     temp_path = os.path.join(temp_dir, b"temp_itunes_lib")
     shutil.copyfile(syspath(path), syspath(temp_path))
@@ -28,7 +38,7 @@ def create_temporary_copy(path):
         shutil.rmtree(syspath(temp_dir))
 
 
-def _norm_itunes_path(path):
+def _norm_itunes_path(path: bytes) -> bytes:
     # Itunes prepends the location with 'file://' on posix systems,
     # and with 'file://localhost/' on Windows systems.
     # The actual path to the file is always saved as posix form
@@ -54,7 +64,7 @@ class Itunes(MetaSource):
         "itunes_dateadded": types.DATE,
     }
 
-    def __init__(self, config, log):
+    def __init__(self, config: ConfigView, log: Logger) -> None:
         super().__init__(config, log)
 
         config.add({"itunes": {"library": "~/Music/iTunes/iTunes Library.xml"}})
@@ -87,7 +97,7 @@ class Itunes(MetaSource):
             if "Location" in track
         }
 
-    def sync_from_source(self, item):
+    def sync_from_source(self, item: Item) -> None:
         result = self.collection.get(util.bytestring_path(item.path).lower())
 
         if not result:

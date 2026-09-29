@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, NamedTuple
 from beets import util
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from beets.library import Library
 
 
@@ -20,7 +22,7 @@ class Node(NamedTuple):
     # Maps directory names to child nodes.
 
 
-def _insert(node: Node, path: list[str], itemid: int):
+def _insert(node: Node, path: Sequence[str], itemid: int) -> None:
     """Insert an item into a virtual filesystem node."""
     if len(path) == 1:
         # Last component. Insert file.

@@ -1,6 +1,11 @@
 Limit Query Plugin
 ==================
 
+.. deprecated:: 2.14
+
+    Use the built-in ``-l`` / ``--limit`` flag on the :ref:`list-cmd` command
+    instead.
+
 ``limit`` is a plugin to limit a query to the first or last set of results. We
 also provide a query prefix ``'<n'`` to inline the same behavior in the ``list``
 command. They are analogous to piping results:

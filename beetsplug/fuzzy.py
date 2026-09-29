@@ -1,10 +1,16 @@
 """Provides a fuzzy matching query."""
 
+from __future__ import annotations
+
 import difflib
+from typing import TYPE_CHECKING
 
 from beets import config
 from beets.dbcore.query import StringFieldQuery
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from ._typing import JSONDict
 
 
 class FuzzyQuery(StringFieldQuery[str]):
@@ -39,6 +45,6 @@ class FuzzyPlugin(BeetsPlugin):
         super().__init__()
         self.config.add({"prefix": "~", "threshold": 0.7})
 
-    def queries(self):
+    def queries(self) -> JSONDict:
         prefix = self.config["prefix"].as_str()
         return {prefix: FuzzyQuery}

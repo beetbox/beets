@@ -1,11 +1,13 @@
 """Use command-line tools to check for audio file corruption."""
 
+from __future__ import annotations
+
 import errno
 import os
 import shlex
 import sys
 from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
-from typing import Literal
+from typing import TYPE_CHECKING, Literal, Protocol
 
 import confuse
 
@@ -14,6 +16,18 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
 from beets.util.color import colorize
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
+
+ImportAction = Literal["abort", "skip", "continue"]
+
+
+class BadCLIOpts(Protocol):
+    verbose: bool
 
 
 class CheckerCommandError(Exception):
@@ -26,7 +40,7 @@ class CheckerCommandError(Exception):
         msg: Message from the checker execution error.
     """
 
-    def __init__(self, cmd, oserror):
+    def __init__(self, cmd: Sequence[str], oserror: OSError) -> None:
         self.checker = cmd[0]
         self.path = cmd[-1]
         self.errno = oserror.errno
@@ -34,12 +48,16 @@ class CheckerCommandError(Exception):
 
 
 class BadFiles(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.verbose = False
 
         self.config.add(
-            {"import_action_on_warning": "ask", "import_action_on_error": "ask"}
+            {
+                "check_on_import": False,
+                "import_action_on_warning": "ask",
+                "import_action_on_error": "ask",
+            }
         )
 
         self.register_listener("import_task_start", self.on_import_task_start)
@@ -47,7 +65,7 @@ class BadFiles(BeetsPlugin):
             "import_task_before_choice", self.on_import_task_before_choice
         )
 
-    def run_command(self, cmd):
+    def run_command(self, cmd: Sequence[str]) -> tuple[int, int, list[str]]:
         self._log.debug(
             "running command: {}", displayable_path(list2cmdline(cmd))
         )
@@ -61,42 +79,46 @@ class BadFiles(BeetsPlugin):
             status = e.returncode
         except OSError as e:
             raise CheckerCommandError(cmd, e)
-        output = output.decode(sys.getdefaultencoding(), "replace")
-        return status, errors, [line for line in output.split("\n") if line]
+        output_str = output.decode(sys.getdefaultencoding(), "replace")
+        return status, errors, [line for line in output_str.split("\n") if line]
 
-    def check_mp3val(self, path):
+    def check_mp3val(self, path: str) -> tuple[int, int, list[str]]:
         status, errors, output = self.run_command(["mp3val", path])
         if status == 0:
             output = [line for line in output if line.startswith("WARNING:")]
             errors = len(output)
         return status, errors, output
 
-    def check_flac(self, path):
+    def check_flac(self, path: str) -> tuple[int, int, list[str]]:
         return self.run_command(["flac", "-wst", path])
 
-    def check_custom(self, command):
-        def checker(path):
-            cmd = shlex.split(command)
-            cmd.append(path)
-            return self.run_command(cmd)
+    def check_custom(
+        self, command: str
+    ) -> Callable[[str], tuple[int, int, list[str]]]:
+        def checker(path: str) -> tuple[int, int, list[str]]:
+            return self.run_command([*shlex.split(command), path])
 
         return checker
 
-    def get_checker(self, ext):
+    def get_checker(
+        self, ext: str
+    ) -> Callable[[str], tuple[int, int, list[str]]] | None:
         ext = ext.lower()
         try:
-            command = self.config["commands"].get(dict).get(ext)
-        except confuse.NotFoundError:
-            command = None
-        if command:
+            command = self.config["commands"].get(confuse.MappingValues(str))[
+                ext
+            ]
+        except (confuse.NotFoundError, KeyError):
+            if ext == "mp3":
+                return self.check_mp3val
+            if ext == "flac":
+                return self.check_flac
+        else:
             return self.check_custom(command)
-        if ext == "mp3":
-            return self.check_mp3val
-        if ext == "flac":
-            return self.check_flac
+
         return None
 
-    def check_item(self, item):
+    def check_item(self, item: Item) -> list[str]:
         # First, check whether the path exists. If not, the user
         # should probably run `beet update` to cleanup your library.
         dpath = displayable_path(item.path)
@@ -110,9 +132,7 @@ class BadFiles(BeetsPlugin):
         if not checker:
             self._log.error("no checker specified in the config for {}", ext)
             return []
-        path = item.path
-        if not isinstance(path, str):
-            path = item.path.decode(sys.getfilesystemencoding())
+        path = str(item.filepath)
         try:
             status, errors, output = checker(path)
         except CheckerCommandError as e:
@@ -146,8 +166,10 @@ class BadFiles(BeetsPlugin):
 
         return error_lines
 
-    def on_import_task_start(self, task, session):
-        if not self.config["check_on_import"].get(False):
+    def on_import_task_start(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
+        if not self.config["check_on_import"].get(bool):
             return
 
         checks_failed = []
@@ -158,12 +180,10 @@ class BadFiles(BeetsPlugin):
                 checks_failed.append(error_lines)
 
         if checks_failed:
-            task._badfiles_checks_failed = checks_failed
+            task._badfiles_checks_failed = checks_failed  # type: ignore[attr-defined]
 
     def handle_import_action(
-        self,
-        action: Literal["abort", "skip", "continue"],
-        failure_type: Literal["error", "warning"],
+        self, action: ImportAction, failure_type: Literal["error", "warning"]
     ) -> importer.Action | None:
         action_name_by_action = {
             "abort": "Aborting",
@@ -180,9 +200,13 @@ class BadFiles(BeetsPlugin):
             return importer.Action.SKIP
         return None
 
-    def on_import_task_before_choice(self, task, session):
+    def on_import_task_before_choice(
+        self, task: ImportTask, session: ImportSession
+    ) -> importer.Action | None:
         if hasattr(task, "_badfiles_checks_failed"):
-            actions = confuse.Choice(["ask", "abort", "skip", "continue"])
+            actions = confuse.Choice[ImportAction | Literal["ask"]](
+                ["ask", "abort", "skip", "continue"]
+            )
             warning_action = self.config["import_action_on_warning"].get(
                 actions
             )
@@ -234,18 +258,18 @@ class BadFiles(BeetsPlugin):
             raise Exception(f"Unexpected selection: {sel}")
         return None
 
-    def command(self, lib, opts, args):
+    def command(self, lib: Library, opts: BadCLIOpts, args: list[str]) -> None:
         # Get items from arguments
         items = lib.items(args)
         self.verbose = opts.verbose
 
-        def check_and_print(item):
+        def check_and_print(item: Item) -> None:
             for error_line in self.check_item(item):
                 ui.print_(error_line)
 
         par_map(check_and_print, items)
 
-    def commands(self):
+    def commands(self) -> list[Subcommand]:
         bad_command = Subcommand(
             "bad", help="check for corrupt or missing files"
         )

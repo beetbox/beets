@@ -106,6 +106,17 @@ get it right:
 4. You're all set! Type ``beet version`` in a new command prompt to verify the
    installation.
 
+.. note::
+
+    The classic Windows console (``cmd.exe``) does not display beets' output
+    (special characters and colors) correctly. For a usable experience, run
+    beets in a terminal emulator such as `Windows Terminal`_ or cmder_, or in a
+    Unix-like shell such as Git Bash.
+
+.. _cmder: https://cmder.app/
+
+.. _windows terminal: https://aka.ms/terminal
+
 **Bonus: Windows Context Menu Integration**
 
 Windows users may also want to install a context menu item for importing files

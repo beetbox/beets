@@ -4,6 +4,7 @@ library: library.db
 directory: ~/Music
 statefile: state.pickle
 create_backup_before_migrations: yes
+tempfile_prefix: '.'
 
 # --------------- Plugins ---------------
 
@@ -95,6 +96,11 @@ aunique:
 sunique:
     keys: artist title
     disambiguators: year trackdisambig
+    bracket: '[]'
+
+tunique:
+    keys: title
+    disambiguators: disc track artist
     bracket: '[]'
 
 # --------------- Tagging ---------------

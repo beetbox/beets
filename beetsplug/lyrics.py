@@ -10,9 +10,10 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
+from http import HTTPStatus
 from itertools import filterfalse, groupby
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, NamedTuple
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Protocol
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import requests
@@ -29,6 +30,7 @@ from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
 
 from ._utils.requests import (
+    BeetsHTTPError,
     HTTPNotFoundError,
     RequestHandler,
     TimeoutAndRetrySession,
@@ -54,9 +56,18 @@ if TYPE_CHECKING:
     HtmlTransformer = Callable[[str], str]
 
 
+class LyricsCLIOpts(Protocol):
+    print: bool
+    rest_directory: str | None
+
+
 class CaptchaError(requests.exceptions.HTTPError):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__("Captcha is required", *args, **kwargs)
+
+
+class TooManyRequestsHTTPError(BeetsHTTPError):
+    STATUS = HTTPStatus.TOO_MANY_REQUESTS
 
 
 class GeniusHTTPError(requests.exceptions.HTTPError):
@@ -66,7 +77,7 @@ class GeniusHTTPError(requests.exceptions.HTTPError):
 # Utilities.
 
 
-def search_pairs(item):
+def search_pairs(item: Item) -> Iterable[tuple[str, list[str]]]:
     """Yield a pairs of artists and titles to search for.
 
     The first item in the pair is the name of the artist, the second
@@ -81,7 +92,9 @@ def search_pairs(item):
     The method also tries to split multiple titles separated with `/`.
     """
 
-    def generate_alternatives(string, patterns):
+    def generate_alternatives(
+        string: str, patterns: Iterable[str]
+    ) -> list[str]:
         """Generate string alternatives by extracting first matching group for
         each given pattern.
         """
@@ -159,7 +172,7 @@ def slug(text: str) -> str:
 class LyricsRequestHandler(RequestHandler):
     _log: Logger
 
-    def create_session(self) -> TimeoutAndRetrySession:
+    def create_session(self) -> requests.Session:
         """Return a rate-limited session for lyrics HTTP requests."""
         return TimeoutAndRetrySession()
 
@@ -182,7 +195,7 @@ class LyricsRequestHandler(RequestHandler):
 
     def warn(self, message: str, *args) -> None:
         """Log warning with the class name."""
-        self._log.warning(f"{self.__class__.__name__}: {message}", *args)
+        self._log.error(f"{self.__class__.__name__}: {message}", *args)
 
     @staticmethod
     def format_url(url: str, params: JSONDict | None) -> str:
@@ -192,26 +205,37 @@ class LyricsRequestHandler(RequestHandler):
         return f"{url}?{urlencode(params)}"
 
     def get_text(
-        self, url: str, params: JSONDict | None = None, **kwargs
+        self,
+        url: str,
+        params: JSONDict | None = None,
+        force_utf8: bool = False,
+        **kwargs,
     ) -> str:
         """Return text / HTML data from the given URL.
 
-        Set the encoding to None to let requests handle it because some sites
-        set it incorrectly.
+        Set encoding to None to let requests auto-detect (works for most sites).
+        For Genius, force UTF-8 to avoid MacRoman misdetection.
         """
         url = self.format_url(url, params)
         self.debug("Fetching HTML from {}", url)
         r = self.get(url, **kwargs)
-        r.encoding = None
+        if force_utf8:
+            r.encoding = r.encoding or "utf-8"
+        else:
+            r.encoding = None
         return r.text
 
-    def get_json(self, url: str, params: JSONDict | None = None, **kwargs):
+    def get_json(
+        self, url: str, params: JSONDict | None = None, **kwargs
+    ) -> Any:
         """Return JSON data from the given URL."""
         url = self.format_url(url, params)
         self.debug("Fetching JSON from {}", url)
         return super().get_json(url, **kwargs)
 
-    def post_json(self, url: str, params: JSONDict | None = None, **kwargs):
+    def post_json(
+        self, url: str, params: JSONDict | None = None, **kwargs
+    ) -> Any:
         """Send POST request and return JSON response."""
         url = self.format_url(url, params)
         self.debug("Posting JSON to {}", url)
@@ -260,7 +284,7 @@ class LRCLyrics:
     id: int
     duration: float
     instrumental: bool
-    plain: str
+    plain: str | None
     synced: str | None
 
     def __le__(self, other: LRCLyrics) -> bool:
@@ -306,13 +330,28 @@ class LRCLyrics:
         return abs(self.duration - self.target_duration)
 
     @cached_property
+    def has_text(self) -> bool:
+        """Return whether this candidate can supply any lyrics.
+
+        LRCLib entries carry track metadata independently of the lyrics
+        themselves, so a record may have neither ``plainLyrics`` nor
+        ``syncedLyrics`` while ``instrumental`` is still False: the lyrics
+        simply have not been contributed. Such a candidate has nothing to
+        offer, in contrast to an instrumental track, for which "no lyrics" is
+        itself the answer.
+        """
+        return bool(self.instrumental or self.plain or self.synced)
+
+    @cached_property
     def is_valid(self) -> bool:
         """Return whether the lyrics item is valid.
         Lyrics duration must be within the tolerance defined by
-        :attr:`DURATION_DIFF_TOLERANCE`.
+        :attr:`DURATION_DIFF_TOLERANCE`, and the item must be able to supply
+        lyrics at all.
         """
         return (
-            self.duration_dist
+            self.has_text
+            and self.duration_dist
             <= self.target_duration * self.DURATION_DIFF_TOLERANCE
         )
 
@@ -329,15 +368,40 @@ class LRCLyrics:
         """
         return not self.synced, self.duration_dist
 
+    @staticmethod
+    def _format_synced(synced: str) -> str:
+        """Return synced lyrics with surrounding whitespace trimmed."""
+        return "\n".join(map(str.strip, synced.splitlines()))
+
+    @staticmethod
+    def _synced_as_plain(synced: str) -> str:
+        """Return synced lyrics as plain text, without the LRC timestamps."""
+        return "\n".join(
+            m[2]
+            for line in synced.splitlines()
+            if (m := Lyrics.LINE_PARTS_PAT.match(line))
+        )
+
     def get_text(self, want_synced: bool) -> str:
         """Return the preferred text form for this candidate."""
         if self.instrumental:
             return INSTRUMENTAL_LYRICS
 
         if want_synced and self.synced:
-            return "\n".join(map(str.strip, self.synced.splitlines()))
+            return self._format_synced(self.synced)
 
-        return self.plain
+        if self.plain:
+            return self.plain
+
+        # 'plainLyrics' may be null while synced lyrics are available. Use the
+        # latter as the plain text, dropping the timestamps.
+        if self.synced:
+            return self._synced_as_plain(self.synced)
+
+        # Unreachable for a candidate that passed :attr:`is_valid`, which
+        # requires some lyrics to be available. Kept so that this method always
+        # returns a string.
+        return ""
 
 
 class LRCLib(Backend):
@@ -612,12 +676,31 @@ class Genius(SearchBackend):
         return {"Authorization": f"Bearer {self.config['genius_api_key']}"}
 
     def get_json(self, *args, **kwargs) -> GeniusAPI.Search:
-        response: GeniusAPI.Response = super().get_json(*args, **kwargs)
+        try:
+            response: GeniusAPI.Response = super().get_json(*args, **kwargs)
+        except requests.HTTPError as exc:
+            response = exc.response.json()
+
         if "response" in response:
             return response  # type: ignore[return-value]
 
         meta = response["meta"]
+        if meta["status"] == HTTPStatus.TOO_MANY_REQUESTS:
+            raise TooManyRequestsHTTPError(
+                message=meta["message"], response=kwargs.get("response")
+            )
+
         raise GeniusHTTPError(f"{meta['message']} Status: {meta['status']}")
+
+    def get_text(
+        self,
+        url: str,
+        params: JSONDict | None = None,
+        force_utf8: bool = True,
+        **kwargs,
+    ) -> str:
+        """Force UTF-8 encoding for Genius to avoid MacRoman misdetection."""
+        return super().get_text(url, params, force_utf8=force_utf8, **kwargs)
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
         search_data = self.get_json(
@@ -632,7 +715,9 @@ class Genius(SearchBackend):
     def scrape(cls, html: str) -> str | None:
         if m := cls.LYRICS_IN_JSON_RE.search(html):
             html_text = cls.remove_backslash(m[0]).replace(r"\n", "\n")
-            return cls.get_soup(html_text).get_text().strip()
+            lyrics = cls.get_soup(html_text).get_text().strip()
+            # Genius embeds lyrics in JSON; escape sequences remain after parsing
+            return re.sub(r'\\+"', '"', lyrics)
 
         return None
 
@@ -643,7 +728,7 @@ class Tekstowo(SearchBackend):
     BASE_URL = "https://www.tekstowo.pl"
     SEARCH_URL = f"{BASE_URL}/szukaj,{{}}.html"
 
-    def build_url(self, artist, title):
+    def build_url(self, artist: str, title: str) -> str:
         artistitle = f"{artist.title()} {title.title()}"
 
         return self.SEARCH_URL.format(quote_plus(unidecode(artistitle)))
@@ -1053,7 +1138,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             return Translator.from_config(self._log, **config.flatten())
         return None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -1096,7 +1181,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         if self.config["auto"]:
             self.import_stages = [self.imported]
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("lyrics", help="fetch song lyrics")
         cmd.parser.add_option(
             "-p",
@@ -1142,7 +1227,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             help="do not fetch missing lyrics",
         )
 
-        def func(lib: Library, opts, args) -> None:
+        def func(lib: Library, opts: LyricsCLIOpts, args: list[str]) -> None:
             # The "write to files" option corresponds to the
             # import_write config value.
             self.config.set(vars(opts))

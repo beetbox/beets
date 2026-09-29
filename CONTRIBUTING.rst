@@ -424,7 +424,7 @@ contributor.
 
 .. _test: https://github.com/beetbox/beets/tree/master/test
 
-.. _test-query: https://github.com/beetbox/beets/blob/master/test/test_query.py
+.. _test-query: https://github.com/beetbox/beets/blob/master/test/dbcore/test_query.py
 
 .. _unittest: https://docs.python.org/3/library/unittest.html
 

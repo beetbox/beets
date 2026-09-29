@@ -28,7 +28,7 @@ class PlaylistTestCase(PluginTestCase):
         ]:
             self.add_album(path=self.music_dir / p, title=title, album=album)
 
-        self.playlist_dir = self.temp_dir_path / "playlists"
+        self.playlist_dir = self.temp_path / "playlists"
         self.playlist_dir.mkdir(parents=True, exist_ok=True)
         self.config["directory"] = str(self.music_dir)
         self.config["playlist"]["playlist_dir"] = str(self.playlist_dir)

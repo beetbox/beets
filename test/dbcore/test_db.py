@@ -3,14 +3,15 @@
 import os
 import shutil
 import unittest
+from pathlib import Path
 from tempfile import mkstemp
 from typing import ClassVar
 
 import pytest
 
 from beets import dbcore
-from beets.dbcore import query, sort, types
-from beets.dbcore.db import DBCustomFunctionError, Index
+from beets.dbcore import Index, query, sort, types
+from beets.dbcore.db import DBCustomFunctionError
 from beets.library import Album, Item
 from beets.test.fixtures import ModelFixture1
 
@@ -90,6 +91,28 @@ class DatabaseFixtureTwoModels(dbcore.Database):
     _models = (ModelFixture2, AnotherModelFixture)
 
 
+class TestDatabasePath:
+    @pytest.mark.parametrize(
+        "path", [":memory:", b":memory:", Path(":memory:")]
+    )
+    def test_path_inputs_are_stored_as_path(self, path):
+        db = DatabaseFixture1(path)
+        try:
+            assert db.path == Path(":memory:")
+            assert isinstance(db.path, Path)
+        finally:
+            db._connection().close()
+
+    def test_bytes_filesystem_path_opens_decoded_path(self, tmp_path):
+        db_path = tmp_path / "library.db"
+        db = DatabaseFixture1(db_path)
+        try:
+            assert db.path == db_path
+            assert db_path.exists()
+        finally:
+            db._connection().close()
+
+
 class ModelFixtureWithGetters(dbcore.Model):
     @classmethod
     def _getters(cls):
@@ -103,7 +126,8 @@ class MigrationTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        handle, cls.orig_libfile = mkstemp("orig_db")
+        handle, orig_libfile = mkstemp("orig_db")
+        cls.orig_libfile = Path(orig_libfile)
         os.close(handle)
         # Set up a database with the two-field schema.
         old_lib = DatabaseFixture2(cls.orig_libfile)
@@ -118,15 +142,16 @@ class MigrationTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove(cls.orig_libfile)
+        cls.orig_libfile.unlink()
 
     def setUp(self):
-        handle, self.libfile = mkstemp("db")
+        handle, libfile = mkstemp("db")
+        self.libfile = Path(libfile)
         os.close(handle)
         shutil.copyfile(self.orig_libfile, self.libfile)
 
     def tearDown(self):
-        os.remove(self.libfile)
+        self.libfile.unlink()
 
     def test_open_with_same_fields_leaves_untouched(self):
         new_lib = DatabaseFixture2(self.libfile)
@@ -254,6 +279,15 @@ class ModelTest(unittest.TestCase):
         model.add(self.db)
         model.foo = "bar"
         model.store()
+
+        other_model = self.db._get(ModelFixture1, model.id)
+        assert other_model.foo == "bar"
+
+    def test_store_flexattr_in_fields(self):
+        model = ModelFixture1()
+        model.add(self.db)
+        model.foo = "bar"
+        model.store(fields=["foo"])
 
         other_model = self.db._get(ModelFixture1, model.id)
         assert other_model.foo == "bar"
@@ -504,16 +538,16 @@ class ResultsIteratorTest(unittest.TestCase):
         self.db._connection().close()
 
     def test_iterate_once(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._get_results(ModelFixture1)
         assert len(list(objs)) == 2
 
     def test_iterate_twice(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._get_results(ModelFixture1)
         list(objs)
         assert len(list(objs)) == 2
 
     def test_concurrent_iterators(self):
-        results = self.db._fetch(ModelFixture1)
+        results = self.db._get_results(ModelFixture1)
         it1 = iter(results)
         it2 = iter(results)
         next(it1)
@@ -522,43 +556,57 @@ class ResultsIteratorTest(unittest.TestCase):
 
     def test_slow_query(self):
         q = query.SubstringQuery("foo", "ba", False)
-        objs = self.db._fetch(ModelFixture1, q)
+        objs = self.db._get_results(ModelFixture1, q)
         assert len(list(objs)) == 2
 
     def test_slow_query_negative(self):
         q = query.SubstringQuery("foo", "qux", False)
-        objs = self.db._fetch(ModelFixture1, q)
+        objs = self.db._get_results(ModelFixture1, q)
         assert len(list(objs)) == 0
 
     def test_iterate_slow_sort(self):
         s = sort.SlowFieldSort("foo")
-        res = self.db._fetch(ModelFixture1, sort=s)
+        res = self.db._get_results(ModelFixture1, sort=s)
         objs = list(res)
         assert objs[0].foo == "bar"
         assert objs[1].foo == "baz"
 
     def test_unsorted_subscript(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._get_results(ModelFixture1)
         assert objs[0].foo == "baz"
         assert objs[1].foo == "bar"
 
     def test_slow_sort_subscript(self):
         s = sort.SlowFieldSort("foo")
-        objs = self.db._fetch(ModelFixture1, sort=s)
+        objs = self.db._get_results(ModelFixture1, sort=s)
         assert objs[0].foo == "bar"
         assert objs[1].foo == "baz"
 
+    def test_negative_subscript(self):
+        objs = self.db._get_results(ModelFixture1)
+        assert objs[-1].foo == "bar"
+        assert objs[-2].foo == "baz"
+
+    def test_slice(self):
+        objs = self.db._get_results(ModelFixture1)
+        assert [obj.foo for obj in objs[:]] == ["baz", "bar"]
+        assert [obj.foo for obj in objs[1:]] == ["bar"]
+        assert [obj.foo for obj in objs[::-1]] == ["bar", "baz"]
+
     def test_length(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._get_results(ModelFixture1)
         assert len(objs) == 2
 
     def test_out_of_range(self):
-        objs = self.db._fetch(ModelFixture1)
+        objs = self.db._get_results(ModelFixture1)
         with pytest.raises(IndexError):
             objs[100]
 
     def test_no_results(self):
-        assert self.db._fetch(ModelFixture1, query.FalseQuery()).get() is None
+        assert (
+            self.db._get_results(ModelFixture1, query.FalseQuery()).get()
+            is None
+        )
 
 
 class TestException:

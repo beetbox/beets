@@ -27,12 +27,7 @@ if TYPE_CHECKING:
 else:
     P = TypeVar("P")
 
-# To use the SQLite "blob" type, it doesn't suffice to provide a byte
-# string; SQLite treats that as encoded text. Wrapping it in a
-# `memoryview` tells it that we actually mean non-text data.
-# needs to be defined in here due to circular import.
-# TODO: remove it from this module and define it in dbcore/types.py instead
-BLOB_TYPE = memoryview
+BLOB_TYPE = bytes
 
 
 class ParsingError(ValueError):
@@ -48,9 +43,9 @@ class InvalidQueryError(ParsingError):
     """
 
     def __init__(
-        self, query: str | Sequence[str] | Query, explanation: Exception
+        self, query: str | Sequence[str] | Query | None, explanation: Exception
     ) -> None:
-        if isinstance(query, list):
+        if isinstance(query, Sequence) and not isinstance(query, str):
             query = " ".join(query)
         message = f"'{query}': {explanation}"
         super().__init__(message)
@@ -119,6 +114,7 @@ class Query(ABC):
 SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 FieldQueryType = type["FieldQuery"]
+AnyCollectionQuery = TypeVar("AnyCollectionQuery", bound="CollectionQuery")
 
 
 class FieldQuery(Query, Generic[P]):
@@ -356,8 +352,8 @@ class PathQuery(FieldQuery[bytes]):
             left, right = f"BYTELOWER({self.field})", "BYTELOWER(?)"
 
         return f"({left} = {right}) || (substr({left}, 1, ?) = {right})", [
-            BLOB_TYPE(self.pattern),
-            len(dir_blob := BLOB_TYPE(self.dir_path)),
+            self.pattern,
+            len(dir_blob := self.dir_path),
             dir_blob,
         ]
 
@@ -818,7 +814,19 @@ class DateInterval:
     def from_periods(
         cls, start: Period | None, end: Period | None
     ) -> DateInterval:
-        """Create an interval with two Periods as the endpoints."""
+        """Create an interval with two Periods as the endpoints.
+
+        A reversed range, whose start period lies entirely after its end
+        period (e.g. ``2024..2020``), is normalised by swapping the two
+        periods, so it means the same as ``2020..2024``.
+        """
+        if (
+            start is not None
+            and end is not None
+            and start.date >= end.open_right_endpoint()
+        ):
+            start, end = end, start
+
         end_date = end.open_right_endpoint() if end is not None else None
         start_date = start.date if start is not None else None
         return cls(start_date, end_date)

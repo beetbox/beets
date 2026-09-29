@@ -88,7 +88,7 @@ audioread_ library:
 
 .. _audioread: https://github.com/beetbox/audioread
 
-.. _core audio: https://developer.apple.com/technologies/mac/audio-and-video.html
+.. _core audio: https://developer.apple.com/documentation/coreaudio
 
 .. _ffmpeg: https://ffmpeg.org/
 

@@ -2,6 +2,10 @@
 interface.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from beets.util.deprecation import deprecate_imports
 
 from .completion import completion_cmd
@@ -18,8 +22,11 @@ from .update import update_cmd
 from .version import version_cmd
 from .write import write_cmd
 
+if TYPE_CHECKING:
+    from beets.ui import Subcommand
 
-def __getattr__(name: str):
+
+def __getattr__(name: str) -> Any:
     """Handle deprecated imports."""
     return deprecate_imports(
         __name__,
@@ -33,7 +40,7 @@ def __getattr__(name: str):
 
 # The list of default subcommands. This is populated with Subcommand
 # objects that can be fed to a SubcommandsOptionParser.
-default_commands = [
+default_commands: list[Subcommand] = [
     fields_cmd,
     HelpCommand(),
     import_cmd,

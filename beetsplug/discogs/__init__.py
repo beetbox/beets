@@ -12,6 +12,7 @@ import socket
 import time
 import traceback
 from functools import cache, cached_property
+from itertools import groupby
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
@@ -32,10 +33,11 @@ from .states import DISAMBIGUATION_RE, ArtistState, TracklistState
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator, Sequence
 
+    from beets.importer import ImportSession
     from beets.library import Item
     from beets.metadata_plugins import QueryType, SearchParams
 
-    from .types import ReleaseFormat, Track
+    from .types import AudioTrack, IndexTrack, ReleaseFormat, Track
 
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
@@ -66,6 +68,10 @@ TRACK_INDEX_RE = re.compile(
     re.VERBOSE,
 )
 
+RELEASE_DATE_RE = re.compile(
+    r"(?P<year>\d{4})(?:-(?P<month>\d{1,2})(?:-(?P<day>\d{1,2}))?)?"
+)
+
 FIELDS_TO_DISCOGS_KEYS = {
     "barcode": "barcode",
     "catalognum": "catno",
@@ -75,9 +81,32 @@ FIELDS_TO_DISCOGS_KEYS = {
     "year": "year",
 }
 
+MEDIA_FORMAT_ALIASES = {"digital media", "web"}
+
+
+def parse_release_date(
+    released: str | None, year: int | None
+) -> tuple[int | None, int | None, int | None]:
+    """Return the ``(year, month, day)`` a release was issued on.
+
+    Discogs reports the year of a release in its own field but the rest of
+    the date only as part of `released`, which is absent or partial for many
+    releases. `year` is therefore used for any component `released` does not
+    provide.
+    """
+    if not (m := RELEASE_DATE_RE.fullmatch((released or "").strip())):
+        return year, None, None
+
+    released_year, month, day = (
+        int(i) if i else 0 for i in m.group("year", "month", "day")
+    )
+
+    # A zero stands for "unknown" in Discogs' dates, as does a missing group.
+    return released_year or year, month or None, day or None
+
 
 class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.config.add(
             {
@@ -122,7 +151,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         return field_by_tag
 
-    def setup(self, session=None) -> None:
+    def setup(self, session: ImportSession | None = None) -> None:
         """Create the `discogs_client` field. Authenticate if necessary."""
         c_key = self.config["apikey"].as_str()
         c_secret = self.config["apisecret"].as_str()
@@ -275,9 +304,17 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             return query, filters
 
         for tag, api_field in self.extra_discogs_field_by_tag.items():
-            most_common, _count = util.plurality(
-                item.get(tag) for item in items
-            )
+            values = (item.get(tag) for item in items)
+
+            if tag == "media":
+                values = (
+                    "File"
+                    if str(value).casefold() in MEDIA_FORMAT_ALIASES
+                    else value
+                    for value in values
+                )
+
+            most_common, _count = util.plurality(values)
             if most_common is None:
                 continue
 
@@ -291,9 +328,19 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def get_search_response(self, params: SearchParams) -> Sequence[IDResponse]:
         """Search Discogs releases and return raw result mappings with IDs."""
-        results = self.discogs_client.search(params.query, **params.filters)
-        results.per_page = params.limit
-        return [r.data for r in results.page(1)]
+
+        def search() -> list[IDResponse]:
+            results = self.discogs_client.search(params.query, **params.filters)
+            results.per_page = params.limit
+            return [r.data for r in results.page(1)]
+
+        try:
+            return search()
+        except json.JSONDecodeError:
+            self._log.debug(
+                "Discogs returned an invalid JSON search response; retrying"
+            )
+            return search()
 
     @cache
     def get_master_year(self, master_id: str) -> int | None:
@@ -345,20 +392,6 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 )
                 return None
 
-        # Sanity check for required fields. The list of required fields is
-        # defined at Guideline 1.3.1.a, but in practice some releases might be
-        # lacking some of these fields. This function expects at least:
-        # `artists` (>0), `title`, `id`, `tracklist` (>0)
-        # https://www.discogs.com/help/doc/submission-guidelines-general-rules
-        if not all(
-            [
-                result.data.get(k)
-                for k in ["artists", "title", "id", "tracklist"]
-            ]
-        ):
-            self._log.warning("Release does not contain the required fields")
-            return None
-
         artist_data = [a.data for a in result.artists]
         # Information for the album artist
         albumartist = ArtistState.from_config(
@@ -378,7 +411,9 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Extract information for the optional AlbumInfo fields, if possible.
         va = albumartist.artist == config["va_name"].as_str()
-        year = result.data.get("year")
+        year, month, day = parse_release_date(
+            result.data.get("released"), result.data.get("year")
+        )
         mediums = [t["medium"] for t in tracks]
         country = result.data.get("country")
         data_url = result.data.get("uri")
@@ -425,9 +460,14 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         # Retrieve master release id (returns None if there isn't one).
         master_id = result.data.get("master_id")
-        # Assume `original_year` is equal to `year` for releases without
-        # a master release, otherwise fetch the master release.
-        original_year = self.get_master_year(master_id) if master_id else year
+        # Assume this release *is* the original when it has no master
+        # release, otherwise fetch the master release. Only its year is
+        # available, so the original month and day stay unknown there.
+        if master_id:
+            original_year = self.get_master_year(master_id)
+            original_month = original_day = None
+        else:
+            original_year, original_month, original_day = year, month, day
 
         return AlbumInfo(
             album=album,
@@ -437,6 +477,8 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             albumtype=albumtype,
             va=va,
             year=year,
+            month=month,
+            day=day,
             label=label,
             mediums=len(set(mediums)),
             releasegroup_id=master_id,
@@ -448,6 +490,8 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
             genres=sorted(genres),
             media=media,
             original_year=original_year,
+            original_month=original_month,
+            original_day=original_day,
             data_source=self.data_source,
             data_url=data_url,
             discogs_albumid=discogs_albumid,
@@ -546,91 +590,88 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         return t.tracks
 
+    def _subtrack_position(self, track: Track) -> str | None:
+        """Identify the physical position containing a flat audio subtrack."""
+        if track["type_"] == "track":
+            medium, medium_index, subindex = self.get_track_index(
+                track["position"]
+            )
+            if subindex:
+                return f"{medium or ''}{medium_index or ''}"
+        return None
+
     def _coalesce_tracks(self, raw_tracklist: list[Track]) -> list[Track]:
-        """Pre-process a tracklist, merging subtracks into a single track. The
-        title for the merged track is the one from the previous index track,
-        if present; otherwise it is a combination of the subtracks titles.
-        """
-        # Pre-process the tracklist, trying to identify subtracks.
-
-        subtracks: list[Track] = []
+        """Normalize each Discogs tracklist entry by its declared kind."""
         tracklist: list[Track] = []
-        prev_subindex = ""
-        for track in raw_tracklist:
-            # Regular subtrack (track with subindex).
-            if track["position"]:
-                _, _, subindex = self.get_track_index(track["position"])
-                if subindex:
-                    if subindex.rjust(len(raw_tracklist)) > prev_subindex:
-                        # Subtrack still part of the current main track.
-                        subtracks.append(track)
-                    else:
-                        # Subtrack part of a new group (..., 1.3, *2.1*, ...).
-                        self._add_merged_subtracks(tracklist, subtracks)
-                        subtracks = [track]
-                    prev_subindex = subindex.rjust(len(raw_tracklist))
-                    continue
-
-            # Index track with nested sub_tracks.
-            if not track["position"] and "sub_tracks" in track:
-                # Append the index track, assuming it contains the track title.
-                tracklist.append(track)
-                self._add_merged_subtracks(tracklist, track["sub_tracks"])
+        for position, tracks in groupby(
+            raw_tracklist, key=self._subtrack_position
+        ):
+            if position is not None:
+                subtracks = [
+                    track for track in tracks if track["type_"] == "track"
+                ]
+                tracklist.append(self._merge_subtracks(subtracks))
                 continue
 
-            # Regular track or index track without nested sub_tracks.
-            if subtracks:
-                self._add_merged_subtracks(tracklist, subtracks)
-                subtracks = []
-                prev_subindex = ""
-            tracklist.append(track)
-
-        # Merge and add the remaining subtracks, if any.
-        if subtracks:
-            self._add_merged_subtracks(tracklist, subtracks)
+            for track in tracks:
+                if track["type_"] in {"track", "heading"}:
+                    tracklist.append(track)
+                elif track["type_"] == "index":
+                    tracklist.extend(self._coalesce_index_track(track))
 
         return tracklist
 
-    def _add_merged_subtracks(
-        self, tracklist: list[Track], subtracks: list[Track]
-    ) -> None:
-        """Modify `tracklist` in place, merging a list of `subtracks` into
-        a single track into `tracklist`."""
-        # Calculate position based on first subtrack, without subindex.
-        idx, medium_idx, sub_idx = self.get_track_index(
+    @staticmethod
+    def _merge_subtracks(subtracks: list[AudioTrack]) -> AudioTrack:
+        """Combine flat Discogs subtracks representing one physical track."""
+        merged_track = subtracks[0].copy()
+        merged_track["title"] = " / ".join(
+            subtrack["title"] for subtrack in subtracks
+        )
+        return merged_track
+
+    def _coalesce_index_track(
+        self, index_track: IndexTrack
+    ) -> list[AudioTrack]:
+        """Convert an index container into its physical audio tracks."""
+        subtracks = index_track["sub_tracks"]
+        if not subtracks:
+            raise ValueError("Discogs index track does not contain subtracks")
+
+        medium, medium_index, subindex = self.get_track_index(
             subtracks[0]["position"]
         )
-        position = f"{idx or ''}{medium_idx or ''}"
 
-        if tracklist and not tracklist[-1]["position"]:
-            # Assume the previous index track contains the track title.
-            if sub_idx:
-                # "Convert" the track title to a real track, discarding the
-                # subtracks assuming they are logical divisions of a
-                # physical track (12.2.9 Subtracks).
-                tracklist[-1]["position"] = position
-            else:
-                # Promote the subtracks to real tracks, discarding the
-                # index track, assuming the subtracks are physical tracks.
-                index_track = tracklist.pop()
-                # Fix artists when they are specified on the index track.
-                if index_track.get("artists"):
-                    for subtrack in subtracks:
-                        if not subtrack.get("artists"):
-                            subtrack["artists"] = index_track["artists"]
-                # Concatenate index with track title when index_tracks
-                # option is set
-                if self.config["index_tracks"]:
-                    for subtrack in subtracks:
-                        subtrack["title"] = (
-                            f"{index_track['title']}: {subtrack['title']}"
-                        )
-                tracklist.extend(subtracks)
-        else:
-            # Merge the subtracks, pick a title, and append the new track.
-            track = subtracks[0].copy()
-            track["title"] = " / ".join([t["title"] for t in subtracks])
-            tracklist.append(track)
+        # Subindexed children are logical pieces contained in one physical
+        # track. Keep the index track's metadata and discard the child entries.
+        if subindex:
+            merged_track: AudioTrack = {
+                "type_": "track",
+                "position": f"{medium or ''}{medium_index or ''}",
+                "title": index_track["title"],
+                "duration": index_track["duration"],
+            }
+            if artists := index_track.get("artists"):
+                merged_track["artists"] = artists
+            if extraartists := index_track.get("extraartists"):
+                merged_track["extraartists"] = extraartists
+            return [merged_track]
+
+        # Children without subindices are separate physical tracks grouped
+        # under a musical work. Discard the index while retaining its context.
+        artists = index_track.get("artists")
+        title_prefix = (
+            f"{index_track['title']}: " if self.config["index_tracks"] else ""
+        )
+        tracks: list[AudioTrack] = []
+        for subtrack in subtracks:
+            track = subtrack.copy()
+            if artists and not track.get("artists"):
+                track["artists"] = artists
+            if title_prefix:
+                track["title"] = f"{title_prefix}{track['title']}"
+            tracks.append(track)
+        return tracks
 
     def strip_disambiguation(self, text: str) -> str:
         """Removes discogs specific disambiguations from a string.
@@ -642,7 +683,7 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
     def get_track_info(
         self,
-        track: Track,
+        track: AudioTrack,
         index: int,
         divisions: list[str],
         albumartistinfo: ArtistState,

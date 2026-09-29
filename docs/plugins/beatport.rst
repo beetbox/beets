@@ -1,7 +1,10 @@
 Beatport Plugin
 ===============
 
-.. deprecated:: 2.8 Beatport retired the API this plugin relies on. See :bug:`3862` and :bug:`4477`.
+.. deprecated:: 2.8
+
+    Beatport retired the API this plugin relies on. See :bug:`3862` and
+    :bug:`4477`.
 
 The ``beatport`` plugin adds support for querying the Beatport_ catalogue during
 the autotagging process. This can potentially be helpful for users whose

@@ -7,11 +7,17 @@ Put something like the following in your config.yaml to configure:
         password: seekrit
 """
 
+from __future__ import annotations
+
 import os
 import socket
+from typing import TYPE_CHECKING
 
 from beets import config
 from beets.plugins import BeetsPlugin
+
+if TYPE_CHECKING:
+    from beets.library import LibModel, Library
 
 
 # No need to introduce a dependency on an MPD library for such a
@@ -20,7 +26,7 @@ from beets.plugins import BeetsPlugin
 class BufferedSocket:
     """Socket abstraction that allows reading by line."""
 
-    def __init__(self, host, port, sep=b"\n"):
+    def __init__(self, host: str, port: int, sep: bytes = b"\n") -> None:
         if host[0] in ["/", "~"]:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.connect(os.path.expanduser(host))
@@ -30,7 +36,7 @@ class BufferedSocket:
         self.buf = b""
         self.sep = sep
 
-    def readline(self):
+    def readline(self) -> bytes:
         while self.sep not in self.buf:
             data = self.sock.recv(1024)
             if not data:
@@ -41,15 +47,15 @@ class BufferedSocket:
             return res + self.sep
         return b""
 
-    def send(self, data):
+    def send(self, data: bytes) -> None:
         self.sock.send(data)
 
-    def close(self):
+    def close(self) -> None:
         self.sock.close()
 
 
 class MPDUpdatePlugin(BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         config["mpd"].add(
             {
@@ -68,17 +74,22 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         self.register_listener("database_change", self.db_change)
 
-    def db_change(self, lib, model):
+    def db_change(self, lib: Library, model: LibModel) -> None:
         self.register_listener("cli_exit", self.update)
 
-    def update(self, lib):
+    def update(self, lib: Library) -> None:
         self.update_mpd(
             config["mpd"]["host"].as_str(),
             config["mpd"]["port"].get(int),
             config["mpd"]["password"].as_str(),
         )
 
-    def update_mpd(self, host="localhost", port=6600, password=None):
+    def update_mpd(
+        self,
+        host: str = "localhost",
+        port: int = 6600,
+        password: str | None = None,
+    ) -> None:
         """Sends the "update" command to the MPD server indicated,
         possibly authenticating with a password first.
         """

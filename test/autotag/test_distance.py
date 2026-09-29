@@ -5,6 +5,7 @@ import pytest
 from beets.autotag import (
     AlbumInfo,
     Distance,
+    Source,
     TrackInfo,
     distance,
     string_dist,
@@ -187,7 +188,12 @@ class TestAlbumDistance:
     @pytest.fixture
     def get_dist(self, items):
         def inner(info: AlbumInfo):
-            return distance(items, info, list(zip(items, info.tracks)))
+            return distance(
+                Source.from_items(items).data,
+                info,
+                list(zip(items, info.tracks)),
+                len(items) - len(info.tracks),
+            )
 
         return inner
 
@@ -281,6 +287,23 @@ class TestStringDistance:
 
     def test_different_distance(self):
         assert string_dist("Some String", "Totally Different") != 0.0
+
+    @pytest.mark.parametrize(
+        "string1, string2",
+        [
+            ("Draft Beer", "Draft Whiskey"),
+            ("Left Field", "Left Symphony"),
+            ("Gift Ideas", "Gift Cards"),
+            ("Craft Beer", "Craft Wine"),
+        ],
+    )
+    def test_featuring_pattern_does_not_match_mid_word(self, string1, string2):
+        # The "featuring"/"feat"/"ft" pattern must not match "ft" embedded
+        # inside an ordinary word (draft, left, gift, craft, ...) -- doing so
+        # would treat everything after "ft" as a low-weight suffix and make
+        # genuinely different strings look almost identical instead of
+        # correctly registering as a large distance.
+        assert string_dist(string1, string2) > 0.3
 
     @pytest.mark.parametrize(
         "string1, string2, reference",

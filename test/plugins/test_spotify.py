@@ -1,7 +1,6 @@
 """Tests for the 'spotify' plugin"""
 
 import json
-import os
 from urllib.parse import parse_qs, urlparse
 
 import responses
@@ -58,11 +57,8 @@ class SpotifyPluginTest(PluginTestCase):
 
     @responses.activate
     def test_missing_request(self):
-        json_file = os.path.join(
-            _common.RSRC, b"spotify", b"missing_request.json"
-        )
-        with open(json_file, "rb") as f:
-            response_body = f.read()
+        json_file = _common.RSRC / "spotify" / "missing_request.json"
+        response_body = json_file.read_bytes()
 
         responses.add(
             responses.GET,
@@ -90,11 +86,8 @@ class SpotifyPluginTest(PluginTestCase):
 
     @responses.activate
     def test_track_request(self):
-        json_file = os.path.join(
-            _common.RSRC, b"spotify", b"track_request.json"
-        )
-        with open(json_file, "rb") as f:
-            response_body = f.read()
+        json_file = _common.RSRC / "spotify" / "track_request.json"
+        response_body = json_file.read_bytes()
 
         responses.add(
             responses.GET,
@@ -128,9 +121,8 @@ class SpotifyPluginTest(PluginTestCase):
         """Tests if plugin is able to fetch a track by its Spotify ID"""
 
         # Mock the Spotify 'Get Track' call
-        json_file = os.path.join(_common.RSRC, b"spotify", b"track_info.json")
-        with open(json_file, "rb") as f:
-            response_body = f.read()
+        json_file = _common.RSRC / "spotify" / "track_info.json"
+        response_body = json_file.read_bytes()
 
         responses.add(
             responses.GET,
@@ -141,9 +133,8 @@ class SpotifyPluginTest(PluginTestCase):
         )
 
         # Mock the Spotify 'Get Album' call
-        json_file = os.path.join(_common.RSRC, b"spotify", b"album_info.json")
-        with open(json_file, "rb") as f:
-            response_body = f.read()
+        json_file = _common.RSRC / "spotify" / "album_info.json"
+        response_body = json_file.read_bytes()
 
         responses.add(
             responses.GET,
@@ -154,11 +145,8 @@ class SpotifyPluginTest(PluginTestCase):
         )
 
         # Mock the Spotify 'Search' call
-        json_file = os.path.join(
-            _common.RSRC, b"spotify", b"track_request.json"
-        )
-        with open(json_file, "rb") as f:
-            response_body = f.read()
+        json_file = _common.RSRC / "spotify" / "track_request.json"
+        response_body = json_file.read_bytes()
 
         responses.add(
             responses.GET,
@@ -186,13 +174,10 @@ class SpotifyPluginTest(PluginTestCase):
         """Ensure non-ASCII characters remain unchanged in search queries"""
 
         # Path to the mock JSON file for the Japanese track
-        json_file = os.path.join(
-            _common.RSRC, b"spotify", b"japanese_track_request.json"
-        )
+        json_file = _common.RSRC / "spotify" / "japanese_track_request.json"
 
         # Load the mock JSON response
-        with open(json_file, "rb") as f:
-            response_body = f.read()
+        response_body = json_file.read_bytes()
 
         # Mock Spotify Search API response
         responses.add(
@@ -250,11 +235,8 @@ class SpotifyPluginTest(PluginTestCase):
         track info correctly"""
 
         # Mock the Spotify 'Get Album' call
-        json_file = os.path.join(
-            _common.RSRC, b"spotify", b"multiartist_album.json"
-        )
-        with open(json_file, "rb") as f:
-            album_response_body = f.read()
+        json_file = _common.RSRC / "spotify" / "multiartist_album.json"
+        album_response_body = json_file.read_bytes()
 
         responses.add(
             responses.GET,
@@ -265,11 +247,8 @@ class SpotifyPluginTest(PluginTestCase):
         )
 
         # Mock the Spotify 'Get Track' call
-        json_file = os.path.join(
-            _common.RSRC, b"spotify", b"multiartist_track.json"
-        )
-        with open(json_file, "rb") as f:
-            track_response_body = f.read()
+        json_file = _common.RSRC / "spotify" / "multiartist_track.json"
+        track_response_body = json_file.read_bytes()
 
         responses.add(
             responses.GET,

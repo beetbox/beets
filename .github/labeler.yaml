@@ -1,3 +1,4 @@
+# Plugins
 absubmit:
   - '/absubmit/i'
 acousticbrainz:
@@ -12,10 +13,20 @@ autobpm:
   - '/autobpm/i'
 badfiles:
   - '/badfiles/i'
+  - '/\bbad command/i'
+  - '/beet bad\b/i'
 bareasc:
   - '/bareasc/i'
 beatport:
   - '/beatport/i'
+bench:
+  - '/bench(?: plugin|:)/i'
+  - '/\bbench_(?:aunique|match) command/i'
+  - '/beet bench_(?:aunique|match)\b/i'
+bpm:
+  - '/\bbpm(?: plugin|:)/i'
+  - '/\bbpm command/i'
+  - '/beet bpm\b/i'
 bpd:
   - '/bpd/i'
 bpsync:
@@ -24,22 +35,36 @@ bucket:
   - '/bucket/i'
 chroma:
   - '/chroma/i'
+  - '/(?:chromasearch|fingerprint|submit) command/i'
+  - '/beet (?:chromasearch|fingerprint|submit)/i'
 convert:
   - '/convert(?: plugin|:)/i'
+  - '/\bconvert command/i'
+  - '/beet convert\b/i'
 deezer:
   - '/deezer/i'
+  - '/\bdeezerupdate command/i'
+  - '/beet deezerupdate\b/i'
 discogs:
   - '/discogs/i'
 duplicates:
   - '/duplicates(?: plugin|:)/i'
+  - '/\bduplicates command/i'
+  - '/beet duplicates\b/i'
 edit:
   - '/edit(?: plugin|:)/i'
+  - '/\bedit command/i'
+  - '/beet edit\b/i'
 embedart:
   - '/embedart/i'
+  - '/\b(?:clear|extract|embed)art command/i'
+  - '/beet (?:clear|extract|embed)art/i'
 embyupdate:
   - '/embyupdate/i'
 export:
   - '/export(?: plugin|:)/i'
+  - '/\bexport command/i'
+  - '/beet export\b/i'
 fetchart:
   - '/fetchart/i'
 filefilter:
@@ -66,6 +91,8 @@ importsource:
   - '/importsource/i'
 info:
   - '/\binfo(?: plugin|:)/i'
+  - '/\binfo command/i'
+  - '/beet info\b/i'
 inline:
   - '/inline(?: plugin|:)/i'
 ipfs:
@@ -80,14 +107,20 @@ lastimport:
   - '/lastimport/i'
 limit:
   - '/\blimit(?: plugin|:)/i'
+  - '/\blslimit command/i'
+  - '/beet lslimit\b/i'
 listenbrainz:
   - '/listenbrainz/i'
+  - '/\blbimport command/i'
+  - '/beet lbimport\b/i'
 loadext:
   - '/loadext/i'
 lyrics:
   - '/lyrics/i'
 mbcollection:
   - '/mbcollection/i'
+  - '/\bmbupdate command/i'
+  - '/beet mbupdate\b/i'
 mbpseudo:
   - '/mbpseudo/i'
 mbsubmit:
@@ -98,6 +131,8 @@ metasync:
   - '/metasync/i'
 missing:
   - '/missing(?: plugin|:)/i'
+  - '/\bmissing command/i'
+  - '/beet missing\b/i'
 mpdstats:
   - '/mpdstats/i'
 mpdupdate:
@@ -110,14 +145,20 @@ permissions:
   - '/permissions(?: plugin|:)/i'
 play:
   - '/\bplay(?: plugin|:)/i'
+  - '/\bplay command/i'
+  - '/beet play\b/i'
 playlist:
   - '/\bplaylist(?: plugin|:)/i'
 plexupdate:
   - '/plexupdate/i'
 random:
   - '/random(?: plugin|:)/i'
+  - '/\brandom command/i'
+  - '/beet random\b/i'
 replace:
   - '/replace(?: plugin|:)/i'
+  - '/\breplace command/i'
+  - '/beet replace\b/i'
 replaygain:
   - '/replaygain/i'
 rewrite:
@@ -126,10 +167,13 @@ scrub:
   - '/scrub/i'
 smartplaylist:
   - '/smartplaylist/i'
+  - '/\bsplupdate command/i'
+  - '/beet splupdate\b/i'
 sonosupdate:
   - '/sonosupdate/i'
 spotify:
   - '/spotify/i'
+  - '/spotify(?:sync)? command/i'
 subsonicplaylist:
   - '/subsonicplaylist/i'
 subsonicupdate:
@@ -138,6 +182,10 @@ substitute:
   - '/substitute/i'
 thumbnails:
   - '/thumbnails/i'
+tidal:
+  - '/tidal/i'
+  - '/tidal(?:sync)? command/i'
+  - '/beet tidal\b/i'
 titlecase:
   - '/titlecase/i'
 types:
@@ -146,5 +194,47 @@ unimported:
   - '/unimported/i'
 web:
   - '/web(?: plugin|:)/i'
+  - '/\bweb command/i'
+  - '/beet web\b/i'
 zero:
   - '/\bzero(?: plugin|:)/i'
+  - '/\bzero command/i'
+  - '/beet zero\b/i'
+
+# Commands
+config-command:
+  - '/\bconfig command/i'
+  - '/beet config\b/i'
+fields-command:
+  - '/\bfields command/i'
+  - '/beet fields\b/i'
+help-command:
+  - '/\bhelp command/i'
+  - '/beet help\b/i'
+import-command:
+  - '/\bimport command/i'
+  - '/beet import\b/i'
+list-command:
+  - '/\blist command/i'
+  - '/beet list\b/i'
+modify-command:
+  - '/\bmodify command/i'
+  - '/beet modify\b/i'
+move-command:
+  - '/\bmove command/i'
+  - '/beet move\b/i'
+remove-command:
+  - '/\bremove command/i'
+  - '/beet remove\b/i'
+stats-command:
+  - '/\bstats command/i'
+  - '/beet stats\b/i'
+update-command:
+  - '/\bupdate command/i'
+  - '/beet update\b/i'
+version-command:
+  - '/\bversion command/i'
+  - '/beet version\b/i'
+write-command:
+  - '/\bwrite command/i'
+  - '/beet write\b/i'

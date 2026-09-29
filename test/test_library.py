@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -20,13 +21,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import TestHelper
-from beets.util import (
-    as_string,
-    bytestring_path,
-    normpath,
-    path_as_posix,
-    syspath,
-)
+from beets.util import as_string, bytestring_path, normpath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -44,6 +39,19 @@ class PytestItemHelper(TestHelper):
     @pytest.fixture
     def item_in_db(self):
         return _common.item(self.lib)
+
+
+class TestBlobTypeCompatibility:
+    def test_canonical_alias_is_bytes(self):
+        assert beets.dbcore.query.BLOB_TYPE is bytes
+
+    def test_legacy_alias_warns(self):
+        with pytest.deprecated_call(
+            match="'beets.library.BLOB_TYPE' is deprecated"
+        ):
+            blob_type = beets.library.BLOB_TYPE
+
+        assert blob_type is bytes
 
 
 class TestLoad(PytestItemHelper):
@@ -117,9 +125,7 @@ class TestAdd(PytestItemHelper):
         assert new_grouping == item.grouping
 
     def test_library_add_path_inserts_row(self):
-        item = beets.library.Item.from_path(
-            os.path.join(_common.RSRC, b"full.mp3")
-        )
+        item = beets.library.Item.from_path(_common.RSRC / "full.mp3")
         self.lib.add(item)
         new_grouping = (
             self.lib._connection()
@@ -136,9 +142,7 @@ class TestAdd(PytestItemHelper):
     ):
         """Test library.add emits only one database_change event."""
 
-        item.path = beets.util.normpath(
-            os.path.join(self.temp_dir, b"a", b"b.mp3")
-        )
+        item.path = beets.util.normpath(self.temp_path / "a" / "b.mp3")
         item.album = "a"
         item.title = "b"
 
@@ -167,6 +171,13 @@ class TestGetSet(PytestItemHelper):
     def test_set_does_not_dirty_if_value_unchanged(self, item):
         item.title = item.title
         assert "title" not in item._dirty
+
+    def test_set_memoryview_path_normalizes_to_bytes(self, item):
+        item.path = memoryview(b"/tmp/song.mp3")
+
+        assert item.path == b"/tmp/song.mp3"
+        assert isinstance(item.path, bytes)
+        assert item.filepath == Path("/tmp/song.mp3")
 
     def test_invalid_field_raises_attributeerror(self, item):
         with pytest.raises(AttributeError):
@@ -385,7 +396,7 @@ class TestDestination(PytestItemHelper):
 
     def test_get_formatted_does_not_replace_separators(self, item_in_db):
         with _common.platform_posix():
-            name = os.path.join("a", "b")
+            name = str(Path("a") / "b")
             item_in_db.title = name
             newname = item_in_db.formatted().get("title")
         assert name == newname
@@ -450,7 +461,7 @@ class TestDestination(PytestItemHelper):
 
     def test_unicode_extension_in_fragment(self, item_in_db):
         self.lib.path_formats = [("default", "foo")]
-        item_in_db.path = util.bytestring_path("bar.caf\xe9")
+        item_in_db.path = Path("bar.caf\xe9")
         with patch("sys.platform", "linux"):
             dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
@@ -469,6 +480,20 @@ class TestDestination(PytestItemHelper):
         item_in_db.title = "foo"
         item_in_db.album = "bar"
         assert item_in_db.destination() == np("base/ber/foo")
+
+    def test_destination_stays_in_basedir_with_empty_leading_field(
+        self, item_in_db
+    ):
+        # Regression test for #4889: an empty leading template field
+        # combined with custom replacements that lack the default
+        # separator rule must not produce an absolute path that escapes
+        # the base directory.
+        self.lib.directory = b"base"
+        self.lib.replacements = [(re.compile(r"a"), "e")]
+        self.lib.path_formats = [("default", "$album/$title")]
+        item_in_db.album = ""
+        item_in_db.title = "three"
+        assert item_in_db.destination() == np("base/three")
 
     @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_component(self, item_in_db):
@@ -734,6 +759,49 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
 
         self._assert_dest(b"/base/foo/the title", i1)
 
+    def test_adding_album_invalidates_memoized_result(self, items):
+        i1, i2 = items
+        album2 = self.lib.get_album(i2)
+        album2.album = "different album"
+        album2.store()
+        self._assert_dest(b"/base/foo/the title", i1)
+
+        i3 = item(year=2003)
+        self.lib.add_album([i3])
+
+        self._assert_dest(b"/base/foo [2001]/the title", i1)
+
+    @pytest.mark.parametrize("singleton_first", [True, False])
+    def test_unique_separates_raw_query_groups(self, items, singleton_first):
+        i1, i2 = items
+        for track in items:
+            album = self.lib.get_album(track)
+            album.album = "AC/DC"
+            album.store()
+        i3 = item(album="AC_DC", year=2003)
+        self.lib.add_album([i3])
+
+        expected = [
+            (b"/base/foo/the title", i3),
+            (b"/base/foo [2001]/the title", i1),
+            (b"/base/foo [2002]/the title", i2),
+        ]
+        for path, track in expected if singleton_first else reversed(expected):
+            self._assert_dest(path, track)
+
+    @pytest.mark.parametrize("inherit", [True, False])
+    def test_store_invalidates_uniqueness(self, items, inherit):
+        i1, i2 = items
+        album2 = self.lib.get_album(i2)
+        album2.album = "Different"
+        album2.store()
+        self._assert_dest(b"/base/foo/the title", i1)
+
+        album2.album = i1.album
+        album2.store(inherit=inherit)
+        self._assert_dest(b"/base/foo [2001]/the title", i1)
+        self._assert_dest(b"/base/foo [2002]/the title", i2)
+
     def test_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
         album2 = self.lib.get_album(i2)
@@ -779,6 +847,14 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         i1, _i2 = items
         self._setf("foo%aunique{albumartist album,year,}/$title")
         self._assert_dest(b"/base/foo 2001/the title", i1)
+
+    def test_unique_memoizes_brackets_independently(self, items):
+        i1, _i2 = items
+        self._setf(
+            "foo%aunique{albumartist album,year,()}"
+            "%aunique{albumartist album,year,[]}/$title"
+        )
+        self._assert_dest(b"/base/foo (2001) [2001]/the title", i1)
 
     def test_key_flexible_attribute(self, items):
         i1, i2 = items
@@ -828,10 +904,56 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
 
         self._assert_dest(b"/base/foo/the title", i1)
 
+    @pytest.mark.parametrize("singleton_first", [True, False])
+    def test_unique_separates_raw_query_groups(self, items, singleton_first):
+        i1, i2 = items
+        for track in items:
+            track.title = "AC/DC"
+            track.store()
+        i3 = item(title="AC_DC", year=2003)
+        self.lib.add(i3)
+
+        expected = [
+            (b"/base/foo/AC_DC", i3),
+            (b"/base/foo/AC_DC [2001]", i1),
+            (b"/base/foo/AC_DC [2002]", i2),
+        ]
+        for path, track in expected if singleton_first else reversed(expected):
+            self._assert_dest(path, track)
+
+    def test_unique_separates_identically_formatted_query_values(self, items):
+        i1, i2 = items
+        config["format_raw_length"] = False
+        for track in items:
+            track.length = 60.1
+            track.store()
+        i3 = item(length=60.2, year=2003)
+        self.lib.add(i3)
+        assert i1.formatted().get("length") == i3.formatted().get("length")
+        self._setf("foo/$title%sunique{length,year}")
+
+        self._assert_dest(b"/base/foo/the title", i3)
+        self._assert_dest(b"/base/foo/the title [2001]", i1)
+        self._assert_dest(b"/base/foo/the title [2002]", i2)
+
+    def test_store_invalidates_disambiguator(self, items):
+        i1, i2 = items
+        self._assert_dest(b"/base/foo/the title [2001]", i1)
+        i2.year = i1.year
+        i2.store()
+        self._assert_dest(b"/base/foo/the title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/foo/the title [%d]" % i2.id, i2)
+
     def test_sunique_does_not_match_album(self, items):
         i1, i2 = items
         self.lib.add_album([i2])
         self._assert_dest(b"/base/foo/the title", i1)
+
+    def test_sunique_skips_config_for_album_item(self, items):
+        _i1, i2 = items
+        self.lib.add_album([i2])
+        config["sunique"]["bracket"] = 5
+        self._assert_dest(b"/base/foo/the title", i2)
 
     def test_sunique_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
@@ -882,6 +1004,223 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i2.store()
         self._setf("foo/$title%sunique{artist title flex,year}")
         self._assert_dest(b"/base/foo/the title", i1)
+
+
+class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
+    @pytest.fixture(autouse=True)
+    def items(self, setup):
+        self.lib.directory = b"/base"
+        self.lib.path_formats = [("default", "path")]
+
+        i1 = item(title="Common Title", track=7, disc=1, artist="Some Artist")
+        i2 = item(title="Common Title", track=11, disc=1, artist="Some Artist")
+        self.lib.add_album([i1, i2])
+        self.lib._connection().commit()
+
+        self._setf("$title%tunique{title,track}")
+        return i1, i2
+
+    def test_expands_to_disambiguating_track(self, items):
+        i1, i2 = items
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest(b"/base/Common Title [11]", i2)
+
+    def test_with_default_arguments_uses_disc(self, items):
+        i1, i2 = items
+        i2.disc = 2
+        i2.store()
+        self._setf("$title%tunique{}")
+        self._assert_dest(b"/base/Common Title [01]", i1)
+        self._assert_dest(b"/base/Common Title [02]", i2)
+
+    def test_expands_to_nothing_for_unique_titles(self, items):
+        i1, i2 = items
+        i2.title = "Different"
+        i2.store()
+
+        self._assert_dest(b"/base/Common Title", i1)
+
+    def test_does_not_match_singletons(self, items):
+        i1, _i2 = items
+        i3 = item()
+        i3.title = "Common Title"
+        self.lib.add(i3)
+
+        # i1 still needs disambiguation from i2 in the same album
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        # Singleton should NOT get track disambiguation
+        self._assert_dest(b"/base/Common Title", i3)
+
+    def test_does_not_match_cross_album(self, items):
+        i1, _i2 = items
+        i3 = item()
+        i3.title = "Common Title"
+        i3.track = 7
+        self.lib.add_album([i3])
+
+        # i1 still needs disambiguation from i2 in the same album
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        # Other album's tracks should NOT be matched
+        self._assert_dest(b"/base/Common Title", i3)
+
+    def test_use_fallback_numbers_when_identical(self, items):
+        i1, i2 = items
+        i2.track = i1.track
+        i2.disc = i1.disc
+        i2.artist = i1.artist
+        i2.store()
+
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    @pytest.mark.parametrize("disambiguators", ["track disc", "disc"])
+    def test_expands_to_disambiguating_disc(self, items, disambiguators):
+        i1, i2 = items
+        i2.track = i1.track
+        i2.disc = 2
+        i2.store()
+
+        self._setf(f"$title%tunique{{title,{disambiguators}}}")
+        self._assert_dest(b"/base/Common Title [01]", i1)
+        self._assert_dest(b"/base/Common Title [02]", i2)
+
+    def test_change_brackets(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,()}")
+        self._assert_dest(b"/base/Common Title (07)", i1)
+
+    def test_remove_brackets(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,}")
+        self._assert_dest(b"/base/Common Title 07", i1)
+
+    def test_drop_empty_disambig(self, items):
+        i1, i2 = items
+        i1.trackdisambig = "live version"
+        i2.trackdisambig = None
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,trackdisambig}")
+        # i1 has trackdisambig, so gets suffixed
+        self._assert_dest(b"/base/Common Title [live version]", i1)
+        # i2 has no trackdisambig, so no suffix
+        self._assert_dest(b"/base/Common Title", i2)
+
+    def test_with_flex_key_field(self, items):
+        i1, i2 = items
+        i1.title = "Diff1"
+        i2.title = "Diff2"
+        i1["flexkey"] = "one"
+        i2["flexkey"] = "two"
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{flexkey,track}")
+        self._assert_dest(b"/base/Diff1", i1)
+        self._assert_dest(b"/base/Diff2", i2)
+
+    @pytest.mark.parametrize(
+        "first_artist, second_artist, replacement, asciify",
+        [
+            ("AC/DC", "AC_DC", None, False),
+            ("AC~DC", "AC_DC", (re.compile("~"), "_"), False),
+            ("Beyonc\u00e9", "Beyonce", None, True),
+        ],
+    )
+    def test_disambiguator_collision_after_path_formatting(
+        self, items, first_artist, second_artist, replacement, asciify
+    ):
+        i1, i2 = items
+        i1.track = 1
+        i2.track = 1
+        i1.disc = 1
+        i2.disc = 1
+        i1.artist = first_artist
+        i2.artist = second_artist
+        if replacement:
+            self.lib.replacements = [replacement]
+        config["asciify_paths"] = asciify
+        i1.store()
+        i2.store()
+
+        self._setf("$title%tunique{title,artist}")
+        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
+        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+
+    def test_path_formatted_key_collision(self, items):
+        i1, i2 = items
+        i1.title = "AC/DC"
+        i2.title = "AC_DC"
+        i1.store()
+        i2.store()
+
+        self._assert_dest(b"/base/AC_DC [07]", i1)
+        self._assert_dest(b"/base/AC_DC [11]", i2)
+
+    def test_memoizes_brackets_independently(self, items):
+        i1, _i2 = items
+        self._setf("$title%tunique{title,track,()}%tunique{title,track,[]}")
+        self._assert_dest(b"/base/Common Title (07) [07]", i1)
+
+    @pytest.mark.parametrize("distinct_titles", [2, 12, 100])
+    def test_reuses_album_analysis_for_distinct_titles(
+        self, items, distinct_titles
+    ):
+        i1, i2 = items
+        i2.title = "Different"
+        i2.store()
+        tracks = [i1, i2]
+        for number in range(2, distinct_titles):
+            track = item(title=f"Title {number}", album_id=i1.album_id)
+            self.lib.add(track)
+            tracks.append(track)
+
+        with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
+            for track in tracks:
+                self._assert_dest(f"/base/{track.title}".encode(), track)
+
+        assert lib_items.call_count == 1
+
+    def test_reuses_album_analysis_for_mixed_titles(self, items):
+        i1, i2 = items
+        i3 = item(title="Different", album_id=i1.album_id)
+        self.lib.add(i3)
+        with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
+            self._assert_dest(b"/base/Different", i3)
+            self._assert_dest(b"/base/Common Title [07]", i1)
+            self._assert_dest(b"/base/Common Title [11]", i2)
+
+        assert lib_items.call_count == 1
+
+    def test_store_invalidates_collision_group_analysis(self, items):
+        i1, i2 = items
+        i2.title = "Different"
+        i2.store()
+        self._assert_dest(b"/base/Common Title", i1)
+
+        i2.title = i1.title
+        i2.store()
+        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest(b"/base/Common Title [11]", i2)
+
+        i2.title = "Different"
+        i2.store()
+        self._assert_dest(b"/base/Common Title", i1)
+        self._assert_dest(b"/base/Different", i2)
+
+    def test_unsaved_title_outside_collision_groups(self, items):
+        i1, _i2 = items
+        i1.title = "Unsaved"
+        self._assert_dest(b"/base/Unsaved", i1)
+
+    def test_reuses_collision_group_analysis(self, items):
+        i1, i2 = items
+        with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
+            self._assert_dest(b"/base/Common Title [07]", i1)
+            self._assert_dest(b"/base/Common Title [11]", i2)
+
+        assert lib_items.call_count == 1
 
 
 class TestPluginDestination(TestHelper):
@@ -1076,18 +1415,18 @@ class TestPathString(PytestItemHelper):
         assert isinstance(self.get_first_item().path, bytes)
 
     def test_special_chars_preserved_in_database(self, item_in_db):
-        path = "b\xe1r".encode()
+        path = Path("b\xe1r")
         item_in_db.path = path
         item_in_db.store()
-        assert self.get_first_item().path == os.path.join(self.libdir, path)
+        assert self.get_first_item().filepath == self.lib_path / path
 
     def test_special_char_path_added_to_database(self, item, item_in_db):
         item_in_db.remove()
-        path = "b\xe1r".encode()
+        path = Path("b\xe1r")
         item = _common.item()
         item.path = path
         self.lib.add(item)
-        assert self.get_first_item().path == os.path.join(self.libdir, path)
+        assert self.get_first_item().filepath == self.lib_path / path
 
     def test_destination_returns_bytestring(self, item_in_db):
         item_in_db.artist = "b\xe1r"
@@ -1101,7 +1440,7 @@ class TestPathString(PytestItemHelper):
         assert isinstance(dest, bytes)
 
     def test_artpath_stores_special_chars(self, item_in_db):
-        path = bytestring_path("b\xe1r")
+        path = Path("b\xe1r")
         alb = self.lib.add_album([item_in_db])
         alb.artpath = path
         alb.store()
@@ -1111,8 +1450,8 @@ class TestPathString(PytestItemHelper):
             .fetchone()[0]
         )
         alb = self.lib.get_album(item_in_db)
-        assert stored_path == path
-        assert alb.artpath == os.path.join(self.libdir, path)
+        assert stored_path == os.fsencode(path)
+        assert alb.art_filepath == self.lib_path / path
 
     def test_sanitize_path_with_special_chars(self):
         path = "b\xe1r?"
@@ -1138,8 +1477,8 @@ class TestPathString(PytestItemHelper):
         assert isinstance(alb.artpath, bytes)
 
     def test_relative_path_is_stored(self, item_in_db):
-        relative_path = os.path.join(b"abc", b"foo.mp3")
-        absolute_path = os.path.join(self.libdir, relative_path)
+        relative_path = Path("abc") / "foo.mp3"
+        absolute_path = self.lib_path / relative_path
         item_in_db.path = absolute_path
         item_in_db.store()
         stored_path = (
@@ -1149,27 +1488,24 @@ class TestPathString(PytestItemHelper):
         )
         album = self.lib.add_album([item_in_db])
 
-        assert item_in_db.path == absolute_path
-        assert stored_path == path_as_posix(relative_path)
-        assert album.path == os.path.dirname(absolute_path)
+        assert item_in_db.filepath == absolute_path
+        assert stored_path == util.path_as_posix(os.fsencode(relative_path))
+        assert album.filepath == absolute_path.parent
 
 
 class TestMtime(TestHelper):
     @pytest.fixture(autouse=True)
     def item(self, setup):
-        self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
-        shutil.copy(
-            syspath(os.path.join(_common.RSRC, b"full.mp3")),
-            syspath(self.ipath),
-        )
+        self.ipath = self.temp_path / "testfile.mp3"
+        shutil.copy(_common.RSRC / "full.mp3", self.ipath)
         item = beets.library.Item.from_path(self.ipath)
         self.lib.add(item)
         yield item
-        if os.path.exists(self.ipath):
-            os.remove(self.ipath)
+        if self.ipath.exists():
+            self.ipath.unlink()
 
     def _mtime(self):
-        return int(os.path.getmtime(self.ipath))
+        return int(self.ipath.stat().st_mtime)
 
     def test_mtime_initially_up_to_date(self, item):
         assert item.mtime >= self._mtime()
@@ -1233,9 +1569,7 @@ class TestTemplate(PytestItemHelper):
 
 class TestUnicodePath(PytestItemHelper):
     def test_unicode_path(self, item_in_db):
-        item_in_db.path = os.path.join(
-            _common.RSRC, "unicode\u2019d.mp3".encode()
-        )
+        item_in_db.path = _common.RSRC / "unicode\u2019d.mp3"
         # If there are any problems with unicode paths, we will raise
         # here and fail.
         item_in_db.read()
@@ -1251,8 +1585,7 @@ class TestWrite(TestHelper):
 
     def test_no_write_permission(self):
         item = self.add_item_fixture()
-        path = syspath(item.path)
-        os.chmod(path, stat.S_IRUSR)
+        item.filepath.chmod(stat.S_IRUSR)
 
         try:
             with pytest.raises(beets.library.WriteError) as exc_info:
@@ -1261,32 +1594,32 @@ class TestWrite(TestHelper):
 
         finally:
             # Restore write permissions so the file can be cleaned up.
-            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+            item.filepath.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
     def test_write_with_custom_path(self):
         item = self.add_item_fixture()
-        custom_path = os.path.join(self.temp_dir, b"custom.mp3")
-        shutil.copy(syspath(item.path), syspath(custom_path))
+        custom_path = self.temp_path / "custom.mp3"
+        shutil.copy(item.filepath, custom_path)
 
         item["artist"] = "new artist"
-        assert MediaFile(syspath(custom_path)).artist != "new artist"
-        assert MediaFile(syspath(item.path)).artist != "new artist"
+        assert MediaFile(custom_path).artist != "new artist"
+        assert MediaFile(item.filepath).artist != "new artist"
 
         item.write(custom_path)
-        assert MediaFile(syspath(custom_path)).artist == "new artist"
-        assert MediaFile(syspath(item.path)).artist != "new artist"
+        assert MediaFile(custom_path).artist == "new artist"
+        assert MediaFile(item.filepath).artist != "new artist"
 
     def test_write_custom_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artist": "new artist"})
         assert item.artist != "new artist"
-        assert MediaFile(syspath(item.path)).artist == "new artist"
+        assert MediaFile(item.filepath).artist == "new artist"
 
     def test_write_multi_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artists": ["old artist", "another artist"]})
 
-        assert MediaFile(syspath(item.path)).artists == [
+        assert MediaFile(item.filepath).artists == [
             "old artist",
             "another artist",
         ]
@@ -1297,9 +1630,7 @@ class TestWrite(TestHelper):
             tags={"artists": ["old artist", "another artist"]}, id3v23=True
         )
 
-        assert MediaFile(syspath(item.path)).artists == [
-            "old artist/another artist"
-        ]
+        assert MediaFile(item.filepath).artists == ["old artist/another artist"]
 
     def test_write_date_field(self):
         # Since `date` is not a MediaField, this should do nothing.
@@ -1307,12 +1638,12 @@ class TestWrite(TestHelper):
         clean_year = item.year
         item.date = "foo"
         item.write()
-        assert MediaFile(syspath(item.path)).year == clean_year
+        assert MediaFile(item.filepath).year == clean_year
 
 
 class TestItemRead(PytestItemHelper):
     def test_unreadable_raise_read_error(self, item_in_db):
-        unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
+        unreadable = _common.RSRC / "image-2x3.png"
         with pytest.raises(beets.library.ReadError) as exc_info:
             item_in_db.read(unreadable)
         assert isinstance(exc_info.value.reason, UnreadableFileError)
@@ -1322,7 +1653,7 @@ class TestItemRead(PytestItemHelper):
             item_in_db.read("/thisfiledoesnotexist")
 
     def test_read_error_str_includes_reason(self, item_in_db):
-        unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
+        unreadable = _common.RSRC / "image-2x3.png"
         with pytest.raises(beets.library.ReadError) as exc_info:
             item_in_db.read(unreadable)
         message = str(exc_info.value)
@@ -1334,7 +1665,7 @@ class TestItemReadGenre(TestHelper):
     def test_read_semicolon_delimited_genres(self):
         """Semicolon-delimited genre tags are split into individual genres on read."""
         path = self.create_mediafile_fixture()
-        mf = MediaFile(syspath(path))
+        mf = MediaFile(path)
         mf.genres = ["Jazz; Funk; Soul"]
         mf.save()
         item = beets.library.Item.from_path(path)
@@ -1354,18 +1685,17 @@ class TestFilesize(TestHelper):
 class TestItemPruneDirsClutter(TestHelper):
     """Regression tests: prune_dirs respects config["clutter"] during move/remove."""
 
-    def _drop_clutter(self, directory, filename=b"unwanted.log"):
+    def _drop_clutter(self, directory: Path) -> Path:
         """Create a clutter file in *directory* (bytes path)."""
-        path = os.path.join(directory, filename)
-        with open(syspath(path), "w"):
-            pass
+        path = directory / "unwanted.log"
+        path.touch()
         return path
 
     def test_move_prunes_dir_with_config_clutter(self):
         """After moving an item, old dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         # Change artist so the destination path differs, forcing a real move.
@@ -1373,18 +1703,18 @@ class TestItemPruneDirsClutter(TestHelper):
         item.store()
         item.move()
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
     def test_remove_prunes_dir_with_config_clutter(self):
         """After deleting an item, its dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
-        old_dir = os.path.dirname(item.path)
+        old_dir = item.filepath.parent
         self._drop_clutter(old_dir)
 
         item.remove(delete=True)
 
-        assert not os.path.exists(syspath(old_dir))
+        assert not old_dir.exists()
 
 
 class TestParseQuery:

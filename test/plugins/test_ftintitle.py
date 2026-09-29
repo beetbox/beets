@@ -9,7 +9,7 @@ import pytest
 from beets import plugins
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, SingletonImportTask
-from beets.library.models import Album
+from beets.library import Album
 from beets.test.helper import PluginTestHelper
 from beetsplug import ftintitle
 

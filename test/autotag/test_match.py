@@ -5,6 +5,7 @@ import pytest
 from beets import metadata_plugins
 from beets.autotag import (
     AlbumInfo,
+    Source,
     TrackInfo,
     assign_items,
     tag_album,
@@ -167,21 +168,29 @@ class TestTagMultipleDataSources:
         assert set(sources) == {"Discogs", "Deezer"}
 
     def test_search_album_ids(self, shared_album_id):
-        _, _, proposal = tag_album([Item()], search_ids=[shared_album_id])
+        source = Source.from_items([Item()])
+
+        proposal = tag_album(source, search_ids=[shared_album_id])
 
         self.check_proposal(proposal)
 
     def test_search_album_current_id(self, shared_album_id):
-        _, _, proposal = tag_album([Item(mb_albumid=shared_album_id)])
+        source = Source.from_items([Item(mb_albumid=shared_album_id)])
+
+        proposal = tag_album(source)
 
         self.check_proposal(proposal)
 
     def test_search_track_ids(self, shared_track_id):
-        proposal = tag_item(Item(), search_ids=[shared_track_id])
+        source = Source.from_item(Item())
+
+        proposal = tag_item(source, search_ids=[shared_track_id])
 
         self.check_proposal(proposal)
 
     def test_search_track_current_id(self, shared_track_id):
-        proposal = tag_item(Item(mb_trackid=shared_track_id))
+        source = Source.from_item(Item(mb_trackid=shared_track_id))
+
+        proposal = tag_item(source)
 
         self.check_proposal(proposal)

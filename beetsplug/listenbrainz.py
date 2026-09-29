@@ -7,7 +7,7 @@ import json
 import time
 import zipfile
 from collections import Counter
-from typing import TYPE_CHECKING, ClassVar, TypedDict
+from typing import TYPE_CHECKING, ClassVar, Protocol, TypedDict
 
 import requests
 
@@ -21,9 +21,18 @@ from ._utils.playcount import update_play_counts
 from ._utils.requests import TimeoutAndRetrySession
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from pathlib import Path
 
+    from beets.library import Library
+
+    from ._typing import JSONDict
     from ._utils.playcount import Track
+
+
+class LBImportCLIOpts(Protocol):
+    export_file: str | None
+    max_listens: int | None
 
 
 class Listen(TypedDict):
@@ -56,7 +65,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         "listenbrainz_play_count": types.INTEGER
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the plugin."""
         super().__init__()
         self.token = self.config["token"].get()
@@ -65,7 +74,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         self.AUTH_HEADER = {"Authorization": f"Token {self.token}"}
         config["listenbrainz"]["token"].redact = True
 
-    def commands(self):
+    def commands(self) -> list[ui.Subcommand]:
         """Add beet UI commands to interact with ListenBrainz."""
         lbupdate_cmd = ui.Subcommand(
             "lbimport", help="Import ListenBrainz history"
@@ -93,7 +102,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             ),
         )
 
-        def func(lib, opts, args):
+        def func(lib: Library, opts: LBImportCLIOpts, args: list[str]) -> None:
             self._lbupdate(
                 lib, export_file=opts.export_file, max_listens=opts.max_listens
             )
@@ -103,10 +112,10 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
     def _lbupdate(
         self,
-        lib,
+        lib: Library,
         export_file: str | None = None,
         max_listens: int | None = None,
-    ):
+    ) -> None:
         """Update play counts from ListenBrainz listening history."""
         listens: list[Listen] | None
         if export_file is not None:
@@ -138,7 +147,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         self._log.info("{} play-counts imported", found)
 
     @staticmethod
-    def _aggregate_listens(tracks: list[Track]) -> list[Track]:
+    def _aggregate_listens(tracks: Iterable[Track]) -> list[Track]:
         """Aggregate individual listen events into per-track play counts.
 
         ListenBrainz returns individual listen events (each with playcount=1).
@@ -164,7 +173,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             for key, info in track_info.items()
         ]
 
-    def _make_request(self, url, params=None):
+    def _make_request(
+        self, url: str, params: JSONDict | None = None
+    ) -> JSONDict | None:
         """Makes a request to the ListenBrainz API.
 
         Respects the X-RateLimit-* headers returned by the server: if the
@@ -225,7 +236,11 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         return all_listens
 
     def get_listens(
-        self, min_ts=None, max_ts=None, count=None, max_total=None
+        self,
+        min_ts: int | None = None,
+        max_ts: int | None = None,
+        count: int | None = None,
+        max_total: int | None = None,
     ) -> list[Listen] | None:
         """Gets the listening history of a given user from the ListenBrainz API.
 
@@ -290,7 +305,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         return all_listens
 
-    def get_tracks_from_listens(self, listens: list[Listen]) -> list[Track]:
+    def get_tracks_from_listens(self, listens: Iterable[Listen]) -> list[Track]:
         """Returns a list of tracks from a list of listens."""
         tracks: list[Track] = []
         for track in listens:
@@ -314,7 +329,7 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             )
         return tracks
 
-    def get_mb_recording_id(self, track) -> str | None:
+    def get_mb_recording_id(self, track: JSONDict) -> str | None:
         """Returns the MusicBrainz recording ID for a track."""
         results = self.mb_api.search(
             "recording",
@@ -325,14 +340,16 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         )
         return next((r["id"] for r in results), None)
 
-    def get_playlists_createdfor(self, username):
+    def get_playlists_createdfor(self, username: str) -> JSONDict | None:
         """Returns a list of playlists created by a user."""
         url = f"{self.ROOT}/user/{username}/playlists/createdfor"
         return self._make_request(url)
 
-    def get_listenbrainz_playlists(self):
+    def get_listenbrainz_playlists(self) -> list[JSONDict]:
         resp = self.get_playlists_createdfor(self.username)
-        playlists = resp.get("playlists")
+        if not resp:
+            return []
+        playlists = resp.get("playlists", [])
         listenbrainz_playlists = []
 
         for playlist in playlists:
@@ -365,15 +382,15 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             self._log.debug("Playlist: {0[type]} - {0[date]}", playlist)
         return listenbrainz_playlists
 
-    def get_playlist(self, identifier):
+    def get_playlist(self, identifier: str) -> JSONDict | None:
         """Returns a playlist."""
         url = f"{self.ROOT}/playlist/{identifier}"
         return self._make_request(url)
 
-    def get_tracks_from_playlist(self, playlist):
+    def get_tracks_from_playlist(self, playlist: JSONDict) -> list[JSONDict]:
         """This function returns a list of tracks in the playlist."""
         tracks = []
-        for track in playlist.get("playlist").get("track"):
+        for track in playlist.get("playlist", {}).get("track"):
             identifier = track.get("identifier")
             if isinstance(identifier, list):
                 identifier = identifier[0]
@@ -387,23 +404,19 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             )
         return self.get_track_info(tracks)
 
-    def get_track_info(self, tracks):
+    def get_track_info(self, tracks: Iterable[JSONDict]) -> list[JSONDict]:
         track_info = []
         for track in tracks:
-            identifier = track.get("identifier")
-            recording = self.mb_api.get_recording(
-                identifier, includes=["releases", "artist-credits"]
-            )
+            identifier = track["identifier"]
+            recording = self.mb_api.get_base_recording_with_releases(identifier)
             title = recording.get("title")
-            artist_credit = recording.get("artist_credit", [])
-            if artist_credit:
-                artist = artist_credit[0].get("artist", {}).get("name")
+            if artist_credit := next(iter(recording["artist_credit"]), None):
+                artist = artist_credit.get("artist", {}).get("name")
             else:
                 artist = None
-            releases = recording.get("releases", [])
-            if releases:
-                album = releases[0].get("title")
-                date = releases[0].get("date")
+            if release := next(iter(recording["releases"]), None):
+                album = release["title"]
+                date = release.get("date")
                 year = date.split("-")[0] if date else None
             else:
                 album = None
@@ -419,7 +432,9 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             )
         return track_info
 
-    def get_weekly_playlist(self, playlist_type, most_recent=True):
+    def get_weekly_playlist(
+        self, playlist_type: str, most_recent: bool = True
+    ) -> list[JSONDict]:
         # Fetch all playlists
         playlists = self.get_listenbrainz_playlists()
         # Filter playlists by type
@@ -439,5 +454,8 @@ class ListenBrainzPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             f"- {selected_playlist['date']}"
         )
         # Fetch and return tracks from the selected playlist
-        playlist = self.get_playlist(selected_playlist.get("identifier"))
-        return self.get_tracks_from_playlist(playlist)
+        if (identifier := selected_playlist.get("identifier")) and (
+            playlist := self.get_playlist(identifier)
+        ):
+            return self.get_tracks_from_playlist(playlist)
+        return []

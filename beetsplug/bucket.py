@@ -1,31 +1,47 @@
 """Provides the %bucket{} function for path formatting."""
 
+from __future__ import annotations
+
 import re
 import string
 from datetime import datetime
 from itertools import tee
+from typing import TYPE_CHECKING, TypedDict, TypeVar
 
 from beets import plugins
 from beets.exceptions import UserError
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Iterator
+
 ASCII_DIGITS = string.digits + string.ascii_lowercase
+T = TypeVar("T")
+YearSpan = TypedDict(
+    "YearSpan", {"from": int, "to": int, "str": str}, total=False
+)
+
+
+class SpanFormat(TypedDict):
+    fromnchars: int
+    tonchars: int
+    fmt: str
 
 
 class BucketError(Exception):
     pass
 
 
-def pairwise(iterable):
+def pairwise(iterable: Iterable[T]) -> Iterator[tuple[T, T]]:
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
 
 
-def span_from_str(span_str):
+def span_from_str(span_str: str) -> YearSpan:
     """Build a span dict from the span string representation."""
 
-    def normalize_year(d, yearfrom):
+    def normalize_year(d: int, yearfrom: int) -> int:
         """Convert string to a 4 digits year"""
         if yearfrom < 100:
             raise BucketError(f"{yearfrom} must be expressed on 4 digits")
@@ -51,13 +67,13 @@ def span_from_str(span_str):
             f"invalid range defined for year bucket {span_str!r}: {exc}"
         )
 
-    res = {"from": years[0], "str": span_str}
+    res: YearSpan = {"from": years[0], "str": span_str}
     if len(years) > 1:
         res["to"] = years[-1]
     return res
 
 
-def complete_year_spans(spans):
+def complete_year_spans(spans: list[YearSpan]) -> None:
     """Set the `to` value of spans if empty and sort them chronologically."""
     spans.sort(key=lambda x: x["from"])
     for x, y in pairwise(spans):
@@ -67,7 +83,9 @@ def complete_year_spans(spans):
         spans[-1]["to"] = datetime.now().year
 
 
-def extend_year_spans(spans, spanlen, start=1900, end=2014):
+def extend_year_spans(
+    spans: list[YearSpan], spanlen: int, start: int = 1900, end: int = 2014
+) -> list[YearSpan]:
     """Add new spans to given spans list so that every year of [start,end]
     belongs to a span.
     """
@@ -88,7 +106,7 @@ def extend_year_spans(spans, spanlen, start=1900, end=2014):
     return extended_spans
 
 
-def build_year_spans(year_spans_str):
+def build_year_spans(year_spans_str: Iterable[str]) -> list[YearSpan]:
     """Build a chronologically ordered list of spans dict from unordered spans
     stringlist.
     """
@@ -99,7 +117,7 @@ def build_year_spans(year_spans_str):
     return spans
 
 
-def str2fmt(s):
+def str2fmt(s: str) -> SpanFormat:
     """Deduces formatting syntax from a span string."""
     regex = re.compile(
         r"(?P<bef>\D*)(?P<fromyear>\d+)(?P<sep>\D*)"
@@ -107,17 +125,20 @@ def str2fmt(s):
     )
     m = re.match(regex, s)
 
-    res = {
-        "fromnchars": len(m.group("fromyear")),
-        "tonchars": len(m.group("toyear")),
-    }
-    res["fmt"] = (
-        f"{m['bef']}{{}}{m['sep']}{'{}' if res['tonchars'] else ''}{m['after']}"
-    )
-    return res
+    if m:
+        fromnchars = len(m.group("fromyear"))
+        tonchars = len(m.group("toyear"))
+        fmt = f"{m['bef']}{{}}{m['sep']}{'{}' if tonchars else ''}{m['after']}"
+    else:
+        fromnchars = tonchars = 0
+        fmt = "{}"
+
+    return {"fromnchars": fromnchars, "tonchars": tonchars, "fmt": fmt}
 
 
-def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
+def format_span(
+    fmt: str, yearfrom: int, yearto: int, fromnchars: int, tonchars: int
+) -> str:
     """Return a span string representation."""
     args = [str(yearfrom)[-fromnchars:]]
     if tonchars:
@@ -126,7 +147,7 @@ def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
     return fmt.format(*args)
 
 
-def extract_modes(spans):
+def extract_modes(spans: Iterable[YearSpan]) -> tuple[int, SpanFormat]:
     """Extract the most common spans lengths and representation formats"""
     rangelen = sorted([x["to"] - x["from"] + 1 for x in spans])
     deflen = sorted(rangelen, key=rangelen.count)[-1]
@@ -135,7 +156,9 @@ def extract_modes(spans):
     return deflen, deffmt
 
 
-def build_alpha_spans(alpha_spans_str, alpha_regexs):
+def build_alpha_spans(
+    alpha_spans_str: Iterable[str], alpha_regexs: dict[str, str]
+) -> list[re.Pattern[str]]:
     """Extract alphanumerics from string and return sorted list of chars
     [from...to]
     """
@@ -164,7 +187,7 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
 
 
 class BucketPlugin(plugins.BeetsPlugin):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.template_funcs["bucket"] = self._tmpl_bucket
 
@@ -178,7 +201,7 @@ class BucketPlugin(plugins.BeetsPlugin):
         )
         self.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         """Setup plugin from config options"""
         self.year_spans = build_year_spans(self.config["bucket_year"].get())
         if self.year_spans and self.config["extrapolate"]:
@@ -194,7 +217,7 @@ class BucketPlugin(plugins.BeetsPlugin):
             self.config["bucket_alpha_regex"].get(),
         )
 
-    def find_bucket_year(self, year):
+    def find_bucket_year(self, year: str) -> str:
         """Return  bucket that matches given year or return the year
         if no matching bucket.
         """
@@ -211,7 +234,7 @@ class BucketPlugin(plugins.BeetsPlugin):
                 )
         return year
 
-    def find_bucket_alpha(self, s):
+    def find_bucket_alpha(self, s: str) -> str:
         """Return alpha-range bucket that matches given string or return the
         string initial if no matching bucket.
         """
@@ -220,10 +243,11 @@ class BucketPlugin(plugins.BeetsPlugin):
                 return self.config["bucket_alpha"].get()[i]
         return s[0].upper()
 
-    def _tmpl_bucket(self, text, field=None):
+    def _tmpl_bucket(self, text: str, field: str | None = None) -> str:
         if not field and len(text) == 4 and text.isdigit():
             field = "year"
 
+        func: Callable[[str], str]
         if field == "year":
             func = self.find_bucket_year
         else:
