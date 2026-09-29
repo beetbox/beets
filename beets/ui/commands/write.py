@@ -55,7 +55,7 @@ def write_items(
         if (changed or force) and not pretend:
             # We use `try_sync` here to keep the mtime up to date in the
             # database.
-            item.try_sync(True, False)
+            item.try_sync(True, False, force_write=force)
 
 
 def write_func(lib: Library, opts: WriteCLIOpts, args: list[str]) -> None:

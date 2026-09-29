@@ -115,8 +115,9 @@ When it is possible that the metadata is out of sync, beets can then just set
 
 This leads to the following implementation policy:
 
-    - On every write of disk metadata (``Item.write()``), the DB mtime is
-      updated to match the post-write disk mtime.
+    - On every call to ``Item.write()`` for the item's own file, the DB mtime is
+      updated to match the disk mtime. This includes the case where the file
+      already holds the tags and is therefore left alone.
     - Same for metadata reads (``Item.read()``).
     - On every modification to DB metadata (``item.field = ...``), the DB mtime
       is reset to zero.
