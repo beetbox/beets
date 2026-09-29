@@ -41,6 +41,9 @@ Bug fixes
 - Fix word wrapping of colored diff output for a word containing two or more
   separately-highlighted spans, which was incorrectly split into two words at
   the second highlighted span.
+- Improve the error message when the library database cannot be opened (for
+  example due to permissions or an unwritable path), and fix the ``cannot not``
+  typo in the generic database open failure message. :bug:`1676`
 
 ..
     For plugin developers
