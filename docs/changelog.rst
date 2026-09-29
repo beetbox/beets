@@ -26,14 +26,6 @@ Bug fixes
   unparseable data, instead of crashing. :bug:`3527`
 - :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
   after configured data and video filters. :bug:`6836`
-
-..
-    New features
-    ~~~~~~~~~~~~
-
-Bug fixes
-~~~~~~~~~
-
 - :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
   large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
   (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
@@ -46,6 +38,9 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Fix word wrapping of colored diff output for a word containing two or more
+  separately-highlighted spans, which was incorrectly split into two words at
+  the second highlighted span.
 
 ..
     For plugin developers
@@ -331,9 +326,6 @@ Bug fixes
   valid date/time string" error instead of crashing with an uncaught
   ``KeyError``. A ``|`` was being accepted as a relative-date unit due to a
   regular expression character-class typo.
-- Fix word wrapping of colored diff output for a word containing two or more
-  separately-highlighted spans, which was incorrectly split into two words at
-  the second highlighted span.
 
 ..
     For plugin developers
