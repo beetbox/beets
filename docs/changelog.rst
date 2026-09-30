@@ -26,6 +26,10 @@ New features
   :bug:`6741`
 - Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
   already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
+- :doc:`plugins/lastgenre`: When no album genre is found for the primary
+  albumartist, the plugin now attempts to fetch genres for each artist listed in
+  the multi-valued ``albumartists`` field before falling back to the artist
+  source. :bug:`6238`
 
 Bug fixes
 ~~~~~~~~~
