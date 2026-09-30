@@ -40,6 +40,10 @@ New features
   where the ``bpd`` and ``replaygain`` extras now install GStreamer, its plugins
   and the Python bindings, so that neither plugin needs a separate GStreamer
   installation there.
+- :doc:`plugins/lastgenre`: When no album genre is found for the primary
+  albumartist, the plugin now attempts to fetch genres for each artist listed in
+  the multi-valued ``albumartists`` field before falling back to the artist
+  source. :bug:`6238`
 
 Bug fixes
 ~~~~~~~~~
