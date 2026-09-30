@@ -269,7 +269,7 @@ def path_as_posix(path: bytes) -> bytes:
     """Return the string representation of the path with forward (/)
     slashes.
     """
-    return path.replace(b"\\", b"/")
+    return os.fsencode(Path(os.fsdecode(path)).as_posix())
 
 
 def mkdirall(path: AnyStr | Path) -> None:
