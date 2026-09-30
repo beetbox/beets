@@ -20,6 +20,10 @@ New features
 - :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
   before whitelist filtering, while preserving existing genres regardless of the
   configured count. :bug:`6890`
+- :doc:`plugins/lastgenre`: When no album genre is found for the primary
+  albumartist, the plugin now attempts to fetch genres for each artist listed in
+  the multi-valued ``albumartists`` field before falling back to the artist
+  source. :bug:`6238`
 
 Bug fixes
 ~~~~~~~~~
