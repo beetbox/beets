@@ -47,6 +47,10 @@ Bug fixes
 - Improve the error message when the library database cannot be opened (for
   example due to permissions or an unwritable path), and fix the ``cannot not``
   typo in the generic database open failure message. :bug:`1676`
+- :doc:`plugins/web`: Fix the ``/item/<id>/file`` endpoint failing to serve
+  media when the library stores relative paths: web worker threads do not
+  inherit the ``music_dir`` context var, so the relative path is now resolved
+  against the library directory. :bug:`7063`
 
 ..
     For plugin developers
@@ -85,10 +89,6 @@ Bug fixes
   shares caused by a hard-coded leading dot ('.'). :bug:`7033`
 - :ref:`import-cmd` Fix interactive importer ignoring candidates from manual
   search (``e``) and manual ID (``i``) entry. :bug:`7000`
-- :doc:`plugins/web`: Fix the ``/item/<id>/file`` endpoint failing to serve
-  media when the library stores relative paths: web worker threads do not
-  inherit the ``music_dir`` context var, so the relative path is now resolved
-  against the library directory. :bug:`7063`
 
 ..
     For plugin developers
