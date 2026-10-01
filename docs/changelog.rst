@@ -47,8 +47,8 @@ Bug fixes
 - Improve the error message when the library database cannot be opened (for
   example due to permissions or an unwritable path), and fix the ``cannot not``
   typo in the generic database open failure message. :bug:`1676`
-- Stop replacing \ with / in `util.path_as_posix` on Unix, since \ is a valid
-  character in filenames on Unix. :bug:`7062`
+- Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
+  is a valid character in filenames on Unix. :bug:`7062`
 
 ..
     For plugin developers
