@@ -47,6 +47,9 @@ Bug fixes
 - Improve the error message when the library database cannot be opened (for
   example due to permissions or an unwritable path), and fix the ``cannot not``
   typo in the generic database open failure message. :bug:`1676`
+- :doc:`plugins/lastgenre`: An empty or null ``whitelist`` or ``canonical``
+  setting now raises a clear error instead of silently falling back to the
+  default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
 
 ..
     For plugin developers

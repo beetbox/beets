@@ -155,11 +155,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _load_whitelist(self) -> Whitelist:
         """Load the whitelist from a text file.
 
-        Default whitelist is used if config is True, empty string or set to "nothing".
+        Default whitelist is used if config is True. An empty or null value is
+        rejected with a UserError.
         """
         whitelist = set()
         wl_filename = self.config["whitelist"].get()
-        if wl_filename in (True, "", None):  # Indicates the default whitelist.
+        if wl_filename in ("", None):
+            raise ui.UserError(
+                "Invalid whitelist setting - True, False or path to custom"
+                " file allowed"
+            )
+        if wl_filename is True:  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
             self._log.debug("Loading whitelist {}", wl_filename)
@@ -173,14 +179,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _load_c14n_tree(self) -> tuple[CanonTree, bool]:
         """Load the canonicalization tree from a YAML file.
 
-        Default tree is used if config is True, empty string, set to "nothing"
-        or if prefer_specific is enabled.
+        Default tree is used if config is True or if prefer_specific is
+        enabled. An empty or null value is rejected with a UserError.
         """
         c14n_branches: CanonTree = []
         c14n_filename = self.config["canonical"].get()
+        if c14n_filename in ("", None):
+            raise ui.UserError(
+                "Invalid canonical setting - True, False or path to custom"
+                " file allowed"
+            )
         canonicalize = c14n_filename is not False
         # Default tree
-        if c14n_filename in (True, "", None) or (
+        if c14n_filename is True or (
             # prefer_specific requires a tree, load default tree
             not canonicalize and self.config["prefer_specific"].get()
         ):
