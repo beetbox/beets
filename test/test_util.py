@@ -284,7 +284,6 @@ class HelperTest(unittest.TestCase):
             assert util.path_as_posix(p) == a
 
 
-
 class FilePathTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
