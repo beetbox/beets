@@ -271,18 +271,18 @@ class HelperTest(unittest.TestCase):
         a = ["a", "b", "c"]
         assert util.components(p) == a
 
-    @pytest.mark.skipif(sys.platform != "win32", reason="windows only")
-    def test_forward_slash_windows(self):
-        p = rb"C:\a\b\c"
-        a = rb"C:/a/b/c"
-        assert util.path_as_posix(p) == a
+    def test_forward_slash(self):
+        with _common.platform_windows():
+            p = rb"C:\a\b\c"
+            a = rb"C:/a/b/c"
+            assert util.path_as_posix(p) == a
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="unix only")
-    def test_forward_slash_unix(self):
-        # \ is valid in a filename on Unix
-        p = rb"/a/b/c\.flac"
-        a = rb"/a/b/c\.flac"
-        assert util.path_as_posix(p) == a
+        with _common.platform_posix():
+            # \ is valid in a filename on Unix
+            p = rb"/a/b/c\.flac"
+            a = rb"/a/b/c\.flac"
+            assert util.path_as_posix(p) == a
+
 
 
 class FilePathTestCase(BeetsTestCase):
