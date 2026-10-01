@@ -50,6 +50,8 @@ Bug fixes
 - :doc:`plugins/lastgenre`: An empty or null ``whitelist`` or ``canonical``
   setting now raises a clear error instead of silently falling back to the
   default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
+- Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
+  is a valid character in filenames on Unix. :bug:`7062`
 
 ..
     For plugin developers

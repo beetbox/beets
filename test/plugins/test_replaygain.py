@@ -1,15 +1,11 @@
+import shutil
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
 import pytest
 from mediafile import MediaFile
 
-from beets.test.helper import (
-    AsIsImporterMixin,
-    ImportHelper,
-    PluginMixin,
-    has_program,
-)
+from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
@@ -26,17 +22,13 @@ except (ImportError, ValueError):
 
 
 GAIN_PROG = next(
-    (
-        cmd
-        for cmd in ["mp3gain", "mp3rgain", "aacgain"]
-        if has_program(cmd, ["-v"])
-    ),
+    (cmd for cmd in ["mp3gain", "mp3rgain", "aacgain"] if shutil.which(cmd)),
     None,
 )
 
-FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
+FFMPEG_AVAILABLE = shutil.which("ffmpeg")
 
-METAFLAC_AVAILABLE = has_program("metaflac", ["--version"])
+METAFLAC_AVAILABLE = shutil.which("metaflac")
 
 
 def reset_replaygain(item):
