@@ -323,8 +323,12 @@ def item_file(item_id: int) -> Any:
     if not item:
         return flask.abort(404, f"Item with id {item_id} not found")
 
-    item_path = util.syspath(item.path)
-    base_filename = os.path.basename(item_path)
+    item_path = item.path
+    if not os.path.isabs(item_path):
+        # Worker threads don't inherit the music_dir context var (#7063).
+        item_path = os.path.join(g.lib.directory, item_path)
+    file_path = util.syspath(item_path)
+    base_filename = os.path.basename(file_path)
 
     try:
         # Imitate http.server behaviour
@@ -335,7 +339,7 @@ def item_file(item_id: int) -> Any:
         safe_filename = base_filename
 
     return flask.send_file(
-        item_path, as_attachment=True, download_name=safe_filename
+        file_path, as_attachment=True, download_name=safe_filename
     )
 
 
