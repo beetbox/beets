@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import codecs
 import os
 import shlex
 import subprocess
@@ -427,7 +426,7 @@ class EditPlugin(plugins.BeetsPlugin):
             while True:
                 edit(new.name, self._log)
 
-                with codecs.open(new.name, encoding="utf-8") as f:
+                with open(new.name, encoding="utf-8") as f:
                     new_str = f.read()
                 if new_str == old_str:
                     ui.print_("No changes; aborting.")

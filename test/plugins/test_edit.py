@@ -1,4 +1,3 @@
-import codecs
 from typing import ClassVar
 from unittest.mock import patch
 
@@ -45,18 +44,18 @@ class ModifyFileMocker:
         `self.contents` is empty, the file remains unchanged.
         """
         if self.contents:
-            with codecs.open(filename, "w", encoding="utf-8") as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 f.write(self.contents)
 
     def replace_contents(self, filename, log):
         """Modify `filename`, reading its contents and replacing the strings
         specified in `self.replacements`.
         """
-        with codecs.open(filename, "r", encoding="utf-8") as f:
+        with open(filename, encoding="utf-8") as f:
             contents = f.read()
         for old, new_ in self.replacements.items():
             contents = contents.replace(old, new_)
-        with codecs.open(filename, "w", encoding="utf-8") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(contents)
 
 
@@ -513,7 +512,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         seen_docs = {}
 
         def inspect_and_edit(filename, log):
-            with codecs.open(filename, encoding="utf-8") as f:
+            with open(filename, encoding="utf-8") as f:
                 docs = load(f.read())
 
             headers = [doc for doc in docs if "id" not in doc]
@@ -522,7 +521,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             seen_docs["tracks"] = tracks
             tracks[0]["title"] = "Issue 6953 edited title"
 
-            with codecs.open(filename, "w", encoding="utf-8") as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 f.write(dump(docs))
 
         with patch("beetsplug.edit.edit", side_effect=inspect_and_edit):
@@ -571,12 +570,12 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         self.config["edit"]["albumfields"] = "album"
 
         def reorder_and_edit(filename, log):
-            with codecs.open(filename, encoding="utf-8") as f:
+            with open(filename, encoding="utf-8") as f:
                 docs = load(f.read())
             header = next(d for d in docs if "id" not in d)
             tracks = [d for d in docs if "id" in d]
             header["album"] = "Modified Album"
-            with codecs.open(filename, "w", encoding="utf-8") as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 f.write(dump([*tracks, header]))
 
         with patch("beetsplug.edit.edit", side_effect=reorder_and_edit):
