@@ -1,6 +1,7 @@
 """Tests for the 'web' plugin"""
 
 import json
+import os
 import platform
 import shutil
 from collections import Counter
@@ -8,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from beets import context
 from beets.library import Album, Item
 from beets.test import _common
 from beets.test.helper import PluginMixin, PytestTestHelper
@@ -293,6 +295,27 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response.status_code == 200
         assert len(res_json["results"]) == 1
         assert res_json["results"][0]["album"] == "album"
+
+    def test_get_item_file_relative_db_path(self):
+        # Simulate a web worker thread without the music_dir context var:
+        # item.path then stays relative, and the file endpoint must still
+        # resolve it against the library directory (#7063).
+        media = Path(self.lib_path) / "song.mp3"
+        media.write_bytes(b"audio-data")
+        item = Item(title="file", path=str(media))
+        self.lib.add(item)
+
+        music_dir = context.get_music_dir()
+        context.set_music_dir(b"")
+        try:
+            # Precondition: without the context the path stays relative.
+            assert not os.path.isabs(self.lib.get_item(item.id).path)
+            response = self.client.get(f"/item/{item.id}/file")
+        finally:
+            context.set_music_dir(music_dir)
+
+        assert response.status_code == 200
+        assert response.data == b"audio-data"
 
     def test_get_stats(self):
         response = self.client.get("/stats")
