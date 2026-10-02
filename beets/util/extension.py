@@ -115,7 +115,9 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
     if err != "":
         if logger:
             logger.error("Error with ffprobe\n", err)
-    for line in out.split("\n"):
+    # `splitlines` rather than splitting on "\n": ffprobe terminates its
+    # lines with CRLF on Windows.
+    for line in out.splitlines():
         if line.startswith("format_name="):
             formats = line.split("=")[1].split(",")
     detected_format = ""

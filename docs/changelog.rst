@@ -49,6 +49,13 @@ Bug fixes
   typo in the generic database open failure message. :bug:`1676`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
+- :doc:`plugins/bpd`: Report song paths with ``/`` separators on every platform,
+  so that the paths clients receive can be used to address songs on Windows too.
+- :ref:`import-cmd`: Detect the format of extension-less files on Windows, where
+  the ``ffprobe`` output was left unparsed because of its line endings.
+- Detect ImageMagick on Windows: the version probe kept looking for ``convert``
+  after ``magick`` had answered and picked up the unrelated built-in Windows
+  tool of that name, reporting the backend as unavailable. :bug:`5414`
 
 ..
     For plugin developers
