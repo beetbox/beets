@@ -9,22 +9,30 @@ below!
 Unreleased
 ----------
 
+=======
+New features
+~~~~~~~~~~~~
+
+- :ref:`tunique` (``%tunique{}``): New path template function to disambiguate
+  tracks within the same album that share the same title (e.g., identical-titled
+  tracks on different discs). It has the same arguments as :ref:`%aunique
+  <aunique>`; the default identifiers are ``title`` and the default
+  disambiguators are ``track disc artist``.
+- :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
+  before whitelist filtering, while preserving existing genres regardless of the
+  configured count. :bug:`6890`
+
 Bug fixes
 ~~~~~~~~~
 
-- :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
-  after configured data and video filters. :bug:`6836`
 - :ref:`import-cmd` Resumed imports no longer prompt again for albums that were
   imported using the "as Tracks" option. Their directories were never recorded
   as finished in the resume state.
-
-..
-    New features
-    ~~~~~~~~~~~~
-
-Bug fixes
-~~~~~~~~~
-
+- :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
+  gracefully by decoding with error handling and skipping tracks that produce
+  unparseable data, instead of crashing. :bug:`3527`
+- :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
+  after configured data and video filters. :bug:`6836`
 - :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
   large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
   (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
@@ -37,6 +45,14 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Fix word wrapping of colored diff output for a word containing two or more
+  separately-highlighted spans, which was incorrectly split into two words at
+  the second highlighted span.
+- Improve the error message when the library database cannot be opened (for
+  example due to permissions or an unwritable path), and fix the ``cannot not``
+  typo in the generic database open failure message. :bug:`1676`
+- Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
+  is a valid character in filenames on Unix. :bug:`7062`
 
 ..
     For plugin developers
