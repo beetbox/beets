@@ -608,7 +608,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if obj.albumartist != config["va_name"].as_str():
             new_genres = self.client.fetch("album_artist", obj)
             if new_genres:
-                return "album artist", new_genres, obj.albumartist
+                return "albumartist", new_genres, obj.albumartist
 
             self._log.extra_debug(
                 'No album artist genre found for "{}", '
@@ -624,8 +624,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 )
             if new_genres:
                 # Already filtered per-artist in client
-                return "multi-valued album artist", new_genres, None
-            return "album artist", [], None
+                return "multi-valued albumartist", new_genres, None
+            return "albumartist", [], None
 
         # For "Various Artists", pick the most popular track genre.
         assert isinstance(obj, Album)  # Type narrowing for mypy
