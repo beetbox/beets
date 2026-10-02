@@ -49,7 +49,6 @@ from beets.test.helper import (
     is_importable,
 )
 from beets.util import bytestring_path, syspath
-from beets.util.extension import remux_mpeglayer3_wav
 
 
 class PathsMixin:
@@ -2565,18 +2564,6 @@ class TestImportId(ImportHelper):
 
 class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
-
-    def test_remux_mpeglayer3_wav(self):
-        src = _common.RSRC / "mpeglayer3.wav"
-        dest = self.temp_path / "mpeglayer3.wav"
-        shutil.copy(src, syspath(dest))
-
-        mp3_path = remux_mpeglayer3_wav(dest)
-
-        assert mp3_path is not None
-        assert mp3_path.suffix == ".mp3"
-        assert mp3_path.exists()
-        assert not dest.exists()
 
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""

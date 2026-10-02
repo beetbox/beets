@@ -125,6 +125,7 @@ mpdstats = ["python-mpd2>=0.4.2"]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = [
+    "gstreamer-bundle>=1.28.0 ; sys_platform == 'win32'",
     "PyGObject ; sys_platform != 'win32'",
 ] # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
 scrub = ["mutagen>=1.33"]
