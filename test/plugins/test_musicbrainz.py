@@ -57,6 +57,7 @@ def release_factory(**kwargs) -> mb.Release:
     return factories.ReleaseFactory.build(**kwargs)
 
 
+@pytest.mark.usefixtures("config")
 class TestUtils:
     @pytest.mark.parametrize(
         "date, expected_parts",
