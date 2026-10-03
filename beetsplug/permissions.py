@@ -54,6 +54,18 @@ def assert_permissions(path: bytes, permission: int, log: Logger) -> None:
         )
 
 
+def set_permissions(path: bytes, permission: int, log: Logger) -> None:
+    """Set permissions for a path, ignoring files removed during import."""
+    try:
+        if not check_permissions(path, permission):
+            os.chmod(syspath(path), permission)
+        assert_permissions(path, permission, log)
+    except FileNotFoundError:
+        log.warning(
+            "could not set permissions on missing path {}", displayable_path(path)
+        )
+
+
 def dirs_in_library(library: bytes, path: bytes) -> list[bytes]:
     """Creates a list of ancestor directories in the beets library path."""
     return [
@@ -109,11 +121,7 @@ class Permissions(BeetsPlugin):
             self._log.debug(
                 "setting file permissions on {}", displayable_path(path)
             )
-            if not check_permissions(path, file_perm):
-                os.chmod(syspath(path), file_perm)
-
-            # Checks if the destination path has the permissions configured.
-            assert_permissions(path, file_perm, self._log)
+            set_permissions(path, file_perm, self._log)
 
         # Change permissions for the directories.
         for path in dirs or []:
@@ -121,8 +129,4 @@ class Permissions(BeetsPlugin):
             self._log.debug(
                 "setting directory permissions on {}", displayable_path(path)
             )
-            if not check_permissions(path, dir_perm):
-                os.chmod(syspath(path), dir_perm)
-
-            # Checks if the destination path has the permissions configured.
-            assert_permissions(path, dir_perm, self._log)
+            set_permissions(path, dir_perm, self._log)
