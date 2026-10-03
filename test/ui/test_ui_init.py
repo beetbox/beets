@@ -1,5 +1,6 @@
 """Test module for file ui/__init__.py"""
 
+import sqlite3
 import unittest
 from copy import deepcopy
 from pathlib import Path
@@ -97,3 +98,16 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
         with pytest.raises(UserError):
             ui._open_library(test_config)
         assert not non_exist_path_parent.exists()
+
+
+@pytest.mark.parametrize(
+    "sqlite_message",
+    ["unable to open database file", "attempt to write a readonly database"],
+)
+def test_open_library_permissions_hint(monkeypatch, sqlite_message):
+    def boom(*_a, **_k):
+        raise sqlite3.OperationalError(sqlite_message)
+
+    monkeypatch.setattr("beets.library.Library", boom)
+    with pytest.raises(UserError, match="permissions"):
+        ui._open_library(config)
