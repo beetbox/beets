@@ -853,7 +853,7 @@ class ITunesStore(RemoteArtSource):
             return
 
         if self._config["high_resolution"]:
-            image_suffix = "100000x100000-999"
+            image_suffix = "3000x3000bb"
         else:
             image_suffix = "1200x1200bb"
 
