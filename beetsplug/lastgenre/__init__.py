@@ -162,8 +162,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         wl_filename = self.config["whitelist"].get()
         if wl_filename in ("", None):
             raise ui.UserError(
-                "Invalid whitelist setting - True, False or path to custom"
-                " file allowed"
+                "Invalid whitelist setting: expected yes, no, or a file path"
             )
         if wl_filename is True:  # Indicates the default whitelist.
             wl_filename = WHITELIST
@@ -186,8 +185,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         c14n_filename = self.config["canonical"].get()
         if c14n_filename in ("", None):
             raise ui.UserError(
-                "Invalid canonical setting - True, False or path to custom"
-                " file allowed"
+                "Invalid canonical setting: expected yes, no, or a file path"
             )
         canonicalize = c14n_filename is not False
         # Default tree
