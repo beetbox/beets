@@ -7,7 +7,7 @@ import timeit
 from typing import TYPE_CHECKING, Protocol
 
 from beets import importer, plugins, ui
-from beets.autotag import Source, tag_album
+from beets.autotag import AlbumCandidates, Source
 from beets.plugins import BeetsPlugin
 from beets.util.pathformats import PF_KEY_DEFAULT
 from beetsplug._utils import vfs
@@ -82,7 +82,7 @@ def match_benchmark(lib: Library, opts: BenchMatch, args: list[str]) -> None:
     # Run the match.
     def _run_match() -> None:
         source = Source.from_items(items)
-        tag_album(source, search_ids=[id_])
+        AlbumCandidates(source).resolve([id_])
 
     if opts.profile:
         cProfile.runctx(

@@ -8,18 +8,10 @@ from typing import Any
 # Parts of external interface.
 from beets.util.deprecation import deprecate_for_maintainers, deprecate_imports
 
+from .candidates import AlbumCandidates, Recommendation, TrackCandidates
 from .distance import Distance, distance, string_dist, track_distance
 from .hooks import AlbumInfo, Info, TrackInfo, correct_list_fields
-from .match import (
-    AlbumMatch,
-    Match,
-    Proposal,
-    Recommendation,
-    TrackMatch,
-    assign_items,
-    tag_album,
-    tag_item,
-)
+from .match import AlbumMatch, Match, TrackMatch, assign_items
 from .source import Source
 
 
@@ -34,21 +26,20 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = [
+    "AlbumCandidates",
     "AlbumInfo",
     "AlbumMatch",
     "Distance",
     "Info",
     "Match",
-    "Proposal",
     "Recommendation",
     "Source",
+    "TrackCandidates",
     "TrackInfo",
     "TrackMatch",
     "assign_items",
     "correct_list_fields",
     "distance",
     "string_dist",
-    "tag_album",
-    "tag_item",
     "track_distance",
 ]
