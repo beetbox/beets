@@ -277,6 +277,7 @@ lyrics_pages = [
         To make ends meet
         """,
         url_title="Lady Madonna - The Beatles - LETRAS.MUS.BR",
+        marks=[xfail_on_ci("Letras returns 403 FORBIDDEN in CI", strict=False)],
     ),
     LyricsPage.make(
         "https://lrclib.net/api/get/23863037",
