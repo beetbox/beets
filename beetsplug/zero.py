@@ -27,6 +27,25 @@ __author__ = "baobab@heresiarch.info"
 
 ARTWORK_FIELDS = {"images", "art"}
 
+FIELD_ALIASES: tuple[frozenset[str], ...] = (
+    frozenset(ARTWORK_FIELDS),
+    frozenset({"genre", "genres"}),
+    frozenset({"artist", "artists"}),
+    frozenset({"artist_credit", "artists_credit"}),
+    frozenset({"artist_sort", "artists_sort"}),
+    frozenset({"albumartist", "albumartists"}),
+    frozenset({"albumartist_credit", "albumartists_credit"}),
+    frozenset({"albumartist_sort", "albumartists_sort"}),
+    frozenset({"composer", "composers"}),
+    frozenset({"lyricist", "lyricists"}),
+    frozenset({"arranger", "arrangers"}),
+    frozenset({"albumtype", "albumtypes"}),
+    frozenset({"catalognum", "catalognums"}),
+    frozenset({"language", "languages"}),
+    frozenset({"mb_artistid", "mb_artistids"}),
+    frozenset({"mb_albumartistid", "mb_albumartistids"}),
+)
+
 
 class ZeroPlugin(BeetsPlugin):
     fields_to_progs: dict[str, list[re.Pattern[str]]]
@@ -68,10 +87,11 @@ class ZeroPlugin(BeetsPlugin):
         # Whitelist mode.
         elif self.config["keep_fields"]:
             keep = set(self.config["keep_fields"].as_str_seq())
-            # ensure that all artwork fields are added when at least
-            # one of them is present
-            if keep & ARTWORK_FIELDS:
-                keep.update(ARTWORK_FIELDS)
+            # Ensure paired and aliased fields are kept when any
+            # member of the alias group is specified.
+            for alias_group in FIELD_ALIASES:
+                if keep & alias_group:
+                    keep.update(alias_group)
             for field in MediaFile.fields():
                 if field not in keep and field not in (
                     "id",
