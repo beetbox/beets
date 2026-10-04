@@ -316,3 +316,48 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         assert mf.images, (
             "images should be preserved when 'images' is in keep_fields"
         )
+
+    def test_keep_fields_art_preserves_images(self):
+        path = self.create_mediafile_fixture(images=["jpg"])
+        item = Item.from_path(path)
+
+        with self.configure_plugin({"fields": None, "keep_fields": ["art"]}):
+            item.write()
+
+        mf = MediaFile(path)
+        assert mf.images, (
+            "images should be preserved when 'art' is in keep_fields"
+        )
+
+    def test_keep_fields_genre_preserves_genres(self):
+        item = self.add_item_fixture(genres=["Elektro", "Techno/House"])
+        item.write()
+
+        with self.configure_plugin({"fields": None, "keep_fields": ["genre"]}):
+            item.write()
+
+        mf = MediaFile(item.filepath)
+        assert mf.genres == ["Elektro", "Techno/House"]
+
+    def test_keep_fields_genres_preserves_genres(self):
+        item = self.add_item_fixture(genres=["Elektro", "Techno/House"])
+        item.write()
+
+        with self.configure_plugin({"fields": None, "keep_fields": ["genres"]}):
+            item.write()
+
+        mf = MediaFile(item.filepath)
+        assert mf.genres == ["Elektro", "Techno/House"]
+
+    def test_keep_fields_artist_preserves_artists(self):
+        item = self.add_item_fixture(
+            artist="Test Artist", artists=["Test Artist"]
+        )
+        item.write()
+
+        with self.configure_plugin({"fields": None, "keep_fields": ["artist"]}):
+            item.write()
+
+        mf = MediaFile(item.filepath)
+        assert mf.artist == "Test Artist"
+        assert mf.artists == ["Test Artist"]

@@ -53,6 +53,9 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
+- :doc:`plugins/zero`: Preserve paired and aliased fields (such as ``genre`` and
+  ``genres``, ``artist`` and ``artists``) when using ``keep_fields``.
+  :bug:`7069`
 
 ..
     For plugin developers
