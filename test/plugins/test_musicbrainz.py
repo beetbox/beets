@@ -865,6 +865,39 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
         assert len(candidates) == 1
         assert candidates[0].track_id == self.RECORDING["id"]
 
+    def test_track_for_id_requests_work_rels(self, mb, requests_mock):
+        recording = {
+            **self.RECORDING,
+            "relations": [
+                {
+                    "target-type": "work",
+                    "type": "performance",
+                    "work": {
+                        "id": self.mbid,
+                        "title": "Work Title",
+                        "relations": [
+                            {
+                                "target-type": "artist",
+                                **artist_relation_factory(type=role),
+                            }
+                            for role in ("composer", "lyricist")
+                        ],
+                    },
+                }
+            ],
+        }
+        requests_mock.get(f"/ws/2/recording/{recording['id']}", json=recording)
+
+        track = mb.track_for_id(recording["id"])
+
+        includes = requests_mock.last_request.qs["inc"][0].split("+")
+        assert {"work-rels", "work-level-rels"} <= set(includes)
+        assert track is not None
+        assert track.work == "Work Title"
+        assert track.mb_workid == self.mbid
+        assert track.composers == ["Composer Artist"]
+        assert track.lyricists == ["Lyricist Artist"]
+
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(
             "beetsplug._utils.musicbrainz.MusicBrainzAPI.get_json",

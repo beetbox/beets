@@ -49,6 +49,8 @@ Bug fixes
   typo in the generic database open failure message. :bug:`1676`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
+- :doc:`plugins/musicbrainz`: Include work, composer, and lyricist information
+  when importing singleton tracks. :bug:`7072`
 
 ..
     For plugin developers
