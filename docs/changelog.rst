@@ -53,6 +53,9 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
+- :doc:`plugins/lyrics`: Handle trailing blank lines and whitespace when
+  verifying synced lyrics, preventing valid synced lyrics from LRCLIB from being
+  silently discarded. :bug:`7070`
 
 ..
     For plugin developers

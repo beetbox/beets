@@ -703,6 +703,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 SYNCED,
                 id="prefer match with synced lyrics",
             ),
+            pytest.param(
+                [lyrics_match(syncedLyrics="[00:00.00] synced\r\n\r\n")],
+                SYNCED,
+                id="synced lyrics with trailing blank lines",
+            ),
         ],
     )
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
@@ -713,6 +718,44 @@ class TestLRCLibLyrics(LyricsBackendTest):
         else:
             assert lyrics
             assert lyrics.text == expected_lyrics
+
+    @pytest.mark.parametrize(
+        "lyrics_text, expected",
+        [
+            pytest.param(
+                "[00:01.00] synced\r\n\r\n",
+                "[00:01.00] synced\r\n\r\n",
+                id="trailing-crlf",
+            ),
+            pytest.param(
+                "[00:01.00] synced\n\n",
+                "[00:01.00] synced\n\n",
+                id="trailing-newlines",
+            ),
+            pytest.param(
+                "[00:01.00] synced\n   \n",
+                "[00:01.00] synced\n   \n",
+                id="trailing-whitespace-line",
+            ),
+            pytest.param(
+                "[00:01.00] synced\nend note\n",
+                "[00:01.00] synced\nend note\n",
+                id="trailing-non-timestamp-line",
+            ),
+            pytest.param(
+                "[01:00.00] synced\r\n\r\n",
+                None,
+                id="exceeds-duration-trailing-newlines",
+            ),
+            pytest.param("not synced lyrics\r\n\r\n", None, id="no-timestamps"),
+            pytest.param("", None, id="empty-string"),
+            pytest.param(None, None, id="none"),
+        ],
+    )
+    def test_verify_synced_lyrics(self, lyrics_text, expected):
+        assert (
+            lyrics.LRCLyrics.verify_synced_lyrics(10.0, lyrics_text) == expected
+        )
 
 
 class TestLRCMuxLyrics(LyricsBackendTest):

@@ -296,14 +296,17 @@ class LRCLyrics:
         cls, duration: float, lyrics: str | None
     ) -> str | None:
         """Accept synced lyrics only when the final timestamp fits duration."""
-        if lyrics and (
-            m := Lyrics.LINE_PARTS_PAT.match(lyrics.splitlines()[-1])
-        ):
-            ts, _ = m.groups()
-            if ts:
-                mm, ss = map(float, ts.strip("[]").split(":"))
-                if 60 * mm + ss <= duration:
-                    return lyrics
+        if not lyrics:
+            return None
+
+        for line in reversed(lyrics.splitlines()):
+            if m := Lyrics.LINE_PARTS_PAT.match(line.strip()):
+                ts, _ = m.groups()
+                if ts:
+                    mm, ss = map(float, ts.strip("[]").split(":"))
+                    if 60 * mm + ss <= duration:
+                        return lyrics
+                    return None
 
         return None
 
@@ -371,7 +374,7 @@ class LRCLyrics:
     @staticmethod
     def _format_synced(synced: str) -> str:
         """Return synced lyrics with surrounding whitespace trimmed."""
-        return "\n".join(map(str.strip, synced.splitlines()))
+        return "\n".join(map(str.strip, synced.splitlines())).strip()
 
     @staticmethod
     def _synced_as_plain(synced: str) -> str:
@@ -380,7 +383,7 @@ class LRCLyrics:
             m[2]
             for line in synced.splitlines()
             if (m := Lyrics.LINE_PARTS_PAT.match(line))
-        )
+        ).strip()
 
     def get_text(self, want_synced: bool) -> str:
         """Return the preferred text form for this candidate."""
