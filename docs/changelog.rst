@@ -53,6 +53,9 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
+- ``beet update``: A filesystem error while moving an item or album is now
+  reported and the update continues with the rest of the library, instead of
+  aborting and leaving it partially updated. :bug:`2419`
 
 ..
     For plugin developers

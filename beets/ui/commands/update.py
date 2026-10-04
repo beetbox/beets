@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
 from beets.exceptions import UserError
-from beets.util import ancestry, syspath
+from beets.util import FilesystemError, ancestry, syspath
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
@@ -120,7 +120,11 @@ def update_items(
                 if changed:
                     # Move the item if it's in the library.
                     if move and lib.directory in ancestry(item.path):
-                        item.move(store=False)
+                        try:
+                            item.move(store=False)
+                        except FilesystemError as exc:
+                            log.error("error moving {.filepath}: {}", item, exc)
+                            continue
 
                     item.store(fields=item_fields)
                     affected_albums.add(item.album_id)
@@ -158,11 +162,14 @@ def update_items(
 
                 # Manually moving and storing the album.
                 items = list(album.items())
-                for item in items:
-                    item.move(store=False, with_album=False)
-                    item.store(fields=item_fields)
-                album.move(store=False)
-                album.store(fields=album_fields)
+                try:
+                    for item in items:
+                        item.move(store=False, with_album=False)
+                        item.store(fields=item_fields)
+                    album.move(store=False)
+                    album.store(fields=album_fields)
+                except FilesystemError as exc:
+                    log.error("error moving album {}: {}", album, exc)
 
 
 def update_func(lib: Library, opts: UpdateCLIOpts, args: list[str]) -> None:

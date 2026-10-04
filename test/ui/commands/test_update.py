@@ -164,6 +164,52 @@ class UpdateTest(IOMixin, BeetsTestCase):
         assert b"differentAlbum" not in item.path
         assert item.genres == ["differentGenre"]
 
+    def test_move_error_does_not_abort_other_albums(self):
+        other = self.add_album_fixture()
+        for item, name in (
+            (self.i, "blocked"),
+            (self.i2, "blocked"),
+            (other.items().get(), "moved"),
+        ):
+            mf = MediaFile(item.filepath)
+            mf.album = name
+            mf.save()
+        # A file in place of the new album directory makes the move fail.
+        blocker = self.lib_path / "Compilations" / "blocked"
+        blocker.parent.mkdir(parents=True, exist_ok=True)
+        blocker.touch()
+
+        with self.assertLogs("beets", level="ERROR") as logs:
+            self._update("-m")
+
+        assert any("error moving album" in line for line in logs.output)
+        self.i.load()
+        assert self.i.filepath.exists()
+        other.load()
+        assert other.album == "moved"
+        assert b"moved" in other.items().get().path
+
+    def test_singleton_move_error_does_not_abort_update(self):
+        singleton = self.add_item_fixture()
+        mf = MediaFile(singleton.filepath)
+        mf.artist = "blocked"
+        mf.save()
+        # A file in place of the new singleton directory makes the move fail.
+        (self.lib_path / "Non-Album" / "blocked").touch()
+        mf = MediaFile(self.i.filepath)
+        mf.title = "differentTitle"
+        mf.save()
+
+        with self.assertLogs("beets", level="ERROR") as logs:
+            self._update("-m")
+
+        assert any("error moving" in line for line in logs.output)
+        singleton.load()
+        assert singleton.artist != "blocked"
+        assert singleton.filepath.exists()
+        self.i.load()
+        assert self.i.title == "differentTitle"
+
     def test_mtime_match_skips_update(self):
         mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"
