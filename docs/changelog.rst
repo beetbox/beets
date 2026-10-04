@@ -53,8 +53,6 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
-- :doc:`plugins/musicbrainz`: Include work, composer, and lyricist information
-  when importing singleton tracks. :bug:`7072`
 
 ..
     For plugin developers
