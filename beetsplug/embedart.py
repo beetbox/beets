@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Album, LibModel, Library
+    from beets.library import Album, Item, LibModel, Library
 
 
 class EmbedArtCLIOpts(Protocol):
@@ -75,6 +75,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 "remove_art_file": False,
                 "quality": 0,
                 "clearart_on_import": False,
+                "normalize": False,
             }
         )
 
@@ -97,6 +98,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         if self.config["clearart_on_import"].get(bool):
             self.register_listener("import_task_files", self.import_task_files)
+
+        if self.config["normalize"].get(bool):
+            self.register_listener("album_imported", self.normalize_album)
 
     def commands(self) -> list[ui.Subcommand]:
         # Embed command.
@@ -287,6 +291,36 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 self.config["ifempty"].get(bool),
             )
             self.remove_artfile(album)
+
+    def normalize_album(self, lib: Library, album: Album) -> None:
+        """Downscale the embedded art of an imported album if it is wider
+        than ``maxwidth``, whether or not new art was fetched.
+        """
+        for item in album.items():
+            self.normalize_item(item)
+
+    def normalize_item(self, item: Item) -> None:
+        """Re-embed the item's art resized to ``maxwidth`` if it is wider."""
+        maxwidth = self.config["maxwidth"].get(int)
+        if not maxwidth:
+            return
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artpath = art.extract(self._log, os.path.join(tmpdir, "art"), item)
+            if not artpath:
+                return  # No embedded art: nothing to normalize.
+
+            size = ArtResizer.shared.get_size(artpath)
+            if size is None or size[0] <= maxwidth:
+                return  # Already small enough: leave it untouched.
+
+            art.embed_item(
+                self._log,
+                item,
+                artpath,
+                maxwidth,
+                quality=self.config["quality"].get(int),
+            )
 
     def remove_artfile(self, album: Album) -> None:
         """Possibly delete the album art file for an album (if the
