@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import config, logging
+from beets import config, logging, plugins
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.fixtures import DummyIMBackend
@@ -111,6 +111,23 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         self.run_command("embedart", "-y")
         mediafile = MediaFile(item.filepath)
         assert mediafile.images[0].data == self.image_data
+
+    def test_art_set_embeds_with_the_configured_quality(self):
+        """fetchart's art_set event embeds automatically; it must use the
+        same quality as `beet embedart` (#5937)."""
+        album = self.add_album_fixture()
+        album.artpath = self.small_artpath
+        album.store()
+        config["embedart"]["maxwidth"] = 1
+        config["embedart"]["quality"] = 90
+
+        with patch.object(
+            art, "resize_image", return_value=bytes(self.small_artpath)
+        ) as resize:
+            plugins.send("art_set", album=album)
+
+        resize.assert_called_once()
+        assert resize.call_args.args[3] == 90
 
     def test_embed_art_remove_art_file(self):
         self._setup_data()

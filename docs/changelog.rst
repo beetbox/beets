@@ -53,6 +53,9 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
+- :doc:`plugins/embedart`: Embedding art automatically after
+  :doc:`plugins/fetchart` sets it (the ``art_set`` event) uses the configured
+  ``quality`` instead of 0, like ``beet embedart`` does. :bug:`5937`
 
 ..
     For plugin developers

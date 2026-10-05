@@ -285,6 +285,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 True,
                 self.config["compare_threshold"].get(int),
                 self.config["ifempty"].get(bool),
+                quality=self.config["quality"].get(int),
             )
             self.remove_artfile(album)
 
