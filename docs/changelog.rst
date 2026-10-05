@@ -53,6 +53,10 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
+- :doc:`plugins/export`, :doc:`plugins/info`: ``--include-keys`` expands glob
+  patterns such as ``mb*`` into the matching fields, as the export
+  documentation describes, instead of showing a ``mb*`` key with no value.
+  :bug:`5411`
 
 ..
     For plugin developers

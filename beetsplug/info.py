@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import os
 from typing import TYPE_CHECKING, Any, Literal, Protocol
 
@@ -31,6 +32,22 @@ class InfoCLIOpts(Protocol):
     keys_only: bool | None
     library: bool | None
     summarize: bool | None
+
+
+def expand_keys(patterns: list[str], available: Iterable[str]) -> list[str]:
+    """Expand glob patterns such as ``mb*`` into the matching field names.
+
+    A pattern without a wildcard is kept as given, so asking for a field that
+    has no value still shows it. A pattern that matches nothing adds nothing.
+    """
+    names = sorted(available)
+    keys: list[str] = []
+    for pattern in patterns:
+        if any(char in pattern for char in "*?["):
+            keys.extend(k for k in names if fnmatch.fnmatchcase(k, pattern))
+        else:
+            keys.append(pattern)
+    return list(dict.fromkeys(keys))
 
 
 def tag_data(
@@ -63,7 +80,7 @@ def tag_data_emitter(path: bytes) -> DataEmitter:
         if included_keys == "*":
             fields = tag_fields()
         else:
-            fields = included_keys
+            fields = expand_keys(included_keys, tag_fields())
         if "images" in fields:
             # We can't serialize the image data.
             fields.remove("images")
@@ -94,6 +111,10 @@ def library_data_emitter(model: LibModel) -> DataEmitter:
     def emitter(
         included_keys: Literal["*"] | list[str],
     ) -> tuple[JSONDict, LibModel]:
+        if included_keys != "*":
+            included_keys = expand_keys(
+                included_keys, model.keys(computed=True)
+            )
         data = dict(model.formatted(included_keys=included_keys))
 
         return data, model
