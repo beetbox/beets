@@ -232,12 +232,12 @@ class TestPlurality:
 
         likelies = util.get_most_common_tags(items)
 
-        assert likelies["albumartist"] == "aartist"
-        assert likelies["album"] == "album"
+        assert likelies.albumartist == "aartist"
+        assert likelies.album == "album"
         # albumartist consensus overrides artist
-        assert likelies["artist"] == "aartist"
-        assert likelies["label"] == "label 1"
-        assert likelies["year"] == 0
+        assert likelies.artist == "aartist"
+        assert likelies.label == "label 1"
+        assert likelies.year == 0
 
 
 class HelperTest(unittest.TestCase):
