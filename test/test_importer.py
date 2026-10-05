@@ -1647,6 +1647,143 @@ class TestImportDuplicateSingleton(ImportHelper):
         return item
 
 
+def _mb_album_candidates_mock(*args, **kwargs):
+    """Album candidate with a specific MusicBrainz album ID."""
+    yield AlbumInfo(
+        artist="artist",
+        album="album",
+        tracks=[TrackInfo(title="new title", track_id="trackid", index=0)],
+        album_id="test-mb-album-id",
+        artist_id="artistid",
+    )
+
+
+@patch(
+    "beets.metadata_plugins.candidates",
+    Mock(side_effect=_mb_album_candidates_mock),
+)
+class TestImportDuplicateAlbumMbid(PluginMixin, ImportHelper):
+    """Regression test for #7067: duplicate_keys.album: mb_albumid must match
+    an autotagged import against the library album with the same MBID.
+
+    Before the fix, chosen_info() returned AlbumInfo field names (album_id)
+    instead of library field names (mb_albumid), so find_duplicates() built a
+    temp Album with mb_albumid unset and the query matched albums with an empty
+    MBID rather than the real duplicate.
+    """
+
+    plugin = "musicbrainz"
+
+    def setup_beets(self):
+        super().setup_beets()
+        # Existing album in library with a known MusicBrainz album ID.
+        self.add_album_fixture(
+            albumartist="artist", album="album", mb_albumid="test-mb-album-id"
+        )
+
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "mb_albumid"}
+        )
+
+    def add_album_fixture(self, **kwargs):
+        album = super().add_album_fixture()
+        album.update(kwargs)
+        album.store()
+        return album
+
+    def test_remove_duplicate_by_mb_albumid(self):
+        """Autotagged import with duplicate_keys.album=mb_albumid must find
+        and remove the existing duplicate album."""
+        item = self.lib.items().get()
+        assert item.filepath.exists()
+
+        self.config["import"]["duplicate_action"] = "remove"
+        self.importer.run()
+
+        # The old album should have been replaced by the imported one.
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        assert self.lib.items().get().title == "new title"
+
+    def test_skip_duplicate_by_mb_albumid(self):
+        """Autotagged import with duplicate_keys.album=mb_albumid must detect
+        the duplicate and skip the import."""
+        item = self.lib.items().get()
+
+        self.config["import"]["duplicate_action"] = "skip"
+        self.importer.run()
+
+        # Import should have been skipped; original item survives.
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 1
+        assert self.lib.items().get().id == item.id
+
+
+def _mb_item_candidates_mock(*args, **kwargs):
+    """Singleton candidate with a specific MusicBrainz track ID."""
+    yield TrackInfo(
+        artist="artist", title="title", track_id="test-mb-track-id", index=0
+    )
+
+
+@patch(
+    "beets.metadata_plugins.item_candidates",
+    Mock(side_effect=_mb_item_candidates_mock),
+)
+class TestImportDuplicateSingletonMbid(ImportHelper):
+    """Regression test for #7067: duplicate_keys.item: mb_trackid must match
+    an autotagged singleton import against the library item with the same MBID.
+
+    Before the fix, chosen_info() returned TrackInfo field names (track_id)
+    instead of library field names (mb_trackid), so find_duplicates() built a
+    temp Item with mb_trackid unset and the query matched items with an empty
+    MBID rather than the real duplicate.
+    """
+
+    def setup_beets(self):
+        super().setup_beets()
+        # Existing item in library with a known MusicBrainz track ID.
+        self.add_item_fixture(
+            artist="artist", title="title", mb_trackid="test-mb-track-id"
+        )
+
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_singleton_importer(
+            duplicate_keys={"item": "mb_trackid"}
+        )
+
+    def test_remove_duplicate_by_mb_trackid(self):
+        """Autotagged singleton import with duplicate_keys.item=mb_trackid must
+        find and remove the existing duplicate item."""
+        item = self.lib.items().get()
+        assert item.mb_trackid == "test-mb-track-id"
+        assert item.filepath.exists()
+
+        self.config["import"]["duplicate_action"] = "remove"
+        self.importer.run()
+
+        assert len(self.lib.items()) == 1
+        assert self.lib.items().get().mb_trackid == "test-mb-track-id"
+
+    def test_skip_duplicate_by_mb_trackid(self):
+        """Autotagged singleton import with duplicate_keys.item=mb_trackid must
+        detect the duplicate and skip the import."""
+        item = self.lib.items().get()
+
+        self.config["import"]["duplicate_action"] = "skip"
+        self.importer.run()
+
+        assert len(self.lib.items()) == 1
+        assert self.lib.items().get().id == item.id
+
+    def add_item_fixture(self, **kwargs):
+        item = self.add_item_fixtures()[0]
+        item.update(kwargs)
+        item.store()
+        return item
+
+
 @contextmanager
 def bitrate_overrides(bitrates_by_title):
     """Force specific per-title bitrates on newly-read import items.

@@ -325,11 +325,18 @@ class ImportTask(BaseImportTask):
         May only be called when the choice flag is ASIS or RETAG
         (in which case the data comes from the files' current metadata)
         or APPLY (in which case the data comes from the choice).
+
+        For APPLY, returns ``info.item_data`` so that field names match
+        library model names (e.g. ``mb_albumid`` instead of ``album_id``,
+        ``mb_trackid`` instead of ``track_id``).  This ensures that
+        ``find_duplicates`` queries built from the returned dict use the
+        correct field names when ``duplicate_keys`` refers to library
+        fields such as ``mb_albumid`` or ``mb_trackid``.
         """
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             return self.source.data.copy()
         if self.choice_flag is Action.APPLY and self.match:
-            return self.match.info.copy()
+            return dict(self.match.info.item_data)
         assert False
 
     def imported_items(self) -> list[library.Item]:
@@ -571,9 +578,16 @@ class ImportTask(BaseImportTask):
         album name as the task.
         """
         info = self.chosen_info()
-        info["albumartist"] = info["artist"]
+        # For ASIS/RETAG, chosen_info() returns Likelies (library field names)
+        # which has 'artist' but may have an incomplete 'albumartist'.  Override
+        # albumartist with artist so duplicate detection is consistent with how
+        # the album will be stored.
+        # For APPLY, chosen_info() returns item_data which already maps
+        # AlbumInfo.artist -> 'albumartist', so 'artist' is absent.
+        if "artist" in info:
+            info["albumartist"] = info["artist"]
 
-        if info["artist"] is None:
+        if info.get("albumartist") is None:
             # As-is import with no artist. Skip check.
             return []
 
