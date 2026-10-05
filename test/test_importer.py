@@ -1784,6 +1784,48 @@ class TestImportDuplicateSingletonMbid(ImportHelper):
         return item
 
 
+class TestFindDuplicatesNoArtist(ImportHelper):
+    """Unit test for the no-artist early-return path in find_duplicates.
+
+    When an autotagged match has artist=None, item_data omits the albumartist
+    key entirely (None values are filtered out).  find_duplicates() must detect
+    the missing albumartist and return [] immediately instead of building a
+    query that would match every artist-less album in the library.
+    """
+
+    def setup_beets(self):
+        super().setup_beets()
+        # An existing library album so we can confirm nothing is returned.
+        self.add_album_fixture()
+
+    def test_apply_no_artist_skips_duplicate_check(self):
+        """find_duplicates() returns [] when the matched AlbumInfo has no artist.
+
+        AlbumInfo(artist=None).item_data omits 'albumartist' entirely (None
+        values are stripped during item_data construction).  chosen_info()
+        therefore returns a dict without an 'albumartist' key, and
+        find_duplicates() must return [] rather than querying with a null
+        albumartist.
+        """
+        item = _common.item()
+        task = importer.ImportTask(
+            toppath=None, paths=[item.path], items=[item]
+        )
+        # Construct an AlbumMatch with artist=None so item_data has no
+        # 'albumartist' key, exercising the is-None early-return guard.
+        no_artist_info = AlbumInfo(
+            artist=None,
+            album="some album",
+            album_id="some-id",
+            artist_id=None,
+            tracks=[],
+        )
+        match = AlbumMatch(distance=Distance(), info=no_artist_info, mapping={})
+        task.set_choice(match)
+
+        assert task.find_duplicates(self.lib) == []
+
+
 @contextmanager
 def bitrate_overrides(bitrates_by_title):
     """Force specific per-title bitrates on newly-read import items.
