@@ -49,14 +49,9 @@ Bug fixes
   typo in the generic database open failure message. :bug:`1676`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
-- Fix ``import.duplicate_keys`` matching: autotagged imports with
-  ``duplicate_keys.album: mb_albumid`` (or ``duplicate_keys.item: mb_trackid``)
-  now correctly detect existing duplicates instead of always matching library
-  entries with an empty MBID.  The root cause was that ``ImportTask.chosen_info``
-  returned raw ``AlbumInfo``/``TrackInfo`` field names (``album_id``,
-  ``track_id``) rather than the library model names (``mb_albumid``,
-  ``mb_trackid``), so ``find_duplicates`` built a temporary album/item with
-  those fields unset and the duplicate query matched the wrong rows. :bug:`7067`
+- Fix ``import.duplicate_keys`` with ``mb_albumid`` / ``mb_trackid`` never
+  matching autotagged imports (and matching entries with an empty MBID instead).
+  :bug:`7067`
 - :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
