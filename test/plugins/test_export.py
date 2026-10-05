@@ -103,3 +103,34 @@ class ExportPluginTest(IOMixin, PluginTestCase):
         )
 
         assert json.loads(out)[0] == {"title": "xtitle"}
+
+    def test_include_keys_glob_gives_every_csv_row_the_same_columns(self):
+        first, second = self.add_item_fixtures(count=2)
+        for item, title in ((first, "one"), (second, "two")):
+            item.artist = "xartist"
+            item.title = title
+            item.store()
+        # a flexible attribute on the second item only
+        second.play_count = 3
+        second.store()
+
+        out = self.run_with_output(
+            "export", "-f", "csv", "--library", "-i", "title,play*", "xartist"
+        )
+
+        rows = out.strip().splitlines()
+        assert rows[0].strip() == "title"
+        assert sorted(r.strip() for r in rows[1:]) == ["one", "two"]
+
+    def test_include_keys_glob_in_album_mode(self):
+        album = self.add_album_fixture()
+        album.mb_albumid = "xalbumid"
+        album.store()
+
+        out = self.run_with_output(
+            "export", "-f", "json", "--album", "-i", "album,mb_albumid*"
+        )
+
+        data = json.loads(out)[0]
+        assert data["mb_albumid"] == "xalbumid"
+        assert "album" in data

@@ -34,7 +34,9 @@ The ``export`` command has these command-line options:
       $ beet export -i 'title,mb*' beatles
 
   will include the ``title`` property and all properties starting with ``mb``.
-  You can add the ``-i`` option multiple times to the command line.
+  Patterns match the built-in fields and the ones plugins declare; include
+  other flexible attributes by their full name. You can add the ``-i`` option
+  multiple times to the command line.
 
 - ``--library`` or ``-l``: Show data from the library database instead of the
   files' tags.

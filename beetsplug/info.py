@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Literal, Protocol
 import mediafile
 
 from beets import ui
-from beets.library import Item
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
 
@@ -107,14 +107,25 @@ def library_data(
         yield library_data_emitter(item)
 
 
+def model_fields(model: LibModel) -> set[str]:
+    """The field names a glob can match for this kind of model.
+
+    Fixed, computed and plugin-declared fields of the model class (plus the
+    album's, for items), not the fields this one object happens to have, so
+    every exported row ends up with the same keys.
+    """
+    fields = {*model.all_keys(), *model._types}
+    if isinstance(model, Item):
+        fields |= {*Album.all_keys(), *Album._types}
+    return fields
+
+
 def library_data_emitter(model: LibModel) -> DataEmitter:
     def emitter(
         included_keys: Literal["*"] | list[str],
     ) -> tuple[JSONDict, LibModel]:
         if included_keys != "*":
-            included_keys = expand_keys(
-                included_keys, model.keys(computed=True)
-            )
+            included_keys = expand_keys(included_keys, model_fields(model))
         data = dict(model.formatted(included_keys=included_keys))
 
         return data, model
@@ -250,6 +261,9 @@ class InfoPlugin(BeetsPlugin):
             except (mediafile.UnreadableFileError, OSError) as ex:
                 self._log.error("cannot read file: {}", ex)
                 continue
+            if included_keys:
+                # a glob like `p*` may have matched it again
+                data.pop("path", None)
 
             if opts.summarize:
                 update_summary(summary, data)

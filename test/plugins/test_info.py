@@ -106,3 +106,16 @@ class InfoTest(IOMixin, PluginTestCase):
             "$track. $title - $artist ($length)",
         )
         assert "02. tïtle 0 - the artist (0:01)\n" == out
+
+    def test_include_keys_glob_does_not_bring_back_path(self):
+        (item,) = self.add_item_fixtures()
+        item.album = "xxxx"
+        item.store()
+
+        out = self.run_with_output(
+            "info", "--library", "-i", "pa*", "album:xxxx"
+        )
+
+        assert not any(
+            line.lstrip().startswith("path:") for line in out.splitlines()
+        )
