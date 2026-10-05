@@ -327,6 +327,16 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
 
         assert self._embedded_width(item) == 500
 
+    def test_normalize_respects_write_disabled(self):
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
+
+        config["import"]["write"] = False
+        self._import_with_normalize(album, maxwidth=300)
+
+        assert self._embedded_width(item) == 500
+
     def test_normalize_without_embedded_art(self):
         album = self.add_album_fixture()
         item = album.items()[0]

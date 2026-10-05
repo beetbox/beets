@@ -296,6 +296,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """Downscale the embedded art of an imported album if it is wider
         than ``maxwidth``, whether or not new art was fetched.
         """
+        if not ui.should_write():
+            return  # Respect `import: write: no`.
+
         for item in album.items():
             self.normalize_item(item)
 
