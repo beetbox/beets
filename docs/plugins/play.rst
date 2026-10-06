@@ -54,7 +54,9 @@ The available options are:
 - **command**: The command used to open the playlist. Default: ``open`` on OS X,
   ``xdg-open`` on other Unixes and ``start`` on Windows. Insert ``$args`` to use
   the ``--args`` feature.
-- **relative_to**: If set, emit paths relative to this directory. Default: None.
+- **relative_to**: If set, emit paths relative to this directory. A path with no
+  relative form—on Windows, one that lives on another drive—is emitted as it is,
+  and the plugin warns about it. Default: None.
 - **use_folders**: When using the ``-a`` option, the m3u will contain the paths
   to each track on the matched albums. Enable this option to store paths to
   folders instead. Default: ``no``.

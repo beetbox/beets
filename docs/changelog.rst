@@ -71,6 +71,9 @@ Bug fixes
   Windows, where they separate path components rather than escape the next
   character, so that commands taking an absolute path now receive it in one
   piece.
+- :doc:`plugins/play`: Keep a path absolute instead of crashing when
+  ``relative_to`` points at another Windows drive, where no relative path
+  between the two exists, and warn about the paths that were left alone.
 
 ..
     For plugin developers
