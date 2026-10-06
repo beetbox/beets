@@ -93,7 +93,7 @@ def test_log_paths_do_not_guess_ambiguous_legacy_paths(tmp_path):
     logfile = tmp_path / "import.log"
     logfile.write_text("skip /music/Artist; Band/Album\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="absolute and relative"):
+    with pytest.raises(ValueError, match="Can't mix"):
         list(paths_from_logfile(logfile))
 
 
