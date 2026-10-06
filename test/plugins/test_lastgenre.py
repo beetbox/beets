@@ -914,7 +914,7 @@ class TestIgnorelist(PluginTestHelper):
 
         assert expected_error_message in str(exc_info.value)
 
-    def test_ignorelist_multivalued_album_artist_fallback(
+    def test_ignorelist_multivalued_albumartist_fallback(
         self, monkeypatch, config
     ):
         """`stage_artist=None` fallback must not re-drop per-artist results."""
@@ -947,7 +947,7 @@ class TestIgnorelist(PluginTestHelper):
 
         genres, label = plugin._get_genre(obj)
 
-        assert "multi-valued album artist" in label
+        assert "multi-valued albumartist" in label
         assert "Metal" in genres
 
 
