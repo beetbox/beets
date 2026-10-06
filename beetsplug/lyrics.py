@@ -1326,6 +1326,9 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             item.store()
             if write:
                 item.try_write(tags={"synced_lyrics": sylt_data})
+        elif new_lyrics:
+            # Instrumental matches update only the `lyrics_*` fields.
+            item.store()
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""
