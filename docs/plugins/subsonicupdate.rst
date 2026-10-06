@@ -54,5 +54,5 @@ The available options under the ``subsonic:`` section are:
   ``password``. ``token`` authentication is preferred to avoid sending cleartext
   password.
 - **auto**: Whether to request an update automatically whenever the beets
-  library or a smart playlist changes. Set to ``no`` to only update when you
-  run ``beet subsonicupdate`` yourself. Default: ``yes``
+  library or a smart playlist changes. Set to ``no`` to only update when you run
+  ``beet subsonicupdate`` yourself. Default: ``yes``

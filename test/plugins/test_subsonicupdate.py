@@ -106,9 +106,14 @@ class TestSubsonicUpdate(PluginTestHelper):
 
         subsonic.start_scan(self.lib)
 
-    def test_start_scan_failed_unreachable(self, subsonic: SubsonicUpdate):
+    @responses.activate
+    def test_start_scan_failed_unreachable(
+        self, subsonic: SubsonicUpdate, caplog: pytest.LogCaptureFixture
+    ):
         """Tests failed path based on service not available."""
         subsonic.start_scan(self.lib)
+
+        assert "Error connecting to Subsonic server" in caplog.text
 
     @responses.activate
     def test_url_with_context_path(self, subsonic: SubsonicUpdate):
