@@ -43,47 +43,6 @@ class UtilTest(BeetsTestCase):
         util.interactive_open(["foo"], "bar")
         mock_execlp.assert_called_once_with("bar", "bar", "foo")
 
-    def test_sanitize_unix_replaces_leading_dot(self):
-        with _common.platform_posix():
-            p = util.sanitize_path("one/.two/three")
-        assert "." not in p
-
-    def test_sanitize_windows_replaces_trailing_dot(self):
-        with _common.platform_windows():
-            p = util.sanitize_path("one/two./three")
-        assert "." not in p
-
-    def test_sanitize_windows_replaces_illegal_chars(self):
-        with _common.platform_windows():
-            p = util.sanitize_path(':*?"<>|')
-        assert ":" not in p
-        assert "*" not in p
-        assert "?" not in p
-        assert '"' not in p
-        assert "<" not in p
-        assert ">" not in p
-        assert "|" not in p
-
-    def test_sanitize_windows_replaces_trailing_space(self):
-        with _common.platform_windows():
-            p = util.sanitize_path("one/two /three")
-        assert " " not in p
-
-    def test_sanitize_path_works_on_empty_string(self):
-        with _common.platform_posix():
-            p = util.sanitize_path("")
-        assert p == ""
-
-    def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
-        with _common.platform_posix():
-            p = util.sanitize_path("a/.?/b", [(re.compile(r"foo"), "bar")])
-        assert p == "a/.?/b"
-
-    def test_sanitize_with_custom_replace_adds_replacements(self):
-        with _common.platform_posix():
-            p = util.sanitize_path("foo/bar", [(re.compile(r"foo"), "bar")])
-        assert p == "bar/bar"
-
     @patch("beets.util.subprocess.Popen")
     def test_command_output(self, mock_popen):
         def popen_fail(*args, **kwargs):
@@ -153,7 +112,7 @@ class PathConversionTest(unittest.TestCase):
         assert outpath == "C:\\caf\xe9".encode()
 
 
-class TestEmptyComponentReplace:
+class TestSanitizePath:
     """An empty path component is filled in on every platform separator."""
 
     @pytest.mark.parametrize(
@@ -179,6 +138,47 @@ class TestEmptyComponentReplace:
         monkeypatch.setattr(os, "altsep", pathmod.altsep)
 
         assert util.sanitize_path(path) == expected
+
+    def test_sanitize_unix_replaces_leading_dot(self):
+        with _common.platform_posix():
+            p = util.sanitize_path("one/.two/three")
+        assert "." not in p
+
+    def test_sanitize_windows_replaces_trailing_dot(self):
+        with _common.platform_windows():
+            p = util.sanitize_path("one/two./three")
+        assert "." not in p
+
+    def test_sanitize_windows_replaces_illegal_chars(self):
+        with _common.platform_windows():
+            p = util.sanitize_path(':*?"<>|')
+        assert ":" not in p
+        assert "*" not in p
+        assert "?" not in p
+        assert '"' not in p
+        assert "<" not in p
+        assert ">" not in p
+        assert "|" not in p
+
+    def test_sanitize_windows_replaces_trailing_space(self):
+        with _common.platform_windows():
+            p = util.sanitize_path("one/two /three")
+        assert " " not in p
+
+    def test_sanitize_path_works_on_empty_string(self):
+        with _common.platform_posix():
+            p = util.sanitize_path("")
+        assert p == ""
+
+    def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
+        with _common.platform_posix():
+            p = util.sanitize_path("a/.?/b", [(re.compile(r"foo"), "bar")])
+        assert p == "a/.?/b"
+
+    def test_sanitize_with_custom_replace_adds_replacements(self):
+        with _common.platform_posix():
+            p = util.sanitize_path("foo/bar", [(re.compile(r"foo"), "bar")])
+        assert p == "bar/bar"
 
 
 class TestPathLegalization:
