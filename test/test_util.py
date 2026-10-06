@@ -1,7 +1,9 @@
 """Tests for base utils from the beets.util package."""
 
+import ntpath
 import os
 import platform
+import posixpath
 import re
 import subprocess
 import sys
@@ -19,7 +21,7 @@ from beets.test.helper import NEEDS_REFLINK, BeetsTestCase
 _p = pytest.param
 
 
-class UtilTest(unittest.TestCase):
+class UtilTest(BeetsTestCase):
     def test_open_anything(self):
         with _common.system_mock("Windows"):
             assert util.open_anything() == 'cmd /c start ""'
@@ -81,12 +83,6 @@ class UtilTest(unittest.TestCase):
         with _common.platform_posix():
             p = util.sanitize_path("foo/bar", [(re.compile(r"foo"), "bar")])
         assert p == "bar/bar"
-
-    @unittest.skip("unimplemented: #359")
-    def test_sanitize_empty_component(self):
-        with _common.platform_posix():
-            p = util.sanitize_path("foo//bar", [(re.compile(r"^$"), "_")])
-        assert p == "foo/_/bar"
 
     @patch("beets.util.subprocess.Popen")
     def test_command_output(self, mock_popen):
@@ -155,6 +151,34 @@ class PathConversionTest(unittest.TestCase):
         path = "\\\\?\\C:\\caf\xe9"
         outpath = self._windows_bytestring_path(path)
         assert outpath == "C:\\caf\xe9".encode()
+
+
+class TestEmptyComponentReplace:
+    """An empty path component is filled in on every platform separator."""
+
+    @pytest.mark.parametrize(
+        "pathmod, path, expected",
+        [
+            # 'X' instead of the default '_': the latter is also what
+            # CHAR_REPLACE substitutes for a separator, which would hide a
+            # component that we did not fill in ourselves.
+            _p(posixpath, "one//three", "one/X/three", id="posix-middle"),
+            _p(posixpath, "one/", "one/X", id="posix-trailing"),
+            _p(posixpath, "/three", "X/three", id="posix-leading"),
+            _p(posixpath, "", "X", id="posix-only-component"),
+            _p(ntpath, "one//three", r"one\X\three", id="windows-template-separator"),
+            _p(ntpath, r"one\\three", r"one\X\three", id="windows-native-separator"),
+            _p(ntpath, "one\\", r"one\X", id="windows-trailing"),
+            _p(ntpath, "/three", r"X\three", id="windows-leading"),
+        ],
+    )  # fmt: skip
+    def test_sanitize_path(self, config, monkeypatch, pathmod, path, expected):
+        config["empty_component_replace"] = "X"
+        monkeypatch.setattr(os, "path", pathmod)
+        monkeypatch.setattr(os, "sep", pathmod.sep)
+        monkeypatch.setattr(os, "altsep", pathmod.altsep)
+
+        assert util.sanitize_path(path) == expected
 
 
 class TestPathLegalization:

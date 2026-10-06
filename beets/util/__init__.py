@@ -20,7 +20,7 @@ from collections.abc import Sequence
 from contextlib import suppress
 from copy import deepcopy
 from enum import Enum
-from functools import cache, cached_property
+from functools import cache, cached_property, partial
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -37,6 +37,7 @@ from typing import (
     cast,
 )
 
+import confuse
 from confuse import Optional
 from typing_extensions import Self
 from unidecode import unidecode
@@ -678,6 +679,27 @@ CHAR_REPLACE = [
 ]
 
 
+def get_empty_component_replace() -> Callable[[str], str] | None:
+    """Return a callable filling in empty path components, if configured.
+
+    Every empty component is filled, including a leading one and a path that
+    is empty altogether. Both the native and the alternative separator are
+    recognised, since path templates are written with forward slashes
+    regardless of the platform.
+    """
+    replacement: str | Literal[False] | None = beets.config[
+        "empty_component_replace"
+    ].get(confuse.OneOf([confuse.Choice([False, None]), confuse.String()]))
+    if not replacement:
+        return None
+
+    seps = "".join(re.escape(s) for s in (os.sep, os.altsep) if s)
+
+    return partial(
+        re.compile(rf"(?:^|(?<=[{seps}]))(?=[{seps}]|$)").sub, replacement
+    )
+
+
 def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
@@ -687,8 +709,10 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     of the default set of replacements; it must be a list of (compiled
     regex, replacement string) pairs.
     """
-    replacements = replacements or CHAR_REPLACE
+    if replace_empty := get_empty_component_replace():
+        path = replace_empty(path)
 
+    replacements = replacements or CHAR_REPLACE
     comps = components(path)
     if not comps:
         return ""

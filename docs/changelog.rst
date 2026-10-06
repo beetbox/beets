@@ -27,6 +27,10 @@ New features
 - The ``-c``/``--config`` command-line option can now be given more than once.
   Each file is overlaid on top of the previous ones, so a configuration can be
   composed from several files in a single run.
+- New :ref:`empty_component_replace` option: a string that fills in for an empty
+  path component, so a path template field that resolves to nothing no longer
+  collapses the directory level it would have created. Unset by default, which
+  keeps the current behaviour. :bug:`359`
 
 Bug fixes
 ~~~~~~~~~
