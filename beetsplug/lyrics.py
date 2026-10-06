@@ -313,15 +313,16 @@ class LRCLyrics:
     ) -> LRCLyrics:
         """Build a scored candidate from LRCLib payload data."""
         duration = candidate["duration"] or 0.0
+        synced = candidate["syncedLyrics"]
+        if synced:
+            synced = synced.strip()
         return cls(
             target_duration,
             candidate["id"],
             duration,
             candidate["instrumental"],
             candidate["plainLyrics"],
-            cls.verify_synced_lyrics(
-                target_duration, candidate["syncedLyrics"]
-            ),
+            cls.verify_synced_lyrics(target_duration, synced),
         )
 
     @cached_property

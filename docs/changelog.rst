@@ -56,6 +56,9 @@ Bug fixes
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
+- :doc:`plugins/lyrics`: Handle trailing blank lines and whitespace when
+  verifying synced lyrics, preventing valid synced lyrics from LRCLIB from being
+  silently discarded. :bug:`7070`
 
 ..
     For plugin developers

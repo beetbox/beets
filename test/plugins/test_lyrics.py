@@ -721,6 +721,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 SYNCED,
                 id="prefer match with synced lyrics",
             ),
+            pytest.param(
+                [lyrics_match(syncedLyrics="[00:00.00] synced\r\n\r\n")],
+                SYNCED,
+                id="synced lyrics with trailing blank lines",
+            ),
         ],
     )
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
