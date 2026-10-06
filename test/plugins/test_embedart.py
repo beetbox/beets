@@ -334,6 +334,7 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         config["import"]["write"] = False
         self._import_with_normalize(album, maxwidth=300)
         assert self._embedded_width(item) == 500
+
     def test_normalize_does_nothing_without_maxwidth(self):
         album = self.add_album_fixture()
         item = album.items()[0]
