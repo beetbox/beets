@@ -53,6 +53,9 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
+- :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
+  ``lyrics_url`` for instrumental matches on items without lyrics, which were
+  previously discarded.
 
 ..
     For plugin developers
