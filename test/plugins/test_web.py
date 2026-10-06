@@ -1,6 +1,7 @@
 """Tests for the 'web' plugin"""
 
 import json
+import os
 import platform
 import shutil
 from collections import Counter
@@ -8,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+from beets import context
 from beets.library import Album, Item
 from beets.test import _common
 from beets.test.helper import PluginMixin, PytestTestHelper
@@ -674,6 +676,122 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         response = self.client.get(f"/item/{item_id}/file")
 
         assert response.status_code == 200
+
+    def test_get_item_file_relative_path(self):
+        rel_name = "relative_track.mp3"
+        dest_path = Path(os.fsdecode(self.lib.directory)) / rel_name
+        shutil.copy(_common.RSRC / "full.mp3", dest_path)
+        assert dest_path.exists()
+
+        item = Item(title="Relative Track", path=rel_name.encode())
+        item_id = self.lib.add(item)
+
+        # Clear context music dir to simulate worker thread without inherited context
+        context.set_music_dir(b"")
+
+        response = self.client.get(f"/item/{item_id}/file")
+        assert response.status_code == 200
+        assert len(response.data) == dest_path.stat().st_size
+
+    def test_get_album_art_relative_path(self):
+        rel_art = "cover.jpg"
+        art_path = Path(os.fsdecode(self.lib.directory)) / rel_art
+        art_path.write_bytes(b"image data")
+
+        album = Album(album="Relative Album", artpath=rel_art.encode())
+        album_id = self.lib.add(album)
+
+        context.set_music_dir(b"")
+
+        response = self.client.get(f"/album/{album_id}/art")
+        assert response.status_code == 200
+        assert response.data == b"image data"
+
+    def test_item_rep_size_with_relative_path(self):
+        rel_name = "sized_track.mp3"
+        dest_path = Path(os.fsdecode(self.lib.directory)) / rel_name
+        dest_path.write_bytes(b"1234567890")
+
+        item = Item(title="Sized Track", path=rel_name.encode())
+        item_id = self.lib.add(item)
+
+        context.set_music_dir(b"")
+
+        web.app.config["INCLUDE_PATHS"] = True
+        try:
+            response = self.client.get(f"/item/{item_id}")
+            assert response.status_code == 200
+            data = json.loads(response.data.decode("utf-8"))
+            assert data["size"] == 10
+            assert data["path"] == str(dest_path)
+        finally:
+            web.app.config["INCLUDE_PATHS"] = False
+
+    def test_resolve_relative_path(self):
+        # Empty path
+        assert web._resolve_relative_path(b"", None) == b""
+
+        # Absolute path
+        abs_path = os.path.abspath(b"/music/track.mp3")
+        assert web._resolve_relative_path(abs_path, None) == abs_path
+
+        # With obj._db.directory
+        item = Item(title="Track", path=b"track.mp3")
+        item._db = self.lib
+        expected = os.path.join(self.lib.directory, b"track.mp3")
+        assert web._resolve_relative_path(b"track.mp3", item) == expected
+
+        # With obj._db is None, fallback to context.get_music_dir()
+        item._db = None
+        context.set_music_dir(self.lib.directory)
+        assert web._resolve_relative_path(b"track.mp3", item) == expected
+
+        # With obj._db is None and context empty
+        context.set_music_dir(b"")
+        assert web._resolve_relative_path(b"track.mp3", item) == b"track.mp3"
+
+    def test_item_file_with_unexpanded_relative_path(self, monkeypatch):
+        rel_name = "raw_rel.mp3"
+        dest_path = Path(os.fsdecode(self.lib.directory)) / rel_name
+        shutil.copy(_common.RSRC / "full.mp3", dest_path)
+
+        item = Item(title="Raw Relative", path=rel_name.encode())
+        monkeypatch.setattr(self.lib, "get_item", lambda _id: item)
+
+        response = self.client.get(f"/item/{1}/file")
+        assert response.status_code == 200
+        assert len(response.data) == dest_path.stat().st_size
+
+    def test_album_art_with_unexpanded_relative_path(self, monkeypatch):
+        rel_art = "raw_art.jpg"
+        art_path = Path(os.fsdecode(self.lib.directory)) / rel_art
+        art_path.write_bytes(b"album art data")
+
+        album = Album(album="Raw Album", artpath=rel_art.encode())
+        monkeypatch.setattr(self.lib, "get_album", lambda _id: album)
+
+        response = self.client.get(f"/album/{1}/art")
+        assert response.status_code == 200
+        assert response.data == b"album art data"
+
+    def test_album_rep_with_relative_artpath(self):
+        album = Album(album="Cover Album", artpath=b"cover.jpg")
+        album._db = self.lib
+        web.app.config["INCLUDE_PATHS"] = True
+        try:
+            data = web._rep(album)
+            assert data is not None
+            expected = os.fsdecode(
+                os.path.join(self.lib.directory, b"cover.jpg")
+            )
+            assert data["artpath"] == expected
+
+            album.artpath = None
+            data_no_art = web._rep(album)
+            assert data_no_art is not None
+            assert data_no_art["artpath"] is None
+        finally:
+            web.app.config["INCLUDE_PATHS"] = False
 
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):

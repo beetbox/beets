@@ -56,6 +56,9 @@ Bug fixes
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
+- :doc:`plugins/web`: Fix serving files and album art when library items have
+  relative paths, which caused 404 or 500 errors in multi-threaded requests due
+  to unpropagated music directory context. :bug:`7063`
 
 ..
     For plugin developers
