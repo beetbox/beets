@@ -459,9 +459,11 @@ Show or edit the user configuration. This command does one of three things:
 - By default, sensitive information like passwords is removed when dumping the
   configuration. The ``--clear`` option includes this sensitive data.
 - With the ``--edit`` option, beets attempts to open your config file for
-  editing. It first tries the ``$EDITOR`` environment variable, followed by
-  ``$EDITOR`` and then a fallback option depending on your platform: ``open`` on
-  OS X, ``xdg-open`` on Unix, and direct invocation on Windows.
+  editing—or, if you gave ``-c``, the first file you passed to it. It first
+  tries the ``editor`` configuration option, followed by the ``$VISUAL`` and
+  ``$EDITOR`` environment variables, and then a fallback option depending on
+  your platform: ``open`` on OS X, ``xdg-open`` on Unix, and direct invocation
+  on Windows.
 
 .. _global-flags:
 
@@ -481,7 +483,8 @@ import ...``.
   configuration works as an overlay: rather than replacing your normal
   configuration options entirely, the two are merged. Any individual options set
   in this config file will override the corresponding settings in your base
-  configuration.
+  configuration. Repeat the flag to stack several overlays, each one taking
+  precedence over the ones before it.
 - ``-p plugins``: specify a comma-separated list of plugins to enable. If
   specified, the plugin list in your configuration is ignored. The long form of
   this argument also allows specifying no plugins, effectively disabling all

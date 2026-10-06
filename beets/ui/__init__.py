@@ -908,7 +908,12 @@ def _raw_main(args: list[str] | None) -> None:
         help="log more details (use twice for even more)",
     )
     parser.add_option(
-        "-c", "--config", dest="config", help="path to configuration file"
+        "-c",
+        "--config",
+        dest="configs",
+        action="append",
+        default=[],
+        help="path to configuration file",
     )
 
     def parse_csl_callback(
@@ -999,7 +1004,7 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
         # It also ensures confuse's source list is populated before set_file() adds the
         #  --config overlay.
         config.read()
-        if overlay_path := getattr(options, "config", None):
+        for overlay_path in options.configs:
             config.set_file(overlay_path)
     except confuse.ConfigError as e:
         deferred_error = e
