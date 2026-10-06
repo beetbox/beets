@@ -67,6 +67,10 @@ Bug fixes
   Picard" (``o``) prompt choices are offered again when the importer has no
   recommendation for a match (for example when no candidates were found).
   :bug:`7031`
+- :doc:`plugins/hook`: Keep backslashes intact when splitting hook commands on
+  Windows, where they separate path components rather than escape the next
+  character, so that commands taking an absolute path now receive it in one
+  piece.
 
 ..
     For plugin developers
