@@ -55,10 +55,9 @@ Bug fixes
   Request.
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
-  previously discarded.
-  - ``beet update``: A filesystem error while moving an item or album is now
-  reported and the update continues with the rest of the library, instead of
-  aborting and leaving it partially updated. :bug:`2419`
+  previously discarded. - ``beet update``: A filesystem error while moving an
+  item or album is now reported and the update continues with the rest of the
+  library, instead of aborting and leaving it partially updated. :bug:`2419`
 
 ..
     For plugin developers
