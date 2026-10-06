@@ -99,11 +99,9 @@ class TestHookCommand(HookTestCase):
                     plugins.send(event)  # type: ignore[arg-type]
                 assert Path(os.fsdecode(path)).is_file()
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_no_arguments(self):
         self._test_command(lambda _, p: p)
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_event_substitution(self):
         self._test_command(lambda e, p: p.replace(e, "{event}"))
 

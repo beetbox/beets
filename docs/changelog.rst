@@ -71,6 +71,10 @@ Bug fixes
   :bug:`7031`
 - :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
   subdirectory holds a file named like one in the album folder.
+- :doc:`plugins/hook`: Keep backslashes intact when splitting hook commands on
+  Windows, where they separate path components rather than escape the next
+  character, so that commands taking an absolute path now receive it in one
+  piece.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
