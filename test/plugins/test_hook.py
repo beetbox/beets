@@ -40,8 +40,6 @@ class TestHookLogs(HookTestCase):
 
         assert 'invalid command ""' in caplog.messages
 
-    # FIXME: fails on windows
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_non_zero_exit(self, caplog: pytest.LogCaptureFixture):
         with caplog.at_level("DEBUG"):
             self._configure_hook('sh -c "exit 1"')
@@ -105,11 +103,9 @@ class TestHookCommand(HookTestCase):
     def test_hook_event_substitution(self):
         self._test_command(lambda e, p: p.replace(e, "{event}"))
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_argument_substitution(self):
         self._test_command(lambda *_: "{path}", send_path_kwarg=True)
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_bytes_interpolation(self):
         self.paths = [p.encode() for p in self.paths]
         self._test_command(lambda *_: "{path}", send_path_kwarg=True)
