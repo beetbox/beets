@@ -331,10 +331,18 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         album = self.add_album_fixture()
         item = album.items()[0]
         self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
-
         config["import"]["write"] = False
         self._import_with_normalize(album, maxwidth=300)
+        assert self._embedded_width(item) == 500
+    def test_normalize_does_nothing_without_maxwidth(self):
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
 
+        with patch("beetsplug._utils.art.extract") as extract:
+            self._import_with_normalize(album)  # No maxwidth: nothing to do.
+
+        extract.assert_not_called()
         assert self._embedded_width(item) == 500
 
     def test_normalize_without_embedded_art(self):
