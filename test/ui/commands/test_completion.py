@@ -6,9 +6,13 @@ from pathlib import Path
 
 import pytest
 
+from beets import ui
 from beets.test import _common
 from beets.test.helper import RUNNING_IN_CI, IOMixin
-from beets.ui.commands.completion import BASH_COMPLETION_PATHS
+from beets.ui.commands.completion import (
+    BASH_COMPLETION_PATHS,
+    completion_script,
+)
 
 from ..test_ui import TestPluginTestCase
 
@@ -62,3 +66,35 @@ class CompletionTest(IOMixin, TestPluginTestCase):
             "test/test_completion.sh did not execute properly. "
             f"Output:{out.decode('utf-8')}"
         )
+
+
+def test_hyphenated_command_names_produce_valid_bash():
+    """Regression: command names with hyphens must not emit invalid bash.
+
+    See https://github.com/beetbox/beets/issues/2836. Variable names derived
+    from the command are sanitized, and the completion script looks them up
+    with the same substitution.
+    """
+
+    cmd = ui.Subcommand("foo-bar", aliases=("fb",))
+    cmd.parser.add_option("-n", "--name", action="store")
+    cmd.parser.add_option("-q", "--quiet", action="store_true")
+
+    script = "".join(completion_script([cmd]))
+
+    assert "local opts__foo_bar=" in script
+    assert "local flags__foo_bar=" in script
+    assert "opts__foo-bar" not in script
+    assert "flags__foo-bar" not in script
+    assert "alias__fb=foo-bar" in script
+    assert "${cmd//-/_}" in script
+    assert "${cur//-/_}" in script
+
+    syntax = subprocess.run(
+        ["bash", "-n"],
+        input=script,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert syntax.returncode == 0, syntax.stderr
