@@ -9,6 +9,7 @@ below!
 Unreleased
 ----------
 
+=======
 New features
 ~~~~~~~~~~~~
 
@@ -24,6 +25,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :ref:`import-cmd` Resumed imports no longer prompt again for albums that were
+  imported using the "as Tracks" option. Their directories were never recorded
+  as finished in the resume state.
 - :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
   gracefully by decoding with error handling and skipping tracks that produce
   unparseable data, instead of crashing. :bug:`3527`
