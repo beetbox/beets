@@ -26,6 +26,9 @@ New features
   :bug:`6741`
 - Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
   already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
+- The ``-c``/``--config`` command-line option can now be given more than once.
+  Each file is overlaid on top of the previous ones, so a configuration can be
+  composed from several files in a single run.
 
 Bug fixes
 ~~~~~~~~~

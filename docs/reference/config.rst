@@ -203,6 +203,26 @@ from it for technical reasons.
 
 Default: ``_``.
 
+.. _empty_component_replace:
+
+empty_component_replace
+~~~~~~~~~~~~~~~~~~~~~~~
+
+A string that stands in for a path component that would otherwise be empty,
+which happens when a field used in a path template has no value. By default such
+a component is dropped and the file is stored one directory higher than the
+template describes: with the path format ``$album/$artist/$title`` and an empty
+``artist``, a track ends up at ``one/three``.
+
+Setting this to ``_`` stores it at ``one/_/three`` instead. A trailing empty
+component is filled in the same way, so an empty ``title`` under
+``$album/$title`` gives ``one/_``.
+
+This option is related to :ref:`replace`, but applies to whole path components
+rather than to characters within them.
+
+Default: none, i.e. empty components are dropped.
+
 .. _asciify-paths:
 
 asciify_paths
@@ -1292,6 +1312,11 @@ YAML file containing options that will then be merged with your existing options
 your configuration mostly the same but modify a few options as a batch. For
 example, you might have different strategies for importing files, each with a
 different set of importer options.
+
+You can pass ``--config`` several times to merge a stack of such files, where
+each one overrides the options set by the ones before it. This lets you keep
+small, single-purpose overlays and combine the ones you need for a given run.
+Note that ``beet config --edit`` opens the first of them.
 
 Default Location
 ~~~~~~~~~~~~~~~~
