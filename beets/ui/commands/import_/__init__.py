@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from typing import TYPE_CHECKING, Protocol
 
@@ -31,12 +32,19 @@ class ImportCLIOpts(Protocol):
 def paths_from_logfile(path: str) -> Iterator[str]:
     """Parse the logfile and yield skipped paths to pass to the `import`
     command.
+
+    Verbs ending in ``-json`` carry a JSON path list; legacy records use
+    semicolon-space separators.
     """
     with open(path, encoding="utf-8") as fp:
         for i, line in enumerate(fp, start=1):
             verb, sep, paths = line.rstrip("\n").partition(" ")
             if not sep:
                 raise ValueError(f"line {i} is invalid")
+
+            structured = verb.endswith("-json")
+            if structured:
+                verb = verb.removesuffix("-json")
 
             # Ignore informational lines that don't need to be re-imported.
             if verb in {"import", "duplicate-keep", "duplicate-replace"}:
@@ -45,7 +53,23 @@ def paths_from_logfile(path: str) -> Iterator[str]:
             if verb not in {"asis", "skip", "duplicate-skip"}:
                 raise ValueError(f"line {i} contains unknown verb {verb}")
 
-            yield os.path.commonpath(paths.split("; "))
+            if structured:
+                try:
+                    parsed_paths = json.loads(paths)
+                except ValueError as err:
+                    raise ValueError(f"line {i} is invalid") from err
+                if (
+                    not isinstance(parsed_paths, list)
+                    or not parsed_paths
+                    or any(
+                        not isinstance(path, str) or not path
+                        for path in parsed_paths
+                    )
+                ):
+                    raise ValueError(f"line {i} is invalid")
+            else:
+                parsed_paths = paths.split("; ")
+            yield os.path.commonpath(parsed_paths)
 
 
 def parse_logfiles(logfiles: list[str]) -> Iterator[str]:

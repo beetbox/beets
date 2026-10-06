@@ -84,7 +84,12 @@ Optional command flags:
   specify a filename to log every time you skip an album or import it "as-is" or
   an album gets skipped as a duplicate. You can later review the file manually
   or import skipped paths from the logfile automatically by using the
-  ``--from-logfile LOGFILE`` argument.
+  ``--from-logfile LOGFILE`` argument. New logfiles escape paths containing
+  semicolon-space or line breaks as a JSON list after a ``<verb>-json`` marker
+  (for example, ``skip-json``). Older beets versions cannot read these escaped
+  records. Unambiguous legacy records remain supported; ambiguous entries in
+  existing logfiles need manual correction because their original paths cannot
+  be reconstructed reliably.
 - Relatedly, the ``-q`` (quiet) option can help with large imports by
   autotagging without ever bothering to ask for user input. Whenever the normal
   autotagger mode would ask for confirmation, the quiet mode performs a fallback

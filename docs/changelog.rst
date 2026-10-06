@@ -53,6 +53,9 @@ Bug fixes
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
   Request.
+- Preserve paths containing semicolons or line breaks when retrying imports from
+  newly written logfiles, using JSON records when escaping is needed. Legacy
+  logfile records remain supported. :bug:`4941`
 
 ..
     For plugin developers

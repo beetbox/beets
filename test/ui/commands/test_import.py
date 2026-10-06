@@ -1,10 +1,16 @@
+import json
+import ntpath
 import os
+import posixpath
 import unittest
+from io import StringIO
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import config, library
+from beets import config, library, logging
 from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
 from beets.exceptions import UserError
 from beets.test import _common
@@ -12,6 +18,116 @@ from beets.test.helper import BeetsTestCase, IOMixin
 from beets.ui.commands.import_ import paths_from_logfile
 from beets.ui.commands.import_.display import show_change
 from beets.ui.commands.import_.session import summarize_items
+
+
+@pytest.mark.parametrize("status", ["asis", "skip", "duplicate-skip"])
+@pytest.mark.parametrize("path_module", [posixpath, ntpath])
+@pytest.mark.parametrize("multidisc", [False, True])
+@pytest.mark.parametrize(
+    "album", ["Artist; The Band", 'Album; "Deluxe" café', "Album\nDeluxe"]
+)
+def test_log_paths_roundtrip(
+    tmp_path, module_helper, monkeypatch, status, path_module, multidisc, album
+):
+    root = path_module.join("F:/Music", album)
+    paths = (
+        [path_module.join(root, "CD 01"), path_module.join(root, "CD 02")]
+        if multidisc
+        else [root]
+    )
+    stream = StringIO()
+    session = _common.import_session(
+        module_helper.lib, loghandler=logging.StreamHandler(stream)
+    )
+    session.tag_log(status, [os.fsencode(path) for path in paths])
+    logfile = tmp_path / "import.log"
+    logfile.write_text(stream.getvalue(), encoding="utf-8")
+    monkeypatch.setattr(
+        "beets.ui.commands.import_.os", SimpleNamespace(path=path_module)
+    )
+
+    assert list(paths_from_logfile(logfile)) == [path_module.commonpath(paths)]
+
+
+@pytest.mark.parametrize(
+    "paths", [[b"/music/Album"], [b"/music/A;B", b"/music/A;B/CD"]]
+)
+def test_log_paths_preserve_legacy_output(module_helper, paths):
+    stream = StringIO()
+    session = _common.import_session(
+        module_helper.lib, loghandler=logging.StreamHandler(stream)
+    )
+    session.tag_log("skip", paths)
+
+    assert stream.getvalue() == f"skip {'; '.join(map(os.fsdecode, paths))}\n"
+
+
+@pytest.mark.parametrize("path", ["café", b"path", Path("path")])
+def test_log_paths_single_path_argument(module_helper, path):
+    stream = StringIO()
+    session = _common.import_session(
+        module_helper.lib, loghandler=logging.StreamHandler(stream)
+    )
+    session.tag_log("skip", path)
+
+    assert stream.getvalue() == f"skip {os.fsdecode(path)}\n"
+
+
+def test_log_paths_mixed_formats(tmp_path):
+    logfile = tmp_path / "import.log"
+    logfile.write_text(
+        'skip ["literal path"]\n'
+        'skip-json ["/music/Artist; Band"]\n'
+        "asis /music/Album; /music/Album/CD 01\n",
+        encoding="utf-8",
+    )
+
+    assert list(paths_from_logfile(logfile)) == [
+        '["literal path"]',
+        os.path.normpath("/music/Artist; Band"),
+        os.path.normpath("/music/Album"),
+    ]
+
+
+def test_log_paths_do_not_guess_ambiguous_legacy_paths(tmp_path):
+    logfile = tmp_path / "import.log"
+    logfile.write_text("skip /music/Artist; Band/Album\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="absolute and relative"):
+        list(paths_from_logfile(logfile))
+
+
+@pytest.mark.parametrize(
+    "status", ["import", "duplicate-keep", "duplicate-replace"]
+)
+def test_log_paths_ignore_structured_information(tmp_path, status):
+    logfile = tmp_path / "import.log"
+    logfile.write_text(
+        f'{status}-json ["/music/Artist; Band"]\n', encoding="utf-8"
+    )
+
+    assert list(paths_from_logfile(logfile)) == []
+
+
+@pytest.mark.parametrize(
+    "payload", ["[", '"path"', "{}", "[]", "[1]", '[""]', "[null]"]
+)
+def test_log_paths_reject_invalid_structured_records(tmp_path, payload):
+    logfile = tmp_path / "import.log"
+    logfile.write_text(
+        f"import started now\nskip-json {payload}\n", encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError, match="line 2 is invalid"):
+        list(paths_from_logfile(logfile))
+
+
+def test_log_paths_structured_escaping(tmp_path):
+    path = '/music/Artist; Band/Album "Deluxe"\\ café'
+    logfile = tmp_path / "import.log"
+    logfile.write_text(f"skip-json {json.dumps([path])}\n", encoding="utf-8")
+
+    assert list(paths_from_logfile(logfile)) == [os.path.commonpath([path])]
 
 
 class ImportTest(BeetsTestCase):
