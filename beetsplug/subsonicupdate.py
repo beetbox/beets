@@ -25,9 +25,12 @@ from typing import TYPE_CHECKING
 
 import requests
 
+from beets import ui
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
+    import optparse
+
     from beets.library import LibModel, Library
 
 
@@ -44,12 +47,15 @@ class SubsonicUpdate(BeetsPlugin):
                 "pass": "admin",
                 "url": "http://localhost:4040",
                 "auth": "token",
+                "auto": True,
             }
         )
         self.config["user"].redact = True
         self.config["pass"].redact = True
-        self.register_listener("database_change", self.db_change)
-        self.register_listener("smartplaylist_update", self.spl_update)
+
+        if self.config["auto"].get(bool):
+            self.register_listener("database_change", self.db_change)
+            self.register_listener("smartplaylist_update", self.spl_update)
 
     def db_change(self, lib: Library, model: LibModel) -> None:
         self.register_listener("cli_exit", self.start_scan)
@@ -157,3 +163,15 @@ class SubsonicUpdate(BeetsPlugin):
                 self._log.error("Error: {}", json)
         except Exception as error:
             self._log.error("Error: {}", error)
+
+    def commands(self) -> list[ui.Subcommand]:
+        subsonicupdate_cmd = ui.Subcommand(
+            "subsonicupdate", help="Update the Subsonic library"
+        )
+
+        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+            self.start_scan(lib)
+
+        subsonicupdate_cmd.func = func
+
+        return [subsonicupdate_cmd]

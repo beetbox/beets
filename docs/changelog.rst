@@ -20,6 +20,10 @@ New features
 - :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
   before whitelist filtering, while preserving existing genres regardless of the
   configured count. :bug:`6890`
+- :doc:`plugins/subsonicupdate`: Add a ``subsonicupdate`` command that requests
+  a library update from the Subsonic server on demand, and an ``auto`` option
+  that disables the updates triggered by library and smart playlist changes.
+  :bug:`6741`
 
 Bug fixes
 ~~~~~~~~~
