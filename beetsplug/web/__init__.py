@@ -13,7 +13,7 @@ from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
-from beets import ui, util
+from beets import context, ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
@@ -42,6 +42,18 @@ class WebCLIOpts(Protocol):
 # Utilities.
 
 
+def _resolve_relative_path(path: bytes, obj: LibModel) -> bytes:
+    """Resolve a relative item or album path against its library directory."""
+    if not path or os.path.isabs(path):
+        return path
+    db = getattr(obj, "_db", None)
+    if db and getattr(db, "directory", None):
+        return os.path.join(db.directory, path)
+    if music_dir := context.get_music_dir():
+        return os.path.join(music_dir, path)
+    return path
+
+
 def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
     """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
     Album object. For Albums, `expand` dictates whether tracks are
@@ -51,7 +63,8 @@ def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
 
     if isinstance(obj, beets.library.Item):
         if app.config.get("INCLUDE_PATHS", False):
-            out["path"] = util.displayable_path(out["path"])
+            path = _resolve_relative_path(obj.path, obj)
+            out["path"] = util.displayable_path(path)
         else:
             del out["path"]
 
@@ -63,7 +76,8 @@ def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
         # Get the size (in bytes) of the backing file. This is useful
         # for the Tomahawk resolver API.
         try:
-            out["size"] = os.path.getsize(util.syspath(obj.path))
+            path = _resolve_relative_path(obj.path, obj)
+            out["size"] = os.path.getsize(util.syspath(path))
         except OSError:
             out["size"] = 0
 
@@ -71,7 +85,12 @@ def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
 
     if isinstance(obj, beets.library.Album):
         if app.config.get("INCLUDE_PATHS", False):
-            out["artpath"] = util.displayable_path(out["artpath"])
+            artpath = obj.artpath
+            out["artpath"] = (
+                util.displayable_path(_resolve_relative_path(artpath, obj))
+                if artpath
+                else None
+            )
         else:
             del out["artpath"]
         if expand:
@@ -299,6 +318,7 @@ app.url_map.converters["everything"] = EverythingConverter
 @app.before_request
 def before_request() -> None:
     g.lib = app.config["lib"]
+    context.set_music_dir(g.lib.directory)
 
 
 # Items.
@@ -323,7 +343,10 @@ def item_file(item_id: int) -> Any:
     if not item:
         return flask.abort(404, f"Item with id {item_id} not found")
 
-    item_path = util.syspath(item.path)
+    raw_path = item.path
+    if not os.path.isabs(raw_path):
+        raw_path = os.path.join(g.lib.directory, raw_path)
+    item_path = util.syspath(raw_path)
     base_filename = os.path.basename(item_path)
 
     try:
@@ -392,7 +415,10 @@ def album_query(queries: Sequence[str]) -> Any:
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
     if album and album.artpath:
-        return flask.send_file(album.artpath.decode())
+        artpath = album.artpath
+        if not os.path.isabs(artpath):
+            artpath = os.path.join(g.lib.directory, artpath)
+        return flask.send_file(util.syspath(artpath))
     return flask.abort(404)
 
 
