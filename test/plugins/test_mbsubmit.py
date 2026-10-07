@@ -57,3 +57,12 @@ class MBSubmitPluginTest(
         )
         shorts = [c.short for choices in results for c in choices]
         assert shorts == ["p", "o"]
+
+    def test_no_choices_offered_above_threshold(self):
+        """Prompt choices should not appear when recommendation is above threshold."""
+        task = SimpleNamespace(rec=Recommendation.strong)
+        results = plugins.send(
+            "before_choose_candidate", session=None, task=task
+        )
+        shorts = [c.short for choices in results for c in choices]
+        assert shorts == []
