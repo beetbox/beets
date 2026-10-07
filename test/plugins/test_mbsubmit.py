@@ -2,7 +2,6 @@ from types import SimpleNamespace
 
 from beets import plugins
 from beets.autotag import Recommendation
-
 from beets.test.helper import (
     AutotagImportTestCase,
     PluginMixin,
