@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import time
 from typing import TYPE_CHECKING
@@ -143,7 +144,19 @@ class ImportSession:
         """Log a message about a given album to the importer log. The status
         should reflect the reason the album couldn't be tagged.
         """
-        self.logger.info("{} {}", status, displayable_path(paths))
+        decoded_paths = (
+            [os.fsdecode(paths)]
+            if isinstance(paths, (str, bytes, os.PathLike))
+            else [os.fsdecode(path) for path in paths]
+        )
+        if any(
+            "; " in path or "\n" in path or "\r" in path
+            for path in decoded_paths
+        ):
+            # A distinct verb keeps JSON payloads unambiguous in mixed old/new logs.
+            self.logger.info("{}-json {}", status, json.dumps(decoded_paths))
+        else:
+            self.logger.info("{} {}", status, displayable_path(paths))
 
     def log_choice(self, task: ImportTask, duplicate: bool = False) -> None:
         """Logs the task's current choice if it should be logged. If

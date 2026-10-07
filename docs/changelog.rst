@@ -59,6 +59,9 @@ Bug fixes
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
+- Preserve paths containing semicolons or line breaks when retrying imports from
+  newly written logfiles, using JSON records when escaping is needed. Legacy
+  logfile records remain supported. :bug:`4941`
 
 ..
     For plugin developers
