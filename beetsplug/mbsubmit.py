@@ -77,8 +77,13 @@ class MBSubmitPlugin(BeetsPlugin):
     def fmt(self) -> str:
         return self.config["format"].as_str()
 
+    @staticmethod
+    def _item_sort_key(item: Item) -> tuple[int, int]:
+        """Sort key for MusicBrainz tracklists: disc, then track."""
+        return (item.disc or 0, item.track or 0)
+
     def print_tracks(self, session: ImportSession, task: ImportTask) -> None:
-        for i in sorted(task.items, key=lambda i: i.track):
+        for i in sorted(task.items, key=self._item_sort_key):
             ui.print_(format(i, self.fmt))
 
     def commands(self) -> list[ui.Subcommand]:
@@ -97,5 +102,5 @@ class MBSubmitPlugin(BeetsPlugin):
 
     def _mbsubmit(self, items: Sequence[Item]) -> None:
         """Print track information to be submitted to MusicBrainz."""
-        for i in sorted(items, key=lambda i: i.track):
+        for i in sorted(items, key=self._item_sort_key):
             ui.print_(format(i, self.fmt))
