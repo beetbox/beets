@@ -10,6 +10,7 @@ import pytest
 from beets.library import Album
 from beets.test import _common
 from beets.test.helper import IOMixin, PluginTestCase, PluginTestHelper
+from beets.ui import UserError
 from beetsplug import lastgenre
 from beetsplug.lastgenre.utils import is_ignored, normalize_genre
 
@@ -70,7 +71,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(whitelist={"blues", "rock", "jazz"}, count=2)
         assert self.plugin._resolve_genres(["pop", "blues"]) == ["blues"]
 
-        self._setup_config(canonical="", whitelist={"rock"})
+        self._setup_config(canonical=True, whitelist={"rock"})
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
     def test_format_genres(self):
@@ -99,19 +100,23 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(canonical=True, whitelist={"rock"})
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
-    def test_empty_string_enables_canonical(self):
-        """For backwards compatibility, setting the `canonical` option
-        to the empty string enables it using the default tree.
+    def test_empty_canonical_raises_user_error(self):
+        """An empty or null `canonical` setting is rejected instead of
+        silently falling back to the default tree.
         """
-        self._setup_config(canonical="", count=99)
-        assert self.plugin._resolve_genres(["delta blues"]) == ["blues"]
+        for value in ("", None):
+            self.config["lastgenre"]["canonical"] = value
+            with pytest.raises(UserError, match="Invalid canonical setting"):
+                self.plugin.setup()
 
-    def test_empty_string_enables_whitelist(self):
-        """Again for backwards compatibility, setting the `whitelist`
-        option to the empty string enables the default set of genres.
+    def test_empty_whitelist_raises_user_error(self):
+        """An empty or null `whitelist` setting is rejected instead of
+        silently falling back to the default whitelist.
         """
-        self._setup_config(whitelist="")
-        assert self.plugin._resolve_genres(["iota blues"]) == []
+        for value in ("", None):
+            self.config["lastgenre"]["whitelist"] = value
+            with pytest.raises(UserError, match="Invalid whitelist setting"):
+                self.plugin.setup()
 
     def test_prefer_specific_loads_tree(self):
         """When prefer_specific is enabled but canonical is not the
