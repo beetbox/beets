@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 import shutil
 import tempfile
@@ -10,8 +11,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from mediafile import MediaFile
+from PIL import Image
 
-from beets import config, logging
+from beets import config, logging, plugins
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.fixtures import DummyIMBackend
@@ -279,6 +281,78 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         self.run_command("embedart", "-y", "-u", "http://example.com/test.html")
         mediafile = MediaFile(item.filepath)
         assert not mediafile.images
+
+    def _embedded_width(self, item) -> int:
+        """Return the width of the first image embedded in the item's file."""
+        data = MediaFile(item.filepath).images[0].data
+        return Image.open(io.BytesIO(data)).size[0]
+
+    def _import_with_normalize(self, album, **options) -> None:
+        """Re-load the plugin with ``normalize`` enabled and fire the
+        event that triggers normalization after an album import.
+        """
+        # Force re-init the plugin to register the listener
+        self.unload_plugins()
+        with self.configure_plugin({"normalize": True, **options}):
+            plugins.send("album_imported", lib=self.lib, album=album)
+
+    def test_normalize_downscales_oversized_art(self):
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
+        assert self._embedded_width(item) == 500
+
+        self._import_with_normalize(album, maxwidth=300)
+
+        assert self._embedded_width(item) <= 300
+
+    def test_normalize_keeps_small_art_untouched(self):
+        self._setup_data(self.abbey_artpath)
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command("embedart", "-y", "-f", self.abbey_artpath)
+
+        self._import_with_normalize(album, maxwidth=300)
+
+        assert MediaFile(item.filepath).images[0].data == self.image_data
+
+    def test_normalize_disabled_by_default(self):
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
+
+        self.unload_plugins()
+        with self.configure_plugin({"maxwidth": 300}):
+            plugins.send("album_imported", lib=self.lib, album=album)
+
+        assert self._embedded_width(item) == 500
+
+    def test_normalize_respects_write_disabled(self):
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
+        config["import"]["write"] = False
+        self._import_with_normalize(album, maxwidth=300)
+        assert self._embedded_width(item) == 500
+
+    def test_normalize_does_nothing_without_maxwidth(self):
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
+
+        with patch("beetsplug._utils.art.extract") as extract:
+            self._import_with_normalize(album)  # No maxwidth: nothing to do.
+
+        extract.assert_not_called()
+        assert self._embedded_width(item) == 500
+
+    def test_normalize_without_embedded_art(self):
+        album = self.add_album_fixture()
+        item = album.items()[0]
+
+        self._import_with_normalize(album, maxwidth=300)
+
+        assert not MediaFile(item.filepath).images
 
     @NEEDS_FFPROBE
     def test_clearart_on_import_disabled(self):

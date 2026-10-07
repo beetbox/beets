@@ -20,6 +20,9 @@ New features
 - :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
   before whitelist filtering, while preserving existing genres regardless of the
   configured count. :bug:`6890`
+- :doc:`plugins/embedart`: Add a ``normalize`` option that downscales existing
+  embedded art wider than ``maxwidth`` after an album is imported, even when no
+  replacement art is fetched. :bug:`7068`
 
 Bug fixes
 ~~~~~~~~~
