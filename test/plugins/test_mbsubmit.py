@@ -1,3 +1,8 @@
+from types import SimpleNamespace
+
+from beets import plugins
+from beets.autotag import Recommendation
+
 from beets.test.helper import (
     AutotagImportTestCase,
     PluginMixin,
@@ -44,3 +49,12 @@ class MBSubmitPluginTest(
             "Open files with Picard? 02. Tag Track 2 - Tag Artist (0:01)"
         )
         assert tracklist in self.io.getoutput()
+
+    def test_choices_offered_with_no_recommendation(self):
+        """Prompt choices must appear even when the recommendation is none."""
+        task = SimpleNamespace(rec=Recommendation.none)
+        results = plugins.send(
+            "before_choose_candidate", session=None, task=task
+        )
+        shorts = [c.short for choices in results for c in choices]
+        assert shorts == ["p", "o"]
