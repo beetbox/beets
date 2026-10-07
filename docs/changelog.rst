@@ -139,6 +139,9 @@ Bug fixes
   ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
   album's ``media`` is now their common format (``Hybrid SACD``) instead of the
   generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track
+  number, so multi-disc albums with shared track numbers stay grouped by disc.
+  :bug:`4061`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
