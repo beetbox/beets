@@ -21,20 +21,23 @@ import hashlib
 import random
 import string
 from binascii import hexlify
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import requests
 
 from beets import ui
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
-    import optparse
-
     from beets.library import LibModel, Library
 
 
 __author__ = "https://github.com/maffo999"
+
+
+class SubsonicUpdateCLIOpts(Protocol):
+    """Options for the `subsonicupdate` command, of which there are none."""
 
 
 class SubsonicUpdate(BeetsPlugin):
@@ -169,7 +172,13 @@ class SubsonicUpdate(BeetsPlugin):
             "subsonicupdate", help="Update the Subsonic library"
         )
 
-        def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
+        def func(
+            lib: Library, opts: SubsonicUpdateCLIOpts, args: list[str]
+        ) -> None:
+            if args:
+                raise UserError(
+                    "the 'subsonicupdate' command does not take arguments"
+                )
             self.start_scan(lib)
 
         subsonicupdate_cmd.func = func

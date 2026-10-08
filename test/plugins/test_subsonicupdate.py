@@ -9,6 +9,7 @@ import pytest
 import requests
 
 from beets import plugins
+from beets.exceptions import UserError
 from beets.test._common import item
 from beets.test.helper import PluginTestHelper
 from beetsplug.subsonicupdate import SubsonicUpdate
@@ -226,6 +227,15 @@ class TestSubsonicUpdate(PluginTestHelper):
         self.run_command("subsonicupdate")
 
         assert requests_mock.call_count == 1
+
+    def test_cli_command_rejects_arguments(self, requests_mock: Mocker):
+        """The command rejects stray arguments without starting a scan."""
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        with pytest.raises(UserError, match="does not take arguments"):
+            self.run_command("subsonicupdate", "startScan")
+
+        assert requests_mock.call_count == 0
 
     def test_cli_command_starts_scan_when_auto_disabled(
         self, config, requests_mock: Mocker
