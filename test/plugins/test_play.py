@@ -1,8 +1,6 @@
 """Tests for the play plugin"""
 
 import os
-import sys
-import unittest
 from unittest.mock import ANY, patch
 
 import pytest
@@ -74,17 +72,35 @@ class PlayPluginTest(IOMixin, PlayPluginMixin, BeetsTestCase):
 
         self.run_and_assert(open_mock, ["title:aNiceTitle"], "echo other")
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
     def test_relative_to(self, open_mock):
+        # Anchor to the item's own root: on Windows a path on another drive
+        # has no relative form at all.
+        relative_to = f"{self.item.filepath.anchor}something"
+        self.config["play"]["relative_to"] = relative_to
         self.config["play"]["command"] = "echo"
-        self.config["play"]["relative_to"] = "/something"
 
-        path = os.path.relpath(self.item.path, b"/something")
+        path = os.path.relpath(self.item.path, os.fsencode(relative_to))
         playlist = path.decode("utf-8")
         self.run_and_assert(
             open_mock, expected_cmd="echo", expected_playlist=playlist
         )
+
+    def test_relative_to_path_without_relative_form(self, open_mock):
+        """Paths that cannot be made relative are left absolute."""
+        relative_to = f"{self.item.filepath.anchor}something"
+        self.config["play"]["relative_to"] = relative_to
+
+        def no_relative_form(path, _):
+            raise ValueError(f"path is on mount {path!r}, start on mount ...")
+
+        with pytest.MonkeyPatch.context() as monkeypatch:
+            monkeypatch.setattr("beetsplug.play.relpath", no_relative_form)
+            with self.assertLogs("beets.play", level="WARNING") as logs:
+                self.run_and_assert(
+                    open_mock, expected_playlist=self.item.path.decode("utf-8")
+                )
+
+        assert "stay absolute" in "\n".join(logs.output)
 
     def test_use_folders(self, open_mock):
         self.config["play"]["command"] = None

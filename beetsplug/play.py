@@ -112,6 +112,31 @@ class PlayPlugin(BeetsPlugin):
         play_command.func = self._play_command
         return [play_command]
 
+    def _make_relative(self, paths: list[bytes], start: bytes) -> list[bytes]:
+        """Make each of the paths relative to the given starting point.
+
+        A path that has no relative form - on Windows, one that lives on
+        another drive - is kept absolute so that playback still works.
+        """
+        relative, absolute = [], []
+        for path in paths:
+            try:
+                relative.append(relpath(path, start))
+            except ValueError:
+                absolute.append(path)
+                relative.append(path)
+
+        if absolute:
+            self._log.warning(
+                "{} path(s) have no relative form from relative_to '{}' and "
+                "stay absolute, starting with '{}'",
+                len(absolute),
+                util.displayable_path(start),
+                util.displayable_path(absolute[0]),
+            )
+
+        return relative
+
     def _play_command(
         self, lib: Library, opts: PlayCLIOpts, args: list[str]
     ) -> None:
@@ -144,7 +169,7 @@ class PlayPlugin(BeetsPlugin):
             item_type = "track"
 
         if relative_to:
-            paths = [relpath(path, relative_to) for path in paths]
+            paths = self._make_relative(paths, relative_to)
 
         if not selection:
             ui.print_(colorize("text_warning", f"No {item_type} to play."))
