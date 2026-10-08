@@ -1,40 +1,25 @@
-"""Tests for the 'subsonic' plugin."""
+"""Tests for the 'subsonicupdate' plugin."""
 
-import responses
+from __future__ import annotations
 
-from beets import config
-from beets.test.helper import TestHelper
-from beetsplug import subsonicupdate
+from http import HTTPStatus
+from typing import TYPE_CHECKING
 
+import pytest
+import requests
 
-class SubsonicPluginTest(TestHelper):
-    """Test class for subsonicupdate."""
+from beets import plugins
+from beets.exceptions import UserError
+from beets.test._common import item
+from beets.test.helper import PluginTestHelper
+from beetsplug.subsonicupdate import SubsonicUpdate
 
-    @responses.activate
-    def setUp(self):
-        """Sets up config and plugin for test."""
-        super().setUp()
+if TYPE_CHECKING:
+    from requests_mock import Mocker
 
-        config["subsonic"]["user"] = "admin"
-        config["subsonic"]["pass"] = "admin"
-        config["subsonic"]["url"] = "http://localhost:4040"
-        responses.add(
-            responses.GET,
-            "http://localhost:4040/rest/ping.view",
-            status=200,
-            body=self.PING_BODY,
-        )
-        self.subsonicupdate = subsonicupdate.SubsonicUpdate()
+START_SCAN_URL = "http://localhost:4040/rest/startScan"
 
-    PING_BODY = """
-{
-    "subsonic-response": {
-        "status": "failed",
-        "version": "1.15.0"
-    }
-}
-"""
-    SUCCESS_BODY = """
+SUCCESS_BODY = """
 {
     "subsonic-response": {
         "status": "ok",
@@ -47,7 +32,7 @@ class SubsonicPluginTest(TestHelper):
 }
 """
 
-    FAILED_BODY = """
+FAILED_BODY = """
 {
     "subsonic-response": {
         "status": "failed",
@@ -60,7 +45,7 @@ class SubsonicPluginTest(TestHelper):
 }
 """
 
-    ERROR_BODY = """
+ERROR_BODY = """
 {
     "timestamp": 1599185854498,
     "status": 404,
@@ -70,116 +55,240 @@ class SubsonicPluginTest(TestHelper):
 }
 """
 
-    @responses.activate
-    def test_start_scan(self):
+
+class TestSubsonicUpdate(PluginTestHelper):
+    """Test class for subsonicupdate."""
+
+    plugin = "subsonicupdate"
+    preload_plugin = False
+
+    @pytest.fixture(name="config")
+    def helper_config(self, setup: None):
+        """Reuse the helper's initialized config without resetting its paths."""
+        return self.config
+
+    @pytest.fixture(autouse=True)
+    def subsonic(self, config) -> SubsonicUpdate:
+        """Load the plugin with a reachable Subsonic server configuration."""
+        config["subsonic"].set(
+            {"user": "admin", "pass": "admin", "url": "http://localhost:4040"}
+        )
+        return self.reload_plugin()
+
+    def reload_plugin(self) -> SubsonicUpdate:
+        """(Re)load the plugin so it picks up the current configuration."""
+        self.unload_plugins()
+        self.load_plugins()
+        return next(
+            plugin
+            for plugin in plugins.find_plugins()
+            if isinstance(plugin, SubsonicUpdate)
+        )
+
+    def test_config_preserves_library_directory(self, config):
+        """The config fixture must preserve the helper's temporary paths."""
+        assert config is self.config
+        assert config["directory"].as_str() == str(self.lib_path)
+
+    def test_start_scan(
+        self,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         """Tests success path based on best case scenario."""
-        responses.add(
-            responses.GET,
-            "http://localhost:4040/rest/startScan",
-            status=200,
-            body=self.SUCCESS_BODY,
-        )
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
 
-        self.subsonicupdate.start_scan(self.lib)
+        subsonic.start_scan(self.lib)
 
-    @responses.activate
-    def test_start_scan_failed_bad_credentials(self):
+        assert requests_mock.call_count == 1
+        assert requests_mock.request_history[0].qs["u"] == ["admin"]
+        assert "Updating Subsonic; scanning 1000 tracks" in caplog.text
+
+    def test_start_scan_failed_bad_credentials(
+        self,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         """Tests failed path based on bad credentials."""
-        responses.add(
-            responses.GET,
-            "http://localhost:4040/rest/startScan",
-            status=200,
-            body=self.FAILED_BODY,
-        )
+        requests_mock.get(START_SCAN_URL, text=FAILED_BODY)
 
-        self.subsonicupdate.start_scan(self.lib)
+        subsonic.start_scan(self.lib)
 
-    @responses.activate
-    def test_start_scan_failed_not_found(self):
+        assert "Wrong username or password." in caplog.text
+
+    def test_start_scan_failed_not_found(
+        self,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         """Tests failed path based on resource not found."""
-        responses.add(
-            responses.GET,
-            "http://localhost:4040/rest/startScan",
-            status=404,
-            body=self.ERROR_BODY,
+        requests_mock.get(
+            START_SCAN_URL, status_code=HTTPStatus.NOT_FOUND, text=ERROR_BODY
         )
 
-        self.subsonicupdate.start_scan(self.lib)
+        subsonic.start_scan(self.lib)
 
-    def test_start_scan_failed_unreachable(self):
+        assert "Not Found" in caplog.text
+
+    def test_start_scan_failed_unreachable(
+        self,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         """Tests failed path based on service not available."""
-        self.subsonicupdate.start_scan(self.lib)
+        requests_mock.get(
+            START_SCAN_URL, exc=requests.exceptions.ConnectionError
+        )
 
-    @responses.activate
-    def test_url_with_context_path(self):
+        subsonic.start_scan(self.lib)
+
+        assert "Error connecting to Subsonic server" in caplog.text
+
+    def test_url_with_context_path(
+        self, config, subsonic: SubsonicUpdate, requests_mock: Mocker
+    ):
         """Tests success for included with contextPath."""
         config["subsonic"]["url"] = "http://localhost:4040/contextPath/"
-
-        responses.add(
-            responses.GET,
+        requests_mock.get(
             "http://localhost:4040/contextPath/rest/startScan",
-            status=200,
-            body=self.SUCCESS_BODY,
+            text=SUCCESS_BODY,
         )
 
-        self.subsonicupdate.start_scan(self.lib)
+        subsonic.start_scan(self.lib)
 
-    @responses.activate
-    def test_url_with_trailing_forward_slash_url(self):
+        assert requests_mock.call_count == 1
+
+    def test_url_with_trailing_forward_slash_url(
+        self, config, subsonic: SubsonicUpdate, requests_mock: Mocker
+    ):
         """Tests success path based on trailing forward slash."""
         config["subsonic"]["url"] = "http://localhost:4040/"
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
 
-        responses.add(
-            responses.GET,
-            "http://localhost:4040/rest/startScan",
-            status=200,
-            body=self.SUCCESS_BODY,
-        )
+        subsonic.start_scan(self.lib)
 
-        self.subsonicupdate.start_scan(self.lib)
+        assert requests_mock.call_count == 1
 
-    @responses.activate
-    def test_url_with_missing_port(self):
-        """Tests failed path based on missing port."""
+    def test_url_with_missing_port(
+        self, config, subsonic: SubsonicUpdate, requests_mock: Mocker
+    ):
+        """Tests success path based on missing port."""
         config["subsonic"]["url"] = "http://localhost/airsonic"
-
-        responses.add(
-            responses.GET,
-            "http://localhost/airsonic/rest/startScan",
-            status=200,
-            body=self.SUCCESS_BODY,
+        requests_mock.get(
+            "http://localhost/airsonic/rest/startScan", text=SUCCESS_BODY
         )
 
-        self.subsonicupdate.start_scan(self.lib)
+        subsonic.start_scan(self.lib)
 
-    @responses.activate
-    def test_url_with_missing_schema(self):
-        """Tests failed path based on missing schema."""
-        config["subsonic"]["url"] = "localhost:4040/airsonic"
+        assert requests_mock.call_count == 1
 
-        responses.add(
-            responses.GET,
-            "http://localhost:4040/rest/startScan",
-            status=200,
-            body=self.SUCCESS_BODY,
-        )
+    def test_url_with_missing_scheme(
+        self,
+        config,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        """Reject a URL without a scheme before sending any HTTP request."""
+        config["subsonic"]["url"] = "localhost/airsonic"
 
-        self.subsonicupdate.start_scan(self.lib)
+        subsonic.start_scan(self.lib)
 
-    @responses.activate
-    def test_start_scan_failed_non_json_response(self):
+        assert "Error connecting to Subsonic server" in caplog.text
+        assert "No scheme supplied" in caplog.text
+        assert requests_mock.call_count == 0
+
+    def test_start_scan_failed_non_json_response(
+        self,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+    ):
         """Tests failed path based on a non-JSON server response."""
-        responses.add(
-            responses.GET,
-            "http://localhost:4040/rest/startScan",
-            status=503,
-            body="<html>server unavailable</html>",
-            content_type="text/html",
+        requests_mock.get(
+            START_SCAN_URL,
+            status_code=HTTPStatus.SERVICE_UNAVAILABLE,
+            text="<html>server unavailable</html>",
+            headers={"Content-Type": "text/html"},
         )
 
-        with self.assertLogs("beets", level="ERROR") as logs:
-            self.subsonicupdate.start_scan(self.lib)
+        subsonic.start_scan(self.lib)
 
-        assert "Subsonic server returned a non-JSON response" in "\n".join(
-            logs.output
-        )
+        assert "Subsonic server returned a non-JSON response" in caplog.text
+
+    def test_cli_command_starts_scan(self, requests_mock: Mocker):
+        """The `subsonicupdate` command triggers a scan."""
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        self.run_command("subsonicupdate")
+
+        assert requests_mock.call_count == 1
+
+    def test_cli_command_rejects_arguments(self, requests_mock: Mocker):
+        """The command rejects stray arguments without starting a scan."""
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        with pytest.raises(UserError, match="does not take arguments"):
+            self.run_command("subsonicupdate", "startScan")
+
+        assert requests_mock.call_count == 0
+
+    def test_cli_command_starts_scan_when_auto_disabled(
+        self, config, requests_mock: Mocker
+    ):
+        """The `subsonicupdate` command works without `auto` enabled."""
+        config["subsonic"]["auto"] = False
+        self.reload_plugin()
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        self.run_command("subsonicupdate")
+
+        assert requests_mock.call_count == 1
+
+    def test_database_change_starts_scan_on_exit(self, requests_mock: Mocker):
+        """A library change triggers a scan when the command exits."""
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        plugins.send("database_change", lib=self.lib, model=item())
+        assert requests_mock.call_count == 0
+        plugins.send("cli_exit", lib=self.lib)
+
+        assert requests_mock.call_count == 1
+
+    def test_smartplaylist_update_starts_scan_on_exit(
+        self, requests_mock: Mocker
+    ):
+        """A smart playlist update triggers a scan when the command exits."""
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        plugins.send("smartplaylist_update")
+        assert requests_mock.call_count == 0
+        plugins.send("cli_exit", lib=self.lib)
+
+        assert requests_mock.call_count == 1
+
+    def test_no_scan_on_exit_without_changes(self, requests_mock: Mocker):
+        """Read-only commands do not trigger a scan."""
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        plugins.send("cli_exit", lib=self.lib)
+
+        assert requests_mock.call_count == 0
+
+    def test_auto_disabled_does_not_start_scan(
+        self, config, requests_mock: Mocker
+    ):
+        """With `auto` disabled no scan is requested on library changes."""
+        config["subsonic"]["auto"] = False
+        self.reload_plugin()
+        requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
+
+        plugins.send("database_change", lib=self.lib, model=item())
+        plugins.send("smartplaylist_update")
+        plugins.send("cli_exit", lib=self.lib)
+
+        assert requests_mock.call_count == 0
