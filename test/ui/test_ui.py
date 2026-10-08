@@ -98,6 +98,9 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         self.env_patcher.stop()
         commands.default_commands.pop()
         os.chdir(self._orig_cwd)
+        # A failed read leaves the shared config materialized but empty, which
+        # breaks every later test that reads it. Undo that for the next test.
+        self._reset_config()
         super().tearDown()
 
     def _make_test_cmd(self):
