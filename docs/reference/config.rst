@@ -556,6 +556,15 @@ by two characters in the terminal:
                 match_details: 2
                 match_tracklist: 5
             layout: column
+            normalize_changes: no
+
+``normalize_changes`` controls how the importer decides whether a track field
+has changed. When set to ``yes``, the importer uses the autotagger's string
+normalization (case folding, punctuation) for track titles and tolerates
+per-disc versus per-release track-number differences, avoiding false-positive
+two-column change displays for minor formatting differences. Visual
+highlighting (color diff) is still applied to show where strings differ.
+Defaults to ``no``, which displays every byte-level difference as a change.
 
 Importer Options
 ----------------

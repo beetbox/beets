@@ -61,6 +61,10 @@ class ChangeRepresentation:
     def indent_tracklist(self) -> str:
         return indent(self._indentation_config["match_tracklist"].get(int))
 
+    @cached_property
+    def _normalize_changes(self) -> bool:
+        return config["ui"]["import"]["normalize_changes"].get(bool)
+
     def print_layout(self, indent: str, left: Side, right: Side) -> None:
         for line in get_layout_lines(indent, left, right, ui.term_width()):
             ui.print_(line)
@@ -168,23 +172,25 @@ class ChangeRepresentation:
         new_track = self.format_index(track_info)
         # Choose color based on change.
         highlight_color: ColorName
+        changed = False
         if cur_track != new_track:
-            if not track_index_changed(item, track_info):
+            changed = True
+            if self._normalize_changes and not track_index_changed(
+                item, track_info
+            ):
                 highlight_color = "text_highlight_minor"
+                changed = False
             else:
                 highlight_color = "text_highlight"
         else:
             highlight_color = "text_faint"
 
-        changed = track_index_changed(item, track_info)
-
         lhs_track = colorize(highlight_color, f"(#{cur_track})")
         rhs_track = colorize(highlight_color, f"(#{new_track})")
         return lhs_track, rhs_track, changed
 
-    @staticmethod
     def make_track_titles(
-        item: Item, track_info: TrackInfo
+        self, item: Item, track_info: TrackInfo
     ) -> tuple[str, str, bool]:
         """Format colored track titles."""
         new_title = track_info.name
@@ -195,7 +201,9 @@ class ChangeRepresentation:
         # If there is a title, highlight differences.
         cur_title = item.title.strip()
         cur_col, new_col = colordiff(cur_title, new_title)
-        return cur_col, new_col, string_dist(cur_title, new_title) != 0
+        if self._normalize_changes:
+            return cur_col, new_col, string_dist(cur_title, new_title) != 0
+        return cur_col, new_col, cur_title != new_title
 
     @staticmethod
     def make_track_lengths(

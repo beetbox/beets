@@ -146,6 +146,7 @@ ui:
             match_details: 2
             match_tracklist: 5
         layout: column
+        normalize_changes: no
 
 # --------------- Search ---------------
 

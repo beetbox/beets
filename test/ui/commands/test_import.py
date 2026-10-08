@@ -57,16 +57,38 @@ class ImportTest(BeetsTestCase):
 
 @patch("beets.ui.term_width", Mock(return_value=54))
 class ShowChangeTestCase(IOMixin, BeetsTestCase):
-    def test_track_title_normalization(self):
+    def test_track_title_shows_change_by_default(self):
         item = _common.item(title='Touch Me (Original 12")')
         track_info = TrackInfo(title="Touch Me (original 12')")
+        change = ChangeRepresentation("", "", Mock(info=Mock(mediums=1)))
 
-        _, _, changed = ChangeRepresentation.make_track_titles(item, track_info)
+        _, _, changed = change.make_track_titles(item, track_info)
+
+        assert changed
+
+    def test_track_title_normalized_when_enabled(self):
+        self.config["ui"]["import"]["normalize_changes"] = True
+        item = _common.item(title='Touch Me (Original 12")')
+        track_info = TrackInfo(title="Touch Me (original 12')")
+        change = ChangeRepresentation("", "", Mock(info=Mock(mediums=1)))
+
+        _, _, changed = change.make_track_titles(item, track_info)
 
         assert not changed
 
-    def test_track_number_per_disc_tolerance(self):
+    def test_track_number_shows_change_by_default(self):
         self.config["per_disc_numbering"] = False
+        item = _common.item(track=1)
+        track_info = TrackInfo(index=19, medium_index=1)
+        change = ChangeRepresentation("", "", Mock(info=Mock(mediums=2)))
+
+        _, _, changed = change.make_track_numbers(item, track_info)
+
+        assert changed
+
+    def test_track_number_tolerance_when_enabled(self):
+        self.config["per_disc_numbering"] = False
+        self.config["ui"]["import"]["normalize_changes"] = True
         item = _common.item(track=1)
         track_info = TrackInfo(index=19, medium_index=1)
         change = ChangeRepresentation("", "", Mock(info=Mock(mediums=2)))

@@ -9,9 +9,15 @@ below!
 Unreleased
 ----------
 
-..
-    New features
-    ~~~~~~~~~~~~
+New features
+~~~~~~~~~~~~
+
+- Added a new ``ui.import.normalize_changes`` configuration option. When enabled,
+  the interactive importer uses the autotagger's string normalization and
+  per-disc track-index tolerance to avoid false-positive change highlights for
+  case/punctuation-only title differences and per-disc versus per-release track
+  numbering. Defaults to ``no`` (show the full byte difference), preserving the
+  previous behavior. :bug:`7043`
 
 Bug fixes
 ~~~~~~~~~
