@@ -63,6 +63,10 @@ Bug fixes
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
+- :doc:`plugins/mbsubmit`: The "Print tracks" (``p``) and "Open files with
+  Picard" (``o``) prompt choices are offered again when the importer has no
+  recommendation for a match (for example when no candidates were found).
+  :bug:`7031`
 
 ..
     For plugin developers
