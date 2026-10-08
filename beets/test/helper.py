@@ -20,7 +20,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import cache, cached_property
 from pathlib import Path
-from tempfile import gettempdir, mkdtemp, mkstemp
+from tempfile import TemporaryDirectory, gettempdir, mkdtemp, mkstemp
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from unittest.mock import Mock, patch
 
@@ -63,11 +63,19 @@ def check_reflink_support(path: str) -> bool:
     except ImportError:
         return False
 
-    return reflink.supported_at(path)
+    # reflink probes support by creating two fixed-name files under the given
+    # path. Concurrent probes - xdist workers, plus every subprocess spawned
+    # on Windows - unlink each other's, so give each probe its own directory.
+    with TemporaryDirectory(dir=path) as tmp:
+        return reflink.supported_at(tmp)
 
 
 NEEDS_REFLINK = pytest.mark.skipif(
-    not check_reflink_support(gettempdir()), reason="need reflink"
+    not (
+        (RUNNING_IN_CI and sys.platform != "win32")
+        or check_reflink_support(gettempdir())
+    ),
+    reason="reflink is not supported",
 )
 NEEDS_FFPROBE = pytest.mark.skipif(
     not shutil.which("ffprobe") and not RUNNING_IN_CI,
