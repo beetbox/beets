@@ -1049,12 +1049,9 @@ class FileSystem(LocalArtSource):
             # considered: art in subdirectories is not a candidate.
             ignore = config["ignore"].as_str_seq()
             ignore_hidden = config["ignore_hidden"].get(bool)
-            str_path = str(path)
             _, _, filenames = next(
-                sorted_walk(
-                    str_path, ignore=ignore, ignore_hidden=ignore_hidden
-                ),
-                (str_path, [], []),
+                sorted_walk(path, ignore=ignore, ignore_hidden=ignore_hidden),
+                (path, [], []),
             )
             images = [
                 fn_path

@@ -23,11 +23,11 @@ from .display import show_change
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
     from beets.autotag import Source
     from beets.importer import ImportSession, ImportTask
     from beets.library import AlbumOrItem, Item
-    from beets.util import PathBytes
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -225,10 +225,9 @@ class TerminalImportSession(importer.ImportSession):
 
         return action
 
-    def should_resume(self, path: PathBytes) -> bool:
+    def should_resume(self, path: Path) -> bool:
         return ui.input_yn(
-            f"Import of the directory:\n{displayable_path(path)}\n"
-            "was interrupted. Resume (Y/n)?"
+            f"Import of the directory:\n{path}\nwas interrupted. Resume (Y/n)?"
         )
 
     def _get_choices(self, task: ImportTask) -> list[PromptChoice]:
