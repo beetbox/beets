@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from beets import context
 from beets.library import Album, Item
 from beets.test import _common
 from beets.test.helper import PluginMixin, PytestTestHelper
@@ -674,6 +675,36 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         response = self.client.get(f"/item/{item_id}/file")
 
         assert response.status_code == 200
+
+    @pytest.fixture
+    def worker_thread_context(self):
+        """Clear the music directory, as in a server request thread."""
+        with context.music_dir(b""):
+            yield
+
+    @pytest.mark.usefixtures("worker_thread_context")
+    def test_get_item_file_relative_path(self):
+        path = self.lib_path / "rel" / "track.mp3"
+        path.parent.mkdir()
+        shutil.copy(_common.RSRC / "full.mp3", path)
+        item_id = self.lib.add(Item(title="rel", path=b"rel/track.mp3"))
+
+        response = self.client.get(f"/item/{item_id}/file")
+
+        assert response.status_code == 200
+        assert response.data == path.read_bytes()
+
+    @pytest.mark.usefixtures("worker_thread_context")
+    def test_get_album_art_relative_path(self):
+        path = self.lib_path / "rel" / "cover.png"
+        path.parent.mkdir()
+        path.write_bytes(b"PNGDATA")
+        album_id = self.lib.add(Album(album="rel", artpath=b"rel/cover.png"))
+
+        response = self.client.get(f"/album/{album_id}/art")
+
+        assert response.status_code == 200
+        assert response.data == b"PNGDATA"
 
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):

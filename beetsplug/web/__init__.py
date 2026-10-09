@@ -13,7 +13,7 @@ from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
-from beets import ui, util
+from beets import context, ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
@@ -299,6 +299,9 @@ app.url_map.converters["everything"] = EverythingConverter
 @app.before_request
 def before_request() -> None:
     g.lib = app.config["lib"]
+    # Request threads don't inherit the music directory context, which beets
+    # needs to expand paths stored relative to the library directory.
+    context.set_music_dir(g.lib.directory)
 
 
 # Items.
@@ -391,8 +394,8 @@ def album_query(queries: Sequence[str]) -> Any:
 @app.route("/album/<int:album_id>/art")
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
-    if album and album.artpath:
-        return flask.send_file(album.artpath.decode())
+    if album and (artpath := album.art_filepath):
+        return flask.send_file(util.syspath(artpath))
     return flask.abort(404)
 
 
