@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 class AcousticBrainzCLIOpts(Protocol):
     force_refetch: bool
+    limit: int | None
 
 
 LEVELS = ["/low-level", "/high-level"]
@@ -121,13 +122,14 @@ class AcousticPlugin(plugins.BeetsPlugin):
         def func(
             lib: Library, opts: AcousticBrainzCLIOpts, args: list[str]
         ) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             self._fetch_info(
                 items,
                 ui.should_write(),
                 opts.force_refetch or self.config["force"].get(bool),
             )
 
+        cmd.parser.add_limit_option()
         cmd.func = func
         return [cmd]
 

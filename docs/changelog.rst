@@ -20,6 +20,12 @@ New features
 - :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
   before whitelist filtering, while preserving existing genres regardless of the
   configured count. :bug:`6890`
+- :doc:`plugins/subsonicupdate`: Add a ``subsonicupdate`` command that requests
+  a library update from the Subsonic server on demand, and an ``auto`` option
+  that disables the updates triggered by library and smart playlist changes.
+  :bug:`6741`
+- Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
+  already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
 
 Bug fixes
 ~~~~~~~~~
@@ -63,17 +69,28 @@ Bug fixes
   Picard" (``o``) prompt choices are offered again when the importer has no
   recommendation for a match (for example when no candidates were found).
   :bug:`7031`
+- :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
+  subdirectory holds a file named like one in the album folder.
 - ``beet update``: A filesystem error while moving an item or album is now
   reported and the update continues with the rest of the library, instead of
   aborting and leaving it partially updated. :bug:`2419`
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+- ``ArtResizer.resize``, ``ArtResizer.deinterlace`` and ``ArtResizer.reformat``
+  now expect :class:`pathlib.Path` arguments. ``str`` and ``bytes`` paths keep
+  working and are returned in the representation they were given in, but emit a
+  :class:`DeprecationWarning` and will be removed in 3.0.0.
+- ``beetsplug._utils.art.embed_item`` and
+  ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
+  arguments, deprecating ``str`` and ``bytes`` in the same way.
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
+  ``platformdirs``, which beets already requires.
 
 2.14.1 (September 17, 2026)
 ---------------------------

@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from discogs_client import Client, Release
+from discogs_client.exceptions import MalformedResponseError
 
-from beets import config
 from beets.library import Item
 from beets.metadata_plugins import SearchParams
 from beets.test.helper import TestHelper
@@ -223,7 +223,7 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         assert d.style == "STYLE1, STYLE2"
         assert d.genres == ["GENRE1", "GENRE2"]
 
-    def test_append_style_to_genre(self):
+    def test_append_style_to_genre(self, config):
         """Test appending style to genre if config enabled"""
         config["discogs"]["append_style_genre"] = True
         release = self._make_release_from_positions(["1", "2"])
@@ -232,7 +232,7 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         assert d.style == "STYLE1, STYLE2"
         assert d.genres == ["GENRE1", "GENRE2", "STYLE1", "STYLE2"]
 
-    def test_append_style_to_genre_no_styles(self):
+    def test_append_style_to_genre_no_styles(self, config):
         """Test nothing appended to genre if style is empty"""
         config["discogs"]["append_style_genre"] = True
         release = self._make_release_from_positions(["1", "2"])
@@ -533,7 +533,7 @@ class TestDGSearchQuery(TestHelper):
         assert "Album" in query
         assert filters == {"type": "release"}
 
-    def test_extra_tags_populate_discogs_filters(self):
+    def test_extra_tags_populate_discogs_filters(self, config):
         """Configured extra_tags should populate Discogs search filters."""
         plugin = DiscogsPlugin()
         plugin.config["extra_tags"] = ["label", "catalognum"]
@@ -558,7 +558,7 @@ class TestDGSearchQuery(TestHelper):
         "media,expected",
         [("Digital Media", "File"), ("WEB", "File"), ("Vinyl", "Vinyl")],
     )
-    def test_extra_tags_normalize_media(self, media, expected):
+    def test_extra_tags_normalize_media(self, config, media, expected):
         plugin = DiscogsPlugin()
         plugin.config["extra_tags"] = ["media"]
 
@@ -571,7 +571,7 @@ class TestDGSearchQuery(TestHelper):
         assert filters["format"] == expected
         config["discogs"]["extra_tags"] = []
 
-    def test_extra_tags_normalize_media_before_plurality(self):
+    def test_extra_tags_normalize_media_before_plurality(self, config):
         plugin = DiscogsPlugin()
         plugin.config["extra_tags"] = ["media"]
 
@@ -595,8 +595,13 @@ class TestDGSearchQuery(TestHelper):
 
 class TestDGSearchResponse(DiscogsTestMixin):
     @staticmethod
-    def _decode_error():
-        return json.JSONDecodeError("Expecting value", "", 0)
+    def _malformed_response_error() -> MalformedResponseError:
+        original_exception = json.JSONDecodeError("Expecting value", "", 0)
+        return MalformedResponseError(
+            status_code=200,
+            content=b"invalid JSON",
+            original_exception=original_exception,
+        )
 
     @pytest.fixture
     def params(self):
@@ -610,7 +615,7 @@ class TestDGSearchResponse(DiscogsTestMixin):
     def test_retries_invalid_json_response(self, plugin, client, params):
         result = MagicMock(data={"id": 123})
         results = client.search.return_value
-        results.page.side_effect = [self._decode_error(), [result]]
+        results.page.side_effect = [self._malformed_response_error(), [result]]
 
         assert plugin.get_search_response(params) == [{"id": 123}]
         assert client.search.call_count == 2
@@ -619,9 +624,12 @@ class TestDGSearchResponse(DiscogsTestMixin):
 
     def test_raises_after_invalid_json_retry(self, plugin, client, params):
         results = client.search.return_value
-        results.page.side_effect = [self._decode_error(), self._decode_error()]
+        results.page.side_effect = [
+            self._malformed_response_error(),
+            self._malformed_response_error(),
+        ]
 
-        with pytest.raises(json.JSONDecodeError):
+        with pytest.raises(MalformedResponseError):
             plugin.get_search_response(params)
 
         assert client.search.call_count == 2
@@ -750,7 +758,7 @@ class TestAnv:
         self._assert_fields(album_info, expected_album_fields)
 
 
-def test_anv_album_artist():
+def test_anv_album_artist(config):
     """Test using artist name variations when the album artist
     is the same as the track artist, but only the track artist
     should use the artist name variation."""
@@ -871,7 +879,7 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     assert result == (expected_media, expected_albumtype)
 
 
-def test_va_buildartistinfo():
+def test_va_buildartistinfo(config):
     config["va_name"] = "VARIOUS ARTISTS"
     expected_info = {
         "artist": "VARIOUS ARTISTS",
