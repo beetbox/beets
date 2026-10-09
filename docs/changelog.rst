@@ -26,6 +26,15 @@ New features
   :bug:`6741`
 - Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
   already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
+- :doc:`plugins/web`: Redesign the web interface as a modern, buildless
+  single-page UI: search (a simple mode and full beets-query support),
+  Songs/Albums/Artists browsing, album and track metadata views with album art,
+  playback, and automatic light/dark theming. ``/album/``, ``/artist/``,
+  ``/item/query/`` and ``/album/query/`` accept optional ``offset``/``limit``
+  paging (``limit`` capped at 500; the list endpoints report the total in an
+  ``X-Total-Count`` header), and ``/artist/`` also returns an ``artist_art`` map
+  used for artist avatars. Omitting the parameters returns every result as
+  before.
 
 Bug fixes
 ~~~~~~~~~
