@@ -24,7 +24,8 @@ command. This command is **exactly** the same as the ``beet list`` command
 except that the output is passed through the bare-ASCII transformation before
 being printed. This allows you to easily check what the library data looks like
 in bare ASCII, which can be useful if you are trying to work out why a query is
-not matching.
+not matching. Use ``-l``/``--limit`` to cap the matched tracks or albums before
+printing.
 
 Using the same example track as above:
 

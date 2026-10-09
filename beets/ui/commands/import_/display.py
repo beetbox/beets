@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 import textwrap
 from dataclasses import dataclass
-from functools import cached_property
+from functools import cached_property, singledispatch
 from typing import TYPE_CHECKING
 
 from beets import config, ui
-from beets.autotag import TrackInfo
+from beets.autotag import AlbumMatch, Source, TrackInfo, TrackMatch
 from beets.util import displayable_path
 from beets.util.color import colorize
 from beets.util.diff import colordiff
@@ -17,7 +17,7 @@ from beets.util.units import human_seconds_short
 if TYPE_CHECKING:
     import confuse
 
-    from beets.autotag import AlbumMatch, Match, Source, TrackMatch
+    from beets.autotag import Match
     from beets.library import Item
     from beets.util.color import ColorName
 
@@ -25,16 +25,15 @@ VARIOUS_ARTISTS = "Various Artists"
 
 
 @dataclass
-class ChangeRepresentation:
+class Change:
     """Keeps track of all information needed to generate a (colored) text
     representation of the changes that will be made if an album or singleton's
     tags are changed according to `match`, which must be an AlbumMatch or
     TrackMatch object, accordingly.
     """
 
-    original_artist: str
-    original_name: str
     match: Match
+    source: Source
 
     @cached_property
     def changed_prefix(self) -> str:
@@ -55,10 +54,6 @@ class ChangeRepresentation:
     @cached_property
     def indent_detail(self) -> str:
         return indent(self._indentation_config["match_details"].get(int))
-
-    @cached_property
-    def indent_tracklist(self) -> str:
-        return indent(self._indentation_config["match_tracklist"].get(int))
 
     def print_layout(self, indent: str, left: Side, right: Side) -> None:
         for line in get_layout_lines(indent, left, right, ui.term_width()):
@@ -99,10 +94,7 @@ class ChangeRepresentation:
         and artist name.
         """
         # Artist.
-        artist_l, artist_r = (
-            self.original_artist,
-            self.match.info.artist or "",
-        )
+        artist_l, artist_r = self.source.artist, self.match.info.artist or ""
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = "", ""
@@ -115,10 +107,10 @@ class ChangeRepresentation:
         else:
             ui.print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
-        if self.original_name:
+        if self.source.name:
             type_ = self.match.type
-            name_l, name_r = self.original_name, self.match.info.name
-            if self.original_name != self.match.info.name != VARIOUS_ARTISTS:
+            name_l, name_r = self.source.name, self.match.info.name
+            if self.source.name != self.match.info.name != VARIOUS_ARTISTS:
                 name_l, name_r = colordiff(name_l, name_r)
                 left = Side(f"{self.changed_prefix} {type_}: ", name_l, "")
                 right = Side("", name_r, "")
@@ -126,18 +118,31 @@ class ChangeRepresentation:
             else:
                 ui.print_(f"{self.indent_detail}*", f"{type_}:", name_r)
 
+    def show(self) -> None:
+        """Print out the change."""
+        self.show_match_header()
+        self.show_match_details()
+
+
+class AlbumChange(Change):
+    match: AlbumMatch
+
+    @cached_property
+    def indent_tracklist(self) -> str:
+        return indent(self._indentation_config["match_tracklist"].get(int))
+
     def make_medium_info_line(self, track_info: TrackInfo) -> str:
         """Construct a line with the current medium's info."""
         track_media = track_info.get("media", "Media")
         # Build output string.
-        if self.match.info.mediums > 1 and track_info.disctitle:
-            return (
-                f"* {track_media} {track_info.medium}: {track_info.disctitle}"
-            )
-        if self.match.info.mediums > 1:
+        if (mediums := self.match.info.mediums) is not None and mediums > 1:
+            if track_info.disctitle:
+                return f"* {track_media} {track_info.medium}: {track_info.disctitle}"
             return f"* {track_media} {track_info.medium}"
+
         if track_info.disctitle:
             return f"* {track_media}: {track_info.disctitle}"
+
         return ""
 
     def format_index(self, track_info: TrackInfo | Item) -> str:
@@ -299,10 +304,6 @@ class ChangeRepresentation:
             right = right._replace(width=col_width_r)
             self.print_layout(self.indent_tracklist, left, right)
 
-
-class AlbumChange(ChangeRepresentation):
-    match: AlbumMatch
-
     def show_match_tracks(self) -> None:
         """Print out the tracks of the match, summarizing changes the match
         suggests for them.
@@ -357,36 +358,31 @@ class AlbumChange(ChangeRepresentation):
                 line += f" ({human_seconds_short(item.length)})"
             ui.print_(colorize("text_warning", line))
 
+    def show(self) -> None:
+        """Print out the change."""
+        super().show()
+        self.show_match_tracks()
 
-class TrackChange(ChangeRepresentation):
+
+class TrackChange(Change):
     """Track change representation, comparing item with match."""
 
     match: TrackMatch
 
 
-def show_change(source: Source, match: AlbumMatch) -> None:
-    """Print out a representation of the changes that will be made if an
-    album's tags are changed according to `match`, which must be an AlbumMatch
-    object.
-    """
-    change = AlbumChange(source.artist, source.name, match)
-
-    # Print the match header.
-    change.show_match_header()
-
-    # Print the match details.
-    change.show_match_details()
-
-    # Print the match tracks.
-    change.show_match_tracks()
+@singledispatch
+def show_change(match: Match, source: Source) -> None:
+    """Print out a representation of the changes."""
+    raise NotImplementedError
 
 
-def show_item_change(source: Source, match: TrackMatch) -> None:
-    """Print out the change that would occur by tagging a track with the
-    metadata from `match`, a TrackMatch object.
-    """
-    change = TrackChange(source.artist, source.name, match)
-    # Print the match header.
-    change.show_match_header()
-    # Print the match details.
-    change.show_match_details()
+@show_change.register
+def _(match: AlbumMatch, source: Source) -> None:
+    """Print out a representation of the changes."""
+    AlbumChange(match, source).show()
+
+
+@show_change.register
+def _(match: TrackMatch, source: Source) -> None:
+    """Print out a representation of the changes."""
+    TrackChange(match, source).show()

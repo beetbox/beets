@@ -8,11 +8,12 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 import confuse
 
 import beets
-from beets.dbcore.query import BLOB_TYPE, InQuery
+from beets.dbcore.query import InQuery
+from beets.plugins import BeetsPlugin
 from beets.util import path_as_posix
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterator
 
     from beets.dbcore.query import FieldQueryType
     from beets.library import Item, Library
@@ -24,10 +25,6 @@ def is_m3u_file(path: str) -> bool:
 
 class PlaylistQuery(InQuery[bytes]):
     """Matches files listed by a playlist file."""
-
-    @property
-    def subvals(self) -> Sequence[BLOB_TYPE]:
-        return [BLOB_TYPE(p) for p in self.pattern]
 
     def __init__(self, _, pattern: str, __) -> None:
         config = beets.config["playlist"]
@@ -76,7 +73,7 @@ class PlaylistQuery(InQuery[bytes]):
         super().__init__("path", paths)
 
 
-class PlaylistPlugin(beets.plugins.BeetsPlugin):
+class PlaylistPlugin(BeetsPlugin):
     item_queries: ClassVar[dict[str, FieldQueryType]] = {
         "playlist": PlaylistQuery
     }

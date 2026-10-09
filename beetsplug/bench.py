@@ -25,6 +25,7 @@ class BenchAunique(Protocol):
 class BenchMatch(Protocol):
     profile: bool
     id: str | None
+    limit: int | None
 
 
 def aunique_benchmark(
@@ -70,7 +71,9 @@ def match_benchmark(lib: Library, opts: BenchMatch, args: list[str]) -> None:
     id_ = opts.id or "9c5c043e-bc69-4edb-81a4-1aaf9c81e6dc"
 
     # Get an album from the library to use as the source for the match.
-    items: Sequence[Item] = i.items() if (i := lib.albums(args).get()) else []
+    items: Sequence[Item] = (
+        i.items() if (i := lib.albums(args, limit=opts.limit).get()) else []
+    )
 
     # Ensure fingerprinting is invoked (if enabled).
     plugins.send(
@@ -122,6 +125,7 @@ class BenchmarkPlugin(BeetsPlugin):
         match_bench_cmd.parser.add_option(
             "-i", "--id", default=None, help="album ID to match against"
         )
+        match_bench_cmd.parser.add_limit_option()
         match_bench_cmd.func = match_benchmark
 
         return [aunique_bench_cmd, match_bench_cmd]

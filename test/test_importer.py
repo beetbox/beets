@@ -46,7 +46,7 @@ from beets.test.helper import (
     TerminalImportMixin,
     TerminalImportSessionFixture,
     TestHelper,
-    has_program,
+    is_importable,
 )
 from beets.util import bytestring_path, syspath
 from beets.util.extension import remux_mpeglayer3_wav
@@ -256,12 +256,16 @@ class TestImportTar(TestImportZip):
         return path
 
 
-@pytest.mark.skipif(not has_program("unrar"), reason="unrar program not found")
+@pytest.mark.skipif(
+    not (is_importable("rarfile") and shutil.which("unrar")),
+    reason="rarfile or unrar program not found",
+)
 class TestImportRar(TestImportZip):
     def create_archive(self):
         return _common.RSRC / "archive.rar"
 
 
+@pytest.mark.skipif(not is_importable("py7zr"), reason="py7zr is not available")
 class TestImport7z(TestImportZip):
     def create_archive(self):
         return _common.RSRC / "archive.7z"
@@ -383,8 +387,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]),
-    reason="need ffprobe for format recognition",
+    not shutil.which("ffprobe"), reason="need ffprobe for format recognition"
 )
 class TestImportFormat(ImportHelper):
     """Test fix_extension during import."""

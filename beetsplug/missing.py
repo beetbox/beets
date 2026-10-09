@@ -153,6 +153,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             ),
         )
         self._command.parser.add_format_option()
+        self._command.parser.add_limit_option()
 
     def commands(self) -> list[Subcommand]:
         def _miss(lib: Library, opts: optparse.Values, args: list[str]) -> None:
@@ -160,16 +161,18 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             albms = self.config["album"].get()
 
             helper = self._missing_albums if albms else self._missing_tracks
-            helper(lib, args)
+            helper(lib, args, opts.limit)
 
         self._command.func = _miss
         return [self._command]
 
-    def _missing_tracks(self, lib: Library, query: list[str]) -> None:
+    def _missing_tracks(
+        self, lib: Library, query: list[str], limit: int | None
+    ) -> None:
         """Print a listing of tracks missing from each album in the library
         matching query.
         """
-        albums = lib.albums(query)
+        albums = lib.albums(query, limit=limit)
 
         count = self.config["count"].get()
         total = self.config["total"].get()
@@ -192,7 +195,9 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 for item in self._missing(album):
                     print_(format(item, fmt))
 
-    def _missing_albums(self, lib: Library, query: list[str]) -> None:
+    def _missing_albums(
+        self, lib: Library, query: list[str], limit: int | None
+    ) -> None:
         """Print a listing of albums missing from each artist in the library
         matching query.
         """
@@ -200,7 +205,7 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         # build dict mapping artist to set of their release group ids in library
         album_ids_by_artist = defaultdict(set)
-        for album in lib.albums(query):
+        for album in lib.albums(query, limit=limit):
             # TODO(@snejus): Some releases have different `albumartist` for the
             # same `mb_albumartistid`. Since we're grouping by the combination
             # of these two fields, we end up processing the same

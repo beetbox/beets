@@ -27,12 +27,7 @@ if TYPE_CHECKING:
 else:
     P = TypeVar("P")
 
-# To use the SQLite "blob" type, it doesn't suffice to provide a byte
-# string; SQLite treats that as encoded text. Wrapping it in a
-# `memoryview` tells it that we actually mean non-text data.
-# needs to be defined in here due to circular import.
-# TODO: remove it from this module and define it in dbcore/types.py instead
-BLOB_TYPE = memoryview
+BLOB_TYPE = bytes
 
 
 class ParsingError(ValueError):
@@ -357,8 +352,8 @@ class PathQuery(FieldQuery[bytes]):
             left, right = f"BYTELOWER({self.field})", "BYTELOWER(?)"
 
         return f"({left} = {right}) || (substr({left}, 1, ?) = {right})", [
-            BLOB_TYPE(self.pattern),
-            len(dir_blob := BLOB_TYPE(self.dir_path)),
+            self.pattern,
+            len(dir_blob := self.dir_path),
             dir_blob,
         ]
 

@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
 class ABSubmitCLIOpts(Protocol):
     force_refetch: bool
+    limit: int | None
     pretend_fetch: bool
 
 
@@ -135,6 +136,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 " processed"
             ),
         )
+        cmd.parser.add_limit_option()
         cmd.func = self.command
         return [cmd]
 
@@ -148,7 +150,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 "option."
             )
         # Get items from arguments
-        items = lib.items(args)
+        items = lib.items(args, limit=opts.limit)
         self.opts = opts
         util.par_map(self.analyze_submit, items)
 
@@ -191,8 +193,15 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     "Failed to analyse {} for AcousticBrainz: {}", item, e
                 )
                 return None
-            with open(filename) as f:
-                analysis = json.load(f)
+            with open(filename, "rb") as f:
+                raw_data = f.read()
+            try:
+                analysis = json.loads(raw_data.decode("utf-8", errors="ignore"))
+            except json.JSONDecodeError as e:
+                self._log.warning(
+                    "Failed to parse analysis output for {}: {}", item, e
+                )
+                return None
             # Add the hash to the output.
             analysis["metadata"]["version"]["essentia_build_sha"] = (
                 self.extractor_sha

@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 
 import pytest
 from discogs_client import Client, Release
+from discogs_client.exceptions import MalformedResponseError
 
-from beets import config
 from beets.library import Item
 from beets.metadata_plugins import SearchParams
 from beets.test.helper import TestHelper
@@ -223,7 +223,7 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         assert d.style == "STYLE1, STYLE2"
         assert d.genres == ["GENRE1", "GENRE2"]
 
-    def test_append_style_to_genre(self):
+    def test_append_style_to_genre(self, config):
         """Test appending style to genre if config enabled"""
         config["discogs"]["append_style_genre"] = True
         release = self._make_release_from_positions(["1", "2"])
@@ -232,7 +232,7 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         assert d.style == "STYLE1, STYLE2"
         assert d.genres == ["GENRE1", "GENRE2", "STYLE1", "STYLE2"]
 
-    def test_append_style_to_genre_no_styles(self):
+    def test_append_style_to_genre_no_styles(self, config):
         """Test nothing appended to genre if style is empty"""
         config["discogs"]["append_style_genre"] = True
         release = self._make_release_from_positions(["1", "2"])
@@ -241,6 +241,60 @@ class TestDGAlbumInfo(DiscogsTestMixin, TestHelper):
         d = DiscogsPlugin().get_album_info(release)
         assert d.style is None
         assert d.genres == ["GENRE1", "GENRE2"]
+
+    @pytest.mark.parametrize(
+        "released, expected",
+        [
+            _p("2000-08-13", (2000, 8, 13), id="full-date"),
+            _p("2000-08", (2000, 8, None), id="year-and-month"),
+            _p("2000", (2000, None, None), id="year-only"),
+            _p("2000-00-00", (2000, None, None), id="zeroed-month-and-day"),
+            _p("2000-08-00", (2000, 8, None), id="zeroed-day"),
+            _p("2000-8-1", (2000, 8, 1), id="unpadded"),
+            _p("  2000-08-13  ", (2000, 8, 13), id="surrounding-whitespace"),
+            # Fall back to the release's own `year` field.
+            _p("", (3001, None, None), id="empty"),
+            _p(None, (3001, None, None), id="missing"),
+            _p("0000-00-00", (3001, None, None), id="zeroed-date"),
+            _p("13 Aug 2000", (3001, None, None), id="unparseable"),
+        ],
+    )
+    def test_parse_release_date(self, released, expected):
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = released
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.year, d.month, d.day) == expected
+
+    def test_original_date_without_master(self):
+        """A release without a master release is its own original."""
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = "2000-08-13"
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.original_year, d.original_month, d.original_day) == (
+            2000,
+            8,
+            13,
+        )
+
+    def test_original_date_with_master(self, monkeypatch):
+        """Only the master release's year is known, so it alone is used."""
+        monkeypatch.setattr(DiscogsPlugin, "get_master_year", lambda *_: 1990)
+        release = self._make_release_from_positions(["1"])
+        release.data["released"] = "2000-08-13"
+        release.data["master_id"] = 22222222
+
+        d = DiscogsPlugin().get_album_info(release)
+
+        assert (d.year, d.month, d.day) == (2000, 8, 13)
+        assert (d.original_year, d.original_month, d.original_day) == (
+            1990,
+            None,
+            None,
+        )
 
 
 class TestStripDisambiguation(DiscogsTestMixin):
@@ -479,7 +533,7 @@ class TestDGSearchQuery(TestHelper):
         assert "Album" in query
         assert filters == {"type": "release"}
 
-    def test_extra_tags_populate_discogs_filters(self):
+    def test_extra_tags_populate_discogs_filters(self, config):
         """Configured extra_tags should populate Discogs search filters."""
         plugin = DiscogsPlugin()
         plugin.config["extra_tags"] = ["label", "catalognum"]
@@ -500,11 +554,54 @@ class TestDGSearchQuery(TestHelper):
         assert filters["catno"] == "ABC123"
         config["discogs"]["extra_tags"] = []
 
+    @pytest.mark.parametrize(
+        "media,expected",
+        [("Digital Media", "File"), ("WEB", "File"), ("Vinyl", "Vinyl")],
+    )
+    def test_extra_tags_normalize_media(self, config, media, expected):
+        plugin = DiscogsPlugin()
+        plugin.config["extra_tags"] = ["media"]
+
+        items = [Item(media=media)]
+
+        _query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert filters["format"] == expected
+        config["discogs"]["extra_tags"] = []
+
+    def test_extra_tags_normalize_media_before_plurality(self, config):
+        plugin = DiscogsPlugin()
+        plugin.config["extra_tags"] = ["media"]
+
+        items = [
+            Item(media="Digital Media"),
+            Item(media="Digital Media"),
+            Item(media="WEB"),
+            Item(media="WEB"),
+            Item(media="Vinyl"),
+            Item(media="Vinyl"),
+            Item(media="Vinyl"),
+        ]
+
+        _query, filters = plugin.get_search_query_with_filters(
+            "album", items, "Artist", "Album", False
+        )
+
+        assert filters["format"] == "File"
+        config["discogs"]["extra_tags"] = []
+
 
 class TestDGSearchResponse(DiscogsTestMixin):
     @staticmethod
-    def _decode_error():
-        return json.JSONDecodeError("Expecting value", "", 0)
+    def _malformed_response_error() -> MalformedResponseError:
+        original_exception = json.JSONDecodeError("Expecting value", "", 0)
+        return MalformedResponseError(
+            status_code=200,
+            content=b"invalid JSON",
+            original_exception=original_exception,
+        )
 
     @pytest.fixture
     def params(self):
@@ -518,7 +615,7 @@ class TestDGSearchResponse(DiscogsTestMixin):
     def test_retries_invalid_json_response(self, plugin, client, params):
         result = MagicMock(data={"id": 123})
         results = client.search.return_value
-        results.page.side_effect = [self._decode_error(), [result]]
+        results.page.side_effect = [self._malformed_response_error(), [result]]
 
         assert plugin.get_search_response(params) == [{"id": 123}]
         assert client.search.call_count == 2
@@ -527,9 +624,12 @@ class TestDGSearchResponse(DiscogsTestMixin):
 
     def test_raises_after_invalid_json_retry(self, plugin, client, params):
         results = client.search.return_value
-        results.page.side_effect = [self._decode_error(), self._decode_error()]
+        results.page.side_effect = [
+            self._malformed_response_error(),
+            self._malformed_response_error(),
+        ]
 
-        with pytest.raises(json.JSONDecodeError):
+        with pytest.raises(MalformedResponseError):
             plugin.get_search_response(params)
 
         assert client.search.call_count == 2
@@ -658,7 +758,7 @@ class TestAnv:
         self._assert_fields(album_info, expected_album_fields)
 
 
-def test_anv_album_artist():
+def test_anv_album_artist(config):
     """Test using artist name variations when the album artist
     is the same as the track artist, but only the track artist
     should use the artist name variation."""
@@ -779,7 +879,7 @@ def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
     assert result == (expected_media, expected_albumtype)
 
 
-def test_va_buildartistinfo():
+def test_va_buildartistinfo(config):
     config["va_name"] = "VARIOUS ARTISTS"
     expected_info = {
         "artist": "VARIOUS ARTISTS",

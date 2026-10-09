@@ -11,7 +11,6 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 import pytest
-import requests
 
 from beets.library import Item
 from beets.test.helper import PluginMixin, PluginTestHelper
@@ -361,6 +360,24 @@ class TestLyricsPlugin(LyricsPluginMixin):
         with pytest.raises(AttributeError):
             item.lyrics_translation_language
 
+    def test_store_instrumental_lyrics_info(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        lyrics = Lyrics(
+            "[Instrumental]", "lrclib", url="https://lrclib.net/api/1"
+        )
+        monkeypatch.setattr(lyrics_plugin, "find_lyrics", lambda _: lyrics)
+        item = helper.add_item(id=1, lyrics="")
+
+        lyrics_plugin.add_item_lyrics(item, False)
+
+        item = helper.lib.get_item(item.id)
+
+        assert item.lyrics == ""
+        assert item.lyrics_instrumental == "1"
+        assert item.lyrics_backend == lyrics.backend
+        assert item.lyrics_url == lyrics.url
+
     def test_imported_skips_auto_ignored_items(
         self, lyrics_plugin, monkeypatch
     ):
@@ -441,8 +458,8 @@ class TestLyricsSources(LyricsBackendTest):
     ):
         """Test parsed lyrics from each of the configured lyrics pages."""
         monkeypatch.setattr(
-            "beetsplug.lyrics.LyricsRequestHandler.create_session",
-            lambda _: requests.Session(),
+            "beetsplug.lyrics.TimeoutAndRetrySession.setup_adapter",
+            lambda _: None,
         )
         expected_lyrics = Lyrics(
             lyrics_page.lyrics,

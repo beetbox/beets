@@ -214,5 +214,11 @@ registration process in this case:
     :Description: Called by the :doc:`/plugins/smartplaylist` plugin after it
         writes updated playlist files. It is not called in pretend mode.
 
+``alternatives.item_updated``
+    :Parameters: ``collection`` (str), ``path`` (``Path``), ``item`` (|Item|),
+        ``action`` (str)
+    :Description: Sent by the external beets-alternatives plugin after an item
+        is updated, added, or removed in a collection.
+
 The included ``mpdupdate`` plugin provides an example use case for event
 listeners.

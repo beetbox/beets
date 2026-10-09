@@ -20,6 +20,7 @@ class RandomCLIOpts(Protocol):
     album: bool
     equal_chance: bool
     field: str
+    limit: int | None
     number: int
     time: float | None
 
@@ -27,7 +28,11 @@ class RandomCLIOpts(Protocol):
 def random_func(lib: Library, opts: RandomCLIOpts, args: list[str]) -> None:
     """Select some random items or albums and print the results."""
     # Fetch all the objects matching the query into a list.
-    objs = lib.albums(args) if opts.album else lib.items(args)
+    objs = (
+        lib.albums(args, limit=opts.limit)
+        if opts.album
+        else lib.items(args, limit=opts.limit)
+    )
 
     # Print a random subset.
     for obj in random_objs(
@@ -71,6 +76,7 @@ random_cmd.parser.add_option(
     help="field to use for equal chance sampling (default: albumartist)",
 )
 random_cmd.parser.add_all_common_options()
+random_cmd.parser.add_limit_option()
 random_cmd.func = random_func
 
 
