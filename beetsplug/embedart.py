@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 class EmbedArtCLIOpts(Protocol):
     file: str | None
+    limit: int | None
     url: str | None
     yes: bool | None
 
@@ -34,10 +35,12 @@ class EmbedArtCLIOpts(Protocol):
 class ExtractArtCLIOpts(Protocol):
     associate: bool | None
     filename: str | None
+    limit: int | None
     outpath: str | None
 
 
 class ClearArtCLIOpts(Protocol):
+    limit: int | None
     yes: bool | None
 
 
@@ -132,7 +135,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not imagepath.is_file():
                     raise UserError(f"image file {imagepath} not found")
 
-                items = lib.items(args)
+                items = lib.items(args, limit=opts.limit)
 
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.file):
@@ -168,7 +171,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 except Exception as e:
                     self._log.error("Unable to save image: {}", e)
                     return
-                items = lib.items(args)
+                items = lib.items(args, limit=opts.limit)
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.url):
                     tempimg.unlink()
@@ -186,7 +189,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     )
                 tempimg.unlink()
             else:
-                albums = lib.albums(args)
+                albums = lib.albums(args, limit=opts.limit)
                 # Confirm with user.
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
@@ -202,6 +205,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     )
                     self.remove_artfile(album)
 
+        embed_cmd.parser.add_limit_option()
         embed_cmd.func = embed_func
 
         # Extract command.
@@ -228,7 +232,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         ) -> None:
             if opts.outpath:
                 art.extract_first(
-                    self._log, normpath(Path(opts.outpath)), lib.items(args)
+                    self._log,
+                    normpath(Path(opts.outpath)),
+                    lib.items(args, limit=opts.limit),
                 )
             else:
                 filename = Path(opts.filename or config["art_filename"].get())
@@ -237,7 +243,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         "Only specify a name rather than a path for -n"
                     )
                     return
-                for album in lib.albums(args):
+                for album in lib.albums(args, limit=opts.limit):
                     if opts.associate and (
                         artpath := art.extract_first(
                             self._log, album.filepath / filename, album.items()
@@ -246,6 +252,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         album.set_art(artpath)
                         album.store()
 
+        extract_cmd.parser.add_limit_option()
         extract_cmd.func = extract_func
 
         # Clear command.
@@ -259,12 +266,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         def clear_func(
             lib: Library, opts: ClearArtCLIOpts, args: list[str]
         ) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             # Confirm with user.
             if not opts.yes and not _confirm(items, False):
                 return
-            art.clear(self._log, lib, args)
+            art.clear(self._log, lib, args, opts.limit)
 
+        clear_cmd.parser.add_limit_option()
         clear_cmd.func = clear_func
 
         return [embed_cmd, extract_cmd, clear_cmd]

@@ -49,9 +49,10 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         )
 
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             self.deezerupdate(list(items), ui.should_write())
 
+        deezer_update_cmd.parser.add_limit_option()
         deezer_update_cmd.func = func
 
         return [deezer_update_cmd]

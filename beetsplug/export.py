@@ -35,6 +35,7 @@ class ExportCLIOpts(Protocol):
     album: bool
     append: bool
     included_keys: Sequence[str]
+    limit: int | None
     output: str | None
     format: Format | None
 
@@ -132,6 +133,7 @@ class ExportPlugin(BeetsPlugin):
             default=self.config["default_format"].get(),
             help="the output format: json|jsonlines|csv|xml",
         )
+        cmd.parser.add_limit_option(flags=("--limit",))
         return [cmd]
 
     def run(
@@ -167,7 +169,9 @@ class ExportPlugin(BeetsPlugin):
         ]
 
         def collect_data() -> Iterator[JSONDict]:
-            for data_emitter in data_collector(lib, args, album=opts.album):
+            for data_emitter in data_collector(
+                lib, args, album=opts.album, limit=opts.limit
+            ):
                 try:
                     data, _ = data_emitter(included_keys or "*")
                 except (mediafile.UnreadableFileError, OSError) as ex:

@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 class ModifyCLIOpts(Protocol):
     album: bool
     inherit: bool
+    limit: int | None
     move: bool | None
     write: bool | None
     yes: bool | None
@@ -139,15 +140,21 @@ def modify_objects(
 
 
 def modify_items(
-    lib: Library, query: Sequence[str], **kwargs: Unpack[ModifyParams]
+    lib: Library,
+    query: Sequence[str],
+    limit: int | None,
+    **kwargs: Unpack[ModifyParams],
 ) -> None:
-    modify_objects(Item, list(lib.items(query)), lib, **kwargs)
+    modify_objects(Item, list(lib.items(query, limit=limit)), lib, **kwargs)
 
 
 def modify_albums(
-    lib: Library, query: Sequence[str], **kwargs: Unpack[ModifyParams]
+    lib: Library,
+    query: Sequence[str],
+    limit: int | None,
+    **kwargs: Unpack[ModifyParams],
 ) -> None:
-    modify_objects(Album, list(lib.albums(query)), lib, **kwargs)
+    modify_objects(Album, list(lib.albums(query, limit=limit)), lib, **kwargs)
 
 
 def print_and_modify(
@@ -204,6 +211,7 @@ def modify_func(lib: Library, opts: ModifyCLIOpts, args: list[str]) -> None:
     method(
         lib,
         query,
+        opts.limit,
         mods=mods,
         dels=dels,
         write=ui.should_write(opts.write),
@@ -257,4 +265,5 @@ modify_cmd.parser.add_option(
     default=True,
     help="when modifying albums, don't also change item data",
 )
+modify_cmd.parser.add_limit_option()
 modify_cmd.func = modify_func

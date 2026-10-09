@@ -24,6 +24,8 @@ New features
   a library update from the Subsonic server on demand, and an ``auto`` option
   that disables the updates triggered by library and smart playlist changes.
   :bug:`6741`
+- Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
+  already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
 
 Bug fixes
 ~~~~~~~~~

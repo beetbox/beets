@@ -3,12 +3,12 @@ Limit Query Plugin
 
 .. deprecated:: 2.14
 
-    Use the built-in ``-l`` / ``--limit`` flag on the :ref:`list-cmd` command
+    Use the built-in ``-l`` / ``--limit`` option on query-based commands
     instead.
 
 ``limit`` is a plugin to limit a query to the first or last set of results. We
-also provide a query prefix ``'<n'`` to inline the same behavior in the ``list``
-command. They are analogous to piping results:
+also provide a query prefix ``'<n'`` to inline the same behavior in query-based
+commands. They are analogous to piping results:
 
     $ beet [list|ls] [QUERY] | [head|tail] -n n
 
@@ -17,7 +17,7 @@ There are two provided interfaces:
 1. ``beet lslimit [--head n | --tail n] [QUERY]`` returns the head or tail of a
 query
 
-2. ``beet [list|ls] [QUERY] '<n'`` returns the head of a query
+2. ``beet [QUERY_COMMAND] [QUERY] '<n'`` returns the head of a query
 
 There are two differences in behavior:
 
