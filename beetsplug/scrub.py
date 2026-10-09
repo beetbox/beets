@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 
 class ScrubCLIOpts(Protocol):
+    limit: int | None
     write: bool
 
 
@@ -55,7 +56,7 @@ class ScrubPlugin(BeetsPlugin):
             lib: Library, opts: ScrubCLIOpts, args: list[str]
         ) -> None:
             # Walk through matching files and remove tags.
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 self._log.info("scrubbing: {.filepath}", item)
                 self._scrub_item(item, opts.write)
 
@@ -68,6 +69,7 @@ class ScrubPlugin(BeetsPlugin):
             default=True,
             help="leave tags empty",
         )
+        scrub_cmd.parser.add_limit_option()
         scrub_cmd.func = scrub_func
 
         return [scrub_cmd]

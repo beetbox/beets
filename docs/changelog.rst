@@ -12,14 +12,98 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+- :ref:`tunique` (``%tunique{}``): New path template function to disambiguate
+  tracks within the same album that share the same title (e.g., identical-titled
+  tracks on different discs). It has the same arguments as :ref:`%aunique
+  <aunique>`; the default identifiers are ``title`` and the default
+  disambiguators are ``track disc artist``.
+- :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
+  before whitelist filtering, while preserving existing genres regardless of the
+  configured count. :bug:`6890`
+- :doc:`plugins/subsonicupdate`: Add a ``subsonicupdate`` command that requests
+  a library update from the Subsonic server on demand, and an ``auto`` option
+  that disables the updates triggered by library and smart playlist changes.
+  :bug:`6741`
+- Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
+  already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
 - :doc:`plugins/web`: Redesign the web interface as a modern, buildless
   single-page UI: search (a simple mode and full beets-query support),
   Songs/Albums/Artists browsing, album and track metadata views with album art,
-  playback, and automatic light/dark theming. The ``/album/`` and ``/artist/``
-  list endpoints also gained optional ``offset``/``limit`` paging, capped at a
-  ``limit`` of 500 and reported via an ``X-Total-Count`` response header;
-  omitting the parameters returns every result as before, and ``/item/`` is
-  unaffected.
+  playback, and automatic light/dark theming. ``/album/``, ``/artist/``,
+  ``/item/query/`` and ``/album/query/`` accept optional ``offset``/``limit``
+  paging (``limit`` capped at 500; the list endpoints report the total in an
+  ``X-Total-Count`` header), and ``/artist/`` also returns an ``artist_art`` map
+  used for artist avatars. Omitting the parameters returns every result as
+  before.
+
+Bug fixes
+~~~~~~~~~
+
+- :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
+  gracefully by decoding with error handling and skipping tracks that produce
+  unparseable data, instead of crashing. :bug:`3527`
+- :doc:`plugins/mbsync`: Set ``medium_total`` to the number of tracks remaining
+  after configured data and video filters. :bug:`6836`
+- :doc:`plugins/chroma`: Fix file descriptor exhaustion when fingerprinting
+  large libraries. The chroma plugin now uses the ``fpcalc`` binary directly
+  (via ``force_fpcalc=True``) instead of routing through audioread's GStreamer
+  backend, which leaked fds on fingerprinting errors. :bug:`5171`
+- Add ``alternatives.item_updated`` to the typed event list so
+  :doc:`plugins/hook` can listen to it. :bug:`7036`
+- :doc:`/plugins/importadded`: The ``preserve_write_mtimes`` option no longer
+  writes to the item's source file when ``beet convert`` writes the converted
+  file, which previously crashed with a :class:`PermissionError` when the source
+  file was read-only. :bug:`6954`
+- :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
+  ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Fix word wrapping of colored diff output for a word containing two or more
+  separately-highlighted spans, which was incorrectly split into two words at
+  the second highlighted span.
+- Improve the error message when the library database cannot be opened (for
+  example due to permissions or an unwritable path), and fix the ``cannot not``
+  typo in the generic database open failure message. :bug:`1676`
+- :doc:`plugins/lastgenre`: An empty or null ``whitelist`` or ``canonical``
+  setting now raises a clear error instead of silently falling back to the
+  default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
+- Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
+  is a valid character in filenames on Unix. :bug:`7062`
+- :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
+  artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
+  fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
+  Request.
+- :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
+  ``lyrics_url`` for instrumental matches on items without lyrics, which were
+  previously discarded.
+- :doc:`plugins/mbsubmit`: The "Print tracks" (``p``) and "Open files with
+  Picard" (``o``) prompt choices are offered again when the importer has no
+  recommendation for a match (for example when no candidates were found).
+  :bug:`7031`
+- :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
+  subdirectory holds a file named like one in the album folder.
+
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
+
+- ``ArtResizer.resize``, ``ArtResizer.deinterlace`` and ``ArtResizer.reformat``
+  now expect :class:`pathlib.Path` arguments. ``str`` and ``bytes`` paths keep
+  working and are returned in the representation they were given in, but emit a
+  :class:`DeprecationWarning` and will be removed in 3.0.0.
+- ``beetsplug._utils.art.embed_item`` and
+  ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
+  arguments, deprecating ``str`` and ``bytes`` in the same way.
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
+  ``platformdirs``, which beets already requires.
+
+2.14.1 (September 17, 2026)
+---------------------------
+
+..
+    New features
+    ~~~~~~~~~~~~
 
 Bug fixes
 ~~~~~~~~~
@@ -28,6 +112,21 @@ Bug fixes
   ``[mm:ss.xxx]``) in LRC parsing, fixing an issue where synced lyrics with
   millisecond precision were erroneously rejected and fell back to plain lyrics.
   :bug:`7001`
+- Skip archive importer tests (``TestImport7z`` and ``TestImportRar``) when
+  their optional dependencies (``py7zr`` or ``rarfile`` / ``unrar``) are not
+  available. :bug:`7002`
+- :doc:`plugins/discogs`: Read the release month and day from the API's
+  ``released`` field instead of only the year. Fix Discogs match overwriting
+  month and day tags on import.
+- Empty leading path-format fields (e.g. from missing metadata) combined with a
+  custom ``replace`` configuration no longer produce an absolute destination
+  path that escapes the library or :doc:`plugins/convert` destination directory;
+  leading path separators are now stripped from the rendered path. :bug:`4889`
+- Add a configurable ``tempfile_prefix`` for temporary files created during
+  cross-filesystem moves, avoiding hidden-file behavior on Windows and Samba
+  shares caused by a hard-coded leading dot ('.'). :bug:`7033`
+- :ref:`import-cmd` Fix interactive importer ignoring candidates from manual
+  search (``e``) and manual ID (``i``) entry. :bug:`7000`
 
 ..
     For plugin developers
@@ -40,6 +139,8 @@ Other changes
   option: explain how the external command is run, remove the broken ``md5sum
   {file}`` example and show how to use such commands through a wrapper script.
   :bug:`3979`
+- Use ``bytes`` instead of ``memoryview`` for SQLite path storage and query
+  parameters.
 
 2.14.0 (September 07, 2026)
 ---------------------------

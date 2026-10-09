@@ -16,12 +16,13 @@ Enable the ``acousticbrainz`` plugin in your configuration (see
 
 ::
 
-    $ beet acousticbrainz [-f] [QUERY]
+    $ beet acousticbrainz [-f] [-l LIMIT] [QUERY]
 
 By default, the command will only look for AcousticBrainz data when the tracks
 doesn't already have it; the ``-f`` or ``--force`` switch makes it re-download
 data even when it already exists. If you specify a query, only matching tracks
 will be processed; otherwise, the command processes every track in your library.
+Use ``-l``/``--limit`` to cap the matched tracks before fetching data.
 
 For all tracks with a MusicBrainz recording ID, the plugin currently sets these
 fields:

@@ -321,7 +321,7 @@ wheels = [
 
 [[package]]
 name = "beets"
-version = "2.14.0"
+version = "2.14.1"
 source = { editable = "." }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },
@@ -419,7 +419,6 @@ sonosupdate = [
 ]
 thumbnails = [
     { name = "pillow" },
-    { name = "pyxdg" },
 ]
 tidal = [
     { name = "requests-oauthlib" },
@@ -449,6 +448,8 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly" },
+    { name = "pytest-xdist" },
     { name = "python-mpd2" },
     { name = "python3-discogs-client" },
     { name = "pyxdg" },
@@ -506,6 +507,8 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly" },
+    { name = "pytest-xdist" },
     { name = "python-mpd2" },
     { name = "python3-discogs-client" },
     { name = "pyxdg" },
@@ -531,7 +534,7 @@ requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'fetchart'" },
     { name = "beautifulsoup4", marker = "extra == 'lyrics'" },
     { name = "colorama", marker = "sys_platform == 'win32'" },
-    { name = "confuse", specifier = ">=2.2.0" },
+    { name = "confuse", specifier = ">=2.3.0" },
     { name = "dbus-python", marker = "sys_platform != 'win32' and extra == 'metasync'" },
     { name = "flask", marker = "extra == 'aura'" },
     { name = "flask", marker = "extra == 'web'" },
@@ -560,8 +563,7 @@ requires-dist = [
     { name = "pylast", marker = "extra == 'lastgenre'" },
     { name = "pylast", marker = "extra == 'lastimport'" },
     { name = "python-mpd2", marker = "extra == 'mpdstats'", specifier = ">=0.4.2" },
-    { name = "python3-discogs-client", marker = "extra == 'discogs'", specifier = ">=2.3.15" },
-    { name = "pyxdg", marker = "extra == 'thumbnails'" },
+    { name = "python3-discogs-client", marker = "extra == 'discogs'", specifier = ">=2.10" },
     { name = "pyyaml" },
     { name = "rarfile", marker = "extra == 'import'" },
     { name = "reflink", marker = "extra == 'reflink'" },
@@ -599,8 +601,10 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy", specifier = ">=2.8.1" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly", specifier = ">=5.0.0" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "python-mpd2" },
-    { name = "python3-discogs-client", specifier = ">=2.3.15" },
+    { name = "python3-discogs-client", specifier = ">=2.10" },
     { name = "pyxdg" },
     { name = "rarfile" },
     { name = "requests-mock", specifier = ">=1.12.1" },
@@ -651,8 +655,10 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-factoryboy", specifier = ">=2.8.1" },
     { name = "pytest-flask" },
+    { name = "pytest-randomly", specifier = ">=5.0.0" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "python-mpd2" },
-    { name = "python3-discogs-client", specifier = ">=2.3.15" },
+    { name = "python3-discogs-client", specifier = ">=2.10" },
     { name = "pyxdg" },
     { name = "rarfile" },
     { name = "requests-mock", specifier = ">=1.12.1" },
@@ -1043,15 +1049,15 @@ wheels = [
 
 [[package]]
 name = "confuse"
-version = "2.2.1"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/98/45/3ad821336a7953a2322e7e2d062488cfe179748725e5165117151b88a121/confuse-2.2.1.tar.gz", hash = "sha256:8e7600c3261852122eb5f17b24b06ab8e5437b21d6224853c1420c38ac469d3c", size = 52837, upload-time = "2026-07-19T14:56:24.289Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/89/d4451e170e9c02dd981cfd517b051658aa4d5a53060e57808bec63cf785b/confuse-2.3.0.tar.gz", hash = "sha256:66123bd4b38dec9ae36dd9407a090fd764245fd717cbaa986a68e3a05056920e", size = 7945661, upload-time = "2026-09-22T15:27:26.607Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/9c/65beb352015e520146b3debc9942cfbd5f6ec5aea7fdcedff2edc23954ab/confuse-2.2.1-py3-none-any.whl", hash = "sha256:0705a61938ae48d20c29fdb641f7dbd79aed5325bb7d0bd2df8a4dacb14de2ad", size = 28005, upload-time = "2026-07-19T14:56:22.94Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/b9/8a4263ca5b102a2ea64d58de338e1219509a13f0bf999108c483cda9530e/confuse-2.3.0-py3-none-any.whl", hash = "sha256:8a71f4d3ffb64302ceb7abf81c6340ae1f6906b759f9f8fd29ad9409201cd45c", size = 28083, upload-time = "2026-09-22T15:27:25.32Z" },
 ]
 
 [[package]]
@@ -1253,6 +1259,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/0e/97c33bf5009bdbac74fd2beace167cab3f978feb69cc36f1ef79360d6c4e/exceptiongroup-1.3.1-py3-none-any.whl", hash = "sha256:a7a39a3bd276781e98394987d3a5701d0c4edffb633bb7a5144577f82c773598", size = 16740, upload-time = "2025-11-21T23:01:53.443Z" },
+]
+
+[[package]]
+name = "execnet"
+version = "2.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/89/780e11f9588d9e7128a3f87788354c7946a9cbb1401ad38a48c4db9a4f07/execnet-2.1.2.tar.gz", hash = "sha256:63d83bfdd9a23e35b9c6a3261412324f964c2ec8dcd8d3c6916ee9373e0befcd", size = 166622, upload-time = "2025-11-12T09:56:37.75Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ab/84/02fc1827e8cdded4aa65baef11296a9bbe595c474f0d6d758af082d849fd/execnet-2.1.2-py3-none-any.whl", hash = "sha256:67fba928dd5a544b783f6056f449e5e3931a5c378b128bc18501f7ea79e296ec", size = 40708, upload-time = "2025-11-12T09:56:36.333Z" },
 ]
 
 [[package]]
@@ -2998,6 +3013,31 @@ wheels = [
 ]
 
 [[package]]
+name = "pytest-randomly"
+version = "5.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/01/3b/6a40e1b9d925651e601e056a97f60d8a1daeddeac03d5609be60cb4362ce/pytest_randomly-5.0.0.tar.gz", hash = "sha256:e9c575a5873ef168ddbe340ed9e97ce9edb4492ccc821e4b2ac6bb1f0ed515d2", size = 8542, upload-time = "2026-09-01T22:34:20.441Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/10/b4/47e939285caad9a623d021512912ac08dc92a467ad075d179f43729d2934/pytest_randomly-5.0.0-py3-none-any.whl", hash = "sha256:8a0d4703115c0c25b38b6e129fc16b1947b9643ff26a41bc1d185d7e5a7689c1", size = 8920, upload-time = "2026-09-01T22:34:19.227Z" },
+]
+
+[[package]]
+name = "pytest-xdist"
+version = "3.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "execnet" },
+    { name = "pytest" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/b4/439b179d1ff526791eb921115fca8e44e596a13efeda518b9d845a619450/pytest_xdist-3.8.0.tar.gz", hash = "sha256:7e578125ec9bc6050861aa93f2d59f1d8d085595d6551c2c90b6f4fad8d3a9f1", size = 88069, upload-time = "2025-07-01T13:30:59.346Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ca/31/d4e37e9e550c2b92a9cbc2e4d0b7420a27224968580b5a447f420847c975/pytest_xdist-3.8.0-py3-none-any.whl", hash = "sha256:202ca578cfeb7370784a8c33d6d05bc6e13b4f25b5053c30a152269fd10f0b88", size = 46396, upload-time = "2025-07-01T13:30:56.632Z" },
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 source = { registry = "https://pypi.org/simple" }
@@ -3020,16 +3060,16 @@ wheels = [
 
 [[package]]
 name = "python3-discogs-client"
-version = "2.9"
+version = "2.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "oauthlib" },
     { name = "python-dateutil" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/5c/48f3b25aeb9a111f09ae3c0f329356c9f4c67c124f0cfb539d19268926a2/python3_discogs_client-2.9.tar.gz", hash = "sha256:f588ad0c998d04b72e1eadcde9b353023cae6c4a3af6d81db15029c83eec5df1", size = 38176, upload-time = "2026-07-15T17:56:17.019Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/12/fbdbd438ed97365d05425ac64d9a5b9ffc4857270fea6d8340cfe143d7a8/python3_discogs_client-2.10.tar.gz", hash = "sha256:3f9b2f53c51e6b2fbb1bd59c3120c4a06c3aa04e6c806e7bef68b533077f7a2f", size = 39014, upload-time = "2026-09-29T21:33:06.636Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/d7/8436885b1ce3a6bf6a167ba4d0680e2d75a3524bec8a890af4dd3dd5598a/python3_discogs_client-2.9-py3-none-any.whl", hash = "sha256:fc426cb4e97159b6595d264957bb991a928686e54db432c7027dbe05e47cacce", size = 17710, upload-time = "2026-07-15T17:56:15.762Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/3a/2c766d9588ccc0b43f610f1f9d32681aab8b1a135bf2c5a6dbc5e76c7925/python3_discogs_client-2.10-py3-none-any.whl", hash = "sha256:3048f6c7821a9f5a87900a6e1cfaeb706abcde737bb9c5a19f4e2d138377ae0c", size = 18290, upload-time = "2026-09-29T21:33:05.185Z" },
 ]
 
 [[package]]

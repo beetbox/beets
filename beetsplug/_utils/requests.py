@@ -22,9 +22,10 @@ class BeetsHTTPError(requests.exceptions.HTTPError):
     STATUS: ClassVar[HTTPStatus]
 
     def __init__(self, *args, message: str | None = None, **kwargs) -> None:
-        if not message:
-            message = f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}"
-
+        status_message = (
+            f"HTTP Error: {self.STATUS.value} {self.STATUS.phrase}."
+        )
+        message = f"{status_message} {message}" if message else status_message
         super().__init__(message, *args, **kwargs)
 
 
@@ -74,7 +75,9 @@ class TimeoutAndRetrySession(requests.Session, metaclass=SingletonMeta):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.headers["User-Agent"] = f"beets/{__version__} https://beets.io/"
+        self.setup_adapter()
 
+    def setup_adapter(self) -> None:
         retry = Retry(
             total=6,
             backoff_factor=0.5,
@@ -164,7 +167,7 @@ class RequestHandler:
         HTTPNotFoundError
     ]
 
-    def create_session(self) -> TimeoutAndRetrySession:
+    def create_session(self) -> requests.Session:
         """Create a new HTTP session instance.
 
         Can be overridden by subclasses to provide custom session types.
@@ -172,7 +175,7 @@ class RequestHandler:
         return TimeoutAndRetrySession()
 
     @cached_property
-    def session(self) -> TimeoutAndRetrySession:
+    def session(self) -> requests.Session:
         return self.create_session()
 
     def status_to_error(

@@ -315,6 +315,15 @@ Use ``poe`` to run tests:
 
     $ poe test [pytest options]
 
+The suite is distributed across several processes with pytest-xdist_. How many
+depends on what you ask for: a single path or a ``-k`` filter runs in a single
+process, while a wider run spreads over half of the available CPUs. Give ``-n0``
+to stay in one process, for example when you need a debugger, or ``-n4`` to
+choose the worker count yourself.
+
+Tests are grouped by module and class (``--dist=loadscope``) so that each group,
+including the state shared by a ``unittest`` class, stays within one worker.
+
 Coverage
 ++++++++
 
@@ -334,9 +343,11 @@ You can find project coverage status on Codecov_.
 Red Flags
 +++++++++
 
-The pytest-random_ plugin makes it easy to randomize the order of tests. ``poe
-test --random`` will occasionally turn up failing tests that reveal ordering
-dependencies—which are bad news!
+The pytest-randomly_ plugin shuffles the order of tests on every run, which
+occasionally turns up failing tests that reveal ordering dependencies—which are
+bad news! Each run reports the seed it used, so an interesting order can be
+replayed with ``poe test --randomly-seed=<seed>``. Use ``poe test -p
+no:randomly`` to keep the original order.
 
 Test Dependencies
 +++++++++++++++++
@@ -418,7 +429,9 @@ contributor.
 
 .. _pytest: https://docs.pytest.org/en/stable/
 
-.. _pytest-random: https://github.com/klrmn/pytest-random
+.. _pytest-randomly: https://github.com/pytest-dev/pytest-randomly
+
+.. _pytest-xdist: https://pytest-xdist.readthedocs.io/en/stable/
 
 .. _requests-mock: https://requests-mock.readthedocs.io/en/latest/response.html
 

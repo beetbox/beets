@@ -6,6 +6,7 @@ on:
       version:
         description: 'Version of the new release, just as a number with no prepended "v"'
         required: true
+        type: string
 
 env:
   PYTHON_VERSION: "3.10"
@@ -17,7 +18,18 @@ jobs:
     name: Bump version, commit and create tag
     runs-on: ubuntu-latest
     steps:
+      - name: Generate release app token
+        id: release-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+
       - uses: actions/checkout@v5
+        with:
+          token: ${{ steps.release-token.outputs.token }}
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
