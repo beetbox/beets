@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import json
 import os
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 import flask
@@ -14,7 +13,7 @@ from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
-from beets import ui, util
+from beets import context, ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
@@ -300,6 +299,9 @@ app.url_map.converters["everything"] = EverythingConverter
 @app.before_request
 def before_request() -> None:
     g.lib = app.config["lib"]
+    # Request threads don't inherit the music directory context, which beets
+    # needs to expand paths stored relative to the library directory.
+    context.set_music_dir(g.lib.directory)
 
 
 # Items.
@@ -393,10 +395,6 @@ def album_query(queries: Sequence[str]) -> Any:
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
     if album and (artpath := album.art_filepath):
-        # artpath may be stored relative to the library directory; resolve it
-        # to an absolute path so send_file doesn't look under the app root.
-        if not artpath.is_absolute():
-            artpath = Path(os.fsdecode(g.lib.directory)) / artpath
         return flask.send_file(util.syspath(artpath))
     return flask.abort(404)
 

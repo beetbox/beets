@@ -71,9 +71,8 @@ Bug fixes
   :bug:`7031`
 - :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
   subdirectory holds a file named like one in the album folder.
-- :doc:`plugins/web`: Fix a 500 error when serving album art for albums whose
-  ``artpath`` is stored relative to the library directory; the path is now
-  resolved against the library directory before the file is served.
+- :doc:`plugins/web`: Fix the 500 error when serving track files and album art
+  whose paths are stored relative to the library directory. :bug:`7063`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

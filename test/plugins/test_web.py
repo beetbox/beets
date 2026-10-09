@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from beets import context
 from beets.library import Album, Item
 from beets.test import _common
 from beets.test.helper import PluginMixin, PytestTestHelper
@@ -675,63 +676,35 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         assert response.status_code == 200
 
-    def test_get_album_art_relative_artpath(self):
-        # Some libraries store artpath relative to the music directory; the art
-        # route must resolve it against the library directory instead of 500ing.
-        import os
-        import threading
+    @pytest.fixture
+    def worker_thread_context(self):
+        """Clear the music directory, as in a server request thread."""
+        with context.music_dir(b""):
+            yield
 
-        from beets.library import Library
-        from beets.util import bytestring_path
+    @pytest.mark.usefixtures("worker_thread_context")
+    def test_get_item_file_relative_path(self):
+        path = self.lib_path / "rel" / "track.mp3"
+        path.parent.mkdir()
+        shutil.copy(_common.RSRC / "full.mp3", path)
+        item_id = self.lib.add(Item(title="rel", path=b"rel/track.mp3"))
 
-        # The ORM auto-absolutizes a relative artpath using a ContextVar
-        # that gets set when the Library is constructed (in this thread).
-        # A brand-new OS thread does NOT inherit that ContextVar, which is
-        # exactly what happens on the real web plugin's threaded dev server
-        # (app.run(threaded=True)): each request runs in a worker thread
-        # that never constructed the Library, so the artpath stays relative
-        # there. Run the request from a freshly spawned thread to reproduce
-        # that condition -- calling it from this (the Library-owning)
-        # thread would never exercise the bug.
-        #
-        # This also requires an on-disk database: the default test library
-        # is sqlite ":memory:", and each thread opens its own connection,
-        # so a worker thread would see an empty (tableless) database rather
-        # than a relative-path lookup. An on-disk file, like a real deployed
-        # library, is visible to every thread's connection.
-        dbpath = self.temp_path / "artpath_test.db"
-        lib = Library(str(dbpath), str(self.lib_path))
-        web.app.config["lib"] = lib
-        try:
-            rel = Path("rel_art_dir") / "cover.png"
-            abspath = Path(os.fsdecode(lib.directory)) / rel
-            abspath.parent.mkdir(parents=True, exist_ok=True)
-            abspath.write_bytes(b"PNGDATA")
+        response = self.client.get(f"/item/{item_id}/file")
 
-            lib.add(Album(album="relartalbum", artpath=bytestring_path(rel)))
-            album_id = lib.albums("relartalbum").get().id
+        assert response.status_code == 200
+        assert response.data == path.read_bytes()
 
-            result = {}
+    @pytest.mark.usefixtures("worker_thread_context")
+    def test_get_album_art_relative_path(self):
+        path = self.lib_path / "rel" / "cover.png"
+        path.parent.mkdir()
+        path.write_bytes(b"PNGDATA")
+        album_id = self.lib.add(Album(album="rel", artpath=b"rel/cover.png"))
 
-            def make_request() -> None:
-                try:
-                    response = self.client.get(f"/album/{album_id}/art")
-                    result["status_code"] = response.status_code
-                    result["data"] = response.data
-                except Exception as exc:  # re-raised in the main thread below
-                    result["exception"] = exc
+        response = self.client.get(f"/album/{album_id}/art")
 
-            thread = threading.Thread(target=make_request)
-            thread.start()
-            thread.join()
-
-            if "exception" in result:
-                raise result["exception"]
-            assert result["status_code"] == 200
-            assert result["data"] == b"PNGDATA"
-        finally:
-            web.app.config["lib"] = self.lib
-            lib._close()
+        assert response.status_code == 200
+        assert response.data == b"PNGDATA"
 
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):
