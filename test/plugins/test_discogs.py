@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from discogs_client import Client, Release
+from discogs_client.exceptions import MalformedResponseError
 
 from beets.library import Item
 from beets.metadata_plugins import SearchParams
@@ -594,8 +595,13 @@ class TestDGSearchQuery(TestHelper):
 
 class TestDGSearchResponse(DiscogsTestMixin):
     @staticmethod
-    def _decode_error():
-        return json.JSONDecodeError("Expecting value", "", 0)
+    def _malformed_response_error() -> MalformedResponseError:
+        original_exception = json.JSONDecodeError("Expecting value", "", 0)
+        return MalformedResponseError(
+            status_code=200,
+            content=b"invalid JSON",
+            original_exception=original_exception,
+        )
 
     @pytest.fixture
     def params(self):
@@ -609,7 +615,7 @@ class TestDGSearchResponse(DiscogsTestMixin):
     def test_retries_invalid_json_response(self, plugin, client, params):
         result = MagicMock(data={"id": 123})
         results = client.search.return_value
-        results.page.side_effect = [self._decode_error(), [result]]
+        results.page.side_effect = [self._malformed_response_error(), [result]]
 
         assert plugin.get_search_response(params) == [{"id": 123}]
         assert client.search.call_count == 2
@@ -618,9 +624,12 @@ class TestDGSearchResponse(DiscogsTestMixin):
 
     def test_raises_after_invalid_json_retry(self, plugin, client, params):
         results = client.search.return_value
-        results.page.side_effect = [self._decode_error(), self._decode_error()]
+        results.page.side_effect = [
+            self._malformed_response_error(),
+            self._malformed_response_error(),
+        ]
 
-        with pytest.raises(json.JSONDecodeError):
+        with pytest.raises(MalformedResponseError):
             plugin.get_search_response(params)
 
         assert client.search.call_count == 2

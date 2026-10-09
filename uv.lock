@@ -563,7 +563,7 @@ requires-dist = [
     { name = "pylast", marker = "extra == 'lastgenre'" },
     { name = "pylast", marker = "extra == 'lastimport'" },
     { name = "python-mpd2", marker = "extra == 'mpdstats'", specifier = ">=0.4.2" },
-    { name = "python3-discogs-client", marker = "extra == 'discogs'", specifier = ">=2.3.15" },
+    { name = "python3-discogs-client", marker = "extra == 'discogs'", specifier = ">=2.10" },
     { name = "pyyaml" },
     { name = "rarfile", marker = "extra == 'import'" },
     { name = "reflink", marker = "extra == 'reflink'" },
@@ -604,7 +604,7 @@ dev = [
     { name = "pytest-randomly", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "python-mpd2" },
-    { name = "python3-discogs-client", specifier = ">=2.3.15" },
+    { name = "python3-discogs-client", specifier = ">=2.10" },
     { name = "pyxdg" },
     { name = "rarfile" },
     { name = "requests-mock", specifier = ">=1.12.1" },
@@ -658,7 +658,7 @@ test = [
     { name = "pytest-randomly", specifier = ">=5.0.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "python-mpd2" },
-    { name = "python3-discogs-client", specifier = ">=2.3.15" },
+    { name = "python3-discogs-client", specifier = ">=2.10" },
     { name = "pyxdg" },
     { name = "rarfile" },
     { name = "requests-mock", specifier = ">=1.12.1" },
@@ -3060,16 +3060,16 @@ wheels = [
 
 [[package]]
 name = "python3-discogs-client"
-version = "2.9"
+version = "2.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "oauthlib" },
     { name = "python-dateutil" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/5c/48f3b25aeb9a111f09ae3c0f329356c9f4c67c124f0cfb539d19268926a2/python3_discogs_client-2.9.tar.gz", hash = "sha256:f588ad0c998d04b72e1eadcde9b353023cae6c4a3af6d81db15029c83eec5df1", size = 38176, upload-time = "2026-07-15T17:56:17.019Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/12/fbdbd438ed97365d05425ac64d9a5b9ffc4857270fea6d8340cfe143d7a8/python3_discogs_client-2.10.tar.gz", hash = "sha256:3f9b2f53c51e6b2fbb1bd59c3120c4a06c3aa04e6c806e7bef68b533077f7a2f", size = 39014, upload-time = "2026-09-29T21:33:06.636Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/d7/8436885b1ce3a6bf6a167ba4d0680e2d75a3524bec8a890af4dd3dd5598a/python3_discogs_client-2.9-py3-none-any.whl", hash = "sha256:fc426cb4e97159b6595d264957bb991a928686e54db432c7027dbe05e47cacce", size = 17710, upload-time = "2026-07-15T17:56:15.762Z" },
+    { url = "https://files.pythonhosted.org/packages/ee/3a/2c766d9588ccc0b43f610f1f9d32681aab8b1a135bf2c5a6dbc5e76c7925/python3_discogs_client-2.10-py3-none-any.whl", hash = "sha256:3048f6c7821a9f5a87900a6e1cfaeb706abcde737bb9c5a19f4e2d138377ae0c", size = 18290, upload-time = "2026-09-29T21:33:05.185Z" },
 ]
 
 [[package]]
