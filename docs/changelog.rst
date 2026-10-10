@@ -71,6 +71,9 @@ Bug fixes
   :bug:`7031`
 - :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
   subdirectory holds a file named like one in the album folder.
+- ``beet update``: A filesystem error while moving an item or album is now
+  reported and the update continues with the rest of the library, instead of
+  aborting and leaving it partially updated. :bug:`2419`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
