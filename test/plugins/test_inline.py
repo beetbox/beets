@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from beets import config, plugins
+from beets import plugins
 from beets.test.helper import PluginTestHelper
 from beetsplug.inline import InlinePlugin
 
@@ -9,7 +9,7 @@ class TestInlineRecursion(PluginTestHelper):
     plugin: ClassVar[str] = "inline"
 
     def test_no_recursion_when_inline_shadows_fixed_field(self):
-        config["item_fields"] = {
+        self.config["item_fields"] = {
             "track_no": (
                 "f'{disc:02d}-{track:02d}' if disctotal > 1 else f'{track:02d}'"
             )
@@ -68,9 +68,8 @@ class TestInlineRecursion(PluginTestHelper):
         assert func(item) == 4
 
     def test_inline_obj_missing(self):
-        config["plugins"] = ["inline", "missing"]
-
-        config["album_fields"] = {"has_missing": ("bool(db_obj.missing)")}
+        self.config["plugins"] = ["inline", "missing"]
+        self.config["album_fields"] = {"has_missing": ("bool(db_obj.missing)")}
 
         plugins._instances.clear()
         plugins.load_plugins()
