@@ -5,7 +5,7 @@ on:
     - cron: "0 0 * * SUN" # run every Sunday at midnight
 
 env:
-  PYTHON_VERSION: "3.10"
+  PYTHON_VERSION: "3.11"
 
 jobs:
   test_integration:
