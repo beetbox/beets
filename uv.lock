@@ -487,7 +487,6 @@ lint = [
 ]
 release = [
     { name = "click" },
-    { name = "tomli" },
 ]
 test = [
     { name = "beautifulsoup4" },
@@ -635,10 +634,7 @@ lint = [
     { name = "ruff", specifier = ">=0.13.0" },
     { name = "sphinx-lint", specifier = ">=1.0.0" },
 ]
-release = [
-    { name = "click", specifier = ">=8.1.7" },
-    { name = "tomli", specifier = ">=2.0.1" },
-]
+release = [{ name = "click", specifier = ">=8.1.7" }]
 test = [
     { name = "beautifulsoup4" },
     { name = "codecov", specifier = ">=2.1.13" },
