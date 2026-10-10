@@ -881,7 +881,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     dbpath = config["library"].as_path()
     _ensure_db_directory_exists(dbpath)
     try:
-        lib = library.Library(dbpath, config["directory"].as_filename())
+        lib = library.Library(dbpath, config["directory"].as_path())
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         error_str = str(db_error).lower()
@@ -893,20 +893,17 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
             or "attempt to write a readonly" in error_str
         ):
             # Prefer directory of the db path for a helpful permissions hint.
-            db_dir = os.path.dirname(os.fspath(dbpath)) or os.curdir
             raise UserError(
                 f"database file {dbpath_display} could not be opened. "
                 f"This may be due to a permissions issue. If the database "
                 f"does not exist yet, please check that the file or directory "
-                f"{util.displayable_path(db_dir)} is writable."
+                f"{dbpath.parent} is writable."
             ) from db_error
         raise UserError(
             f"database file {dbpath_display} could not be opened: {db_error}"
         ) from db_error
     log.debug(
-        "library database: {}\nlibrary directory: {}",
-        util.displayable_path(lib.path),
-        util.displayable_path(lib.directory),
+        "library database: {}\nlibrary directory: {}", lib.path, lib.directory
     )
     return lib
 
