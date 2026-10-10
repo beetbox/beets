@@ -8,7 +8,7 @@ import re
 import subprocess
 from collections.abc import Callable
 from contextlib import redirect_stdout
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from functools import partial
 from io import StringIO
 from pathlib import Path
@@ -121,7 +121,7 @@ def create_rst_replacements() -> list[Replacement]:
         #    |BeetsPlugin| -> :class:`beets.plugins.BeetsPlugin`
         (r"\|\w[^ ]*\|", lambda m: explicit_replacements.get(m[0], m[0])),
         # Replace Sphinx directives by documentation URLs, e.g.,
-        #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)  # noqa: E501
+        #   :ref:`/plugins/autobpm` -> [AutoBPM Plugin](DOCS/plugins/autobpm.html)
         #   :ref:`list-cmd` -> [list command](DOCS/reference/cli.html#list-cmd)
         (
             r":(?:ref|doc|class|conf):`+~?(?:([^`<]+)<)?/?([\w.:/_-]+)>?`+",
@@ -156,7 +156,7 @@ def update_docs_config(text: str, new: Version) -> str:
 
 
 def update_changelog(text: str, new: Version) -> str:
-    new_header = f"{new} ({datetime.now(timezone.utc).date():%B %d, %Y})"
+    new_header = f"{new} ({datetime.now(UTC).date():%B %d, %Y})"
     return re.sub(
         # do not match if the new version is already present
         r"\nUnreleased\n--+\n",

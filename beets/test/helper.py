@@ -40,11 +40,11 @@ from beets.util import MoveOperation, clean_module_tempdir, syspath
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
     from types import TracebackType
+    from typing import Self
     from unittest.mock import _patch
 
     from confuse import ConfigSource
     from requests_mock.mocker import Mocker
-    from typing_extensions import Self
 
     from beets.autotag import AlbumMatch, TrackMatch
     from beets.library import Album

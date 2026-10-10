@@ -185,7 +185,7 @@ class UpdateTest(IOMixin, BeetsTestCase):
         correct_albumtypes = ["album", "live"]
 
         # Setting albumtypes does not set albumtype, currently.
-        # Using x[0] mirrors https://github.com/beetbox/mediafile/blob/057432ad53b3b84385e5582f69f44dc00d0a725d/mediafile.py#L1928  # noqa: E501
+        # Using x[0] mirrors https://github.com/beetbox/mediafile/blob/057432ad53b3b84385e5582f69f44dc00d0a725d/mediafile.py#L1928
         correct_albumtype = correct_albumtypes[0]
 
         album.albumtype = correct_albumtype

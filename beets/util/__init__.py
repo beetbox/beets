@@ -33,13 +33,13 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    Self,
     TypeVar,
     cast,
     overload,
 )
 
 from confuse import Optional
-from typing_extensions import Self
 from unidecode import unidecode
 
 import beets

@@ -6,7 +6,7 @@ import os
 import re
 from dataclasses import dataclass
 from mimetypes import guess_type
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, Self
 
 from flask import (
     Blueprint,
@@ -16,7 +16,6 @@ from flask import (
     request,
     send_file,
 )
-from typing_extensions import Self
 
 from beets import config
 from beets.dbcore import AndQuery, MatchQuery
