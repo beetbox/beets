@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
-
-from typing_extensions import NotRequired
+from typing import TYPE_CHECKING, NotRequired, TypedDict
 
 from beets.dbcore import AndQuery, MatchQuery, OrQuery
 from beets.dbcore.query import StringQuery, SubstringQuery

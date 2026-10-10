@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple, Protocol, TypedDict
-
-from typing_extensions import Unpack
+from typing import TYPE_CHECKING, NamedTuple, Protocol, TypedDict, Unpack
 
 from beets import ui
 from beets.dbcore import types

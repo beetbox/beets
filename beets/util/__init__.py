@@ -33,6 +33,7 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    Self,
     TypeVar,
     cast,
     overload,
@@ -40,7 +41,6 @@ from typing import (
 
 import confuse
 from confuse import Optional
-from typing_extensions import Self
 from unidecode import unidecode
 
 import beets

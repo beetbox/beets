@@ -26,14 +26,12 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    Self,
     TypedDict,
     overload,
 )
 
-from typing_extensions import (
-    Self,
-    TypeVar,  # default value support
-)
+from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
 
 import beets
