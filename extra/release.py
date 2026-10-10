@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import tomllib
 from collections.abc import Callable
 from contextlib import redirect_stdout
 from datetime import UTC, datetime
@@ -15,7 +16,6 @@ from pathlib import Path
 from typing import NamedTuple, TypeAlias
 
 import click
-import tomli
 from packaging.version import Version, parse
 from sphinx.ext import intersphinx
 
@@ -209,7 +209,7 @@ def validate_new_version(
 ) -> Version:
     """Validate the version is newer than the current one."""
     with PYPROJECT.open("rb") as f:
-        current = parse(tomli.load(f)["project"]["version"])
+        current = parse(tomllib.load(f)["project"]["version"])
 
     if not value > current:
         msg = f"version must be newer than {current}"

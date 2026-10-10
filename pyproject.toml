@@ -89,7 +89,6 @@ typing = [
 ]
 release = [
     "click>=8.1.7",
-    "tomli>=2.0.1",
 ]
 dev = [
     { include-group = "docs" },
