@@ -155,7 +155,8 @@ class TestCaseSensitivity:
     """
 
     @pytest.fixture(autouse=True, scope="class")
-    def setup(self, helper):
+    @classmethod
+    def setup(cls, helper):
         helper.lib.add(Album(album="album", albumartist="bar"))
         helper.lib.add(Album(album="Album", albumartist="Bar"))
         helper.add_item(artist="artist", flex1="flex1", track=10)
