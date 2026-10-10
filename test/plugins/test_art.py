@@ -79,11 +79,12 @@ class UseThePlugin(TestHelper):
         return
 
     @pytest.fixture(autouse=True, scope="class")
-    def cleanup(self):
+    @classmethod
+    def cleanup(cls):
         try:
             yield
         finally:
-            for module in self.modules:
+            for module in cls.modules:
                 clean_module_tempdir(module)
 
     @pytest.fixture
@@ -1027,11 +1028,12 @@ class AlbumArtOperationMixin(UseThePlugin):
     IMAGE_WIDTH_HEIGHT_DIFF = IMAGE_WIDTH - IMAGE_HEIGHT
 
     @pytest.fixture(autouse=True, scope="class")
-    def fs_mock(self, cleanup):
+    @classmethod
+    def fs_mock(cls, cleanup):
         def fs_source_get(_self, album, settings, paths):
             if paths:
                 yield fetchart.Candidate(
-                    logger, source_name=_self.ID, path=self.IMAGE_PATH
+                    logger, source_name=_self.ID, path=cls.IMAGE_PATH
                 )
 
         with patch("beetsplug.fetchart.FileSystem.get", fs_source_get):

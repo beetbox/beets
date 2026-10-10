@@ -49,7 +49,8 @@ def helper(class_helper):
 
 class TestGet:
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         album_items = [
             helper.create_item(
                 title="first",
@@ -258,7 +259,8 @@ class TestGet:
 
 class TestMatch:
     @pytest.fixture(scope="class")
-    def item(self):
+    @classmethod
+    def item(cls):
         return _common.item(
             album="the album",
             disc=6,
@@ -453,9 +455,10 @@ class TestQuery:
     SINGLE = "singleton"
 
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         helper.add_album(
-            title=self.ALBUM,
+            title=cls.ALBUM,
             comp=True,
             flexbool=True,
             bpm=120,
@@ -463,7 +466,7 @@ class TestQuery:
             rg_track_gain=0,
         )
         helper.add_item(
-            title=self.SINGLE, comp=False, flexbool=False, rg_track_gain=None
+            title=cls.SINGLE, comp=False, flexbool=False, rg_track_gain=None
         )
 
         with pytest.MonkeyPatch.context() as monkeypatch:
@@ -523,7 +526,8 @@ class TestQuery:
 
 class TestDefaultSearchFields:
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         helper.add_album(
             title="title",
             album="album",
@@ -552,7 +556,8 @@ class TestRelatedQueries:
     """Test album-level queries with track-level filters and vice-versa."""
 
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         for album_idx in range(1, 3):
             album_name = f"Album{album_idx}"
             items = [
@@ -606,7 +611,8 @@ class TestHasCoverArtQuery:
     """Test has_cover_art computed field for detecting embedded cover art."""
 
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         item_with = helper.add_item_fixture()
         item_with.title = "with_art"
 
