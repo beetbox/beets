@@ -2,16 +2,15 @@ import time
 
 import pytest
 
-import beets
 from beets.dbcore import types
 from beets.util import normpath
 
 
-def test_datetype():
+def test_datetype(config):
     t = types.DATE
 
     # format
-    time_format = beets.config["time_format"].as_str()
+    time_format = config["time_format"].as_str()
     time_local = time.strftime(time_format, time.localtime(123456789))
     assert time_local == t.format(123456789)
     # parse
@@ -41,7 +40,7 @@ def test_musicalkey():
     assert "Not c#m" == t.parse("not C#m")
 
 
-def test_durationtype():
+def test_durationtype(config):
     t = types.DurationType()
 
     # format
@@ -55,7 +54,7 @@ def test_durationtype():
     assert t.null == t.parse("1:00:01")
     assert t.null == t.parse("not61.23")
     # config format_raw_length
-    beets.config["format_raw_length"] = True
+    config["format_raw_length"] = True
     assert "61.23" == t.format(61.23)
     assert "3601.23" == t.format(3601.23)
 

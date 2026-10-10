@@ -108,18 +108,18 @@ class MoveTest(BeetsTestCase):
         assert "C_DOS" in self.i.path.decode()
 
     def test_move_file_with_multiple_colons(self):
-        # print(beets.config["replace"])
+        # print(self.config["replace"])
         self.i.artist = "COM:DOS"
         self.i.move()
         assert "COM_DOS" in self.i.path.decode()
 
     def test_move_file_with_colon_alt_separator(self):
-        old = beets.config["drive_sep_replace"]
-        beets.config["drive_sep_replace"] = "0"
+        old = self.config["drive_sep_replace"]
+        self.config["drive_sep_replace"] = "0"
         self.i.artist = "C:DOS"
         self.i.move()
         assert "C0DOS" in self.i.path.decode()
-        beets.config["drive_sep_replace"] = old
+        self.config["drive_sep_replace"] = old
 
     def test_read_only_file_copied_writable(self):
         # Make the source file read-only.
