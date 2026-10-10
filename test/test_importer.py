@@ -22,7 +22,7 @@ from zipfile import ZipFile
 import pytest
 from mediafile import MediaFile
 
-from beets import config, importer, logging, plugins, ui, util
+from beets import importer, logging, plugins, ui, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
 from beets.importer.state import ImportState
 from beets.importer.tasks import (
@@ -84,7 +84,7 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
         assert self.track_lib_path.exists()
 
     def test_threaded_import_copy_arrives(self):
-        config["threaded"] = True
+        self.config["threaded"] = True
 
         self.run_asis_importer()
         assert self.track_lib_path.exists()
@@ -93,7 +93,7 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
         assert self.album_path.exists()
         assert self.track_import_path.exists()
         (self.album_path / "alog.log").touch()
-        config["clutter"] = ["*.log"]
+        self.config["clutter"] = ["*.log"]
 
         self.run_asis_importer(move=True)
 
@@ -305,7 +305,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert (self.lib_path / "singletons" / "Applied Track 1.mp3").exists()
 
     def test_apply_from_scratch_removes_other_metadata(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         for mediafile in self.import_media:
             mediafile.comments = "Tag Comment"
@@ -351,7 +351,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         collection = "To Listen"
         disc = 0
 
-        config["import"]["set_fields"] = {
+        self.config["import"]["set_fields"] = {
             "genres": "; ".join(genres),
             "collection": collection,
             "disc": disc,
@@ -425,7 +425,7 @@ class TestImportFormat(ImportHelper):
         assert len(self.lib.items()) == 0
 
     def test_recognize_format_change_original(self):
-        config["import"]["fix_ext_inplace"] = True
+        self.config["import"]["fix_ext_inplace"] = True
         resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
@@ -435,7 +435,7 @@ class TestImportFormat(ImportHelper):
         assert not Path(self.temp_path / "no_ext").exists()
 
     def test_recognize_format_keep_original(self):
-        config["import"]["fix_ext_inplace"] = False
+        self.config["import"]["fix_ext_inplace"] = False
         resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
@@ -472,7 +472,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
         assert item.filepath.exists()
 
     def test_apply_from_scratch_removes_other_metadata(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         for mediafile in self.import_media:
             mediafile.genres = ["Tag Genre"]
@@ -483,14 +483,14 @@ class TestImport(PathsMixin, AutotagImportHelper):
         assert not self.lib.items().get().genres
 
     def test_apply_from_scratch_keeps_format(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
         assert self.lib.items().get().format == "MP3"
 
     def test_apply_from_scratch_keeps_bitrate(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
         bitrate = 80000
 
         self.importer.add_choice(importer.Action.APPLY)
@@ -500,7 +500,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
     def test_apply_with_move_deletes_import(self):
         assert self.track_import_path.exists()
 
-        config["import"]["move"] = True
+        self.config["import"]["move"] = True
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -509,7 +509,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
     def test_apply_with_delete_deletes_import(self):
         assert self.track_import_path.exists()
 
-        config["import"]["delete"] = True
+        self.config["import"]["delete"] = True
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -574,7 +574,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
         disc = 0
         comments = "managed by beets"
 
-        config["import"]["set_fields"] = {
+        self.config["import"]["set_fields"] = {
             "genres": "; ".join(genres),
             "collection": collection,
             "disc": disc,
@@ -1156,7 +1156,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         medium.title = "New Title"
         medium.save()
 
-        config["import"]["copy"] = False
+        self.config["import"]["copy"] = False
         self.reimporter.add_choice(importer.Action.ASIS)
         self.reimporter.run()
 
@@ -1164,7 +1164,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         assert not self.applied_track_path.with_name("New Title.mp3").exists()
 
     def test_outside_file_is_copied(self):
-        config["import"]["copy"] = False
+        self.config["import"]["copy"] = False
         self.importer.run()
         assert self.lib.items().get().filepath == self.track_import_path
 
@@ -1227,7 +1227,7 @@ class GroupAlbumsImportTest(AutotagImportTestCase):
         assert artists == {"Artist B", "Tag Artist"}
 
     def test_incremental(self):
-        config["import"]["incremental"] = True
+        self.config["import"]["incremental"] = True
         self.import_media[0].album = "Album B"
         self.import_media[0].save()
 
@@ -1241,7 +1241,7 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
         super().setUp()
         self.importer.clear_choices()
         self.importer.default_choice = importer.Action.ASIS
-        config["import"]["group_albums"] = True
+        self.config["import"]["group_albums"] = True
 
 
 class ChooseCandidateTest(AutotagImportTestCase):
@@ -1417,7 +1417,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert len(self.lib.albums()) == 1
 
     def test_no_autotag_removes_duplicate_album(self):
-        config["import"]["autotag"] = False
+        self.config["import"]["autotag"] = False
         album = self.lib.albums().get()
         item = self.lib.items().get()
         assert item.title == "t\xeftle 0"
@@ -1474,7 +1474,9 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         pytest.skip(reason="write me")
 
     def test_keep_when_extra_key_is_different(self):
-        config["import"]["duplicate_keys"]["album"] = "albumartist album flex"
+        self.config["import"]["duplicate_keys"]["album"] = (
+            "albumartist album flex"
+        )
 
         item = self.lib.items().get()
         import_file = MediaFile(
@@ -1599,7 +1601,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         assert item.mb_trackid == "old trackid"
 
     def test_keep_when_extra_key_is_different(self):
-        config["import"]["duplicate_keys"]["item"] = "artist title flex"
+        self.config["import"]["duplicate_keys"]["item"] = "artist title flex"
         item = self.lib.items().get()
         item.flex = "different"
         item.store()
@@ -1611,7 +1613,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         assert len(self.lib.items()) == 2
 
     def test_no_autotag_removes_duplicate_singleton(self):
-        config["import"]["autotag"] = False
+        self.config["import"]["autotag"] = False
         item = self.lib.items().get()
         assert item.mb_trackid == "old trackid"
         assert item.filepath.exists()

@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, Mock, PropertyMock
 
 import pytest
 
-from beets import config
 from beets.dbcore.sort import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
 from beets.test._common import item
@@ -34,12 +33,12 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         assert spl._matched_playlists == set()
         assert spl._unmatched_playlists == set()
 
-        config["smartplaylist"]["playlists"].set([])
+        self.config["smartplaylist"]["playlists"].set([])
         spl.build_queries()
         assert spl._matched_playlists == set()
         assert spl._unmatched_playlists == set()
 
-        config["smartplaylist"]["playlists"].set(
+        self.config["smartplaylist"]["playlists"].set(
             [
                 {"name": "foo", "query": "FOO foo"},
                 {"name": "bar", "album_query": ["BAR bar1", "BAR bar2"]},
@@ -66,7 +65,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
 
     def test_build_queries_with_sorts(self):
         spl = SmartPlaylistPlugin()
-        config["smartplaylist"]["playlists"].set(
+        self.config["smartplaylist"]["playlists"].set(
             [
                 {"name": "no_sort", "query": "foo"},
                 {"name": "one_sort", "query": "foo year+"},
@@ -182,8 +181,8 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
+        self.config["smartplaylist"]["relative_to"] = False
+        self.config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
         spl.update_playlists(lib)
 
         lib.items.assert_called_once_with(q, None)
@@ -217,10 +216,10 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        config["smartplaylist"]["output"] = "extm3u"
-        config["smartplaylist"]["prefix"] = "http://beets:8337/files"
-        config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
+        self.config["smartplaylist"]["output"] = "extm3u"
+        self.config["smartplaylist"]["prefix"] = "http://beets:8337/files"
+        self.config["smartplaylist"]["relative_to"] = False
+        self.config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
         spl.update_playlists(lib)
 
         lib.items.assert_called_once_with(q, None)
@@ -260,10 +259,10 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        config["smartplaylist"]["output"] = "extm3u"
-        config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
-        config["smartplaylist"]["fields"] = ["id", "genres"]
+        self.config["smartplaylist"]["output"] = "extm3u"
+        self.config["smartplaylist"]["relative_to"] = False
+        self.config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
+        self.config["smartplaylist"]["fields"] = ["id", "genres"]
         spl.update_playlists(lib)
 
         lib.items.assert_called_once_with(q, None)
@@ -353,13 +352,13 @@ class SmartPlaylistCLITest(PlaylistDirMixin, IOMixin, PluginTestCase):
         super().setUp()
 
         self.item = self.add_item()
-        config["smartplaylist"]["playlists"].set(
+        self.config["smartplaylist"]["playlists"].set(
             [
                 {"name": "my_playlist.m3u", "query": self.item.title},
                 {"name": "all.m3u", "query": ""},
             ]
         )
-        config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
+        self.config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
 
     def test_splupdate(self):
         with pytest.raises(UserError):
@@ -382,7 +381,7 @@ class SmartPlaylistCLITest(PlaylistDirMixin, IOMixin, PluginTestCase):
             ).read_bytes() == self.item.path + b"\n"
 
     def test_splupdate_unknown_playlist_error_is_sorted_and_quoted(self):
-        config["smartplaylist"]["playlists"].set(
+        self.config["smartplaylist"]["playlists"].set(
             [
                 {"name": "z last.m3u", "query": self.item.title},
                 {"name": "rock'n roll.m3u", "query": self.item.title},
