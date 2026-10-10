@@ -42,15 +42,7 @@ class TestUnimported(IOMixin, PluginTestHelper):
         [
             _p("mp3", "archive.mp3", id="simple"),
             _p("tar.gz", "archive.tar.gz", id="compound"),
-            _p(
-                "mp3",
-                "archive.MP3",
-                marks=pytest.mark.xfail(
-                    reason="Extensions should be compared case insensitively",
-                    strict=True,
-                ),
-                id="case insensitive",
-            ),
+            _p("mp3", "archive.MP3", id="case insensitive"),
         ],
     )
     def test_ignore_extension(self, ignore_extension, filename):
@@ -67,9 +59,6 @@ class TestUnimported(IOMixin, PluginTestHelper):
         with self.configure_plugin({"ignore_subdirectories": ["data"]}):
             assert self.get_unimported_paths() == unimported
 
-    @pytest.mark.xfail(
-        reason="Should not match prefix of directory name", strict=True
-    )
     def test_do_not_ignore_partially_matching_subdirectory(self):
         unimported = {
             self.make_file("music/report.txt"),

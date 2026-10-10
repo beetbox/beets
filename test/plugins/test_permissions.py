@@ -28,26 +28,14 @@ class TestDirsInLibrary(PathsMixin):
         album_path = lib_path / "album"
         track_path = album_path / "sibling.mp3"
 
-        assert set(
-            dirs_in_library(os.fsencode(lib_path), os.fsencode(track_path))
-        ) == {os.fsencode(album_path)}
+        assert set(dirs_in_library(lib_path, track_path)) == {album_path}
 
-    @pytest.mark.xfail(
-        reason="dirs_in_library does not ignore sibling libraries", strict=True
-    )
     def test_ignore_sibling_lib(self, lib_path):
         """Sibling libraries that start with the same prefix should be ignored."""
         sibling_lib_path = self.temp_path / "library1"
         sibling_track_path = sibling_lib_path / "album1" / "sibling.mp3"
 
-        assert (
-            set(
-                dirs_in_library(
-                    os.fsencode(lib_path), os.fsencode(sibling_track_path)
-                )
-            )
-            == set()
-        )
+        assert set(dirs_in_library(lib_path, sibling_track_path)) == set()
 
 
 class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
@@ -74,7 +62,10 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
         self.run_asis_importer()
         item = self.lib.items().get()
 
-        paths = (item.path, *dirs_in_library(self.lib.directory, item.path))
+        paths = (
+            item.filepath,
+            *dirs_in_library(self.lib.directory, item.filepath),
+        )
         for path in paths:
             assert os.stat(path).st_mode & 0o777 == 511
 
@@ -87,7 +78,7 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
     def test_permissions_on_set_art(self):
         self.do_set_art(True)
 
-    @patch("os.chmod", Mock())
+    @patch("pathlib.Path.chmod", Mock())
     def test_failing_permissions_on_set_art(self):
         self.do_set_art(False)
 
@@ -98,5 +89,5 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
         album = self.lib.albums().get()
         artpath = self.temp_path / "cover.jpg"
         artpath.touch()
-        album.set_art(artpath)
-        assert expect_success == check_permissions(album.artpath, 0o777)
+        album.set_art(os.fsencode(artpath))
+        assert expect_success == check_permissions(album.art_filepath, 0o777)
