@@ -9,7 +9,7 @@ on:
         type: string
 
 env:
-  PYTHON_VERSION: "3.10"
+  PYTHON_VERSION: "3.11"
   NEW_VERSION: ${{ inputs.version }}
   NEW_TAG: v${{ inputs.version }}
 

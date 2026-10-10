@@ -6,7 +6,7 @@ authors = [{ name = "Adrian Sampson", email = "adrian@radbox.org" }]
 maintainers = [{ name = "Serene-Arc" }]
 license = { text = "MIT" }
 readme = "README.rst"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.11,<3.15"
 classifiers = [
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Multimedia :: Sound/Audio :: Players :: MP3",
@@ -15,7 +15,6 @@ classifiers = [
     "Environment :: Web Environment",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -90,7 +89,6 @@ typing = [
 ]
 release = [
     "click>=8.1.7",
-    "tomli>=2.0.1",
 ]
 dev = [
     { include-group = "docs" },
@@ -287,7 +285,7 @@ extend-exclude = [
 ]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 80
 
 [tool.ruff.format]

@@ -21,13 +21,14 @@ from typing import (
     Any,
     ClassVar,
     Literal,
+    NotRequired,
     ParamSpec,
     TypedDict,
     TypeVar,
+    Unpack,
 )
 
 from requests_ratelimiter import LimiterMixin
-from typing_extensions import NotRequired, Unpack
 
 from beets import config, logging
 

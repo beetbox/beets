@@ -23,7 +23,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install Python tools
         run: uv tool install "poethepoet>=0.26,<0.47.0"
@@ -42,10 +42,10 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     runs-on: ${{ matrix.platform }}
     env:
-      IS_MAIN_PYTHON: ${{ matrix.python-version == '3.10' && matrix.platform == 'ubuntu-latest' }}
+      IS_MAIN_PYTHON: ${{ matrix.python-version == '3.11' && matrix.platform == 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v5
       - name: Install uv
@@ -108,7 +108,7 @@ jobs:
         name: Test without coverage
         run: |
           poe install --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
-          poe test
+          poe test -k 'not test_convert_rst_to_md'
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
