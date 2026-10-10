@@ -23,12 +23,21 @@ bpd = pytest.importorskip("beetsplug.bpd", exc_type=ImportError)
 
 SERVER_START_TIMEOUT = 10
 
+# The BPD server subprocess relies on inheriting the parent's patched
+# `gstplayer` and `unittest.mock` state, so it has to be forked rather than
+# spawned (the Python 3.14 default on Linux is `forkserver`).
 if "fork" in mp.get_all_start_methods():
     try:
         mp.set_start_method("fork", force=True)
     except RuntimeError:
         # Already set, which is fine
         pass
+
+# Under `pytest-xdist` the forking parent is multi-threaded, which Python 3.14
+# warns about. We only fork to start a short-lived server, so it is harmless.
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:This process .* is multi-threaded:DeprecationWarning"
+)
 
 
 class CommandParseTest(unittest.TestCase):
