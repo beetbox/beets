@@ -9,6 +9,9 @@ below!
 Unreleased
 ----------
 
+Beets now requires Python 3.11 or later since support for EOL Python 3.10 has
+been dropped.
+
 New features
 ~~~~~~~~~~~~
 
