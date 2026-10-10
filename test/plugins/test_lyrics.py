@@ -159,9 +159,9 @@ class TestHtml:
 
 class TestSearchBackend:
     @pytest.fixture
-    def backend(self, dist_thresh):
+    def backend(self, config, dist_thresh):
+        config["lyrics"]["dist_thresh"] = dist_thresh
         plugin = lyrics.LyricsPlugin()
-        plugin.config.set({"dist_thresh": dist_thresh})
         return lyrics.SearchBackend(plugin.config, plugin._log)
 
     @pytest.mark.parametrize(

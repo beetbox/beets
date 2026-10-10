@@ -73,10 +73,9 @@ class DiscogsTestMixin:
         return {}
 
     @pytest.fixture
-    def plugin(self, plugin_config):
-        plugin = DiscogsPlugin()
-        plugin.config.set(plugin_config)
-        return plugin
+    def plugin(self, config, plugin_config):
+        config["discogs"].set(plugin_config)
+        return DiscogsPlugin()
 
     def _make_release(self, tracks=None):
         """Return discogs_client.Release.
@@ -638,10 +637,7 @@ class TestDGSearchResponse(DiscogsTestMixin):
 
 class TestAnv:
     @pytest.fixture
-    def album_info(self, monkeypatch, anv_config):
-        monkeypatch.setattr(
-            "beetsplug.discogs.DiscogsPlugin.setup", lambda _: None
-        )
+    def album_info(self, config, anv_config):
         data = {
             "id": 123,
             "uri": "https://www.discogs.com/release/123456-something",
@@ -668,12 +664,11 @@ class TestAnv:
             "title": "title",
         }
         release = get_release(data)
-        plugin = DiscogsPlugin()
-        plugin.config["anv"].set(
+        config["discogs"]["anv"].set(
             {"artist": False, "album_artist": False, "artist_credit": False}
             | anv_config
         )
-        return plugin.get_album_info(release)
+        return DiscogsPlugin().get_album_info(release)
 
     @staticmethod
     def _assert_fields(obj, expected):
