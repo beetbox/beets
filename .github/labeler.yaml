@@ -238,3 +238,12 @@ version-command:
 write-command:
   - '/\bwrite command/i'
   - '/beet write\b/i'
+
+# Operating Systems
+linux:
+  - '/ubuntu/i'
+  - '/linux/i'
+mac:
+  - '/\bmac(?:os)?\b/i'
+windows:
+  - '/\bwindows\b/i'
