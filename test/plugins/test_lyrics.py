@@ -666,6 +666,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 id="synced with 3-decimal millisecond timestamp",
             ),
             pytest.param(
+                [lyrics_match(syncedLyrics=f"{SYNCED}\r\n\r\n")],
+                f"{SYNCED}\n",
+                id="synced with trailing blank line",
+            ),
+            pytest.param(
                 [lyrics_match(duration=1)], None, id="none: duration too short"
             ),
             pytest.param(
