@@ -396,6 +396,45 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
     @pytest.mark.parametrize(
         "artist,title,expected_artist,expected_title",
         [
+            ("Artist (feat. B) & C", "Song", "Artist & C", "Song (feat. B)"),
+            ("Artist(feat. B) & C", "Song", "Artist & C", "Song (feat. B)"),
+            ("Artist ( feat. B) & C", "Song", "Artist & C", "Song (feat. B)"),
+            ("Artist [ feat. B] & C", "Song", "Artist & C", "Song (feat. B)"),
+            ("Artist[feat. B] & C", "Song", "Artist & C", "Song (feat. B)"),
+            (
+                "Victony (with Don Toliver, Rema and Tempoe)",
+                "Soweto",
+                "Victony",
+                "Soweto (feat. Don Toliver, Rema and Tempoe)",
+            ),
+            (
+                "Bon Jovi (duet with Jennifer Nettles)",
+                "Who Says You Can't Go Home",
+                "Bon Jovi",
+                "Who Says You Can't Go Home (feat. Jennifer Nettles)",
+            ),
+            (
+                "Victony (with Don Toliver",
+                "Soweto",
+                "Victony (with Don Toliver",
+                "Soweto",
+            ),
+        ],
+    )
+    def test_bracketed_artist_credit_regressions(
+        self, artist, title, expected_artist, expected_title
+    ):
+        info = TrackInfo(artist=artist, title=title)
+        with self.configure_plugin(
+            {"format": "(feat. {0})", "custom_words": ["with", "duet with"]}
+        ):
+            plugins.send("trackinfo_received", info=info)
+        assert info.artist == expected_artist
+        assert info.title == expected_title
+
+    @pytest.mark.parametrize(
+        "artist,title,expected_artist,expected_title",
+        [
             (
                 "Keith Sweat feat. Ronald Isley",
                 "Come With Me",
@@ -642,6 +681,24 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert info.artist == "Alice"
         assert info.title == title_format.format(credit)
 
+    def test_albuminfo_keeps_feature_credit_with_trailing_album_artist(self):
+        track = TrackInfo(artist="Artist (feat. B) & C", title="Song")
+        album = AlbumInfo(artist="C", album="Album", tracks=[track])
+        with self.configure_plugin({"format": "(feat. {})"}):
+            plugins.send("albuminfo_received", info=album)
+        assert track.artist == "Artist & C"
+        assert track.title == "Song (feat. B)"
+
+    def test_bracketed_generic_marker_with_comma(self):
+        track = TrackInfo(
+            artist="Victony (with Don Toliver, Rema and Tempoe)", title="Soweto"
+        )
+        album = AlbumInfo(artist="Victony", album="Album", tracks=[track])
+        with self.configure_plugin({"format": "(feat. {})"}):
+            plugins.send("albuminfo_received", info=album)
+        assert track.artist == "Victony"
+        assert track.title == "Soweto (feat. Don Toliver, Rema and Tempoe)"
+
     @pytest.mark.parametrize("inner_marker", ["with", "feat."])
     def test_nested_custom_title_credit_uses_enclosing_marker(
         self, inner_marker
@@ -730,6 +787,21 @@ def test_find_feat_part(
         ("Alice and Bob feat Charlie", ("Alice and Bob", "Charlie")),
         ("Alice (ft. Bob)", ("Alice", "Bob")),
         ("Alice [& Bob]", ("Alice", "Bob")),
+        ("Artist (feat. B) & C", ("Artist & C", "B")),
+        ("Artist(feat. B) & C", ("Artist & C", "B")),
+        ("Artist ( feat. B) & C", ("Artist & C", "B")),
+        ("Artist [ feat. B] & C", ("Artist & C", "B")),
+        ("Artist[feat. B] & C", ("Artist & C", "B")),
+        ("Artist [feat. B] & C", ("Artist & C", "B")),
+        ("Artist (feat. B (Guest)) & C", ("Artist & C", "B (Guest)")),
+        ("Artist (feat. B [Guest]) & C", ("Artist & C", "B [Guest]")),
+        ("Artist (feat. B", ("Artist (feat. B", None)),
+        ("Artist (feat. B] & C", ("Artist (feat. B] & C", None)),
+        ("Artist (feat. B, C", ("Artist (feat. B, C", None)),
+        ("Artist (feat. B) & C)", ("Artist (feat. B) & C)", None)),
+        ("Artist (Alias feat. B)", ("Artist (Alias feat. B)", None)),
+        ("Artist (Alias, B)", ("Artist (Alias, B)", None)),
+        ("Artist (Alias & B)", ("Artist (Alias & B)", None)),
     ],
 )
 def test_split_on_feat(given: str, expected: tuple[str, str | None]) -> None:

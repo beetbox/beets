@@ -57,29 +57,25 @@ def _bracket_pairs(value: str, brackets: str = "([") -> dict[int, int] | None:
 
 
 def _split_on_feat_token(
-    regex: re.Pattern[str], artist: str
-) -> tuple[str, str] | None:
+    regex: re.Pattern[str], artist: str, pairs: dict[int, int]
+) -> tuple[str, str | None] | None:
     match = regex.search(artist)
     if not match:
         return None
 
-    left = artist[: match.start()].strip()
-    right = artist[match.end() :].strip()
-    opener = match.group(0)[0]
-
-    if opener == "(":
-        closing = ")"
-    elif opener == "[":
-        closing = "]"
+    opening = match.start() if match.start() in pairs else match.start() - 1
+    while opening >= 0 and artist[opening].isspace():
+        opening -= 1
+    if opening in pairs:
+        closing = pairs[opening]
+        main = f"{artist[:opening].strip()} {artist[closing + 1 :].strip()}"
+        left, right = main.strip(), artist[match.end() : closing].strip()
     else:
-        closing = None
+        left = artist[: match.start()].strip()
+        right = artist[match.end() :].strip()
 
-    if closing:
-        if right.endswith(closing):
-            right = right[:-1].strip()
-        else:
-            left = f"{left} {opener}".strip()
-
+    if _bracket_pairs(left) is None or _bracket_pairs(right) is None:
+        return artist.strip(), None
     return left, right
 
 
@@ -91,28 +87,37 @@ def split_on_feat(
     artist, which is always a string, and the featuring artist, which
     may be a string or None if none is present.
     """
+    pairs = _bracket_pairs(artist)
+    if pairs is None:
+        return artist.strip(), None
+
     # Try explicit featuring tokens first (ft, feat, featuring, etc.)
     # to avoid splitting on generic separators like "&" when both are present
     regex_explicit = re.compile(
         plugins.feat_tokens(for_artist=False, custom_words=custom_words),
         re.IGNORECASE,
     )
-    parts = _split_on_feat_token(regex_explicit, artist)
+    parts = _split_on_feat_token(regex_explicit, artist, pairs)
     if parts:
         return parts
 
     # Try comma as separator
     # (e.g. "Alice, Bob & Charlie" where Bob and Charlie are featuring)
-    if for_artist and "," in artist:
-        comma_parts = artist.split(",", 1)
-        return comma_parts[0].strip(), comma_parts[1].strip()
+    if for_artist:
+        comma = artist.find(",")
+        while comma >= 0 and any(
+            opening < comma < closing for opening, closing in pairs.items()
+        ):
+            comma = artist.find(",", comma + 1)
+        if comma >= 0:
+            return artist[:comma].strip(), artist[comma + 1 :].strip()
 
     # Fall back to all tokens including generic separators if no explicit match
     if for_artist:
         regex = re.compile(
             plugins.feat_tokens(for_artist, custom_words), re.IGNORECASE
         )
-        parts = _split_on_feat_token(regex, artist)
+        parts = _split_on_feat_token(regex, artist, pairs)
         if parts:
             return parts
 
@@ -145,6 +150,9 @@ def find_feat_part(
     artist_part, feat_part = split_on_feat(artist, custom_words=custom_words)
     if albumartist and feat_part == albumartist and artist_part:
         return artist_part
+
+    if feat_part and albumartist and albumartist in artist_part:
+        return feat_part
 
     # Handle a wider variety of extraction cases if the album artist is
     # contained within the track artist.
