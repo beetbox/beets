@@ -8,7 +8,8 @@ import pytest
 
 from beets.test import _common
 from beets.test.helper import RUNNING_IN_CI, IOMixin
-from beets.ui.commands.completion import BASH_COMPLETION_PATHS
+from beets.ui import Subcommand
+from beets.ui.commands.completion import BASH_COMPLETION_PATHS, completion_script
 
 from ..test_ui import TestPluginTestCase
 
@@ -49,8 +50,8 @@ class CompletionTest(IOMixin, TestPluginTestCase):
 
         # Load completion script.
         self.run_command("completion")
-        completion_script = self.io.getoutput().encode("utf-8")
-        tester.stdin.writelines(completion_script.splitlines(True))
+        completion_script_out = self.io.getoutput().encode("utf-8")
+        tester.stdin.writelines(completion_script_out.splitlines(True))
 
         # Load test suite.
         test_script_name = _common.RSRC / "test_completion.sh"
@@ -62,3 +63,27 @@ class CompletionTest(IOMixin, TestPluginTestCase):
             "test/test_completion.sh did not execute properly. "
             f"Output:{out.decode('utf-8')}"
         )
+
+    def test_hyphenated_command_names_are_sanitized(self):
+        """Regression test for #2836: hyphenated command names must not
+        produce invalid bash variable names.
+
+        The completion script generator replaces '-' with '_' in variable
+        names so that commands like 'foo-bar' become 'foo_bar' in the
+        generated shell variables.
+        """
+        cmd = Subcommand("foo-bar", aliases=["fb"])
+        script = "".join(completion_script([cmd]))
+
+        # Variable names must use underscores, not hyphens.
+        assert (
+            "alias__foo_bar" in script
+            or "opts__foo_bar" in script
+            or "flags__foo_bar" in script
+        )
+        assert "alias__foo-bar" not in script
+        assert "opts__foo-bar" not in script
+        assert "flags__foo-bar" not in script
+
+        # The original command name should still appear in the commands list.
+        assert "foo-bar" in script
