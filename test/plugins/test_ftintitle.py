@@ -388,10 +388,36 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
             plugins.send("albuminfo_received", info=info)
 
         assert track_info.artist == "Alice"
-        assert track_info.artist_sort == "Alice"
+        assert track_info.artist_sort == "Alice & Bob"
         assert track_info.title == "Song feat. Bob"
         assert track_info.item_data["artist"] == "Alice"
         assert track_info.item_data["title"] == "Song feat. Bob"
+
+    @pytest.mark.parametrize(
+        "sort_name",
+        [
+            "Weeknd, The",
+            "Chainsmokers, The",
+            "Kid LAROI, The",
+            "Notorious B.I.G., The",
+            "Black Eyed Peas, The",
+            "Goo Goo Dolls, The",
+            "Five Stairsteps, The",
+            "Alice & Bob",
+            "Alice and Bob",
+            "Alice with Bob",
+        ],
+    )
+    @pytest.mark.parametrize("suffix", ["", " feat. X"])
+    def test_artist_sort_only_strips_explicit_features(self, sort_name, suffix):
+        info = TrackInfo(
+            artist="The Weeknd feat. X",
+            artist_sort=sort_name + suffix,
+            title="Song",
+        )
+        with self.configure_plugin({"custom_words": ["with", "duet with"]}):
+            plugins.send("trackinfo_received", info=info)
+        assert info.artist_sort == sort_name
 
 
 @pytest.mark.parametrize(

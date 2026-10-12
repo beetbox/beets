@@ -305,7 +305,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if artist_sort := metadata.get("artist_sort"):
             # Just strip the featured artist from the sort name.
             artist_sort_no_feat, _ = split_on_feat(
-                artist_sort, custom_words=self.custom_words
+                artist_sort, for_artist=False
             )
             metadata["artist_sort"] = artist_sort_no_feat
             changed |= artist_sort != artist_sort_no_feat
