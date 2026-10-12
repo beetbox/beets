@@ -1418,9 +1418,8 @@ class Database:
         order_by = sort.order_clause()
         sql_limit = flex_limit = None
         if limit is not None:
-            if sort.field_names - model_cls.all_db_fields:
-                # sorting by at least one flexible attr.
-                # Limit will be applied after slow field sort.
+            if sort.is_slow() or sort.field_names - model_cls.all_db_fields:
+                # Limit must follow any slow sort or flexible-field sort.
                 flex_limit = limit
             else:
                 sql_limit = limit

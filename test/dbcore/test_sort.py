@@ -121,6 +121,19 @@ class TestSort:
         results = self.lib._fetch(model, query, None)
         assert [r.id for r in results] == expected_ids
 
+    def test_slow_database_field_sort_applies_limit_after_sort(self, config):
+        config["sort_initial_key_harmonic"] = True
+        for key in ("G", "C"):
+            self.lib.add(
+                _common.item(artist="slow-sort-regression", initial_key=key)
+            )
+
+        results = self.lib.items(
+            "artist:slow-sort-regression initial_key+", limit=1
+        )
+
+        assert [item.initial_key for item in results] == ["C"]
+
     def test_sort_path_field(self):
         results = self.lib.items("", FixedFieldSort("path", True))
         expected_paths = [
