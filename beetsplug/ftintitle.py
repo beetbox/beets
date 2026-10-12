@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from functools import cached_property, lru_cache
+from string import Formatter
 from typing import TYPE_CHECKING
 
 from beets import config, plugins, ui
@@ -37,6 +38,22 @@ DEFAULT_BRACKET_KEYWORDS: tuple[str, ...] = (
     "version",
     "vip",
 )
+
+
+def _bracket_pairs(value: str, brackets: str = "([") -> dict[int, int] | None:
+    """Map opening brackets to their closers, or reject malformed input."""
+    stack: list[tuple[str, int]] = []
+    pairs = {}
+    closers = {")": "(", "]": "[", "}": "{", ">": "<"}
+    for index, char in enumerate(value):
+        if char in brackets:
+            stack.append((char, index))
+        elif char in closers and closers[char] in brackets:
+            if not stack or stack[-1][0] != closers[char]:
+                return None
+            _, opening = stack.pop()
+            pairs[opening] = index
+    return None if stack else pairs
 
 
 def _split_on_feat_token(
@@ -104,12 +121,17 @@ def split_on_feat(
 
 def contains_feat(title: str, custom_words: list[str] | None = None) -> bool:
     """Determine whether the title contains a "featured" marker."""
-    return bool(
-        re.search(
-            plugins.feat_tokens(for_artist=False, custom_words=custom_words),
-            title,
-            flags=re.IGNORECASE,
-        )
+    if re.search(plugins.feat_tokens(for_artist=False), title, re.IGNORECASE):
+        return True
+    if not custom_words or (pairs := _bracket_pairs(title)) is None:
+        return False
+    pattern = re.compile(
+        plugins.feat_tokens(for_artist=False, custom_words=custom_words),
+        re.IGNORECASE,
+    )
+    return any(
+        pattern.match("(" + title[opening + 1 : closing].lstrip())
+        for opening, closing in pairs.items()
     )
 
 
@@ -287,17 +309,51 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         If `drop_feat` is set, then do not add the artist to the title; just
         remove it from the artist field.
         """
-        changed = False
+        title = metadata.get("title") or ""
         artist = metadata.get("artist") or ""
+        track_artist, artist_credit = split_on_feat(
+            artist, custom_words=self.custom_words
+        )
+        removed_credit = artist_credit or feat_part
+        new_title = title
+        copied_credit = False
+        if not self.drop_feat and _bracket_pairs(title) is not None:
+            if not contains_feat(title, self.custom_words):
+                formatted = self.feat_format.format(feat_part)
+                copied_credit = bool(self._format_credit_values(feat_part))
+                if _bracket_pairs(formatted) is not None and (
+                    self.keep_in_artist_field
+                    or copied_credit
+                    or formatted.strip() == feat_part
+                    or self._title_credit(" " + formatted, feat_part)
+                    == feat_part
+                ):
+                    new_title = self.insert_ft_into_title(
+                        title, formatted, self.bracket_keywords
+                    )
+
+        # Keep the original credit if the title cannot carry it. A matching
+        # credit already in the title is enough to allow artist cleanup.
+        can_update = (
+            self.keep_in_artist_field
+            or self.drop_feat
+            or self._title_credit(new_title, removed_credit) == removed_credit
+            or (
+                new_title != title
+                and feat_part == removed_credit
+                and (copied_credit or formatted.strip() == feat_part)
+            )
+        )
+        if not can_update:
+            return False
+
+        changed = False
         # In case the artist is kept, do not update the artist fields.
         if self.keep_in_artist_field:
             self._log.info(
                 "artist: {} (Not changing due to keep_in_artist)", artist
             )
         else:
-            track_artist, _ = split_on_feat(
-                artist, custom_words=self.custom_words
-            )
             self._log.info("artist: {} -> {}", artist, track_artist)
             metadata["artist"] = track_artist
             changed |= artist != track_artist
@@ -310,19 +366,80 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             metadata["artist_sort"] = artist_sort_no_feat
             changed |= artist_sort != artist_sort_no_feat
 
-        # Only update the title if it does not already contain a featured
-        # artist and if we do not drop featuring information.
-        title = metadata.get("title") or ""
-        if not self.drop_feat and not contains_feat(title, self.custom_words):
-            formatted = self.feat_format.format(feat_part)
-            new_title = self.insert_ft_into_title(
-                title, formatted, self.bracket_keywords
-            )
+        if new_title != title:
             self._log.info("title: {} -> {}", title, new_title)
             metadata["title"] = new_title
-            changed |= title != new_title
+            changed = True
 
         return changed
+
+    def _format_credit_values(self, feat_part: str) -> list[str]:
+        """Return format fields that contain the complete featured credit."""
+        values = []
+        formatter = Formatter()
+        try:
+            for _, field, spec, conversion in formatter.parse(self.feat_format):
+                if field is None:
+                    continue
+                value, _ = formatter.get_field(field or "0", (feat_part,), {})
+                if value != feat_part:
+                    continue
+                converted = formatter.convert_field(value, conversion)
+                rendered = formatter.format_field(
+                    converted, (spec or "").format(feat_part)
+                )
+                if rendered.strip() == converted:
+                    values.append(rendered.strip())
+        except (AttributeError, IndexError, KeyError, TypeError, ValueError):
+            return []
+        return values
+
+    def _title_credit(self, title: str, feat_part: str) -> str | None:
+        """Find the expected credit using the marker rules for titles."""
+        pairs = _bracket_pairs(title)
+        if pairs is None:
+            return None
+        pairs.update(_bracket_pairs(title, brackets="{<") or {})
+        pattern = re.compile(
+            plugins.feat_tokens(False, self.custom_words), re.IGNORECASE
+        )
+        standard_pattern = re.compile(plugins.feat_tokens(False), re.IGNORECASE)
+        qualifier_pattern = self._bracket_position_pattern(
+            tuple(self.bracket_keywords)
+        )
+        expected_values = [feat_part, *self._format_credit_values(feat_part)]
+        for match in pattern.finditer(title):
+            opening = (
+                match.start() if match.start() in pairs else match.start() - 1
+            )
+            while opening >= 0 and title[opening].isspace():
+                opening -= 1
+            if opening in pairs and title[opening] in "([":
+                credit = title[match.end() : pairs[opening]].strip()
+            elif standard_pattern.match(title, match.start()):
+                closing = min(
+                    (
+                        closing
+                        for opening, closing in pairs.items()
+                        if opening < match.start() < closing
+                    ),
+                    default=len(title),
+                )
+                credit = title[match.end() : closing].strip()
+                if _bracket_pairs(credit) is None:
+                    continue
+            else:
+                continue
+            for expected in expected_values:
+                if credit == expected:
+                    return feat_part
+                if not credit.startswith(expected):
+                    continue
+                # The insertion rule places credits before remix/edit brackets.
+                suffix = credit[len(expected) :].strip()
+                if not qualifier_pattern.split(suffix, maxsplit=1)[0].strip():
+                    return feat_part
+        return None
 
     def trackinfo_received(self, info: TrackInfo) -> None:
         """Move featuring artists in fetched singleton metadata."""

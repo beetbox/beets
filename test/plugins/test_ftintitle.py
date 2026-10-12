@@ -394,6 +394,40 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         assert track_info.item_data["title"] == "Song feat. Bob"
 
     @pytest.mark.parametrize(
+        "artist,title,expected_artist,expected_title",
+        [
+            (
+                "Keith Sweat feat. Ronald Isley",
+                "Come With Me",
+                "Keith Sweat",
+                "Come With Me (feat. Ronald Isley)",
+            ),
+            (
+                "Pharrell feat. Pusha T",
+                "Stay With Me",
+                "Pharrell",
+                "Stay With Me (feat. Pusha T)",
+            ),
+            (
+                "The Internet feat. Vic Mensa",
+                "Go with It",
+                "The Internet",
+                "Go with It (feat. Vic Mensa)",
+            ),
+        ],
+    )
+    def test_custom_title_word_regressions(
+        self, artist, title, expected_artist, expected_title
+    ):
+        info = TrackInfo(artist=artist, title=title)
+        with self.configure_plugin(
+            {"format": "(feat. {0})", "custom_words": ["with", "duet with"]}
+        ):
+            plugins.send("trackinfo_received", info=info)
+        assert info.artist == expected_artist
+        assert info.title == expected_title
+
+    @pytest.mark.parametrize(
         "sort_name",
         [
             "Weeknd, The",
@@ -418,6 +452,237 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
         with self.configure_plugin({"custom_words": ["with", "duet with"]}):
             plugins.send("trackinfo_received", info=info)
         assert info.artist_sort == sort_name
+
+    @pytest.mark.parametrize(
+        "title,feat_format,drop,expected_artist,expected_title",
+        [
+            (
+                "Song feat. Carol",
+                "feat. {}",
+                False,
+                "Alice feat. Bob",
+                "Song feat. Carol",
+            ),
+            (
+                "Song (with Carol)",
+                "feat. {}",
+                False,
+                "Alice feat. Bob",
+                "Song (with Carol)",
+            ),
+            (
+                "Song feat. Carol (Remix)",
+                "feat. {}",
+                False,
+                "Alice feat. Bob",
+                "Song feat. Carol (Remix)",
+            ),
+            ("Song feat. Bob", "feat. {}", False, "Alice", "Song feat. Bob"),
+            (
+                "Song ( with Bob)",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song ( with Bob)",
+            ),
+            (
+                "Song [ with Bob]",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song [ with Bob]",
+            ),
+            (
+                "Song {Remix feat. Bob}",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song {Remix feat. Bob}",
+            ),
+            (
+                "Song <Remix feat. Bob>",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song <Remix feat. Bob>",
+            ),
+            (
+                "Song (Remix feat. Bob)",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song (Remix feat. Bob)",
+            ),
+            (
+                "Song [Remix feat. Bob]",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song [Remix feat. Bob]",
+            ),
+            ("Song(with Bob)", "feat. {}", False, "Alice", "Song(with Bob)"),
+            (
+                "Song (feat. Carol) (feat. Bob)",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song (feat. Carol) (feat. Bob)",
+            ),
+            (
+                "Song feat. Bob (Remix) (Acoustic)",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song feat. Bob (Remix) (Acoustic)",
+            ),
+            (
+                "Song feat. Bob {Remix}",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song feat. Bob {Remix}",
+            ),
+            (
+                "Song feat. Bob <Remix>",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song feat. Bob <Remix>",
+            ),
+            (
+                "Come With Me (feat. Bob)",
+                "feat. {}",
+                False,
+                "Alice",
+                "Come With Me (feat. Bob)",
+            ),
+            (
+                "Song feat. Bob (Remix)",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song feat. Bob (Remix)",
+            ),
+            (
+                "Song feat. Bob (Remix) and Carol",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song feat. Bob (Remix) and Carol",
+            ),
+            (
+                "Song feat. Bob (Remix) (feat. Carol)",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song feat. Bob (Remix) (feat. Carol)",
+            ),
+            (
+                "Song with Bob",
+                "feat. {}",
+                False,
+                "Alice",
+                "Song with Bob feat. Bob",
+            ),
+            (
+                "Song feat. Bobby",
+                "feat. {}",
+                False,
+                "Alice feat. Bob",
+                "Song feat. Bobby",
+            ),
+            ("Song", "(guest)", False, "Alice feat. Bob", "Song"),
+            ("Song", "feat. Bobby", False, "Alice feat. Bob", "Song"),
+            (
+                "Song",
+                "feat. {0:.1} and Bobby",
+                False,
+                "Alice feat. Bob",
+                "Song",
+            ),
+            ("Song", "feat. {0!r}", False, "Alice", "Song feat. 'Bob'"),
+            (
+                "Song feat. 'Bob'",
+                "feat. {0!r}",
+                False,
+                "Alice",
+                "Song feat. 'Bob'",
+            ),
+            ("Song", "(feat. {}", False, "Alice feat. Bob", "Song"),
+            ("Song (", "feat. {}", False, "Alice feat. Bob", "Song ("),
+            ("Song feat. Carol", "feat. {}", True, "Alice", "Song feat. Carol"),
+        ],
+    )
+    def test_preserves_credit_unless_in_title_or_dropped(
+        self, title, feat_format, drop, expected_artist, expected_title
+    ):
+        info = TrackInfo(
+            artist="Alice feat. Bob", artist_sort="Alice feat. Bob", title=title
+        )
+        with self.configure_plugin(
+            {"format": feat_format, "drop": drop, "custom_words": ["with"]}
+        ):
+            plugins.send("trackinfo_received", info=info)
+        assert info.artist == expected_artist
+        assert info.artist_sort == expected_artist
+        assert info.title == expected_title
+
+    @pytest.mark.parametrize(
+        "title_format", ["Song (feat. {})", "Song feat. {} (Remix)"]
+    )
+    def test_existing_title_preserves_brackets_in_featured_name(
+        self, title_format
+    ):
+        credit = "Bob (Live)"
+        info = TrackInfo(
+            artist=f"Alice feat. {credit}", title=title_format.format(credit)
+        )
+        with self.configure_plugin({"bracket_keywords": ["live", "remix"]}):
+            plugins.send("trackinfo_received", info=info)
+        assert info.artist == "Alice"
+        assert info.title == title_format.format(credit)
+
+    @pytest.mark.parametrize("inner_marker", ["with", "feat."])
+    def test_nested_custom_title_credit_uses_enclosing_marker(
+        self, inner_marker
+    ):
+        info = TrackInfo(
+            artist=f"Alice feat. Bob ({inner_marker} Carol)",
+            title=f"Song (with Bob ({inner_marker} Carol))",
+        )
+        with self.configure_plugin({"custom_words": ["with"]}):
+            plugins.send("trackinfo_received", info=info)
+        assert info.artist == "Alice"
+        assert info.title == f"Song (with Bob ({inner_marker} Carol))"
+
+    def test_update_metadata_retains_credit_when_extraction_disagrees(self):
+        info = TrackInfo(artist="Alice feat. Bob", title="Song")
+        with self.configure_plugin({}):
+            plugin = next(iter(plugins.find_plugins()))
+            assert plugin.update_metadata(info, "Carol") is False
+        assert info.artist == "Alice feat. Bob"
+        assert info.title == "Song"
+
+    @pytest.mark.parametrize(
+        "title,feat_format,expected_title",
+        [
+            ("Song feat. Carol", "feat. {}", "Song feat. Carol"),
+            ("Song", "(guest)", "Song (guest)"),
+        ],
+    )
+    def test_keep_in_artist_preserves_existing_metadata_updates(
+        self, title, feat_format, expected_title
+    ):
+        info = TrackInfo(
+            artist="Alice feat. Bob", artist_sort="Alice feat. Bob", title=title
+        )
+        with self.configure_plugin(
+            {"keep_in_artist": True, "format": feat_format}
+        ):
+            plugins.send("trackinfo_received", info=info)
+        assert info.artist == "Alice feat. Bob"
+        assert info.artist_sort == "Alice"
+        assert info.title == expected_title
 
 
 @pytest.mark.parametrize(
@@ -567,11 +832,21 @@ def test_contains_feat(given: str, expected: bool) -> None:
         ("Alice (defeat Bob)", [], False),
         ("Live and Let Go", [], False),
         ("Come With Me", [], False),
-        ("Alice x Bob", ["x"], True),
-        ("Alice x Bob", ["X"], True),
+        ("Alice x Bob", ["x"], False),
+        ("Alice x Bob", ["X"], False),
+        ("Alice (x Bob)", ["X"], True),
+        ("Alice [x Bob]", ["x"], True),
         ("Alice och Xavier", ["x"], False),
         ("Alice ft. Xavier", ["x"], True),
-        ("Alice med Carol", ["med"], True),
+        ("Alice med Carol", ["med"], False),
+        ("Alice (med Carol)", ["med"], True),
+        ("Come With Me", ["with"], False),
+        ("Stay With Me", ["with"], False),
+        ("Go with It", ["with"], False),
+        ("Song (with X)", ["with"], True),
+        ("Song [duet with X]", ["with", "duet with"], True),
+        ("Song (with X", ["with"], False),
+        ("Song (with X]", ["with"], False),
         ("Alice med Carol", [], False),
     ],
 )

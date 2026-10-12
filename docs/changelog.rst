@@ -114,6 +114,9 @@ Bug fixes
   without starting any analysis. :bug:`5449`
 - :doc:`plugins/ftintitle`: Preserve commas and generic separators in
   ``artist_sort``, removing only explicit featuring markers.
+- :doc:`plugins/ftintitle`: Recognize custom featuring words in titles only in
+  brackets, and retain artist credits that cannot be included in the title
+  unless ``drop`` is enabled.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
