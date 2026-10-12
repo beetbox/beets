@@ -149,6 +149,25 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
         album = self.lib.albums().get()
         assert album.album == "newAlbum"
 
+    def test_selective_modify_album_output(self):
+        """Selecting albums must show and store the new value.
+        See #7019: with ``--album``, choosing "select" displayed and stored
+        ``ModifyOperation(operator=None, value='...')`` instead of the value.
+        """
+        self.io.addinput("s")  # select
+        self.io.addinput("y")  # yes, modify this album
+        new_artist = "Kanye West"
+        pattern = re.compile(rf"albumartist: .* -> {new_artist}")
+
+        output = self.run_with_output(
+            "modify", "--album", f"albumartist={new_artist}"
+        )
+
+        # we expect to see the change printed twice (before and after select)
+        assert len(pattern.findall(output)) == 2
+        assert "ModifyOperation" not in output
+        assert self.lib.albums().get().albumartist == new_artist
+
     def test_modify_album_write_tags(self):
         self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
