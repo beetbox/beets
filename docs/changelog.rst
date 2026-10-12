@@ -112,6 +112,8 @@ Bug fixes
   while the thread pool is open. It held a CPU core at 100% and starved the
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
+- :doc:`plugins/ftintitle`: Preserve commas and generic separators in
+  ``artist_sort``, removing only explicit featuring markers.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
