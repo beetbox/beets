@@ -271,12 +271,6 @@ class TestImport7z(TestImportZip):
         return _common.RSRC / "archive.7z"
 
 
-@pytest.mark.skip(reason="Implement me!")
-class TestImportPasswordRar(TestImportZip):
-    def create_archive(self):
-        return _common.RSRC / "password.rar"
-
-
 class ImportSingletonTest(AutotagImportTestCase):
     """Test ``APPLY`` and ``ASIS`` choices for an import session with
     singletons config set to True.

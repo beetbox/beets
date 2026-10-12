@@ -2,7 +2,6 @@
 
 import os
 import platform
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -52,6 +51,18 @@ class TestPluginTestCase(PluginTestCase):
 
 
 class ConfigTest(IOMixin, TestPluginTestCase):
+    @pytest.fixture(autouse=True)
+    def disable_migration_backup(self, monkeypatch):
+        """Do not perform database backup before migration.
+
+        Our `self.config` is configured to not create backups, however, these
+        tests work with temporary config files.
+        """
+        monkeypatch.setattr(
+            "beets.dbcore.db.Migration._before_migration_backup",
+            lambda *_: None,
+        )
+
     def setUp(self):
         super().setUp()
 
@@ -82,7 +93,12 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         self.cli_config_path = self.temp_path / "config.yaml"
         self.env_patcher = patch(
             "os.environ",
-            {"HOME": str(self.temp_path), "APPDATA": str(appdata_dir)},
+            {
+                "HOME": str(self.temp_path),
+                # Windows' ntpath.expanduser ignores $HOME: it reads USERPROFILE.
+                "USERPROFILE": str(self.temp_path),
+                "APPDATA": str(appdata_dir),
+            },
         )
         self.env_patcher.start()
 
@@ -123,30 +139,26 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         return self.user_config_path.open("w")
 
     def test_paths_section_respected(self):
-        with self.write_config_file() as config:
-            config.write("paths: {x: y}")
+        self.user_config_path.write_text("paths: {x: y}")
 
         self.run_command("test")
         assert self.test_cmd.lib.path_formats[0] == ("x", "y")
 
     def test_nonexistant_db(self):
-        with self.write_config_file() as config:
-            config.write("library: /xxx/yyy/not/a/real/path")
+        self.user_config_path.write_text("library: /xxx/yyy/not/a/real/path")
 
         self.io.addinput("n")
         with pytest.raises(UserError):
             self.run_command("test")
 
     def test_user_config_file(self):
-        with self.write_config_file() as file:
-            file.write("anoption: value")
+        self.user_config_path.write_text("anoption: value")
 
         self.run_command("test")
         assert config["anoption"].get() == "value"
 
     def test_replacements_parsed(self):
-        with self.write_config_file() as config:
-            config.write("replace: {'[xy]': z}")
+        self.user_config_path.write_text("replace: {'[xy]': z}")
 
         self.run_command("test")
         replacements = self.test_cmd.lib.replacements
@@ -154,8 +166,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         assert repls == [("[xy]", "z")]
 
     def test_multiple_replacements_parsed(self):
-        with self.write_config_file() as config:
-            config.write("replace: {'[xy]': z, foo: bar}")
+        self.user_config_path.write_text("replace: {'[xy]': z, foo: bar}")
         self.run_command("test")
         replacements = self.test_cmd.lib.replacements
         repls = [(p.pattern, s) for p, s in replacements]
@@ -181,37 +192,39 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         self.run_command("--config", str(self.cli_config_path), "test")
         assert config["anoption"].get() == "cli overwrite"
 
-    #    @unittest.skip('Difficult to implement with optparse')
-    #    def test_multiple_cli_config_files(self):
-    #        cli_config_path_1 = self.temp_path / 'config.yaml'
-    #        cli_config_path_2 = self.temp_path / 'config_2.yaml'
-    #
-    #        with open(cli_config_path_1, 'w') as file:
-    #            file.write('first: value')
-    #
-    #        with open(cli_config_path_2, 'w') as file:
-    #            file.write('second: value')
-    #
-    #        self.run_command('--config', cli_config_path_1,
-    #                      '--config', cli_config_path_2, 'test')
-    #        assert config['first'].get() == 'value'
-    #        assert config['second'].get() == 'value'
-    #
-    #    @unittest.skip('Difficult to implement with optparse')
-    #    def test_multiple_cli_config_overwrite(self):
-    #        cli_overwrite_config_path = self.temp_path / 'overwrite_config.yaml'
-    #
-    #        self.cli_config_path.write_text("anoption: value")
-    #
-    #        with open(cli_overwrite_config_path, 'w') as file:
-    #            file.write('anoption: overwrite')
-    #
-    #        self.run_command('--config', str(self.cli_config_path),
-    #                      '--config', cli_overwrite_config_path, 'test')
-    #        assert config['anoption'].get() == 'cli overwrite'
+    def test_multiple_cli_config_files(self):
+        cli_config_path_1 = self.temp_path / "config.yaml"
+        cli_config_path_2 = self.temp_path / "config_2.yaml"
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
+        cli_config_path_1.write_text("first: value")
+        cli_config_path_2.write_text("second: value")
+
+        self.run_command(
+            "--config",
+            str(cli_config_path_1),
+            "--config",
+            str(cli_config_path_2),
+            "test",
+        )
+        assert config["second"].get() == "value"
+        assert config["first"].get() == "value"
+
+    def test_multiple_cli_config_overwrite(self):
+        cli_overwrite_config_path = self.temp_path / "overwrite_config.yaml"
+
+        self.cli_config_path.write_text("anoption: value")
+
+        cli_overwrite_config_path.write_text("anoption: overwrite")
+
+        self.run_command(
+            "--config",
+            str(self.cli_config_path),
+            "--config",
+            str(cli_overwrite_config_path),
+            "test",
+        )
+        assert config["anoption"].get() == "overwrite"
+
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         self.cli_config_path.write_text("library: beets.db\nstatefile: state")
 
