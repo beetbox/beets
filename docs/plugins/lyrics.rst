@@ -156,7 +156,9 @@ lyrics will be added to the beets database and, if ``import.write`` is on,
 embedded into files' metadata.
 
 The ``-p, --print`` option to the ``lyrics`` command makes it print lyrics out
-to the console so you can view the fetched (or previously-stored) lyrics.
+to the console so you can view the fetched (or previously-stored) lyrics. Use
+``--limit`` to cap the matched tracks before fetching lyrics. The short ``-l``
+option is already used by ``--local``.
 
 The ``-f, --force`` option forces the command to fetch lyrics, even for tracks
 that already have lyrics.

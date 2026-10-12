@@ -9,6 +9,7 @@ import confuse
 
 import beets
 from beets.dbcore.query import InQuery
+from beets.plugins import BeetsPlugin
 from beets.util import path_as_posix
 
 if TYPE_CHECKING:
@@ -72,7 +73,7 @@ class PlaylistQuery(InQuery[bytes]):
         super().__init__("path", paths)
 
 
-class PlaylistPlugin(beets.plugins.BeetsPlugin):
+class PlaylistPlugin(BeetsPlugin):
     item_queries: ClassVar[dict[str, FieldQueryType]] = {
         "playlist": PlaylistQuery
     }

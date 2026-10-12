@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import random
 import shlex
 import subprocess
@@ -31,6 +32,7 @@ ARGS_MARKER = "$args"
 class PlayCLIOpts(Protocol):
     album: bool
     args: str | None
+    limit: int | None
     randomize: bool | None
     yes: bool | None
 
@@ -109,6 +111,7 @@ class PlayPlugin(BeetsPlugin):
             action="store_true",
             help="skip the warning threshold",
         )
+        play_command.parser.add_limit_option()
         play_command.func = self._play_command
         return [play_command]
 
@@ -126,7 +129,7 @@ class PlayPlugin(BeetsPlugin):
         # playlist.
         selection: Sequence[LibModel]
         if opts.album:
-            selection = lib.albums(args)
+            selection = lib.albums(args, limit=opts.limit)
             paths = []
 
             sort = lib.get_default_album_sort()
@@ -139,7 +142,7 @@ class PlayPlugin(BeetsPlugin):
 
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(args)
+            selection = lib.items(args, limit=opts.limit)
             paths = [item.path for item in selection]
             item_type = "track"
 
@@ -230,14 +233,14 @@ class PlayPlugin(BeetsPlugin):
         """Create a temporary .m3u file. Return the filename."""
         utf8_bom = config["play"]["bom"].get(bool)
         filename = get_temp_filename(__name__, suffix=".m3u")
-        with open(filename, "wb") as m3u:
+        with filename.open("wb") as m3u:
             if utf8_bom:
                 m3u.write(b"\xef\xbb\xbf")
 
             for item in paths_list:
                 m3u.write(item + b"\n")
 
-        return filename
+        return os.fsencode(filename)
 
     def before_choose_candidate_listener(
         self, session: ImportSession, task: ImportTask

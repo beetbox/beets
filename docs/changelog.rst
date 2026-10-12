@@ -23,6 +23,12 @@ New features
 - :doc:`plugins/embedart`: Add a ``normalize`` option that downscales existing
   embedded art wider than ``maxwidth`` after an album is imported, even when no
   replacement art is fetched. :bug:`7068`
+- :doc:`plugins/subsonicupdate`: Add a ``subsonicupdate`` command that requests
+  a library update from the Subsonic server on demand, and an ``auto`` option
+  that disables the updates triggered by library and smart playlist changes.
+  :bug:`6741`
+- Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
+  already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
 
 Bug fixes
 ~~~~~~~~~
@@ -50,6 +56,9 @@ Bug fixes
 - Improve the error message when the library database cannot be opened (for
   example due to permissions or an unwritable path), and fix the ``cannot not``
   typo in the generic database open failure message. :bug:`1676`
+- :doc:`plugins/lastgenre`: An empty or null ``whitelist`` or ``canonical``
+  setting now raises a clear error instead of silently falling back to the
+  default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
 - :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
@@ -59,14 +68,29 @@ Bug fixes
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
+- :doc:`plugins/mbsubmit`: The "Print tracks" (``p``) and "Open files with
+  Picard" (``o``) prompt choices are offered again when the importer has no
+  recommendation for a match (for example when no candidates were found).
+  :bug:`7031`
+- :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
+  subdirectory holds a file named like one in the album folder.
 
-..
-    For plugin developers
-    ~~~~~~~~~~~~~~~~~~~~~
+For plugin developers
+~~~~~~~~~~~~~~~~~~~~~
 
-..
-    Other changes
-    ~~~~~~~~~~~~~
+- ``ArtResizer.resize``, ``ArtResizer.deinterlace`` and ``ArtResizer.reformat``
+  now expect :class:`pathlib.Path` arguments. ``str`` and ``bytes`` paths keep
+  working and are returned in the representation they were given in, but emit a
+  :class:`DeprecationWarning` and will be removed in 3.0.0.
+- ``beetsplug._utils.art.embed_item`` and
+  ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
+  arguments, deprecating ``str`` and ``bytes`` in the same way.
+
+Other changes
+~~~~~~~~~~~~~
+
+- :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
+  ``platformdirs``, which beets already requires.
 
 2.14.1 (September 17, 2026)
 ---------------------------

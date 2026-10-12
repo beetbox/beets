@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 import confuse
 import requests
 from discogs_client import Client, Master, Release
-from discogs_client.exceptions import DiscogsAPIError
+from discogs_client.exceptions import DiscogsAPIError, MalformedResponseError
 
 import beets
 import beets.ui
@@ -336,10 +336,8 @@ class DiscogsPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
 
         try:
             return search()
-        except json.JSONDecodeError:
-            self._log.debug(
-                "Discogs returned an invalid JSON search response; retrying"
-            )
+        except MalformedResponseError as exc:
+            self._log.debug("{}; retrying", exc.msg)
             return search()
 
     @cache

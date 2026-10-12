@@ -137,6 +137,7 @@ class DuplicatesPlugin(BeetsPlugin):
             help="remove items from library",
         )
         self._command.parser.add_all_common_options()
+        self._command.parser.add_limit_option()
 
     def commands(self) -> list[Subcommand]:
         def _dup(lib: Library, opts: optparse.Values, args: list[str]) -> None:
@@ -145,14 +146,14 @@ class DuplicatesPlugin(BeetsPlugin):
 
             if self.config["album"].get(bool):
                 self._run_command(
-                    lib.albums(args),
+                    lib.albums(args, limit=opts.limit),
                     keys or ["mb_albumid"],
                     "$albumartist - $album",
                     merge_func=self._merge_albums,
                 )
             else:
                 self._run_command(
-                    lib.items(args),
+                    lib.items(args, limit=opts.limit),
                     keys or ["mb_trackid", "mb_albumid"],
                     "$albumartist - $album - $title",
                     merge_func=self._merge_items,
