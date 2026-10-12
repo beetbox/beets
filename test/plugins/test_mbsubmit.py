@@ -1,7 +1,8 @@
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from beets import plugins
-from beets.autotag import Recommendation
+from beets.autotag import AlbumCandidates, Recommendation
 from beets.test.helper import (
     AutotagImportTestCase,
     PluginMixin,
@@ -51,16 +52,17 @@ class MBSubmitPluginTest(
 
     def test_choices_offered_with_no_recommendation(self):
         """Prompt choices must appear even when the recommendation is none."""
-        task = SimpleNamespace(rec=Recommendation.none)
+        task = SimpleNamespace(candidates=AlbumCandidates(source=None))
         results = plugins.send(
             "before_choose_candidate", session=None, task=task
         )
         shorts = [c.short for choices in results for c in choices]
         assert shorts == ["p", "o"]
 
+    @patch("beets.autotag.AlbumCandidates.recommendation", Recommendation.strong)
     def test_no_choices_offered_above_threshold(self):
         """Prompt choices should not appear when recommendation is above threshold."""
-        task = SimpleNamespace(rec=Recommendation.strong)
+        task = SimpleNamespace(candidates=AlbumCandidates(source=None))
         results = plugins.send(
             "before_choose_candidate", session=None, task=task
         )
