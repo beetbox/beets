@@ -4,7 +4,7 @@ import fnmatch
 import os
 import shlex
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from mediafile import MediaFile
@@ -320,3 +320,66 @@ class TestNoConvert(PluginTestHelper):
         item = Item(format="ogg", bitrate=256)
         config["convert"]["no_convert"] = config_value
         assert convert.ConvertPlugin().in_no_convert(item) == should_skip
+
+
+class TestConvertRemoveMissing(ConvertPluginHelper, ConvertCommand):
+    """Tests the effect of the `remove_missing option`"""
+
+    @pytest.fixture(autouse=True)
+    def setup_removemissing(self, setup):
+        self.item = self.add_item_fixture(
+            title="title", artist="artist", album="album", format="flac"
+        )
+
+        self.convert_dest = self.temp_path / "convert_dest"
+        self.convert_dest.mkdir(parents=True)
+
+        self.config["convert"] = {
+            "dest": str(self.convert_dest),
+            "format": "mp3",
+        }
+
+    def create_dummy_file(self, filename: str) -> Path:
+        "Creates a dummy file in the conversion directory"
+        p = self.convert_dest / filename
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("w") as f:
+            f.write("test")
+        return p
+
+    @pytest.mark.parametrize(
+        "plugin_config,cli_options,expect_removal",
+        [
+            ({}, [], False),
+            ({}, ["--remove-missing", "--pretend"], False),
+            ({}, ["--remove-missing"], True),
+            ({"remove_missing": True}, [], True),
+        ],
+    )
+    def test_convert_remove_missing(
+        self,
+        plugin_config: dict[str, Any],
+        cli_options: list[str],
+        expect_removal: bool,
+    ):
+        # This file mocks an already existing converted file that should not be
+        # removed or modified.
+        file_not_to_remove = self.item.filepath
+
+        original_mtime = os.path.getmtime(file_not_to_remove)
+
+        # Create files to be marked for removal
+        path_to_mark_for_removal = self.create_dummy_file("to_remove.mp3")
+
+        # Set configurations
+        for key, val in plugin_config.items():
+            self.config["convert"][key] = val
+
+        self.run_convert("--yes", *cli_options)
+
+        # Check if file was expectedly removed or not
+        assert (not path_to_mark_for_removal.exists()) == expect_removal
+
+        # Check that files not to be removed are still there unmodified
+        assert file_not_to_remove.exists()
+        assert os.path.getmtime(file_not_to_remove) == original_mtime
