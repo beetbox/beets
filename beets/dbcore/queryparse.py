@@ -140,7 +140,9 @@ def construct_query_part(
     if not term.field:
         # If there's no key (field name) specified, this is a "match anything"
         # query.
-        out_query = model_cls.any_field_query(term.pattern, query_class)
+        out_query = query.OrQuery(
+            [query_class(f, term.pattern) for f in model_cls._search_fields]
+        )
     else:
         # Field queries get constructed according to the name of the field
         # they are querying.

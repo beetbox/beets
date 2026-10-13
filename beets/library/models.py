@@ -182,14 +182,6 @@ class LibModel(dbcore.Model["Library"]):
         return query_cls(field, pattern, fast)
 
     @classmethod
-    def any_field_query(
-        cls, pattern: str, query_cls: type[FieldQuery]
-    ) -> dbcore.OrQuery:
-        return dbcore.OrQuery(
-            [cls.field_query(f, pattern, query_cls) for f in cls._search_fields]
-        )
-
-    @classmethod
     def any_writable_media_field_query(
         cls, pattern: str, query_cls: type[FieldQuery]
     ) -> dbcore.OrQuery:
