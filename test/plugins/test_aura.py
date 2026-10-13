@@ -87,7 +87,8 @@ class TestAuraResponse:
         return get
 
     @pytest.fixture(scope="class")
-    def track_document(self, item, album):
+    @classmethod
+    def track_document(cls, item, album):
         return {
             "type": "track",
             "id": str(item.id),
@@ -108,7 +109,8 @@ class TestAuraResponse:
         }
 
     @pytest.fixture(scope="class")
-    def artist_document(self, item):
+    @classmethod
+    def artist_document(cls, item):
         return {
             "type": "artist",
             "id": item.artist,
@@ -119,7 +121,8 @@ class TestAuraResponse:
         }
 
     @pytest.fixture(scope="class")
-    def album_document(self, album):
+    @classmethod
+    def album_document(cls, album):
         return {
             "type": "album",
             "id": str(album.id),
