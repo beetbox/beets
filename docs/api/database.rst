@@ -43,3 +43,10 @@ Queries
     Query
     FieldQuery
     AndQuery
+
+.. currentmodule:: beets.dbcore.queryparse
+
+.. autosummary::
+    :toctree: generated/
+
+    ModelQuery

@@ -82,6 +82,12 @@ For plugin developers
 - ``beetsplug._utils.art.embed_item`` and
   ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
   arguments, deprecating ``str`` and ``bytes`` in the same way.
+- Query parsing is now available through ``Item.parse_query`` and
+  ``Album.parse_query``, which return a
+  :class:`~beets.dbcore.queryparse.ModelQuery` containing the query and sort
+  order. The ``parse_query_string``, ``parse_query_parts``,
+  ``query_from_strings``, ``sort_from_strings``, and ``parse_sorted_query``
+  helpers are deprecated.
 
 Other changes
 ~~~~~~~~~~~~~

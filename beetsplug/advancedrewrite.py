@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 import confuse
 
-from beets.dbcore import AndQuery, query_from_strings
+from beets.dbcore import ModelQuery
 from beets.dbcore.types import MULTI_VALUE_DSV
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
@@ -20,6 +20,7 @@ from .rewrite import apply_rewrite_rules
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
+    from beets.dbcore.query import Query
     from beets.library import LibModel
 
 
@@ -31,7 +32,7 @@ class AdvancedRewriteConfig(TypedDict):
 def rewriter(
     field: str,
     simple_rules: list[tuple[re.Pattern[str], str]],
-    advanced_rules: list[tuple[AndQuery, str | list[str]]],
+    advanced_rules: list[tuple[Query, str | list[str]]],
 ) -> Callable[[LibModel], str | list[str]]:
     """Template field function factory.
 
@@ -102,16 +103,14 @@ class AdvancedRewritePlugin(BeetsPlugin):
 
     def parse_advanced_rule(
         self, rule: AdvancedRewriteConfig
-    ) -> Iterator[tuple[str, tuple[AndQuery, str | list[str]]]]:
+    ) -> Iterator[tuple[str, tuple[Query, str | list[str]]]]:
         match = rule["match"]
         replacements = rule["replacements"]
         if len(replacements) == 0:
             raise UserError(
                 "Advanced rewrites must have at least one replacement"
             )
-        query = query_from_strings(
-            AndQuery, Item, prefixes={}, query_parts=shlex.split(match)
-        )
+        query = ModelQuery.build_and_query(Item, shlex.split(match))
         for fieldname, replacement in replacements.items():
             if fieldname not in Item._fields:
                 raise UserError(f"Invalid field name {fieldname} in rewriter")
@@ -158,7 +157,7 @@ class AdvancedRewritePlugin(BeetsPlugin):
         # Gather all the rewrite rules for each field.
         class RulesContainer:
             simple: list[tuple[re.Pattern[str], str]]
-            advanced: list[tuple[AndQuery, str | list[str]]]
+            advanced: list[tuple[Query, str | list[str]]]
 
             def __init__(self) -> None:
                 self.simple = []
