@@ -187,6 +187,19 @@ def do_not_log_sources(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def restore_log_level() -> Iterator[None]:
+    """Reset the global log level, which the CLI sets and never restores.
+
+    See https://github.com/beetbox/beets/actions/runs/38253501906/job/114825507731.
+    """
+    log = logging.getLogger("beets")
+    default_level, level = log.default_level, log.level
+    yield
+    log.default_level = default_level
+    log.setLevel(level)
+
+
+@pytest.fixture(autouse=True)
 def clear_cached_classproperty():
     cached_classproperty.cache.clear()
 
