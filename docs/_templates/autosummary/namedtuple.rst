@@ -3,3 +3,4 @@
 .. currentmodule:: {{ module }}
 
 .. autonamedtuple:: {{ objname }}
+    :members:
