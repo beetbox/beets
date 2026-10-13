@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from beets import ui
 from beets.library import Item
 from beets.test.helper import PluginMixin, PluginTestHelper
 from beets.util.lyrics import Lyrics
@@ -569,6 +570,23 @@ class TestGeniusLyrics(LyricsBackendTest):
 
         assert len(result.splitlines()) == expected_line_count
 
+    @pytest.mark.parametrize(
+        "file_name, expecting_lyrics",
+        [("geniuscom/Ttngchinchillalyrics", True), ("geniuscom/sample", False)],
+    )
+    def test_fetch_url(
+        self, backend, requests_mock, lyrics_html, expecting_lyrics
+    ):
+        url = "https://genius.com/Artist-song-lyrics"
+        requests_mock.get(url, text=lyrics_html)
+
+        result = backend.fetch_url(url, 0)
+
+        assert bool(result) == expecting_lyrics
+        if result:
+            assert result.backend == "genius"
+            assert result.url == url
+
 
 class TestTekstowoLyrics(LyricsBackendTest):
     @pytest.fixture(scope="class")
@@ -587,6 +605,46 @@ class TestTekstowoLyrics(LyricsBackendTest):
     )
     def test_scrape(self, backend, lyrics_html, expecting_lyrics):
         assert bool(backend.scrape(lyrics_html)) == expecting_lyrics
+
+    @pytest.mark.parametrize(
+        "file_name", ["tekstowopl/piosenka24kgoldncityofangels1"]
+    )
+    def test_fetch_url(self, backend, requests_mock, lyrics_html):
+        url = "https://www.tekstowo.pl/piosenka,24kgoldn,city_of_angels.html"
+        requests_mock.get(url, text=lyrics_html)
+
+        result = backend.fetch_url(url, 0)
+
+        assert result
+        assert result.backend == "tekstowo"
+        assert result.url == url
+
+
+class TestMusiXmatchLyrics(LyricsBackendTest):
+    @pytest.fixture(scope="class")
+    def backend_name(self):
+        return "musixmatch"
+
+    @pytest.mark.parametrize(
+        "html, expected_lyrics",
+        [
+            ('<p class="mxm-lyrics__content">la la</p>', "la la"),
+            ("We detected that your IP is blocked", None),
+        ],
+    )
+    def test_fetch(self, backend, requests_mock, html, expected_lyrics):
+        """Search builds the page URL and scrapes it via ``fetch_url``."""
+        url = backend.build_url("Artist", "Song")
+        requests_mock.get(url, text=html)
+
+        result = backend.fetch("Artist", "Song", "", 0)
+
+        if expected_lyrics is None:
+            assert not result
+        else:
+            assert result
+            assert result.text.strip() == expected_lyrics
+            assert result.url == url
 
 
 LYRICS_DURATION = 950
@@ -732,6 +790,53 @@ class TestLRCLibLyrics(LyricsBackendTest):
             assert lyrics
             assert lyrics.text == expected_lyrics
 
+    @pytest.mark.parametrize(
+        "plugin_config, response_data, expected_lyrics",
+        [
+            pytest.param(
+                {"synced": True},
+                lyrics_match(duration=1),
+                SYNCED,
+                id="ignore duration mismatch",
+            ),
+            pytest.param(
+                {"synced": False}, lyrics_match(), "plain", id="plain"
+            ),
+            pytest.param(
+                {"synced": True},
+                lyrics_match(syncedLyrics="[20:00.00] past the end"),
+                "plain",
+                id="plain: synced longer than the track",
+            ),
+            pytest.param(
+                {"synced": True},
+                lyrics_match(instrumental=True),
+                "",
+                id="instrumental",
+            ),
+            pytest.param(
+                {"synced": True},
+                lyrics_match(plainLyrics=None, syncedLyrics=None),
+                None,
+                id="none: no lyrics text",
+            ),
+        ],
+    )
+    def test_fetch_url(
+        self, backend, requests_mock, response_data, expected_lyrics
+    ):
+        url = f"{backend.GET_URL}/1"
+        requests_mock.get(url, json=response_data)
+
+        lyrics = backend.fetch_url(url, self.ITEM_DURATION)
+
+        if expected_lyrics is None:
+            assert not lyrics
+        else:
+            assert lyrics
+            assert lyrics.text == expected_lyrics
+            assert lyrics.url == url
+
 
 class TestLRCMuxLyrics(LyricsBackendTest):
     SYNCED = "[00:00.00] synced"
@@ -783,6 +888,166 @@ class TestLRCMuxLyrics(LyricsBackendTest):
     def test_empty_response(self, backend, requests_mock):
         requests_mock.get(backend.url, text="")
         assert backend.fetch("la", "la", "", 0) is None
+
+    @pytest.mark.parametrize(
+        "plugin_config, url, expected",
+        [
+            ({}, f"{lyrics.LRCMux.DEFAULT_URL}/get?title=la", True),
+            ({}, f"{lyrics.LRCMux.DEFAULT_URL}/get", False),
+            ({}, f"{lyrics.LRCMux.DEFAULT_URL}/search?title=la", False),
+            (
+                {"lrcmux": {"url": "http://localhost:8000/"}},
+                "http://localhost:8000/get?title=la",
+                True,
+            ),
+            (
+                {"lrcmux": {"url": "http://localhost:8000/"}},
+                f"{lyrics.LRCMux.DEFAULT_URL}/get?title=la",
+                False,
+            ),
+        ],
+    )
+    def test_handles_url(self, backend, url, expected):
+        assert backend.handles_url(url) is expected
+
+    @pytest.mark.parametrize("plugin_config", [{}])
+    def test_fetch_url(self, backend, requests_mock):
+        url = f"{backend.url}?title=la&format=lrc"
+        requests_mock.get(url, text=self.SYNCED)
+
+        result = backend.fetch_url(url, 0)
+
+        assert result
+        assert result.text == self.SYNCED
+        assert result.url == url
+
+
+class TestBackendHandlesUrl(LyricsBackendTest):
+    @pytest.fixture
+    def plugin_config(self):
+        return {"google_API_key": "test"}
+
+    @pytest.mark.parametrize(
+        "backend_name, url, expected",
+        [
+            ("lrclib", "https://lrclib.net/api/get/26627014", True),
+            ("lrclib", "https://lrclib.net/api/search?q=song", False),
+            ("lrclib", "https://lrclib.net/api/get/1/", False),
+            ("lrclib", "https://lrclib.net/api/get/abc", False),
+            ("lrclib", "https://example.com/api/get/1", False),
+            ("genius", "https://genius.com/Artist-song-lyrics", True),
+            ("genius", "https://genius.com/artists/Artist", False),
+            ("genius", "https://genius.com/Artist-song-lyrics?q=1", False),
+            (
+                "tekstowo",
+                "https://www.tekstowo.pl/piosenka,artist,song.html",
+                True,
+            ),
+            ("tekstowo", "https://www.tekstowo.pl/szukaj,song.html", False),
+            ("musixmatch", "https://www.musixmatch.com/lyrics/A/S", True),
+            (
+                "musixmatch",
+                "https://www.musixmatch.com/lyrics/A/S/translation/spanish",
+                False,
+            ),
+            ("lrcmux", f"{lyrics.LRCMux.DEFAULT_URL}/get?title=song", True),
+            ("lrcmux", "https://lrclib.net/api/get/1", False),
+            ("google", "https://www.azlyrics.com/lyrics/a/s.html", False),
+        ],
+    )
+    def test_handles_url(self, backend, url, expected):
+        assert backend.handles_url(url) is expected
+
+
+class TestLyricsUrlCommand(PluginTestHelper):
+    plugin = "lyrics"
+    URL = f"{lyrics.LRCLib.GET_URL}/1"
+
+    @pytest.fixture(autouse=True)
+    def _configure(self):
+        self.config["lyrics"]["sources"] = ["lrclib"]
+
+    def test_fetch_from_url(self, requests_mock):
+        requests_mock.get(self.URL, json=lyrics_match(plainLyrics="from url"))
+        item = self.add_item(lyrics="", length=LYRICS_DURATION)
+
+        self.run_command("lyrics", "--url", self.URL)
+
+        item.load()
+        assert item.lyrics == "from url"
+        assert item.lyrics_url == self.URL
+        assert item.lyrics_backend == "lrclib"
+        assert [r.url for r in requests_mock.request_history] == [self.URL]
+
+    def test_url_picks_matching_source(self, requests_mock):
+        """Only the source owning the URL is queried, whatever its order."""
+        self.config["lyrics"]["sources"] = ["genius", "lrclib"]
+        requests_mock.get(self.URL, json=lyrics_match(plainLyrics="from url"))
+        item = self.add_item(lyrics="", length=LYRICS_DURATION)
+
+        self.run_command("lyrics", "--url", self.URL)
+
+        item.load()
+        assert item.lyrics == "from url"
+        assert [r.url for r in requests_mock.request_history] == [self.URL]
+
+    def test_failed_request_keeps_lyrics(self, requests_mock):
+        """A failed URL request does not fall back to the search."""
+        requests_mock.get(self.URL, status_code=HTTPStatus.NOT_FOUND)
+        item = self.add_item(lyrics="old", length=LYRICS_DURATION)
+
+        self.run_command("lyrics", "-f", "--url", self.URL)
+
+        item.load()
+        assert item.lyrics == "old"
+        assert "lyrics_url" not in item
+        assert [r.url for r in requests_mock.request_history] == [self.URL]
+
+    @pytest.mark.parametrize(
+        "args, expected_lyrics",
+        [
+            pytest.param((), "old", id="keep-existing-without-force"),
+            pytest.param(("-f",), "from url", id="replace-with-force"),
+            pytest.param(("-f", "--local"), "old", id="local-skips-fetch"),
+        ],
+    )
+    def test_existing_lyrics(self, requests_mock, args, expected_lyrics):
+        requests_mock.get(self.URL, json=lyrics_match(plainLyrics="from url"))
+        item = self.add_item(lyrics="old", length=LYRICS_DURATION)
+
+        self.run_command("lyrics", *args, "--url", self.URL)
+
+        item.load()
+        assert item.lyrics == expected_lyrics
+
+    def test_no_matching_items(self, requests_mock):
+        self.run_command("lyrics", "--url", self.URL)
+
+        assert not requests_mock.called
+
+    def test_multiple_items_rejected(self, requests_mock):
+        self.add_item(lyrics="")
+        self.add_item(lyrics="")
+
+        with pytest.raises(ui.UserError, match="2 tracks matched"):
+            self.run_command("lyrics", "--url", self.URL)
+        assert not requests_mock.called
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://genius.com/Artist-song-lyrics",
+            "https://lrclib.net/api/search?q=song",
+        ],
+    )
+    def test_unknown_url_rejected(self, requests_mock, url):
+        self.add_item(lyrics="")
+
+        with pytest.raises(
+            ui.UserError, match="enabled lyrics sources: lrclib"
+        ):
+            self.run_command("lyrics", "--url", url)
+        assert not requests_mock.called
 
 
 @pytest.mark.requires_import("langdetect")

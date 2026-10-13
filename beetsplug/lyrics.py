@@ -60,6 +60,7 @@ class LyricsCLIOpts(Protocol):
     limit: int | None
     print: bool
     rest_directory: str | None
+    url: str | None
 
 
 class CaptchaError(requests.exceptions.HTTPError):
@@ -262,6 +263,9 @@ class BackendClass(type):
 class Backend(LyricsRequestHandler, metaclass=BackendClass):
     config: confuse.Subview
 
+    #: Pattern of the URLs that lyrics can be fetched from directly.
+    URL_PAT: ClassVar[re.Pattern[str] | None] = None
+
     def __init__(self, config: confuse.Subview, log: Logger) -> None:
         self._log = log
         self.config = config
@@ -270,6 +274,14 @@ class Backend(LyricsRequestHandler, metaclass=BackendClass):
         self, artist: str, title: str, album: str, length: int
     ) -> Lyrics | None:
         """Return lyrics for a song, or ``None`` when no match is found."""
+        raise NotImplementedError
+
+    def handles_url(self, url: str) -> bool:
+        """Return whether lyrics can be fetched from the given URL."""
+        return bool(self.URL_PAT and self.URL_PAT.match(url))
+
+    def fetch_url(self, url: str, length: int) -> Lyrics | None:
+        """Return lyrics from the given URL, or ``None`` if there are none."""
         raise NotImplementedError
 
 
@@ -411,6 +423,7 @@ class LRCLib(Backend):
     BASE_URL = "https://lrclib.net/api"
     GET_URL = f"{BASE_URL}/get"
     SEARCH_URL = f"{BASE_URL}/search"
+    URL_PAT = re.compile(rf"{re.escape(GET_URL)}/\d+$")
 
     def fetch_candidates(
         self, artist: str, title: str, album: str, length: int
@@ -456,9 +469,19 @@ class LRCLib(Backend):
 
         return None
 
+    def fetch_url(self, url: str, length: int) -> Lyrics | None:
+        """Fetch the LRCLib record at the given URL without ranking it."""
+        item = LRCLyrics.make(self.get_json(url), length)
+        if item.has_text:
+            lyrics = item.get_text(self.config["synced"].get(bool))
+            return Lyrics(lyrics, self.__class__.name, url)
+
+        return None
+
 
 class MusiXmatch(Backend):
     URL_TEMPLATE = "https://www.musixmatch.com/lyrics/{}/{}"
+    URL_PAT = re.compile(r"https://www\.musixmatch\.com/lyrics/[^/]+/[^/]+$")
 
     REPLACEMENTS: ClassVar[dict[str, str]] = {
         "['\u2018\u2019]": "-",
@@ -481,9 +504,12 @@ class MusiXmatch(Backend):
     def build_url(cls, *args: str) -> str:
         return cls.URL_TEMPLATE.format(*map(cls.encode, args))
 
-    def fetch(self, artist: str, title: str, *_) -> Lyrics | None:
-        url = self.build_url(artist, title)
+    def fetch(
+        self, artist: str, title: str, album: str, length: int
+    ) -> Lyrics | None:
+        return self.fetch_url(self.build_url(artist, title), length)
 
+    def fetch_url(self, url: str, length: int) -> Lyrics | None:
         html = self.get_text(url)
         if "We detected that your IP is blocked" in html:
             self.warn("Failed: Blocked IP address")
@@ -644,13 +670,20 @@ class SearchBackend(SoupMixin, Backend):
             if check_match(candidate):
                 yield candidate
 
-    def fetch(self, artist: str, title: str, *_) -> Lyrics | None:
+    def fetch(
+        self, artist: str, title: str, album: str, length: int
+    ) -> Lyrics | None:
         """Fetch lyrics for the given artist and title."""
         for result in self.get_results(artist, title):
-            if (html := self.get_text(result.url)) and (
-                lyrics := self.scrape(html)
-            ):
-                return Lyrics(lyrics, self.__class__.name, result.url)
+            if lyrics := self.fetch_url(result.url, length):
+                return lyrics
+
+        return None
+
+    def fetch_url(self, url: str, length: int) -> Lyrics | None:
+        """Scrape lyrics from the page at the given URL."""
+        if (html := self.get_text(url)) and (lyrics := self.scrape(html)):
+            return Lyrics(lyrics, self.__class__.name, url)
 
         return None
 
@@ -669,6 +702,7 @@ class Genius(SearchBackend):
     """
 
     SEARCH_URL = "https://api.genius.com/search"
+    URL_PAT = re.compile(r"https://genius\.com/[^/?#]+-lyrics$")
     LYRICS_IN_JSON_RE = re.compile(r'(?<=.\\"html\\":\\").*?(?=(?<!\\)\\")')
     remove_backslash = partial(re.compile(r"\\(?=[^\\])").sub, "")
 
@@ -728,6 +762,7 @@ class Tekstowo(SearchBackend):
 
     BASE_URL = "https://www.tekstowo.pl"
     SEARCH_URL = f"{BASE_URL}/szukaj,{{}}.html"
+    URL_PAT = re.compile(rf"{re.escape(BASE_URL)}/piosenka,[^/]+\.html$")
 
     def build_url(self, artist: str, title: str) -> str:
         artistitle = f"{artist.title()} {title.title()}"
@@ -1011,10 +1046,15 @@ class LRCMux(Backend):
         if sources:
             params["sources"] = ",".join(sources)
 
-        full_url = self.format_url(self.url, params)
+        return self.fetch_url(self.format_url(self.url, params), length)
+
+    def handles_url(self, url: str) -> bool:
+        return url.startswith(f"{self.url}?")
+
+    def fetch_url(self, url: str, length: int) -> Lyrics | None:
         with suppress(HTTPNotFoundError):
-            if text := self.get_text(self.url, params=params).strip():
-                return Lyrics(text, self.__class__.name, full_url)
+            if text := self.get_text(url).strip():
+                return Lyrics(text, self.__class__.name, url)
 
         return None
 
@@ -1227,12 +1267,25 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             default=self.config["local"].get(),
             help="do not fetch missing lyrics",
         )
+        cmd.parser.add_option(
+            "--url",
+            metavar="URL",
+            help="fetch lyrics for a single matched track from the given URL",
+        )
 
         def func(lib: Library, opts: LyricsCLIOpts, args: list[str]) -> None:
             # The "write to files" option corresponds to the
             # import_write config value.
             self.config.set(vars(opts))
             items = list(lib.items(args, limit=opts.limit))
+            if opts.url:
+                if len(items) > 1:
+                    raise ui.UserError(
+                        "--url expects a query matching a single track,"
+                        f" but {len(items)} tracks matched"
+                    )
+                self.get_url_backend(opts.url)
+
             for item in items:
                 self.add_item_lyrics(item, ui.should_write())
                 if item.lyrics and opts.print:
@@ -1258,9 +1311,28 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         for item in filterfalse(query.match, task.imported_items()):
             self.add_item_lyrics(item, False)
 
+    def get_url_backend(self, url: str) -> Backend:
+        """Return the enabled backend that can fetch lyrics from the URL."""
+        for backend in self.backends:
+            if backend.handles_url(url):
+                return backend
+
+        raise ui.UserError(
+            f"URL {url} does not belong to any of the enabled lyrics sources:"
+            f" {', '.join(b.__class__.name for b in self.backends)}"
+        )
+
     def find_lyrics(self, item: Item) -> Lyrics | None:
-        """Return the first lyrics match from the configured source search."""
+        """Return lyrics from the requested URL, if given, or the first match
+        from the configured source search.
+        """
         album, length = item.album, round(item.length)
+        if url := self.config["url"].get(Optional(str)):
+            backend = self.get_url_backend(url)
+            with backend.handle_request():
+                return backend.fetch_url(url, length)
+            return None
+
         matches = (
             self.get_lyrics(a, t, album, length)
             for a, titles in search_pairs(item)

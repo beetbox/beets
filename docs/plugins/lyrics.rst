@@ -172,6 +172,24 @@ single command run.
 Inversely, the ``-l, --local`` option restricts operations to lyrics that are
 locally available, which show lyrics faster without using the network at all.
 
+The ``--url URL`` option fetches lyrics from the given URL instead of searching
+for them, which is useful when the search picks the wrong lyrics. The query must
+match a single track, and the URL must belong to one of the enabled ``sources``:
+
+- ``lrclib``: an LRCLib API record, such as ``https://lrclib.net/api/get/123``
+- ``genius``: a Genius lyrics page
+- ``tekstowo``: a Tekstowo song page
+- ``musixmatch``: a Musixmatch lyrics page
+- ``lrcmux``: an lrcmux ``/get`` URL
+
+The URL is stored in the ``lyrics_url`` field, so the source URL printed by the
+command for a previous fetch can be used here directly. Combine it with ``-f``
+to replace existing lyrics, for example:
+
+::
+
+    $ beet lyrics -f --url https://lrclib.net/api/get/26627014 disco chaos
+
 .. _rendering-lyrics:
 
 Rendering Lyrics into Other Formats

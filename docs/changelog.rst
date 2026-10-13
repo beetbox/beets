@@ -26,6 +26,9 @@ New features
   :bug:`6741`
 - Add ``-l / --limit LIMIT`` to other query-based commands. Commands that
   already use ``-l`` for another purpose accept ``--limit LIMIT`` only.
+- :doc:`plugins/lyrics`: Add a ``--url`` option to the ``lyrics`` command to
+  fetch lyrics for a track from a specific URL of one of the enabled sources.
+  :bug:`6439`
 
 Bug fixes
 ~~~~~~~~~
