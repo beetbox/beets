@@ -15,7 +15,6 @@ import beets
 from beets import dbcore, logging, plugins, util
 from beets.dbcore import sort, types
 from beets.dbcore.db import FormattedMapping
-from beets.dbcore.pathutils import normalize_path_for_db
 from beets.dbcore.queryparse import ModelQuery
 from beets.util import (
     MoveOperation,
@@ -162,16 +161,7 @@ class LibModel(dbcore.Model["Library"]):
         field = maybe_replace_legacy_field(field, cls is Album)
 
         fast = field in cls.all_db_fields
-        if (
-            cls._type(field).query is dbcore.query.PathQuery
-            and query_cls is not dbcore.query.PathQuery
-        ):
-            # Regex, exact, and string queries operate on the raw DB value, so
-            # strip the library prefix to match the stored relative path.
-            bytes_pattern = normalize_path_for_db(util.bytestring_path(pattern))
-            if query_cls is not dbcore.query.RegexpQuery:
-                bytes_pattern = util.path_as_posix(bytes_pattern)
-            pattern = os.fsdecode(bytes_pattern)
+        pattern = cls._type(field).normalize_query_pattern(query_cls, pattern)
 
         if field in cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter

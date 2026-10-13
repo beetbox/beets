@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import time
 import typing
@@ -14,6 +15,9 @@ from beets import util
 from beets.util.units import human_seconds_short, raw_seconds_short
 
 from . import pathutils, query
+
+if TYPE_CHECKING:
+    from .query import FieldQuery
 
 SQLiteType = query.SQLiteType
 MULTI_VALUE_DELIMITER = "\\␀"
@@ -49,7 +53,7 @@ class Type(ABC, Generic[T, N]):
     """The SQLite column type for the value.
     """
 
-    query: type[query.FieldQuery] = query.SubstringQuery
+    query: type[FieldQuery] = query.SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
@@ -104,6 +108,12 @@ class Type(ABC, Generic[T, N]):
         # TODO This should eventually be replaced by
         # `self.model_type(value)`
         return cast(T, value)
+
+    def normalize_query_pattern(
+        self, query_cls: type[FieldQuery], pattern: str
+    ) -> str:
+        """Adapt a user-supplied pattern to this field's stored representation."""
+        return pattern
 
     def from_sql(self, sql_value: SQLiteType) -> T | N:
         """Receives the value stored in the SQL backend and return the
@@ -220,7 +230,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: type[query.FieldQuery] = query.NumericQuery
+    query: type[FieldQuery] = query.NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1) -> None:
@@ -385,6 +395,21 @@ class BasePathType(Type[bytes, N]):
             return bytes(value)
 
         return value
+
+    def normalize_query_pattern(
+        self, query_cls: type[FieldQuery], pattern: str
+    ) -> str:
+        """Adapt a user-supplied pattern to this field's stored representation."""
+        if query_cls is query.PathQuery:
+            # PathQuery normalizes its own pattern against the library root.
+            return pattern
+
+        # Strip the library prefix to match the stored relative path.
+        value = pathutils.normalize_path_for_db(util.bytestring_path(pattern))
+        # Keep escape chars (`\`) for regexes - the SQL regex uses them.
+        if query_cls is not query.RegexpQuery:
+            value = util.path_as_posix(value)
+        return os.fsdecode(value)
 
     def from_sql(self, sql_value: SQLiteType) -> bytes | N:
         value = self.normalize(sql_value)
