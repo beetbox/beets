@@ -649,6 +649,15 @@ class TestFtInTitlePluginFunctional(PluginTestHelper):
             ),
             ("Song", "(feat. {}", False, "Alice feat. Bob", "Song"),
             ("Song (", "feat. {}", False, "Alice feat. Bob", "Song ("),
+            ("Song", "feat. {0[0]}", False, "Alice feat. Bob", "Song"),
+            ("Song feat. Bob", "feat. {1}", False, "Alice", "Song feat. Bob"),
+            (
+                "<Song feat. Bob (Live> Mix)",
+                "feat. {}",
+                False,
+                "Alice feat. Bob",
+                "<Song feat. Bob (Live> Mix)",
+            ),
             ("Song feat. Carol", "feat. {}", True, "Alice", "Song feat. Carol"),
         ],
     )
