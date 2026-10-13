@@ -71,6 +71,13 @@ Bug fixes
   :bug:`7031`
 - :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
   subdirectory holds a file named like one in the album folder.
+- :doc:`plugins/ftintitle`: Handle bracketed featured credits followed by more
+  artist text, and leave malformed artist brackets unsplit.
+- :doc:`plugins/ftintitle`: Preserve commas and generic separators in
+  ``artist_sort``, removing only explicit featuring markers.
+- :doc:`plugins/ftintitle`: Recognize custom featuring words in titles only in
+  brackets, and retain artist credits that cannot be included in the title
+  unless ``drop`` is enabled.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
