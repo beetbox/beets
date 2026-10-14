@@ -57,6 +57,7 @@ if TYPE_CHECKING:
 
 
 class LyricsCLIOpts(Protocol):
+    limit: int | None
     print: bool
     rest_directory: str | None
 
@@ -1231,7 +1232,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             self.config.set(vars(opts))
-            items = list(lib.items(args))
+            items = list(lib.items(args, limit=opts.limit))
             for item in items:
                 self.add_item_lyrics(item, ui.should_write())
                 if item.lyrics and opts.print:
@@ -1242,6 +1243,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             ):
                 RestFiles(Path(opts.rest_directory).expanduser()).write(items)
 
+        cmd.parser.add_limit_option(flags=("--limit",))
         cmd.func = func
         return [cmd]
 
@@ -1326,6 +1328,9 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             item.store()
             if write:
                 item.try_write(tags={"synced_lyrics": sylt_data})
+        elif new_lyrics:
+            # Instrumental matches update only the `lyrics_*` fields.
+            item.store()
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""

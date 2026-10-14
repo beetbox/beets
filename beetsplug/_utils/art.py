@@ -4,13 +4,12 @@ music and items' embedded album art.
 
 from __future__ import annotations
 
-import os
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
 import mediafile
 
-from beets.util import bytestring_path, displayable_path, syspath
+from beets.util import as_path, bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 
 if TYPE_CHECKING:
@@ -19,16 +18,15 @@ if TYPE_CHECKING:
     from beets.dbcore import Query
     from beets.library import Album, Item, Library
     from beets.logging import BeetsLogger as Logger
-    from beets.util import PathLike
+    from beets.util import AnyPath, PathLike
 
 
 def mediafile_image(
-    image_path: bytes, maxwidth: int | None = None
+    image_path: PathLike, maxwidth: int | None = None
 ) -> mediafile.Image:
     """Return a `mediafile.Image` object for the path."""
 
-    with open(syspath(image_path), "rb") as f:
-        data = f.read()
+    data = as_path(image_path, "image_path").read_bytes()
     return mediafile.Image(data, type=mediafile.ImageType.front)
 
 
@@ -46,7 +44,7 @@ def get_art(log: Logger, item: Item) -> bytes | None:
 def embed_item(
     log: Logger,
     item: Item,
-    imagepath: bytes,
+    imagepath: PathLike,
     maxwidth: int | None = None,
     itempath: bytes | None = None,
     compare_threshold: int = 0,
@@ -57,6 +55,7 @@ def embed_item(
 ) -> None:
     """Embed an image into the item's media file."""
     # Conditions.
+    imagepath = as_path(imagepath, "imagepath")
     if compare_threshold:
         is_similar = check_art_similarity(
             log, item, imagepath, compare_threshold
@@ -78,7 +77,7 @@ def embed_item(
 
     # Get the `Image` object from the file.
     try:
-        log.debug("embedding {}", displayable_path(imagepath))
+        log.debug("embedding {}", imagepath)
         image = mediafile_image(imagepath, maxwidth)
     except OSError as exc:
         log.warning("could not read image file: {}", exc)
@@ -103,16 +102,12 @@ def embed_album(
     quality: int = 0,
 ) -> None:
     """Embed album art into all of the album's items."""
-    imagepath = album.artpath
+    imagepath = album.art_filepath
     if not imagepath:
         log.info("No album art present for {}", album)
         return
-    if not os.path.isfile(syspath(imagepath)):
-        log.info(
-            "Album art not found at {} for {}",
-            displayable_path(imagepath),
-            album,
-        )
+    if not imagepath.is_file():
+        log.info("Album art not found at {} for {}", imagepath, album)
         return
     if maxwidth:
         imagepath = resize_image(log, imagepath, maxwidth, quality)
@@ -134,8 +129,8 @@ def embed_album(
 
 
 def resize_image(
-    log: Logger, imagepath: bytes, maxwidth: int, quality: int
-) -> bytes:
+    log: Logger, imagepath: AnyPath, maxwidth: int, quality: int
+) -> AnyPath:
     """Returns path to an image resized to maxwidth and encoded with the
     specified quality level.
     """
@@ -150,7 +145,7 @@ def resize_image(
 def check_art_similarity(
     log: Logger,
     item: Item,
-    imagepath: bytes,
+    imagepath: PathLike,
     compare_threshold: int,
     artresizer: ArtResizer | None = None,
 ) -> bool | None:
@@ -196,7 +191,7 @@ def extract(log: Logger, outpath: PathLike, item: Item) -> bytes | None:
 
 
 def extract_first(
-    log: Logger, outpath: bytes, items: Iterable[Item]
+    log: Logger, outpath: PathLike, items: Iterable[Item]
 ) -> bytes | None:
     for item in items:
         real_path = extract(log, outpath, item)
@@ -212,9 +207,12 @@ def clear_item(item: Item, log: Logger) -> None:
 
 
 def clear(
-    log: Logger, lib: Library, query: str | Sequence[str] | Query | None = None
+    log: Logger,
+    lib: Library,
+    query: str | Sequence[str] | Query | None = None,
+    limit: int | None = None,
 ) -> None:
-    items = lib.items(query)
+    items = lib.items(query, limit=limit)
     log.info("Clearing album art from {} items", len(items))
     for item in items:
         clear_item(item, log)

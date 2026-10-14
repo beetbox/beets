@@ -22,12 +22,11 @@ class ReplacePlugin(BeetsPlugin):
         cmd = ui.Subcommand(
             "replace", help="replace audio file while keeping tags"
         )
+        cmd.parser.add_limit_option()
         cmd.func = self.run
         return [cmd]
 
-    def run(
-        self, lib: Library, _opts: optparse.Values, args: list[str]
-    ) -> None:
+    def run(self, lib: Library, opts: optparse.Values, args: list[str]) -> None:
         if len(args) < 2:
             raise UserError("Usage: beet replace <query> <new_file_path>")
 
@@ -36,7 +35,7 @@ class ReplacePlugin(BeetsPlugin):
 
         self.file_check(new_file_path)
 
-        item_list = list(lib.items(item_query))
+        item_list = list(lib.items(item_query, limit=opts.limit))
 
         if not item_list:
             raise UserError("No matching songs found.")

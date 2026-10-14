@@ -21,10 +21,12 @@ Usage
 
 To convert a part of your collection, run ``beet convert QUERY``. The command
 will transcode all the files matching the query to the destination directory
-given by the ``-d`` (``--dest``) option or the ``dest`` configuration. The path
-layout mirrors that of your library, but it may be customized through the
-``paths`` configuration. Files that have been previously converted---and thus
-already exist in the destination directory---will be skipped.
+given by the ``-d`` (``--dest``) option or the ``dest`` configuration. Use
+``--limit`` to cap the matched items or albums before conversion; the short
+``-l`` option is already used by ``--link``. The path layout mirrors that of
+your library, but it may be customized through the ``paths`` configuration.
+Files that have been previously converted---and thus already exist in the
+destination directory---will be skipped.
 
 The plugin uses a command-line program to transcode the audio. With the ``-f``
 (``--format``) option you can choose the transcoding command and customize the

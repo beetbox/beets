@@ -33,6 +33,9 @@ The ``export`` command has these command-line options:
 
       $ beet export -i 'title,mb*' beatles
 
+- ``--limit``: Cap the matched items or albums before exporting. The short
+  ``-l`` option is already used by ``--library``.
+
   will include the ``title`` property and all properties starting with ``mb``.
   You can add the ``-i`` option multiple times to the command line.
 

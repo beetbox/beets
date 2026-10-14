@@ -24,6 +24,7 @@ class UpdateCLIOpts(Protocol):
     album: bool
     exclude_fields: list[str] | None
     fields: list[str] | None
+    limit: int | None
     move: bool | None
     pretend: bool
 
@@ -173,9 +174,11 @@ def update_func(lib: Library, opts: UpdateCLIOpts, args: list[str]) -> None:
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
     if opts.album:
-        items = [i for a in lib.albums(args) for i in a.items()]
+        items = [
+            i for a in lib.albums(args, limit=opts.limit) for i in a.items()
+        ]
     else:
-        items = list(lib.items(args))
+        items = list(lib.items(args, limit=opts.limit))
     update_items(
         lib,
         items,
@@ -228,4 +231,5 @@ update_cmd.parser.add_option(
     dest="exclude_fields",
     help="list of fields to exclude from updates",
 )
+update_cmd.parser.add_limit_option()
 update_cmd.func = update_func
