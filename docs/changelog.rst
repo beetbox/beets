@@ -71,6 +71,10 @@ Bug fixes
   :bug:`7031`
 - :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
   subdirectory holds a file named like one in the album folder.
+- :doc:`plugins/musicbrainz`: Request the missing ``work-rels`` include in
+  recording lookups so singleton imports (``beet import -s``) populate work,
+  composer and lyricist tags for tracks linked to a work, matching album
+  imports. :bug:`7072`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
