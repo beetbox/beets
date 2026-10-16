@@ -4,6 +4,7 @@ from typing import Any, ClassVar
 
 import pytest
 from mediafile import MediaFile
+
 from beets.library import Item
 from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
 from beetsplug.replaygain import (
@@ -372,26 +373,15 @@ class TestReplayGainMetaflacCli(ReplayGainCliTest, MetaflacBackendMixin):
 def test_metaflac_backend_parses_output():
     output = (
         "01.flac: -1.234567 0.123456 1.987654 0.456789\n"
-        "02.flac: -1.234567 0.123456 -1.987654 0.987654\n"
+        "Artist: 02.flac: -1.234567 0.123456 -1.987654 0.987654\n"
     )
 
-    results = MetaflacBackend._parse_output(output)
+    results = [list(gains) for gains in MetaflacBackend._parse_output(output)]
 
-    assert set(results) == {"01.flac", "02.flac"}
-
-    album_gain_1, album_peak_1, track_gain_1, track_peak_1 = results["01.flac"]
-    album_gain_2, album_peak_2, track_gain_2, track_peak_2 = results["02.flac"]
-
-    # Album gain/peak is shared across every file in the batch...
-    assert album_gain_1 == pytest.approx(album_gain_2)
-    assert album_peak_1 == pytest.approx(album_peak_2)
-
-    # ...but each file keeps its own distinct track gain/peak.
-    assert track_gain_1 == pytest.approx(1.987654)
-    assert track_peak_1 == pytest.approx(0.456789)
-
-    assert track_gain_2 == pytest.approx(-1.987654)
-    assert track_peak_2 == pytest.approx(0.987654)
+    assert results == [
+        pytest.approx([-1.234567, 0.123456, 1.987654, 0.456789]),
+        pytest.approx([-1.234567, 0.123456, -1.987654, 0.987654]),
+    ]
 
 
 def test_metaflac_backend_cannot_compute_album_gain_with_mixed_formats():
