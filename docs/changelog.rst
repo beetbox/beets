@@ -113,8 +113,6 @@ Bug fixes
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
 - :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
-  files. :bug:`6916`
-- :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
   files. :bug:`6915`
 
 For plugin developers
