@@ -375,6 +375,35 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert result == ["rock", "jazz"]
 
 
+@pytest.fixture
+def mock_lastfm(monkeypatch):
+    """Return a function that makes the last.fm client serve `mock_genres`.
+
+    `mock_genres` maps the arguments of a client lookup to the genres it
+    returns: the lookup kind, followed by the extra arguments of per-artist
+    lookups (used for multi-valued albumartists), e.g.
+
+        {
+            ("album",): ["Jazz"],
+            ("album", "Artist A", "the album"): ["Rock"],
+            ("album_artist", "Artist A"): ["Rock"],
+        }
+
+    Spell out empty results (`("album",): []`) to show a lookup found nothing.
+    A lookup without a matching entry returns no genres as well.
+    """
+
+    def install(mock_genres):
+        def fake_fetch(_, kind, __, *args):
+            return mock_genres.get((kind, *args), [])
+
+        monkeypatch.setattr(
+            "beetsplug.lastgenre.client.LastFmClient.fetch", fake_fetch
+        )
+
+    return install
+
+
 @pytest.mark.parametrize(
     "config_values, item_genre, mock_genres, expected_result",
     [
@@ -389,7 +418,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["Blues"],
-            {"album": ["Jazz"]},
+            {("album",): ["Jazz"]},
             (["Blues", "Jazz"], "keep + album, whitelist"),
             id="force-keep-whitelisted",
         ),
@@ -404,7 +433,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["original unknown", "Blues"],
-            {"album": ["Jazz"]},
+            {("album",): ["Jazz"]},
             (["Blues", "Jazz"], "keep + album, whitelist"),
             id="force-keep-whitelisted-unknown-original",
         ),
@@ -418,7 +447,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             [],
-            {"album": ["Jazz"]},
+            {("album",): ["Jazz"]},
             (["Jazz"], "album, whitelist"),
             id="force-keep-whitelisted-empty-tag",
         ),
@@ -433,7 +462,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["original unknown", "Blues"],
-            {"album": ["Jazz"], "artist": ["Pop"]},
+            {("album",): ["Jazz"], ("artist",): ["Pop"]},
             (["Blues", "Pop"], "keep + artist, whitelist"),
             id="force-keep-artist-configured",
         ),
@@ -447,7 +476,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             ["any genre"],
-            {"album": ["Jazz"]},
+            {("album",): ["Jazz"]},
             (["any genre"], "keep any, no-force"),
             id="no-force-whitelist-disabled",
         ),
@@ -461,7 +490,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             [],
-            {"album": ["Jazzin"]},
+            {("album",): ["Jazzin"]},
             (["Jazzin"], "album, any"),
             id="no-force-empty-tag-no-whitelist",
         ),
@@ -481,7 +510,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["Cosmic Disco"],
-            {"artist": []},
+            {("artist",): []},
             (["Disco", "Electronic"], "keep + cleanup, whitelist"),
             id="canonicalize-existing-genre-with-cleanup",
         ),
@@ -496,7 +525,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["unknown genre"],
-            {"track": None, "album": None, "artist": ["Jazz"]},
+            {("track",): [], ("album",): [], ("artist",): ["Jazz"]},
             (["Unknown Genre", "Jazz"], "keep + artist, any"),
             id="fallback-through-stages-until-found",
         ),
@@ -511,7 +540,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             ["any existing"],
-            {"track": None, "album": None, "artist": None},
+            {("track",): [], ("album",): [], ("artist",): []},
             (["any existing"], "original fallback"),
             id="keep-original-with-keep-existing-without-whitelist",
         ),
@@ -526,7 +555,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             ["Jazz"],
-            {"track": None, "album": None, "artist": None},
+            {("track",): [], ("album",): [], ("artist",): []},
             (["Jazz"], "original fallback"),
             id="keep-valid-original-with-keep-existing-with-whitelist",
         ),
@@ -541,7 +570,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             ["Jazz"],
-            {"track": None, "album": None, "artist": None},
+            {("track",): [], ("album",): [], ("artist",): []},
             (["fallback genre"], "fallback"),
             id="fallback-without-keep-existing",
         ),
@@ -556,7 +585,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             [],
-            {"track": None, "album": None, "artist": None},
+            {("track",): [], ("album",): [], ("artist",): []},
             (["fallback genre"], "fallback"),
             id="fallback-when-no-original-genre",
         ),
@@ -571,7 +600,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             ["original unknown", "Blues", "Rock", "Folk", "Metal"],
-            {"album": ["Jazz", "Bebop", "Hardbop"]},
+            {("album",): ["Jazz", "Bebop", "Hardbop"]},
             (
                 ["Blues", "Rock", "Metal", "Jazz", "Bebop"],
                 "keep + album, whitelist",
@@ -591,7 +620,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             ["not whitelisted original"],
-            {"track": None, "album": None, "artist": ["Jazz"]},
+            {("album",): [], ("artist",): ["Jazz"]},
             (["Jazz"], "keep + artist, whitelist"),
             id="fallback-to-artist-when-original-and-album-invalid",
         ),
@@ -610,7 +639,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             [],
-            {"album": ["acid techno"]},
+            {("album",): ["acid techno"]},
             (["Techno", "Electronic"], "album, whitelist"),
             id="canonicalize-non-whitelisted-fetched-genre",
         ),
@@ -632,7 +661,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "extended_debug": True,
             },
             ["detroit techno"],
-            {"album": ["acid house"]},
+            {("album",): ["acid house"]},
             (
                 [
                     "Detroit Techno",
@@ -662,7 +691,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["Cosmic Disco"],
-            {"album": ["Detroit Techno"]},
+            {("album",): ["Detroit Techno"]},
             (
                 ["Disco", "Electronic", "Detroit Techno", "Techno"],
                 "keep + album, whitelist",
@@ -685,7 +714,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["Cosmic Disco"],
-            {"album": [], "artist": []},
+            {("album",): [], ("artist",): []},
             (["Disco", "Electronic"], "keep + original fallback, whitelist"),
             id="canonicalize-and-deduplicate-without-new-genres",
         ),
@@ -705,7 +734,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "count": 10,
             },
             ["Jazz; Funk; Soul"],
-            {"album": [], "artist": []},
+            {("album",): [], ("artist",): []},
             (["Jazz", "Funk", "Soul"], "original fallback"),
             id="split-semicolon-delimited-original-genres",
         ),
@@ -724,7 +753,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "prefer_specific": False,
             },
             ["Baroque", "Classical"],
-            {"album": [], "artist": []},
+            {("album",): [], ("artist",): []},
             (["Baroque", "Classical"], "original fallback"),
             id="preserve-multiple-whitelisted-genres-on-empty-fetch",
         ),
@@ -741,24 +770,61 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
                 "aliases": {"hip hop": ["hip-hop", "hiphop"]},
             },
             ["hip-hop", "hiphop"],
-            {"album": [], "artist": []},
+            {("album",): [], ("artist",): []},
             (["hip hop"], "original fallback"),
             id="deduplicate-alias-normalized-original-genres",
+        ),
+        # The album lookup and both per-artist album lookups (the entries for
+        # "Artist A" and "Artist B" are missing) find nothing, so the artist
+        # stage provides the genres.
+        _p(
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": False,
+                "canonical": False,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            [],
+            {("album",): [], ("artist",): ["Jazz"]},
+            (["Jazz"], "artist, any"),
+            id="empty-multi-valued-album-lookups-fall-through-to-artist",
+        ),
+        # The per-artist album lookups are only answered for the exact
+        # (artist, album) arguments listed here, so passing wrong arguments
+        # finds no genres and the test fails.
+        _p(
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": False,
+                "canonical": False,
+                "prefer_specific": False,
+                "count": 10,
+            },
+            [],
+            {
+                ("album",): [],
+                ("artist",): ["Pop"],
+                ("album", "Artist A", "the album"): ["Rock"],
+                ("album", "Artist B", "the album"): ["Jazz"],
+            },
+            (["Rock", "Jazz"], "multi-valued albumartist album, any"),
+            id="multi-valued-albumartist-album-lookups",
         ),
     ],
 )
 @pytest.mark.usefixtures("config")
 def test_get_genre(
-    monkeypatch, config_values, item_genre, mock_genres, expected_result
+    mock_lastfm, config_values, item_genre, mock_genres, expected_result
 ):
     """Test _get_genre with various configurations."""
-    # Mock the last.fm fetchers. When whitelist enabled, we can assume only
-    # whitelisted genres get returned, the plugin's _resolve_genre method
-    # ensures it.
-    monkeypatch.setattr(
-        "beetsplug.lastgenre.client.LastFmClient.fetch",
-        lambda _, kind, __: mock_genres[kind],
-    )
+    # When whitelist enabled, we can assume only whitelisted genres get
+    # returned, the plugin's _resolve_genre method ensures it.
+    mock_lastfm(mock_genres)
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
     # Configure
@@ -767,9 +833,60 @@ def test_get_genre(
 
     item = _common.item()
     item.genres = item_genre
+    # Needed for the per-artist lookups of multi-valued albumartists
+    item.albumartists = ["Artist A", "Artist B"]
 
     # Run
     assert plugin._get_genre(item) == expected_result
+
+
+@pytest.mark.parametrize(
+    "mock_genres, expected_result",
+    [
+        _p(
+            {("album",): [], ("album_artist",): ["Jazz"]},
+            (["Jazz"], "albumartist, any"),
+            id="albumartist-genres",
+        ),
+        _p(
+            {
+                ("album",): [],
+                ("album_artist",): [],
+                ("album_artist", "Artist A"): ["Rock"],
+                ("album_artist", "Artist B"): ["Jazz"],
+            },
+            (["Rock", "Jazz"], "multi-valued albumartist, any"),
+            id="multi-valued-albumartist-genres",
+        ),
+        _p(
+            {("album",): [], ("album_artist",): []},
+            ([], "fallback unconfigured"),
+            id="no-albumartist-genres",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("config")
+def test_get_genre_album(mock_lastfm, mock_genres, expected_result):
+    """Test the artist stage that only exists for albums.
+
+    Items fetch a single "artist" genre. Albums fetch "album_artist" genres
+    and fall back to one lookup per entry of the multi-valued `albumartists`.
+    `test_get_genre` only passes Items, so it cannot reach this stage.
+    """
+    mock_lastfm(mock_genres)
+    plugin = lastgenre.LastGenrePlugin()
+    plugin.config.set(
+        {"source": "artist", "whitelist": False, "count": 10, "force": True}
+    )
+    plugin.setup()
+
+    album = Album()
+    album.albumartist = "Artist Group"
+    album.albumartists = ["Artist A", "Artist B"]
+    album.album = "the album"
+    album.genres = []
+
+    assert plugin._get_genre(album) == expected_result
 
 
 class TestIgnorelist(PluginTestHelper):
