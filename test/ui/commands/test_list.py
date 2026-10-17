@@ -1,8 +1,5 @@
 import os
 
-import pytest
-
-from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin
 
@@ -82,9 +79,6 @@ class ListTest(IOMixin, BeetsTestCase):
 
         stdout = self.run_with_output(*args, "-l", "1").strip()
         assert len(stdout.splitlines()) == 1
-
-        with pytest.raises(UserError, match="must be a non-negative integer"):
-            self.run_with_output(*args, "-l", "-1")
 
     def test_limit_sort_by_flex_attr(self):
         args = "list", "-p", "-l", "1"

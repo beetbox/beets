@@ -28,6 +28,7 @@ from beets.dbcore.query import (
 )
 from beets.library import Item
 from beets.test import _common
+from beets.test.helper import TestHelper
 
 # Because the absolute path begins with something like C:, we
 # can't disambiguate it from an ordinary query.
@@ -302,6 +303,12 @@ class TestPathQuery:
     and path separator detection across different platforms.
     """
 
+    @pytest.fixture
+    def helper(self):
+        """Isolate rows added by individual path query tests."""
+        with TestHelper() as helper:
+            yield helper
+
     @staticmethod
     def abs_query_path(path: str, trailing_sep: bool = False) -> str:
         """Build a platform-correct absolute query path without normalizing it.
@@ -319,7 +326,7 @@ class TestPathQuery:
             path = os.path.join(path, "")
         return path.replace("\\", "\\\\")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def lib(self, helper):
         helper.add_item(path=b"/aaa/bb/c.mp3", title="path item")
         helper.add_item(path=b"/x/y/z.mp3", title="another item")

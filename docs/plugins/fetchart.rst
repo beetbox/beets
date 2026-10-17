@@ -139,7 +139,7 @@ been imported:
 
 ::
 
-    $ beet fetchart [-f] [query]
+    $ beet fetchart [-f] [-l LIMIT] [query]
 
 By default, the command will only look for album art when the album doesn't
 already have it; the ``-f`` or ``--force`` switch makes it search for art in Web
@@ -154,7 +154,9 @@ missing art:
 
 ::
 
-    $ beet fetchart [-q] [query]
+    $ beet fetchart [-q] [-l LIMIT] [query]
+
+Use ``-l``/``--limit`` to cap the matched albums before fetching art.
 
 By default the command will display all albums matching the ``query``. When the
 ``-q`` or ``--quiet`` switch is given, only albums for which artwork has been

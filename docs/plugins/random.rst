@@ -32,6 +32,8 @@ allow you to customize the selection:
       --field=FIELD         field to use for equal chance sampling (default:
                             albumartist)
       -a, --album           match albums instead of tracks
+      -l LIMIT, --limit=LIMIT
+                            limit query results before random selection
       -p PATH, --path=PATH  print paths for matched items or albums
       -f FORMAT, --format=FORMAT
                             print with custom format

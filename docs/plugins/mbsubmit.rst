@@ -49,7 +49,7 @@ choice is demonstrated:
     Print tracks?
 
 You can also run ``beet mbsubmit QUERY`` to print the track information for any
-album:
+album. Use ``-l``/``--limit`` to cap the matched tracks before printing:
 
 ::
 

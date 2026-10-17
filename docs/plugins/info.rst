@@ -22,6 +22,9 @@ library:
 
     $ beet info beatles
 
+Use ``--limit`` to cap the matched items or albums before printing information.
+The short ``-l`` option is already used by ``--library``.
+
 If you just want to see specific properties you can use the ``--include-keys``
 option to filter them. The argument is a comma-separated list of field names.
 For example:

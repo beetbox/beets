@@ -9,7 +9,8 @@ import pytest
 
 from beets.library import Album
 from beets.test import _common
-from beets.test.helper import IOMixin, PluginTestCase
+from beets.test.helper import IOMixin, PluginTestCase, PluginTestHelper
+from beets.ui import UserError
 from beetsplug import lastgenre
 from beetsplug.lastgenre.utils import is_ignored, normalize_genre
 
@@ -70,7 +71,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(whitelist={"blues", "rock", "jazz"}, count=2)
         assert self.plugin._resolve_genres(["pop", "blues"]) == ["blues"]
 
-        self._setup_config(canonical="", whitelist={"rock"})
+        self._setup_config(canonical=True, whitelist={"rock"})
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
     def test_format_genres(self):
@@ -99,19 +100,23 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self._setup_config(canonical=True, whitelist={"rock"})
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
-    def test_empty_string_enables_canonical(self):
-        """For backwards compatibility, setting the `canonical` option
-        to the empty string enables it using the default tree.
+    def test_empty_canonical_raises_user_error(self):
+        """An empty or null `canonical` setting is rejected instead of
+        silently falling back to the default tree.
         """
-        self._setup_config(canonical="", count=99)
-        assert self.plugin._resolve_genres(["delta blues"]) == ["blues"]
+        for value in ("", None):
+            self.config["lastgenre"]["canonical"] = value
+            with pytest.raises(UserError, match="Invalid canonical setting"):
+                self.plugin.setup()
 
-    def test_empty_string_enables_whitelist(self):
-        """Again for backwards compatibility, setting the `whitelist`
-        option to the empty string enables the default set of genres.
+    def test_empty_whitelist_raises_user_error(self):
+        """An empty or null `whitelist` setting is rejected instead of
+        silently falling back to the default whitelist.
         """
-        self._setup_config(whitelist="")
-        assert self.plugin._resolve_genres(["iota blues"]) == []
+        for value in ("", None):
+            self.config["lastgenre"]["whitelist"] = value
+            with pytest.raises(UserError, match="Invalid whitelist setting"):
+                self.plugin.setup()
 
     def test_prefer_specific_loads_tree(self):
         """When prefer_specific is enabled but canonical is not the
@@ -723,6 +728,23 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
             (["Baroque", "Classical"], "original fallback"),
             id="preserve-multiple-whitelisted-genres-on-empty-fetch",
         ),
+        # 'hip-hop' and 'hiphop' both normalize to 'hip hop' via aliases, so
+        # the original fallback path must deduplicate them.
+        _p(
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "canonical": False,
+                "prefer_specific": False,
+                "aliases": {"hip hop": ["hip-hop", "hiphop"]},
+            },
+            ["hip-hop", "hiphop"],
+            {"album": [], "artist": []},
+            (["hip hop"], "original fallback"),
+            id="deduplicate-alias-normalized-original-genres",
+        ),
     ],
 )
 @pytest.mark.usefixtures("config")
@@ -750,8 +772,10 @@ def test_get_genre(
     assert plugin._get_genre(item) == expected_result
 
 
-class TestIgnorelist:
+class TestIgnorelist(PluginTestHelper):
     """Ignorelist pattern matching tests independent of resolve_genres."""
+
+    plugin = "lastgenre"
 
     @pytest.mark.parametrize(
         "ignorelist_dict, artist, genre, expected_forbidden",
@@ -823,16 +847,12 @@ class TestIgnorelist:
     ):
         """Test ignorelist pattern matching logic directly."""
 
-        logger = Mock()
+        with self.configure_plugin({"ignorelist": ignorelist_dict}):
+            plugin = lastgenre.LastGenrePlugin()
+            result = is_ignored(
+                plugin._log, plugin.ignore_patterns, genre, artist
+            )
 
-        # Set up compiled patterns directly (skipping file parsing)
-        ignore_patterns = defaultdict(list)
-        for artist_name, patterns in ignorelist_dict.items():
-            ignore_patterns[artist_name.lower()] = [
-                re.compile(pattern, re.IGNORECASE) for pattern in patterns
-            ]
-
-        result = is_ignored(logger, ignore_patterns, genre, artist)
         assert result == expected_forbidden
 
     @pytest.mark.parametrize(
@@ -866,31 +886,13 @@ class TestIgnorelist:
         self, ignorelist_config, expected_ignorelist
     ):
         """Test ignorelist parsing/compilation with isolated config state."""
-        cfg = confuse.Configuration("test", read=False)
-        cfg.set({"lastgenre": {"ignorelist": ignorelist_config}})
 
-        # Mimic the plugin loader behavior in isolation to avoid global config bleed.
-        if not cfg["lastgenre"]["ignorelist"].get():
-            ignore_patterns = {}
-        else:
-            raw_strs = cfg["lastgenre"]["ignorelist"].get(
-                confuse.MappingValues(confuse.Sequence(str))
-            )
-            ignore_patterns = {}
-            for artist, patterns in raw_strs.items():
-                compiled_patterns = []
-                for pattern in patterns:
-                    try:
-                        compiled_patterns.append(
-                            re.compile(pattern, re.IGNORECASE).pattern
-                        )
-                    except re.error:
-                        compiled_patterns.append(
-                            re.compile(
-                                re.escape(pattern), re.IGNORECASE
-                            ).pattern
-                        )
-                ignore_patterns[artist.lower()] = compiled_patterns
+        with self.configure_plugin({"ignorelist": ignorelist_config}):
+            plugin = lastgenre.LastGenrePlugin()
+            ignore_patterns = {
+                artist: [pattern.pattern for pattern in patterns]
+                for artist, patterns in plugin.ignore_patterns.items()
+            }
 
         assert ignore_patterns == expected_ignorelist
 
@@ -911,13 +913,9 @@ class TestIgnorelist:
         self, invalid_config, expected_error_message
     ):
         """Test ignorelist config validation errors in isolated config."""
-        cfg = confuse.Configuration("test", read=False)
-        cfg.set({"lastgenre": {"ignorelist": invalid_config}})
-
         with pytest.raises(confuse.ConfigTypeError) as exc_info:
-            _ = cfg["lastgenre"]["ignorelist"].get(
-                confuse.MappingValues(confuse.Sequence(str))
-            )
+            with self.configure_plugin({"ignorelist": invalid_config}):
+                lastgenre.LastGenrePlugin()
 
         assert expected_error_message in str(exc_info.value)
 
@@ -958,8 +956,10 @@ class TestIgnorelist:
         assert "Metal" in genres
 
 
-class TestAliases:
+class TestAliases(PluginTestHelper):
     """Alias pattern matching and loading tests."""
+
+    plugin = "lastgenre"
 
     @pytest.mark.parametrize(
         "aliases_dict, genre, expected",
@@ -999,19 +999,21 @@ class TestAliases:
         assert normalize_genre(logger, alias_patterns, "hip-hop") == "hip-hop"
         logger.warning.assert_called_once()
 
-    def test_aliases_config_format(self, config):
+    def test_aliases_config_format(self):
         """Test _load_aliases() loading from inline config dict."""
         # Multi-pattern list: proves all patterns are loaded, not just the first
-        config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop", "hiphop"]}
-        plugin = lastgenre.LastGenrePlugin()
-        assert (
-            normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
-            == "hip hop"
-        )
-        assert (
-            normalize_genre(plugin._log, plugin.alias_patterns, "hiphop")
-            == "hip hop"
-        )
+        with self.configure_plugin(
+            {"aliases": {"hip hop": ["hip-hop", "hiphop"]}}
+        ):
+            plugin = lastgenre.LastGenrePlugin()
+            assert (
+                normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
+                == "hip hop"
+            )
+            assert (
+                normalize_genre(plugin._log, plugin.alias_patterns, "hiphop")
+                == "hip hop"
+            )
 
     @pytest.mark.parametrize(
         "invalid_config, expected_error",
@@ -1024,58 +1026,93 @@ class TestAliases:
             ({"hip hop": "hip-hop"}, "must be a list"),
         ],
     )
-    def test_aliases_config_format_errors(
-        self, config, invalid_config, expected_error
-    ):
+    def test_aliases_config_format_errors(self, invalid_config, expected_error):
         """Test that invalid aliases config values raise confuse.ConfigTypeError."""
-        config["lastgenre"]["aliases"] = invalid_config
         with pytest.raises(confuse.ConfigTypeError) as exc_info:
-            lastgenre.LastGenrePlugin()
+            with self.configure_plugin({"aliases": invalid_config}):
+                lastgenre.LastGenrePlugin()
         assert expected_error in str(exc_info.value)
 
-    def test_normalize_before_whitelist(self, config):
+    def test_normalize_before_whitelist(self):
         """Aliases normalize BEFORE whitelist filtering.
 
         'hip-hop' is not on the whitelist but 'hip hop' is.  With aliases
         enabled the tag must survive whitelist filtering.
         """
-        config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop", "hiphop"]}
-        plugin = lastgenre.LastGenrePlugin()
-        plugin.setup()
-        # Inject only 'hip hop' into the whitelist to prove the alias fired.
-        plugin.whitelist = {"hip hop"}
+        with self.configure_plugin(
+            {"aliases": {"hip hop": ["hip-hop", "hiphop"]}}
+        ):
+            plugin = lastgenre.LastGenrePlugin()
+            # Inject only 'hip hop' into the whitelist to prove the alias fired.
+            plugin.whitelist = {"hip hop"}
 
-        result = plugin._resolve_genres(["hip-hop"])
+            result = plugin._resolve_genres(["hip-hop"])
         assert result == ["hip hop"], (
             "alias must normalize 'hip-hop' → 'hip hop' before whitelist check"
         )
 
-    def test_normalize_before_ignorelist(self, config):
+    def test_original_fallback_keeps_all_alias_normalized_genres(self, config):
+        """Original-fallback path alias-normalizes without truncating to count.
+
+        Covers force + keep_existing + whitelist + aliases with an empty
+        Last.fm response, so ``_get_genre`` falls back to the item's own
+        (alias-normalized) genres.
+
+        With ``count`` set to 1, both 'hip-hop' (whitelisted only after
+        normalizing to 'hip hop') and the already-whitelisted 'Jazz' must
+        survive, proving the count limit isn't applied early.
+        """
+        with self.configure_plugin(
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "count": 1,
+                "aliases": {"hip hop": ["hip-hop", "hiphop"]},
+            }
+        ):
+            plugin = lastgenre.LastGenrePlugin()
+            plugin.whitelist = {"hip hop", "jazz"}
+
+            item = _common.item()
+            item.genres = ["hip-hop", "Jazz"]
+
+            with patch(
+                "beetsplug.lastgenre.client.LastFmClient.fetch", return_value=[]
+            ):
+                assert plugin._get_genre(item) == (
+                    ["hip hop", "Jazz"],
+                    "original fallback",
+                )
+
+    def test_normalize_before_ignorelist(self):
         """Aliases normalize BEFORE ignorelist filtering.
 
         If 'hip hop' is ignored but 'hip-hop' is fed in, the alias fires first
         so the result is empty (correctly ignored).
         """
-        config["lastgenre"]["aliases"] = {"hip hop": ["hip-hop"]}
-        plugin = lastgenre.LastGenrePlugin()
-        plugin.setup()
-        plugin.ignore_patterns = {"*": [re.compile("hip hop", re.IGNORECASE)]}
+        with self.configure_plugin({"aliases": {"hip hop": ["hip-hop"]}}):
+            plugin = lastgenre.LastGenrePlugin()
+            plugin.ignore_patterns = {
+                "*": [re.compile("hip hop", re.IGNORECASE)]
+            }
 
-        result = plugin._resolve_genres(["hip-hop"])
+            result = plugin._resolve_genres(["hip-hop"])
         assert result == [], (
             "alias must normalize 'hip-hop' before ignorelist check drops it"
         )
 
-    def test_disabled(self, config):
+    def test_disabled(self):
         """With aliases: false, no normalization is performed."""
-        config["lastgenre"]["aliases"] = False
-        plugin = lastgenre.LastGenrePlugin()
-        assert plugin.alias_patterns == []
-        # normalize_genre with an empty list must return the genre unchanged.
-        assert (
-            normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
-            == "hip-hop"
-        )
+        with self.configure_plugin({"aliases": False}):
+            plugin = lastgenre.LastGenrePlugin()
+            assert plugin.alias_patterns == []
+            # normalize_genre with an empty list must return the genre unchanged.
+            assert (
+                normalize_genre(plugin._log, plugin.alias_patterns, "hip-hop")
+                == "hip-hop"
+            )
 
     @pytest.mark.parametrize(
         "input_genre, expected_genre",
@@ -1143,12 +1180,13 @@ class TestAliases:
             ("old school-jungle", "old school jungle"),
         ],
     )
-    def test_default_alias_patterns(self, config, input_genre, expected_genre):
+    def test_default_alias_patterns(self, input_genre, expected_genre):
         """Verify that bundled aliases.yaml correctly handles common variants."""
-        plugin = lastgenre.LastGenrePlugin()
-        result = normalize_genre(
-            plugin._log, plugin.alias_patterns, input_genre
-        )
+        with self.configure_plugin({}):
+            plugin = lastgenre.LastGenrePlugin()
+            result = normalize_genre(
+                plugin._log, plugin.alias_patterns, input_genre
+            )
         assert result == expected_genre
 
     def test_client_normalizes_in_last_lookup(self):

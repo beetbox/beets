@@ -10,10 +10,11 @@ and then type:
 
 ::
 
-    $ beet replace <query> <path>
+    $ beet replace [-l LIMIT] <query> <path>
 
 The plugin will show you a list of files for you to pick from, and then ask for
-confirmation.
+confirmation. Use ``-l``/``--limit`` to cap the matched tracks before choosing
+the file to replace.
 
 Consider using the ``replaygain`` command from the :doc:`/plugins/replaygain`
 plugin, if you usually use it during imports.

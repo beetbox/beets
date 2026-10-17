@@ -47,7 +47,6 @@ from beets.test.helper import (
     TerminalImportMixin,
     TerminalImportSessionFixture,
     TestHelper,
-    has_program,
     is_importable,
 )
 from beets.util import bytestring_path, syspath
@@ -259,7 +258,7 @@ class TestImportTar(TestImportZip):
 
 
 @pytest.mark.skipif(
-    not (is_importable("rarfile") and has_program("unrar")),
+    not (is_importable("rarfile") and shutil.which("unrar")),
     reason="rarfile or unrar program not found",
 )
 class TestImportRar(TestImportZip):
@@ -389,8 +388,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]),
-    reason="need ffprobe for format recognition",
+    not shutil.which("ffprobe"), reason="need ffprobe for format recognition"
 )
 class TestImportFormat(ImportHelper):
     """Test fix_extension during import."""

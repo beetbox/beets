@@ -90,9 +90,10 @@ class ZeroPlugin(BeetsPlugin):
                 "Remove fields for all items? (Y/n)", True
             ):
                 return
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 self.process_item(item)
 
+        zero_command.parser.add_limit_option()
         zero_command.func = zero_fields
         return [zero_command]
 
