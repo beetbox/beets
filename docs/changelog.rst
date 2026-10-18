@@ -121,6 +121,7 @@ Other changes
 
 - :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
   ``platformdirs``, which beets already requires.
+- Beets now officially supports Python 3.15.
 
 2.14.1 (September 17, 2026)
 ---------------------------
