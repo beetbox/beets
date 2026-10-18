@@ -7,6 +7,7 @@ test_importer module. But here the test importer inherits from
 from unittest import mock
 
 from beets import importer
+from beets.autotag.hooks import TrackInfo
 from beets.test.helper import TerminalImportMixin
 from test import test_importer
 
@@ -32,6 +33,38 @@ class ImportSingletonTest(
         self.importer.run()
         assert not self.lib.albums()
         assert self.lib.items().get().title == "ManualTrack"
+
+    def test_singleton_manual_id_updates_candidates(self):
+        recording_id = "12345678-1234-1234-1234-123456789abc"
+        track_info = TrackInfo(
+            title="IDTrack",
+            artist="IDArtist",
+            artist_id="some-artist-id",
+            track_id=recording_id,
+            length=1,
+            index=0,
+        )
+
+        with mock.patch(
+            "beets.metadata_plugins.tracks_for_ids", return_value=[track_info]
+        ) as lookup:
+            self.importer.io.addinput("i")
+            self.importer.io.addinput(recording_id)
+            self.importer.io.addinput("m")
+            self.importer.io.addinput("1")
+            self.importer.io.addinput("a")
+            self.importer.run()
+
+        lookup.assert_called_once_with([recording_id])
+
+        items = list(self.lib.items())
+        assert len(items) == 1
+        assert not self.lib.albums()
+
+        item = items[0]
+        assert item.title == "IDTrack"
+        assert item.artist == "IDArtist"
+        assert item.mb_trackid == recording_id
 
 
 class ImportTracksTest(TerminalImportMixin, test_importer.ImportTracksTest):
