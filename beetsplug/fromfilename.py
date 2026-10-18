@@ -19,10 +19,13 @@ from beets.plugins import BeetsPlugin
 from beets.util import PromptChoice, displayable_path
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Mapping, ValuesView
+    from collections.abc import Iterator, Mapping, Sized, ValuesView
     from typing import Any
 
+    from typing_extensions import Unpack
+
     from beets.autotag import Proposal
+    from beets.events import ImportTaskEventArgs
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
 
@@ -205,15 +208,17 @@ class FromFilenamePlugin(BeetsPlugin):
         self.register_listener("import_task_apply", self.clear_task_data)
         self.register_listener("import_task_choice", self.update_regroup_items)
         self.register_listener(
-            "before_choose_candidate",
-            lambda: [
-                PromptChoice(
-                    "f", "toggle FromFilename", self.fromfilename_toggle
-                )
-            ],
+            "before_choose_candidate", self.before_choose_candidate
         )
         self.register_listener("item_imported", self.write_found_item)
         self.register_listener("album_imported", self.write_found_album)
+
+    def before_choose_candidate(
+        self, **kwargs: Unpack[ImportTaskEventArgs]
+    ) -> list[PromptChoice]:
+        return [
+            PromptChoice("f", "toggle FromFilename", self.fromfilename_toggle)
+        ]
 
     @cached_property
     def ignored_directories(self) -> set[str]:
@@ -224,13 +229,13 @@ class FromFilenamePlugin(BeetsPlugin):
             ]
         )
 
-    def write_found_item(self, lib: Library, item: Item):
+    def write_found_item(self, lib: Library, item: Item) -> None:
         """
         Ensure the data we found is written to the imported file.
         """
         item.try_write()
 
-    def write_found_album(self, lib: Library, album: Album):
+    def write_found_album(self, lib: Library, album: Album) -> None:
         """
         Ensure the data we found is written to the imported file.
         """
@@ -498,7 +503,7 @@ class FromFilenamePlugin(BeetsPlugin):
             return
 
         # Utility function for sorting
-        def index_key(x: tuple[str, Item]):
+        def index_key(x: tuple[str, Item]) -> str:
             return x[0]
 
         # If all have match, sort by the matched strings
@@ -536,14 +541,14 @@ class FromFilenamePlugin(BeetsPlugin):
 
     def _apply_album_matches(
         self, items: list[Item], album_match: FilenameMatch
-    ):
+    ) -> None:
         for item in items:
             self._log.debug(f"album matches {album_match}")
             item.update(album_match._matches)
 
     def _apply_track_matches(
         self, items: list[Item], track_matches: dict[Item, FilenameMatch]
-    ):
+    ) -> None:
         for item in items:
             filename_match = track_matches[item]
             self._log.debug(f"track matches {filename_match}")
@@ -697,7 +702,7 @@ class FromFilenamePlugin(BeetsPlugin):
         """Checks if all values of a field on a dictionary match."""
         return len(set(d[field] for d in dictionaries)) <= 1
 
-    def is_regrouped_task(self, items) -> bool:
+    def is_regrouped_task(self, items: Sized) -> bool:
         """
         If the item is within the count of
         items from a previous regrouping task,
