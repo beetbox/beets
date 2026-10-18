@@ -48,6 +48,35 @@ def mock_task(items):
     return ImportTask(toppath=None, paths=None, items=items)
 
 
+def _item_id(val: object) -> str | None:
+    """Generate deterministic test IDs for parametrized tests with Items."""
+    if isinstance(val, Item):
+        fields: list[str] = []
+        if val.path:
+            path_str = (
+                val.path.decode("utf-8", "replace")
+                if isinstance(val.path, bytes)
+                else str(val.path)
+            )
+            fields.append(f"path={path_str}")
+        for k in sorted(val._fields.keys()):
+            if k in ("path", "mtime"):
+                continue
+            v = val.get(k, with_album=False)
+            if v:
+                fields.append(f"{k}={v!r}")
+        for k in sorted(val._values_flex.keys()):
+            v = val._values_flex[k]
+            if v:
+                fields.append(f"{k}={v!r}")
+        return f"Item({', '.join(fields)})"
+    if isinstance(val, (list, tuple)) and any(isinstance(x, Item) for x in val):
+        return f"[{', '.join(_item_id(x) or str(x) for x in val)}]"
+    if isinstance(val, FilenameMatch):
+        return repr(val)
+    return None
+
+
 @pytest.mark.parametrize(
     "text,matchgroup",
     [
@@ -338,6 +367,7 @@ class TestFromFilename(PluginTestHelper):
                 media="Digital Media",
             ),
         ],
+        ids=_item_id,
     )
     def test_fromfilename(self, expected_item):
         """
@@ -486,6 +516,7 @@ class TestFromFilename(PluginTestHelper):
                 ),
             ],
         ],
+        ids=_item_id,
     )
     def test_sanity_check(self, expected_items):
         """Take a list of expected items, create a task with just the paths.
@@ -572,6 +603,7 @@ class TestFromFilename(PluginTestHelper):
                 ),
             ),
         ],
+        ids=_item_id,
     )
     def test_fields(self, file_fields, folder_fields, expected):
         """Test that the applied fields can be adjusted by the user."""
@@ -631,6 +663,7 @@ class TestFromFilename(PluginTestHelper):
                 ),
             ),
         ],
+        ids=_item_id,
     )
     def test_user_patterns(self, folder_patterns, file_patterns, expected):
         """Test recognizing data from a given user pattern."""
@@ -673,6 +706,7 @@ class TestFromFilename(PluginTestHelper):
                 mock_item(path="/temp/Y - track.wav", track=2),
             ),
         ],
+        ids=_item_id,
     )
     def test_alphanumeric_index(self, expected):
         """Assert that an alphanumeric index is guessed in order."""

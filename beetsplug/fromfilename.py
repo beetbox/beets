@@ -135,6 +135,9 @@ class FilenameMatch(MutableMapping[str, str | None]):
     def __str__(self) -> str:
         return ", ".join([f'{g[0]}="{g[1]}"' for g in self._matches.items()])
 
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({dict(sorted(self._matches.items()))!r})"
+
     def __getitem__(self, key: str) -> str | None:
         return self._matches.get(key, None)
 
