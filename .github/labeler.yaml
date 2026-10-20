@@ -238,3 +238,22 @@ version-command:
 write-command:
   - '/\bwrite command/i'
   - '/beet write\b/i'
+
+# Operating Systems
+linux:
+  - '/alpine/i'
+  - '/\barch\b/i'
+  - '/\baur\b/i'
+  - '/debian/i'
+  - '/fedora/i'
+  - '/gentoo/i'
+  - '/linux(?!server)/i'
+  - '/nixos/i'
+  - '/slackware/i'
+  - '/solus/i'
+  - '/\b(?:open)?suse\b/i'
+  - '/ubuntu/i'
+mac:
+  - '/\bmac(?:os)?\b/i'
+windows:
+  - '/\bwindows\b/i'
