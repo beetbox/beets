@@ -71,6 +71,10 @@ Bug fixes
   :bug:`7031`
 - :doc:`plugins/fetchart`: Do not offer the same local art file twice when a
   subdirectory holds a file named like one in the album folder.
+- :doc:`plugins/lastgenre`: The import stage no longer prints the fetched
+  genres to the terminal. The printed text could appear on top of the
+  importer's prompt for the next album, making the import look frozen.
+  :bug:`6830`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

@@ -671,33 +671,46 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Beets plugin hooks and CLI.
 
-    def _fetch_and_log_genre(self, obj: LibModel) -> None:
-        """Fetch genre and log it."""
+    def _fetch_and_log_genre(
+        self, obj: LibModel, show_changes: bool = True
+    ) -> None:
+        """Fetch genre and log it.
+
+        The genre changes are printed to the terminal only if ``show_changes``
+        is set.
+        """
         self._log.info(str(obj))
         obj.genres, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genres)
 
-        ui.show_model_changes(obj, fields=["genres"], print_obj=False)
+        if show_changes:
+            ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
     @singledispatchmethod
-    def _process(self, obj: LibModel, write: bool) -> None:
+    def _process(
+        self, obj: LibModel, write: bool, show_changes: bool = True
+    ) -> None:
         """Process an object, dispatching to the appropriate method."""
         raise NotImplementedError
 
     @_process.register
-    def _process_track(self, obj: Item, write: bool) -> None:
+    def _process_track(
+        self, obj: Item, write: bool, show_changes: bool = True
+    ) -> None:
         """Process a single track/item."""
-        self._fetch_and_log_genre(obj)
+        self._fetch_and_log_genre(obj, show_changes)
         if not self.config["pretend"]:
             obj.try_sync(write=write, move=False)
 
     @_process.register
-    def _process_album(self, obj: Album, write: bool) -> None:
+    def _process_album(
+        self, obj: Album, write: bool, show_changes: bool = True
+    ) -> None:
         """Process an entire album."""
-        self._fetch_and_log_genre(obj)
+        self._fetch_and_log_genre(obj, show_changes)
         if "track" in self.sources:
             for item in obj.items():
-                self._process(item, write)
+                self._process(item, write, show_changes)
 
         if not self.config["pretend"]:
             obj.try_sync(
@@ -776,4 +789,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [lastgenre_cmd]
 
     def imported(self, _: ImportSession, task: ImportTask) -> None:
-        self._process(task.album if task.is_album else task.item, write=False)  # type: ignore[attr-defined]
+        """Fetch genres for the imported album or singleton.
+
+        This runs in the import pipeline while the importer may be waiting for
+        input on another task, so nothing is printed to the terminal here.
+        """
+        self._process(
+            task.album if task.is_album else task.item,  # type: ignore[attr-defined]
+            write=False,
+            show_changes=False,
+        )

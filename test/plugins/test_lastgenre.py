@@ -160,6 +160,48 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert album.genres == ["Original Genre"]
         assert album.items()[0].genres == ["Original Genre"]
 
+    def _add_album_for_import(self) -> Album:
+        item = self.create_item(
+            album="Import Album",
+            albumartist="Import Artist",
+            artist="Import Artist",
+            title="Import Track",
+        )
+        return self.lib.add_album([item])
+
+    def test_imported_album_does_not_print_genre_changes(self):
+        """The import stage must not write to the terminal.
+
+        See #6830: the printed genre changes appeared on top of the importer's
+        prompt for the next album, which made the import look frozen.
+        """
+        album = self._add_album_for_import()
+        task = Mock(is_album=True, album=album)
+        self.io.getoutput()
+
+        with patch.object(
+            self.plugin, "_get_genre", return_value=(["Rock"], "test")
+        ):
+            self.plugin.imported(Mock(), task)
+
+        assert self.io.getoutput() == ""
+        album.load()
+        assert album.genres == ["Rock"]
+
+    def test_imported_singleton_does_not_print_genre_changes(self):
+        item = self._add_album_for_import().items()[0]
+        task = Mock(is_album=False, item=item)
+        self.io.getoutput()
+
+        with patch.object(
+            self.plugin, "_get_genre", return_value=(["Rock"], "test")
+        ):
+            self.plugin.imported(Mock(), task)
+
+        assert self.io.getoutput() == ""
+        item.load()
+        assert item.genres == ["Rock"]
+
     def test_no_duplicate(self):
         """Remove duplicated genres."""
         self._setup_config(count=99)
