@@ -56,10 +56,31 @@ jobs:
       - name: Install Python tools
         run: uv tool install "poethepoet>=0.26,<0.47.0"
 
+      - name: Set up MSYS2 with bash-completion
+        if: matrix.platform == 'windows-latest'
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          update: true
+          install: bash-completion
+
+      - name: Configure MSYS2 environment
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          "MSYS2_ROOT=${{ steps.msys2.outputs.msys2-location }}" >> $env:GITHUB_ENV
+          "BEETS_TEST_SHELL=${{ steps.msys2.outputs.msys2-location }}\usr\bin\bash.exe --norc" >> $env:GITHUB_ENV
+
       - name: Install system dependencies on Windows
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
+          choco install ffmpeg flac imagemagick -y --no-progress
+          if ($LASTEXITCODE -ne 0) {
+            throw "Windows system dependency installation failed."
+          }
+
           $maxAttempts = 3
           for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
             # mp3gain's Chocolatey install script pulls from a flaky SourceForge
@@ -79,16 +100,37 @@ jobs:
         run: |
           sudo apt update
           sudo apt install --yes --no-install-recommends \
+            bash-completion \
+            btrfs-progs \
             ffmpeg \
             flac \
             gobject-introspection \
-            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
             imagemagick \
             libcairo2-dev \
             libgirepository-2.0-dev \
             mp3gain \
             pandoc \
-            python3-gst-1.0
+            python3-gst-1.0 \
+            unrar
+
+      - name: Provide a reflink-capable temporary directory on Ubuntu
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          # The runner's disk is ext4, which cannot clone files. Back TMPDIR
+          # with a btrfs image so the reflink tests exercise real clones
+          # instead of quietly skipping.
+          image="$RUNNER_TEMP/reflink.img"
+          truncate -s 4G "$image"
+          mkfs.btrfs -q "$image"
+          sudo mkdir -p /mnt/reflink
+          sudo mount -o loop "$image" /mnt/reflink
+          sudo chown "$(id -u):$(id -g)" /mnt/reflink
+          # Clone within the mount: --reflink cannot cross filesystems.
+          echo probe > /mnt/reflink/probe.src
+          cp --reflink=always /mnt/reflink/probe.src /mnt/reflink/probe.dst
+          rm /mnt/reflink/probe.src /mnt/reflink/probe.dst
+          echo "TMPDIR=/mnt/reflink" >> "$GITHUB_ENV"
 
       - name: Get changed lyrics files
         id: lyrics-update
@@ -106,16 +148,41 @@ jobs:
 
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
+        shell: bash
         run: |
-          poe install --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
+          poe install \
+            --group test \
+            --extra autobpm \
+            --extra discogs \
+            --extra embedart \
+            --extra import \
+            --extra lyrics \
+            --extra replaygain \
+            --extra reflink \
+            --extra fetchart \
+            --extra chroma \
+            --extra sonosupdate
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
+        shell: bash
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poe install --group test --extra autobpm --extra discogs --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate --group docs
+          poe install \
+            --group test \
+            --group docs \
+            --extra autobpm \
+            --extra discogs \
+            --extra embedart \
+            --extra import \
+            --extra lyrics \
+            --extra replaygain \
+            --extra reflink \
+            --extra fetchart \
+            --extra chroma \
+            --extra sonosupdate
           poe docs
           poe test-with-coverage
 

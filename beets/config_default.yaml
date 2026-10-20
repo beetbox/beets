@@ -64,6 +64,7 @@ import:
 # --------------- Paths ---------------
 
 path_sep_replace: _
+empty_component_replace:
 drive_sep_replace: _
 asciify_paths: false
 art_filename: cover

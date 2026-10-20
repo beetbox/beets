@@ -15,6 +15,16 @@ if TYPE_CHECKING:
     from beets.events import EventType
 
 
+def _split_command(command: str) -> list[str]:
+    """Split a hook command into argv, treating '\\' as a path separator on Windows."""
+    lex = shlex.shlex(command, posix=True)
+    lex.whitespace_split = True
+    lex.commenters = ""  # shlex.split does this; raw shlex defaults to '#'
+    if os.name == "nt":
+        lex.escape = ""
+    return list(lex)
+
+
 class BytesToStrFormatter(string.Formatter):
     """A variant of `string.Formatter` that converts `bytes` to `str`."""
 
@@ -60,7 +70,7 @@ class HookPlugin(BeetsPlugin):
             formatter = BytesToStrFormatter()
             command_pieces = [
                 formatter.format(piece, event=event, **kwargs)
-                for piece in shlex.split(command)
+                for piece in _split_command(command)
             ]
 
             self._log.debug(
