@@ -33,6 +33,10 @@ New features
   path component, so a path template field that resolves to nothing no longer
   collapses the directory level it would have created. Unset by default, which
   keeps the current behaviour. :bug:`359`
+- :doc:`plugins/bpd`, :doc:`plugins/replaygain`: Support GStreamer on Windows,
+  where the ``bpd`` and ``replaygain`` extras now install GStreamer, its plugins
+  and the Python bindings, so that neither plugin needs a separate GStreamer
+  installation there.
 
 Bug fixes
 ~~~~~~~~~
@@ -85,6 +89,13 @@ Bug fixes
 - :doc:`plugins/play`: Keep a path absolute instead of crashing when
   ``relative_to`` points at another Windows drive, where no relative path
   between the two exists, and warn about the paths that were left alone.
+- :doc:`plugins/bpd`: Report song paths with ``/`` separators on every platform,
+  so that the paths clients receive can be used to address songs on Windows too.
+- :ref:`import-cmd`: Detect the format of extension-less files on Windows, where
+  the ``ffprobe`` output was left unparsed because of its line endings.
+- Detect ImageMagick on Windows: the version probe kept looking for ``convert``
+  after ``magick`` had answered and picked up the unrelated built-in Windows
+  tool of that name, reporting the backend as unavailable. :bug:`5414`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
