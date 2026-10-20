@@ -33,6 +33,10 @@ New features
   path component, so a path template field that resolves to nothing no longer
   collapses the directory level it would have created. Unset by default, which
   keeps the current behaviour. :bug:`359`
+- :doc:`plugins/bpd`, :doc:`plugins/replaygain`: Support GStreamer on Windows,
+  where the ``bpd`` and ``replaygain`` extras now install GStreamer, its plugins
+  and the Python bindings, so that neither plugin needs a separate GStreamer
+  installation there.
 
 Bug fixes
 ~~~~~~~~~

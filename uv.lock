@@ -358,6 +358,7 @@ beatport = [
     { name = "requests-oauthlib" },
 ]
 bpd = [
+    { name = "gstreamer-bundle", marker = "sys_platform == 'win32'" },
     { name = "pygobject", marker = "sys_platform != 'win32'" },
 ]
 chroma = [
@@ -541,6 +542,7 @@ requires-dist = [
     { name = "flask", marker = "extra == 'web'" },
     { name = "flask-cors", marker = "extra == 'aura'" },
     { name = "flask-cors", marker = "extra == 'web'" },
+    { name = "gstreamer-bundle", marker = "sys_platform == 'win32' and extra == 'bpd'", specifier = ">=1.28.0" },
     { name = "gstreamer-bundle", marker = "sys_platform == 'win32' and extra == 'replaygain'", specifier = ">=1.28.0" },
     { name = "jellyfish" },
     { name = "langdetect", marker = "extra == 'fetchart'" },
