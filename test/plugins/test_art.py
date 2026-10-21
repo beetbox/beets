@@ -10,7 +10,7 @@ from unittest.mock import patch
 import confuse
 import pytest
 
-from beets import config, importer, logging, util
+from beets import importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance
 from beets.library import Album
 from beets.test import _common
@@ -985,14 +985,10 @@ class TestArtImporter(UseThePlugin):
         self._fetch_art(True)
         assert self.art_file.exists()
 
-    def test_delete_original_file(self):
-        prev_move = config["import"]["move"].get()
-        try:
-            config["import"]["move"] = True
-            self._fetch_art(True)
-            assert not self.art_file.exists()
-        finally:
-            config["import"]["move"] = prev_move
+    def test_delete_original_file(self, config):
+        config["import"]["move"] = True
+        self._fetch_art(True)
+        assert not self.art_file.exists()
 
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = self.i.filepath.parent / "cover.jpg"
@@ -1160,7 +1156,7 @@ class TestDeprecatedConfig:
     # overwritten by BeetsTestCase or be set after constructing the
     # plugin object
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, config):
         config["fetchart"]["remote_priority"] = True
         self.plugin = fetchart.FetchArtPlugin()
 
@@ -1171,7 +1167,7 @@ class TestDeprecatedConfig:
 class TestEnforceRatioConfig:
     """Throw some data at the regexes."""
 
-    def _load_with_config(self, values, should_raise):
+    def _load_with_config(self, config, values, should_raise):
         if should_raise:
             for v in values:
                 config["fetchart"]["enforce_ratio"] = v
@@ -1182,10 +1178,10 @@ class TestEnforceRatioConfig:
                 config["fetchart"]["enforce_ratio"] = v
                 fetchart.FetchArtPlugin()
 
-    def test_px(self):
-        self._load_with_config("0px 4px 12px 123px".split(), False)
-        self._load_with_config("00px stuff5px".split(), True)
+    def test_px(self, config):
+        self._load_with_config(config, "0px 4px 12px 123px".split(), False)
+        self._load_with_config(config, "00px stuff5px".split(), True)
 
-    def test_percent(self):
-        self._load_with_config("0% 0.00% 5.1% 5% 100%".split(), False)
-        self._load_with_config("00% 1.234% foo5% 100.1%".split(), True)
+    def test_percent(self, config):
+        self._load_with_config(config, "0% 0.00% 5.1% 5% 100%".split(), False)
+        self._load_with_config(config, "00% 1.234% foo5% 100.1%".split(), True)

@@ -747,9 +747,8 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         ),
     ],
 )
-@pytest.mark.usefixtures("config")
 def test_get_genre(
-    monkeypatch, config_values, item_genre, mock_genres, expected_result
+    monkeypatch, config, config_values, item_genre, mock_genres, expected_result
 ):
     """Test _get_genre with various configurations."""
     # Mock the last.fm fetchers. When whitelist enabled, we can assume only
@@ -759,10 +758,10 @@ def test_get_genre(
         "beetsplug.lastgenre.client.LastFmClient.fetch",
         lambda _, kind, __: mock_genres[kind],
     )
+    config["lastgenre"].set(config_values)
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
     # Configure
-    plugin.config.set(config_values)
     plugin.setup()  # Loads default whitelist and canonicalization tree
 
     item = _common.item()

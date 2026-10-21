@@ -8,7 +8,7 @@ from random import random
 
 import pytest
 
-from beets import config, ui
+from beets import ui
 from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase, IOMixin
 
@@ -82,7 +82,7 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
         non_exist_path = self.temp_path / "nonexist" / str(random())
         # Deepcopy instead of recovering because exceptions might
         # occur; wish I can use a golang defer here.
-        test_config = deepcopy(config)
+        test_config = deepcopy(self.config)
         test_config["library"] = str(non_exist_path)
         self.io.addinput("y")
         lib = ui._open_library(test_config)
@@ -91,7 +91,7 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
     def test_create_no(self):
         non_exist_path_parent = self.temp_path / "nonexist"
         non_exist_path = non_exist_path_parent / str(random())
-        test_config = deepcopy(config)
+        test_config = deepcopy(self.config)
         test_config["library"] = str(non_exist_path)
 
         self.io.addinput("n")
@@ -104,7 +104,7 @@ class ParentalDirCreation(IOMixin, BeetsTestCase):
     "sqlite_message",
     ["unable to open database file", "attempt to write a readonly database"],
 )
-def test_open_library_permissions_hint(monkeypatch, sqlite_message):
+def test_open_library_permissions_hint(monkeypatch, config, sqlite_message):
     def boom(*_a, **_k):
         raise sqlite3.OperationalError(sqlite_message)
 
