@@ -69,6 +69,9 @@ Bug fixes
   default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
+- Fix ``import.duplicate_keys`` with ``mb_albumid`` / ``mb_trackid`` never
+  matching autotagged imports (and matching entries with an empty MBID instead).
+  :bug:`7067`
 - :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
   artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
   fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
