@@ -11,6 +11,7 @@ from beetsplug.permissions import (
     check_permissions,
     convert_perm,
     dirs_in_library,
+    set_permissions,
 )
 
 
@@ -47,6 +48,16 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
 
     def test_convert_perm_from_int(self):
         assert convert_perm(10) == 8
+
+    def test_missing_path_does_not_abort_permissions_update(self):
+        log = Mock()
+
+        set_permissions(b"/missing/12 Ntr/mssion.flac", 0o644, log)
+
+        log.warning.assert_called_once_with(
+            "could not set permissions on missing path {}",
+            "/missing/12 Ntr/mssion.flac",
+        )
 
     def test_permissions_on_set_art(self):
         self.do_set_art(True)
