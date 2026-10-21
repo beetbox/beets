@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from beets.importer import Action
-from beets.library import Album, Item, parse_query_string
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
@@ -35,9 +35,8 @@ class IHatePlugin(BeetsPlugin):
         """
         if action_patterns:
             for query_string in action_patterns:
-                query, _ = parse_query_string(
-                    query_string, Album if task.is_album else Item
-                )
+                model_cls = Album if task.is_album else Item
+                query = model_cls.parse_query(query_string).query
                 if any(query.match(item) for item in task.imported_items()):
                     return True
         return False

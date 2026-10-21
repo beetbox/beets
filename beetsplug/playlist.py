@@ -15,7 +15,7 @@ from beets.util import path_as_posix
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from beets.dbcore.query import FieldQueryType
+    from beets.dbcore.query import QueryByField
     from beets.library import Item, Library
 
 
@@ -74,9 +74,7 @@ class PlaylistQuery(InQuery[bytes]):
 
 
 class PlaylistPlugin(BeetsPlugin):
-    item_queries: ClassVar[dict[str, FieldQueryType]] = {
-        "playlist": PlaylistQuery
-    }
+    item_queries: ClassVar[QueryByField] = {"playlist": PlaylistQuery}
 
     changes: dict[bytes, bytes | None]
 

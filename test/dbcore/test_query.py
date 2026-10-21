@@ -30,10 +30,6 @@ from beets.library import Item
 from beets.test import _common
 from beets.test.helper import TestHelper
 
-# Because the absolute path begins with something like C:, we
-# can't disambiguate it from an ordinary query.
-WIN32_NO_IMPLICIT_PATHS = "Implicit paths are not supported on Windows"
-
 _p = pytest.param
 
 
@@ -386,7 +382,9 @@ class TestPathQuery:
 
         assert {i.title for i in lib.items(q)} == {"relative item"}
 
-    @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason=_common.WIN32_NO_IMPLICIT_PATHS
+    )
     @pytest.mark.parametrize(
         "q, expected_titles",
         [
@@ -424,7 +422,9 @@ class TestPathQuery:
 
     # FIXME: Also create a variant of this test for windows, which tests
     # both os.sep and os.altsep
-    @pytest.mark.skipif(sys.platform == "win32", reason=WIN32_NO_IMPLICIT_PATHS)
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason=_common.WIN32_NO_IMPLICIT_PATHS
+    )
     @pytest.mark.parametrize(
         "q, is_path_query",
         [

@@ -6,7 +6,7 @@ import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import MutableMapping, Sequence
 from datetime import datetime, timedelta
 from functools import cached_property, reduce
 from operator import mul, or_
@@ -43,7 +43,9 @@ class InvalidQueryError(ParsingError):
     """
 
     def __init__(
-        self, query: str | Sequence[str] | Query | None, explanation: Exception
+        self,
+        query: str | Sequence[str] | Query | None,
+        explanation: Exception | str,
     ) -> None:
         if isinstance(query, Sequence) and not isinstance(query, str):
             query = " ".join(query)
@@ -96,6 +98,9 @@ class Query(ABC):
     def __and__(self, other: Query) -> AndQuery:
         return AndQuery([self, other])
 
+    def __or__(self, other: Query) -> OrQuery:
+        return OrQuery([self, other])
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 
@@ -113,7 +118,7 @@ class Query(ABC):
 
 SQLiteType = str | bytes | float | int | memoryview | None
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
-FieldQueryType = type["FieldQuery"]
+QueryByField = MutableMapping[str, type["FieldQuery"]]
 AnyCollectionQuery = TypeVar("AnyCollectionQuery", bound="CollectionQuery")
 
 
@@ -591,6 +596,14 @@ class MutableCollectionQuery(CollectionQuery):
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
+    def __and__(self, other: Query) -> AndQuery:
+        if isinstance(other, AndQuery):
+            self.subqueries.extend(other.subqueries)
+        else:
+            self.subqueries.append(other)
+
+        return self
+
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("and")
 
@@ -600,6 +613,14 @@ class AndQuery(MutableCollectionQuery):
 
 class OrQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
+
+    def __or__(self, other: Query) -> OrQuery:
+        if isinstance(other, OrQuery):
+            self.subqueries.extend(other.subqueries)
+        else:
+            self.subqueries.append(other)
+
+        return self
 
     def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("or")

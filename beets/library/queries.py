@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-import shlex
 from typing import TYPE_CHECKING
 
-import beets
-from beets import dbcore, logging, plugins
+from beets import dbcore, logging
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.dbcore.queryparse import Prefixes
     from beets.library import LibModel
+
+from beets.util.deprecation import deprecate_for_maintainers
 
 log = logging.getLogger("beets")
 
@@ -27,29 +26,10 @@ def parse_query_parts(
     Like `dbcore.parse_sorted_query`, with beets query prefixes and
     ensuring that implicit path queries are made explicit with 'path::<query>'
     """
-    # Get query types and their prefix characters.
-    prefixes: Prefixes = {
-        ":": dbcore.query.RegexpQuery,
-        "=~": dbcore.query.StringQuery,
-        "=": dbcore.query.MatchQuery,
-    }
-    prefixes.update(plugins.queries())
-
-    # Special-case path-like queries, which are non-field queries
-    # containing path separators (/).
-    parts = [
-        f"path:{s}" if dbcore.query.PathQuery.is_path_query(s) else s
-        for s in parts
-    ]
-
-    case_insensitive = beets.config["sort_case_insensitive"].get(bool)
-
-    query, sort = dbcore.parse_sorted_query(
-        model_cls, parts, prefixes, case_insensitive
+    deprecate_for_maintainers(
+        "'parse_query_parts'", f"beets.library.{model_cls.__name__}.parse_query"
     )
-    log.debug("Parsed query: {!r}", query)
-    log.debug("Parsed sort: {!r}", sort)
-    return query, sort
+    return model_cls.parse_query(parts)
 
 
 def parse_query_string(
@@ -60,10 +40,8 @@ def parse_query_string(
 
     The string is split into components using shell-like syntax.
     """
-    message = f"Query is not unicode: {s!r}"
-    assert isinstance(s, str), message
-    try:
-        parts = shlex.split(s)
-    except ValueError as exc:
-        raise dbcore.InvalidQueryError(s, exc)
-    return parse_query_parts(parts, model_cls)
+    deprecate_for_maintainers(
+        "'parse_query_string'",
+        f"beets.library.{model_cls.__name__}.parse_query",
+    )
+    return model_cls.parse_query(s)

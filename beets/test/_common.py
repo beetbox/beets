@@ -22,6 +22,9 @@ if TYPE_CHECKING:
 
     from beets.dbcore import Query
     from beets.library import Item, Library
+# Because the absolute path begins with something like C:, we
+# can't disambiguate it from an ordinary query.
+WIN32_NO_IMPLICIT_PATHS = "Implicit paths are not supported on Windows"
 
 # Test resources path.
 RSRC = (Path(__file__).parent.parent.parent / "test" / "rsrc").resolve()
