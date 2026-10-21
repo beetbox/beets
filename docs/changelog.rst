@@ -96,6 +96,9 @@ Bug fixes
 - Detect ImageMagick on Windows: the version probe kept looking for ``convert``
   after ``magick`` had answered and picked up the unrelated built-in Windows
   tool of that name, reporting the backend as unavailable. :bug:`5414`
+- :ref:`update-cmd`: A filesystem error while moving an item or album is now
+  reported and the update continues with the rest of the library, instead of
+  aborting and leaving it partially updated. :bug:`2419`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
