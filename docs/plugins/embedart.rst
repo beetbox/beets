@@ -72,6 +72,10 @@ file. The available options are:
   art file. Default: ``no``.
 - **clearart_on_import**: Enable automatic embedded art clearing. Default:
   ``no``.
+- **normalize**: After an album is imported, downscale any embedded art that is
+  wider than ``maxwidth``, even when no new art was fetched to replace it. Art
+  that is already at most ``maxwidth`` pixels wide is left untouched. Requires
+  ``maxwidth`` to be set. Default: ``no``.
 
 Note: ``compare_threshold`` option requires ImageMagick_, and ``maxwidth``
 requires either ImageMagick_ or Pillow_.
