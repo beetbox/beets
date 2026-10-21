@@ -37,6 +37,10 @@ New features
   where the ``bpd`` and ``replaygain`` extras now install GStreamer, its plugins
   and the Python bindings, so that neither plugin needs a separate GStreamer
   installation there.
+- :doc:`plugins/convert`: Add a ``format_map`` option to choose the target
+  format depending on the source format, for example ALAC and WAV to FLAC.
+  Formats that are not listed use ``format``, and ``--format`` still overrides
+  everything. :bug:`7040`
 
 Bug fixes
 ~~~~~~~~~

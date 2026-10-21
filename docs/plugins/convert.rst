@@ -183,6 +183,9 @@ You can also configure the format to use for transcoding (see the next section):
 
 - **format**: The name of the format to transcode to when none is specified on
   the command line. Default: ``mp3``.
+- **format_map**: A map from source formats to the format to transcode them to.
+  Formats that are not listed use ``format``. See :ref:`convert-format-map`.
+  Default: empty.
 - **formats**: A set of formats and associated command lines for transcoding
   each.
 
@@ -230,6 +233,28 @@ given command is used for all conversions.
     convert:
         command: ffmpeg -i $source -y -vn -aq 2 $dest
         extension: mp3
+
+.. _convert-format-map:
+
+Choosing the target format by source format
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``format_map`` to transcode files to different formats depending on their
+current format. Formats that are not listed use the ``format`` option, and the
+``--format`` command-line option overrides both.
+
+::
+
+    convert:
+        format: mp3
+        format_map:
+            alac: flac
+            wav: flac
+
+In this example ALAC and WAV files are transcoded to FLAC, and everything else
+is transcoded to MP3. The keys are the format names shown by ``beet ls -f
+'$format'``, in any case. Each target format needs an entry in ``formats``, see
+above.
 
 Gapless MP3 encoding
 ~~~~~~~~~~~~~~~~~~~~
