@@ -6,9 +6,7 @@ import sys
 import pytest
 
 from beets.test.helper import RUNNING_IN_CI
-
-release = pytest.importorskip("extra.release")
-
+from extra import release
 
 pytestmark = pytest.mark.skipif(
     not (

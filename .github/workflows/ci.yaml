@@ -162,7 +162,7 @@ jobs:
             --extra fetchart \
             --extra chroma \
             --extra sonosupdate
-          poe test
+          poe test -k 'not test_convert_rst_to_md'
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
