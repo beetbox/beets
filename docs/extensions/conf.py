@@ -93,7 +93,7 @@ class ConfDomain(Domain):
         target: str,
         node: pending_xref,
         contnode: Element,
-    ) -> Element | None:
+    ) -> nodes.reference | None:
         if entry := self.data["objects"].get(target):
             docname, targetid = entry
             return make_refnode(

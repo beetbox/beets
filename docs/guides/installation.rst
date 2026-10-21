@@ -1,9 +1,9 @@
 Installation
 ============
 
-Beets requires `Python 3.10 or later`_. You can install it using uv_ or pip_.
+Beets requires `Python 3.11 or later`_. You can install it using uv_ or pip_.
 
-.. _python 3.10 or later: https://www.python.org/downloads/
+.. _python 3.11 or later: https://www.python.org/downloads/
 
 Using ``uv tool`` or ``pip``
 ----------------------------
