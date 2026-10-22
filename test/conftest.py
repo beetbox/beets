@@ -261,18 +261,6 @@ def is_importable():
 # Inheriting from TestHelper gives each test function isolated state. Use the
 # fixtures below instead when a broader scope is safe and the suite benefits
 # from reusing the same helper instance.
-@pytest.fixture(scope="session")
-def session_helper():
-    """Share beets test state across the full test session.
-
-    Use this for suites that tolerate shared library contents and global
-    configuration. Tests should target specific records rather than assume a
-    completely fresh overall state.
-    """
-    with TestHelper() as helper:
-        yield helper
-
-
 @pytest.fixture(scope="module")
 def module_helper():
     """Share beets test state within one test module.
