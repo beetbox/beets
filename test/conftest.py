@@ -187,6 +187,19 @@ def do_not_log_sources(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def restore_log_level() -> Iterator[None]:
+    """Reset the global log level, which the CLI sets and never restores.
+
+    See https://github.com/beetbox/beets/actions/runs/38253501906/job/114825507731.
+    """
+    log = logging.getLogger("beets")
+    default_level, level = log.default_level, log.level
+    yield
+    log.default_level = default_level
+    log.setLevel(level)
+
+
+@pytest.fixture(autouse=True)
 def clear_cached_classproperty():
     cached_classproperty.cache.clear()
 
@@ -248,18 +261,6 @@ def is_importable():
 # Inheriting from TestHelper gives each test function isolated state. Use the
 # fixtures below instead when a broader scope is safe and the suite benefits
 # from reusing the same helper instance.
-@pytest.fixture(scope="session")
-def session_helper():
-    """Share beets test state across the full test session.
-
-    Use this for suites that tolerate shared library contents and global
-    configuration. Tests should target specific records rather than assume a
-    completely fresh overall state.
-    """
-    with TestHelper() as helper:
-        yield helper
-
-
 @pytest.fixture(scope="module")
 def module_helper():
     """Share beets test state within one test module.

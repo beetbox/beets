@@ -116,7 +116,8 @@ class TestMBPseudoMixin(PluginMixin):
         )
 
     @pytest.fixture(scope="class")
-    def plugin_config(self):
+    @classmethod
+    def plugin_config(cls):
         return {"scripts": ["Latn", "Dummy"]}
 
     @pytest.fixture
@@ -271,7 +272,8 @@ class TestMBPseudoPlugin(TestMBPseudoMixin):
 
 class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
     @pytest.fixture(scope="class")
-    def plugin_config(self):
+    @classmethod
+    def plugin_config(cls):
         return {"scripts": ["Latn", "Dummy"], "custom_tags_only": True}
 
     def test_custom_tags(
