@@ -344,6 +344,7 @@ class Album(LibModel):
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {
         "albumartist": sort.SmartArtistSort,
         "artist": sort.SmartArtistSort,
+        "initial_key": sort.HarmonicKeySort,
     }
 
     # List of keys that are set on an album's items.
@@ -757,7 +758,8 @@ class Item(LibModel):
     _formatter = FormattedItemMapping
 
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {
-        "artist": sort.SmartArtistSort
+        "artist": sort.SmartArtistSort,
+        "initial_key": sort.HarmonicKeySort,
     }
 
     @cached_classproperty
