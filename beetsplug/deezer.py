@@ -279,7 +279,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 self._log.debug("Invalid Deezer track_id: {}", e)
                 continue
             else:
-                if track and (rank := track.get("rank") is not None):
+                if track and (rank := track.get("rank")) is not None:
                     self._log.debug(
                         "Deezer track: {} has {} rank", deezer_track_id, rank
                     )

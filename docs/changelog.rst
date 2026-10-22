@@ -102,6 +102,8 @@ Bug fixes
 - :ref:`update-cmd`: A filesystem error while moving an item or album is now
   reported and the update continues with the rest of the library, instead of
   aborting and leaving it partially updated. :bug:`2419`
+- :doc:`plugins/deezer`: ``deezerupdate`` now stores each track's Deezer rank
+  instead of ``1``. :bug:`7106`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
