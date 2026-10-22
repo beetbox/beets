@@ -7,6 +7,8 @@ import json
 import os
 import sys
 from datetime import date, datetime
+from fnmatch import fnmatchcase
+from glob import has_magic
 from typing import TYPE_CHECKING, Any, Literal, Protocol, get_args
 from xml.etree import ElementTree
 
@@ -163,6 +165,8 @@ class ExportPlugin(BeetsPlugin):
         for keys in opts.included_keys:
             included_keys.extend(keys.split(","))
 
+        has_patterns = any(has_magic(key) for key in included_keys)
+
         byte_fields = [
             k for k, v in TYPE_BY_FIELD.items() if isinstance(v, BasePathType)
         ]
@@ -172,7 +176,18 @@ class ExportPlugin(BeetsPlugin):
                 lib, args, album=opts.album, limit=opts.limit
             ):
                 try:
-                    data, _ = data_emitter(included_keys or "*")
+                    data, _ = data_emitter(
+                        "*" if has_patterns else included_keys or "*"
+                    )
+                    if has_patterns:
+                        data = {
+                            key: value
+                            for key, value in data.items()
+                            if any(
+                                fnmatchcase(key, pattern)
+                                for pattern in included_keys
+                            )
+                        }
                 except (mediafile.UnreadableFileError, OSError) as ex:
                     self._log.error("cannot read file: {}", ex)
                     continue
