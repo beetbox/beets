@@ -47,6 +47,7 @@ var/
 pip-log.txt
 pip-delete-this-directory.txt
 
+temp_auto_push.bat
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -90,10 +91,10 @@ ENV/
 /.project
 /.pydevproject
 /.settings
-.vscode
 
 # pyright
 pyrightconfig.json
 
 # Pyrefly
 pyrefly.toml
+branch_structure.json

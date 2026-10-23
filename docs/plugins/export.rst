@@ -35,12 +35,11 @@ The ``export`` command has these command-line options:
 
   This will include the ``title`` property and all properties starting with
   ``mb``. You can add the ``-i`` option multiple times to the command line.
-  Patterns match field names case-sensitively. A pattern without matches adds
-  no fields; overlapping patterns include each matching field only once.
+  Patterns match field names case-sensitively. A pattern without matches adds no
+  fields; overlapping patterns include each matching field only once.
 
 - ``--limit``: Cap the matched items or albums before exporting. The short
   ``-l`` option is already used by ``--library``.
-
 - ``--library`` or ``-l``: Show data from the library database instead of the
   files' tags.
 - ``--album`` or ``-a``: Show data from albums instead of tracks (implies
