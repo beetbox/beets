@@ -186,3 +186,15 @@ class TestVariousArtistsDetection:
         assert album_info is not None
         assert album_info.va is False
         assert album_info.artist == "Artist 100"
+
+
+class TestDeezerUpdate:
+    def test_stores_track_rank(self, plugin, class_helper, requests_mock):
+        item = class_helper.add_item(deezer_track_id=1)
+        requests_mock.get(
+            f"{DeezerPlugin.track_url}1", json={"id": 1, "rank": 1234}
+        )
+
+        plugin.deezerupdate([item], write=False)
+
+        assert item.deezer_track_rank == 1234
