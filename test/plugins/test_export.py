@@ -1,5 +1,7 @@
 """Test the beets.export utilities associated with the export plugin."""
 
+import csv
+import io
 import json
 import re  # used to test csv format
 from xml.etree import ElementTree
@@ -67,3 +69,83 @@ class ExportPluginTest(IOMixin, PluginTestCase):
                 txt = details.text
                 assert tag in self.test_values, tag
                 assert self.test_values[tag] == txt, txt
+
+    def test_include_key_patterns_for_tags(self):
+        item = self.create_item()
+        item.mb_trackid = "track-id"
+        item.write()
+        item.store()
+        data = json.loads(
+            self.run_with_output("export", "-i", "title,mb*", item.artist)
+        )[0]
+        assert data["title"] == item.title
+        assert data["mb_trackid"] == "track-id"
+        assert "mb*" not in data
+        assert all(key == "title" or key.startswith("mb") for key in data)
+
+    def test_include_key_patterns_for_library_flexible_fields(self):
+        item = self.create_item()
+        item["mb_custom"] = "custom-value"
+        item.store()
+        data = json.loads(
+            self.run_with_output(
+                "export",
+                "--library",
+                "-i",
+                "title,mb*",
+                "-i",
+                "mb_custom",
+                item.artist,
+            )
+        )[0]
+        assert data["title"] == item.title
+        assert data["mb_custom"] == "custom-value"
+        assert "mb*" not in data
+        assert all(key == "title" or key.startswith("mb") for key in data)
+
+    def test_unmatched_key_pattern_exports_no_fields(self):
+        item = self.create_item()
+        data = json.loads(
+            self.run_with_output("export", "-i", "no_such_field_*", item.artist)
+        )
+        assert data == [{}]
+
+    def test_star_key_pattern_exports_available_fields(self):
+        item = self.create_item()
+        data = json.loads(
+            self.run_with_output("export", "-i", "*", item.artist)
+        )[0]
+        assert data["title"] == item.title
+        assert data["album"] == item.album
+        assert "*" not in data
+
+    def test_question_mark_key_pattern(self):
+        item = self.create_item()
+        data = json.loads(
+            self.run_with_output(
+                "export", "--library", "-i", "titl?", item.artist
+            )
+        )[0]
+        assert data == {"title": item.title}
+
+    def test_include_key_patterns_for_album_fields(self):
+        item = self.create_item()
+        album = self.lib.add_album([item])
+        album["mb_custom"] = "album-value"
+        album.store()
+        data = json.loads(
+            self.run_with_output(
+                "export", "--album", "-i", "album,mb*", "album:xalbum"
+            )
+        )[0]
+        assert data["album"] == item.album
+        assert data["mb_custom"] == "album-value"
+        assert "mb*" not in data
+        assert all(key == "album" or key.startswith("mb") for key in data)
+
+    def test_include_key_patterns_in_csv(self):
+        item = self.create_item()
+        output = self.run_with_output(
+            "export", "-f", "csv", "-i", "titl?,alb[ua]m", item.artist
+        )
+        assert list(csv.DictReader(io.StringIO(output))) == [self.test_values]

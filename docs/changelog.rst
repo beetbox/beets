@@ -102,6 +102,8 @@ Bug fixes
 - :ref:`update-cmd`: A filesystem error while moving an item or album is now
   reported and the update continues with the rest of the library, instead of
   aborting and leaving it partially updated. :bug:`2419`
+- :doc:`plugins/export`: Honor glob patterns in ``--include-keys`` for both file
+  tags and library fields. :bug:`5411`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
