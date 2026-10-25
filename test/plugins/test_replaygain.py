@@ -368,7 +368,7 @@ def test_metaflac_backend_parses_replaygain_tags():
     assert MetaflacBackend._parse_gain("+4.56 dB") == pytest.approx(4.56)
 
 
-class CountingQueue(queue.Queue):
+class CountingQueue(queue.Queue[BaseException]):
     def __init__(self):
         super().__init__()
         self.get_calls = 0
