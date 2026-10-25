@@ -71,6 +71,7 @@ RECORDING_INCLUDES = [
     "artists",
     "aliases",
     "isrcs",
+    "work-rels",
     "work-level-rels",
     "artist-rels",
 ]
