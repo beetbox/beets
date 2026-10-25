@@ -6,10 +6,9 @@ import time
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Self, TypeVar
 
 from mediafile import MediaFile, UnreadableFileError
-from typing_extensions import Self
 
 import beets
 from beets import dbcore, logging, plugins, util

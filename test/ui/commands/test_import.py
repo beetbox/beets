@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import config, library
+from beets import library
 from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
 from beets.exceptions import UserError
 from beets.test import _common
@@ -16,8 +16,8 @@ from beets.ui.commands.import_.session import summarize_items
 
 class ImportTest(BeetsTestCase):
     def test_quiet_timid_disallowed(self):
-        config["import"]["quiet"] = True
-        config["import"]["timid"] = True
+        self.config["import"]["quiet"] = True
+        self.config["import"]["timid"] = True
         with pytest.raises(UserError):
             self.run_command("import")
 

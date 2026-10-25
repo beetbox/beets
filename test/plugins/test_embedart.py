@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import config, logging
+from beets import logging
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.fixtures import DummyIMBackend
@@ -128,8 +128,8 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         album.artpath = tmp_path
         album.store()
 
-        config["embedart"]["remove_art_file"] = True
-        self.run_command("embedart", "-y")
+        with self.configure_plugin({"remove_art_file": True}):
+            self.run_command("embedart", "-y")
 
         if tmp_path.is_file():
             tmp_path.unlink()
@@ -164,8 +164,8 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         album = self.add_album_fixture()
         item = album.items()[0]
         self.run_command("embedart", "-y", "-f", self.abbey_artpath)
-        config["embedart"]["compare_threshold"] = 20
-        self.run_command("embedart", "-y", "-f", self.abbey_differentpath)
+        with self.configure_plugin({"compare_threshold": 20}):
+            self.run_command("embedart", "-y", "-f", self.abbey_differentpath)
         mediafile = MediaFile(item.filepath)
 
         assert mediafile.images[0].data == self.image_data, (
@@ -178,8 +178,8 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         album = self.add_album_fixture()
         item = album.items()[0]
         self.run_command("embedart", "-y", "-f", self.abbey_artpath)
-        config["embedart"]["compare_threshold"] = 20
-        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
+        with self.configure_plugin({"compare_threshold": 20}):
+            self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
         mediafile = MediaFile(item.filepath)
 
         assert mediafile.images[0].data == self.image_data, (

@@ -6,11 +6,10 @@ from collections import defaultdict
 from contextlib import suppress
 from functools import cached_property
 from itertools import product
-from typing import TYPE_CHECKING, Literal, TypedDict
+from typing import TYPE_CHECKING, Literal, NotRequired, TypedDict
 from urllib.parse import urljoin
 
 from confuse.exceptions import NotFoundError
-from typing_extensions import NotRequired
 
 from beets import config, plugins, util
 from beets.autotag import AlbumInfo, TrackInfo

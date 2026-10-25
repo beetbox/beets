@@ -20,7 +20,7 @@ def _make_zip(files: dict[str, str]) -> bytes:
 
 
 class TestListenBrainzPlugin(ConfigMixin):
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def plugin(self) -> ListenBrainzPlugin:
         self.config["listenbrainz"]["token"] = "test_token"
         self.config["listenbrainz"]["username"] = "test_user"

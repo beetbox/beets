@@ -5,9 +5,7 @@ import os
 import pickle
 from bisect import bisect_left, insort
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Self
 
 from beets import config
 

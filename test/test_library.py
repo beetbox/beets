@@ -7,7 +7,6 @@ import os.path
 import re
 import shutil
 import stat
-import unittest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,7 +15,7 @@ from mediafile import MediaFile, UnreadableFileError
 
 import beets.dbcore.query
 import beets.library
-from beets import config, plugins, util
+from beets import plugins, util
 from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
@@ -466,7 +465,7 @@ class TestDestination(PytestItemHelper):
             dest = item_in_db.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
 
-    def test_asciify_character_expanding_to_slash(self, item_in_db):
+    def test_asciify_character_expanding_to_slash(self, item_in_db, config):
         config["asciify_paths"] = True
         self.lib.directory = b"lib"
         self.lib.path_formats = [("default", "$title")]
@@ -495,10 +494,17 @@ class TestDestination(PytestItemHelper):
         item_in_db.title = "three"
         assert item_in_db.destination() == np("base/three")
 
-    @unittest.skip("unimplemented: #359")
-    def test_destination_with_empty_component(self, item_in_db):
+    def test_destination_with_empty_leading_component(self, item_in_db):
+        self.config["empty_component_replace"] = "_"
         self.lib.directory = b"base"
-        self.lib.replacements = [(re.compile(r"^$"), "_")]
+        self.lib.path_formats = [("default", "$album/$title")]
+        item_in_db.album = ""
+        item_in_db.title = "three"
+        assert item_in_db.destination() == np("base/_/three")
+
+    def test_destination_with_empty_component(self, item_in_db):
+        self.config["empty_component_replace"] = "_"
+        self.lib.directory = b"base"
         self.lib.path_formats = [("default", "$album/$artist/$title")]
         item_in_db.title = "three"
         item_in_db.artist = ""
@@ -506,10 +512,9 @@ class TestDestination(PytestItemHelper):
         item_in_db.album = "one"
         assert item_in_db.destination() == np("base/one/_/three")
 
-    @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_final_component(self, item_in_db):
+        self.config["empty_component_replace"] = "_"
         self.lib.directory = b"base"
-        self.lib.replacements = [(re.compile(r"^$"), "_")]
         self.lib.path_formats = [("default", "$album/$title")]
         item_in_db.title = ""
         item_in_db.album = "one"
@@ -921,7 +926,9 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         for path, track in expected if singleton_first else reversed(expected):
             self._assert_dest(path, track)
 
-    def test_unique_separates_identically_formatted_query_values(self, items):
+    def test_unique_separates_identically_formatted_query_values(
+        self, items, config
+    ):
         i1, i2 = items
         config["format_raw_length"] = False
         for track in items:
@@ -949,7 +956,7 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         self.lib.add_album([i2])
         self._assert_dest(b"/base/foo/the title", i1)
 
-    def test_sunique_skips_config_for_album_item(self, items):
+    def test_sunique_skips_config_for_album_item(self, items, config):
         _i1, i2 = items
         self.lib.add_album([i2])
         config["sunique"]["bracket"] = 5
@@ -1129,7 +1136,7 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         ],
     )
     def test_disambiguator_collision_after_path_formatting(
-        self, items, first_artist, second_artist, replacement, asciify
+        self, items, first_artist, second_artist, replacement, asciify, config
     ):
         i1, i2 = items
         i1.track = 1
@@ -1365,7 +1372,7 @@ class TestAlbumInfo(PytestItemHelper):
 
 class TestArtDestination(TestHelper):
     @pytest.fixture(autouse=True)
-    def item_and_album(self, setup):
+    def item_and_album(self, setup, config):
         config["art_filename"] = "artimage"
         config["replace"] = {"X": "Y"}
         self.lib.replacements = [(re.compile("X"), "Y")]
@@ -1387,7 +1394,7 @@ class TestArtDestination(TestHelper):
         track = i.destination()
         assert os.path.dirname(art) == os.path.dirname(track)
 
-    def test_art_path_sanitized(self, item_and_album):
+    def test_art_path_sanitized(self, item_and_album, config):
         _i, ai = item_and_album
         config["art_filename"] = "artXimage"
         art = ai.art_destination("something.jpg")
@@ -1549,7 +1556,7 @@ class TestTemplate(PytestItemHelper):
         self.album.store()
         assert item_in_db.evaluate_template("$foo") == "baz"
 
-    def test_album_and_item_format(self, item_in_db):
+    def test_album_and_item_format(self, item_in_db, config):
         config["format_album"] = "foö $foo"
         album = beets.library.Album()
         album.foo = "bar"
@@ -1691,7 +1698,7 @@ class TestItemPruneDirsClutter(TestHelper):
         path.touch()
         return path
 
-    def test_move_prunes_dir_with_config_clutter(self):
+    def test_move_prunes_dir_with_config_clutter(self, config):
         """After moving an item, old dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()
@@ -1705,7 +1712,7 @@ class TestItemPruneDirsClutter(TestHelper):
 
         assert not old_dir.exists()
 
-    def test_remove_prunes_dir_with_config_clutter(self):
+    def test_remove_prunes_dir_with_config_clutter(self, config):
         """After deleting an item, its dir is removed even when only clutter remains."""
         config["clutter"] = ["*.log"]
         item = self.add_item_fixture()

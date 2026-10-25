@@ -18,6 +18,9 @@ from beets.library import Item
 from beets.test.helper import BeetsTestCase
 from beets.util import AttrDict
 
+# hide deprecation warnings for the legacy string fields under test
+pytestmark = pytest.mark.filterwarnings(r"ignore::DeprecationWarning")
+
 str_field_deprecation = pytest.warns(
     DeprecationWarning, match="The 'genre' field is deprecated"
 )

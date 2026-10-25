@@ -4,7 +4,6 @@ from datetime import datetime
 
 import pytest
 
-from beets import config
 from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase
 from beetsplug import bucket
@@ -22,10 +21,10 @@ class BucketPluginTest(BeetsTestCase):
         bucket_alpha_regex={},
         extrapolate=False,
     ):
-        config["bucket"]["bucket_year"] = bucket_year
-        config["bucket"]["bucket_alpha"] = bucket_alpha
-        config["bucket"]["bucket_alpha_regex"] = bucket_alpha_regex
-        config["bucket"]["extrapolate"] = extrapolate
+        self.config["bucket"]["bucket_year"] = bucket_year
+        self.config["bucket"]["bucket_alpha"] = bucket_alpha
+        self.config["bucket"]["bucket_alpha_regex"] = bucket_alpha_regex
+        self.config["bucket"]["extrapolate"] = extrapolate
         self.plugin.setup()
 
     def test_year_single_year(self):

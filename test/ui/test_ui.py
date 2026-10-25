@@ -2,7 +2,6 @@
 
 import os
 import platform
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -10,7 +9,7 @@ from unittest.mock import patch
 import pytest
 from confuse import ConfigError
 
-from beets import config, plugins, ui
+from beets import plugins, ui
 from beets.exceptions import UserError
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, IOMixin, PluginTestCase
@@ -52,6 +51,18 @@ class TestPluginTestCase(PluginTestCase):
 
 
 class ConfigTest(IOMixin, TestPluginTestCase):
+    @pytest.fixture(autouse=True)
+    def disable_migration_backup(self, monkeypatch):
+        """Do not perform database backup before migration.
+
+        Our `self.config` is configured to not create backups, however, these
+        tests work with temporary config files.
+        """
+        monkeypatch.setattr(
+            "beets.dbcore.db.Migration._before_migration_backup",
+            lambda *_: None,
+        )
+
     def setUp(self):
         super().setUp()
 
@@ -82,7 +93,12 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         self.cli_config_path = self.temp_path / "config.yaml"
         self.env_patcher = patch(
             "os.environ",
-            {"HOME": str(self.temp_path), "APPDATA": str(appdata_dir)},
+            {
+                "HOME": str(self.temp_path),
+                # Windows' ntpath.expanduser ignores $HOME: it reads USERPROFILE.
+                "USERPROFILE": str(self.temp_path),
+                "APPDATA": str(appdata_dir),
+            },
         )
         self.env_patcher.start()
 
@@ -116,37 +132,30 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
     def _reset_config(self):
         # Config should read files again on demand
-        config.clear()
-        config._materialized = False
-
-    def write_config_file(self):
-        return self.user_config_path.open("w")
+        self.config.clear()
+        self.config._materialized = False
 
     def test_paths_section_respected(self):
-        with self.write_config_file() as config:
-            config.write("paths: {x: y}")
+        self.user_config_path.write_text("paths: {x: y}")
 
         self.run_command("test")
         assert self.test_cmd.lib.path_formats[0] == ("x", "y")
 
     def test_nonexistant_db(self):
-        with self.write_config_file() as config:
-            config.write("library: /xxx/yyy/not/a/real/path")
+        self.user_config_path.write_text("library: /xxx/yyy/not/a/real/path")
 
         self.io.addinput("n")
         with pytest.raises(UserError):
             self.run_command("test")
 
     def test_user_config_file(self):
-        with self.write_config_file() as file:
-            file.write("anoption: value")
+        self.user_config_path.write_text("anoption: value")
 
         self.run_command("test")
-        assert config["anoption"].get() == "value"
+        assert self.config["anoption"].get() == "value"
 
     def test_replacements_parsed(self):
-        with self.write_config_file() as config:
-            config.write("replace: {'[xy]': z}")
+        self.user_config_path.write_text("replace: {'[xy]': z}")
 
         self.run_command("test")
         replacements = self.test_cmd.lib.replacements
@@ -154,8 +163,7 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         assert repls == [("[xy]", "z")]
 
     def test_multiple_replacements_parsed(self):
-        with self.write_config_file() as config:
-            config.write("replace: {'[xy]': z, foo: bar}")
+        self.user_config_path.write_text("replace: {'[xy]': z, foo: bar}")
         self.run_command("test")
         replacements = self.test_cmd.lib.replacements
         repls = [(p.pattern, s) for p, s in replacements]
@@ -164,14 +172,14 @@ class ConfigTest(IOMixin, TestPluginTestCase):
     def test_cli_config_option(self):
         self.cli_config_path.write_text("anoption: value")
         self.run_command("--config", str(self.cli_config_path), "test")
-        assert config["anoption"].get() == "value"
+        assert self.config["anoption"].get() == "value"
 
     def test_cli_config_file_overwrites_user_defaults(self):
         self.user_config_path.write_text("anoption: value")
 
         self.cli_config_path.write_text("anoption: cli overwrite")
         self.run_command("--config", str(self.cli_config_path), "test")
-        assert config["anoption"].get() == "cli overwrite"
+        assert self.config["anoption"].get() == "cli overwrite"
 
     def test_cli_config_file_overwrites_beetsdir_defaults(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
@@ -179,45 +187,52 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
         self.cli_config_path.write_text("anoption: cli overwrite")
         self.run_command("--config", str(self.cli_config_path), "test")
-        assert config["anoption"].get() == "cli overwrite"
+        assert self.config["anoption"].get() == "cli overwrite"
 
-    #    @unittest.skip('Difficult to implement with optparse')
-    #    def test_multiple_cli_config_files(self):
-    #        cli_config_path_1 = self.temp_path / 'config.yaml'
-    #        cli_config_path_2 = self.temp_path / 'config_2.yaml'
-    #
-    #        with open(cli_config_path_1, 'w') as file:
-    #            file.write('first: value')
-    #
-    #        with open(cli_config_path_2, 'w') as file:
-    #            file.write('second: value')
-    #
-    #        self.run_command('--config', cli_config_path_1,
-    #                      '--config', cli_config_path_2, 'test')
-    #        assert config['first'].get() == 'value'
-    #        assert config['second'].get() == 'value'
-    #
-    #    @unittest.skip('Difficult to implement with optparse')
-    #    def test_multiple_cli_config_overwrite(self):
-    #        cli_overwrite_config_path = self.temp_path / 'overwrite_config.yaml'
-    #
-    #        self.cli_config_path.write_text("anoption: value")
-    #
-    #        with open(cli_overwrite_config_path, 'w') as file:
-    #            file.write('anoption: overwrite')
-    #
-    #        self.run_command('--config', str(self.cli_config_path),
-    #                      '--config', cli_overwrite_config_path, 'test')
-    #        assert config['anoption'].get() == 'cli overwrite'
+    def test_multiple_cli_config_files(self):
+        cli_config_path_1 = self.temp_path / "config.yaml"
+        cli_config_path_2 = self.temp_path / "config_2.yaml"
 
-    # FIXME: fails on windows
-    @unittest.skipIf(sys.platform == "win32", "win32")
+        cli_config_path_1.write_text("first: value")
+        cli_config_path_2.write_text("second: value")
+
+        self.run_command(
+            "--config",
+            str(cli_config_path_1),
+            "--config",
+            str(cli_config_path_2),
+            "test",
+        )
+        assert self.config["second"].get() == "value"
+        assert self.config["first"].get() == "value"
+
+    def test_multiple_cli_config_overwrite(self):
+        cli_overwrite_config_path = self.temp_path / "overwrite_config.yaml"
+
+        self.cli_config_path.write_text("anoption: value")
+
+        cli_overwrite_config_path.write_text("anoption: overwrite")
+
+        self.run_command(
+            "--config",
+            str(self.cli_config_path),
+            "--config",
+            str(cli_overwrite_config_path),
+            "test",
+        )
+        assert self.config["anoption"].get() == "overwrite"
+
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         self.cli_config_path.write_text("library: beets.db\nstatefile: state")
 
         self.run_command("--config", str(self.cli_config_path), "test")
-        assert config["library"].as_path() == self.user_config_dir / "beets.db"
-        assert config["statefile"].as_path() == self.user_config_dir / "state"
+        assert (
+            self.config["library"].as_path()
+            == self.user_config_dir / "beets.db"
+        )
+        assert (
+            self.config["statefile"].as_path() == self.user_config_dir / "state"
+        )
 
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
@@ -225,14 +240,14 @@ class ConfigTest(IOMixin, TestPluginTestCase):
         self.cli_config_path.write_text("library: beets.db\nstatefile: state")
 
         self.run_command("--config", str(self.cli_config_path), "test")
-        assert config["library"].as_path() == self.beetsdir / "beets.db"
-        assert config["statefile"].as_path() == self.beetsdir / "state"
+        assert self.config["library"].as_path() == self.beetsdir / "beets.db"
+        assert self.config["statefile"].as_path() == self.beetsdir / "state"
 
     def test_command_line_option_relative_to_working_dir(self):
-        config.read()
+        self.config.read()
         os.chdir(self.temp_path)
         self.run_command("--library", "foo.db", "test")
-        assert config["library"].as_path() == Path.cwd() / "foo.db"
+        assert self.config["library"].as_path() == Path.cwd() / "foo.db"
 
     def test_cli_config_file_loads_plugin_commands(self):
         self.cli_config_path.write_text(
@@ -250,8 +265,8 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
         self.env_config_path.write_text("anoption: overwrite")
 
-        config.read()
-        assert config["anoption"].get() == "overwrite"
+        self.config.read()
+        assert self.config["anoption"].get() == "overwrite"
 
     def test_beetsdir_points_to_file_error(self):
         beetsdir = self.temp_path / "beetsfile"
@@ -265,24 +280,26 @@ class ConfigTest(IOMixin, TestPluginTestCase):
 
         self.user_config_path.write_text("anoption: value")
 
-        config.read()
-        assert not config["anoption"].exists()
+        self.config.read()
+        assert not self.config["anoption"].exists()
 
     def test_default_config_paths_resolve_relative_to_beetsdir(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
 
-        config.read()
-        assert config["library"].as_path() == self.beetsdir / "library.db"
-        assert config["statefile"].as_path() == self.beetsdir / "state.pickle"
+        self.config.read()
+        assert self.config["library"].as_path() == self.beetsdir / "library.db"
+        assert (
+            self.config["statefile"].as_path() == self.beetsdir / "state.pickle"
+        )
 
     def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
         os.environ["BEETSDIR"] = str(self.beetsdir)
 
         self.env_config_path.write_text("library: beets.db\nstatefile: state")
 
-        config.read()
-        assert config["library"].as_path() == self.beetsdir / "beets.db"
-        assert config["statefile"].as_path() == self.beetsdir / "state"
+        self.config.read()
+        assert self.config["library"].as_path() == self.beetsdir / "beets.db"
+        assert self.config["statefile"].as_path() == self.beetsdir / "state"
 
 
 class PluginTest(TestPluginTestCase):
@@ -371,7 +388,7 @@ class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
         # assert 'plugins: ' in output
 
 
-class CommonOptionsParserTest(unittest.TestCase):
+class TestCommonOptionsParser:
     def test_album_option(self):
         parser = ui.CommonOptionsParser()
         assert not parser._album_flags
@@ -382,7 +399,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         assert parser.parse_args(["-a"]) == ({"album": True}, [])
         assert parser.parse_args(["--album"]) == ({"album": True}, [])
 
-    def test_path_option(self):
+    def test_path_option(self, config):
         parser = ui.CommonOptionsParser()
         parser.add_path_option()
         assert not parser._album_flags
@@ -403,7 +420,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         assert config["format_item"].as_str() == "$path"
         assert config["format_album"].as_str() == "$path"
 
-    def test_format_option(self):
+    def test_format_option(self, config):
         parser = ui.CommonOptionsParser()
         parser.add_format_option()
         assert not parser._album_flags
@@ -421,7 +438,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         assert config["format_item"].as_str() == "$baz"
         assert config["format_album"].as_str() == "$baz"
 
-    def test_format_option_with_target(self):
+    def test_format_option_with_target(self, config):
         with pytest.raises(KeyError):
             ui.CommonOptionsParser().add_format_option(target="thingy")
 
@@ -436,7 +453,7 @@ class CommonOptionsParserTest(unittest.TestCase):
         assert config["format_item"].as_str() == "$bar"
         assert config["format_album"].as_str() == "$album"
 
-    def test_format_option_with_album(self):
+    def test_format_option_with_album(self, config):
         parser = ui.CommonOptionsParser()
         parser.add_album_option()
         parser.add_format_option()

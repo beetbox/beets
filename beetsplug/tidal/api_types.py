@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import Generic, Literal, TypedDict, TypeVar
-
-from typing_extensions import NotRequired
+from typing import Generic, Literal, NotRequired, TypedDict, TypeVar
 
 
 class ResourceIdentifier(TypedDict):
