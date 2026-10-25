@@ -1,4 +1,7 @@
+import queue
 import shutil
+import threading
+import time
 from typing import Any, ClassVar
 
 import pytest
@@ -10,7 +13,7 @@ from beets.test.helper import (
     ImportHelper,
     PluginMixin,
 )
-from beetsplug.replaygain import MetaflacBackend
+from beetsplug.replaygain import ExceptionWatcher, MetaflacBackend
 
 try:
     import gi
@@ -363,6 +366,51 @@ def test_metaflac_backend_parses_replaygain_tags():
     )
     assert float(tags["REPLAYGAIN_TRACK_PEAK"]) == pytest.approx(0.99998772)
     assert MetaflacBackend._parse_gain("+4.56 dB") == pytest.approx(4.56)
+
+
+class CountingQueue(queue.Queue):
+    def __init__(self):
+        super().__init__()
+        self.get_calls = 0
+
+    def get(self, *args, **kwargs):
+        self.get_calls += 1
+        return super().get(*args, **kwargs)
+
+    def get_nowait(self):
+        self.get_calls += 1
+        return super().get_nowait()
+
+
+def test_exception_watcher_does_not_busy_wait():
+    exc_queue = CountingQueue()
+    watcher = ExceptionWatcher(exc_queue, lambda: None)
+    watcher.start()
+    time.sleep(0.5)
+    watcher.join()
+
+    assert not watcher.is_alive()
+    # A blocking get wakes up a handful of times; a busy loop would call it
+    # many thousands of times.
+    assert exc_queue.get_calls < 50
+
+
+def test_exception_watcher_runs_callback_on_exception(monkeypatch):
+    raised = []
+    monkeypatch.setattr(
+        threading, "excepthook", lambda args: raised.append(args.exc_value)
+    )
+    callback_called = threading.Event()
+    exc_queue = queue.Queue()
+    watcher = ExceptionWatcher(exc_queue, callback_called.set)
+    watcher.start()
+
+    error = RuntimeError("worker failed")
+    exc_queue.put(error)
+
+    assert callback_called.wait(timeout=5)
+    watcher.join(timeout=5)
+    assert raised == [error]
 
 
 class ImportTest(AsIsImporterMixin, ReplayGainPluginHelper):

@@ -104,6 +104,10 @@ Bug fixes
   aborting and leaving it partially updated. :bug:`2419`
 - :doc:`plugins/deezer`: ``deezerupdate`` now stores each track's Deezer rank
   instead of ``1``. :bug:`7106`
+- :doc:`plugins/replaygain`: Stop the exception watcher thread from busy-waiting
+  while the thread pool is open. It held a CPU core at 100% and starved the
+  other threads, making ``beet replaygain`` on a large library run for hours
+  without starting any analysis. :bug:`5449`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

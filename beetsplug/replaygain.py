@@ -1245,16 +1245,19 @@ class ExceptionWatcher(Thread):
         self._stopevent = Event()
         Thread.__init__(self)
 
+    # Seconds to block waiting for an exception before re-checking
+    # `_stopevent`. Polling with `get_nowait()` would busy-loop and hold the
+    # GIL, starving the main and worker threads.
+    poll_interval = 0.1
+
     def run(self) -> None:
         while not self._stopevent.is_set():
             try:
-                exc = self._queue.get_nowait()
-                self._callback()
-                raise exc
+                exc = self._queue.get(timeout=self.poll_interval)
             except queue.Empty:
-                # No exceptions yet, loop back to check
-                #  whether `_stopevent` is set
-                pass
+                continue
+            self._callback()
+            raise exc
 
     def join(self, timeout: float | None = None) -> None:
         self._stopevent.set()
