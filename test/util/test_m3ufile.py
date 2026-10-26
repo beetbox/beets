@@ -7,7 +7,6 @@ import pytest
 
 from beets.test._common import RSRC
 from beets.test.helper import PathsMixin
-from beets.util import bytestring_path
 from beets.util.m3u import EmptyPlaylistError, M3UFile
 
 
@@ -27,8 +26,8 @@ class TestM3UFile(PathsMixin):
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents(
             [
-                bytestring_path("/This/is/a/path/to_a_file.mp3"),
-                bytestring_path("/This/is/another/path/to_a_file.mp3"),
+                "/This/is/a/path/to_a_file.mp3",
+                "/This/is/another/path/to_a_file.mp3",
             ]
         )
         m3ufile.write()
@@ -40,8 +39,8 @@ class TestM3UFile(PathsMixin):
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents(
             [
-                bytestring_path("/This/is/å/path/to_a_file.mp3"),
-                bytestring_path("/This/is/another/path/tö_a_file.mp3"),
+                "/This/is/å/path/to_a_file.mp3",
+                "/This/is/another/path/tö_a_file.mp3",
             ]
         )
         m3ufile.write()
@@ -56,22 +55,21 @@ class TestM3UFile(PathsMixin):
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents(
             [
-                bytestring_path(r"x:\This\is\å\path\to_a_file.mp3"),
-                bytestring_path(r"x:\This\is\another\path\tö_a_file.mp3"),
+                r"x:\This\is\å\path\to_a_file.mp3",
+                r"x:\This\is\another\path\tö_a_file.mp3",
             ]
         )
         m3ufile.write()
         assert the_playlist_file.exists()
         m3ufile_read = M3UFile(the_playlist_file)
         m3ufile_read.load()
-        assert m3ufile.media_list[0] == bytestring_path(
-            Path("x:\\") / "This" / "is" / "å" / "path" / "to_a_file.mp3"
+        assert (
+            m3ufile.media_list[0]
+            == Path("x:\\") / "This" / "is" / "å" / "path" / "to_a_file.mp3"
         )
-        assert m3ufile.media_list[1] == bytestring_path(
-            r"x:\This\is\another\path\tö_a_file.mp3"
-        ), bytestring_path(
-            Path("x:\\") / "This" / "is" / "another" / "path" / "tö_a_file.mp3"
-        )
+        assert (
+            m3ufile.media_list[1] == r"x:\This\is\another\path\tö_a_file.mp3"
+        ), Path("x:\\") / "This" / "is" / "another" / "path" / "tö_a_file.mp3"
 
     @pytest.mark.skipif(sys.platform == "win32", reason="Unix-style paths")
     def test_playlist_load_ascii(self):
@@ -79,9 +77,7 @@ class TestM3UFile(PathsMixin):
         the_playlist_file = RSRC / "playlist.m3u"
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
-        assert m3ufile.media_list[0] == bytestring_path(
-            "/This/is/a/path/to_a_file.mp3"
-        )
+        assert m3ufile.media_list[0] == "/This/is/a/path/to_a_file.mp3"
 
     @pytest.mark.skipif(sys.platform == "win32", reason="Windows-style paths")
     def test_playlist_load_unicode(self):
@@ -89,20 +85,16 @@ class TestM3UFile(PathsMixin):
         the_playlist_file = RSRC / "playlist.m3u8"
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
-        assert m3ufile.media_list[0] == bytestring_path(
-            "/This/is/å/path/to_a_file.mp3"
-        )
+        assert m3ufile.media_list[0] == "/This/is/å/path/to_a_file.mp3"
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Unix-style paths")
     def test_playlist_load_unicode_windows(self):
         """Test loading unicode paths from a playlist file."""
         the_playlist_file = RSRC / "playlist_windows.m3u8"
-        winpath = bytestring_path(
-            Path("x:\\") / "This" / "is" / "å" / "path" / "to_a_file.mp3"
-        )
+        winpath = Path("x:\\") / "This" / "is" / "å" / "path" / "to_a_file.mp3"
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
-        assert m3ufile.media_list[0] == winpath
+        assert m3ufile.media_list[0] == str(winpath)
 
     def test_playlist_load_extm3u(self):
         """Test loading a playlist with an #EXTM3U header."""

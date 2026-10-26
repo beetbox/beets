@@ -52,17 +52,16 @@ LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
 
 
 class FormatCommand(NamedTuple):
-    command: bytes
-    ext: bytes
+    command: str
+    ext: str
 
 
-def replace_ext(path: bytes, ext: bytes) -> bytes:
+def replace_ext(path: Path, ext: str) -> Path:
     """Return the path with its extension replaced by `ext`.
 
     The new extension must not contain a leading dot.
     """
-    ext_dot = b"." + ext
-    return os.path.splitext(path)[0] + ext_dot
+    return path.with_suffix(f".{ext}")
 
 
 class ConvertPlugin(BeetsPlugin):
@@ -225,11 +224,11 @@ class ConvertPlugin(BeetsPlugin):
         return [cmd]
 
     @cached_property
-    def dest(self) -> bytes:
-        dest = self.config["dest"].get()
+    def dest(self) -> Path:
+        dest = self.config["dest"].as_optional_path()
         if not dest:
             raise UserError("no convert destination set")
-        return util.bytestring_path(dest)
+        return util.normpath(dest)
 
     @cached_property
     def threads(self) -> int:
@@ -244,11 +243,22 @@ class ConvertPlugin(BeetsPlugin):
         return self.config["format"].as_str().lower()
 
     @cached_property
-    def playlist(self) -> bytes | None:
+    def playlist(self) -> Path | None:
         if (playlist := self.config["playlist"].get()) is not None:
-            return os.path.join(self.dest, util.bytestring_path(playlist))
+            return self.dest / playlist
 
         return None
+
+    @cached_property
+    def playlist_dir(self) -> Path | None:
+        if playlist := self.playlist:
+            return playlist.parent
+
+        return None
+
+    @cached_property
+    def tmpdir(self) -> Path | None:
+        return self.config["tmpdir"].as_optional_path()
 
     @cached_property
     def pretend(self) -> bool:
@@ -297,7 +307,7 @@ class ConvertPlugin(BeetsPlugin):
         if "extension" in keys:
             extension = self.config["extension"].as_str()
 
-        return FormatCommand(command.encode("utf-8"), extension.encode("utf-8"))
+        return FormatCommand(command, extension)
 
     def auto_convert(self, session: ImportSession, task: ImportTask) -> None:
         if self.config["auto"]:
@@ -319,9 +329,7 @@ class ConvertPlugin(BeetsPlugin):
 
     # Utilities converted from functions to methods on logging overhaul
 
-    def encode(
-        self, command_bytes: bytes, source_bytes: bytes, dest_bytes: bytes
-    ) -> None:
+    def encode(self, command: str, source: Path, dest: Path) -> None:
         """Encode source to destination using given command template.
 
         Raises `subprocess.CalledProcessError` if the command exited with a
@@ -330,11 +338,7 @@ class ConvertPlugin(BeetsPlugin):
         pretend, quiet = self.pretend, self.config["quiet"].get(bool)
 
         if not quiet and not pretend:
-            self._log.info("Encoding {}", util.displayable_path(source_bytes))
-
-        command = os.fsdecode(command_bytes)
-        source = os.fsdecode(source_bytes)
-        dest = os.fsdecode(dest_bytes)
+            self._log.info("Encoding {}", source)
 
         # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
@@ -353,17 +357,14 @@ class ConvertPlugin(BeetsPlugin):
             util.command_output(encode_cmd)
         except subprocess.CalledProcessError as exc:
             # Something went wrong (probably Ctrl+C), remove temporary files
-            self._log.info(
-                "Encoding {} failed. Cleaning up...",
-                util.displayable_path(source),
-            )
+            self._log.info("Encoding {} failed. Cleaning up...", source)
             self._log.debug(
                 "Command {0} exited with status {1.returncode}: {1.output}",
                 args,
                 exc,
             )
             util.remove(dest)
-            util.prune_dirs(os.path.dirname(dest))
+            util.prune_dirs(dest.parent)
             raise
         except OSError as exc:
             raise UserError(
@@ -371,9 +372,7 @@ class ConvertPlugin(BeetsPlugin):
             )
 
         if not quiet and not pretend:
-            self._log.info(
-                "Finished encoding {}", util.displayable_path(source)
-            )
+            self._log.info("Finished encoding {}", source)
 
     def in_no_convert(self, item: Item) -> bool:
         no_convert_query = self.config["no_convert"].as_str()
@@ -403,21 +402,19 @@ class ConvertPlugin(BeetsPlugin):
             return True
         return self.fmt != item.format.lower()
 
-    def get_item_destination(self, item: Item) -> bytes:
+    def get_item_destination(self, item: Item) -> Path:
         extension = (
-            os.fsdecode(self.command.ext)
+            self.command.ext
             if (
                 self.should_transcode(item)
                 and not self.config["keep_new"].get(bool)
             )
             else None
         )
-        return os.fsencode(
-            item.destination(
-                basedir=Path(os.fsdecode(self.dest)),
-                path_formats=self.path_formats,
-                extension=extension,
-            )
+        return item.destination(
+            basedir=self.dest,
+            path_formats=self.path_formats,
+            extension=extension,
         )
 
     @pipeline.mutator_stage
@@ -447,11 +444,11 @@ class ConvertPlugin(BeetsPlugin):
         # back to its old path or transcode it to a new path.
         if keep_new:
             original = dest
-            converted = item.path
+            converted = item.filepath
             if self.should_transcode(item):
                 converted = replace_ext(converted, ext)
         else:
-            original = item.path
+            original = item.filepath
             if self.should_transcode(item):
                 dest = replace_ext(dest, ext)
             converted = dest
@@ -459,7 +456,7 @@ class ConvertPlugin(BeetsPlugin):
         # If the destination file exists, we have to choose between:
         # 1) Skipping current conversion
         # 2) Removing the target file to start a fresh conversion
-        if os.path.exists(util.syspath(dest)):
+        if dest.exists():
             # Test to skip the conversion, whether because:
             # 1) `refresh` is false (default)
             # 2) `keep_new` is true (incompatible with `refresh`)
@@ -467,7 +464,7 @@ class ConvertPlugin(BeetsPlugin):
             if (
                 not refresh
                 or keep_new
-                or os.path.getmtime(item.path) <= os.path.getmtime(dest)
+                or os.path.getmtime(item.path) <= dest.stat().st_mtime
             ):
                 self._log.info(
                     "Skipping {.filepath} (destination file exists)", item
@@ -483,15 +480,11 @@ class ConvertPlugin(BeetsPlugin):
             # user about what would be removed without removing anything.
             if pretend:
                 self._log.info(
-                    "Pretend to remove {0} (original file modified)",
-                    util.displayable_path(dest),
+                    "Pretend to remove {0} (original file modified)", dest
                 )
             # Otherwise, actually remove the destination file
             else:
-                self._log.info(
-                    "Removing {0} (original file modified)",
-                    util.displayable_path(dest),
-                )
+                self._log.info("Removing {0} (original file modified)", dest)
                 util.remove(dest)
 
         # Ensure that only one thread tries to create directories at a
@@ -504,12 +497,10 @@ class ConvertPlugin(BeetsPlugin):
         if keep_new:
             if pretend:
                 self._log.info(
-                    "Pretend to move {.filepath} to {}",
-                    item,
-                    util.displayable_path(original),
+                    "Pretend to move {.filepath} to {}", item, original
                 )
             else:
-                self._log.info("Moving to {}", util.displayable_path(original))
+                self._log.info("Moving to {}", original)
                 util.move(item.path, original)
 
         if self.should_transcode(item):
@@ -523,12 +514,7 @@ class ConvertPlugin(BeetsPlugin):
             if pretend:
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
-                self._log.info(
-                    "{} {} {}",
-                    msg,
-                    util.displayable_path(original),
-                    util.displayable_path(converted),
-                )
+                self._log.info("{} {} {}", msg, original, converted)
             else:
                 # No transcoding necessary.
                 msg = (
@@ -557,12 +543,12 @@ class ConvertPlugin(BeetsPlugin):
 
         # Write tags from the database to the file if requested
         if self.config["write_metadata"].get(bool):
-            item.try_write(path=Path(os.fsdecode(converted)), id3v23=id3v23)
+            item.try_write(path=converted, id3v23=id3v23)
 
         if keep_new:
             # If we're keeping the transcoded file, read it again (after
             # writing) to get new bitrate, duration, etc.
-            item.path = converted
+            item.path = os.fsencode(converted)
             item.read()
             item.store()  # Store new path and audio data.
 
@@ -578,35 +564,27 @@ class ConvertPlugin(BeetsPlugin):
                     item,
                     path,
                     maxwidth,
-                    itempath=Path(os.fsdecode(converted)),
+                    itempath=converted,
                     id3v23=id3v23,
                 )
 
         if keep_new:
-            plugins.send(
-                "after_convert",
-                item=item,
-                dest=Path(os.fsdecode(dest)),
-                keepnew=True,
-            )
+            plugins.send("after_convert", item=item, dest=dest, keepnew=True)
         else:
             plugins.send(
-                "after_convert",
-                item=item,
-                dest=Path(os.fsdecode(converted)),
-                keepnew=False,
+                "after_convert", item=item, dest=converted, keepnew=False
             )
 
     def copy_album_art(self, album: Album) -> None:
         """Copies or converts the associated cover art of the album. Album must
         have at least one track.
         """
-        if not album or not album.artpath or not album.art_filepath:
+        if not album or not album.art_filepath:
             return
 
         # The stored art path may point to a missing file (e.g. the cover
         # lives in the album's root directory rather than a per-disc one).
-        if not os.path.isfile(util.syspath(album.artpath)):
+        if not album.art_filepath.is_file():
             self._log.info(
                 "Skipping {.art_filepath} (source file not found)", album
             )
@@ -622,46 +600,37 @@ class ConvertPlugin(BeetsPlugin):
         dest = self.get_item_destination(album_item)
 
         # Remove item from the path.
-        dest = os.path.join(*util.components(dest)[:-1])
+        parent = dest.parent
 
-        dest = os.fsencode(
-            album.art_destination(
-                album.artpath, item_dir=Path(os.fsdecode(dest))
-            )
-        )
-        if album.artpath == dest:
+        art_dest = album.art_destination(album.art_filepath, item_dir=parent)
+        if album.art_filepath == art_dest:
             return
 
         if not (pretend := self.pretend):
-            util.mkdirall(dest)
+            util.mkdirall(art_dest)
 
-        if os.path.exists(util.syspath(dest)):
+        if art_dest.exists():
             self._log.info(
                 "Skipping {.art_filepath} (destination file exists)", album
             )
             return
 
-        dest_path = Path(os.fsdecode(dest))
         # Decide whether we need to resize the cover-art image.
         maxwidth = self._get_art_resize(album.art_filepath)
 
         # Either copy or resize (while copying) the image.
         if maxwidth is not None:
             self._log.info(
-                "Resizing cover art from {.art_filepath} to {}",
-                album,
-                dest_path,
+                "Resizing cover art from {.art_filepath} to {}", album, art_dest
             )
             if not pretend:
-                ArtResizer.shared.resize(
-                    maxwidth, album.art_filepath, dest_path
-                )
+                ArtResizer.shared.resize(maxwidth, album.art_filepath, art_dest)
         else:
             link, hardlink = self.link, self.hardlink
             if pretend:
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
-                self._log.info("{} {.art_filepath} {}", msg, album, dest_path)
+                self._log.info("{} {.art_filepath} {}", msg, album, art_dest)
             else:
                 msg = (
                     "Hardlinking"
@@ -673,14 +642,14 @@ class ConvertPlugin(BeetsPlugin):
                     "{} cover art from {.art_filepath} to {}",
                     msg,
                     album,
-                    dest_path,
+                    art_dest,
                 )
                 if hardlink:
-                    util.hardlink(album.artpath, dest)
+                    util.hardlink(album.art_filepath, art_dest)
                 elif link:
-                    util.link(album.artpath, dest)
+                    util.link(album.art_filepath, art_dest)
                 else:
-                    util.copy(album.artpath, dest)
+                    util.copy(album.art_filepath, art_dest)
 
     def convert_func(
         self, lib: Library, opts: ConvertCLIOpts, args: list[str]
@@ -712,12 +681,9 @@ class ConvertPlugin(BeetsPlugin):
 
         # If the user supplied a playlist name, create a playlist for files
         # copied to the destination.
-        pl_normpath = None
         items_paths = None
-        if playlist := self.playlist:
-            # Playlist paths are understood as relative to the dest directory.
-            pl_normpath = util.normpath(playlist)
-            pl_dir = os.path.dirname(pl_normpath)
+        # Playlist paths are understood as relative to the dest directory.
+        if playlist_dir := self.playlist_dir:
             items_paths = []
             for item in items:
                 item_path = self.get_item_destination(item)
@@ -727,14 +693,14 @@ class ConvertPlugin(BeetsPlugin):
                 if not opts.keep_new and self.should_transcode(item):
                     item_path = replace_ext(item_path, self.command.ext)
 
-                items_paths.append(os.path.relpath(item_path, pl_dir))
+                items_paths.append(os.path.relpath(item_path, playlist_dir))
 
         self._parallel_convert(
             items, keep_new=self.config["keep_new"].get(bool)
         )
 
-        if playlist:
-            self._log.info("Creating playlist file {}", pl_normpath)
+        if playlist := self.playlist:
+            self._log.info("Creating playlist file {}", playlist)
             if not pretend:
                 m3ufile = M3UFile(playlist)
                 m3ufile.set_contents(items_paths)
@@ -748,25 +714,22 @@ class ConvertPlugin(BeetsPlugin):
             command, ext = self.command
 
             # Create a temporary file for the conversion.
-            tmpdir = self.config["tmpdir"].get()
-            if tmpdir:
-                tmpdir = util.bytestring_path(tmpdir)
-            fd, dest = tempfile.mkstemp(b"." + ext, dir=tmpdir)
+            fd, _dest = tempfile.mkstemp(f".{ext}", dir=self.tmpdir)
             os.close(fd)
-            dest = util.bytestring_path(dest)
+            dest = Path(_dest)
             # Delete the transcode later.
-            _temp_files.append(Path(os.fsdecode(dest)))
+            _temp_files.append(dest)
 
             # Convert.
             try:
-                self.encode(command, item.path, dest)
+                self.encode(command, item.filepath, dest)
             except subprocess.CalledProcessError:
                 return
 
             # Change the newly-imported database entry to point to the
             # converted file.
             source_path = item.path
-            item.path = dest
+            item.path = os.fsencode(dest)
             item.write()
             item.read()  # Load new audio information data.
             item.store()
