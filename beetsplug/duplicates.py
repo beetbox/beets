@@ -12,7 +12,6 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, UserError, print_
 from beets.util import (
     MoveOperation,
-    bytestring_path,
     command_output,
     displayable_path,
     subprocess,
@@ -21,6 +20,7 @@ from beets.util import (
 if TYPE_CHECKING:
     import optparse
     from collections.abc import Callable, Iterator, Sequence
+    from pathlib import Path
 
     from beets.library import AlbumOrItem, LibModel, Library
 
@@ -38,14 +38,14 @@ class DuplicatesPlugin(BeetsPlugin):
             {
                 "album": False,
                 "checksum": "",
-                "copy": "",
+                "copy": None,
                 "count": False,
                 "delete": False,
                 "format": "",
                 "full": False,
                 "keys": [],
                 "merge": False,
-                "move": "",
+                "move": None,
                 "path": False,
                 "tiebreak": {},
                 "strict": False,
@@ -172,14 +172,14 @@ class DuplicatesPlugin(BeetsPlugin):
     ) -> None:
         """Process one homogeneous set of duplicate candidates."""
         checksum = self.config["checksum"].get(str)
-        copy = bytestring_path(self.config["copy"].as_str())
+        copy = self.config["copy"].as_optional_path()
         count = self.config["count"].get(bool)
         delete = self.config["delete"].get(bool)
         remove = self.config["remove"].get(bool)
         fmt_tmpl = self.config["format"].get(str)
         full = self.config["full"].get(bool)
         merge = self.config["merge"].get(bool)
-        move = bytestring_path(self.config["move"].as_str())
+        move = self.config["move"].as_optional_path()
         path = self.config["path"].get(bool)
         tiebreak = self.config["tiebreak"].get(dict)
         strict = self.config["strict"].get(bool)
@@ -228,8 +228,8 @@ class DuplicatesPlugin(BeetsPlugin):
         self,
         model: LibModel,
         *,
-        copy: bytes,
-        move: bytes,
+        copy: Path | None,
+        move: Path | None,
         delete: bool,
         tag: str,
         fmt: str,
@@ -400,7 +400,7 @@ class DuplicatesPlugin(BeetsPlugin):
                         missing,
                         objs[0],
                         o,
-                        displayable_path(missing.destination()),
+                        missing.destination(),
                     )
                     missing.move(operation=MoveOperation.COPY)
         return objs

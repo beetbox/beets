@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 import pytest
@@ -14,9 +14,6 @@ from beets.test.helper import BeetsTestCase, IOMixin, PathsMixin, PluginTestCase
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE
 from beetsplug.smartplaylist import SmartPlaylistPlugin
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 _p = pytest.param
 
@@ -166,7 +163,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
     def test_playlist_update(self):
         spl = SmartPlaylistPlugin()
 
-        i = Mock(path=b"/tagada.mp3")
+        i = Mock(filepath=Path("/tagada.mp3"))
         i.evaluate_template.side_effect = lambda pl, **__: os.fsdecode(
             pl
         ).replace("$title", "ta:ga:da")
@@ -181,7 +178,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         pl = b"$title-my<playlist>.m3u", (q, None), (a_q, None)
         spl._matched_playlists = {pl}
 
-        self.config["smartplaylist"]["relative_to"] = False
+        self.config["smartplaylist"]["relative_to"] = None
         self.config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
         spl.update_playlists(lib)
 
@@ -201,7 +198,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         type(i).artist = PropertyMock(return_value="fake artist")
         type(i).title = PropertyMock(return_value="fake title")
         type(i).length = PropertyMock(return_value=300.123)
-        type(i).path = PropertyMock(return_value=b"/tagada.mp3")
+        type(i).filepath = PropertyMock(return_value=Path("/tagada.mp3"))
         i.evaluate_template.side_effect = lambda pl, **__: os.fsdecode(
             pl
         ).replace("$title", "ta:ga:da")
@@ -218,7 +215,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
 
         self.config["smartplaylist"]["output"] = "extm3u"
         self.config["smartplaylist"]["prefix"] = "http://beets:8337/files"
-        self.config["smartplaylist"]["relative_to"] = False
+        self.config["smartplaylist"]["relative_to"] = None
         self.config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
         spl.update_playlists(lib)
 
@@ -242,7 +239,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         type(i).artist = PropertyMock(return_value="Fake Artist")
         type(i).title = PropertyMock(return_value="fake Title")
         type(i).length = PropertyMock(return_value=300.123)
-        type(i).path = PropertyMock(return_value=b"/tagada.mp3")
+        type(i).filepath = PropertyMock(return_value=Path("/tagada.mp3"))
         a = {"id": 456, "genres": ["Rock", "Pop"]}
         i.__getitem__.side_effect = a.__getitem__
         i.evaluate_template.side_effect = lambda pl, **__: os.fsdecode(
@@ -260,7 +257,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
         spl._matched_playlists = {pl}
 
         self.config["smartplaylist"]["output"] = "extm3u"
-        self.config["smartplaylist"]["relative_to"] = False
+        self.config["smartplaylist"]["relative_to"] = None
         self.config["smartplaylist"]["playlist_dir"] = str(self.playlist_dir)
         self.config["smartplaylist"]["fields"] = ["id", "genres"]
         spl.update_playlists(lib)
@@ -306,7 +303,7 @@ class TestGetItemURI:
 
     @pytest.fixture(autouse=True)
     def _setup(self, monkeypatch):
-        monkeypatch.setattr(Item, "destination", lambda _: b"/tagada.mp3")
+        monkeypatch.setattr(Item, "destination", lambda _: Path("/tagada.mp3"))
 
     @pytest.fixture
     def item(self):
@@ -323,12 +320,12 @@ class TestGetItemURI:
         [
             _p(
                 {},
-                b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3",
+                "http://beets:8337/files/imported/path/with/dont/move/tagada.mp3",
                 id="path by default",
             ),
             _p(
                 {"dest_regen": True},
-                b"http://beets:8337/files/tagada.mp3",
+                "http://beets:8337/files/tagada.mp3",
                 id="dest_regen uses item destination",
             ),
             _p(
@@ -336,7 +333,7 @@ class TestGetItemURI:
                     "uri_format": "http://beets:8337/item/$id/file",
                     "dest_regen": True,
                 },
-                b"http://beets:8337/item/3/file",
+                "http://beets:8337/item/3/file",
                 id="uri_format takes precedence",
             ),
         ],

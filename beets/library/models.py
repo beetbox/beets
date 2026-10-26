@@ -483,7 +483,7 @@ class Album(LibModel):
     def move(
         self,
         operation: MoveOperation = MoveOperation.MOVE,
-        basedir: bytes | None = None,
+        basedir: Path | None = None,
         store: bool = True,
     ) -> None:
         """Move, copy, link or hardlink (depending on `operation`)
@@ -498,7 +498,7 @@ class Album(LibModel):
         the album is not stored automatically, and it will have to be manually
         stored after invoking this method.
         """
-        basedir = basedir or os.fsencode(self.db.directory)
+        basedir = basedir or self.db.directory
 
         # Ensure new metadata is available to items for destination
         # computation.
@@ -1166,7 +1166,7 @@ class Item(LibModel):
     def move(
         self,
         operation: MoveOperation = MoveOperation.MOVE,
-        basedir: bytes | None = None,
+        basedir: Path | None = None,
         with_album: bool = True,
         store: bool = True,
     ) -> None:
@@ -1213,8 +1213,8 @@ class Item(LibModel):
         util.mkdirall(dest)
 
         # Perform the move and store the change.
-        old_path = self.path
-        self.move_file(dest, operation)
+        old_path = self.filepath
+        self.move_file(os.fsencode(dest), operation)
         if store:
             self.store()
 
@@ -1229,7 +1229,7 @@ class Item(LibModel):
         # Prune vacated directory.
         if operation == MoveOperation.MOVE:
             util.prune_dirs(
-                os.path.dirname(old_path),
+                old_path.parent,
                 self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
@@ -1239,10 +1239,10 @@ class Item(LibModel):
     def destination(
         self,
         relative_to_libdir: bool = False,
-        basedir: bytes | None = None,
+        basedir: Path | None = None,
         path_formats: list[PathFormat] | None = None,
         extension: str | None = None,
-    ) -> bytes:
+    ) -> Path:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
 
@@ -1251,7 +1251,7 @@ class Item(LibModel):
         is true, returns just the fragment of the path underneath the library
         base directory.
         """
-        basedir = basedir or os.fsencode(self.db.directory)
+        basedir = basedir or self.db.directory
         path_formats = path_formats or self.db.path_formats
 
         for query_str, path_format in path_formats:
@@ -1294,12 +1294,12 @@ class Item(LibModel):
         # the replacements do not remove them) which would otherwise make
         # `os.path.join` discard `basedir`.
         lib_path_str = lib_path_str.lstrip(os.sep + (os.altsep or ""))
-        lib_path_bytes = util.bytestring_path(lib_path_str)
 
+        lib_path = Path(lib_path_str)
         if relative_to_libdir:
-            return lib_path_bytes
+            return lib_path
 
-        return normpath(os.path.join(basedir, lib_path_bytes))
+        return normpath(basedir / lib_path)
 
 
 def _int_arg(s: str) -> int:

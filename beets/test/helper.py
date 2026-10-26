@@ -303,7 +303,7 @@ class TestHelper(RunMixin, PathsMixin, ConfigMixin):
 
         # Ensure every item has a path.
         if "path" not in values:
-            item["path"] = item.destination()
+            item.path = os.fsencode(item.destination())
             item.store()
 
         return item
