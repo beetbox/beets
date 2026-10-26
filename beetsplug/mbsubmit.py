@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
-from beets.util import PromptChoice, displayable_path
+from beets.util import PromptChoice
 
 if TYPE_CHECKING:
     import optparse
@@ -65,7 +65,7 @@ class MBSubmitPlugin(BeetsPlugin):
     def picard(self, session: ImportSession, task: ImportTask) -> None:
         paths = []
         for p in task.paths:
-            paths.append(displayable_path(p))
+            paths.append(p)
         try:
             picard_path = self.config["picard_path"].as_str()
             subprocess.Popen([picard_path, *paths])
