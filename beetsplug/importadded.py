@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from beets import importer, util
+from beets import importer
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class ImportAddedPlugin(BeetsPlugin):
-    item_mtime: dict[bytes, float]
+    item_mtime: dict[Path, float]
     reimported_item_ids: set[int | None]
     replaced_album_paths: set[Path]
 
@@ -81,7 +81,7 @@ class ImportAddedPlugin(BeetsPlugin):
                 else task.items
             )
             for item in items:
-                self.record_import_mtime(item, item.path, item.path)
+                self.record_import_mtime(item, item.filepath, item.filepath)
 
         return None
 
@@ -95,30 +95,30 @@ class ImportAddedPlugin(BeetsPlugin):
         }
         self.replaced_album_paths = set(task.replaced_albums.keys())
 
-    def write_file_mtime(self, path: str, mtime: float) -> None:
+    def write_file_mtime(self, path: Path, mtime: float) -> None:
         """Write the given mtime to the destination path."""
-        stat = os.stat(util.syspath(path))
-        os.utime(util.syspath(path), (stat.st_atime, mtime))
+        stat = path.stat()
+        os.utime(path, (stat.st_atime, mtime))
 
     def write_item_mtime(self, item: Item, mtime: float) -> None:
         """Write the given mtime to an item's `mtime` field and to the mtime
         of the item's file.
         """
         # The file's mtime on disk must be in sync with the item's mtime
-        self.write_file_mtime(util.syspath(item.path), mtime)
+        self.write_file_mtime(item.filepath, mtime)
         item.mtime = int(mtime)
 
     def record_import_mtime(
-        self, item: Item, source: bytes, destination: bytes
+        self, item: Item, source: Path, destination: Path
     ) -> None:
         """Record the file mtime of an item's path before its import."""
-        mtime = os.stat(util.syspath(source)).st_mtime
+        mtime = source.stat().st_mtime
         self.item_mtime[destination] = mtime
         self._log.debug(
             "Recorded mtime {} for item '{}' imported from '{}'",
             mtime,
-            util.displayable_path(destination),
-            util.displayable_path(source),
+            destination,
+            source,
         )
 
     def update_album_times(self, lib: Library, album: Album) -> None:
@@ -132,7 +132,7 @@ class ImportAddedPlugin(BeetsPlugin):
 
         album_mtimes = []
         for item in album.items():
-            mtime = self.item_mtime.pop(item.path, None)
+            mtime = self.item_mtime.pop(item.filepath, None)
             if mtime:
                 album_mtimes.append(mtime)
                 if self.config["preserve_mtimes"].get(bool):
@@ -153,7 +153,7 @@ class ImportAddedPlugin(BeetsPlugin):
                 item,
             )
             return
-        mtime = self.item_mtime.pop(item.path, None)
+        mtime = self.item_mtime.pop(item.filepath, None)
         if mtime:
             item.added = mtime
             if self.config["preserve_mtimes"].get(bool):
@@ -164,14 +164,14 @@ class ImportAddedPlugin(BeetsPlugin):
             )
             item.store()
 
-    def update_after_write_time(self, item: Item, path: bytes) -> None:
+    def update_after_write_time(self, item: Item, path: Path) -> None:
         """Update the mtime of the written file with the item.added value
         after each write of the item if `preserve_write_mtimes` is enabled.
         """
         if item.added:
             if self.config["preserve_write_mtimes"].get(bool):
-                self.write_file_mtime(util.syspath(path), item.added)
-                if path == item.path:
+                self.write_file_mtime(path, item.added)
+                if path == item.filepath:
                     # The file's mtime on disk must be in sync with the
                     # item's mtime
                     item.mtime = int(item.added)

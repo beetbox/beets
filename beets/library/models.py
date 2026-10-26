@@ -815,7 +815,7 @@ class Item(LibModel):
         """Create a new item from the media file at the specified path."""
         # Initiate with values that aren't read from files.
         i = cls(album_id=None)
-        i.read(path)
+        i.read(Path(os.fsdecode(path)))
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
@@ -907,7 +907,7 @@ class Item(LibModel):
 
     # Interaction with file metadata.
 
-    def read(self, read_path: util.PathLike | None = None) -> None:
+    def read(self, read_path: Path | None = None) -> None:
         """Read the metadata from the associated file.
 
         If `read_path` is specified, read metadata from that file
@@ -917,11 +917,11 @@ class Item(LibModel):
         Raise a `ReadError` if the file could not be read.
         """
         if read_path is None:
-            read_path = self.path
+            read_path = self.filepath
         else:
-            read_path = os.fsencode(normpath(read_path))
+            read_path = normpath(read_path)
         try:
-            mediafile = MediaFile(syspath(read_path))
+            mediafile = MediaFile(read_path)
         except UnreadableFileError as exc:
             raise ReadError(read_path, exc)
 
@@ -933,14 +933,14 @@ class Item(LibModel):
             self[key] = value
 
         # Database's mtime should now reflect the on-disk value.
-        if read_path == self.path:
+        if read_path == self.filepath:
             self.mtime = self.current_mtime()
 
-        self.path = read_path
+        self.path = os.fsencode(read_path)
 
     def write(
         self,
-        path: bytes | None = None,
+        path: Path | None = None,
         tags: Mapping[str, Any] | None = None,
         id3v23: bool | None = None,
     ) -> None:
@@ -961,7 +961,7 @@ class Item(LibModel):
         Can raise either a `ReadError` or a `WriteError`.
         """
         if path is None:
-            path = self.path
+            path = self.filepath
         else:
             path = normpath(path)
 
@@ -979,7 +979,7 @@ class Item(LibModel):
 
         # Open the file.
         try:
-            mediafile = MediaFile(syspath(path), id3v23=id3v23)
+            mediafile = MediaFile(path, id3v23=id3v23)
         except UnreadableFileError as exc:
             raise ReadError(path, exc)
 
@@ -988,16 +988,16 @@ class Item(LibModel):
         try:
             mediafile.save()
         except UnreadableFileError as exc:
-            raise WriteError(self.path, exc)
+            raise WriteError(self.filepath, exc)
 
         # The file has a new mtime.
-        if path == self.path:
+        if path == self.filepath:
             self.mtime = self.current_mtime()
         plugins.send("after_write", item=self, path=path)
 
     def try_write(
         self,
-        path: bytes | None = None,
+        path: Path | None = None,
         tags: Mapping[str, Any] | None = None,
         id3v23: bool | None = None,
     ) -> bool:
@@ -1039,7 +1039,7 @@ class Item(LibModel):
     # Files themselves.
 
     def move_file(
-        self, dest: bytes, operation: MoveOperation = MoveOperation.MOVE
+        self, dest: Path, operation: MoveOperation = MoveOperation.MOVE
     ) -> None:
         """Move, copy, link or hardlink the item depending on `operation`,
         updating the path value if the move succeeds.
@@ -1048,49 +1048,58 @@ class Item(LibModel):
 
         `operation` should be an instance of `util.MoveOperation`.
         """
-        if not util.samefile(self.path, dest):
-            dest = os.fsencode(util.unique_path(Path(os.fsdecode(dest))))
+        if not util.samefile(self.filepath, dest):
+            dest = util.unique_path(dest)
         if operation == MoveOperation.MOVE:
             plugins.send(
                 "before_item_moved",
                 item=self,
-                source=self.path,
+                source=self.filepath,
                 destination=dest,
             )
             util.move(self.path, dest)
             plugins.send(
-                "item_moved", item=self, source=self.path, destination=dest
+                "item_moved", item=self, source=self.filepath, destination=dest
             )
         elif operation == MoveOperation.COPY:
             util.copy(self.path, dest)
             plugins.send(
-                "item_copied", item=self, source=self.path, destination=dest
+                "item_copied", item=self, source=self.filepath, destination=dest
             )
         elif operation == MoveOperation.LINK:
             util.link(self.path, dest)
             plugins.send(
-                "item_linked", item=self, source=self.path, destination=dest
+                "item_linked", item=self, source=self.filepath, destination=dest
             )
         elif operation == MoveOperation.HARDLINK:
             util.hardlink(self.path, dest)
             plugins.send(
-                "item_hardlinked", item=self, source=self.path, destination=dest
+                "item_hardlinked",
+                item=self,
+                source=self.filepath,
+                destination=dest,
             )
         elif operation == MoveOperation.REFLINK:
             util.reflink(self.path, dest, fallback=False)
             plugins.send(
-                "item_reflinked", item=self, source=self.path, destination=dest
+                "item_reflinked",
+                item=self,
+                source=self.filepath,
+                destination=dest,
             )
         elif operation == MoveOperation.REFLINK_AUTO:
             util.reflink(self.path, dest, fallback=True)
             plugins.send(
-                "item_reflinked", item=self, source=self.path, destination=dest
+                "item_reflinked",
+                item=self,
+                source=self.filepath,
+                destination=dest,
             )
         else:
             assert False, "unknown MoveOperation"
 
         # Either copying or moving succeeded, so update the stored path.
-        self.path = dest
+        self.path = os.fsencode(dest)
 
     def current_mtime(self) -> int:
         """Return the current mtime of the file, rounded to the nearest
@@ -1204,7 +1213,7 @@ class Item(LibModel):
 
         # Perform the move and store the change.
         old_path = self.filepath
-        self.move_file(os.fsencode(dest), operation)
+        self.move_file(dest, operation)
         if store:
             self.store()
 

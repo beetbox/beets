@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from shlex import quote
+from typing import ClassVar
 
 import beets
 from beets.test.helper import PluginTestCase
@@ -137,8 +138,8 @@ class PlaylistTestItemMoved(PlaylistUpdateTest, PlaylistTestCase):
         beets.plugins.send(
             "item_moved",
             item=item,
-            source=item.path,
-            destination=os.fsencode(self.music_dir / self.i_track_path),
+            source=item.filepath,
+            destination=self.music_dir / self.i_track_path,
         )
 
         # Emit item_moved event for an item that is not in a playlist
@@ -149,8 +150,8 @@ class PlaylistTestItemMoved(PlaylistUpdateTest, PlaylistTestCase):
         beets.plugins.send(
             "item_moved",
             item=item,
-            source=item.path,
-            destination=os.fsencode(self.music_dir / self.w_track_path),
+            source=item.filepath,
+            destination=self.music_dir / self.w_track_path,
         )
 
         # Emit cli_exit event
@@ -203,3 +204,40 @@ class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
             map(Path, self.relative_playlist_path.read_text().splitlines())
         )
         assert lines == expected_paths
+
+
+class PlaylistTestPreservesUnchangedLines(PlaylistUpdateTest, PlaylistTestCase):
+    """Only the lines naming moved items may be rewritten.
+
+    A playlist is a byte stream that happens to contain paths: comments, blank
+    lines and non-canonical spellings are not ours to normalise.
+    """
+
+    unchanged_lines: ClassVar[list[bytes]] = [
+        b"#EXTM3U",
+        b"",
+        b"#EXTINF:123,Some Artist - Some Title",
+        b"./a/b/c.mp3",
+        b"x//y/z.mp3",
+        "caf\xe9.mp3".encode(),
+    ]
+
+    def write_relative_playlist(self):
+        lines = [*self.unchanged_lines, os.fsencode(self.f_track_path)]
+        self.relative_playlist_path.write_bytes(b"\n".join(lines) + b"\n")
+
+    def test_only_moved_item_line_is_rewritten(self):
+        q = f"path:{quote(str(self.music_dir / self.f_track_path))}"
+        item = self.lib.items(q)[0]
+        beets.plugins.send(
+            "item_moved",
+            item=item,
+            source=item.filepath,
+            destination=self.music_dir / self.i_track_path,
+        )
+        beets.plugins.send("cli_exit", lib=self.lib)
+
+        expected = [*self.unchanged_lines, os.fsencode(self.i_track_path)]
+        assert self.relative_playlist_path.read_bytes() == (
+            b"\n".join(expected) + b"\n"
+        )

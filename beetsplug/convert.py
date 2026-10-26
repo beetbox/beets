@@ -557,7 +557,7 @@ class ConvertPlugin(BeetsPlugin):
 
         # Write tags from the database to the file if requested
         if self.config["write_metadata"].get(bool):
-            item.try_write(path=converted, id3v23=id3v23)
+            item.try_write(path=Path(os.fsdecode(converted)), id3v23=id3v23)
 
         if keep_new:
             # If we're keeping the transcoded file, read it again (after
@@ -578,15 +578,23 @@ class ConvertPlugin(BeetsPlugin):
                     item,
                     path,
                     maxwidth,
-                    itempath=converted,
+                    itempath=Path(os.fsdecode(converted)),
                     id3v23=id3v23,
                 )
 
         if keep_new:
-            plugins.send("after_convert", item=item, dest=dest, keepnew=True)
+            plugins.send(
+                "after_convert",
+                item=item,
+                dest=Path(os.fsdecode(dest)),
+                keepnew=True,
+            )
         else:
             plugins.send(
-                "after_convert", item=item, dest=converted, keepnew=False
+                "after_convert",
+                item=item,
+                dest=Path(os.fsdecode(converted)),
+                keepnew=False,
             )
 
     def copy_album_art(self, album: Album) -> None:

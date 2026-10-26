@@ -77,13 +77,13 @@ ALL_EVENTS = list(chain.from_iterable(get_args(e) for e in get_args(EventType)))
 
 class AfterWriteEventArgs(TypedDict):
     item: Item
-    path: bytes
+    path: Path
 
 
 class ItemPathEventArgs(TypedDict):
     item: Item
-    source: bytes
-    destination: bytes
+    source: Path
+    destination: Path
 
 
 class ImportTaskEventArgs(TypedDict):
@@ -141,7 +141,7 @@ class ItemEventArgs(TypedDict):
 
 class WriteEventArgs(TypedDict):
     item: Item
-    path: bytes
+    path: Path
     tags: dict[str, Any]
 
 
@@ -151,7 +151,7 @@ class MusicBrainzExtractEventArgs(TypedDict):
 
 class AfterConvertEventArgs(TypedDict):
     item: Item
-    dest: bytes
+    dest: Path
     keepnew: bool
 
 

@@ -89,5 +89,5 @@ class TestPermissionsPlugin(AsIsImporterMixin, PluginMixin, ImportHelper):
         album = self.lib.albums().get()
         artpath = self.temp_path / "cover.jpg"
         artpath.touch()
-        album.set_art(os.fsencode(artpath))
+        album.set_art(artpath)
         assert expect_success == check_permissions(album.art_filepath, 0o777)

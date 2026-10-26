@@ -13,7 +13,6 @@ import beets
 from beets import util
 from beets.dbcore.query import InQuery
 from beets.plugins import BeetsPlugin
-from beets.util import path_as_posix
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -92,7 +91,7 @@ class PlaylistPlugin(PlaylistMixin, BeetsPlugin):
         "playlist": PlaylistQuery
     }
 
-    changes: dict[bytes, bytes | None]
+    changes: dict[Path, Path | None]
 
     def __init__(self) -> None:
         super().__init__()
@@ -120,25 +119,21 @@ class PlaylistPlugin(PlaylistMixin, BeetsPlugin):
     def relative_to(self) -> Path | None:
         return self._get_relative_to(self.config)
 
-    def item_moved(self, item: Item, source: bytes, destination: bytes) -> None:
+    def item_moved(self, item: Item, source: Path, destination: Path) -> None:
         self.changes[source] = destination
 
     def item_removed(self, item: Item) -> None:
-        if not os.path.exists(beets.util.syspath(item.path)):
-            self.changes[item.path] = None
+        if not item.filepath.exists():
+            self.changes[item.filepath] = None
 
     def cli_exit(self, lib: Library) -> None:
         for playlist in self.find_playlists():
             self._log.info("Updating playlist: {}", playlist)
-            base_dir = beets.util.bytestring_path(
-                self.relative_to
-                if self.relative_to
-                else os.path.dirname(playlist)
-            )
+            base_dir = self.relative_to or playlist.parent
 
             try:
                 self.update_playlist(playlist, base_dir)
-            except beets.util.FilesystemError:
+            except util.FilesystemError:
                 self._log.error("Failed to update playlist: {}", playlist)
 
     def find_playlists(self) -> Iterator[Path]:
@@ -151,43 +146,42 @@ class PlaylistPlugin(PlaylistMixin, BeetsPlugin):
             )
             return
 
-    def update_playlist(self, filename: Path, base_dir: bytes) -> None:
+    def update_playlist(self, filename: Path, base_dir: Path) -> None:
         """Find M3U playlists in the specified directory."""
         changes = 0
         deletions = 0
 
         with tempfile.NamedTemporaryFile(mode="w+b", delete=False) as tempfp:
             new_playlist = tempfp.name
-            with open(filename, mode="rb") as fp:
+            with filename.open("rb") as fp:
                 for line in fp:
                     original_path = line.rstrip(b"\r\n")
 
                     # Ensure that path from playlist is absolute
-                    is_relative = not os.path.isabs(line)
-                    if is_relative:
-                        lookup = os.path.join(base_dir, original_path)
-                    else:
-                        lookup = original_path
+                    lookup = Path(os.fsdecode(original_path))
+                    if is_relative := not lookup.is_absolute():
+                        lookup = base_dir / lookup
 
-                    try:
-                        new_path = self.changes[beets.util.normpath(lookup)]
-                    except KeyError:
-                        if self.config["forward_slash"]:
-                            line = path_as_posix(line)
-                        tempfp.write(line)
-                    else:
+                    if (key := util.normpath(lookup)) in self.changes:
+                        new_path = self.changes[key]
                         if new_path is None:
                             # Item has been deleted
                             deletions += 1
                             continue
 
                         changes += 1
-                        if is_relative:
-                            new_path = os.path.relpath(new_path, base_dir)
-                        line = line.replace(original_path, new_path)
-                        if self.config["forward_slash"]:
-                            line = path_as_posix(line)
-                        tempfp.write(line)
+                        replacement = (
+                            os.path.relpath(new_path, base_dir)
+                            if is_relative
+                            else new_path
+                        )
+                        line = line.replace(
+                            original_path, os.fsencode(replacement)
+                        )
+
+                    if self.config["forward_slash"]:
+                        line = util.path_as_posix(line)
+                    tempfp.write(line)
 
         if changes or deletions:
             self._log.info(
@@ -196,5 +190,5 @@ class PlaylistPlugin(PlaylistMixin, BeetsPlugin):
                 changes,
                 deletions,
             )
-            beets.util.copy(new_playlist, filename, replace=True)
-        beets.util.remove(new_playlist)
+            util.copy(new_playlist, filename, replace=True)
+        util.remove(new_playlist)

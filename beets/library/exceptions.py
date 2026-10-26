@@ -1,4 +1,9 @@
-from beets import util
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class FileOperationError(Exception):
@@ -8,7 +13,7 @@ class FileOperationError(Exception):
     error, and an unhandled Mutagen exception.
     """
 
-    def __init__(self, path: util.PathLike, reason: Exception) -> None:
+    def __init__(self, path: Path, reason: Exception) -> None:
         """Create an exception describing an operation on the file at
         `path` with the underlying (chained) exception `reason`.
         """
@@ -21,7 +26,7 @@ class FileOperationError(Exception):
 
         Describe both the underlying reason and the file path in question.
         """
-        return f"{util.displayable_path(self.path)}: {self.reason}"
+        return f"{self.path}: {self.reason}"
 
 
 class ReadError(FileOperationError):
