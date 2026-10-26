@@ -382,35 +382,35 @@ class CountingQueue(queue.Queue[BaseException]):
         return super().get_nowait()
 
 
-def test_exception_watcher_does_not_busy_wait():
-    exc_queue = CountingQueue()
-    watcher = ExceptionWatcher(exc_queue, lambda: None)
-    watcher.start()
-    time.sleep(0.5)
-    watcher.join()
+class TestExceptionWatcher:
+    def test_does_not_busy_wait(self):
+        exc_queue = CountingQueue()
+        watcher = ExceptionWatcher(exc_queue, lambda: None)
+        watcher.start()
+        time.sleep(0.5)
+        watcher.join()
 
-    assert not watcher.is_alive()
-    # A blocking get wakes up a handful of times; a busy loop would call it
-    # many thousands of times.
-    assert exc_queue.get_calls < 50
+        assert not watcher.is_alive()
+        # A blocking get wakes up a handful of times; a busy loop would call
+        # it many thousands of times.
+        assert exc_queue.get_calls < 50
 
+    def test_runs_callback_on_exception(self, monkeypatch):
+        raised = []
+        monkeypatch.setattr(
+            threading, "excepthook", lambda args: raised.append(args.exc_value)
+        )
+        callback_called = threading.Event()
+        exc_queue = queue.Queue()
+        watcher = ExceptionWatcher(exc_queue, callback_called.set)
+        watcher.start()
 
-def test_exception_watcher_runs_callback_on_exception(monkeypatch):
-    raised = []
-    monkeypatch.setattr(
-        threading, "excepthook", lambda args: raised.append(args.exc_value)
-    )
-    callback_called = threading.Event()
-    exc_queue = queue.Queue()
-    watcher = ExceptionWatcher(exc_queue, callback_called.set)
-    watcher.start()
+        error = RuntimeError("worker failed")
+        exc_queue.put(error)
 
-    error = RuntimeError("worker failed")
-    exc_queue.put(error)
-
-    assert callback_called.wait(timeout=5)
-    watcher.join(timeout=5)
-    assert raised == [error]
+        assert callback_called.wait(timeout=5)
+        watcher.join(timeout=5)
+        assert raised == [error]
 
 
 class ImportTest(AsIsImporterMixin, ReplayGainPluginHelper):
