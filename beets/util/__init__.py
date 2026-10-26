@@ -294,11 +294,15 @@ def sorted_walk(
         )
 
 
-def path_as_posix(path: bytes) -> bytes:
+def path_as_posix(path: AnyStr) -> AnyStr:
     """Return the string representation of the path with forward (/)
     slashes.
     """
-    return path.replace(os.fsencode(os.path.sep), b"/")
+    sep = os.path.sep
+    replacements = (
+        (sep, "/") if isinstance(path, str) else (os.fsencode(sep), b"/")
+    )
+    return path.replace(*replacements)
 
 
 def mkdirall(path: AnyStr | Path) -> None:
@@ -306,7 +310,13 @@ def mkdirall(path: AnyStr | Path) -> None:
     parent).
     """
     if isinstance(path, Path):
-        path.parent.mkdir(parents=True, exist_ok=True)
+        parent = path.parent
+        try:
+            parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise FilesystemError(
+                exc, "create", (parent,), traceback.format_exc()
+            )
         return
 
     for ancestor in ancestry(path):

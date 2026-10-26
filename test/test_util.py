@@ -497,6 +497,14 @@ class MkDirAllTest(BeetsTestCase):
         assert child.parent.exists()
         assert child.parent.is_dir()
 
+    def test_mkdirall_handles_pathlib_path_error(self):
+        """Test that mkdirall raises a FilesystemError when trying to create
+        a directory where a file already exists."""
+        file = self.temp_path / "file"
+        file.touch()
+        with pytest.raises(util.FilesystemError, match="File exists"):
+            util.mkdirall(file / "subfile")
+
 
 class TestAsciifyPath:
     @pytest.fixture(autouse=True)
