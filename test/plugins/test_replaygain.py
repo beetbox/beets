@@ -37,6 +37,11 @@ SKIP_GSTREAMER = pytest.mark.skipif(
     not GST_AVAILABLE and not RUNNING_IN_CI,
     reason="gstreamer cannot be found and not running in CI",
 )
+XFAIL_GSTREAMER_WIN_PY315 = pytest.mark.xfail(
+    sys.platform == "win32" and sys.version_info >= (3, 15),
+    reason="gstreamer-bundle does not support Python 3.15 on Windows yet",
+    strict=True,
+)
 SKIP_METAFLAC = pytest.mark.skipif(
     (
         not shutil.which("metaflac")  # included in ``flac`` package
@@ -326,6 +331,7 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
 
 
 @SKIP_GSTREAMER
+@XFAIL_GSTREAMER_WIN_PY315
 class TestReplayGainGstCli(R128Test, ReplayGainCliTest, GstBackendMixin):
     FNAME = "full"  # file contains only silence
 
@@ -425,6 +431,7 @@ class ImportTest(AsIsImporterMixin, ReplayGainPluginHelper):
 
 
 @SKIP_GSTREAMER
+@XFAIL_GSTREAMER_WIN_PY315
 class TestReplayGainGstImport(ImportTest, GstBackendMixin):
     pass
 
