@@ -2375,7 +2375,7 @@ class ReimportTest(AutotagImportTestCase):
         self.importer.run()
         new_album = self._album()
         new_artpath = new_album.art_destination(art_source)
-        assert new_album.artpath == new_artpath
+        assert new_album.art_filepath == new_artpath
         assert new_album.art_filepath.exists()
         if new_artpath != old_artpath:
             assert not old_artpath.exists()

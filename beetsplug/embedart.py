@@ -166,8 +166,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 file = f"image{extension}"
                 tempimg = Path(tempfile.gettempdir()) / file
                 try:
-                    with tempimg.open("wb") as f:
-                        f.write(response.content)
+                    tempimg.write_bytes(response.content)
                 except Exception as e:
                     self._log.error("Unable to save image: {}", e)
                     return

@@ -21,7 +21,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import TestHelper
-from beets.util import as_string, bytestring_path
+from beets.util import as_string
 
 if TYPE_CHECKING:
     from beets.library import Item
@@ -1404,20 +1404,19 @@ class TestArtDestination(TestHelper):
     def test_art_filename_respects_setting(self, item_and_album):
         _i, ai = item_and_album
         art = ai.art_destination("something.jpg")
-        new_art = bytestring_path(f"{os.path.sep}artimage.jpg")
-        assert new_art in art
+        assert art.name == "artimage.jpg"
 
     def test_art_path_in_item_dir(self, item_and_album):
         i, ai = item_and_album
         art = ai.art_destination("something.jpg")
         track = i.destination()
-        assert os.path.dirname(art) == os.fsencode(track.parent)
+        assert art.parent == track.parent
 
     def test_art_path_sanitized(self, item_and_album, config):
         _i, ai = item_and_album
         config["art_filename"] = "artXimage"
         art = ai.art_destination("something.jpg")
-        assert b"artYimage" in art
+        assert "artYimage" in str(art)
 
 
 class TestPathString(PytestItemHelper):
@@ -1459,11 +1458,11 @@ class TestPathString(PytestItemHelper):
         dest = item_in_db.destination()
         assert isinstance(dest, Path)
 
-    def test_art_destination_returns_bytestring(self, item_in_db):
+    def test_art_destination_returns_path(self, item_in_db):
         item_in_db.artist = "b\xe1r"
         alb = self.lib.add_album([item_in_db])
         dest = alb.art_destination("image.jpg")
-        assert isinstance(dest, bytes)
+        assert isinstance(dest, Path)
 
     def test_artpath_stores_special_chars(self, item_in_db):
         path = Path("b\xe1r")

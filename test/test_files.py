@@ -273,10 +273,9 @@ class ArtFileTest(BeetsTestCase):
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Make an art file too.
-        art_bytes = self.lib.get_album(self.i).art_destination("something.jpg")
-        self.art = Path(os.fsdecode(art_bytes))
+        self.art = self.lib.get_album(self.i).art_destination("something.jpg")
         self.art.touch()
-        self.ai.artpath = art_bytes
+        self.ai.artpath = os.fsencode(self.art)
         self.ai.store()
         # Alternate destination dir.
         self.otherdir = self.temp_path / "testotherdir"
@@ -296,7 +295,7 @@ class ArtFileTest(BeetsTestCase):
         assert self.i.path != oldpath
         assert not self.art.exists()
         newart = self.lib.get_album(self.i).art_destination(self.art)
-        assert Path(os.fsdecode(newart)).exists()
+        assert newart.exists()
 
     def test_art_moves_with_album_to_custom_dir(self):
         # Move the album to another directory.
@@ -339,7 +338,7 @@ class ArtFileTest(BeetsTestCase):
         ai.set_art(newart)
 
         # Set the art again.
-        ai.set_art(ai.artpath)
+        ai.set_art(ai.art_filepath)
         assert ai.art_filepath.exists()
 
     def test_setart_to_existing_but_unset_art_works(self):
@@ -369,7 +368,7 @@ class ArtFileTest(BeetsTestCase):
         i2.move(operation=MoveOperation.COPY)
 
         # Make a file at the destination.
-        artdest = Path(os.fsdecode(ai.art_destination(newart)))
+        artdest = ai.art_destination(newart)
         artdest.touch()
 
         # Set the art - should replace the existing file, not create a suffixed

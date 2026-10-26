@@ -425,7 +425,7 @@ class Album(LibModel):
     def move_art(
         self,
         operation: MoveOperation = MoveOperation.MOVE,
-        item_dir: bytes | None = None,
+        item_dir: Path | None = None,
     ) -> None:
         """Move, copy, link or hardlink (depending on `operation`) any
         existing album art so that it remains in the same directory as
@@ -437,14 +437,13 @@ class Album(LibModel):
         the art. If not provided, the directory of the album's first
         item is used.
         """
-        old_art = self.artpath
+        old_art = self.art_filepath
         if not old_art:
             return
 
-        if not os.path.exists(syspath(old_art)):
+        if not old_art.exists():
             log.error(
-                "removing reference to missing album art file {}",
-                util.displayable_path(old_art),
+                "removing reference to missing album art file {}", old_art
             )
             self.artpath = None
             return
@@ -454,15 +453,11 @@ class Album(LibModel):
             return
 
         new_art = util.unique_path(new_art)
-        log.debug(
-            "moving album art {} to {}",
-            util.displayable_path(old_art),
-            util.displayable_path(new_art),
-        )
+        log.debug("moving album art {} to {}", old_art, new_art)
         if operation == MoveOperation.MOVE:
             util.move(old_art, new_art)
             util.prune_dirs(
-                os.path.dirname(old_art),
+                old_art.parent,
                 self.db.directory,
                 clutter=beets.config["clutter"].as_str_seq(),
             )
@@ -478,7 +473,7 @@ class Album(LibModel):
             util.reflink(old_art, new_art, fallback=True)
         else:
             assert False, "unknown MoveOperation"
-        self.artpath = new_art
+        self.artpath = os.fsencode(new_art)
 
     def move(
         self,
@@ -509,24 +504,24 @@ class Album(LibModel):
         items = list(self.items())
         moved_item_dir = None
         for item in items:
-            old_path = item.path
+            old_path = item.filepath
             item.move(operation, basedir=basedir, with_album=False, store=store)
-            if moved_item_dir is None and item.path != old_path:
-                moved_item_dir = os.path.dirname(item.path)
+            if moved_item_dir is None and item.filepath != old_path:
+                moved_item_dir = item.filepath.parent
 
         # Move art.
         self.move_art(operation, item_dir=moved_item_dir)
         if store:
             self.store()
 
-    def item_dir(self) -> bytes:
+    def item_dir(self) -> Path:
         """Return the directory containing the album's first item,
         provided that such an item exists.
         """
         item = self.items().get()
         if not item:
             raise ValueError(f"empty album for album id {self.id}")
-        return os.path.dirname(item.path)
+        return item.filepath.parent
 
     def _albumtotal(self) -> int:
         """Return the total number of tracks on all discs on the album."""
@@ -549,8 +544,8 @@ class Album(LibModel):
         return total
 
     def art_destination(
-        self, image: bytes, item_dir: bytes | None = None
-    ) -> bytes:
+        self, image: util.PathLike, item_dir: Path | None = None
+    ) -> Path:
         """Return a path to the destination for the album art image
         for the album.
 
@@ -561,7 +556,6 @@ class Album(LibModel):
         items, so the album must contain at least one item or
         item_dir must be provided.
         """
-        image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
         filename_tmpl = beets.config["art_filename"].as_str()
@@ -569,14 +563,11 @@ class Album(LibModel):
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
         subpath = util.sanitize_path(subpath, replacements=self.db.replacements)
-        subpath_bytes = bytestring_path(subpath)
 
-        _, ext = os.path.splitext(image)
-        dest = os.path.join(item_dir, subpath_bytes + ext)
+        ext = Path(os.fsdecode(image)).suffix
+        return Path(f"{item_dir / subpath}{ext}")
 
-        return bytestring_path(dest)
-
-    def set_art(self, path: bytes, copy: bool = True) -> None:
+    def set_art(self, path: Path, copy: bool = True) -> None:
         """Set the album's cover art to the image at the given path.
 
         The image is copied (or moved) into place, replacing any
@@ -584,8 +575,7 @@ class Album(LibModel):
 
         Send an 'art_set' event with `self` as the sole argument.
         """
-        path = bytestring_path(path)
-        oldart = self.artpath
+        oldart = self.art_filepath
         artdest = self.art_destination(path)
 
         if oldart and samefile(path, oldart):
@@ -593,7 +583,7 @@ class Album(LibModel):
             return
         if samefile(path, artdest):
             # Art already in place.
-            self.artpath = path
+            self.artpath = os.fsencode(path)
             return
 
         # Normal operation.
@@ -604,7 +594,7 @@ class Album(LibModel):
             util.copy(path, artdest)
         else:
             util.move(path, artdest)
-        self.artpath = artdest
+        self.artpath = os.fsencode(artdest)
 
         plugins.send("art_set", album=self)
 
@@ -1059,7 +1049,7 @@ class Item(LibModel):
         `operation` should be an instance of `util.MoveOperation`.
         """
         if not util.samefile(self.path, dest):
-            dest = util.unique_path(dest)
+            dest = os.fsencode(util.unique_path(Path(os.fsdecode(dest))))
         if operation == MoveOperation.MOVE:
             plugins.send(
                 "before_item_moved",
