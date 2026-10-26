@@ -412,10 +412,12 @@ class ConvertPlugin(BeetsPlugin):
             )
             else None
         )
-        return item.destination(
-            basedir=self.dest,
-            path_formats=self.path_formats,
-            extension=extension,
+        return os.fsencode(
+            item.destination(
+                basedir=Path(os.fsdecode(self.dest)),
+                path_formats=self.path_formats,
+                extension=extension,
+            )
         )
 
     @pipeline.mutator_stage
