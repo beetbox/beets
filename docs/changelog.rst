@@ -104,10 +104,10 @@ Bug fixes
   aborting and leaving it partially updated. :bug:`2419`
 - :doc:`plugins/deezer`: ``deezerupdate`` now stores each track's Deezer rank
   instead of ``1``. :bug:`7106`
-- :doc:`plugins/musicbrainz`: Request the missing ``work-rels`` include in
-  recording lookups so singleton imports (``beet import -s``) populate work,
-  composer and lyricist tags for tracks linked to a work, matching album
-  imports. :bug:`7072`
+- :doc:`plugins/replaygain`: Stop the exception watcher thread from busy-waiting
+  while the thread pool is open. It held a CPU core at 100% and starved the
+  other threads, making ``beet replaygain`` on a large library run for hours
+  without starting any analysis. :bug:`5449`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
