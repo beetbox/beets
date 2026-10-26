@@ -1,7 +1,7 @@
 import queue
 import shutil
-import threading
 import sys
+import threading
 import time
 from typing import Any, ClassVar
 
