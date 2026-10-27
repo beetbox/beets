@@ -49,6 +49,10 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- :doc:`plugins/lyrics`: Lyrics can be written to ``.lrc`` and ``.txt`` files
+  next to the tracks (``write_files``, ``--write-files``) for players that
+  expect them there, and ``remove_embedded`` deletes the lyrics tags afterwards
+  so that the lyrics end up in a single place. :bug:`6396`
 
 Bug fixes
 ~~~~~~~~~

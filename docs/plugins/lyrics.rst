@@ -68,9 +68,11 @@ Default configuration:
           url: https://api.lrcmux.dev
           sources: []
         print: no
+        remove_embedded: no
         rest_directory: null
         sources: [lrclib, google, genius, lrcmux]
         synced: no
+        write_files: no
 
 The available options are:
 
@@ -126,6 +128,10 @@ The available options are:
     providers.
 
 - **print**: Print lyrics to the console.
+- **remove_embedded**: Delete the lyrics from a track's tags after its lyrics
+  file has been written, so that the lyrics live in one place instead of two.
+  Tags which hold lyrics that differ from the ones that were written are kept
+  and a warning is logged. Requires ``write_files``. Default: ``no``.
 - **rest_directory**: The directory to which reStructuredText_ (ReST) rendered
   lyric documents will be output. See :ref:`rendering-lyrics`.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
@@ -141,6 +147,9 @@ The available options are:
   and plain text (without timestamps) in the ``USLT`` (unsynchronized lyrics)
   frame, so players that support only one of the two formats can still show the
   correct lyrics.
+- **write_files**: Write the lyrics of each track to a file next to it: synced
+  lyrics go into a ``.lrc`` file and plain lyrics into a ``.txt`` one. See
+  :ref:`lyrics-files`. Default: ``no``.
 
 .. _beets custom search engine: https://cse.google.com/cse?cx=009217259823014548361:lndtuqkycfu
 
@@ -169,8 +178,79 @@ lyrics without touching tracks that already have a synced version. Use
 ``--no-keep-synced`` to override a ``keep_synced: yes`` configuration for a
 single command run.
 
+To look for synced replacements for plain or missing lyrics, set ``synced: yes``
+in the plugin configuration and run:
+
+.. code-block:: bash
+
+    beet lyrics --force --keep-synced
+
+This skips tracks whose database lyrics already contain timestamps. It prefers
+synced results but can still accept plain lyrics when synced lyrics are not
+available. It does not inspect sidecars or SYLT-only tags to decide what to
+skip.
+
 Inversely, the ``-l, --local`` option restricts operations to lyrics that are
 locally available, which show lyrics faster without using the network at all.
+
+The ``--write-files`` option writes the lyrics of each matched track to a file
+next to it, and ``--remove-embedded`` additionally deletes them from the file's
+tags. See :ref:`lyrics-files`.
+
+.. _lyrics-files:
+
+Writing Lyrics to Files
+-----------------------
+
+Some players support separate lyrics files next to the tracks. Enable the
+``write_files`` option, or pass ``--write-files`` to the ``lyrics`` command, to
+write one for every matched track with available lyrics. This applies only to
+the ``lyrics`` command, not automatic fetching during import.
+
+beets writes a ``.lrc`` file when the lyrics are synced, that is when they carry
+``[mm:ss.xx]`` timestamps, and a ``.txt`` file when they are not. That is the
+distinction players make between synced and plain lyrics. The file is named
+exactly like the audio file and placed in the same directory, because that is
+how players find it:
+
+.. code-block:: text
+
+    The Beatles/1962-1966/
+    |-- 01 Please Please Me.flac
+    `-- 01 Please Please Me.lrc
+
+The database text takes precedence, including any ``original / translation``
+text. If it is empty, beets uses embedded lyrics instead, preferring SYLT over
+USLT. Existing sidecars with different content are replaced; writing is atomic
+so a failed write does not truncate the previous file. A sidecar with the other
+extension is not removed automatically.
+
+To write lyrics that your library already has, without downloading anything,
+combine the option with ``--local``:
+
+.. code-block:: bash
+
+    beet lyrics --local --write-files
+
+A file which already contains the same lyrics is left alone, so its modification
+time does not change. Embedded lyrics can still be removed on these runs.
+
+With ``remove_embedded`` enabled the lyrics are deleted from the track's tags
+once its lyrics file has been written, which turns copying into moving:
+
+.. code-block:: yaml
+
+    lyrics:
+        write_files: yes
+        remove_embedded: yes
+
+Both the ``lyrics`` tag (``USLT`` on MP3s) and the ID3 ``SYLT`` frame are
+cleared; the database keeps the lyrics either way. Tags which hold lyrics that
+differ from the text just written are never deleted --- the plugin logs a
+warning instead, so lyrics that exist nowhere else survive. Keep in mind that
+commands which rewrite all tags, notably :ref:`write-cmd`, put the lyrics back
+into the file; rerun ``beet lyrics --local --write-files --remove-embedded`` to
+remove them again.
 
 .. _rendering-lyrics:
 
