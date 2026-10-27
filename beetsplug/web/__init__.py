@@ -323,7 +323,13 @@ def item_file(item_id: int) -> Any:
     if not item:
         return flask.abort(404, f"Item with id {item_id} not found")
 
-    item_path = util.syspath(item.path)
+    raw_path = util.syspath(item.path)
+
+    if not os.path.isabs(raw_path):
+        lib_dir = util.syspath(g.lib.directory)
+        raw_path = os.path.join(lib_dir, raw_path)
+
+    item_path = os.path.abspath(raw_path)
     base_filename = os.path.basename(item_path)
 
     try:
@@ -392,7 +398,13 @@ def album_query(queries: Sequence[str]) -> Any:
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
     if album and album.artpath:
-        return flask.send_file(album.artpath.decode())
+        raw_artpath = util.syspath(album.artpath)
+        if not os.path.isabs(raw_artpath):
+            lib_dir = util.syspath(g.lib.directory)
+            raw_artpath = os.path.join(lib_dir, raw_artpath)
+
+        artpath = os.path.abspath(raw_artpath)
+        return flask.send_file(artpath)
     return flask.abort(404)
 
 
