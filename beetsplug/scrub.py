@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 import mediafile
 import mutagen
+from mutagen.id3 import ID3
+from mutagen.mp4 import MP4Tags
 
 from beets import config, ui, util
 from beets.plugins import BeetsPlugin
@@ -46,7 +48,10 @@ class ScrubPlugin(BeetsPlugin):
 
     def __init__(self) -> None:
         super().__init__()
-        self.config.add({"auto": True})
+        self.config.add({"auto": True, "keep_tags": []})
+        self.keep_tags = {
+            tag.casefold() for tag in self.config["keep_tags"].as_str_seq()
+        }
 
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)
@@ -83,8 +88,37 @@ class ScrubPlugin(BeetsPlugin):
             classes.append(getattr(mod, clsname))
         return classes
 
+    def _is_kept(self, tags: Any, key: str) -> bool:
+        """Check whether the tag stored under `key` is in `keep_tags`."""
+        names = [key]
+        if isinstance(tags, (ID3, MP4Tags)):
+            # Also match key prefixes and bare TXXX/freeform names.
+            parts = key.split(":")
+            names += [":".join(parts[:i]) for i in range(1, len(parts))]
+            if parts[0] == "TXXX":
+                names.append(key.split(":", 1)[1])
+            elif parts[0] == "----" and len(parts) > 2:
+                names.append(key.split(":", 2)[2])
+        return any(name.casefold() in self.keep_tags for name in names)
+
+    @staticmethod
+    def _remove_tags(f: Any, keys: list[str]) -> None:
+        """Remove the given tags from a file and save it."""
+        for key in keys:
+            del f[key]
+        if isinstance(f.tags, ID3):
+            # Drop unparsed frames and ID3v1, like delete() does.
+            f.tags.unknown_frames.clear()
+            if config["id3v23"].get(bool):
+                f.tags.update_to_v23()
+                f.save(v1=0, v2_version=3)
+            else:
+                f.save(v1=0)
+        else:
+            f.save()
+
     def _scrub(self, path: bytes) -> None:
-        """Remove all tags from a file."""
+        """Remove all tags from a file, except those in `keep_tags`."""
         for cls in self._mutagen_classes():
             # Try opening the file with this type, but just skip in the
             # event of any error.
@@ -95,9 +129,21 @@ class ScrubPlugin(BeetsPlugin):
             if f.tags is None:
                 continue
 
+            keys = list(f.keys())
+            if isinstance(f.tags, ID3) and f.tags.version < (2, 0, 0):
+                # ID3v1 only: a partial save would add an ID3v2 header.
+                unkept = keys
+            else:
+                unkept = [k for k in keys if not self._is_kept(f.tags, k)]
+
             # Remove the tag for this type.
             try:
-                f.delete()
+                if len(unkept) == len(keys):
+                    f.delete()
+                elif unkept:
+                    kept = [k for k in keys if k not in unkept]
+                    self._log.debug("keeping tags: {}", ", ".join(kept))
+                    self._remove_tags(f, unkept)
             except NotImplementedError:
                 # Some Mutagen metadata subclasses (namely, ASFTag) do not
                 # support .delete(), presumably because it is impossible to

@@ -40,6 +40,8 @@ New features
   where the ``bpd`` and ``replaygain`` extras now install GStreamer, its plugins
   and the Python bindings, so that neither plugin needs a separate GStreamer
   installation there.
+- :doc:`plugins/scrub`: Add a ``keep_tags`` option that lists tags to leave in
+  place when scrubbing, such as custom tags written by other tools. :bug:`6537`
 
 Bug fixes
 ~~~~~~~~~

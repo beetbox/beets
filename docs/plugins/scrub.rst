@@ -34,13 +34,32 @@ caution, however, because any information in the tags that is out of sync with
 the database will be lost.
 
 The ``-W`` (or ``--nowrite``) option causes the command to just remove tags but
-not restore any information. This will leave the files with no metadata
-whatsoever.
+not restore any information. This will leave the files with no metadata other
+than the tags listed in ``keep_tags``.
 
 Configuration
 -------------
 
 To configure the plugin, make a ``scrub:`` section in your configuration file.
-There is one option:
+The available options are:
 
 - **auto**: Enable metadata stripping during import. Default: ``yes``.
+- **keep_tags**: A list of tags to leave in place when scrubbing, such as custom
+  tags written by other tools. Default: ``[]``.
+
+Tags are named as they are stored in the file, not by beets field names, and are
+matched case-insensitively. A name such as ``SUBBOX_ID`` matches the tag with
+that name in Vorbis comments (FLAC, Ogg, Opus), APEv2 (Monkey's Audio, WavPack,
+Musepack) and ASF (WMA) files, the ``TXXX:SUBBOX_ID`` frame in ID3 (MP3) files
+and the ``----:com.apple.iTunes:SUBBOX_ID`` atom in MP4 files. For ID3 frames
+and MP4 atoms, you can also give the full key or the part of it before a ``:``,
+such as ``COMM`` to keep all comment frames. For example:
+
+.. code-block:: yaml
+
+    scrub:
+        keep_tags:
+            - SUBBOX_ID
+            - SERATO_PLAYCOUNT
+
+A kept tag that beets also writes still gets its value from the database.
