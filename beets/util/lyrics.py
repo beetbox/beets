@@ -10,10 +10,31 @@ from urllib.parse import urlparse
 from beets.util import unique_list
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from beets.library import Item
 
 INSTRUMENTAL_LYRICS = "[Instrumental]"
 BACKEND_NAMES = {"genius", "musixmatch", "lrclib", "tekstowo"}
+
+
+def sylt_to_lrc(sylt: Iterable[tuple[str, int]]) -> str:
+    """Format SYLT ``(text, milliseconds)`` pairs as LRC lines.
+
+    Preserve millisecond precision when hundredths are not sufficient.
+    """
+    lines = []
+    for text, milliseconds in sylt:
+        minutes, remainder = divmod(milliseconds, 60_000)
+        seconds, milliseconds = divmod(remainder, 1000)
+        fraction = (
+            f"{milliseconds:03d}"
+            if milliseconds % 10
+            else f"{milliseconds // 10:02d}"
+        )
+        lines.append(f"[{minutes:02d}:{seconds:02d}.{fraction}] {text}")
+
+    return "\n".join(lines)
 
 
 @dataclass
