@@ -569,10 +569,13 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         candidate = next(source.get(album, settings, []))
         assert candidate.url == "https://example.com/image/1200x1200bb.jpg"
 
-        # high_resolution: 3000x3000bb
+        # high_resolution: 10000x10000-999
         source._config["high_resolution"] = True
         candidate_high = next(source.get(album, settings, []))
-        assert candidate_high.url == "https://example.com/image/3000x3000bb.jpg"
+        assert (
+            candidate_high.url
+            == "https://example.com/image/10000x10000-999.jpg"
+        )
 
     def test_itunesstore_no_result(
         self, source, settings, album, image_request_mock, caplog
