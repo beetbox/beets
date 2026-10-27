@@ -157,6 +157,10 @@ For plugin developers
   ``PathBytes`` alias is removed, and ``extension.fix_extension``,
   ``extension.remux_mpeglayer3_wav`` and ``ArchiveImportTask.is_archive`` now
   take :class:`pathlib.Path`.
+- ``util.sorted_walk`` now expects a :class:`pathlib.Path` and ``str`` ignore
+  patterns. ``str`` and ``bytes`` paths and ``bytes`` ignore patterns keep
+  working, with results returned in the representation of the given path, but
+  emit a :class:`DeprecationWarning` and will be removed in 3.0.0.
 
 Other changes
 ~~~~~~~~~~~~~
