@@ -1408,6 +1408,41 @@ class TestLyricsFiles(LyricsPluginMixin):
         assert set(sidecar.parent.iterdir()) == before
         assert "Could not write lyrics file" in caplog.text
 
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [{"local": True, "write_files": True, "remove_embedded": True}],
+    )
+    def test_other_tags_are_left_untouched(self, helper, lyrics_plugin):
+        """Moving lyrics out of a file must not rewrite unrelated tags."""
+        import mutagen
+
+        item = helper.add_item_fixture(format="MP3", lyrics=self.SYNCED)
+        assert item.try_write(tags={"title": "Title on disk"})
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        tags = mutagen.File(item.path).tags
+        assert tags["TIT2"].text[0] == "Title on disk"
+        assert not tags.getall("USLT"), "USLT frame should be gone"
+        assert item.lyrics == self.SYNCED
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_uncreatable_directory_is_not_fatal(
+        self, helper, lyrics_plugin, caplog, tmp_path
+    ):
+        """One track which cannot be written must not stop the others."""
+        blocked = tmp_path / "blocked"
+        blocked.write_text("", encoding="utf-8")
+        item = helper.add_item(
+            path=str(blocked / "song.mp3"), lyrics=self.PLAIN
+        )
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert "Could not write lyrics file" in caplog.text
+
 
 class TestLyricsFilesCommand(PluginTestHelper):
     """The ``--write-files`` option of the ``lyrics`` command."""
