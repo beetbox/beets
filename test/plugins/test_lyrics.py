@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+import sys
 import textwrap
 from functools import partial
 from http import HTTPStatus
@@ -390,7 +392,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         calls = []
         monkeypatch.setattr(
             lyrics_plugin,
-            "add_item_lyrics",
+            "fetch_item_lyrics",
             lambda current_item, write: calls.append(
                 (current_item.title, write)
             ),
@@ -1121,3 +1123,315 @@ class TestSyncedLyricsWrite(LyricsPluginMixin):
         # USLT retains the full LRC text (with timestamps) so players that
         # parse LRC in USLT, and non-ID3 formats, continue to work.
         assert f.tags["USLT::XXX"].text == self.SYNCED_LRC
+
+
+NOT_POSIX_OR_ROOT = pytest.mark.skipif(
+    sys.platform == "win32" or (hasattr(os, "geteuid") and os.geteuid() == 0),
+    reason="requires a POSIX filesystem and an unprivileged user",
+)
+
+
+class TestLyricsFiles(LyricsPluginMixin):
+    """Tests for writing lyrics to files next to the tracks."""
+
+    SYNCED = "[00:01.00] synced\n[00:02.00] lyrics"
+    PLAIN = "plain lyrics"
+
+    @pytest.fixture
+    def backend_name(self):
+        """Return the lyrics backend to configure."""
+        return "lrclib"
+
+    def test_disabled_by_default(
+        self, monkeypatch, helper, lyrics_plugin, tmp_path
+    ):
+        """A plain run leaves the music directory untouched."""
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED)
+        )
+        item = helper.add_item(path=str(tmp_path / "song.mp3"), lyrics="")
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert item.lyrics == self.SYNCED
+        assert list(tmp_path.iterdir()) == []
+
+    @pytest.mark.parametrize("plugin_config", [{"write_files": True}])
+    @pytest.mark.parametrize(
+        "lyrics_text, extension",
+        [
+            pytest.param(PLAIN, ".txt", id="plain"),
+            pytest.param(SYNCED, ".lrc", id="synced"),
+        ],
+    )
+    def test_fetched_lyrics_are_written_to_a_file(
+        self,
+        monkeypatch,
+        helper,
+        lyrics_plugin,
+        lyrics_text,
+        extension,
+        tmp_path,
+    ):
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(lyrics_text)
+        )
+        item = helper.add_item(path=str(tmp_path / "song.mp3"), lyrics="")
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert (tmp_path / f"song{extension}").read_text(
+            encoding="utf-8"
+        ) == lyrics_text + "\n"
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_local_mode_writes_stored_lyrics(
+        self, helper, lyrics_plugin, requests_mock, tmp_path
+    ):
+        """Lyrics which are already stored need no network request."""
+        item = helper.add_item(
+            path=str(tmp_path / "song.mp3"), lyrics=self.SYNCED
+        )
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert not requests_mock.request_history
+        assert (tmp_path / "song.lrc").read_text(
+            encoding="utf-8"
+        ) == self.SYNCED + "\n"
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_filename_follows_the_audio_file(
+        self, helper, lyrics_plugin, tmp_path
+    ):
+        """Players look for a file named like the track, so keep the stem."""
+        name = "01. Ünïcode – Song.flac"
+        item = helper.add_item(path=str(tmp_path / name), lyrics=self.SYNCED)
+
+        lyrics_plugin.add_item_lyrics(item, write=True)
+
+        assert (tmp_path / "01. Ünïcode – Song.lrc").exists()
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_lyrics_without_text_write_no_file(
+        self, helper, lyrics_plugin, tmp_path
+    ):
+        """Neither an empty nor an instrumental match creates a file."""
+        item = helper.add_item(
+            path=str(tmp_path / "song.mp3"), lyrics="", lyrics_instrumental=True
+        )
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert list(tmp_path.iterdir()) == []
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_unchanged_file_keeps_its_modification_time(
+        self, helper, lyrics_plugin, tmp_path
+    ):
+        """Rewriting identical files would make players rescan the library."""
+        item = helper.add_item(
+            path=str(tmp_path / "song.mp3"), lyrics=self.PLAIN
+        )
+        file = tmp_path / "song.txt"
+        file.write_text(self.PLAIN + "\n", encoding="utf-8", newline="\n")
+        modified = 1_600_000_000
+        os.utime(file, (modified, modified))
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert file.stat().st_mtime == modified
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_outdated_file_is_replaced(self, helper, lyrics_plugin, tmp_path):
+        item = helper.add_item(
+            path=str(tmp_path / "song.mp3"), lyrics=self.PLAIN
+        )
+        file = tmp_path / "song.txt"
+        file.write_text("outdated\n", encoding="utf-8")
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert file.read_text(encoding="utf-8") == self.PLAIN + "\n"
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    @NOT_POSIX_OR_ROOT
+    def test_unwritable_target_is_not_fatal(
+        self, helper, lyrics_plugin, tmp_path, caplog
+    ):
+        readonly = tmp_path / "readonly"
+        readonly.mkdir()
+        os.chmod(readonly, 0o500)
+        item = helper.add_item(
+            path=str(readonly / "song.mp3"), lyrics=self.PLAIN
+        )
+
+        try:
+            lyrics_plugin.add_item_lyrics(item, write=False)
+        finally:
+            os.chmod(readonly, 0o700)
+
+        assert not (readonly / "song.txt").exists()
+        assert "Could not write lyrics file" in caplog.text
+
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [{"local": True, "write_files": True, "remove_embedded": True}],
+    )
+    @pytest.mark.parametrize("existing_sidecar", [False, True])
+    @pytest.mark.parametrize("stored_in_db", [False, True])
+    @pytest.mark.parametrize(
+        "text", [SYNCED, "[00:01.123] synced\n[00:02.005] lyrics"]
+    )
+    def test_embedded_lyrics_are_moved_to_the_file(
+        self, helper, lyrics_plugin, existing_sidecar, stored_in_db, text
+    ):
+        """Tags are emptied once the lyrics file holds the same lyrics."""
+        import mutagen
+
+        item = helper.add_item_fixture(format="MP3", lyrics=text)
+        assert item.try_write(tags={"synced_lyrics": Lyrics(text).sylt})
+        if not stored_in_db:
+            item.lyrics = ""
+            item.store()
+        sidecar = item.filepath.with_suffix(".lrc")
+        if existing_sidecar:
+            sidecar.write_text(text + "\n", encoding="utf-8")
+            os.utime(sidecar, (1_600_000_000, 1_600_000_000))
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert sidecar.read_text(encoding="utf-8") == text + "\n"
+        if existing_sidecar:
+            assert sidecar.stat().st_mtime == 1_600_000_000
+        tags = mutagen.File(item.path).tags
+        assert not tags.getall("USLT"), "USLT frame should be gone"
+        assert not tags.getall("SYLT"), "SYLT frame should be gone"
+        item.load()
+        assert item.lyrics == text, "the database keeps the lyrics"
+
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [{"local": True, "write_files": True, "remove_embedded": True}],
+    )
+    def test_embedded_lyrics_which_differ_are_kept(
+        self, helper, lyrics_plugin, caplog
+    ):
+        """Lyrics which exist only in the file must not be deleted."""
+        import mutagen
+
+        item = helper.add_item_fixture(format="MP3", lyrics=self.PLAIN)
+        assert item.try_write(tags={"lyrics": "lyrics from elsewhere"})
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert (
+            item.filepath.with_suffix(".txt").read_text(encoding="utf-8")
+            == self.PLAIN + "\n"
+        )
+        assert mutagen.File(item.path).tags["USLT::XXX"].text == (
+            "lyrics from elsewhere"
+        )
+        assert "Kept embedded lyrics" in caplog.text
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_timestamped_uslt_without_database_lyrics(
+        self, helper, lyrics_plugin
+    ):
+        item = helper.add_item_fixture(format="MP3", lyrics=self.SYNCED)
+        assert item.try_write(tags={"synced_lyrics": []})
+        item.lyrics = ""
+        item.store()
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert (
+            item.filepath.with_suffix(".lrc").read_text(encoding="utf-8")
+            == self.SYNCED + "\n"
+        )
+        assert not item.filepath.with_suffix(".txt").exists()
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"write_files": True, "remove_embedded": True}]
+    )
+    def test_import_does_not_publish_sidecars(
+        self, helper, lyrics_plugin, monkeypatch, tmp_path
+    ):
+        item = helper.add_item(path=str(tmp_path / "song.mp3"), lyrics="")
+        monkeypatch.setattr(
+            lyrics_plugin, "find_lyrics", lambda _: Lyrics(self.SYNCED)
+        )
+        task = SimpleNamespace(imported_items=lambda: [item])
+
+        lyrics_plugin.imported(None, task)
+
+        assert item.lyrics == self.SYNCED
+        assert list(tmp_path.iterdir()) == []
+
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [{"local": True, "write_files": True, "remove_embedded": True}],
+    )
+    def test_failed_replace_preserves_sidecar_and_tags(
+        self, helper, lyrics_plugin, monkeypatch, caplog
+    ):
+        from mediafile import MediaFile
+
+        item = helper.add_item_fixture(format="MP3", lyrics=self.PLAIN)
+        assert item.try_write()
+        sidecar = item.filepath.with_suffix(".txt")
+        sidecar.write_text("previous lyrics", encoding="utf-8")
+        before = set(sidecar.parent.iterdir())
+
+        def fail_replace(*args):
+            raise OSError("replacement failed")
+
+        monkeypatch.setattr(os, "replace", fail_replace)
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert sidecar.read_text(encoding="utf-8") == "previous lyrics"
+        assert MediaFile(item.path).lyrics == self.PLAIN
+        assert set(sidecar.parent.iterdir()) == before
+        assert "Could not write lyrics file" in caplog.text
+
+
+class TestLyricsFilesCommand(PluginTestHelper):
+    """The ``--write-files`` option of the ``lyrics`` command."""
+
+    plugin = "lyrics"
+
+    PLAIN = "plain lyrics"
+
+    @pytest.mark.parametrize(
+        "config_write_files, cmd_args, expects_file",
+        [
+            pytest.param(False, (), False, id="disabled-by-default"),
+            pytest.param(False, ("--write-files",), True, id="cli-enables"),
+            pytest.param(True, (), True, id="config-enables"),
+        ],
+    )
+    def test_write_files_option(
+        self, config_write_files, cmd_args, expects_file
+    ):
+        item = self.add_item(lyrics=self.PLAIN)
+
+        with self.configure_plugin(
+            {"local": True, "write_files": config_write_files}
+        ):
+            self.run_command("lyrics", *cmd_args)
+
+        assert item.filepath.with_suffix(".txt").exists() is expects_file
