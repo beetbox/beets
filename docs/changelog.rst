@@ -44,6 +44,13 @@ New features
   albumartist, the plugin now attempts to fetch genres for each artist listed in
   the multi-valued ``albumartists`` field before falling back to the artist
   source. :bug:`6238`
+- :doc:`plugins/lyrics`: Lyrics can be written to files next to the tracks
+  (``write_files``, ``--write-files``) for players that expect them there: a
+  ``.lrc`` file for synced lyrics and a ``.txt`` file for plain ones, named like
+  the audio file. ``beet lyrics --local --write-files`` writes out lyrics the
+  library already holds without downloading anything, files that would not
+  change keep their modification time, and ``remove_embedded`` deletes the
+  lyrics tags afterwards so the lyrics end up in a single place. :bug:`6396`
 
 Bug fixes
 ~~~~~~~~~
