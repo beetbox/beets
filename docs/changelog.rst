@@ -112,6 +112,9 @@ Bug fixes
   while the thread pool is open. It held a CPU core at 100% and starved the
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
+- :doc:`plugins/web`: The ``web`` plugin no longer crashes with a 500/404 error
+  when trying to serve media files or album art from a database using relative
+  paths (portable libraries).
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
