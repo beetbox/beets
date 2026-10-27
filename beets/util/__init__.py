@@ -216,17 +216,13 @@ def ancestry(path: AnyStr) -> list[AnyStr]:
     return out
 
 
-def sorted_walk(
+def _sorted_walk(
     path: Path,
     ignore: Sequence[str] = (),
     ignore_hidden: bool = False,
     logger: Logger | None = None,
 ) -> Iterator[tuple[Path, Sequence[Path], Sequence[Path]]]:
-    """Like `os.walk`, but yields things in case-insensitive sorted,
-    breadth-first order.  Directory and file names matching any glob
-    pattern in `ignore` are skipped. If `logger` is provided, then
-    warning messages are logged there when a directory cannot be listed.
-    """
+    """Walk the directory tree using `Path` objects only."""
     # Get all the directories and files at this level.
     try:
         entries = list(path.iterdir())
@@ -264,7 +260,38 @@ def sorted_walk(
     )
 
     for dir_path in dirs:
-        yield from sorted_walk(dir_path, ignore, ignore_hidden, logger)
+        yield from _sorted_walk(dir_path, ignore, ignore_hidden, logger)
+
+
+def sorted_walk(
+    path: AnyPath,
+    ignore: Sequence[str] | Sequence[bytes] = (),
+    ignore_hidden: bool = False,
+    logger: Logger | None = None,
+) -> Iterator[tuple[AnyPath, Sequence[AnyPath], Sequence[AnyPath]]]:
+    """Walk a directory tree like `os.walk`, in case-insensitive sorted order.
+
+    Directory and file names matching any glob pattern in `ignore` are
+    skipped. If `logger` is provided, directories that cannot be listed are
+    logged there as warnings.
+
+    Paths are yielded in the same representation as the given `path`, so
+    that third-party plugins still passing `str` or `bytes` keep working
+    while they migrate to `Path`.
+    """
+    if any(isinstance(i, bytes) for i in ignore):
+        deprecate_for_maintainers(
+            "Passing Sequence[bytes] as 'ignore'", "Sequence[str]", stacklevel=2
+        )
+
+    for p, dirs, files in _sorted_walk(
+        as_path(path), list(map(os.fsdecode, ignore)), ignore_hidden, logger
+    ):
+        yield (
+            as_path_like(p, path),
+            [as_path_like(d, path) for d in dirs],
+            [as_path_like(f, path) for f in files],
+        )
 
 
 def path_as_posix(path: bytes) -> bytes:
