@@ -245,7 +245,8 @@ once its lyrics file has been written, which turns copying into moving:
         remove_embedded: yes
 
 Both the ``lyrics`` tag (``USLT`` on MP3s) and the ID3 ``SYLT`` frame are
-cleared; the database keeps the lyrics either way. Tags which hold lyrics that
+cleared; the database keeps the lyrics either way. Only these lyrics tags are
+changed, so whatever else is on disk stays as it is. Tags which hold lyrics that
 differ from the text just written are never deleted --- the plugin logs a
 warning instead, so lyrics that exist nowhere else survive. Keep in mind that
 commands which rewrite all tags, notably :ref:`write-cmd`, put the lyrics back

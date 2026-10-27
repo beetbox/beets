@@ -24,12 +24,12 @@ from confuse import Optional
 from mediafile import MediaFile, UnreadableFileError
 from unidecode import unidecode
 
-from beets import plugins, ui
+from beets import config, plugins, ui
 from beets.autotag import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
 from beets.library import Item, parse_query_string
-from beets.util import displayable_path, mkdirall, syspath
+from beets.util import FilesystemError, displayable_path, mkdirall, syspath
 from beets.util.config import sanitize_choices
 from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics, sylt_to_lrc
 
@@ -1400,7 +1400,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 with suppress(FileNotFoundError):
                     temporary.chmod(os.stat(syspath(path)).st_mode)
                 os.replace(temporary, syspath(path))
-        except OSError as exc:
+        except (OSError, FilesystemError) as exc:
             self.warn(
                 "Could not write lyrics file {}: {}",
                 displayable_path(path),
@@ -1439,9 +1439,12 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     def remove_embedded_lyrics(self, item: Item, text: str) -> None:
         """Delete the lyrics tags of ``item``'s file, keeping them when they
         differ from ``text`` so that lyrics held nowhere else are not lost.
+        Unlike :meth:`Item.try_write`, other tags are left as they are on disk.
         """
         try:
-            mediafile = MediaFile(syspath(item.path))
+            mediafile = MediaFile(
+                syspath(item.path), id3v23=config["id3v23"].get(bool)
+            )
         except (OSError, UnreadableFileError) as exc:
             self.warn(
                 "Could not read lyrics tags from {}: {}",
@@ -1453,11 +1456,11 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         embedded = {}
         if mediafile.lyrics:
             embedded["lyrics"] = mediafile.lyrics.strip()
-        if sylt := mediafile.synced_lyrics:
-            if sylt != Lyrics(text).sylt:
-                embedded["synced_lyrics"] = sylt_to_lrc(sylt).strip()
+        sylt = mediafile.synced_lyrics
+        if sylt and sylt != Lyrics(text).sylt:
+            embedded["synced_lyrics"] = sylt_to_lrc(sylt).strip()
 
-        if not embedded and not mediafile.synced_lyrics:
+        if not embedded and not sylt:
             return
         if any(value != text.strip() for value in embedded.values()):
             self.warn(
@@ -1466,15 +1469,25 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             )
             return
 
+        # Keep a copy in the database before dropping it from the file.
         if not (item.lyrics or "").strip():
             item.lyrics = text
-            item.store()
 
-        # Assigning `None` deletes a tag, but mediafile removes the ID3 SYLT
-        # frame only when it is given an empty list of timestamps.
-        deleted: dict[str, Any] = {"lyrics": None, "synced_lyrics": []}
-        if item.try_write(tags=deleted):
-            self.info("🟢 Removed embedded lyrics: {}", item)
+        # `None` deletes a tag, except SYLT, which needs an empty list.
+        try:
+            mediafile.update({"lyrics": None, "synced_lyrics": []})
+            mediafile.save()
+        except (OSError, UnreadableFileError) as exc:
+            self.warn(
+                "Could not remove lyrics tags from {}: {}",
+                displayable_path(item.path),
+                exc,
+            )
+            return
+
+        item.mtime = item.current_mtime()
+        item.store()
+        self.info("🟢 Removed embedded lyrics: {}", item)
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""
