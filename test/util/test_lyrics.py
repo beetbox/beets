@@ -1,7 +1,9 @@
 import textwrap
 
+import pytest
+
 from beets.library import Item
-from beets.util.lyrics import Lyrics
+from beets.util.lyrics import Lyrics, sylt_to_lrc
 
 
 class TestLyrics:
@@ -81,3 +83,42 @@ class TestLyrics:
             ("Three decimals", 2123),
             ("Five milliseconds", 60005),
         ]
+
+
+class TestSyltToLrc:
+    """Unit tests for the SYLT to LRC timestamp formatter."""
+
+    @pytest.mark.parametrize(
+        "sylt, expected",
+        [
+            pytest.param([], "", id="no-sylt"),
+            pytest.param(
+                [("hello", 1000), ("world", 2000)],
+                "[00:01.00] hello\n[00:02.00] world",
+                id="basic-sylt-to-lrc",
+            ),
+            pytest.param(
+                [("past a minute", 60_000)],
+                "[01:00.00] past a minute",
+                id="over-one-minute",
+            ),
+            pytest.param(
+                [("centiseconds", 50)],
+                "[00:00.05] centiseconds",
+                id="centiseconds",
+            ),
+            pytest.param(
+                [("millisecond precision is preserved", 2123)],
+                "[00:02.123] millisecond precision is preserved",
+                id="preserves-milliseconds",
+            ),
+        ],
+    )
+    def test_sylt_to_lrc(self, sylt, expected):
+        assert sylt_to_lrc(sylt) == expected
+
+    def test_roundtrip_from_lrc(self):
+        """LRC timestamps survive a ``sylt`` / ``sylt_to_lrc`` roundtrip."""
+        lrc = "[00:00.05] first\n[01:30.50] second"
+
+        assert sylt_to_lrc(Lyrics(lrc).sylt) == lrc
