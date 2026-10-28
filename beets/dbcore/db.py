@@ -56,7 +56,7 @@ if TYPE_CHECKING:
     from beets.util.functemplate import FieldTFuncs
 
     from ..util import PathLike
-    from .query import FieldQueryType, Query, SQLiteType
+    from .query import Query, QueryByField, SQLiteType
     from .sort import FieldSort, Sort
 
 D = TypeVar("D", bound="Database", default=Any)
@@ -282,7 +282,7 @@ class Model(ABC, Generic[D]):
     """
 
     @cached_classproperty
-    def _queries(cls) -> dict[str, FieldQueryType]:
+    def _queries(cls) -> QueryByField:
         """Named queries that use a field-like `name:value` syntax but which
         do not relate to any specific field.
         """
