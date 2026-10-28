@@ -102,6 +102,10 @@ Bug fixes
 - :ref:`update-cmd`: A filesystem error while moving an item or album is now
   reported and the update continues with the rest of the library, instead of
   aborting and leaving it partially updated. :bug:`2419`
+- :doc:`plugins/bareasc`: Fix a crash when a bare-ASCII (``#``) query reaches a
+  row with a ``NULL`` value in one of the searched columns. The ``unidecode``
+  SQLite function now passes ``NULL`` through instead of raising, which
+  previously surfaced as a ``DBCustomFunctionError``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
