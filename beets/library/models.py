@@ -757,7 +757,8 @@ class Item(LibModel):
     _formatter = FormattedItemMapping
 
     _sorts: ClassVar[dict[str, type[FieldSort]]] = {
-        "artist": sort.SmartArtistSort
+        "artist": sort.SmartArtistSort,
+        "initial_key": sort.HarmonicKeySort,
     }
 
     @cached_classproperty

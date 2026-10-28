@@ -6,6 +6,12 @@ from functools import reduce
 from operator import or_
 from typing import TYPE_CHECKING, Any
 
+from beets.util.musictheory import (
+    CIRCLE_OF_FIFTHS,
+    harmonic_sort_key,
+    key_spellings,
+)
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -228,6 +234,58 @@ class NullSort(Sort):
 
     def __hash__(self) -> int:
         return 0
+
+
+class HarmonicKeySort(FieldSort):
+    """Sort by musical key in Circle of Fifths order when
+    ``sort_initial_key_harmonic`` is enabled; falls back to standard
+    case-insensitive alphabetical ordering otherwise.
+
+    The ordering is done in SQL by mapping every accepted spelling of a key
+    (flat or sharp, long or short form) to its Circle of Fifths position.
+    Keys not present in the Circle of Fifths (or missing entirely) always sort
+    to the end; descending order only reverses the known keys.
+    """
+
+    @staticmethod
+    def _harmonic_enabled() -> bool:
+        import beets
+
+        return beets.config["sort_initial_key_harmonic"].get(bool)
+
+    def order_clause(self) -> str:
+        if not self._harmonic_enabled():
+            return FixedFieldSort(
+                self.field, self.ascending, self.case_insensitive
+            ).order_clause()
+
+        # Negating the positions reverses the known keys for a descending
+        # sort while the CASE is still ordered ASC, so the bucket for unknown
+        # keys (just above the largest known value) stays last either way.
+        sign = 1 if self.ascending else -1
+        unknown = len(CIRCLE_OF_FIFTHS) if self.ascending else 1
+        whens = " ".join(
+            f"WHEN '{spelling}' THEN {sign * position}"
+            for spelling, position in key_spellings().items()
+        )
+        return f"CASE LOWER({self.field}) {whens} ELSE {unknown} END ASC"
+
+    def sort(self, objs: Sequence[AnyModel]) -> Sequence[AnyModel]:
+        """Python fallback used when this sort follows a slow sort; must
+        order objects like :meth:`order_clause` does.
+        """
+        if not self._harmonic_enabled():
+            return FieldSort.sort(self, objs)
+
+        sign = 1 if self.ascending else -1
+
+        def key(obj: Model) -> tuple[bool, int]:
+            position = harmonic_sort_key(obj.get(self.field_name))
+            if position >= len(CIRCLE_OF_FIFTHS):
+                return (True, 0)
+            return (False, sign * position)
+
+        return sorted(objs, key=key)
 
 
 class SmartArtistSort(FieldSort):
