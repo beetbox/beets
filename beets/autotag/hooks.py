@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from functools import cached_property
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeVar
 
 from beets import config, logging
 from beets.util import AttrDict, cached_classproperty, unique_list
@@ -15,6 +15,7 @@ from beets.util.deprecation import (
 )
 
 JSONDict = dict[str, Any]
+InfoT = TypeVar("InfoT", bound="Info")
 
 log = logging.getLogger("beets")
 
@@ -186,6 +187,11 @@ class Info(AttrDict[Any]):
         self.genres = genres
         self.media = media
         self.update(kwargs)
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.artist} - {self.name} ({self.id}) from {self.data_source}"
+        )
 
     @staticmethod
     def _get_list_from_string_value(

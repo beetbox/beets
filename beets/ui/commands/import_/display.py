@@ -4,7 +4,7 @@ import os
 import textwrap
 from dataclasses import dataclass
 from functools import cached_property, singledispatch
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets import config, ui
 from beets.autotag import AlbumMatch, Source, TrackInfo, TrackMatch
@@ -32,7 +32,7 @@ class Change:
     TrackMatch object, accordingly.
     """
 
-    match: Match
+    match: Match[Any]
     source: Source
 
     @cached_property
@@ -108,7 +108,7 @@ class Change:
             ui.print_(f"{self.indent_detail}*", "Artist:", artist_r)
 
         if self.source.name:
-            type_ = self.match.type
+            type_ = self.match.type.capitalize()
             name_l, name_r = self.source.name, self.match.info.name
             if self.source.name != self.match.info.name != VARIOUS_ARTISTS:
                 name_l, name_r = colordiff(name_l, name_r)
@@ -371,7 +371,7 @@ class TrackChange(Change):
 
 
 @singledispatch
-def show_change(match: Match, source: Source) -> None:
+def show_change(match: Match[Any], source: Source) -> None:
     """Print out a representation of the changes."""
     raise NotImplementedError
 

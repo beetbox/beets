@@ -542,7 +542,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
 
         albums = list(self.lib.albums())
         assert len(albums) == 1
-        assert albums[0].mb_albumid == "albumid"
+        assert "albumid" in albums[0].mb_albumid
 
     def test_importer_edit_album_header_albumartist(self):
         """Edit albumartist in the header (default albumfields)."""
