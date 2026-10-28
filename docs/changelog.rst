@@ -49,6 +49,12 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- Sorting items by ``initial_key`` now follows the Circle of Fifths, with each
+  major key followed by its relative minor (``C Am G Em D Bm …``), so musical
+  keys are grouped by harmonic compatibility in queries and smart playlists.
+  Unknown or missing keys sort last. Short key forms such as ``Gmin`` and
+  ``Gmaj`` are now normalized like ``G minor`` and ``G major``. Set
+  :ref:`sort_initial_key_harmonic` to ``no`` to keep alphabetical sorting.
 
 Bug fixes
 ~~~~~~~~~
