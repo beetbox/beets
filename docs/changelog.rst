@@ -40,6 +40,10 @@ New features
   where the ``bpd`` and ``replaygain`` extras now install GStreamer, its plugins
   and the Python bindings, so that neither plugin needs a separate GStreamer
   installation there.
+- :doc:`plugins/lastgenre`: When no album genre is found for the primary
+  albumartist, the plugin now attempts to fetch genres for each artist listed in
+  the multi-valued ``albumartists`` field before falling back to the artist
+  source. :bug:`6238`
 
 Bug fixes
 ~~~~~~~~~
@@ -102,6 +106,12 @@ Bug fixes
 - :ref:`update-cmd`: A filesystem error while moving an item or album is now
   reported and the update continues with the rest of the library, instead of
   aborting and leaving it partially updated. :bug:`2419`
+- :doc:`plugins/deezer`: ``deezerupdate`` now stores each track's Deezer rank
+  instead of ``1``. :bug:`7106`
+- :doc:`plugins/replaygain`: Stop the exception watcher thread from busy-waiting
+  while the thread pool is open. It held a CPU core at 100% and starved the
+  other threads, making ``beet replaygain`` on a large library run for hours
+  without starting any analysis. :bug:`5449`
 - :doc:`plugins/bareasc`: Fix a crash when a bare-ASCII (``#``) query reaches a
   row with a ``NULL`` value in one of the searched columns. The ``unidecode``
   SQLite function now passes ``NULL`` through instead of raising, which
@@ -123,6 +133,7 @@ Other changes
 
 - :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
   ``platformdirs``, which beets already requires.
+- Beets now officially supports Python 3.15.
 
 2.14.1 (September 17, 2026)
 ---------------------------
