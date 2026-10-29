@@ -158,3 +158,33 @@ body {
 #player .disabled {
     color: #666;
 }
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #1a1a1a;
+        color: #ddd;
+    }
+    #entities {
+        background: #25292e;
+        box-shadow: 0 0 20px #000;
+        -webkit-box-shadow: 0 0 20px #000;
+        -moz-box-shadow: 0 0 20px #000;
+    }
+    #entities ul li.selected {
+        background: #2f6fb0;
+        background: -moz-linear-gradient(top, #4a8fd4 0%, #3171b0 44%, #245a92 100%);
+        background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#4a8fd4), color-stop(44%,#3171b0), color-stop(100%,#245a92));
+        color: white;
+    }
+    #query {
+        background: #1a1a1a;
+        border: 1px solid #444;
+        color: #ddd;
+    }
+    a {
+        color: #7abcff;
+    }
+    #player .disabled {
+        color: #555;
+    }
+}
