@@ -171,6 +171,22 @@ class TestTrackDistance:
         dist = track_distance(item, info, incl_artist=True)
         assert bool(dist) == expected_penalty, dist._penalties
 
+    @pytest.mark.parametrize(
+        "item_id, info_id, expected_penalty",
+        [
+            _p("rt-1", "rt-1", False, id="same"),
+            _p("rt-1", "rt-2", True, id="different"),
+            _p("", "rt-1", False, id="item-without-id"),
+            _p("rt-1", None, False, id="info-without-id"),
+        ],
+    )
+    def test_release_track_id(self, item_id, info_id, expected_penalty):
+        item = Item(title="title", mb_releasetrackid=item_id)
+        info = TrackInfo(title="title", release_track_id=info_id)
+
+        dist = track_distance(item, info)
+        assert bool(dist) == expected_penalty, dist._penalties
+
 
 class TestAlbumDistance:
     @pytest.fixture(scope="class")
