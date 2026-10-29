@@ -1248,13 +1248,24 @@ class Database:
 
             return bytestring
 
+        def unidecode_null(value: str | None) -> str | None:
+            """A ``unidecode`` wrapper that passes ``NULL`` values through.
+
+            The ``unidecode`` function fails on ``None``, which SQLite will hand
+            it whenever a queried column is ``NULL``..
+            """
+            if value is None:
+                return None
+
+            return unidecode(value)
+
         # Let sqlite make extra optimizations
         create_function = functools.partial(
             conn.create_function, deterministic=True
         )
 
         create_function("regexp", 2, regexp)
-        create_function("unidecode", 1, unidecode)
+        create_function("unidecode", 1, unidecode_null)
         create_function("bytelower", 1, bytelower)
 
     def _close(self) -> None:

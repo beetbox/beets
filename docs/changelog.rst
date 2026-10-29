@@ -112,6 +112,10 @@ Bug fixes
   while the thread pool is open. It held a CPU core at 100% and starved the
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
+- :doc:`plugins/bareasc`: Fix a crash when a bare-ASCII (``#``) query reaches a
+  row with a ``NULL`` value in one of the searched columns. The ``unidecode``
+  SQLite function now passes ``NULL`` through instead of raising, which
+  previously surfaced as a ``DBCustomFunctionError``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
