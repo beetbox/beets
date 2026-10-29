@@ -36,8 +36,7 @@ class TestBareascPlugin(PluginTestHelper):
         # its own (fixed string fields default to the empty string).
         with self.lib.transaction() as tx:
             tx.mutate(
-                "UPDATE items SET albumartist = NULL WHERE id = ?",
-                (item.id,),
+                "UPDATE items SET albumartist = NULL WHERE id = ?", (item.id,)
             )
 
         # A non-matching term defeats OR short-circuiting, so the NULL
