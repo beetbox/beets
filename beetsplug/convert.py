@@ -50,6 +50,10 @@ ALIASES = {"windows media": "wma", "vorbis": "ogg"}
 
 LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
 
+# ReplayGain 2.0 references -18 LUFS while Opus R128 gains reference
+# -23 LUFS (RFC 7845), so R128 gains are 5 dB lower.
+RG_TO_R128_OFFSET = -5.0
+
 
 class FormatCommand(NamedTuple):
     command: bytes
@@ -470,6 +474,13 @@ class ConvertPlugin(BeetsPlugin):
                 self._log.info(
                     "Skipping {.filepath} (destination file exists)", item
                 )
+                if (
+                    not keep_new
+                    and not pretend
+                    and self.should_transcode(item)
+                    and self.config["write_metadata"].get(bool)
+                ):
+                    self.sync_opus_gain(item, dest)
                 if keep_new and refresh:
                     self._log.debug(
                         "Skipping refresh: not supported with keep_new"
@@ -556,6 +567,8 @@ class ConvertPlugin(BeetsPlugin):
         # Write tags from the database to the file if requested
         if self.config["write_metadata"].get(bool):
             item.try_write(path=converted, id3v23=id3v23)
+            if not linked:
+                self.sync_opus_gain(item, converted)
 
         if keep_new:
             # If we're keeping the transcoded file, read it again (after
@@ -586,6 +599,95 @@ class ConvertPlugin(BeetsPlugin):
             plugins.send(
                 "after_convert", item=item, dest=converted, keepnew=False
             )
+
+    def sync_opus_gain(self, item: Item, path: bytes) -> None:
+        """Ensure that an Opus file at `path` carries R128 gain tags.
+
+        Opus players only honour R128_* tags, so they are derived from the
+        library's ReplayGain values. If the library has no track gain and the
+        file has none either, the gain is computed with the replaygain
+        plugin, when it is enabled.
+        """
+        try:
+            mf = mediafile.MediaFile(util.syspath(path))
+        except mediafile.UnreadableFileError as exc:
+            self._log.warning("Could not update gain tags: {}", exc)
+            return
+        if mf.type != "opus":
+            return
+
+        tags = {
+            "r128_track_gain": self._r128_gain(
+                item.r128_track_gain, item.rg_track_gain
+            ),
+            "r128_album_gain": self._r128_gain(
+                item.r128_album_gain, item.rg_album_gain
+            ),
+        }
+        if tags["r128_track_gain"] is None and mf.r128_track_gain is None:
+            tags["r128_track_gain"] = self._analyse_r128_track_gain(path)
+
+        # Q7.8 tags: compare in 1/256 dB steps to avoid rewriting the file
+        # because of float rounding.
+        changed = {
+            k: v
+            for k, v in tags.items()
+            if v is not None
+            and (
+                getattr(mf, k) is None
+                or round(getattr(mf, k) * 256) != round(v * 256)
+            )
+        }
+        if not changed:
+            return
+
+        self._log.debug(
+            "writing gain tags {} to {}", changed, util.displayable_path(path)
+        )
+        mf.update(changed)
+        try:
+            mf.save()
+        except mediafile.UnreadableFileError as exc:
+            self._log.warning("Could not update gain tags: {}", exc)
+
+    @staticmethod
+    def _r128_gain(r128: float | None, rg: float | None) -> float | None:
+        if r128 is not None:
+            return r128
+        if rg is not None:
+            return rg + RG_TO_R128_OFFSET
+        return None
+
+    def _analyse_r128_track_gain(self, path: bytes) -> float | None:
+        """Compute the R128 track gain of `path` with the replaygain plugin.
+
+        Return None if the plugin is not enabled or the analysis fails.
+        """
+        from beetsplug.replaygain import (
+            FatalReplayGainError,
+            ReplayGainError,
+            ReplayGainPlugin,
+        )
+
+        rg = next(
+            (
+                p
+                for p in plugins.find_plugins()
+                if isinstance(p, ReplayGainPlugin)
+            ),
+            None,
+        )
+        if rg is None:
+            return None
+
+        self._log.info("Analyzing gain of {}", util.displayable_path(path))
+        task = rg.create_task([Item(path=path)], use_r128=True)
+        try:
+            task = rg.backend_instance.compute_track_gain(task)
+        except (ReplayGainError, FatalReplayGainError) as exc:
+            self._log.warning("ReplayGain error: {}", exc)
+            return None
+        return task.track_gains[0].gain if task.track_gains else None
 
     def copy_album_art(self, album: Album) -> None:
         """Copies or converts the associated cover art of the album. Album must

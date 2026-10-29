@@ -3,13 +3,14 @@ from __future__ import annotations
 import fnmatch
 import os
 import shlex
+import shutil
 import sys
 from typing import TYPE_CHECKING
 
 import pytest
 from mediafile import MediaFile
 
-from beets import util
+from beets import plugins, util
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
@@ -298,6 +299,87 @@ class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
 
         converted = self.convert_dest / f"converted.{expected_ext}"
         assert self.file_endswith(converted, convert_fmt) is should_convert
+
+
+class TestOpusGainTags(ConvertPluginHelper, ConvertCommand):
+    """Test that converted Opus files get R128 gain tags."""
+
+    def setup_beets(self):
+        super().setup_beets()
+        self.item = self.add_item_fixture(ext="flac")
+        self.item.rg_track_gain = -7.5
+        self.item.rg_album_gain = -6.0
+        self.item.store()
+        self.converted = self.convert_dest / "converted.opus"
+
+        # The stub copies a real Opus file (ignoring the source) so that the
+        # result can be tagged.
+        stub = str(_common.RSRC / "convert_stub.py")
+        opus = str(_common.RSRC / "full.opus")
+        command = shlex.join([sys.executable, stub, opus]) + " $dest ''"
+        self.config["convert"] = {
+            "paths": {"default": "converted"},
+            "format": "opus",
+            "formats": {"opus": {"command": command, "extension": "opus"}},
+        }
+
+    def test_rg_gains_converted_to_r128(self):
+        self.run_convert("--yes")
+
+        mf = MediaFile(self.converted)
+        assert mf.r128_track_gain == pytest.approx(-12.5, abs=1 / 256)
+        assert mf.r128_album_gain == pytest.approx(-11.0, abs=1 / 256)
+
+    def test_r128_gains_kept(self):
+        self.item.r128_track_gain = -10.0
+        self.item.store()
+
+        self.run_convert("--yes")
+
+        assert MediaFile(self.converted).r128_track_gain == pytest.approx(
+            -10.0, abs=1 / 256
+        )
+
+    def test_existing_file_gets_gain_tags(self):
+        util.mkdirall(self.converted)
+        self.converted.write_bytes((_common.RSRC / "full.opus").read_bytes())
+        mtime = self.converted.stat().st_mtime_ns
+
+        self.run_convert("--yes")
+
+        mf = MediaFile(self.converted)
+        assert mf.r128_track_gain == pytest.approx(-12.5, abs=1 / 256)
+
+        # Up-to-date tags are not rewritten.
+        os.utime(self.converted, ns=(mtime, mtime))
+        self.run_convert("--yes")
+        assert self.converted.stat().st_mtime_ns == mtime
+
+    def test_no_gain_without_replaygain_plugin(self):
+        self.item.rg_track_gain = None
+        self.item.rg_album_gain = None
+        self.item.store()
+
+        self.run_convert("--yes")
+
+        assert MediaFile(self.converted).r128_track_gain is None
+
+    @pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
+    def test_gain_analysed_with_replaygain_plugin(self):
+        self.item.rg_track_gain = None
+        self.item.rg_album_gain = None
+        self.item.store()
+        self.config["replaygain"]["backend"] = "ffmpeg"
+        self.unload_plugins()
+        self.config["plugins"] = ["convert", "replaygain"]
+        plugins.load_plugins()
+
+        self.run_convert("--yes")
+
+        assert MediaFile(self.converted).r128_track_gain is not None
+        # The library item is left untouched.
+        self.item.load()
+        assert self.item.r128_track_gain is None
 
 
 class TestNoConvert(PluginTestHelper):
