@@ -113,9 +113,9 @@ Bug fixes
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
 - Autotagger: Match tracks by their MusicBrainz release track ID as well as
-  their recording ID. Media of one release can share recordings, like the CD
-  and SACD layers of a hybrid SACD, and files from the second medium were
-  assigned to the first medium's tracks, overwriting their release track IDs.
+  their recording ID. Media of one release can share recordings, like the CD and
+  SACD layers of a hybrid SACD, and files from the second medium were assigned
+  to the first medium's tracks, overwriting their release track IDs.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
