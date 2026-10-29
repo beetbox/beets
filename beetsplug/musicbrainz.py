@@ -627,6 +627,18 @@ class MusicBrainzPlugin(
                         track["recording"]["id"]
                     ]
 
+    @staticmethod
+    def _album_media(medias: set[str | None]) -> str | None:
+        """Return the release's media for the album: the media's shared format,
+        else their common base when they differ only in a parenthetical (the
+        layers of a hybrid SACD or the sides of a DualDisc), else ``Media``.
+        """
+        if len(medias) == 1:
+            return medias.pop()
+        if len(bases := {(m or "").split(" (")[0] for m in medias}) == 1:
+            return bases.pop() or "Media"
+        return "Media"
+
     def album_info(self, release: Release) -> AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
@@ -650,11 +662,7 @@ class MusicBrainzPlugin(
             album=release_title,
             album_id=release["id"],
             tracks=track_infos,
-            media=(
-                medias.pop()
-                if len(medias := {t.media for t in track_infos}) == 1
-                else "Media"
-            ),
+            media=self._album_media({t.media for t in track_infos}),
             mediums=len(release["media"]),
             data_source=self.data_source,
             data_url=urljoin(BASE_URL, f"release/{release['id']}"),
