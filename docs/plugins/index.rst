@@ -552,8 +552,8 @@ beets-plexsync_
     into Plex.
 
 beets-pysacd_
-    Imports SACD ISO images: converts each layer to DSF or FLAC with pysacd_,
-    on its own medium of the MusicBrainz release.
+    Imports SACD ISO images: converts each layer to DSF or FLAC with pysacd_, on
+    its own medium of the MusicBrainz release.
 
 beets-setlister_
     Generate playlists from the setlists of a given artist.
@@ -661,8 +661,6 @@ beets-youtube_
 
 .. _beets-pysacd: https://github.com/aclater/beets-pysacd
 
-.. _pysacd: https://github.com/aclater/pysacd
-
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
 .. _beets-usertag: https://github.com/edgars-supe/beets-usertag
@@ -690,6 +688,8 @@ beets-youtube_
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 
 .. _ibroadcast: https://ibroadcast.com/
+
+.. _pysacd: https://github.com/aclater/pysacd
 
 .. _subsonic api: https://www.subsonic.org/pages/api.jsp
 
