@@ -551,6 +551,10 @@ beets-plexsync_
     playlists in Plex, and import online playlists (from services like Spotify)
     into Plex.
 
+beets-pysacd_
+    Imports SACD ISO images: converts each layer to DSF or FLAC with pysacd_,
+    on its own medium of the MusicBrainz release.
+
 beets-setlister_
     Generate playlists from the setlists of a given artist.
 
@@ -654,6 +658,10 @@ beets-youtube_
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
 
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
+
+.. _beets-pysacd: https://github.com/aclater/beets-pysacd
+
+.. _pysacd: https://github.com/aclater/pysacd
 
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
