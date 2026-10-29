@@ -118,7 +118,13 @@ The available options are:
 - **id3v23**: Can be used to override the global ``id3v23`` option. Default:
   ``inherit``.
 - **write_metadata**: Can be used to disable writing metadata to converted
-  files. Default: ``true``.
+  files. Default: ``true``. When converting to Opus, R128 gain tags are written
+  as well, since Opus players ignore ``REPLAYGAIN_*`` tags. They are derived
+  from the item's ReplayGain values (R128 gains reference -23 LUFS, 5 dB below
+  ReplayGain's -18 LUFS). If the item has no gain data and the :doc:`replaygain`
+  plugin is enabled, the track gain is computed on the converted file. Files
+  that already exist at the destination are not re-encoded, but their gain tags
+  are updated.
 - **max_bitrate**: By default, the plugin does not transcode files that are
   already in the destination format. This option instead also transcodes files
   with high bitrates, even if they are already in the same format as the output.
