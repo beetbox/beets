@@ -157,14 +157,19 @@ be used for music discovery.
 The ``spotify`` plugin provides an additional command ``spotifysync`` to obtain
 these track attributes from Spotify:
 
-- ``beet spotifysync [-f] [-l LIMIT]``: obtain popularity and audio features
-  information for every track in the library. By default, ``spotifysync`` will
-  skip tracks that already have this information populated. Using the ``-f`` or
-  ``-force`` option will download the data even for tracks that already have it.
-  Please note that ``spotifysync`` works on tracks that have the Spotify track
-  identifiers. So run ``spotifysync`` only after importing your music, during
-  which Spotify identifiers will be added for tracks where Spotify is chosen as
-  the tag source.
+- ``beet spotifysync [-f] [-l LIMIT] [QUERY...]``: obtain popularity and
+  audio features information for matching tracks. With no query, the command
+  selects all tracks in the library. For example, to select tracks by an
+  artist::
+
+      beet spotifysync artist:Radiohead
+
+  By default, ``spotifysync`` skips tracks that already have this information
+  populated. Use ``-f`` or ``--force`` to download the data again.
+
+  The command only fetches information for tracks with Spotify track
+  identifiers. These identifiers are added during import when Spotify is
+  chosen as the tag source.
 
   In addition to ``popularity``, the command currently sets these audio features
   for all tracks with a Spotify track ID:
