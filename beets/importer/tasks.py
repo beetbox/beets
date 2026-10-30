@@ -246,6 +246,18 @@ class TrackDuplicates:
                 for other in lib.items(dup_query)
                 if other.path not in task_paths
             ]
+            if keys is not FALLBACK_ITEM_DUPLICATE_KEYS:
+                # Library items missing every configured key (e.g. added
+                # as-is, without mb_trackid) can only match on the fallback.
+                fallback_query = library.LibModel.duplicates_query(
+                    tmp_item, FALLBACK_ITEM_DUPLICATE_KEYS
+                )
+                found += [
+                    other
+                    for other in lib.items(fallback_query)
+                    if other.path not in task_paths
+                    and not any(other.get(k) for k in keys)
+                ]
             if found or (seen_keys is not None and item_key in seen_keys):
                 duplicates[item] = found
             # Claimed for later tasks only, not for this one.

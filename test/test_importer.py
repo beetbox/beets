@@ -2086,6 +2086,24 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 2",
         ]
 
+    def test_skip_matches_old_item_without_key_fields(self):
+        # The new track has an mb_trackid but the library copy, added as-is,
+        # does not: it is still matched on artist + title.
+        self.config["import"]["duplicate_keys"]["item"] = "mb_trackid"
+        self.add_item_fixture(
+            artist="Tag Artist", title="Tag Track 1", mb_trackid=""
+        )
+        for n, media in enumerate(self.import_media):
+            media.mb_trackid = f"new trackid {n}"
+            media.save()
+
+        self._import(action="skip")
+
+        assert sorted(i.title for i in self.lib.items()) == [
+            "Tag Track 1",
+            "Tag Track 2",
+        ]
+
     def test_skip_all_duplicates_skips_album(self):
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 2")
