@@ -48,6 +48,10 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
+  full traceback at error level when a search fails because the service is
+  unreachable. The error message is logged on its own, and the traceback is kept
+  at debug level. :bug:`6960`
 - :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
   gracefully by decoding with error handling and skipping tracks that produce
   unparseable data, instead of crashing. :bug:`3527`

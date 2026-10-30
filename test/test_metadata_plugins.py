@@ -1,8 +1,10 @@
+import logging
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor as BaseThreadPoolExecutor
 from threading import Event
 
 import pytest
+import requests
 
 from beets import metadata_plugins
 from beets.test.helper import PluginMixin
@@ -118,6 +120,21 @@ class TestSearchApiMetadataSourcePlugin(PluginMixin):
 
         assert search_plugin._search_api("track", "query", {}) == ()
         assert "Search failure" in caplog.text
+
+    def test_search_api_logs_request_error_without_traceback(
+        self, config, search_plugin, caplog, monkeypatch
+    ):
+        config["raise_on_error"] = False
+
+        def fail(_):
+            raise requests.exceptions.ConnectionError("Max retries exceeded")
+
+        monkeypatch.setattr(search_plugin, "get_search_response", fail)
+
+        assert search_plugin._search_api("track", "query", {}) == ()
+        errors = [r for r in caplog.records if r.levelno >= logging.ERROR]
+        assert "Max retries exceeded" in errors[0].getMessage()
+        assert not any(r.exc_info for r in errors)
 
     def test_search_api_raises_when_raise_on_error_enabled(
         self, config, search_plugin
