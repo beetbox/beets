@@ -131,6 +131,9 @@ Other changes
   ``platformdirs``, which beets already requires.
 - Beets now officially supports Python 3.15.
 
+- :doc:`plugins/spotify`: Correct the ``spotifysync`` long option to
+  ``--force`` and document selecting tracks with a query.
+
 2.14.1 (September 17, 2026)
 ---------------------------
 
