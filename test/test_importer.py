@@ -2071,6 +2071,21 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 2",
         }
 
+    def test_skip_falls_back_to_artist_title_without_key_fields(self):
+        # The configured key (mb_trackid) is empty on both sides, as on an
+        # as-is import, so artist + title is compared instead.
+        self.config["import"]["duplicate_keys"]["item"] = "mb_trackid"
+        self.add_item_fixture(
+            artist="Tag Artist", title="Tag Track 1", mb_trackid=""
+        )
+
+        self._import(action="skip")
+
+        assert sorted(i.title for i in self.lib.items()) == [
+            "Tag Track 1",
+            "Tag Track 2",
+        ]
+
     def test_skip_all_duplicates_skips_album(self):
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 1")
         self.add_item_fixture(artist="Tag Artist", title="Tag Track 2")

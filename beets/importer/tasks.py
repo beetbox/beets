@@ -172,6 +172,20 @@ def resolve_upgrade_target(
     return kept, superseded, [album_id] if album_id else []
 
 
+FALLBACK_ITEM_DUPLICATE_KEYS = ["artist", "title"]
+
+
+def item_duplicate_keys(item: library.Item) -> list[str]:
+    """The ``import.duplicate_keys.item`` fields to compare ``item`` on, or
+    ``artist title`` when the item has none of them set (e.g. ``mb_trackid``
+    on an as-is import), so untagged tracks are still checked.
+    """
+    keys: list[str] = config["import"]["duplicate_keys"]["item"].as_str_seq()
+    if any(item.get(k) for k in keys):
+        return keys
+    return FALLBACK_ITEM_DUPLICATE_KEYS
+
+
 @dataclass
 class TrackDuplicates:
     """The tracks of an import task that duplicate existing library items:
@@ -216,16 +230,14 @@ class TrackDuplicates:
         ``import.duplicate_keys.item`` and ignoring the task's own paths. Keys
         in ``seen_keys`` also count as duplicates; this task's are added to it.
         """
-        keys: list[str] = config["import"]["duplicate_keys"][
-            "item"
-        ].as_str_seq()
         task_paths = {i.path for i in task.items if i}
         duplicates: dict[library.Item, list[library.Item]] = {}
         claimed: set[tuple[Any, ...]] = set()
         for item, tmp_item in cls._candidate_pairs(task, lib):
+            keys = item_duplicate_keys(tmp_item)
             if not any(tmp_item.get(k) for k in keys):
                 continue
-            item_key = tuple(tmp_item.get(k) for k in keys)
+            item_key = (tuple(keys), *(tmp_item.get(k) for k in keys))
             # `Item.duplicates_query` restricts the search to singletons;
             # the base implementation does not.
             dup_query = library.LibModel.duplicates_query(tmp_item, keys)
@@ -1003,9 +1015,7 @@ class SingletonImportTask(ImportTask):
         # Query for existing items using the same metadata. We use a
         # temporary `Item` object to generate any computed fields.
         tmp_item = library.Item(lib, **info)
-        keys: list[str] = config["import"]["duplicate_keys"][
-            "item"
-        ].as_str_seq()
+        keys = item_duplicate_keys(tmp_item)
         dup_query = tmp_item.duplicates_query(keys)
 
         found_items = []
