@@ -4,7 +4,7 @@ AutoBPM Plugin
 The ``autobpm`` plugin uses the Librosa_ library to calculate the BPM of a track
 from its audio data and store it in the ``bpm`` field of your database. It does
 so automatically when importing music or through the ``beet autobpm [-l LIMIT]
-[QUERY]`` command.
+[-b START_BPM] [QUERY]`` command.
 
 Install
 -------
@@ -61,6 +61,9 @@ Default
         autobpm:
           beat_track_kwargs:
             start_bpm: 160
+
+    The ``start_bpm`` value can also be set for a single run using the ``-b``
+    or ``--start-bpm`` flag, which takes precedence over the configuration.
 
 .. conf:: quiet
     :default: no
