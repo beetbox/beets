@@ -24,7 +24,7 @@ from beets.plugins import BeetsPlugin
 from beets.util import command_output, syspath
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable, Iterator, Sequence
     from logging import Logger
     from types import FrameType
 
@@ -694,19 +694,29 @@ class MetaflacBackend(Backend):
             )
         self.command = path
 
+        help_output = call([self.command, "--help"], self._log).stdout
+        if b"--scan-replay-gain" not in help_output:
+            raise FatalReplayGainError(
+                "your metaflac does not support --scan-replay-gain"
+                " (FLAC tools 1.3.2 or newer is required)"
+            )
+
     def format_supported(self, item: Item) -> bool:
         """Return whether metaflac can process this item."""
         return item.format in self.SUPPORTED_FORMATS
 
     def compute_track_gain(self, task: AnyRgTask) -> AnyRgTask:
         """Compute the track gain for each FLAC item in the task."""
-        track_gains = []
-        for item in filter(self.format_supported, task.items):
-            self._add_replay_gain([item])
-            track_gains.append(
-                self._read_gain(item, "TRACK", task.target_level)
-            )
-        task.track_gains = track_gains
+        items = list(filter(self.format_supported, task.items))
+
+        if not items:
+            task.track_gains = None
+            return task
+
+        results = self._read_gain(items, task.target_level)
+
+        task.track_gains = [results[i][1] for i in items]
+
         return task
 
     def compute_album_gain(self, task: AnyRgTask) -> AnyRgTask:
@@ -717,53 +727,46 @@ class MetaflacBackend(Backend):
             task.track_gains = None
             return task
 
-        self._add_replay_gain(items)
-        task.track_gains = [
-            self._read_gain(item, "TRACK", task.target_level) for item in items
-        ]
-        task.album_gain = self._read_gain(items[0], "ALBUM", task.target_level)
+        results = self._read_gain(items, task.target_level)
+
+        task.album_gain = results[items[0]][0]
+        task.track_gains = [results[i][1] for i in items]
+
         return task
 
-    def _add_replay_gain(self, items: Sequence[Item]) -> None:
-        """Run ``metaflac --add-replay-gain`` on the given files."""
+    def _read_gain(
+        self, items: Sequence[Item], target_level: float
+    ) -> dict[Item, tuple[Gain, Gain]]:
+        """Run ``metaflac --scan-replay-gain`` on the given files"""
         paths = [str(item.filepath) for item in items]
-        call([self.command, "--add-replay-gain", *paths], self._log)
 
-    def _read_gain(self, item: Item, kind: str, target_level: float) -> Gain:
-        """Read the REPLAYGAIN gain and peak tags back from a file."""
-        gain_tag = f"REPLAYGAIN_{kind}_GAIN"
-        peak_tag = f"REPLAYGAIN_{kind}_PEAK"
-        command = [
-            self.command,
-            f"--show-tag={gain_tag}",
-            f"--show-tag={peak_tag}",
-            str(item.filepath),
-        ]
-        tags = self._parse_tags(call(command, self._log).stdout)
-        try:
-            gain = self._parse_gain(tags[gain_tag])
-            peak = float(tags[peak_tag])
-        except (KeyError, IndexError, ValueError) as exc:
-            raise ReplayGainError(
-                f"could not read metaflac replaygain tags for {item}: {exc!r}"
+        output = call(
+            [self.command, "--scan-replay-gain", *paths], self._log
+        ).stdout.decode("utf-8", "ignore")
+
+        results: dict[Item, tuple[Gain, Gain]] = {}
+        for item, gains in zip(items, self._parse_gains(output)):
+            album_gain, album_peak, track_gain, track_peak = gains
+
+            # metaflac uses an 89 dB reference, like the other backends
+            offset = target_level - 89.0
+
+            results[item] = (
+                Gain(gain=album_gain + offset, peak=album_peak),
+                Gain(gain=track_gain + offset, peak=track_peak),
             )
-        # metaflac uses an 89 dB reference, like the other backends
-        return Gain(gain=gain + (target_level - 89.0), peak=peak)
+        return results
 
     @staticmethod
-    def _parse_tags(output: bytes) -> dict[str, str]:
-        """Turn metaflac's NAME=VALUE output into a dict."""
-        tags: dict[str, str] = {}
-        for line in output.decode("utf-8", "ignore").splitlines():
-            name, sep, value = line.partition("=")
-            if sep:
-                tags[name.strip().upper()] = value.strip()
-        return tags
+    def _parse_gains(text: str) -> Iterator[Iterator[float]]:
+        """Parse the output of ``metaflac --scan-replay-gain``.
 
-    @staticmethod
-    def _parse_gain(value: str) -> float:
-        """Turn a '-7.89 dB' tag value into a float."""
-        return float(value.split()[0])
+        Each line has the form ``<path>: <album_gain> <album_peak>
+        <track_gain> <track_peak>``, in the same order as the input files.
+        """
+        for line in text.splitlines():
+            _, gains = line.rsplit(": ", 1)
+            yield map(float, gains.split())
 
 
 # GStreamer-based backend.
