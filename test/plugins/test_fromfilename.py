@@ -996,3 +996,39 @@ class FromfilenameImportTest(
         assert not file.artist
         assert not file.year
 
+    def test_writes_album(self):
+        """
+        When the user selects "ASIS" fromfilename
+        writes the data it found to the imported
+        copy of the file.
+        """
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        library_paths = [item.path for item in self.lib.items()]
+        assert MediaFile(library_paths[0]).album == "Album Title"
+
+    def test_asis_writes_single(self):
+        """
+        When the user selects "ASIS" fromfilename
+        writes the data it found to the imported
+        copy of the file.
+        """
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        library_paths = [item.path for item in self.lib.items()]
+        assert MediaFile(library_paths[0]).title == "This Track"
+        assert MediaFile(library_paths[1]).title == "The Other Track"
+
+    def test_as_tracks_toggle(self):
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.io.addinput("f")
+        self.io.addinput("t")
+        self.io.addinput("f")
+        self.io.addinput("s")
+        self.io.addinput("a")
+        self.importer.run()
+        titles = [item.title for item in self.lib.items()]
+        assert titles[0] == "The Other Track"
+
