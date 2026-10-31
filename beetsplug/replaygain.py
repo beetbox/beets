@@ -745,7 +745,7 @@ class MetaflacBackend(Backend):
         ).stdout.decode("utf-8", "ignore")
 
         results: dict[Item, tuple[Gain, Gain]] = {}
-        for item, gains in zip(items, self._parse_output(output)):
+        for item, gains in zip(items, self._parse_gains(output)):
             album_gain, album_peak, track_gain, track_peak = gains
 
             # metaflac uses an 89 dB reference, like the other backends
@@ -758,7 +758,7 @@ class MetaflacBackend(Backend):
         return results
 
     @staticmethod
-    def _parse_output(text: str) -> Iterator[Iterator[float]]:
+    def _parse_gains(text: str) -> Iterator[Iterator[float]]:
         """Parse the output of ``metaflac --scan-replay-gain``.
 
         Each line has the form ``<path>: <album_gain> <album_peak>

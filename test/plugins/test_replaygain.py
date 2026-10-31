@@ -364,13 +364,13 @@ class TestReplayGainMetaflacCli(ReplayGainCliTest, MetaflacBackendMixin):
         return super()._add_album(*args, **kwargs)
 
 
-def test_metaflac_backend_parses_output():
+def test_metaflac_backend_parses_gains():
     output = (
         "01.flac: -1.234567 0.123456 1.987654 0.456789\n"
         "Artist: 02.flac: -1.234567 0.123456 -1.987654 0.987654\n"
     )
 
-    results = [list(gains) for gains in MetaflacBackend._parse_output(output)]
+    results = [list(gains) for gains in MetaflacBackend._parse_gains(output)]
 
     assert results == [
         pytest.approx([-1.234567, 0.123456, 1.987654, 0.456789]),
