@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from beets.test.helper import ImportHelper, PluginTestHelper
+from beets.ui import UserError
 
 pytestmark = pytest.mark.requires_import("librosa")
 
@@ -100,6 +101,56 @@ class TestAutoBPMPlugin(ImportHelper, PluginTestHelper):
         kwargs = beat_track_spy.call_args.kwargs
         assert kwargs["start_bpm"] == 155
         assert kwargs["tightness"] == 100
+
+    def test_command_bpm_range(self, item, beat_track_spy):
+        item.bpm = None
+        item.store()
+
+        self.run_command("autobpm", "--min-bpm", "140", "--max-bpm", "190")
+
+        prior = beat_track_spy.call_args.kwargs["prior"]
+        assert prior.support() == (140, 190)
+        assert prior.logpdf(100) == float("-inf")
+        assert prior.logpdf(160) > float("-inf")
+
+    def test_config_bpm_range_single_bound(self, item, beat_track_spy):
+        item.bpm = None
+        item.store()
+
+        self.unload_plugins()
+        self.config[self.plugin]["min_bpm"] = 140
+        self.load_plugins()
+
+        self.run_command("autobpm")
+
+        assert beat_track_spy.call_args.kwargs["prior"].support() == (140, 320)
+
+    def test_command_bpm_range_invalid(self, item):
+        with pytest.raises(UserError):
+            self.run_command("autobpm", "--min-bpm", "190", "--max-bpm", "140")
+
+    def test_command_bpm_range_without_tempo_candidates(
+        self, item, beat_track_spy
+    ):
+        item.bpm = None
+        item.store()
+
+        with pytest.raises(UserError, match="no tempo can be detected"):
+            self.run_command("autobpm", "--min-bpm", "175", "--max-bpm", "177")
+
+        beat_track_spy.assert_not_called()
+
+    def test_command_non_finite_tempo(self, item):
+        item.bpm = None
+        item.store()
+
+        with patch(
+            "librosa.beat.beat_track", return_value=(float("inf"), None)
+        ):
+            self.run_command("autobpm")
+
+        item.load()
+        assert not item.bpm
 
     def test_import(self, importer):
         importer.run()
