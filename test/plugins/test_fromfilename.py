@@ -1031,4 +1031,3 @@ class FromfilenameImportTest(
         self.importer.run()
         titles = [item.title for item in self.lib.items()]
         assert titles[0] == "The Other Track"
-
