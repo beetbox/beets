@@ -89,6 +89,16 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         web.app.config["INCLUDE_PATHS"] = False
 
+    def test_config_include_paths_album_without_art(self):
+        web.app.config["INCLUDE_PATHS"] = True
+        response = self.client.get("/album/1")
+        res_json = json.loads(response.data.decode("utf-8"))
+
+        assert response.status_code == 200
+        assert res_json["artpath"] is None
+
+        web.app.config["INCLUDE_PATHS"] = False
+
     def test_config_include_paths_false(self):
         web.app.config["INCLUDE_PATHS"] = False
         response = self.client.get("/item/1")

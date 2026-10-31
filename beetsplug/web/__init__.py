@@ -71,7 +71,8 @@ def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
 
     if isinstance(obj, beets.library.Album):
         if app.config.get("INCLUDE_PATHS", False):
-            out["artpath"] = util.displayable_path(out["artpath"])
+            if out["artpath"] is not None:
+                out["artpath"] = util.displayable_path(out["artpath"])
         else:
             del out["artpath"]
         if expand:
