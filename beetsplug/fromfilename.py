@@ -12,11 +12,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from beets import config
+from beets.importer import Action, SingletonImportTask
 from beets.plugins import BeetsPlugin
 from beets.util import displayable_path
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, ValuesView
+    from collections.abc import Iterator, Mapping, Sized, ValuesView
+    from typing import Any
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item
@@ -196,7 +198,76 @@ class FromFilenamePlugin(BeetsPlugin):
             self.folder_fields,
         )
 
+        self.backup_items: dict[Item, Mapping[str, Any]] = {}
+        self.regroup_items = 0
+
         self.register_listener("import_task_start", self.filename_task)
+        self.register_listener("import_task_apply", self.clear_task_data)
+        self.register_listener("import_task_choice", self.update_regroup_items)
+
+    def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
+        """When an import task has been applied, we don't need any of the backup
+        data we created.
+
+        This clears it out for the next import task,
+        while keeping items that might have been moved
+        to another task.
+
+        Items don't get dropped mid-task, so we should be
+        good with a simple `del` statement
+        """
+        for item in task.items:
+            del self.backup_items[item]
+
+    def build_backup_data(self, items: list[Item]) -> None:
+        """Build a backup of the data from the items.
+
+        Since items in the task are mutable, if the user wants to
+        revert these operations, we need to restore our backup
+        to the session items.
+        """
+        self.backup_items.update(
+            {item: self.build_item_backup_data(item) for item in items}
+        )
+
+    def build_item_backup_data(self, item: Item) -> Mapping[str, Any]:
+        """Builds the per item dict for `build_backup_data`"""
+        return {
+            field: item.get(field, with_album=False)
+            for field in [*self.file_fields, *self.folder_fields]
+        }
+
+    def restore_backup_data(self, items: list[Item]) -> None:
+        """Restore the fields we mutated in a previous round of fromfilename"""
+        if self.backup_items:
+            for item in items:
+                backup = self.backup_items.get(item, {})
+                item.update(backup)
+                try:
+                    del self.backup_items[item]
+                except KeyError:
+                    self._log.debug(f"item {item.filepath} not in backup data")
+
+    def update_regroup_items(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
+        """Store a count of how many items we can expect
+        in future sessions from this re-grouping.
+
+        This allows the plugin to avoid reading the folder.
+        """
+        if task.choice_flag in [Action.ALBUMS, Action.TRACKS]:
+            self.regroup_items += len(task.items)
+
+    def is_regrouped_task(self, items: Sized) -> bool:
+        """If the item is within the count of
+        items from a previous regrouping task,
+        we know to not look at the folder.
+        """
+        if self.regroup_items:
+            self.regroup_items -= len(items)
+            return True
+        return False
 
     @cached_property
     def ignored_directories(self) -> set[str]:
@@ -220,6 +291,12 @@ class FromFilenamePlugin(BeetsPlugin):
         # Retrieve the list of items to process
         items: list[Item] = task.items
 
+        # Conditionally restores any existing data
+        self.restore_backup_data(items)
+
+        # Create a backup of the items we can restore later
+        self.build_backup_data(items)
+
         # Retrieve the path characteristics to check
         parent_folder, item_filenames = self._get_path_strings(items)
 
@@ -229,8 +306,13 @@ class FromFilenamePlugin(BeetsPlugin):
         if self._has_bad_fields(items, list(self.file_fields)):
             track_matches = self._build_track_matches(item_filenames)
 
-        if self._has_bad_fields(items, list(self.folder_fields)):
-            album_matches = self._build_album_match(parent_folder, items)
+        # Both of these mean we are splitting up the files
+        # into individuals not based on folder
+        if not self.is_regrouped_task(items) and not isinstance(
+            task, SingletonImportTask
+        ):
+            if self._has_bad_fields(items, list(self.folder_fields)):
+                album_matches = self._build_album_match(parent_folder, items)
 
         if track_matches and self.config["sanity_check"].get(bool):
             self._sanity_check_matches(album_matches, track_matches)
