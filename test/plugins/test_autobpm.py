@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from beets.test.helper import ImportHelper, PluginTestHelper
+from beets.ui import UserError
 
 pytestmark = pytest.mark.requires_import("librosa")
 
@@ -100,6 +101,33 @@ class TestAutoBPMPlugin(ImportHelper, PluginTestHelper):
         kwargs = beat_track_spy.call_args.kwargs
         assert kwargs["start_bpm"] == 155
         assert kwargs["tightness"] == 100
+
+    def test_command_bpm_range(self, item, beat_track_spy):
+        item.bpm = None
+        item.store()
+
+        self.run_command("autobpm", "--min-bpm", "140", "--max-bpm", "190")
+
+        prior = beat_track_spy.call_args.kwargs["prior"]
+        assert prior.support() == (140, 190)
+        assert prior.logpdf(100) == float("-inf")
+        assert prior.logpdf(160) > float("-inf")
+
+    def test_config_bpm_range_single_bound(self, item, beat_track_spy):
+        item.bpm = None
+        item.store()
+
+        self.unload_plugins()
+        self.config[self.plugin]["min_bpm"] = 140
+        self.load_plugins()
+
+        self.run_command("autobpm")
+
+        assert beat_track_spy.call_args.kwargs["prior"].support() == (140, 320)
+
+    def test_command_bpm_range_invalid(self, item):
+        with pytest.raises(UserError):
+            self.run_command("autobpm", "--min-bpm", "190", "--max-bpm", "140")
 
     def test_import(self, importer):
         importer.run()
