@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
     from logging import Logger
 
+    from beets.autotag import Proposal
     from beets.importer import Action, ImportSession, ImportTask
     from beets.library import Item
 
@@ -174,7 +175,9 @@ class MoveOperation(Enum):
 class PromptChoice(NamedTuple):
     short: str
     long: str
-    callback: Callable[[ImportSession, ImportTask], Action | None] | None
+    callback: (
+        Callable[[ImportSession, ImportTask], Proposal | Action | None] | None
+    )
 
 
 @overload
