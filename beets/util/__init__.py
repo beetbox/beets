@@ -62,10 +62,6 @@ StrPath = str | Path
 PathLike = StrPath | bytes
 Replacements = Sequence[tuple[Pattern[str], str]]
 
-# Here for now to allow for a easy replace later on
-# once we can move to a PathLike (mainly used in importer)
-PathBytes = bytes
-
 
 class HumanReadableError(Exception):
     """An Exception that can include a human-readable error message to
@@ -220,62 +216,82 @@ def ancestry(path: AnyStr) -> list[AnyStr]:
     return out
 
 
-def sorted_walk(
-    path: AnyStr,
-    ignore: Sequence[AnyStr] = (),
+def _sorted_walk(
+    path: Path,
+    ignore: Sequence[str] = (),
     ignore_hidden: bool = False,
     logger: Logger | None = None,
-) -> Iterator[tuple[AnyStr, Sequence[AnyStr], Sequence[AnyStr]]]:
-    """Like `os.walk`, but yields things in case-insensitive sorted,
-    breadth-first order.  Directory and file names matching any glob
-    pattern in `ignore` are skipped. If `logger` is provided, then
-    warning messages are logged there when a directory cannot be listed.
-    """
+) -> Iterator[tuple[Path, Sequence[Path], Sequence[Path]]]:
+    """Walk the directory tree using `Path` objects only."""
     # Get all the directories and files at this level.
     try:
-        contents = os.listdir(path)
+        entries = list(path.iterdir())
     except OSError:
         if logger:
-            logger.warning(
-                "could not list directory {}",
-                displayable_path(path),
-                exc_info=True,
-            )
+            logger.warning("could not list directory {}", path, exc_info=True)
         return
     dirs = []
     files = []
-    for base in contents:
+    for entry in entries:
         # Skip ignored filenames.
-        skip = False
-        for pat in ignore:
-            if fnmatch.fnmatch(base, pat):
-                if logger:
-                    logger.debug(
-                        "ignoring '{}' due to ignore rule '{}'", base, pat
-                    )
-                skip = True
-                break
-        if skip:
+        if rule := next(filter(entry.match, ignore), None):
+            if logger:
+                logger.debug(
+                    "ignoring '{}' due to ignore rule '{}'", entry.name, rule
+                )
+            continue
+
+        if ignore_hidden and hidden.is_hidden(entry):
             continue
 
         # Add to output as either a file or a directory.
-        cur = os.path.join(path, base)
-        if (ignore_hidden and not hidden.is_hidden(cur)) or not ignore_hidden:
-            if os.path.isdir(syspath(cur)):
-                dirs.append(base)
-            else:
-                files.append(base)
+        if entry.is_dir():
+            dirs.append(entry)
+        else:
+            files.append(entry)
 
     # Sort lists (case-insensitive) and yield the current level.
-    sort_key = path.__class__.lower
-    dirs.sort(key=sort_key)
-    files.sort(key=sort_key)
-    yield (path, dirs, files)
+    dirs.sort(key=lambda p: p.name.lower())
+    files.sort(key=lambda p: p.name.lower())
+    yield (
+        path,
+        [d.relative_to(path) for d in dirs],
+        [f.relative_to(path) for f in files],
+    )
 
-    # Recurse into directories.
-    for base in dirs:
-        cur = os.path.join(path, base)
-        yield from sorted_walk(cur, ignore, ignore_hidden, logger)
+    for dir_path in dirs:
+        yield from _sorted_walk(dir_path, ignore, ignore_hidden, logger)
+
+
+def sorted_walk(
+    path: AnyPath,
+    ignore: Sequence[str] | Sequence[bytes] = (),
+    ignore_hidden: bool = False,
+    logger: Logger | None = None,
+) -> Iterator[tuple[AnyPath, Sequence[AnyPath], Sequence[AnyPath]]]:
+    """Walk a directory tree like `os.walk`, in case-insensitive sorted order.
+
+    Directory and file names matching any glob pattern in `ignore` are
+    skipped. If `logger` is provided, directories that cannot be listed are
+    logged there as warnings.
+
+    Paths are yielded in the same representation as the given `path`, so
+    that third-party plugins still passing `str` or `bytes` keep working
+    while they migrate to `Path`.
+    """
+    if any(isinstance(i, bytes) for i in ignore):
+        deprecate_for_maintainers(
+            "Passing Sequence[bytes] as 'ignore'", "Sequence[str]", stacklevel=2
+        )
+
+    for p, dirs, files in _sorted_walk(
+        as_path(path), list(map(os.fsdecode, ignore)), ignore_hidden, logger
+    ):
+        yield (
+            as_path_like(p, path),
+            [as_path_like(d, path) for d in dirs],
+            [as_path_like(f, path) for f in files],
+        )
 
 
 def path_as_posix(path: bytes) -> bytes:
