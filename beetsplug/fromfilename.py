@@ -216,6 +216,22 @@ class FromFilenamePlugin(BeetsPlugin):
         self.register_listener("item_imported", self.write_found_item)
         self.register_listener("album_imported", self.write_found_album)
 
+    def before_choose_candidate(
+        self, **kwargs: Unpack[ImportTaskEventArgs]
+    ) -> list[PromptChoice]:
+        return [
+            PromptChoice("f", "toggle FromFilename", self.fromfilename_toggle)
+        ]
+
+    @cached_property
+    def ignored_directories(self) -> set[str]:
+        return set(
+            [
+                p.lower()
+                for p in self.config["fromfolder"]["ignore"].as_str_seq()
+            ]
+        )
+
     def write_found_item(self, lib: Library, item: Item) -> None:
         """
         Ensure the data we found is written to the imported file.
@@ -229,122 +245,15 @@ class FromFilenamePlugin(BeetsPlugin):
         for item in album.items():
             item.try_write()
 
-    def before_choose_candidate(
-        self, **kwargs: Unpack[ImportTaskEventArgs]
-    ) -> list[PromptChoice]:
-        return [
-            PromptChoice("f", "toggle FromFilename", self.fromfilename_toggle)
-        ]
-
-    def fromfilename_toggle(
-        self, session: ImportSession, task: ImportTask | SingletonImportTask
-    ) -> Proposal:
-        """
-        Restore any backup data, get new proposals from the un-altered data.
-        """
-        autouse = not self.config["autouse"].get(bool)
-        self.config["autouse"] = autouse
-        if not autouse:
-            self.restore_backup_data(task.items)
-        if autouse:
-            self.filename_task(task, session)
-        # Now we have to search for things again...
-        self._log.debug(
-            "fromfilename set to {} - searching for metadata again...", autouse
-        )
-        if task.is_album:
-            item = task.items[0]
-            return tag_album(
-                source=Source.from_items(task.items),
-                search_artist=item.get("artist"),
-                search_name=item.get("album"),
-            )
-        item = task.items[0]
-        return tag_item(
-            source=Source.from_items(task.items),
-            search_artist=item.get("artist"),
-            search_name=item.get("album"),
-        )
-
-    def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
-        """When an import task has been applied, we don't need any of the backup
-        data we created.
-
-        This clears it out for the next import task,
-        while keeping items that might have been moved
-        to another task.
-
-        Items don't get dropped mid-task, so we should be
-        good with a simple `del` statement
-        """
-        for item in task.items:
-            del self.backup_items[item]
-
-    def build_backup_data(self, items: list[Item]) -> None:
-        """Build a backup of the data from the items.
-
-        Since items in the task are mutable, if the user wants to
-        revert these operations, we need to restore our backup
-        to the session items.
-        """
-        self.backup_items.update(
-            {item: self.build_item_backup_data(item) for item in items}
-        )
-
-    def build_item_backup_data(self, item: Item) -> Mapping[str, Any]:
-        """Builds the per item dict for `build_backup_data`"""
-        return {
-            field: item.get(field, with_album=False)
-            for field in [*self.file_fields, *self.folder_fields]
-        }
-
-    def restore_backup_data(self, items: list[Item]) -> None:
-        """Restore the fields we mutated in a previous round of fromfilename"""
-        if self.backup_items:
-            for item in items:
-                backup = self.backup_items.get(item, {})
-                item.update(backup)
-                try:
-                    del self.backup_items[item]
-                except KeyError:
-                    self._log.debug(f"item {item.filepath} not in backup data")
-
-    def update_regroup_items(
-        self, task: ImportTask, session: ImportSession
-    ) -> None:
-        """Store a count of how many items we can expect
-        in future sessions from this re-grouping.
-
-        This allows the plugin to avoid reading the folder.
-        """
-        if task.choice_flag in [Action.ALBUMS, Action.TRACKS]:
-            self.regroup_items += len(task.items)
-
-    def is_regrouped_task(self, items: Sized) -> bool:
-        """If the item is within the count of
-        items from a previous regrouping task,
-        we know to not look at the folder.
-        """
-        if self.regroup_items:
-            self.regroup_items -= len(items)
-            return True
-        return False
-
-    @cached_property
-    def ignored_directories(self) -> set[str]:
-        return set(
-            [
-                p.lower()
-                for p in self.config["fromfolder"]["ignore"].as_str_seq()
-            ]
-        )
-
     def filename_task(self, task: ImportTask, session: ImportSession) -> None:
-        """Examines all files in the given import task for any missing
+        """
+        Examines all files in the given import task for any missing
         information it can gather from the file and folder names.
 
         Once the information has been obtained and checked, it
         is applied to the items to improve later metadata lookup.
+
+        Alternatively, backups of the data are restored.
         """
         # Shortcut if the user has disabled the plugin
         if not self.config["autouse"].get(bool):
@@ -384,6 +293,63 @@ class FromFilenamePlugin(BeetsPlugin):
         if album_matches:
             self._apply_album_matches(items, album_matches)
 
+    def update_regroup_items(
+        self, task: ImportTask, session: ImportSession
+    ) -> None:
+        """
+        Store a count of how many items we can expect
+        in future sessions from this re-grouping.
+
+        This allows the plugin to avoid reading the folder.
+        """
+        if task.choice_flag in [Action.ALBUMS, Action.TRACKS]:
+            self.regroup_items += len(task.items)
+
+    def fromfilename_toggle(
+        self, session: ImportSession, task: ImportTask | SingletonImportTask
+    ) -> Proposal:
+        """
+        Restore any backup data, get new proposals from the un-altered data.
+        """
+        autouse = not self.config["autouse"].get(bool)
+        self.config["autouse"] = autouse
+        if not autouse:
+            self.restore_backup_data(task.items)
+        if autouse:
+            self.filename_task(task, session)
+        # Now we have to search for things again...
+        self._log.debug(
+            "fromfilename set to {} - searching for metadata again...", autouse
+        )
+        if task.is_album:
+            item = task.items[0]
+            return tag_album(
+                source=Source.from_items(task.items),
+                search_artist=item.get("artist"),
+                search_name=item.get("album"),
+            )
+        item = task.items[0]
+        return tag_item(
+            source=Source.from_items(task.items),
+            search_artist=item.get("artist"),
+            search_name=item.get("album"),
+        )
+
+    def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
+        """
+        When an import task has been applied, we don't need any of the backup
+        data we created.
+
+        This clears it out for the next import task,
+        while keeping items that might have been moved
+        to another task.
+
+        Items don't get dropped mid-task, so we should be
+        good with a simple `del` statement
+        """
+        for item in task.items:
+            del self.backup_items[item]
+
     def _has_bad_fields(self, items: list[Item], fields: list[str]) -> bool:
         """Look for what fields are missing data on the items.
         Compare each field in the list to the fields on the
@@ -405,7 +371,8 @@ class FromFilenamePlugin(BeetsPlugin):
     def _user_pattern_to_regex(
         self, patterns: list[str], fields: set[str]
     ) -> list[re.Pattern[str]]:
-        """Compile user patterns into a list of usable regex patterns.
+        """
+        Compile user patterns into a list of usable regex patterns.
 
         Catchs syntax errors and continues without bad regex patterns.
         """
@@ -737,3 +704,48 @@ class FromFilenamePlugin(BeetsPlugin):
     def _equal_fields(dictionaries: list[FilenameMatch], field: str) -> bool:
         """Checks if all values of a field on a dictionary match."""
         return len(set(d[field] for d in dictionaries)) <= 1
+
+    def is_regrouped_task(self, items: Sized) -> bool:
+        """
+        If the item is within the count of
+        items from a previous regrouping task,
+        we know to not look at the folder.
+        """
+        if self.regroup_items:
+            self.regroup_items -= len(items)
+            return True
+        return False
+
+    def build_backup_data(self, items: list[Item]) -> None:
+        """
+        Build a backup of the data from the items.
+
+        Since items in the task are mutable, if the user wants to
+        revert these operations, we need to restore our backup
+        to the session items.
+        """
+        self.backup_items.update(
+            {item: self.build_item_backup_data(item) for item in items}
+        )
+
+    def build_item_backup_data(self, item: Item) -> Mapping[str, Any]:
+        """
+        Builds the per item dict for `build_backup_data`
+        """
+        return {
+            field: item.get(field, with_album=False)
+            for field in [*self.file_fields, *self.folder_fields]
+        }
+
+    def restore_backup_data(self, items: list[Item]) -> None:
+        """
+        Restore the fields we mutated in a previous round of fromfilename
+        """
+        if self.backup_items:
+            for item in items:
+                backup = self.backup_items.get(item, {})
+                item.update(backup)
+                try:
+                    del self.backup_items[item]
+                except KeyError:
+                    self._log.debug(f"item {item.filepath} not in backup data")
