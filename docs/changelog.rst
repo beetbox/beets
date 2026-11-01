@@ -169,6 +169,9 @@ Bug fixes
   shares caused by a hard-coded leading dot ('.'). :bug:`7033`
 - :ref:`import-cmd` Fix interactive importer ignoring candidates from manual
   search (``e``) and manual ID (``i``) entry. :bug:`7000`
+- :doc:`plugins/badfiles`: Detach stdin from the controlling terminal when
+  running checker commands, so a checker can no longer leave the terminal in a
+  modified state (e.g. with input echo disabled) after ``beet bad``. :bug:`6750`
 
 ..
     For plugin developers
@@ -282,9 +285,6 @@ Bug fixes
   scrubbing when ``should_write()`` returns ``False``. :bug:`6958`
 - :doc:`plugins/convert`: Fixed convert plugin not taking into account the new
   format when determining the target path. :bug:`1360`
-- :doc:`plugins/badfiles`: Detach stdin from the controlling terminal when
-  running checker commands, so a checker can no longer leave the terminal in a
-  modified state (e.g. with input echo disabled) after ``beet bad``. :bug:`6750`
 - :doc:`plugins/edit`: Item-only fields rejected from the album header remain
   available in per-track documents during interactive import when they are also
   configured in ``itemfields``. :bug:`6953`
