@@ -162,6 +162,11 @@ For plugin developers
   patterns. ``str`` and ``bytes`` paths and ``bytes`` ignore patterns keep
   working, with results returned in the representation of the given path, but
   emit a :class:`DeprecationWarning` and will be removed in 3.0.0.
+- ``Item.destination`` now returns a :class:`pathlib.Path` instead of
+  :class:`bytes`, and the ``basedir`` argument of ``Item.destination``,
+  ``Item.move`` and ``Album.move`` expects a :class:`pathlib.Path`. There is no
+  compatibility shim, so plugins comparing the result against ``item.path`` or
+  passing it to :mod:`os.path` helpers alongside ``bytes`` paths need updating.
 
 Other changes
 ~~~~~~~~~~~~~

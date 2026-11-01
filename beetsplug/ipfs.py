@@ -145,7 +145,7 @@ class IPFSPlugin(BeetsPlugin):
             cmd = "ipfs add --nocopy -q -r".split()
         else:
             cmd = "ipfs add -q -r".split()
-        cmd.append(os.fsdecode(album_dir))
+        cmd.append(str(album_dir))
         try:
             output = util.command_output(cmd).stdout.split()
         except (OSError, subprocess.CalledProcessError) as exc:

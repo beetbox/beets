@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -20,10 +21,16 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import TestHelper
-from beets.util import as_string, bytestring_path, normpath
+from beets.util import as_string
+
+if TYPE_CHECKING:
+    from beets.library import Item
+
 
 # Shortcut to path normalization.
-np = util.normpath
+def np(path: str) -> Path:
+    return util.normpath(Path(path))
+
 
 _p = pytest.param
 
@@ -279,50 +286,50 @@ class TestDestination(PytestItemHelper):
     def test_destination_escapes_slashes(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
         item_in_db.album = "one/two"
-        dest = item_in_db.destination()
-        assert b"one" in dest
-        assert b"two" in dest
-        assert b"one/two" not in dest
+        dest = str(item_in_db.destination())
+        assert "one" in dest
+        assert "two" in dest
+        assert "one/two" not in dest
 
     def test_destination_escapes_leading_dot(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
         item_in_db.album = ".something"
-        dest = item_in_db.destination()
-        assert b"something" in dest
-        assert b"/.something" not in dest
+        dest = str(item_in_db.destination())
+        assert "something" in dest
+        assert "/.something" not in dest
 
     def test_destination_preserves_legitimate_slashes(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album/$track $title")]
         item_in_db.artist = "one"
         item_in_db.album = "two"
         dest = item_in_db.destination()
-        assert os.path.join(b"one", b"two") in dest
+        assert str(Path("one") / "two") in str(dest)
 
     def test_destination_long_names_truncated(self, item_in_db):
         item_in_db.title = "X" * 300
         item_in_db.artist = "Y" * 300
-        for c in item_in_db.destination().split(util.PATH_SEP):
+        for c in item_in_db.destination().parts:
             assert len(c) <= 255
 
     def test_destination_long_names_keep_extension(self, item_in_db):
         item_in_db.title = "X" * 300
         item_in_db.path = b"something.extn"
         dest = item_in_db.destination()
-        assert dest[-5:] == b".extn"
+        assert dest.suffix == ".extn"
 
     def test_distination_windows_removes_both_separators(self, item_in_db):
         item_in_db.title = "one \\ two / three.mp3"
         with _common.platform_windows():
-            p = item_in_db.destination()
-        assert b"one \\ two" not in p
-        assert b"one / two" not in p
-        assert b"two \\ three" not in p
-        assert b"two / three" not in p
+            p = str(item_in_db.destination())
+        assert "one \\ two" not in p
+        assert "one / two" not in p
+        assert "two \\ three" not in p
+        assert "two / three" not in p
 
     def test_path_with_format(self, item_in_db):
         self.lib.path_formats = [("default", "$artist/$album ($format)")]
-        p = item_in_db.destination()
-        assert b"(FLAC)" in p
+        p = str(item_in_db.destination())
+        assert "(FLAC)" in p
 
     def test_heterogeneous_album_gets_single_directory(self):
         i1, i2 = _common.item(self.lib), _common.item(self.lib)
@@ -330,7 +337,7 @@ class TestDestination(PytestItemHelper):
         i1.year, i2.year = 2009, 2010
         self.lib.path_formats = [("default", "$album ($year)/$track $title")]
         dest1, dest2 = i1.destination(), i2.destination()
-        assert os.path.dirname(dest1) == os.path.dirname(dest2)
+        assert dest1.parent == dest2.parent
 
     def test_default_path_for_non_compilations(self, item_in_db):
         item_in_db.comp = False
@@ -458,28 +465,28 @@ class TestDestination(PytestItemHelper):
         item_in_db.albumartist = "something"
         self.lib.path_formats = [("default", "$artist")]
         p = item_in_db.destination()
-        assert p.rsplit(util.PATH_SEP, 1)[1] == b"something"
+        assert p.name == "something"
 
     def test_albumartist_falls_back_to_artist(self, item_in_db):
         item_in_db.artist = "trackartist"
         item_in_db.albumartist = ""
         self.lib.path_formats = [("default", "$albumartist")]
         p = item_in_db.destination()
-        assert p.rsplit(util.PATH_SEP, 1)[1] == b"trackartist"
+        assert p.name == "trackartist"
 
     def test_artist_overrides_albumartist(self, item_in_db):
         item_in_db.artist = "theartist"
         item_in_db.albumartist = "something"
         self.lib.path_formats = [("default", "$artist")]
         p = item_in_db.destination()
-        assert p.rsplit(util.PATH_SEP, 1)[1] == b"theartist"
+        assert p.name == "theartist"
 
     def test_albumartist_overrides_artist(self, item_in_db):
         item_in_db.artist = "theartist"
         item_in_db.albumartist = "something"
         self.lib.path_formats = [("default", "$albumartist")]
         p = item_in_db.destination()
-        assert p.rsplit(util.PATH_SEP, 1)[1] == b"something"
+        assert p.name == "something"
 
     def test_unicode_extension_in_fragment(self, item_in_db):
         self.lib.path_formats = [("default", "foo")]
@@ -519,7 +526,7 @@ class TestDestination(PytestItemHelper):
 
     def test_destination_with_empty_leading_component(self, item_in_db):
         self.config["empty_component_replace"] = "_"
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [("default", "$album/$title")]
         item_in_db.album = ""
         item_in_db.title = "three"
@@ -629,17 +636,10 @@ class PathFormattingMixin:
     def _setf(self, fmt):
         self.lib.path_formats.insert(0, ("default", fmt))
 
-    def _assert_dest(self, dest, item):
+    def _assert_dest(self, dest: str, item: Item) -> None:
         # Handle paths on Windows.
-        if os.path.sep != "/":
-            dest = dest.replace(b"/", os.path.sep.encode())
-
-            # Paths are normalized based on the CWD.
-            dest = normpath(dest)
-
-        actual = item.destination()
-
-        assert actual == dest
+        expected = Path(dest.replace("/", os.path.sep)).resolve()
+        assert item.destination() == expected
 
 
 class TestDestinationFunction(TestHelper, PathFormattingMixin):
@@ -651,103 +651,103 @@ class TestDestinationFunction(TestHelper, PathFormattingMixin):
 
     def test_upper_case_literal(self, item):
         self._setf("%upper{foo}")
-        self._assert_dest(b"/base/FOO", item)
+        self._assert_dest("/base/FOO", item)
 
     def test_upper_case_variable(self, item):
         self._setf("%upper{$title}")
-        self._assert_dest(b"/base/THE TITLE", item)
+        self._assert_dest("/base/THE TITLE", item)
 
     def test_capitalize_variable(self, item):
         self._setf("%capitalize{$title}")
-        self._assert_dest(b"/base/The title", item)
+        self._assert_dest("/base/The title", item)
 
     def test_title_case_variable(self, item):
         self._setf("%title{$title}")
-        self._assert_dest(b"/base/The Title", item)
+        self._assert_dest("/base/The Title", item)
 
     def test_title_case_variable_aphostrophe(self, item):
         self._setf("%title{I can't}")
-        self._assert_dest(b"/base/I Can't", item)
+        self._assert_dest("/base/I Can't", item)
 
     def test_asciify_variable(self, item):
         self._setf("%asciify{ab\xa2\xbdd}")
-        self._assert_dest(b"/base/abC_ 1_2d", item)
+        self._assert_dest("/base/abC_ 1_2d", item)
 
     def test_left_variable(self, item):
         self._setf("%left{$title, 3}")
-        self._assert_dest(b"/base/the", item)
+        self._assert_dest("/base/the", item)
 
     def test_right_variable(self, item):
         self._setf("%right{$title,3}")
-        self._assert_dest(b"/base/tle", item)
+        self._assert_dest("/base/tle", item)
 
     def test_if_false(self, item):
         self._setf("x%if{,foo}")
-        self._assert_dest(b"/base/x", item)
+        self._assert_dest("/base/x", item)
 
     def test_if_false_value(self, item):
         self._setf("x%if{false,foo}")
-        self._assert_dest(b"/base/x", item)
+        self._assert_dest("/base/x", item)
 
     def test_if_true(self, item):
         self._setf("%if{bar,foo}")
-        self._assert_dest(b"/base/foo", item)
+        self._assert_dest("/base/foo", item)
 
     def test_if_else_false(self, item):
         self._setf("%if{,foo,baz}")
-        self._assert_dest(b"/base/baz", item)
+        self._assert_dest("/base/baz", item)
 
     def test_if_else_false_value(self, item):
         self._setf("%if{false,foo,baz}")
-        self._assert_dest(b"/base/baz", item)
+        self._assert_dest("/base/baz", item)
 
     def test_if_int_value(self, item):
         self._setf("%if{0,foo,baz}")
-        self._assert_dest(b"/base/baz", item)
+        self._assert_dest("/base/baz", item)
 
     def test_nonexistent_function(self, item):
         self._setf("%foo{bar}")
-        self._assert_dest(b"/base/%foo{bar}", item)
+        self._assert_dest("/base/%foo{bar}", item)
 
     def test_if_def_field_return_self(self, item):
         item.bar = 3
         self._setf("%ifdef{bar}")
-        self._assert_dest(b"/base/3", item)
+        self._assert_dest("/base/3", item)
 
     def test_if_def_field_not_defined(self, item):
         self._setf(" %ifdef{bar}/$artist")
-        self._assert_dest(b"/base/the artist", item)
+        self._assert_dest("/base/the artist", item)
 
     def test_if_def_field_not_defined_2(self, item):
         self._setf("$artist/%ifdef{bar}")
-        self._assert_dest(b"/base/the artist", item)
+        self._assert_dest("/base/the artist", item)
 
     def test_if_def_true(self, item):
         self._setf("%ifdef{artist,cool}")
-        self._assert_dest(b"/base/cool", item)
+        self._assert_dest("/base/cool", item)
 
     def test_if_def_true_complete(self, item):
         item.series = "Now"
         self._setf("%ifdef{series,$series Series,Albums}/$album")
-        self._assert_dest(b"/base/Now Series/the album", item)
+        self._assert_dest("/base/Now Series/the album", item)
 
     def test_if_def_false_complete(self, item):
         self._setf("%ifdef{plays,$plays,not_played}")
-        self._assert_dest(b"/base/not_played", item)
+        self._assert_dest("/base/not_played", item)
 
     def test_first(self, item):
         item.albumtypes = ["album", "compilation"]
         self._setf("%first{$albumtypes}")
-        self._assert_dest(b"/base/album", item)
+        self._assert_dest("/base/album", item)
 
     def test_first_skip(self, item):
         item.albumtype = "album; ep; compilation"
         self._setf("%first{$albumtype,1,2}")
-        self._assert_dest(b"/base/compilation", item)
+        self._assert_dest("/base/compilation", item)
 
     def test_first_different_sep(self, item):
         self._setf("%first{Alice / Bob / Eve,2,0, / , & }")
-        self._assert_dest(b"/base/Alice & Bob", item)
+        self._assert_dest("/base/Alice & Bob", item)
 
 
 class TestDisambiguation(TestHelper, PathFormattingMixin):
@@ -769,7 +769,7 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
 
     def test_unique_expands_to_disambiguating_year(self, items):
         i1, _i2 = items
-        self._assert_dest(b"/base/foo [2001]/the title", i1)
+        self._assert_dest("/base/foo [2001]/the title", i1)
 
     def test_unique_with_default_arguments_uses_albumtype(self, items):
         i1, _i2 = items
@@ -777,7 +777,7 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album2.albumtype = "bar"
         album2.store()
         self._setf("foo%aunique{}/$title")
-        self._assert_dest(b"/base/foo [bar]/the title", i1)
+        self._assert_dest("/base/foo [bar]/the title", i1)
 
     def test_unique_expands_to_nothing_for_distinct_albums(self, items):
         i1, i2 = items
@@ -785,19 +785,19 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album2.album = "different album"
         album2.store()
 
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
     def test_adding_album_invalidates_memoized_result(self, items):
         i1, i2 = items
         album2 = self.lib.get_album(i2)
         album2.album = "different album"
         album2.store()
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
         i3 = item(year=2003)
         self.lib.add_album([i3])
 
-        self._assert_dest(b"/base/foo [2001]/the title", i1)
+        self._assert_dest("/base/foo [2001]/the title", i1)
 
     @pytest.mark.parametrize("singleton_first", [True, False])
     def test_unique_separates_raw_query_groups(self, items, singleton_first):
@@ -810,9 +810,9 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         self.lib.add_album([i3])
 
         expected = [
-            (b"/base/foo/the title", i3),
-            (b"/base/foo [2001]/the title", i1),
-            (b"/base/foo [2002]/the title", i2),
+            ("/base/foo/the title", i3),
+            ("/base/foo [2001]/the title", i1),
+            ("/base/foo [2002]/the title", i2),
         ]
         for path, track in expected if singleton_first else reversed(expected):
             self._assert_dest(path, track)
@@ -823,12 +823,12 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album2 = self.lib.get_album(i2)
         album2.album = "Different"
         album2.store()
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
         album2.album = i1.album
         album2.store(inherit=inherit)
-        self._assert_dest(b"/base/foo [2001]/the title", i1)
-        self._assert_dest(b"/base/foo [2002]/the title", i2)
+        self._assert_dest("/base/foo [2001]/the title", i1)
+        self._assert_dest("/base/foo [2002]/the title", i2)
 
     def test_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
@@ -836,13 +836,13 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album2.year = 2001
         album2.store()
 
-        self._assert_dest(b"/base/foo [1]/the title", i1)
-        self._assert_dest(b"/base/foo [2]/the title", i2)
+        self._assert_dest("/base/foo [1]/the title", i1)
+        self._assert_dest("/base/foo [2]/the title", i2)
 
     def test_unique_falls_back_to_second_distinguishing_field(self, items):
         i1, _i2 = items
         self._setf("foo%aunique{albumartist album,month year}/$title")
-        self._assert_dest(b"/base/foo [2001]/the title", i1)
+        self._assert_dest("/base/foo [2001]/the title", i1)
 
     def test_unique_sanitized(self, items):
         i1, i2 = items
@@ -853,7 +853,7 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album2.store()
         album1.store()
         self._setf("foo%aunique{albumartist album,albumtype}/$title")
-        self._assert_dest(b"/base/foo [foo_bar]/the title", i1)
+        self._assert_dest("/base/foo [foo_bar]/the title", i1)
 
     def test_drop_empty_disambig_string(self, items):
         i1, i2 = items
@@ -864,17 +864,17 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album1.store()
         album2.store()
         self._setf("foo%aunique{albumartist album,albumdisambig}/$title")
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
     def test_change_brackets(self, items):
         i1, _i2 = items
         self._setf("foo%aunique{albumartist album,year,()}/$title")
-        self._assert_dest(b"/base/foo (2001)/the title", i1)
+        self._assert_dest("/base/foo (2001)/the title", i1)
 
     def test_remove_brackets(self, items):
         i1, _i2 = items
         self._setf("foo%aunique{albumartist album,year,}/$title")
-        self._assert_dest(b"/base/foo 2001/the title", i1)
+        self._assert_dest("/base/foo 2001/the title", i1)
 
     def test_unique_memoizes_brackets_independently(self, items):
         i1, _i2 = items
@@ -882,7 +882,7 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
             "foo%aunique{albumartist album,year,()}"
             "%aunique{albumartist album,year,[]}/$title"
         )
-        self._assert_dest(b"/base/foo (2001) [2001]/the title", i1)
+        self._assert_dest("/base/foo (2001) [2001]/the title", i1)
 
     def test_key_flexible_attribute(self, items):
         i1, i2 = items
@@ -893,7 +893,7 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album1.store()
         album2.store()
         self._setf("foo%aunique{albumartist album flex,year}/$title")
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
 
 class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
@@ -915,7 +915,7 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
 
     def test_sunique_expands_to_disambiguating_year(self, items):
         i1, _i2 = items
-        self._assert_dest(b"/base/foo/the title [2001]", i1)
+        self._assert_dest("/base/foo/the title [2001]", i1)
 
     def test_sunique_with_default_arguments_uses_trackdisambig(self, items):
         i1, i2 = items
@@ -923,14 +923,14 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i1.year = i2.year
         i1.store()
         self._setf("foo/$title%sunique{}")
-        self._assert_dest(b"/base/foo/the title [live version]", i1)
+        self._assert_dest("/base/foo/the title [live version]", i1)
 
     def test_sunique_expands_to_nothing_for_distinct_singletons(self, items):
         i1, i2 = items
         i2.title = "different track"
         i2.store()
 
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
     @pytest.mark.parametrize("singleton_first", [True, False])
     def test_unique_separates_raw_query_groups(self, items, singleton_first):
@@ -942,9 +942,9 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         self.lib.add(i3)
 
         expected = [
-            (b"/base/foo/AC_DC", i3),
-            (b"/base/foo/AC_DC [2001]", i1),
-            (b"/base/foo/AC_DC [2002]", i2),
+            ("/base/foo/AC_DC", i3),
+            ("/base/foo/AC_DC [2001]", i1),
+            ("/base/foo/AC_DC [2002]", i2),
         ]
         for path, track in expected if singleton_first else reversed(expected):
             self._assert_dest(path, track)
@@ -962,41 +962,41 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         assert i1.formatted().get("length") == i3.formatted().get("length")
         self._setf("foo/$title%sunique{length,year}")
 
-        self._assert_dest(b"/base/foo/the title", i3)
-        self._assert_dest(b"/base/foo/the title [2001]", i1)
-        self._assert_dest(b"/base/foo/the title [2002]", i2)
+        self._assert_dest("/base/foo/the title", i3)
+        self._assert_dest("/base/foo/the title [2001]", i1)
+        self._assert_dest("/base/foo/the title [2002]", i2)
 
     def test_store_invalidates_disambiguator(self, items):
         i1, i2 = items
-        self._assert_dest(b"/base/foo/the title [2001]", i1)
+        self._assert_dest("/base/foo/the title [2001]", i1)
         i2.year = i1.year
         i2.store()
-        self._assert_dest(b"/base/foo/the title [%d]" % i1.id, i1)
-        self._assert_dest(b"/base/foo/the title [%d]" % i2.id, i2)
+        self._assert_dest(f"/base/foo/the title [{i1.id}]", i1)
+        self._assert_dest(f"/base/foo/the title [{i2.id}]", i2)
 
     def test_sunique_does_not_match_album(self, items):
         i1, i2 = items
         self.lib.add_album([i2])
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
     def test_sunique_skips_config_for_album_item(self, items, config):
         _i1, i2 = items
         self.lib.add_album([i2])
         config["sunique"]["bracket"] = 5
-        self._assert_dest(b"/base/foo/the title", i2)
+        self._assert_dest("/base/foo/the title", i2)
 
     def test_sunique_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
         i2.year = i1.year
         i2.store()
 
-        self._assert_dest(b"/base/foo/the title [1]", i1)
-        self._assert_dest(b"/base/foo/the title [2]", i2)
+        self._assert_dest("/base/foo/the title [1]", i1)
+        self._assert_dest("/base/foo/the title [2]", i2)
 
     def test_sunique_falls_back_to_second_distinguishing_field(self, items):
         i1, _i2 = items
         self._setf("foo/$title%sunique{albumartist album,month year}")
-        self._assert_dest(b"/base/foo/the title [2001]", i1)
+        self._assert_dest("/base/foo/the title [2001]", i1)
 
     def test_sunique_sanitized(self, items):
         i1, i2 = items
@@ -1005,7 +1005,7 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i2.store()
         i1.store()
         self._setf("foo/$title%sunique{artist title,trackdisambig}")
-        self._assert_dest(b"/base/foo/the title [foo_bar]", i1)
+        self._assert_dest("/base/foo/the title [foo_bar]", i1)
 
     def test_drop_empty_disambig_string(self, items):
         i1, i2 = items
@@ -1014,17 +1014,17 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i1.store()
         i2.store()
         self._setf("foo/$title%sunique{albumartist album,trackdisambig}")
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
     def test_change_brackets(self, items):
         i1, _i2 = items
         self._setf("foo/$title%sunique{artist title,year,()}")
-        self._assert_dest(b"/base/foo/the title (2001)", i1)
+        self._assert_dest("/base/foo/the title (2001)", i1)
 
     def test_remove_brackets(self, items):
         i1, _i2 = items
         self._setf("foo/$title%sunique{artist title,year,}")
-        self._assert_dest(b"/base/foo/the title 2001", i1)
+        self._assert_dest("/base/foo/the title 2001", i1)
 
     def test_key_flexible_attribute(self, items):
         i1, i2 = items
@@ -1033,7 +1033,7 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
         i1.store()
         i2.store()
         self._setf("foo/$title%sunique{artist title flex,year}")
-        self._assert_dest(b"/base/foo/the title", i1)
+        self._assert_dest("/base/foo/the title", i1)
 
 
 class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
@@ -1052,23 +1052,23 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
 
     def test_expands_to_disambiguating_track(self, items):
         i1, i2 = items
-        self._assert_dest(b"/base/Common Title [07]", i1)
-        self._assert_dest(b"/base/Common Title [11]", i2)
+        self._assert_dest("/base/Common Title [07]", i1)
+        self._assert_dest("/base/Common Title [11]", i2)
 
     def test_with_default_arguments_uses_disc(self, items):
         i1, i2 = items
         i2.disc = 2
         i2.store()
         self._setf("$title%tunique{}")
-        self._assert_dest(b"/base/Common Title [01]", i1)
-        self._assert_dest(b"/base/Common Title [02]", i2)
+        self._assert_dest("/base/Common Title [01]", i1)
+        self._assert_dest("/base/Common Title [02]", i2)
 
     def test_expands_to_nothing_for_unique_titles(self, items):
         i1, i2 = items
         i2.title = "Different"
         i2.store()
 
-        self._assert_dest(b"/base/Common Title", i1)
+        self._assert_dest("/base/Common Title", i1)
 
     def test_does_not_match_singletons(self, items):
         i1, _i2 = items
@@ -1077,9 +1077,9 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         self.lib.add(i3)
 
         # i1 still needs disambiguation from i2 in the same album
-        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest("/base/Common Title [07]", i1)
         # Singleton should NOT get track disambiguation
-        self._assert_dest(b"/base/Common Title", i3)
+        self._assert_dest("/base/Common Title", i3)
 
     def test_does_not_match_cross_album(self, items):
         i1, _i2 = items
@@ -1089,9 +1089,9 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         self.lib.add_album([i3])
 
         # i1 still needs disambiguation from i2 in the same album
-        self._assert_dest(b"/base/Common Title [07]", i1)
+        self._assert_dest("/base/Common Title [07]", i1)
         # Other album's tracks should NOT be matched
-        self._assert_dest(b"/base/Common Title", i3)
+        self._assert_dest("/base/Common Title", i3)
 
     def test_use_fallback_numbers_when_identical(self, items):
         i1, i2 = items
@@ -1100,8 +1100,8 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i2.artist = i1.artist
         i2.store()
 
-        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
-        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+        self._assert_dest(f"/base/Common Title [{i1.id}]", i1)
+        self._assert_dest(f"/base/Common Title [{i2.id}]", i2)
 
     @pytest.mark.parametrize("disambiguators", ["track disc", "disc"])
     def test_expands_to_disambiguating_disc(self, items, disambiguators):
@@ -1111,18 +1111,18 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i2.store()
 
         self._setf(f"$title%tunique{{title,{disambiguators}}}")
-        self._assert_dest(b"/base/Common Title [01]", i1)
-        self._assert_dest(b"/base/Common Title [02]", i2)
+        self._assert_dest("/base/Common Title [01]", i1)
+        self._assert_dest("/base/Common Title [02]", i2)
 
     def test_change_brackets(self, items):
         i1, _i2 = items
         self._setf("$title%tunique{title,track,()}")
-        self._assert_dest(b"/base/Common Title (07)", i1)
+        self._assert_dest("/base/Common Title (07)", i1)
 
     def test_remove_brackets(self, items):
         i1, _i2 = items
         self._setf("$title%tunique{title,track,}")
-        self._assert_dest(b"/base/Common Title 07", i1)
+        self._assert_dest("/base/Common Title 07", i1)
 
     def test_drop_empty_disambig(self, items):
         i1, i2 = items
@@ -1133,9 +1133,9 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
 
         self._setf("$title%tunique{title,trackdisambig}")
         # i1 has trackdisambig, so gets suffixed
-        self._assert_dest(b"/base/Common Title [live version]", i1)
+        self._assert_dest("/base/Common Title [live version]", i1)
         # i2 has no trackdisambig, so no suffix
-        self._assert_dest(b"/base/Common Title", i2)
+        self._assert_dest("/base/Common Title", i2)
 
     def test_with_flex_key_field(self, items):
         i1, i2 = items
@@ -1147,8 +1147,8 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i2.store()
 
         self._setf("$title%tunique{flexkey,track}")
-        self._assert_dest(b"/base/Diff1", i1)
-        self._assert_dest(b"/base/Diff2", i2)
+        self._assert_dest("/base/Diff1", i1)
+        self._assert_dest("/base/Diff2", i2)
 
     @pytest.mark.parametrize(
         "first_artist, second_artist, replacement, asciify",
@@ -1175,8 +1175,8 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i2.store()
 
         self._setf("$title%tunique{title,artist}")
-        self._assert_dest(b"/base/Common Title [%d]" % i1.id, i1)
-        self._assert_dest(b"/base/Common Title [%d]" % i2.id, i2)
+        self._assert_dest(f"/base/Common Title [{i1.id}]", i1)
+        self._assert_dest(f"/base/Common Title [{i2.id}]", i2)
 
     def test_path_formatted_key_collision(self, items):
         i1, i2 = items
@@ -1185,13 +1185,13 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i1.store()
         i2.store()
 
-        self._assert_dest(b"/base/AC_DC [07]", i1)
-        self._assert_dest(b"/base/AC_DC [11]", i2)
+        self._assert_dest("/base/AC_DC [07]", i1)
+        self._assert_dest("/base/AC_DC [11]", i2)
 
     def test_memoizes_brackets_independently(self, items):
         i1, _i2 = items
         self._setf("$title%tunique{title,track,()}%tunique{title,track,[]}")
-        self._assert_dest(b"/base/Common Title (07) [07]", i1)
+        self._assert_dest("/base/Common Title (07) [07]", i1)
 
     @pytest.mark.parametrize("distinct_titles", [2, 12, 100])
     def test_reuses_album_analysis_for_distinct_titles(
@@ -1208,7 +1208,7 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
 
         with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
             for track in tracks:
-                self._assert_dest(f"/base/{track.title}".encode(), track)
+                self._assert_dest(f"/base/{track.title}", track)
 
         assert lib_items.call_count == 1
 
@@ -1217,9 +1217,9 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i3 = item(title="Different", album_id=i1.album_id)
         self.lib.add(i3)
         with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
-            self._assert_dest(b"/base/Different", i3)
-            self._assert_dest(b"/base/Common Title [07]", i1)
-            self._assert_dest(b"/base/Common Title [11]", i2)
+            self._assert_dest("/base/Different", i3)
+            self._assert_dest("/base/Common Title [07]", i1)
+            self._assert_dest("/base/Common Title [11]", i2)
 
         assert lib_items.call_count == 1
 
@@ -1227,28 +1227,28 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         i1, i2 = items
         i2.title = "Different"
         i2.store()
-        self._assert_dest(b"/base/Common Title", i1)
+        self._assert_dest("/base/Common Title", i1)
 
         i2.title = i1.title
         i2.store()
-        self._assert_dest(b"/base/Common Title [07]", i1)
-        self._assert_dest(b"/base/Common Title [11]", i2)
+        self._assert_dest("/base/Common Title [07]", i1)
+        self._assert_dest("/base/Common Title [11]", i2)
 
         i2.title = "Different"
         i2.store()
-        self._assert_dest(b"/base/Common Title", i1)
-        self._assert_dest(b"/base/Different", i2)
+        self._assert_dest("/base/Common Title", i1)
+        self._assert_dest("/base/Different", i2)
 
     def test_unsaved_title_outside_collision_groups(self, items):
         i1, _i2 = items
         i1.title = "Unsaved"
-        self._assert_dest(b"/base/Unsaved", i1)
+        self._assert_dest("/base/Unsaved", i1)
 
     def test_reuses_collision_group_analysis(self, items):
         i1, i2 = items
         with patch.object(self.lib, "items", wraps=self.lib.items) as lib_items:
-            self._assert_dest(b"/base/Common Title [07]", i1)
-            self._assert_dest(b"/base/Common Title [11]", i2)
+            self._assert_dest("/base/Common Title [07]", i1)
+            self._assert_dest("/base/Common Title [11]", i2)
 
         assert lib_items.call_count == 1
 
@@ -1276,19 +1276,19 @@ class TestPluginDestination(TestHelper, PathFormattingMixin):
         plugins.item_field_getters = self.old_field_getters
 
     def test_undefined_value_not_substituted(self, item):
-        self._assert_dest(b"/base/the artist $foo", item)
+        self._assert_dest("/base/the artist $foo", item)
 
     def test_plugin_value_not_substituted(self, item):
         self._tv_map = {"foo": "bar"}
-        self._assert_dest(b"/base/the artist bar", item)
+        self._assert_dest("/base/the artist bar", item)
 
     def test_plugin_value_overrides_attribute(self, item):
         self._tv_map = {"artist": "bar"}
-        self._assert_dest(b"/base/bar $foo", item)
+        self._assert_dest("/base/bar $foo", item)
 
     def test_plugin_value_sanitized(self, item):
         self._tv_map = {"foo": "bar/baz"}
-        self._assert_dest(b"/base/the artist bar_baz", item)
+        self._assert_dest("/base/the artist bar_baz", item)
 
 
 class TestAlbumInfo(PytestItemHelper):
@@ -1306,10 +1306,11 @@ class TestAlbumInfo(PytestItemHelper):
 
     def test_albuminfo_stores_art(self, item_in_album):
         ai = self.lib.get_album(item_in_album)
-        ai.artpath = os.fsdecode(np("/my/great/art"))
+        bytes_artpath = util.normpath("/my/great/art")
+        ai.artpath = bytes_artpath
         ai.store()
         new_ai = self.lib.get_album(item_in_album)
-        assert new_ai.artpath == np("/my/great/art")
+        assert new_ai.artpath == bytes_artpath
 
     def test_albuminfo_for_two_items_doesnt_duplicate_row(self, item_in_album):
         i2 = _common.item(self.lib)
@@ -1403,20 +1404,19 @@ class TestArtDestination(TestHelper):
     def test_art_filename_respects_setting(self, item_and_album):
         _i, ai = item_and_album
         art = ai.art_destination("something.jpg")
-        new_art = bytestring_path(f"{os.path.sep}artimage.jpg")
-        assert new_art in art
+        assert art.name == "artimage.jpg"
 
     def test_art_path_in_item_dir(self, item_and_album):
         i, ai = item_and_album
         art = ai.art_destination("something.jpg")
         track = i.destination()
-        assert os.path.dirname(art) == os.path.dirname(track)
+        assert art.parent == track.parent
 
     def test_art_path_sanitized(self, item_and_album, config):
         _i, ai = item_and_album
         config["art_filename"] = "artXimage"
         art = ai.art_destination("something.jpg")
-        assert b"artYimage" in art
+        assert "artYimage" in str(art)
 
 
 class TestPathString(PytestItemHelper):
@@ -1453,16 +1453,16 @@ class TestPathString(PytestItemHelper):
         self.lib.add(item)
         assert self.get_first_item().filepath == self.lib_path / path
 
-    def test_destination_returns_bytestring(self, item_in_db):
+    def test_destination_returns_path(self, item_in_db):
         item_in_db.artist = "b\xe1r"
         dest = item_in_db.destination()
-        assert isinstance(dest, bytes)
+        assert isinstance(dest, Path)
 
-    def test_art_destination_returns_bytestring(self, item_in_db):
+    def test_art_destination_returns_path(self, item_in_db):
         item_in_db.artist = "b\xe1r"
         alb = self.lib.add_album([item_in_db])
         dest = alb.art_destination("image.jpg")
-        assert isinstance(dest, bytes)
+        assert isinstance(dest, Path)
 
     def test_artpath_stores_special_chars(self, item_in_db):
         path = Path("b\xe1r")
@@ -1675,7 +1675,7 @@ class TestItemRead(PytestItemHelper):
 
     def test_nonexistent_raise_read_error(self, item_in_db):
         with pytest.raises(beets.library.ReadError):
-            item_in_db.read("/thisfiledoesnotexist")
+            item_in_db.read(Path("/thisfiledoesnotexist"))
 
     def test_read_error_str_includes_reason(self, item_in_db):
         unreadable = _common.RSRC / "image-2x3.png"

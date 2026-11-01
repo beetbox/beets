@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import os
+from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Protocol
 
 from beets import logging, ui
 from beets.exceptions import UserError
-from beets.util import MoveOperation, displayable_path, normpath, syspath
+from beets.util import MoveOperation, normpath
 from beets.util.diff import colordiff
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class MoveCLIOpts(Protocol):
     timid: bool
 
 
-def show_path_changes(path_changes: Iterable[tuple[bytes, bytes]]) -> None:
+def show_path_changes(path_changes: Iterable[tuple[Path, Path]]) -> None:
     """Given a list of tuples (source, destination) that indicate the
     path changes, log the changes as INFO-level output to the beets log.
     The output is guaranteed to be unicode.
@@ -44,11 +44,11 @@ def show_path_changes(path_changes: Iterable[tuple[bytes, bytes]]) -> None:
     Source
       -> Destination
     """
-    sources_bytes, destinations_bytes = zip(*path_changes)
+    sources_paths, destinations_paths = zip(*path_changes)
 
     # Ensure unicode output
-    sources = list(map(displayable_path, sources_bytes))
-    destinations = list(map(displayable_path, destinations_bytes))
+    sources = list(map(str, sources_paths))
+    destinations = list(map(str, destinations_paths))
 
     # Calculate widths for terminal split
     col_width = (ui.term_width() - len(" -> ")) // 2
@@ -72,11 +72,11 @@ def show_path_changes(path_changes: Iterable[tuple[bytes, bytes]]) -> None:
 
 def move_objects(
     all_objs: Sequence[AlbumOrItem],
-    filter_objs: Callable[[bytes | None, AlbumOrItem], bool],
+    filter_objs: Callable[[Path | None, AlbumOrItem], bool],
     entity: Literal["album", "item"],
-    get_paths: Callable[[Iterable[AlbumOrItem]], list[tuple[bytes, bytes]]],
+    get_paths: Callable[[Iterable[AlbumOrItem]], list[tuple[Path, Path]]],
     *,
-    dest: bytes | None,
+    dest: Path | None,
     opts: MoveCLIOpts,
 ) -> None:
     """Move or copy albums or items to a new base directory, given by dest. If
@@ -138,31 +138,31 @@ def move_objects(
                     obj.move(operation=MoveOperation.MOVE, basedir=dest)
 
 
-def isitemmoved(dest: bytes | None, item: Item) -> bool:
+def isitemmoved(dest: Path | None, item: Item) -> bool:
     """Filter out files that don't need to be moved."""
-    return item.path != item.destination(basedir=dest)
+    return item.filepath != item.destination(basedir=dest)
 
 
-def isalbummoved(dest: bytes | None, album: Album) -> bool:
+def isalbummoved(dest: Path | None, album: Album) -> bool:
     return any(isitemmoved(dest, i) for i in album.items())
 
 
 def move_items(
-    lib: Library, query: Sequence[str], dest: bytes | None, opts: MoveCLIOpts
+    lib: Library, query: Sequence[str], dest: Path | None, opts: MoveCLIOpts
 ) -> None:
-    def get_paths(objs: Iterable[Item]) -> list[tuple[bytes, bytes]]:
-        return [(obj.path, obj.destination(basedir=dest)) for obj in objs]
+    def get_paths(objs: Iterable[Item]) -> list[tuple[Path, Path]]:
+        return [(obj.filepath, obj.destination(basedir=dest)) for obj in objs]
 
     objs = list(lib.items(query, limit=opts.limit))
     move_objects(objs, isitemmoved, "item", get_paths, dest=dest, opts=opts)
 
 
 def move_albums(
-    lib: Library, query: Sequence[str], dest: bytes | None, opts: MoveCLIOpts
+    lib: Library, query: Sequence[str], dest: Path | None, opts: MoveCLIOpts
 ) -> None:
-    def get_paths(objs: Iterable[Album]) -> list[tuple[bytes, bytes]]:
+    def get_paths(objs: Iterable[Album]) -> list[tuple[Path, Path]]:
         return [
-            (item.path, item.destination(basedir=dest))
+            (item.filepath, item.destination(basedir=dest))
             for obj in objs
             for item in obj.items()
         ]
@@ -172,10 +172,10 @@ def move_albums(
 
 
 def move_func(lib: Library, opts: MoveCLIOpts, args: list[str]) -> None:
-    dest = normpath(opts.dest) if opts.dest else None
+    dest = normpath(Path(opts.dest)) if opts.dest else None
     if dest is not None:
-        if not os.path.isdir(syspath(dest)):
-            raise UserError(f"no such directory: {displayable_path(dest)}")
+        if not dest.is_dir():
+            raise UserError(f"no such directory: {dest}")
 
     method = move_albums if opts.album else move_items
     method(lib, args, dest, opts)

@@ -1,6 +1,7 @@
 """Tests for the play plugin"""
 
 import os
+from pathlib import Path
 from unittest.mock import ANY, patch
 
 import pytest
@@ -39,15 +40,14 @@ class PlayPluginTest(IOMixin, PlayPluginMixin, BeetsTestCase):
         open_mock,
         args=("title:aNiceTitle",),
         expected_cmd="echo",
-        expected_playlist=None,
+        expected_playlist: str | None = None,
     ):
         self.run_command("play", *args)
 
         open_mock.assert_called_once_with(ANY, expected_cmd)
         expected_playlist = expected_playlist or self.item.path.decode("utf-8")
-        exp_playlist = f"{expected_playlist}\n"
-        with open(open_mock.call_args[0][0][0], "rb") as playlist:
-            assert exp_playlist == playlist.read().decode("utf-8")
+        path = Path(open_mock.call_args[0][0][0])
+        assert path.read_text().strip() == f"{expected_playlist}"
 
     def test_basic(self, open_mock):
         self.run_and_assert(open_mock)
@@ -108,16 +108,15 @@ class PlayPluginTest(IOMixin, PlayPluginMixin, BeetsTestCase):
         self.run_command("play", "-a", "nice")
 
         open_mock.assert_called_once_with(ANY, open_anything())
-        with open(open_mock.call_args[0][0][0], "rb") as f:
-            playlist = f.read().decode("utf-8")
-        assert f"{self.item.filepath.parent}\n" == playlist
+        path = Path(open_mock.call_args[0][0][0])
+        assert path.read_text().strip() == f"{self.item.filepath.parent}"
 
     def test_raw(self, open_mock):
         self.config["play"]["raw"] = True
 
         self.run_command("play", "nice")
 
-        open_mock.assert_called_once_with([self.item.path], "echo")
+        open_mock.assert_called_once_with([self.item.filepath], "echo")
 
     def test_pls_marker(self, open_mock):
         self.config["play"]["command"] = (
@@ -160,9 +159,8 @@ class PlayPluginTest(IOMixin, PlayPluginMixin, BeetsTestCase):
     def _playlist_lines(self, open_mock):
         """Read the playlist file passed to interactive_open and return its lines."""
         # interactive_open is called as: interactive_open([playlist_path], command)
-        playlist_path = open_mock.call_args[0][0][0]
-        with open(playlist_path, "rb") as playlist:
-            return playlist.read().decode("utf-8").splitlines()
+        playlist_path = Path(open_mock.call_args[0][0][0])
+        return playlist_path.read_text().splitlines()
 
     def _add_many_ordered_items(self, *, count, album):
         items = []
@@ -211,7 +209,7 @@ class PlayOnImportTest(
         playlist_path = self.temp_path / "beetsplug_play" / "playlist.m3u"
         playlist_path.parent.mkdir(parents=True)
         playlist_path.touch()
-        playlist_path_bytes = os.fsencode(playlist_path)
+        playlist_path_bytes = playlist_path
 
         with (
             patch(

@@ -412,10 +412,12 @@ class ConvertPlugin(BeetsPlugin):
             )
             else None
         )
-        return item.destination(
-            basedir=self.dest,
-            path_formats=self.path_formats,
-            extension=extension,
+        return os.fsencode(
+            item.destination(
+                basedir=Path(os.fsdecode(self.dest)),
+                path_formats=self.path_formats,
+                extension=extension,
+            )
         )
 
     @pipeline.mutator_stage
@@ -614,7 +616,11 @@ class ConvertPlugin(BeetsPlugin):
         # Remove item from the path.
         dest = os.path.join(*util.components(dest)[:-1])
 
-        dest = album.art_destination(album.artpath, item_dir=dest)
+        dest = os.fsencode(
+            album.art_destination(
+                album.artpath, item_dir=Path(os.fsdecode(dest))
+            )
+        )
         if album.artpath == dest:
             return
 

@@ -294,11 +294,15 @@ def sorted_walk(
         )
 
 
-def path_as_posix(path: bytes) -> bytes:
+def path_as_posix(path: AnyStr) -> AnyStr:
     """Return the string representation of the path with forward (/)
     slashes.
     """
-    return path.replace(os.fsencode(os.path.sep), b"/")
+    sep = os.path.sep
+    replacements = (
+        (sep, "/") if isinstance(path, str) else (os.fsencode(sep), b"/")
+    )
+    return path.replace(*replacements)
 
 
 def mkdirall(path: AnyStr | Path) -> None:
@@ -306,7 +310,13 @@ def mkdirall(path: AnyStr | Path) -> None:
     parent).
     """
     if isinstance(path, Path):
-        path.parent.mkdir(parents=True, exist_ok=True)
+        parent = path.parent
+        try:
+            parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise FilesystemError(
+                exc, "create", (parent,), traceback.format_exc()
+            )
         return
 
     for ancestor in ancestry(path):
@@ -667,29 +677,25 @@ def reflink(
         ) from exc
 
 
-def unique_path(path: AnyStr) -> AnyStr:
+def unique_path(path: Path) -> Path:
     """Returns a version of ``path`` that does not exist on the
     filesystem. Specifically, if ``path` itself already exists, then
     something unique is appended to the path.
     """
-    if not os.path.exists(syspath(path)):
+    if not path.exists():
         return path
 
-    byte_path = os.fsencode(path)
-    base, ext = os.path.splitext(byte_path)
-    match = re.search(rb"\.(\d+)$", base)
+    stem, ext = path.stem, path.suffix
+    match = re.search(r"\.(\d+)$", stem)
     if match:
         num = int(match.group(1))
-        base = base[: match.start()]
+        stem = stem[: match.start()]
     else:
         num = 0
     while True:
         num += 1
-        suffix = f".{num}".encode() + ext
-        new_path = base + suffix
-        if not os.path.exists(new_path):
-            if not isinstance(path, bytes):
-                return os.fsdecode(new_path)
+        new_path = path.with_name(f"{stem}.{num}{ext}")
+        if not new_path.exists():
             return new_path
 
 

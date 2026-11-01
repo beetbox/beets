@@ -473,20 +473,20 @@ class UniquePathTest(BeetsTestCase):
 
     def test_conflicting_file_appends_1(self):
         path = util.unique_path(self.base / "y.mp3")
-        assert path == str(self.base / "y.1.mp3")
+        assert path == self.base / "y.1.mp3"
 
     def test_conflicting_file_appends_higher_number(self):
         path = util.unique_path(self.base / "x.mp3")
-        assert path == str(self.base / "x.3.mp3")
+        assert path == self.base / "x.3.mp3"
 
     def test_conflicting_file_with_number_increases_number(self):
         path = util.unique_path(self.base / "x.1.mp3")
-        assert path == str(self.base / "x.3.mp3")
+        assert path == self.base / "x.3.mp3"
 
     def test_conflicting_file_with_multi_digit_number_increases_number(self):
         (self.base / "w.10.mp3").touch()
         path = util.unique_path(self.base / "w.10.mp3")
-        assert path == str(self.base / "w.11.mp3")
+        assert path == self.base / "w.11.mp3"
 
 
 class MkDirAllTest(BeetsTestCase):
@@ -496,6 +496,14 @@ class MkDirAllTest(BeetsTestCase):
         assert not child.exists()
         assert child.parent.exists()
         assert child.parent.is_dir()
+
+    def test_mkdirall_handles_pathlib_path_error(self):
+        """Test that mkdirall raises a FilesystemError when trying to create
+        a directory where a file already exists."""
+        file = self.temp_path / "file"
+        file.touch()
+        with pytest.raises(util.FilesystemError, match="File exists"):
+            util.mkdirall(file / "subfile")
 
 
 class TestAsciifyPath:
