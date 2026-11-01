@@ -8,6 +8,27 @@ from beets.ui import UserError
 pytestmark = pytest.mark.requires_import("librosa")
 
 
+def test_librosa_defaults_match_plugin_constants():
+    """Fail if librosa changes defaults that has_tempo_candidates mirrors."""
+    import inspect
+
+    import librosa
+
+    from beetsplug import autobpm
+
+    def default(func, name):
+        return inspect.signature(func).parameters[name].default
+
+    tempo = librosa.feature.tempo
+    assert default(librosa.load, "sr") == autobpm.SAMPLE_RATE
+    assert default(librosa.beat.beat_track, "hop_length") == (
+        autobpm.DEFAULT_HOP_LENGTH
+    )
+    assert default(tempo, "hop_length") == autobpm.DEFAULT_HOP_LENGTH
+    assert default(tempo, "ac_size") == autobpm.AUTOCORRELATION_SECONDS
+    assert default(tempo, "max_tempo") == autobpm.LIBROSA_MAX_TEMPO
+
+
 class TestAutoBPMPlugin(ImportHelper, PluginTestHelper):
     plugin = "autobpm"
 
