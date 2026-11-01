@@ -44,6 +44,10 @@ New features
   albumartist, the plugin now attempts to fetch genres for each artist listed in
   the multi-valued ``albumartists`` field before falling back to the artist
   source. :bug:`6238`
+- :doc:`plugins/convert`: Files transcoded to Opus now get ``R128_TRACK_GAIN``
+  and ``R128_ALBUM_GAIN`` tags, derived from the library's ReplayGain values (or
+  computed by the :doc:`plugins/replaygain` plugin when the library has none).
+  The gain tags of already converted files are updated as well.
 
 Bug fixes
 ~~~~~~~~~
