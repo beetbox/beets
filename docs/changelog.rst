@@ -134,6 +134,11 @@ Bug fixes
   well.
 - :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
   files. :bug:`6915`
+- :doc:`plugins/musicbrainz`: When a release's media differ only in a
+  parenthetical, like the layers of a hybrid SACD (``Hybrid SACD (CD layer)``,
+  ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
+  album's ``media`` is now their common format (``Hybrid SACD``) instead of the
+  generic ``Media``. Releases mixing different formats still get ``Media``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
