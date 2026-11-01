@@ -429,6 +429,13 @@ def track_distance(
     if item.mb_trackid:
         dist.add_expr("track_id", item.mb_trackid != track_info.track_id)
 
+    # Release track ID. Media of one release can share recordings (e.g. the
+    # CD and SACD layers of a hybrid disc), so this tells their tracks apart.
+    if item.mb_releasetrackid and track_info.release_track_id:
+        dist.add_expr(
+            "track_id", item.mb_releasetrackid != track_info.release_track_id
+        )
+
     # Penalize mismatching disc numbers.
     if track_info.medium and item.disc:
         dist.add_expr("medium", item.disc != track_info.medium)
