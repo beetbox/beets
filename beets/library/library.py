@@ -50,7 +50,21 @@ class Library(dbcore.Database):
     )
 
     # Used for template substitution performance.
-    _memotable: dict[tuple[str | None, str | None, str | None, int | None], str]
+    _memotable: dict[
+        tuple[str | None, str | None, str | None, str | None, int | None], str
+    ]
+    # Caches the per-collision-group work shared by every member of a group.
+    _group_memotable: dict[
+        tuple[
+            str | None,
+            str | None,
+            str | None,
+            int | None,
+            Query | None,
+            tuple[str, ...],
+        ],
+        tuple[int, str | None],
+    ]
     replacements: Replacements
 
     @cached_property
@@ -77,7 +91,7 @@ class Library(dbcore.Database):
         directory: str | None = None,
         set_music_dir: bool = True,
     ) -> None:
-        self.directory = normpath(directory or platformdirs.user_music_path())
+        self.directory = normpath(directory or platformdirs.user_music_dir())
         if set_music_dir:
             context.set_music_dir(self.directory)
 
@@ -85,6 +99,7 @@ class Library(dbcore.Database):
 
         self.replacements = self.get_replacements()
         self._memotable = {}
+        self._group_memotable = {}
 
     @contextmanager
     def music_dir_context(self) -> Iterator[Library]:
@@ -102,6 +117,7 @@ class Library(dbcore.Database):
         """
         obj.add(self)
         self._memotable = {}
+        self._group_memotable = {}
         return obj.id
 
     def add_album(self, items: Sequence[Item]) -> Album:
@@ -129,6 +145,8 @@ class Library(dbcore.Database):
                 else:
                     item.store()
 
+        self._memotable = {}
+        self._group_memotable = {}
         return album
 
     # Querying.
@@ -138,6 +156,7 @@ class Library(dbcore.Database):
         model_cls: type[LM],
         query: str | Sequence[str] | Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> dbcore.Results[LM]:
         """Parse a query and fetch.
 
@@ -169,7 +188,7 @@ class Library(dbcore.Database):
         if parsed_sort and not isinstance(parsed_sort, NullSort):
             sort = parsed_sort
 
-        return super()._get_results(model_cls, parsed_query, sort)
+        return super()._get_results(model_cls, parsed_query, sort, limit)
 
     @staticmethod
     def get_default_album_sort() -> Sort:
@@ -189,17 +208,23 @@ class Library(dbcore.Database):
         self,
         query: str | Sequence[str] | Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> dbcore.Results[Album]:
         """Get :class:`Album` objects matching the query."""
-        return self._fetch(Album, query, sort or self.get_default_album_sort())
+        return self._fetch(
+            Album, query, sort or self.get_default_album_sort(), limit
+        )
 
     def items(
         self,
         query: str | Sequence[str] | Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> dbcore.Results[Item]:
         """Get :class:`Item` objects matching the query."""
-        return self._fetch(Item, query, sort or self.get_default_item_sort())
+        return self._fetch(
+            Item, query, sort or self.get_default_item_sort(), limit
+        )
 
     # Convenience accessors.
     def get_item(self, id_: int) -> Item | None:

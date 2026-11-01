@@ -159,13 +159,14 @@ class TitlecasePlugin(BeetsPlugin):
     def commands(self) -> list[ui.Subcommand]:
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             write = ui.should_write()
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 self._log.info(f"titlecasing {item.title}:")
                 self.titlecase_fields(item)
                 item.store()
                 if write:
                     item.try_write()
 
+        self._command.parser.add_limit_option()
         self._command.func = func
         return [self._command]
 
@@ -207,10 +208,10 @@ class TitlecasePlugin(BeetsPlugin):
                 split_cased = "".join(
                     [self.titlecase(s[0], field) + s[1] for s in splits]
                 )
-                # Add on the remaining portion
-                return split_cased + self.titlecase(
-                    text[len(split_cased) :], field
-                )
+                # Add on the remaining portion. Measure it against the
+                # original text, since replacements can change the length.
+                consumed = sum(len(s[0]) + len(s[1]) for s in splits)
+                return split_cased + self.titlecase(text[consumed:], field)
         # Check if A-Z is all uppercase or all lowercase
         if self.all_lowercase and text.islower():
             return text

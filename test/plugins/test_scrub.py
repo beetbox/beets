@@ -25,11 +25,12 @@ class TestScrubbedImport(AsIsImporterMixin, PluginMixin, ImportHelper):
             assert imported_file.artist == "Tag Artist"
             assert imported_file.album == "Tag Album"
 
-    def test_tags_not_restored(self):
+    def test_tags_not_scrubbed_when_nowrite(self):
+        """When --nowrite is passed, scrubbing should be skipped entirely."""
         with self.configure_plugin({"auto": True}):
             self.run_asis_importer(write=False)
 
         for item in self.lib.items():
             imported_file = MediaFile(item.filepath)
-            assert imported_file.artist is None
-            assert imported_file.album is None
+            assert imported_file.artist == "Tag Artist"
+            assert imported_file.album == "Tag Album"

@@ -41,13 +41,9 @@ class HiddenFileTest(unittest.TestCase):
 
         with tempfile.NamedTemporaryFile() as f:
             # Hide the file using
-            success = ctypes.windll.kernel32.SetFileAttributesW(
+            assert ctypes.windll.kernel32.SetFileAttributesW(
                 f.name, hidden_mask
-            )
-
-            if not success:
-                self.skipTest("unable to set file attributes")
-
+            ), "Could not set file attributes"
             assert hidden.is_hidden(f.name)
 
     def test_other_hidden(self):

@@ -8,7 +8,7 @@ class FileOperationError(Exception):
     error, and an unhandled Mutagen exception.
     """
 
-    def __init__(self, path: bytes, reason: Exception) -> None:
+    def __init__(self, path: util.PathLike, reason: Exception) -> None:
         """Create an exception describing an operation on the file at
         `path` with the underlying (chained) exception `reason`.
         """

@@ -28,6 +28,7 @@ from beets.dbcore.query import (
 )
 from beets.library import Item
 from beets.test import _common
+from beets.test.helper import TestHelper
 
 # Because the absolute path begins with something like C:, we
 # can't disambiguate it from an ordinary query.
@@ -48,7 +49,8 @@ def helper(class_helper):
 
 class TestGet:
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         album_items = [
             helper.create_item(
                 title="first",
@@ -257,7 +259,8 @@ class TestGet:
 
 class TestMatch:
     @pytest.fixture(scope="class")
-    def item(self):
+    @classmethod
+    def item(cls):
         return _common.item(
             album="the album",
             disc=6,
@@ -302,6 +305,12 @@ class TestPathQuery:
     and path separator detection across different platforms.
     """
 
+    @pytest.fixture
+    def helper(self):
+        """Isolate rows added by individual path query tests."""
+        with TestHelper() as helper:
+            yield helper
+
     @staticmethod
     def abs_query_path(path: str, trailing_sep: bool = False) -> str:
         """Build a platform-correct absolute query path without normalizing it.
@@ -319,7 +328,7 @@ class TestPathQuery:
             path = os.path.join(path, "")
         return path.replace("\\", "\\\\")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def lib(self, helper):
         helper.add_item(path=b"/aaa/bb/c.mp3", title="path item")
         helper.add_item(path=b"/x/y/z.mp3", title="another item")
@@ -446,9 +455,10 @@ class TestQuery:
     SINGLE = "singleton"
 
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         helper.add_album(
-            title=self.ALBUM,
+            title=cls.ALBUM,
             comp=True,
             flexbool=True,
             bpm=120,
@@ -456,7 +466,7 @@ class TestQuery:
             rg_track_gain=0,
         )
         helper.add_item(
-            title=self.SINGLE, comp=False, flexbool=False, rg_track_gain=None
+            title=cls.SINGLE, comp=False, flexbool=False, rg_track_gain=None
         )
 
         with pytest.MonkeyPatch.context() as monkeypatch:
@@ -516,7 +526,8 @@ class TestQuery:
 
 class TestDefaultSearchFields:
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         helper.add_album(
             title="title",
             album="album",
@@ -545,7 +556,8 @@ class TestRelatedQueries:
     """Test album-level queries with track-level filters and vice-versa."""
 
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         for album_idx in range(1, 3):
             album_name = f"Album{album_idx}"
             items = [
@@ -599,7 +611,8 @@ class TestHasCoverArtQuery:
     """Test has_cover_art computed field for detecting embedded cover art."""
 
     @pytest.fixture(scope="class")
-    def lib(self, helper):
+    @classmethod
+    def lib(cls, helper):
         item_with = helper.add_item_fixture()
         item_with.title = "with_art"
 

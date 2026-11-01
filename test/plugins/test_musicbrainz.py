@@ -57,6 +57,7 @@ def release_factory(**kwargs) -> mb.Release:
     return factories.ReleaseFactory.build(**kwargs)
 
 
+@pytest.mark.usefixtures("config")
 class TestUtils:
     @pytest.mark.parametrize(
         "date, expected_parts",
@@ -411,23 +412,32 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
         assert mb.album_info(release).mediums == 2
 
     @pytest.mark.parametrize(
-        "beets_match_config, expected_titles",
+        "beets_match_config, expected_titles, expected_medium_total",
         [
-            _p({}, ("Audio",), id="only audio tracks by default"),
+            _p({}, ("Audio",), 1, id="only audio tracks by default"),
             _p(
                 {"ignore_data_tracks": False},
                 ("Audio", "Data"),
+                2,
                 id="include data tracks",
             ),
             _p(
                 {"ignore_data_tracks": False, "ignore_video_tracks": False},
                 ("Audio", "Video: Video", "Data"),
+                3,
                 id="include data and video tracks",
             ),
-            _p({"ignored_media": "Vinyl"}, (), id="ignore all tracks"),
+            _p({"ignored_media": "Vinyl"}, (), 0, id="ignore all tracks"),
         ],
     )
-    def test_data_tracks(self, config, beets_match_config, mb, expected_titles):
+    def test_data_tracks(
+        self,
+        config,
+        beets_match_config,
+        mb,
+        expected_titles,
+        expected_medium_total,
+    ):
         medium = medium_factory(
             format="Vinyl",
             tracks=[
@@ -441,9 +451,11 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
 
         config.set({"match": beets_match_config})
 
-        actual_titles = tuple(t.title for t in mb.album_info(release).tracks)
+        tracks = mb.album_info(release).tracks
+        actual_titles = tuple(t.title for t in tracks)
 
         assert actual_titles == expected_titles
+        assert all(t.medium_total == expected_medium_total for t in tracks)
 
 
 class TestParseRelease(MusicBrainzPluginTestMixin):
@@ -853,6 +865,39 @@ class TestMusicBrainzPlugin(MusicBrainzPluginTestMixin):
 
         assert len(candidates) == 1
         assert candidates[0].track_id == self.RECORDING["id"]
+
+    def test_track_for_id_requests_work_rels(self, mb, requests_mock):
+        recording = {
+            **self.RECORDING,
+            "relations": [
+                {
+                    "target-type": "work",
+                    "type": "performance",
+                    "work": {
+                        "id": self.mbid,
+                        "title": "Work Title",
+                        "relations": [
+                            {
+                                "target-type": "artist",
+                                **artist_relation_factory(type=role),
+                            }
+                            for role in ("composer", "lyricist")
+                        ],
+                    },
+                }
+            ],
+        }
+        requests_mock.get(f"/ws/2/recording/{recording['id']}", json=recording)
+
+        track = mb.track_for_id(recording["id"])
+
+        includes = requests_mock.last_request.qs["inc"][0].split("+")
+        assert {"work-rels", "work-level-rels"} <= set(includes)
+        assert track is not None
+        assert track.work == "Work Title"
+        assert track.mb_workid == self.mbid
+        assert track.composers == ["Composer Artist"]
+        assert track.lyricists == ["Lyricist Artist"]
 
     def test_candidates(self, monkeypatch, mb):
         monkeypatch.setattr(

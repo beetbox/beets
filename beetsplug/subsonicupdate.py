@@ -21,10 +21,12 @@ import hashlib
 import random
 import string
 from binascii import hexlify
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import requests
 
+from beets import ui
+from beets.exceptions import UserError
 from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
@@ -32,6 +34,10 @@ if TYPE_CHECKING:
 
 
 __author__ = "https://github.com/maffo999"
+
+
+class SubsonicUpdateCLIOpts(Protocol):
+    """Options for the `subsonicupdate` command, of which there are none."""
 
 
 class SubsonicUpdate(BeetsPlugin):
@@ -44,12 +50,15 @@ class SubsonicUpdate(BeetsPlugin):
                 "pass": "admin",
                 "url": "http://localhost:4040",
                 "auth": "token",
+                "auto": True,
             }
         )
         self.config["user"].redact = True
         self.config["pass"].redact = True
-        self.register_listener("database_change", self.db_change)
-        self.register_listener("smartplaylist_update", self.spl_update)
+
+        if self.config["auto"].get(bool):
+            self.register_listener("database_change", self.db_change)
+            self.register_listener("smartplaylist_update", self.spl_update)
 
     def db_change(self, lib: Library, model: LibModel) -> None:
         self.register_listener("cli_exit", self.start_scan)
@@ -157,3 +166,21 @@ class SubsonicUpdate(BeetsPlugin):
                 self._log.error("Error: {}", json)
         except Exception as error:
             self._log.error("Error: {}", error)
+
+    def commands(self) -> list[ui.Subcommand]:
+        subsonicupdate_cmd = ui.Subcommand(
+            "subsonicupdate", help="Update the Subsonic library"
+        )
+
+        def func(
+            lib: Library, opts: SubsonicUpdateCLIOpts, args: list[str]
+        ) -> None:
+            if args:
+                raise UserError(
+                    "the 'subsonicupdate' command does not take arguments"
+                )
+            self.start_scan(lib)
+
+        subsonicupdate_cmd.func = func
+
+        return [subsonicupdate_cmd]

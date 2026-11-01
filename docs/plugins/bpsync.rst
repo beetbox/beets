@@ -35,3 +35,4 @@ The command has a few command-line options:
 - If you have the ``import.write`` configuration option enabled, then this
   plugin will write new metadata to files' tags. To disable this, use the ``-W``
   (``--nowrite``) option.
+- To cap the matched tracks or albums before syncing, use ``-l``/``--limit``.

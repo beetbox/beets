@@ -5,10 +5,10 @@ from __future__ import annotations
 import itertools
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import mediafile
-from typing_extensions import Self, override
+from typing_extensions import override
 
 from beets import config
 from beets.autotag import AlbumInfo, Source, assign_items, distance

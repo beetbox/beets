@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 class AutoBPMCLIOpts(Protocol):
     force: bool
+    limit: int | None
     quiet: bool
 
 
@@ -66,6 +67,7 @@ class AutoBPMPlugin(BeetsPlugin):
             default=False,
             help="Suppress message when item already has BPM",
         )
+        cmd.parser.add_limit_option()
         cmd.func = self.command
         return [cmd]
 
@@ -75,7 +77,7 @@ class AutoBPMPlugin(BeetsPlugin):
         force = self.config["force"].get(bool) or opts.force
         quiet = self.config["quiet"].get(bool) or opts.quiet
         self.calculate_bpm(
-            list(lib.items(args)),
+            list(lib.items(args, limit=opts.limit)),
             write=should_write(),
             force=force,
             quiet=quiet,

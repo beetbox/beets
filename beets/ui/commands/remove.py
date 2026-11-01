@@ -18,6 +18,7 @@ class RemoveCLIOpts(Protocol):
     album: bool
     delete: bool
     force: bool
+    limit: int | None
 
 
 def remove_objects(
@@ -84,7 +85,7 @@ def remove_items(
     lib: Library, query: Sequence[str], opts: RemoveCLIOpts
 ) -> None:
     """Remove items matching query from lib."""
-    items = list(lib.items(query))
+    items = list(lib.items(query, limit=opts.limit))
     album_str = ""
 
     remove_objects(items, fmt_item, len(items), album_str, lib, opts=opts)
@@ -94,7 +95,7 @@ def remove_albums(
     lib: Library, query: Sequence[str], opts: RemoveCLIOpts
 ) -> None:
     """Remove albums matching query from lib."""
-    albums = list(lib.albums(query))
+    albums = list(lib.albums(query, limit=opts.limit))
     items = [i for a in albums for i in a.items()]
     album_str = f" and {len(albums)} album{'s' if len(albums) > 1 else ''}"
 
@@ -124,4 +125,5 @@ remove_cmd.parser.add_option(
     help="do not ask when removing items",
 )
 remove_cmd.parser.add_album_option()
+remove_cmd.parser.add_limit_option()
 remove_cmd.func = remove_func

@@ -30,11 +30,15 @@ class InfoCLIOpts(Protocol):
     included_keys: list[str]
     keys_only: bool | None
     library: bool | None
+    limit: int | None
     summarize: bool | None
 
 
 def tag_data(
-    lib: Library, args: Iterable[str], album: bool = False
+    lib: Library,
+    args: Iterable[str],
+    album: bool = False,
+    limit: int | None = None,
 ) -> Iterator[DataEmitter]:
     query = []
     for arg in args:
@@ -45,7 +49,7 @@ def tag_data(
             query.append(arg)
 
     if query:
-        for item in lib.items(query):
+        for item in lib.items(query, limit=limit):
             yield tag_data_emitter(item.path)
 
 
@@ -84,9 +88,14 @@ def tag_data_emitter(path: bytes) -> DataEmitter:
 
 
 def library_data(
-    lib: Library, args: Sequence[str], album: bool = False
+    lib: Library,
+    args: Sequence[str],
+    album: bool = False,
+    limit: int | None = None,
 ) -> Iterator[DataEmitter]:
-    for item in lib.albums(args) if album else lib.items(args):
+    for item in (
+        lib.albums(args, limit=limit) if album else lib.items(args, limit=limit)
+    ):
         yield library_data_emitter(item)
 
 
@@ -194,6 +203,7 @@ class InfoPlugin(BeetsPlugin):
             "-k", "--keys-only", action="store_true", help="show only the keys"
         )
         cmd.parser.add_format_option(target="item")
+        cmd.parser.add_limit_option(flags=("--limit",))
         return [cmd]
 
     def run(self, lib: Library, opts: InfoCLIOpts, args: list[str]) -> None:
@@ -223,7 +233,9 @@ class InfoPlugin(BeetsPlugin):
 
         first = True
         summary: dict[str, Any] = {}
-        for data_emitter in data_collector(lib, args, album=opts.album):
+        for data_emitter in data_collector(
+            lib, args, album=opts.album, limit=opts.limit
+        ):
             try:
                 data, item = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:

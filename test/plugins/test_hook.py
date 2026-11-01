@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
 
 from beets import plugins
+from beets.events import ALL_EVENTS
 from beets.test.helper import PluginTestHelper
 
 if TYPE_CHECKING:
@@ -39,8 +39,6 @@ class TestHookLogs(HookTestCase):
 
         assert 'invalid command ""' in caplog.messages
 
-    # FIXME: fails on windows
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_non_zero_exit(self, caplog: pytest.LogCaptureFixture):
         with caplog.at_level("DEBUG"):
             self._configure_hook('sh -c "exit 1"')
@@ -98,19 +96,25 @@ class TestHookCommand(HookTestCase):
                     plugins.send(event)  # type: ignore[arg-type]
                 assert Path(os.fsdecode(path)).is_file()
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_no_arguments(self):
         self._test_command(lambda _, p: p)
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_event_substitution(self):
         self._test_command(lambda e, p: p.replace(e, "{event}"))
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_argument_substitution(self):
         self._test_command(lambda *_: "{path}", send_path_kwarg=True)
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_hook_bytes_interpolation(self):
         self.paths = [p.encode() for p in self.paths]
         self._test_command(lambda *_: "{path}", send_path_kwarg=True)
+
+
+class TestHookCustomEvents(HookTestCase):
+    def test_plugin_defined_event_loads_and_registers(self):
+        event = "alternatives.item_updated"
+        assert event in ALL_EVENTS
+
+        with self.configure_plugin({"hooks": [self._get_hook(event, "true")]}):
+            assert event in plugins.BeetsPlugin.listeners
+            assert plugins.BeetsPlugin.listeners[event]

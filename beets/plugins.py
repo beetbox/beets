@@ -10,10 +10,18 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Never,
+    ParamSpec,
+    TypeVar,
+    Unpack,
+    overload,
+)
 
 import mediafile
-from typing_extensions import Never, ParamSpec, Unpack
 
 import beets
 from beets import logging
@@ -423,6 +431,12 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
         event: events.AfterConvertEventType,
         func: Callable[[Unpack[events.AfterConvertEventArgs]], None],
     ) -> None: ...
+    @overload
+    def register_listener(
+        self,
+        event: events.AlternativesItemUpdatedEventType,
+        func: Callable[[Unpack[events.AlternativesItemUpdatedEventArgs]], None],
+    ) -> None: ...
     def register_listener(
         self, event: events.EventType, func: Listener
     ) -> None:
@@ -810,6 +824,11 @@ def send(event: events.NoArgsEventType) -> list[Never]: ...
 def send(
     event: events.AfterConvertEventType,
     **arguments: Unpack[events.AfterConvertEventArgs],
+) -> list[Never]: ...
+@overload
+def send(
+    event: events.AlternativesItemUpdatedEventType,
+    **arguments: Unpack[events.AlternativesItemUpdatedEventArgs],
 ) -> list[Never]: ...
 def send(event: events.EventType, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.

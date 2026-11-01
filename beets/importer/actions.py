@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from enum import Enum
-
-from typing_extensions import Self
+from enum import Enum, StrEnum
+from typing import Self
 
 
 class Action(Enum):
@@ -17,9 +16,12 @@ class Action(Enum):
     # The RETAG action represents "don't apply any match, but do record
     # new metadata". It's not reachable via the standard command prompt but
     # can be used by plugins.
+    RESCAN = "RESCAN"
+    # RESCAN re-reads the task's directories from disk and re-runs the
+    # match, so the user can clean up files without restarting the import.
 
 
-class DuplicateAction(str, Enum):
+class DuplicateAction(StrEnum):
     text: str
 
     def __new__(cls, code: str, text: str) -> Self:

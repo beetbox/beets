@@ -48,6 +48,7 @@ class BPMPlugin(BeetsPlugin):
             "bpm",
             help="determine bpm of a song by pressing a key to the rhythm",
         )
+        cmd.parser.add_limit_option()
         cmd.func = self.command
         return [cmd]
 
@@ -55,7 +56,7 @@ class BPMPlugin(BeetsPlugin):
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
         write = ui.should_write()
-        self.get_bpm(lib.items(args), write)
+        self.get_bpm(lib.items(args, limit=opts.limit), write)
 
     def get_bpm(self, items: Sequence[Item], write: bool = False) -> None:
         overwrite = self.config["overwrite"].get(bool)

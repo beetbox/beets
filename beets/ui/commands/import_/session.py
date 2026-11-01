@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Literal
 from beets import config, importer, logging, plugins, ui
 from beets.autotag import (
     AlbumMatch,
+    Proposal,
     Recommendation,
     TrackMatch,
     tag_album,
@@ -18,12 +19,12 @@ from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
 
-from .display import show_change, show_item_change
+from .display import show_change
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.autotag import Proposal, Source
+    from beets.autotag import Source
     from beets.importer import ImportSession, ImportTask
     from beets.library import AlbumOrItem, Item
     from beets.util import PathBytes
@@ -73,7 +74,7 @@ class TerminalImportSession(importer.ImportSession):
             match = task.candidates[0]
             # TODO: introduce AlbumImportTask to remove this assertion
             assert isinstance(match, AlbumMatch)
-            show_change(task.source, match)
+            show_change(match, task.source)
             return match
         if action is not None:
             return action
@@ -97,7 +98,12 @@ class TerminalImportSession(importer.ImportSession):
             # or, basic choices that require no more action here.
             if isinstance(choice, AlbumMatch) or (
                 isinstance(choice, importer.Action)
-                and choice in (importer.Action.SKIP, importer.Action.ASIS)
+                and choice
+                in (
+                    importer.Action.SKIP,
+                    importer.Action.ASIS,
+                    importer.Action.RESCAN,
+                )
             ):
                 # Pass selection to main control flow.
                 return choice
@@ -108,6 +114,9 @@ class TerminalImportSession(importer.ImportSession):
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
+                if isinstance(post_choice, Proposal):
+                    task.candidates = post_choice.candidates
+                    task.rec = post_choice.recommendation
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
@@ -132,7 +141,7 @@ class TerminalImportSession(importer.ImportSession):
             match = task.candidates[0]
             # TODO: introduce AlbumImportTask to remove this assertion
             assert isinstance(match, TrackMatch)
-            show_item_change(task.source, match)
+            show_change(match, task.source)
             return match
         if action is not None:
             return action
@@ -163,6 +172,9 @@ class TerminalImportSession(importer.ImportSession):
                 post_choice = choice.callback(self, task)
                 if isinstance(post_choice, importer.Action):
                     return post_choice
+                if isinstance(post_choice, Proposal):
+                    task.candidates = post_choice.candidates
+                    task.rec = post_choice.recommendation
 
     def _report_item_summary(
         self, prefix: Literal["Old", "New"], items: list[Item], is_album: bool
@@ -249,6 +261,16 @@ class TerminalImportSession(importer.ImportSession):
                     "g", "Group albums", lambda s, t: importer.Action.ALBUMS
                 ),
             ]
+            # Withheld for "Group albums" output: grouped by tag, not by
+            # directory, so there's nothing for a rescan to reconstruct.
+            if task.toppath and not task.is_grouped:
+                choices.append(
+                    PromptChoice(
+                        "r",
+                        "Rescan directory",
+                        lambda s, t: importer.Action.RESCAN,
+                    )
+                )
         choices += [
             # TODO: introduce beets.autotag.Candidates to remove these ignores
             #  context: Candidates is a Sequence which will be updated in place
@@ -474,11 +496,7 @@ def choose_candidate(
         bypass_candidates = False
 
         # Show what we're about to do.
-        # TODO: introduce AlbumImportTask to remove these ignores
-        if source.type == "track":
-            show_item_change(source, match)  # type: ignore[arg-type]
-        else:
-            show_change(source, match)  # type: ignore[arg-type]
+        show_change(match, source)
 
         # Exact match => tag automatically if we're not in timid mode.
         if rec == Recommendation.strong and not config["import"]["timid"]:

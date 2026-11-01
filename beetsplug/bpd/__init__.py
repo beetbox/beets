@@ -23,7 +23,6 @@ from beets import dbcore
 from beets.exceptions import UserError
 from beets.library import Item
 from beets.plugins import BeetsPlugin
-from beets.util import as_string
 from beetsplug._utils import vfs
 
 if TYPE_CHECKING:
@@ -1238,7 +1237,7 @@ class Server(BaseServer):
 
     def _item_info(self, item: Item) -> list[str]:
         info_lines = [
-            f"file: {as_string(item.destination(relative_to_libdir=True))}",
+            f"file: {vfs.item_path(item)}",
             f"Time: {int(item.length)}",
             "duration: {item.length:.3f}",
             f"Id: {item.id}",

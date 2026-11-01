@@ -14,7 +14,7 @@ Then, play a song you want to measure in your favorite media player and type:
 
 ::
 
-    beet bpm <song>
+    beet bpm [-l LIMIT] <song>
 
 You'll be prompted to press Enter three times to the rhythm. This typically
 allows to determine the BPM within 5% accuracy.
@@ -24,7 +24,9 @@ instance, with ``mpc`` you can do something like:
 
 ::
 
-    beet bpm $(mpc |head -1|tr -d "-")
+    beet bpm [-l LIMIT] $(mpc |head -1|tr -d "-")
+
+Use ``-l``/``--limit`` to cap the matched tracks before choosing a song.
 
 If :ref:`import.write <config-import-write>` is ``yes``, the song's tags are
 written to disk.

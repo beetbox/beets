@@ -501,6 +501,10 @@ beetFs_
     Is a FUSE filesystem for browsing the music in your beets library. (Might be
     out of date.)
 
+beets-genrecanon_
+    Maps existing genres into a separate, user-defined canonical taxonomy while
+    preserving the original genre metadata.
+
 beets-getlrc_
     Fetches synced and non-synced lyrics and creates .lrc files to be used by
     compatible music players.
@@ -546,6 +550,10 @@ beets-plexsync_
     Allows you to sync your Plex library with your beets library, create smart
     playlists in Plex, and import online playlists (from services like Spotify)
     into Plex.
+
+beets-pysacd_
+    Imports SACD ISO images: converts each layer to DSF or FLAC with pysacd_, on
+    its own medium of the MusicBrainz release.
 
 beets-setlister_
     Generate playlists from the setlists of a given artist.
@@ -625,6 +633,8 @@ beets-youtube_
 
 .. _beets-follow: https://github.com/nolsto/beets-follow
 
+.. _beets-genrecanon: https://codeberg.org/gbcox/beets-genrecanon
+
 .. _beets-getlrc: https://github.com/jaedonswanson/beets-getlrc
 
 .. _beets-goingrunning: https://pypi.org/project/beets-goingrunning
@@ -648,6 +658,8 @@ beets-youtube_
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
 
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
+
+.. _beets-pysacd: https://github.com/aclater/beets-pysacd
 
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
@@ -676,6 +688,8 @@ beets-youtube_
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 
 .. _ibroadcast: https://ibroadcast.com/
+
+.. _pysacd: https://github.com/aclater/pysacd
 
 .. _subsonic api: https://www.subsonic.org/pages/api.jsp
 

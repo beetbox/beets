@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Protocol
 from beets.dbcore import FieldQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
+from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
 class LsLimitCLIOpts(Protocol):
     album: bool
     head: int | None
+    limit: int | None
     tail: int | None
 
 
@@ -41,9 +43,9 @@ def lslimit(lib: Library, opts: LsLimitCLIOpts, args: list[str]) -> None:
 
     objs: Iterable[LibModel]
     if opts.album:
-        objs = lib.albums(args)
+        objs = lib.albums(args, limit=opts.limit)
     else:
-        objs = lib.items(args)
+        objs = lib.items(args, limit=opts.limit)
 
     if opts.head is not None:
         objs = islice(objs, opts.head)
@@ -65,11 +67,18 @@ lslimit_cmd.parser.add_option(
 )
 
 lslimit_cmd.parser.add_all_common_options()
+lslimit_cmd.parser.add_limit_option()
 lslimit_cmd.func = lslimit
 
 
 class LimitPlugin(BeetsPlugin):
     """Query limit functionality via command and query prefix."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        deprecate_for_user(
+            self._log, "LimitPlugin ('limit')", "'beet ls -l <number>'"
+        )
 
     def commands(self) -> list[Subcommand]:
         """Expose `lslimit` subcommand."""

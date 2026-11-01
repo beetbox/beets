@@ -27,8 +27,8 @@ class Lyrics:
 
     ORIGINAL_PAT = re.compile(r"[^\n]+ / ")
     TRANSLATION_PAT = re.compile(r" / [^\n]+")
-    LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d\d\]|) *(.*)$")
-    LRC_TIMESTAMP_PAT = re.compile(r"\[(\d{2}):(\d{2})\.(\d{2})\]")
+    LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d{2,3}\]|) *(.*)$")
+    LRC_TIMESTAMP_PAT = re.compile(r"\[(\d{2}):(\d{2})\.(\d{2,3})\]")
 
     text: str
     backend: str | None = None
@@ -148,8 +148,9 @@ class Lyrics:
                 continue
             ts_m = self.LRC_TIMESTAMP_PAT.match(ts)
             if ts_m:
-                m, s, cs = map(int, ts_m.groups())
-                ms = (m * 60 + s) * 1000 + cs * 10
+                m, s = map(int, ts_m.groups()[:2])
+                frac = ts_m.group(3)
+                ms = (m * 60 + s) * 1000 + int(frac.ljust(3, "0"))
                 result.append((text, ms))
         return result
 

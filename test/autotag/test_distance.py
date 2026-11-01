@@ -152,7 +152,8 @@ class TestDistance:
 
 class TestTrackDistance:
     @pytest.fixture(scope="class")
-    def info(self):
+    @classmethod
+    def info(cls):
         return TrackInfo(title="title", artist="artist")
 
     @pytest.mark.parametrize(
@@ -173,7 +174,8 @@ class TestTrackDistance:
 
 class TestAlbumDistance:
     @pytest.fixture(scope="class")
-    def items(self):
+    @classmethod
+    def items(cls):
         return [
             Item(
                 title=title,

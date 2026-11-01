@@ -243,6 +243,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             default=None,
             help="drop featuring from artists and ignore title update",
         )
+        self._command.parser.add_limit_option()
 
         self.import_stages = [self.imported]
         if self.auto:
@@ -262,7 +263,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             write = ui.should_write()
 
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 if self.ft_in_title(item, item.get("albumartist") or ""):
                     item.store()
                     if write:

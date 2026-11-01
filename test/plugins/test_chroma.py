@@ -7,6 +7,7 @@ from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import ImportHelper, IOMixin, PluginMixin
 
+acoustid = pytest.importorskip("acoustid", exc_type=ImportError)
 chroma = pytest.importorskip("beetsplug.chroma", exc_type=ImportError)
 
 TEST_TITLE_1 = "TEST_TITLE_1"
@@ -69,6 +70,73 @@ class TestChroma(IOMixin, PluginMixin, ImportHelper):
         output = self.run_search(FINGERPRINT_1_CLOSE)
         assert self.line_count(output) == 2
         assert TEST_TITLE_1 in output.split("\n")[0]
+
+
+class TestAcoustidMatch:
+    """Tests for acoustid_match() covering the force_fpcalc fix (#5171)."""
+
+    def _make_log(self):
+        log = MagicMock()
+        log.error = MagicMock()
+        return log
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_fingerprint_file_called_with_force_fpcalc(self, mock_fp):
+        """acoustid_match must pass force_fpcalc=True to avoid GStreamer fd leak."""
+        mock_fp.return_value = (30, b"FINGERPRINT")
+        with patch("beetsplug.chroma.acoustid.lookup") as mock_lookup:
+            mock_lookup.return_value = {"status": "ok", "results": []}
+            chroma.acoustid_match(self._make_log(), b"/fake/path.mp3")
+        mock_fp.assert_called_once()
+        _, kwargs = mock_fp.call_args
+        assert kwargs.get("force_fpcalc") is True
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_no_backend_falls_back_to_library(self, mock_fp):
+        """When fpcalc is absent, acoustid_match falls back to the library."""
+        mock_fp.side_effect = [acoustid.NoBackendError(), (30, b"FINGERPRINT")]
+        with patch("beetsplug.chroma.acoustid.lookup") as mock_lookup:
+            mock_lookup.return_value = {"status": "ok", "results": []}
+            chroma.acoustid_match(self._make_log(), b"/fake/path.mp3")
+        assert mock_fp.call_count == 2
+        first_kwargs = mock_fp.call_args_list[0][1]
+        assert first_kwargs.get("force_fpcalc") is True
+        second_kwargs = mock_fp.call_args_list[1][1]
+        assert "force_fpcalc" not in second_kwargs
+
+
+class TestFingerprintItem:
+    """Tests for fingerprint_item() covering the force_fpcalc fix (#5171)."""
+
+    def _make_log(self):
+        log = MagicMock()
+        log.info = MagicMock()
+        return log
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_fingerprint_file_called_with_force_fpcalc(self, mock_fp):
+        """fingerprint_item must pass force_fpcalc=True."""
+        mock_fp.return_value = (30, b"FINGERPRINT")
+        item = MagicMock()
+        item.length = 30
+        item.acoustid_fingerprint = None
+        item._db = None
+        chroma.fingerprint_item(self._make_log(), item)
+        mock_fp.assert_called_once()
+        _, kwargs = mock_fp.call_args
+        assert kwargs.get("force_fpcalc") is True
+
+    @patch("beetsplug.chroma.acoustid.fingerprint_file")
+    def test_no_backend_falls_back_to_library(self, mock_fp):
+        """When fpcalc is absent, fingerprint_item falls back to the library."""
+        mock_fp.side_effect = [acoustid.NoBackendError(), (30, b"FINGERPRINT")]
+        item = MagicMock()
+        item.length = 30
+        item.acoustid_fingerprint = None
+        item._db = None
+        result = chroma.fingerprint_item(self._make_log(), item)
+        assert result == "FINGERPRINT"
+        assert mock_fp.call_count == 2
 
 
 def _seed_acoustid_match(item_path: bytes = b"/fake/path.mp3") -> Item:

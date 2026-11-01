@@ -1,8 +1,6 @@
 """This module includes various helpers that provide fixtures, capture
 information or mock the environment.
 
-- `has_program` checks the presence of a command on the system.
-
 - The `ImportSessionFixture` allows one to run importer code while
   controlling the interactions through code.
 
@@ -15,7 +13,6 @@ import importlib.util
 import os
 import os.path
 import shutil
-import subprocess
 import sys
 import unittest
 from contextlib import contextmanager
@@ -23,7 +20,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import cache, cached_property
 from pathlib import Path
-from tempfile import gettempdir, mkdtemp, mkstemp
+from tempfile import TemporaryDirectory, gettempdir, mkdtemp, mkstemp
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from unittest.mock import Mock, patch
 
@@ -43,32 +40,16 @@ from beets.util import MoveOperation, clean_module_tempdir, syspath
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
     from types import TracebackType
+    from typing import Self
     from unittest.mock import _patch
 
     from confuse import ConfigSource
     from requests_mock.mocker import Mocker
-    from typing_extensions import Self
 
     from beets.autotag import AlbumMatch, TrackMatch
     from beets.library import Album
 
 RUNNING_IN_CI = os.environ.get("GITHUB_ACTIONS") == "true"
-
-
-def has_program(cmd: str, args: Iterable[str] = ("--version",)) -> bool:
-    """Returns `True` if `cmd` can be executed."""
-    full_cmd = [cmd, *args]
-    try:
-        with open(os.devnull, "wb") as devnull:
-            subprocess.check_call(
-                full_cmd, stderr=devnull, stdout=devnull, stdin=devnull
-            )
-    except OSError:
-        return False
-    except subprocess.CalledProcessError:
-        return False
-    else:
-        return True
 
 
 @cache
@@ -82,14 +63,22 @@ def check_reflink_support(path: str) -> bool:
     except ImportError:
         return False
 
-    return reflink.supported_at(path)
+    # reflink probes support by creating two fixed-name files under the given
+    # path. Concurrent probes - xdist workers, plus every subprocess spawned
+    # on Windows - unlink each other's, so give each probe its own directory.
+    with TemporaryDirectory(dir=path) as tmp:
+        return reflink.supported_at(tmp)
 
 
 NEEDS_REFLINK = pytest.mark.skipif(
-    not check_reflink_support(gettempdir()), reason="need reflink"
+    not (
+        (RUNNING_IN_CI and sys.platform != "win32")
+        or check_reflink_support(gettempdir())
+    ),
+    reason="reflink is not supported",
 )
 NEEDS_FFPROBE = pytest.mark.skipif(
-    not has_program("ffprobe", ("-version",)) and not RUNNING_IN_CI,
+    not shutil.which("ffprobe") and not RUNNING_IN_CI,
     reason="ffprobe (ffmpeg) is not available",
 )
 

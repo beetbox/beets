@@ -15,8 +15,9 @@ from collections.abc import Mapping, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
+from itertools import islice
 from pathlib import Path
-from sqlite3 import Connection, sqlite_version_info
+from sqlite3 import Connection
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -25,14 +26,12 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    Self,
     TypedDict,
     overload,
 )
 
-from typing_extensions import (
-    Self,
-    TypeVar,  # default value support
-)
+from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
 
 import beets
@@ -744,6 +743,7 @@ class Results(Sequence[AnyModel]):
         flex_rows: list[sqlite3.Row],
         query: Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> None:
         """Create a result set that will construct objects of type
         `model_class`.
@@ -764,6 +764,7 @@ class Results(Sequence[AnyModel]):
         self.db = db
         self.query = query
         self.sort = sort
+        self.limit = limit
         self.flex_rows = flex_rows
 
         # We keep a queue of rows we haven't yet consumed for
@@ -815,13 +816,16 @@ class Results(Sequence[AnyModel]):
         """Construct and generate Model objects for all matching
         objects, in sorted order.
         """
+        # Objects are pre-sorted (i.e., by the database).
+        objects = self._get_objects()
         if self.sort:
             # Slow sort. Must build the full list first.
-            objects = self.sort.sort(list(self._get_objects()))
-            return iter(objects)
+            objects = iter(self.sort.sort(list(objects)))
 
-        # Objects are pre-sorted (i.e., by the database).
-        return self._get_objects()
+        if self.limit is not None:
+            objects = islice(objects, self.limit)
+
+        return objects
 
     def _get_indexed_flex_attrs(self) -> dict[int, FlexAttrs]:
         """Index flexible attributes by the entity id they belong to"""
@@ -1244,12 +1248,10 @@ class Database:
 
             return bytestring
 
-        create_function = conn.create_function
-        if sys.version_info >= (3, 8) and sqlite_version_info >= (3, 8, 3):
-            # Let sqlite make extra optimizations
-            create_function = functools.partial(
-                conn.create_function, deterministic=True
-            )
+        # Let sqlite make extra optimizations
+        create_function = functools.partial(
+            conn.create_function, deterministic=True
+        )
 
         create_function("regexp", 2, regexp)
         create_function("unidecode", 1, unidecode)
@@ -1399,6 +1401,7 @@ class Database:
         model_cls: type[AnyModel],
         query: Query | None = None,
         sort: Sort | None = None,
+        limit: int | None = None,
     ) -> Results[AnyModel]:
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
@@ -1409,6 +1412,14 @@ class Database:
         sort = sort or NullSort()  # Unsorted.
         where, subvals = query.clause()
         order_by = sort.order_clause()
+        sql_limit = flex_limit = None
+        if limit is not None:
+            if sort.field_names - model_cls.all_db_fields:
+                # sorting by at least one flexible attr.
+                # Limit will be applied after slow field sort.
+                flex_limit = limit
+            else:
+                sql_limit = limit
 
         table = model_cls._table
         _from = table
@@ -1420,15 +1431,7 @@ class Database:
             f"SELECT {table}.* "
             f"FROM ({_from}) "
             f"WHERE {where or 1} "
-            f"GROUP BY {table}.id"
-        )
-        # Fetch flexible attributes for items matching the main query.
-        # Doing the per-item filtering in python is faster than issuing
-        # one query per item to sqlite.
-        flex_sql = (
-            "SELECT * "
-            f"FROM {model_cls._flex_table} "
-            f"WHERE entity_id IN (SELECT id FROM ({sql}))"
+            f"GROUP BY {table}.id "
         )
 
         if order_by:
@@ -1437,7 +1440,26 @@ class Database:
             # if we try to order directly.
             # Since the join is required only for filtering, we can filter in
             # a subquery and order the result, which returns unique fields.
-            sql = f"SELECT * FROM ({sql}) ORDER BY {order_by}"
+            select = f"{table}.* FROM ({sql}) {table}"
+            if (
+                sort.field_names & model_cls.other_db_fields
+            ) - model_cls._getters().keys():
+                # only applies to db fields on the other model
+                select += f" {model_cls.relation_join}"
+
+            sql = f"SELECT {select} ORDER BY {order_by} "
+
+        if sql_limit is not None:
+            sql += f"LIMIT {sql_limit}"
+
+        # Fetch flexible attributes for items matching the main query.
+        # Doing the per-item filtering in python is faster than issuing
+        # one query per item to sqlite.
+        flex_sql = (
+            "SELECT * "
+            f"FROM {model_cls._flex_table} "
+            f"WHERE entity_id IN (SELECT id FROM ({sql}))"
+        )
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
@@ -1450,6 +1472,7 @@ class Database:
             flex_rows,
             None if where else query,  # Slow query component.
             sort if sort.is_slow() else None,  # Slow sort component.
+            flex_limit,
         )
 
     def _get(self, model_cls: type[AnyModel], id_: int) -> AnyModel | None:

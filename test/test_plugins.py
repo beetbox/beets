@@ -1,7 +1,7 @@
 import importlib
 import itertools
-import logging
 import pkgutil
+import subprocess
 import sys
 from typing import ClassVar
 from unittest.mock import ANY, Mock, patch
@@ -9,7 +9,7 @@ from unittest.mock import ANY, Mock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import config, plugins, ui
+from beets import plugins, ui
 from beets.dbcore import types
 from beets.importer import Action, SingletonImportTask
 from beets.library import Item
@@ -271,7 +271,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             def return_choices(self, session, task):
                 return [
                     PromptChoice("f", "Foo", None),
-                    PromptChoice("r", "baR", None),
+                    PromptChoice("z", "baZ", None),
                 ]
 
         self.register_plugin(DummyPlugin)
@@ -283,11 +283,12 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
             "Foo",
-            "baR",
+            "baZ",
         )
 
         self.importer.add_choice(Action.SKIP)
@@ -296,7 +297,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             opts, default="a", require=ANY
         )
 
-    def test_plugin_choices_in_ui_input_options_singleton(self):
+    def test_plugin_choices_in_ui_input_options_singleton(self, config):
         """Test the presence of plugin choices on the prompt (singleton)."""
 
         class DummyPlugin(plugins.BeetsPlugin):
@@ -360,6 +361,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -396,6 +398,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -440,6 +443,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             "Use as-is",
             "as Tracks",
             "Group albums",
+            "Rescan directory",
             "Enter search",
             "enter Id",
             "aBort",
@@ -467,7 +471,7 @@ def get_available_plugins():
     ]
 
 
-class TestImportPlugin(PluginMixin):
+class TestImportPlugin:
     @pytest.fixture(params=get_available_plugins())
     def plugin_name(self, request):
         """Fixture to provide the name of each available plugin."""
@@ -480,20 +484,6 @@ class TestImportPlugin(PluginMixin):
 
         return name
 
-    def unload_plugins(self):
-        """Unimport plugins before each test to avoid conflicts."""
-        super().unload_plugins()
-        for mod in list(sys.modules):
-            if mod.startswith("beetsplug."):
-                del sys.modules[mod]
-
-    @pytest.fixture(autouse=True)
-    def cleanup(self):
-        """Ensure plugins are unimported before and after each test."""
-        self.unload_plugins()
-        yield
-        self.unload_plugins()
-
     @pytest.mark.skipif(
         not RUNNING_IN_CI,
         reason=(
@@ -501,14 +491,20 @@ class TestImportPlugin(PluginMixin):
             " guarantee in the local environment."
         ),
     )
-    def test_import_plugin(self, caplog, plugin_name):
-        """Test that a plugin is importable without an error."""
-        caplog.set_level(logging.WARNING)
-        self.load_plugins(plugin_name)
-
-        assert "PluginImportError" not in caplog.text, (
-            f"Plugin '{plugin_name}' has issues during import."
+    def test_import_plugin(self, plugin_name):
+        """Check that each plugin imports in a fresh interpreter."""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import importlib, sys; importlib.import_module(sys.argv[1])",
+                f"beetsplug.{plugin_name}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
+        assert result.returncode == 0, result.stdout + result.stderr
 
 
 class TestDeprecationCopy:
@@ -533,11 +529,10 @@ class TestDeprecationCopy:
 
 class TestMusicBrainzPluginLoading:
     @pytest.fixture(autouse=True)
-    def config(self):
-        _config = config
-        _config.sources = []
-        _config.read(user=False, defaults=True)
-        return _config
+    def config(self, config):
+        config.sources = []
+        config.read(user=False, defaults=True)
+        return config
 
     def test_default(self):
         assert "musicbrainz" in plugins.get_plugin_names()

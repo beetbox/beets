@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 class ReplayGainCLIOpts(Protocol):
     album: bool
     force: bool
+    limit: int | None
     threads: int | None
     write: bool | None
 
@@ -1244,16 +1245,19 @@ class ExceptionWatcher(Thread):
         self._stopevent = Event()
         Thread.__init__(self)
 
+    # Seconds to block waiting for an exception before re-checking
+    # `_stopevent`. Polling with `get_nowait()` would busy-loop and hold the
+    # GIL, starving the main and worker threads.
+    poll_interval = 0.1
+
     def run(self) -> None:
         while not self._stopevent.is_set():
             try:
-                exc = self._queue.get_nowait()
-                self._callback()
-                raise exc
+                exc = self._queue.get(timeout=self.poll_interval)
             except queue.Empty:
-                # No exceptions yet, loop back to check
-                #  whether `_stopevent` is set
-                pass
+                continue
+            self._callback()
+            raise exc
 
     def join(self, timeout: float | None = None) -> None:
         self._stopevent.set()
@@ -1606,7 +1610,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.open_pool(threads)
 
             if opts.album:
-                albums = lib.albums(args)
+                albums = lib.albums(args, limit=opts.limit)
                 self._log.info(
                     f"Analyzing {len(albums)} albums ~"
                     f" {self.backend_name} backend..."
@@ -1614,7 +1618,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
-                items = lib.items(args)
+                items = lib.items(args, limit=opts.limit)
                 self._log.info(
                     f"Analyzing {len(items)} tracks ~"
                     f" {self.backend_name} backend..."
@@ -1666,5 +1670,6 @@ class ReplayGainPlugin(BeetsPlugin):
             action="store_false",
             help="don't write metadata (opposite of -w)",
         )
+        cmd.parser.add_limit_option()
         cmd.func = self.command_func
         return [cmd]

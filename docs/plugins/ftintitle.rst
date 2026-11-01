@@ -61,10 +61,10 @@ From the command line, type:
 
 ::
 
-    $ beet ftintitle [QUERY]
+    $ beet ftintitle [-l LIMIT] [QUERY]
 
 The query is optional; if it's left off, the transformation will be applied to
-your entire collection.
+your entire collection. Use ``-l``/``--limit`` to cap the matched tracks.
 
 Use the ``-d`` flag to remove featured artists (equivalent of the ``drop``
 config option).

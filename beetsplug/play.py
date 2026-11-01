@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import random
 import shlex
 import subprocess
@@ -31,6 +32,7 @@ ARGS_MARKER = "$args"
 class PlayCLIOpts(Protocol):
     album: bool
     args: str | None
+    limit: int | None
     randomize: bool | None
     yes: bool | None
 
@@ -109,8 +111,34 @@ class PlayPlugin(BeetsPlugin):
             action="store_true",
             help="skip the warning threshold",
         )
+        play_command.parser.add_limit_option()
         play_command.func = self._play_command
         return [play_command]
+
+    def _make_relative(self, paths: list[bytes], start: bytes) -> list[bytes]:
+        """Make each of the paths relative to the given starting point.
+
+        A path that has no relative form - on Windows, one that lives on
+        another drive - is kept absolute so that playback still works.
+        """
+        relative, absolute = [], []
+        for path in paths:
+            try:
+                relative.append(relpath(path, start))
+            except ValueError:
+                absolute.append(path)
+                relative.append(path)
+
+        if absolute:
+            self._log.warning(
+                "{} path(s) have no relative form from relative_to '{}' and "
+                "stay absolute, starting with '{}'",
+                len(absolute),
+                util.displayable_path(start),
+                util.displayable_path(absolute[0]),
+            )
+
+        return relative
 
     def _play_command(
         self, lib: Library, opts: PlayCLIOpts, args: list[str]
@@ -126,7 +154,7 @@ class PlayPlugin(BeetsPlugin):
         # playlist.
         selection: Sequence[LibModel]
         if opts.album:
-            selection = lib.albums(args)
+            selection = lib.albums(args, limit=opts.limit)
             paths = []
 
             sort = lib.get_default_album_sort()
@@ -139,12 +167,12 @@ class PlayPlugin(BeetsPlugin):
 
         # Perform item query and add tracks to playlist.
         else:
-            selection = lib.items(args)
+            selection = lib.items(args, limit=opts.limit)
             paths = [item.path for item in selection]
             item_type = "track"
 
         if relative_to:
-            paths = [relpath(path, relative_to) for path in paths]
+            paths = self._make_relative(paths, relative_to)
 
         if not selection:
             ui.print_(colorize("text_warning", f"No {item_type} to play."))
@@ -230,14 +258,14 @@ class PlayPlugin(BeetsPlugin):
         """Create a temporary .m3u file. Return the filename."""
         utf8_bom = config["play"]["bom"].get(bool)
         filename = get_temp_filename(__name__, suffix=".m3u")
-        with open(filename, "wb") as m3u:
+        with filename.open("wb") as m3u:
             if utf8_bom:
                 m3u.write(b"\xef\xbb\xbf")
 
             for item in paths_list:
                 m3u.write(item + b"\n")
 
-        return filename
+        return os.fsencode(filename)
 
     def before_choose_candidate_listener(
         self, session: ImportSession, task: ImportTask

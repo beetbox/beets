@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypedDict, get_args
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from pathlib import Path
 
     from beets.autotag import AlbumInfo, TrackInfo
     from beets.autotag.match import AlbumMatch
@@ -47,6 +48,7 @@ WriteEventType = Literal["write"]
 MusicBrainzExtractEventType = Literal["mb_album_extract", "mb_track_extract"]
 NoArgsEventType = Literal["pluginload", "smartplaylist_update"]
 AfterConvertEventType = Literal["after_convert"]
+AlternativesItemUpdatedEventType = Literal["alternatives.item_updated"]
 EventType = (
     AfterWriteEventType
     | ItemPathEventType
@@ -68,6 +70,7 @@ EventType = (
     | MusicBrainzExtractEventType
     | NoArgsEventType
     | AfterConvertEventType
+    | AlternativesItemUpdatedEventType
 )
 ALL_EVENTS = list(chain.from_iterable(get_args(e) for e in get_args(EventType)))
 
@@ -150,3 +153,10 @@ class AfterConvertEventArgs(TypedDict):
     item: Item
     dest: bytes
     keepnew: bool
+
+
+class AlternativesItemUpdatedEventArgs(TypedDict):
+    collection: str
+    path: Path
+    item: Item
+    action: str

@@ -88,7 +88,7 @@ class MoveTest(BeetsTestCase):
 
     def test_move_changes_path(self):
         self.i.move()
-        assert self.i.path == util.normpath(self.dest)
+        assert self.i.path == util.normpath(os.fsencode(self.dest))
 
     def test_copy_already_at_destination(self):
         self.i.move()
@@ -108,18 +108,18 @@ class MoveTest(BeetsTestCase):
         assert "C_DOS" in self.i.path.decode()
 
     def test_move_file_with_multiple_colons(self):
-        # print(beets.config["replace"])
+        # print(self.config["replace"])
         self.i.artist = "COM:DOS"
         self.i.move()
         assert "COM_DOS" in self.i.path.decode()
 
     def test_move_file_with_colon_alt_separator(self):
-        old = beets.config["drive_sep_replace"]
-        beets.config["drive_sep_replace"] = "0"
+        old = self.config["drive_sep_replace"]
+        self.config["drive_sep_replace"] = "0"
         self.i.artist = "C:DOS"
         self.i.move()
         assert "C0DOS" in self.i.path.decode()
-        beets.config["drive_sep_replace"] = old
+        self.config["drive_sep_replace"] = old
 
     def test_read_only_file_copied_writable(self):
         # Make the source file read-only.
@@ -158,7 +158,7 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_changes_path(self):
         self.i.move(operation=MoveOperation.LINK)
-        assert self.i.path == util.normpath(self.dest)
+        assert self.i.path == util.normpath(os.fsencode(self.dest))
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_arrives(self):
@@ -179,7 +179,7 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_changes_path(self):
         self.i.move(operation=MoveOperation.HARDLINK)
-        assert self.i.path == util.normpath(self.dest)
+        assert self.i.path == util.normpath(os.fsencode(self.dest))
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_from_symlink(self):

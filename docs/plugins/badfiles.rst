@@ -53,6 +53,8 @@ instance, this will run a check on all songs containing the word "wolf":
 
     beet bad wolf
 
+Use ``-l``/``--limit`` to cap the matched tracks before checking files.
+
 This one will run checks on a specific album:
 
 ::

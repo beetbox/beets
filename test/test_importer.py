@@ -22,8 +22,9 @@ from zipfile import ZipFile
 import pytest
 from mediafile import MediaFile
 
-from beets import config, importer, logging, util
+from beets import importer, logging, plugins, ui, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
+from beets.importer.state import ImportState
 from beets.importer.tasks import (
     ImportTaskFactory,
     albums_in_dir,
@@ -35,6 +36,7 @@ from beets.test import _common
 from beets.test.helper import (
     NEEDS_FFPROBE,
     NEEDS_REFLINK,
+    RUNNING_IN_CI,
     AsIsImporterMixin,
     AutotagImportHelper,
     AutotagImportTestCase,
@@ -42,11 +44,12 @@ from beets.test.helper import (
     BeetsTestCase,
     ImportHelper,
     PluginMixin,
+    TerminalImportMixin,
+    TerminalImportSessionFixture,
     TestHelper,
-    has_program,
+    is_importable,
 )
 from beets.util import bytestring_path, syspath
-from beets.util.extension import remux_mpeglayer3_wav
 
 
 class PathsMixin:
@@ -81,7 +84,7 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
         assert self.track_lib_path.exists()
 
     def test_threaded_import_copy_arrives(self):
-        config["threaded"] = True
+        self.config["threaded"] = True
 
         self.run_asis_importer()
         assert self.track_lib_path.exists()
@@ -90,7 +93,7 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
         assert self.album_path.exists()
         assert self.track_import_path.exists()
         (self.album_path / "alog.log").touch()
-        config["clutter"] = ["*.log"]
+        self.config["clutter"] = ["*.log"]
 
         self.run_asis_importer(move=True)
 
@@ -229,12 +232,15 @@ class TestRmTemp(TestHelper):
 
 
 class TestImportZip(AsIsImporterMixin, ImportHelper):
+    def create_archive(self):
+        return create_archive(self)
+
     def test_import_zip(self):
-        zip_path = create_archive(self)
+        archive_path = self.create_archive()
         assert len(self.lib.items()) == 0
         assert len(self.lib.albums()) == 0
 
-        self.run_asis_importer(import_dir=zip_path)
+        self.run_asis_importer(import_dir=archive_path)
         assert len(self.lib.items()) == 1
         assert len(self.lib.albums()) == 1
 
@@ -250,21 +256,22 @@ class TestImportTar(TestImportZip):
         return path
 
 
-@pytest.mark.skipif(not has_program("unrar"), reason="unrar program not found")
+@pytest.mark.skipif(
+    not (is_importable("rarfile") and shutil.which("unrar") and RUNNING_IN_CI),
+    reason="rarfile or unrar program not found",
+)
 class TestImportRar(TestImportZip):
     def create_archive(self):
         return _common.RSRC / "archive.rar"
 
 
+@pytest.mark.skipif(
+    not (is_importable("py7zr") and RUNNING_IN_CI),
+    reason="py7zr is not available",
+)
 class TestImport7z(TestImportZip):
     def create_archive(self):
         return _common.RSRC / "archive.7z"
-
-
-@pytest.mark.skip(reason="Implement me!")
-class TestImportPasswordRar(TestImportZip):
-    def create_archive(self):
-        return _common.RSRC / "password.rar"
 
 
 class ImportSingletonTest(AutotagImportTestCase):
@@ -295,7 +302,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert (self.lib_path / "singletons" / "Applied Track 1.mp3").exists()
 
     def test_apply_from_scratch_removes_other_metadata(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         for mediafile in self.import_media:
             mediafile.comments = "Tag Comment"
@@ -341,7 +348,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         collection = "To Listen"
         disc = 0
 
-        config["import"]["set_fields"] = {
+        self.config["import"]["set_fields"] = {
             "genres": "; ".join(genres),
             "collection": collection,
             "disc": disc,
@@ -377,8 +384,7 @@ class ImportSingletonTest(AutotagImportTestCase):
 
 
 @pytest.mark.skipif(
-    not has_program("ffprobe", ["-L"]),
-    reason="need ffprobe for format recognition",
+    not shutil.which("ffprobe"), reason="need ffprobe for format recognition"
 )
 class TestImportFormat(ImportHelper):
     """Test fix_extension during import."""
@@ -416,7 +422,7 @@ class TestImportFormat(ImportHelper):
         assert len(self.lib.items()) == 0
 
     def test_recognize_format_change_original(self):
-        config["import"]["fix_ext_inplace"] = True
+        self.config["import"]["fix_ext_inplace"] = True
         resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
@@ -426,7 +432,7 @@ class TestImportFormat(ImportHelper):
         assert not Path(self.temp_path / "no_ext").exists()
 
     def test_recognize_format_keep_original(self):
-        config["import"]["fix_ext_inplace"] = False
+        self.config["import"]["fix_ext_inplace"] = False
         resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
@@ -463,7 +469,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
         assert item.filepath.exists()
 
     def test_apply_from_scratch_removes_other_metadata(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         for mediafile in self.import_media:
             mediafile.genres = ["Tag Genre"]
@@ -474,14 +480,14 @@ class TestImport(PathsMixin, AutotagImportHelper):
         assert not self.lib.items().get().genres
 
     def test_apply_from_scratch_keeps_format(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
         assert self.lib.items().get().format == "MP3"
 
     def test_apply_from_scratch_keeps_bitrate(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
         bitrate = 80000
 
         self.importer.add_choice(importer.Action.APPLY)
@@ -491,7 +497,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
     def test_apply_with_move_deletes_import(self):
         assert self.track_import_path.exists()
 
-        config["import"]["move"] = True
+        self.config["import"]["move"] = True
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -500,7 +506,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
     def test_apply_with_delete_deletes_import(self):
         assert self.track_import_path.exists()
 
-        config["import"]["delete"] = True
+        self.config["import"]["delete"] = True
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -565,7 +571,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
         disc = 0
         comments = "managed by beets"
 
-        config["import"]["set_fields"] = {
+        self.config["import"]["set_fields"] = {
             "genres": "; ".join(genres),
             "collection": collection,
             "disc": disc,
@@ -637,6 +643,349 @@ class ImportTracksTest(AutotagImportTestCase):
         self.importer.run()
 
         assert (self.lib_path / "singletons" / "Applied Track 1.mp3").exists()
+
+
+class ImportRescanTest(AutotagImportTestCase):
+    """Test the Rescan directory action.
+
+    Directory mutations must land when the first prompt is answered, not
+    before ``run()`` -- an edit made earlier would be visible to the
+    initial scan too and wouldn't exercise rescanning. Hence
+    ``_run_with_cleanup_before_first_prompt``.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.album_path = self.prepare_album_for_import(2)[0].parent
+        self.setup_importer()
+
+    def _run_with_cleanup_before_first_prompt(self, cleanup):
+        """Run the importer, calling `cleanup` as the first prompt is
+        answered -- the user editing the directory while paused there.
+        """
+        original_choose_match = self.importer.choose_match
+        state = {"done": False}
+
+        def choose_match_and_cleanup(task):
+            if not state["done"]:
+                state["done"] = True
+                cleanup()
+            return original_choose_match(task)
+
+        with patch.object(
+            self.importer, "choose_match", side_effect=choose_match_and_cleanup
+        ):
+            self.importer.run()
+
+    def test_rescan_picks_up_file_added_after_initial_scan(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(
+            lambda: self.prepare_track_for_import(3, self.album_path)
+        )
+
+        assert len(self.lib.items()) == 3
+
+    def test_rescan_picks_up_file_removed_after_initial_scan(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(
+            lambda: (self.album_path / "track_2.mp3").unlink()
+        )
+
+        assert len(self.lib.items()) == 1
+
+    def test_rescan_of_emptied_directory_imports_nothing(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+
+        def cleanup():
+            for track in self.album_path.glob("*.mp3"):
+                track.unlink()
+
+        self._run_with_cleanup_before_first_prompt(cleanup)
+
+        assert not self.lib.items()
+
+    def test_rescan_with_only_unreadable_files_imports_nothing(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+
+        def cleanup():
+            # Directory still has a music file by extension, but it can't
+            # actually be read as an item.
+            for track in self.album_path.glob("*.mp3"):
+                track.unlink()
+            (self.album_path / "track_1.mp3").write_bytes(b"not a real mp3")
+
+        self._run_with_cleanup_before_first_prompt(cleanup)
+
+        assert not self.lib.items()
+
+    def test_rescan_with_multiple_subdirectories_finds_all_albums(self):
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        def cleanup():
+            # Simulate the user splitting the messy directory into two
+            # proper album subdirectories.
+            for track in self.album_path.glob("*.mp3"):
+                track.unlink()
+            self.prepare_album_for_import(2, album_path=self.album_path / "one")
+            self.prepare_album_for_import(2, album_path=self.album_path / "two")
+
+        self._run_with_cleanup_before_first_prompt(cleanup)
+
+        assert len(self.lib.albums()) == 2
+
+    def test_rescan_of_multidisc_album_does_not_duplicate_tasks(self):
+        """`task.paths` for a multi-disc album holds the album root and
+        each disc subdirectory. Rescanning must not walk each
+        independently -- that produced three tasks for a two-disc album.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.prepare_album_for_import(1, album_path=self.album_path / "CD1")
+        self.prepare_album_for_import(1, album_path=self.album_path / "CD2")
+        self.setup_importer()
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 2
+
+    def test_rescan_preserves_multidisc_album_grouping(self):
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.prepare_album_for_import(1, album_path=self.album_path / "CD1")
+        self.prepare_album_for_import(1, album_path=self.album_path / "CD2")
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert len(self.lib.albums()) == 1
+
+    def test_rescan_preserves_flat_album_grouping(self):
+        self.prepare_album_for_import(2, album_id=2)
+        self.setup_importer(flat=True)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert len(self.lib.albums()) == 1
+
+    def test_rescan_of_single_file_import(self):
+        """When the import path is a single file, rescanning must still
+        find it (walking a file with `albums_in_dir` finds no music).
+        """
+        track_path = self.prepare_album_for_import(1)[0]
+        self.setup_importer(import_dir=track_path)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert len(self.lib.items()) == 1
+
+    def test_rescan_preserves_toppath_for_move_pruning(self):
+        """Rescanned tasks must keep the original `toppath`. Pruning
+        stops at `toppath`, so using the album directory itself would
+        leave it behind, empty and un-pruned, after a move.
+        """
+        self.setup_importer(move=True)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        assert not self.album_path.exists()
+
+    def test_rescan_preserves_toppath_for_resume_state(self):
+        """Rescanned tasks must keep the original `toppath`. Resume
+        progress is keyed by `toppath`, so using the album directory
+        itself would leave stale, never-reset progress behind.
+        """
+        self.setup_importer(resume=True)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        # A completed import resets progress for its toppath at the end.
+        assert not ImportState().tagprogress
+
+    def test_rescan_of_sibling_multidisc_album_does_not_duplicate_tasks(self):
+        """Sibling disc directories with no wrapping album directory can
+        only be reconstructed by walking their shared parent, which also
+        finds an unrelated sibling album. The rescan must regroup the
+        discs into one task and leave the sibling alone.
+        """
+        for track in self.album_path.glob("*.mp3"):
+            track.unlink()
+        self.album_path.rmdir()
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 1"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Set Disc 2"
+        )
+        self.prepare_album_for_import(
+            1, album_path=self.import_path / "Other Album"
+        )
+        self.setup_importer()
+
+        # "Other Album" sorts first; leave it as-is, then no-op rescan
+        # the two-disc album.
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        albums = self.lib.albums()
+        assert len(albums) == 2
+        assert sorted(len(list(a.items())) for a in albums) == [1, 2]
+
+    def test_rescan_of_normal_album_scans_only_its_own_directory(self):
+        """A plain album under a larger toppath must be rediscovered
+        from its own directory, not from `toppath` -- otherwise every
+        rescan walks far more of the filesystem than necessary.
+        """
+        self.importer.add_choice(importer.Action.RESCAN)
+        self.importer.add_choice(importer.Action.APPLY)
+
+        with patch(
+            "beets.importer.stages.ImportTaskFactory", wraps=ImportTaskFactory
+        ) as mock_factory:
+            self._run_with_cleanup_before_first_prompt(lambda: None)
+
+        scanned_toppaths = [
+            call.args[0] for call in mock_factory.call_args_list
+        ]
+        album_path_bytes = os.fsencode(str(self.album_path))
+        import_path_bytes = os.fsencode(str(self.import_path))
+
+        # Discovery is scoped to the album's own directory; `toppath` is
+        # only touched by the initial scan and the task-emitting factory
+        # (see `rescan_tasks`), never by a discovery walk.
+        assert scanned_toppaths.count(album_path_bytes) == 1
+        assert scanned_toppaths.count(import_path_bytes) == 2
+
+
+class TestRescanChoiceAvailability(
+    TerminalImportMixin, PluginMixin, AutotagImportHelper
+):
+    """The "Rescan directory" choice must not be offered for tasks with
+    no directory scope to rescan: "Group albums" output, toppath-less
+    query tasks, singletons.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup_prompt_choice(self, io):
+        self.prepare_album_for_import(2)
+        self.setup_importer()
+        self.input_options_patcher = patch(
+            "beets.ui.input_options", side_effect=ui.input_options
+        )
+        self.mock_input_options = self.input_options_patcher.start()
+        yield
+        self.input_options_patcher.stop()
+
+    def test_rescan_choice_withheld_after_group_albums(self):
+        self.importer.add_choice(importer.Action.ALBUMS)
+        self.importer.add_choice(importer.Action.SKIP)
+        self.importer.run()
+
+        assert self.mock_input_options.call_count >= 2
+        first_opts, second_opts = (
+            call.args[0] for call in self.mock_input_options.call_args_list[:2]
+        )
+        assert "Rescan directory" in first_opts
+        assert "Rescan directory" not in second_opts
+
+    def test_rescan_choice_forced_by_plugin_on_singleton_task_is_ignored(self):
+        """A singleton task's `paths` is a single item file, not an
+        album directory. A plugin forcing Rescan there must not wrap it
+        back into a mismatched album-style task.
+        """
+
+        class ForceRescanPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener("import_task_choice", self.force_rescan)
+
+            def force_rescan(self, session, task):
+                if not task.is_album:
+                    task.choice_flag = importer.Action.RESCAN
+
+        self.register_plugin(ForceRescanPlugin)
+        self.importer.add_choice(importer.Action.TRACKS)
+        self.importer.run()
+
+        assert not self.lib.items()
+
+    def test_rescan_choice_forced_by_plugin_on_grouped_task_is_ignored(self):
+        """A plugin forcing Rescan onto a Group-albums task must be
+        ignored (falling back to Skip) rather than misbehave.
+        """
+
+        class ForceRescanPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener("import_task_choice", self.force_rescan)
+
+            def force_rescan(self, session, task):
+                if task.is_grouped:
+                    task.choice_flag = importer.Action.RESCAN
+
+        self.register_plugin(ForceRescanPlugin)
+        self.importer.add_choice(importer.Action.ALBUMS)
+        self.importer.run()
+
+        assert not self.lib.albums()
+
+    def test_rescan_choice_forced_by_plugin_on_toppathless_task_is_ignored(
+        self,
+    ):
+        """`task.toppath` is None for library-query tasks (`beet import
+        -L`). A plugin forcing Rescan there must not reach
+        `rescan_tasks`'s `assert task.toppath is not None`.
+        """
+
+        class ForceRescanPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener("import_task_choice", self.force_rescan)
+
+            def force_rescan(self, session, task):
+                task.choice_flag = importer.Action.RESCAN
+
+        # Get an album into the library first, via the normal importer.
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        assert len(self.lib.albums()) == 1
+
+        self.register_plugin(ForceRescanPlugin)
+
+        query_session = TerminalImportSessionFixture(
+            self.lib,
+            loghandler=None,
+            query="album:'Tag Album'",
+            io=self.io,
+            paths=None,
+        )
+        query_session.default_choice = importer.Action.APPLY
+
+        query_session.run()  # Must not raise.
+
+        assert len(self.lib.albums()) == 1
 
 
 class ImportCompilationTest(AutotagImportTestCase):
@@ -804,7 +1153,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         medium.title = "New Title"
         medium.save()
 
-        config["import"]["copy"] = False
+        self.config["import"]["copy"] = False
         self.reimporter.add_choice(importer.Action.ASIS)
         self.reimporter.run()
 
@@ -812,7 +1161,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         assert not self.applied_track_path.with_name("New Title.mp3").exists()
 
     def test_outside_file_is_copied(self):
-        config["import"]["copy"] = False
+        self.config["import"]["copy"] = False
         self.importer.run()
         assert self.lib.items().get().filepath == self.track_import_path
 
@@ -875,7 +1224,7 @@ class GroupAlbumsImportTest(AutotagImportTestCase):
         assert artists == {"Artist B", "Tag Artist"}
 
     def test_incremental(self):
-        config["import"]["incremental"] = True
+        self.config["import"]["incremental"] = True
         self.import_media[0].album = "Album B"
         self.import_media[0].save()
 
@@ -889,7 +1238,7 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
         super().setUp()
         self.importer.clear_choices()
         self.importer.default_choice = importer.Action.ASIS
-        config["import"]["group_albums"] = True
+        self.config["import"]["group_albums"] = True
 
 
 class ChooseCandidateTest(AutotagImportTestCase):
@@ -1065,7 +1414,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert len(self.lib.albums()) == 1
 
     def test_no_autotag_removes_duplicate_album(self):
-        config["import"]["autotag"] = False
+        self.config["import"]["autotag"] = False
         album = self.lib.albums().get()
         item = self.lib.items().get()
         assert item.title == "t\xeftle 0"
@@ -1122,7 +1471,9 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         pytest.skip(reason="write me")
 
     def test_keep_when_extra_key_is_different(self):
-        config["import"]["duplicate_keys"]["album"] = "albumartist album flex"
+        self.config["import"]["duplicate_keys"]["album"] = (
+            "albumartist album flex"
+        )
 
         item = self.lib.items().get()
         import_file = MediaFile(
@@ -1247,7 +1598,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         assert item.mb_trackid == "old trackid"
 
     def test_keep_when_extra_key_is_different(self):
-        config["import"]["duplicate_keys"]["item"] = "artist title flex"
+        self.config["import"]["duplicate_keys"]["item"] = "artist title flex"
         item = self.lib.items().get()
         item.flex = "different"
         item.store()
@@ -1258,8 +1609,18 @@ class TestImportDuplicateSingleton(ImportHelper):
 
         assert len(self.lib.items()) == 2
 
+    def test_album_track_is_not_duplicate(self):
+        item = self.lib.items().get()
+        self.lib.add_album([item])
+
+        self.config["import"]["duplicate_action"] = "remove"
+        self.importer.run()
+
+        assert item.filepath.exists()
+        assert len(self.lib.items()) == 2
+
     def test_no_autotag_removes_duplicate_singleton(self):
-        config["import"]["autotag"] = False
+        self.config["import"]["autotag"] = False
         item = self.lib.items().get()
         assert item.mb_trackid == "old trackid"
         assert item.filepath.exists()
@@ -2213,18 +2574,6 @@ class TestImportId(ImportHelper):
 
 class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
-
-    def test_remux_mpeglayer3_wav(self):
-        src = _common.RSRC / "mpeglayer3.wav"
-        dest = self.temp_path / "mpeglayer3.wav"
-        shutil.copy(src, syspath(dest))
-
-        mp3_path = remux_mpeglayer3_wav(dest)
-
-        assert mp3_path is not None
-        assert mp3_path.suffix == ".mp3"
-        assert mp3_path.exists()
-        assert not dest.exists()
 
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""

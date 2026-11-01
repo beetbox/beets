@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import threading
 from functools import cached_property
+from pathlib import Path
 from string import Template
 from typing import TYPE_CHECKING, Literal, NamedTuple, Protocol
 
@@ -40,6 +41,7 @@ _temp_files: list[bytes] = []
 class ConvertCLIOpts(Protocol):
     album: bool
     keep_new: bool
+    limit: int | None
     yes: bool | None
 
 
@@ -218,6 +220,7 @@ class ConvertPlugin(BeetsPlugin):
             ),
         )
         cmd.parser.add_album_option()
+        cmd.parser.add_limit_option(flags=("--limit",))
         cmd.func = self.convert_func
         return [cmd]
 
@@ -563,15 +566,15 @@ class ConvertPlugin(BeetsPlugin):
 
         if self.config["embed"] and not linked:
             album = item._cached_album
-            if album and album.artpath:
-                maxwidth = self._get_art_resize(album.artpath)
+            if album and (path := album.art_filepath):
+                maxwidth = self._get_art_resize(path)
                 self._log.debug(
                     "embedding album art from {.art_filepath}", album
                 )
                 art.embed_item(
                     self._log,
                     item,
-                    album.artpath,
+                    path,
                     maxwidth,
                     itempath=converted,
                     id3v23=id3v23,
@@ -588,7 +591,7 @@ class ConvertPlugin(BeetsPlugin):
         """Copies or converts the associated cover art of the album. Album must
         have at least one track.
         """
-        if not album or not album.artpath:
+        if not album or not album.artpath or not album.art_filepath:
             return
 
         # The stored art path may point to a missing file (e.g. the cover
@@ -624,29 +627,27 @@ class ConvertPlugin(BeetsPlugin):
             )
             return
 
+        dest_path = Path(os.fsdecode(dest))
         # Decide whether we need to resize the cover-art image.
-        maxwidth = self._get_art_resize(album.artpath)
+        maxwidth = self._get_art_resize(album.art_filepath)
 
         # Either copy or resize (while copying) the image.
         if maxwidth is not None:
             self._log.info(
                 "Resizing cover art from {.art_filepath} to {}",
                 album,
-                util.displayable_path(dest),
+                dest_path,
             )
             if not pretend:
-                ArtResizer.shared.resize(maxwidth, album.artpath, dest)
+                ArtResizer.shared.resize(
+                    maxwidth, album.art_filepath, dest_path
+                )
         else:
             link, hardlink = self.link, self.hardlink
             if pretend:
                 msg = "ln" if hardlink else ("ln -s" if link else "cp")
 
-                self._log.info(
-                    "{} {.art_filepath} {}",
-                    msg,
-                    album,
-                    util.displayable_path(dest),
-                )
+                self._log.info("{} {.art_filepath} {}", msg, album, dest_path)
             else:
                 msg = (
                     "Hardlinking"
@@ -658,7 +659,7 @@ class ConvertPlugin(BeetsPlugin):
                     "{} cover art from {.art_filepath} to {}",
                     msg,
                     album,
-                    util.displayable_path(dest),
+                    dest_path,
                 )
                 if hardlink:
                     util.hardlink(album.artpath, dest)
@@ -674,13 +675,13 @@ class ConvertPlugin(BeetsPlugin):
         pretend = self.pretend
 
         if opts.album:
-            albums = lib.albums(args)
+            albums = lib.albums(args, limit=opts.limit)
             items = [i for a in albums for i in a.items()]
             if not pretend:
                 for a in albums:
                     ui.print_(format(a, ""))
         else:
-            items = list(lib.items(args))
+            items = list(lib.items(args, limit=opts.limit))
             if not pretend:
                 for i in items:
                     ui.print_(format(i, ""))
@@ -763,7 +764,7 @@ class ConvertPlugin(BeetsPlugin):
                 )
                 util.remove(source_path, False)
 
-    def _get_art_resize(self, artpath: bytes) -> int | None:
+    def _get_art_resize(self, artpath: Path) -> int | None:
         """For a given piece of album art, determine whether or not it needs
         to be resized according to the user's settings. If so, returns the
         new size. If not, returns None.

@@ -183,16 +183,7 @@ def construct_sort_part(
     assert direction in ("+", "-"), "part must end with + or -"
     is_ascending = direction == "+"
 
-    if sort_cls := model_cls._sorts.get(field):
-        if isinstance(sort_cls, sort.SmartArtistSort):
-            field = "albumartist" if model_cls.__name__ == "Album" else "artist"
-    elif field in model_cls._fields:
-        sort_cls = sort.FixedFieldSort
-    else:
-        # Flexible or computed.
-        sort_cls = sort.SlowFieldSort
-
-    return sort_cls(field, is_ascending, case_insensitive)
+    return model_cls.field_sort(field, is_ascending, case_insensitive)
 
 
 def sort_from_strings(

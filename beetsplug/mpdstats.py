@@ -2,10 +2,17 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypedDict, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    NotRequired,
+    TypedDict,
+    overload,
+)
 
 import mpd
-from typing_extensions import NotRequired
 
 from beets import config, plugins, ui
 from beets.dbcore import types

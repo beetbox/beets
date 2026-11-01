@@ -56,7 +56,7 @@ Usage
 -----
 
 Run ``beet metasync QUERY`` to fetch metadata from the configured list of
-sources.
+sources. Use ``-l``/``--limit`` to cap the matched tracks before syncing.
 
 The command has a few command-line options:
 
