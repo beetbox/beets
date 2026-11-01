@@ -104,6 +104,12 @@ class SubsonicClient(RequestHandler):
         )
         return _as_list(response.get("searchResult3", {}).get("song"))
 
+    def starred_song_ids(self) -> set[str]:
+        """Return IDs of songs the authenticated user has already starred."""
+        response = self._request("getStarred2", {})
+        songs = _as_list(response.get("starred2", {}).get("song"))
+        return {str(song["id"]) for song in songs}
+
     def star_songs(self, song_ids: Iterable[str]) -> None:
         """Mark songs as favourites for the authenticated user."""
         if ids := list(song_ids):

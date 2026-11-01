@@ -12,7 +12,7 @@ import requests
 from beets import plugins
 from beets.exceptions import UserError
 from beets.test._common import item
-from beets.test.helper import PluginTestHelper
+from beets.test.helper import IOMixin, PluginTestHelper
 from beetsplug.subsonicupdate import SubsonicUpdate
 
 if TYPE_CHECKING:
@@ -23,6 +23,7 @@ _p = pytest.param
 START_SCAN_URL = "http://localhost:4040/rest/startScan"
 SEARCH_URL = "http://localhost:4040/rest/search3"
 STAR_URL = "http://localhost:4040/rest/star"
+STARRED_URL = "http://localhost:4040/rest/getStarred2"
 
 SUCCESS_BODY = """
 {
@@ -314,13 +315,14 @@ def _songs(*songs):
 SONG = {"id": "song-1", "artist": "Artist", "album": "Album", "title": "Song"}
 
 
-class TestSetFavorite(PluginTestHelper):
+class TestSetFavorite(IOMixin, PluginTestHelper):
     plugin = "subsonicupdate"
     preload_plugin = False
 
     @pytest.fixture(autouse=True)
-    def subsonic(self, setup: None):
+    def subsonic(self, setup: None, requests_mock: Mocker):
         """Load the plugin without scanning the library on exit."""
+        requests_mock.get(STARRED_URL, json=_ok(starred2={}))
         self.config["subsonic"].set(
             {
                 "user": "admin",
@@ -337,7 +339,7 @@ class TestSetFavorite(PluginTestHelper):
 
         self.run_command("set-favorite", f"id:{item.id}")
 
-        (star,) = requests_mock.request_history
+        _, star = requests_mock.request_history
         params = _params(star.url)
         assert params["id"] == ["song-1"]
         assert params["u"] == ["admin"]
@@ -352,7 +354,7 @@ class TestSetFavorite(PluginTestHelper):
 
         self.run_command("set-favorite", f"id:{item.id}")
 
-        search, star = requests_mock.request_history
+        _, search, star = requests_mock.request_history
         assert _params(search.url)["query"] == ["Artist Album Song"]
         assert _params(star.url)["id"] == ["song-1"]
 
@@ -376,10 +378,10 @@ class TestSetFavorite(PluginTestHelper):
     @pytest.mark.parametrize(
         "songs, message, expected_calls",
         [
-            _p([], "No Subsonic match", 4, id="no match"),
-            _p([{**SONG, "title": "Songbird"}], "No Subsonic match", 4, id="partial word"),
-            _p([{"id": "song-1", "title": "Song"}], "No Subsonic match", 4, id="missing fields"),
-            _p([SONG, {**SONG, "id": "song-2"}], "Skipping ambiguous match", 1, id="ambiguous"),
+            _p([], "No Subsonic match", 5, id="no match"),
+            _p([{**SONG, "title": "Songbird"}], "No Subsonic match", 5, id="partial word"),
+            _p([{"id": "song-1", "title": "Song"}], "No Subsonic match", 5, id="missing fields"),
+            _p([SONG, {**SONG, "id": "song-2"}], "Skipping ambiguous match", 2, id="ambiguous"),
         ],
     )  # fmt: skip
     def test_skips_unresolvable_matches(
@@ -414,6 +416,19 @@ class TestSetFavorite(PluginTestHelper):
             r.url.startswith(STAR_URL) for r in requests_mock.request_history
         )
         assert "No Subsonic match" in caplog.text
+
+    def test_stars_and_reports_only_new_favourites(self, requests_mock: Mocker):
+        requests_mock.get(STARRED_URL, json=_ok(starred2={"song": [SONG]}))
+        requests_mock.get(STAR_URL, json=_ok())
+        self.add_item(title="Song", subsonic_id="song-1")
+        self.add_item(title="Other", subsonic_id="song-2")
+        self.add_item(title="Other dupe", subsonic_id="song-2")
+
+        output = self.run_with_output("set-favorite")
+
+        *_, star = requests_mock.request_history
+        assert _params(star.url)["id"] == ["song-2"]
+        assert "Marked 1 new tracks as Subsonic favourites." in output
 
     def test_reports_server_errors(self, requests_mock: Mocker):
         item = self.add_item(title="Song", subsonic_id="song-1")
