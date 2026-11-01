@@ -305,3 +305,68 @@ class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
         assert album_info["album_artist_transl"] == "Lilas Ikuta"
         assert album_info.tracks[0]["title_transl"] == "In Bloom"
         assert album_info.tracks[0]["artist_transl"] == "Lilas Ikuta"
+
+    def test_artist_aliases_follow_each_track_credit(
+        self,
+        config,
+        mbpseudo_plugin: MusicBrainzPseudoReleasePlugin,
+        pseudo_release: Release,
+    ):
+        config["import"]["languages"] = []
+
+        release = deepcopy(pseudo_release)
+        first = deepcopy(release["artist_credit"][0])
+        second = deepcopy(first)
+        second["artist"]["id"] = "other-artist"
+        second["artist"]["name"] = "別の歌手"
+        second["artist"]["aliases"][0]["name"] = "Second Artist"
+        first["joinphrase"] = " & "
+        second["joinphrase"] = ""
+        no_alias = deepcopy(second)
+        no_alias["artist"]["id"] = "unaliased-artist"
+        no_alias["artist"]["name"] = "Artist Without Alias"
+        no_alias["artist"]["aliases"] = []
+
+        release["artist_credit"] = [first, second]
+        release["release_group"]["artist_credit"] = [first, second]
+        raw_track = release["media"][0]["tracks"][0]
+        first_single = {**first, "joinphrase": ""}
+        release["media"][0]["tracks"] = [
+            {**raw_track, "id": "first", "artist_credit": [first_single]},
+            {**raw_track, "id": "second", "artist_credit": [second]},
+            {**raw_track, "id": "duet", "artist_credit": [first, second]},
+            {
+                **raw_track,
+                "id": "recording-credit",
+                "artist_credit": [],
+                "recording": {
+                    **raw_track["recording"],
+                    "artist_credit": [second],
+                },
+            },
+            {**raw_track, "id": "no-alias", "artist_credit": [no_alias]},
+        ]
+
+        info = mbpseudo_plugin.album_info(release)
+        mbpseudo_plugin._replace_artist_with_alias(release, info)
+
+        assert info.artist == "Lilas Ikuta & Second Artist"
+        expected_track_artists = [
+            "Lilas Ikuta",
+            "Second Artist",
+            "Lilas Ikuta & Second Artist",
+            "Second Artist",
+            "Artist Without Alias",
+        ]
+        assert [track.artist for track in info.tracks] == expected_track_artists
+
+        official = AlbumInfo(
+            tracks=[TrackInfo(title="Original Title") for _ in info.tracks],
+            artist="original",
+            album="Original Album",
+        )
+        mbpseudo_plugin._add_custom_tags(official, info)
+        assert official["album_artist_transl"] == "Lilas Ikuta & Second Artist"
+        assert [track["artist_transl"] for track in official.tracks] == (
+            expected_track_artists
+        )
