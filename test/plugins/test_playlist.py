@@ -68,20 +68,18 @@ class PlaylistTestCase(PluginTestCase):
 
 class PlaylistQueryTest:
     def test_ignores_blank_lines_and_comments_in_playlist(self):
+        track_paths = [
+            os.fsencode(self.music_dir / self.c_track_path),
+            os.fsencode(self.music_dir / self.f_track_path),
+        ]
+
         self.absolute_playlist_path.write_bytes(
-            b"\n#EXTM3U\n# comment\n"
-            + os.fsencode(self.music_dir / self.c_track_path)
-            + b"\n"
-            + os.fsencode(self.music_dir / self.f_track_path)
-            + b"\n"
+            b"\n#EXTM3U\n# comment\n" + b"\n".join(track_paths) + b"\n"
         )
 
         query = PlaylistQuery(None, "absolute", None)
 
-        assert query.pattern == [
-            os.fsencode(self.music_dir / self.c_track_path),
-            os.fsencode(self.music_dir / self.f_track_path),
-        ]
+        assert query.pattern == track_paths
 
     def test_name_query_with_absolute_paths_in_playlist(self):
         q = "playlist:absolute"
