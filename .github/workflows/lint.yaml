@@ -25,17 +25,17 @@ jobs:
       changed_doc_files: ${{ steps.changed-doc-files.outputs.all_changed_files }}
       changed_python_files: ${{ steps.changed-python-files.outputs.all_changed_files }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Get changed docs files
         id: changed-doc-files
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         with:
           files: |
             docs/**
             uv.lock
       - name: Get changed python files
         id: raw-changed-python-files
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         with:
           files: |
             **.py
@@ -58,9 +58,9 @@ jobs:
     name: Check formatting
     needs: changed-files
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -80,9 +80,9 @@ jobs:
     name: Check linting
     needs: changed-files
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -101,9 +101,9 @@ jobs:
     name: Check types with mypy
     needs: changed-files
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -114,7 +114,7 @@ jobs:
         run: poe install --only-group typing
 
       - name: Type check code
-        uses: liskin/gh-problem-matcher-wrap@v3
+        uses: liskin/gh-problem-matcher-wrap@v4
         with:
           linters: mypy
           run: poe check-types --show-column-numbers --no-error-summary .
@@ -125,11 +125,11 @@ jobs:
     name: Check docs
     needs: changed-files
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # needed to get the full git history for the changelog check
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
