@@ -298,9 +298,11 @@ class FfmpegBackend(Backend):
             )
         incompatible_ffmpeg = True
         for line in ffmpeg_version_out.stdout.splitlines():
-            if line.startswith(b"configuration:"):
-                if b"--enable-libebur128" in line:
-                    incompatible_ffmpeg = False
+            if (
+                line.startswith(b"configuration:")
+                and b"--enable-libebur128" in line
+            ):
+                incompatible_ffmpeg = False
             if line.startswith(b"libavfilter"):
                 version_parts = (
                     line.split(b" ", 1)[1].split(b"/", 1)[0].split(b".")

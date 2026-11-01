@@ -323,6 +323,7 @@ select = [
     "PT", # flake8-pytest-style
     "RET", # flake8-return
     "RUF", # ruff
+    "SIM", # flake8-simplify
     "UP", # pyupgrade
     "TC", # flake8-type-checking
     "W", # pycodestyle

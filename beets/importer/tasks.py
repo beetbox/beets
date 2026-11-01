@@ -1177,10 +1177,9 @@ class ArchiveImportTask(SentinelImportTask):
         if not os.path.isfile(path):
             return False
 
-        for path_test, _ in cls.handlers:
-            if path_test(os.fsdecode(path)):
-                return True
-        return False
+        return any(
+            path_test(os.fsdecode(path)) for path_test, _ in cls.handlers
+        )
 
     @util.cached_classproperty
     def handlers(cls) -> list[ArchiveHandler]:
@@ -1522,10 +1521,9 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
 
     _ignore = config["ignore"].as_str_seq()
     ignore: list[AnyStr]
-    if isinstance(path, str):
-        ignore = _ignore
-    else:
-        ignore = list(map(os.fsencode, _ignore))
+    ignore = (
+        _ignore if isinstance(path, str) else list(map(os.fsencode, _ignore))
+    )
     ignore_hidden: bool = config["ignore_hidden"].get(bool)
 
     patterns = (

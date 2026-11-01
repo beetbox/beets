@@ -42,10 +42,11 @@ class TestEqualChancePermutation:
         mean = sum(data) / len(data)
         stdev = math.sqrt(sum((p - mean) ** 2 for p in data) / (len(data) - 1))
         quot, rem = divmod(len(data), 2)
-        if rem:
-            median = sorted(data)[quot]
-        else:
-            median = sum(sorted(data)[quot - 1 : quot + 1]) / 2
+        median = (
+            sorted(data)[quot]
+            if rem
+            else sum(sorted(data)[quot - 1 : quot + 1]) / 2
+        )
         return mean, stdev, median
 
     def test_equal_permutation(self):

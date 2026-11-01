@@ -64,10 +64,7 @@ def tag_data_emitter(path: bytes) -> DataEmitter:
         included_keys: Literal["*"] | list[str],
     ) -> tuple[JSONDict, LibModel]:
         fields: set[str] | list[str]
-        if included_keys == "*":
-            fields = tag_fields()
-        else:
-            fields = included_keys
+        fields = tag_fields() if included_keys == "*" else included_keys
         if "images" in fields:
             # We can't serialize the image data.
             fields.remove("images")
@@ -220,10 +217,9 @@ class InfoPlugin(BeetsPlugin):
         dictionary and only prints that. If two files have different values
         for the same tag, the value is set to '[various]'
         """
-        if opts.library or opts.album:
-            data_collector = library_data
-        else:
-            data_collector = tag_data
+        data_collector = (
+            library_data if opts.library or opts.album else tag_data
+        )
 
         included_keys = []
         for keys in opts.included_keys:

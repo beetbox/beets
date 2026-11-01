@@ -372,10 +372,7 @@ class BeatportPlugin(MetadataSourcePlugin):
     def candidates(
         self, items: Sequence[Item], artist: str, album: str, va_likely: bool
     ) -> Iterator[AlbumInfo]:
-        if va_likely:
-            query = album
-        else:
-            query = f"{artist} {album}"
+        query = album if va_likely else f"{artist} {album}"
         try:
             yield from self._get_releases(query)
         except BeatportAPIError as e:

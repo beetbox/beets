@@ -116,7 +116,10 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         metadata = {"a": "A", "b": "B"}
         im = DummyIMBackend()
         im.write_metadata("foo", metadata)
-        command = [*im.convert_cmd, *"foo -set a A -set b B foo".split()]
+        command = [
+            *im.convert_cmd,
+            *["foo", "-set", "a", "A", "-set", "b", "B", "foo"],
+        ]
         mock_util.command_output.assert_called_once_with(command)
 
 

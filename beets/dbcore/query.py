@@ -470,9 +470,7 @@ class NumericQuery(FieldQuery[str]):
             return value == self.point
         if self.rangemin is not None and value < self.rangemin:
             return False
-        if self.rangemax is not None and value > self.rangemax:
-            return False
-        return True
+        return not (self.rangemax is not None and value > self.rangemax)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
@@ -834,9 +832,7 @@ class DateInterval:
     def contains(self, date: datetime) -> bool:
         if self.start is not None and date < self.start:
             return False
-        if self.end is not None and date >= self.end:
-            return False
-        return True
+        return not (self.end is not None and date >= self.end)
 
     def __str__(self) -> str:
         return f"[{self.start}, {self.end})"
@@ -880,7 +876,7 @@ class DateQuery(FieldQuery[str]):
             clause_parts.append(f"{self.field} < ?")
             subvals.append(int(self.interval.end.timestamp()))
 
-        if clause_parts:
+        if clause_parts:  # noqa: SIM108
             # One- or two-sided interval.
             clause = " AND ".join(clause_parts)
         else:

@@ -594,10 +594,7 @@ def safe_filename(fn: str) -> bool:
         return False
 
     # In single names, rule out Unix directory traversal names.
-    if fn in (".", ".."):
-        return False
-
-    return True
+    return fn not in (".", "..")
 
 
 class ImageDocument(AURADocument):

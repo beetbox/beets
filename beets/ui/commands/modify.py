@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import TYPE_CHECKING, NamedTuple, Protocol, TypedDict, Unpack
 
 from beets import ui
@@ -166,10 +167,8 @@ def print_and_modify(
     """
     obj.update(mods)
     for field in dels:
-        try:
+        with contextlib.suppress(KeyError):
             del obj[field]
-        except KeyError:
-            pass
     return ui.show_model_changes(obj)
 
 

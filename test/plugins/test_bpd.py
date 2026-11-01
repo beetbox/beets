@@ -8,7 +8,7 @@ import tempfile
 import threading
 import time
 import unittest
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import ClassVar
 from unittest.mock import MagicMock, patch
 
@@ -27,11 +27,9 @@ SERVER_START_TIMEOUT = 10
 # `gstplayer` and `unittest.mock` state, so it has to be forked rather than
 # spawned (the Python 3.14 default on Linux is `forkserver`).
 if "fork" in mp.get_all_start_methods():
-    try:
+    # May already be set, which is fine
+    with suppress(RuntimeError):
         mp.set_start_method("fork", force=True)
-    except RuntimeError:
-        # Already set, which is fine
-        pass
 
 # Under `pytest-xdist` the forking parent is multi-threaded, which Python 3.14
 # warns about. We only fork to start a short-lived server, so it is harmless.
@@ -360,13 +358,12 @@ class BPDTestHelper(PluginTestCase):
         }
         if password:
             config["bpd"]["password"] = password
-        config_file = tempfile.NamedTemporaryFile(
+        with tempfile.NamedTemporaryFile(
             mode="wb", dir=str(self.temp_path), suffix=".yaml", delete=False
-        )
-        config_file.write(
-            yaml.dump(config, Dumper=confuse.Dumper, encoding="utf-8")
-        )
-        config_file.close()
+        ) as config_file:
+            config_file.write(
+                yaml.dump(config, Dumper=confuse.Dumper, encoding="utf-8")
+            )
 
         # Fork and launch BPD in the new process:
         assigned_port = mp.Queue(2)  # 2 slots, `control_port` and `port`

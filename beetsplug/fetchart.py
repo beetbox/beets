@@ -316,10 +316,7 @@ def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:
         send_kwargs["timeout"] = 10
 
     # Our special logging message parameter.
-    if "message" in kwargs:
-        message = kwargs.pop("message")
-    else:
-        message = "getting URL"
+    message = kwargs.pop("message") if "message" in kwargs else "getting URL"
 
     req = requests.Request("GET", *args, **req_kwargs)
 
@@ -556,17 +553,18 @@ class CoverArtArchive(RemoteArtSource):
                     # If there is a pre-sized thumbnail of the desired size
                     # we select it. Otherwise, we return the raw image.
                     image_url: str = item["image"]
-                    if preferred_width is not None:
-                        if isinstance(item.get("thumbnails"), dict):
-                            image_url = item["thumbnails"].get(
-                                preferred_width,
-                                item["thumbnails"].get(
-                                    self.LEGACY_THUMBNAIL_NAMES.get(
-                                        preferred_width
-                                    ),
-                                    image_url,
+                    if preferred_width is not None and isinstance(
+                        item.get("thumbnails"), dict
+                    ):
+                        image_url = item["thumbnails"].get(
+                            preferred_width,
+                            item["thumbnails"].get(
+                                self.LEGACY_THUMBNAIL_NAMES.get(
+                                    preferred_width
                                 ),
-                            )
+                                image_url,
+                            ),
+                        )
                     yield image_url
                 except KeyError:
                     pass
@@ -702,7 +700,7 @@ class GoogleImages(RemoteArtSource):
             self._log.debug("google fetchart error: {}", reason)
             return
 
-        if "items" in data.keys():
+        if "items" in data:
             for item in data["items"]:
                 yield self._candidate(
                     url=item["link"], match=MetadataMatch.EXACT
@@ -1168,7 +1166,7 @@ class LastFM(RemoteArtSource):
                 }
 
                 # Provide candidates in order of size.
-                for size in self.SIZES.keys():
+                for size in self.SIZES:
                     if size in images:
                         yield self._candidate(
                             url=images[size], size=self.SIZES[size]
