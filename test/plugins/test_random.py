@@ -73,7 +73,7 @@ class TestEqualChancePermutation:
 
         _, stdev1, median1 = experiment("artist")
         _, stdev2, median2 = experiment("track")
-        assert 0 == pytest.approx(median1, abs=1)
+        assert pytest.approx(median1, abs=1) == 0
         assert len(self.items) // 2 == pytest.approx(median2, abs=1)
         assert stdev2 > stdev1
 

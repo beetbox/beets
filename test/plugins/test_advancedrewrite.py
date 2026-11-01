@@ -52,12 +52,12 @@ class TestAdvancedRewritePlugin(PluginTestHelper):
             )
 
             # Assert that all replacements were applied to item_a
-            assert "이달의 소녀 오드아이써클" == item_a.artist
-            assert "LOONA / ODD EYE CIRCLE" == item_a.artist_sort
-            assert "LOONA / ODD EYE CIRCLE" == item_a.albumartist_sort
+            assert item_a.artist == "이달의 소녀 오드아이써클"
+            assert item_a.artist_sort == "LOONA / ODD EYE CIRCLE"
+            assert item_a.albumartist_sort == "LOONA / ODD EYE CIRCLE"
 
             # Assert that no replacements were applied to item_b
-            assert "ODD EYE CIRCLE" == item_b.artist
+            assert item_b.artist == "ODD EYE CIRCLE"
 
     def test_advanced_rewrite_example_with_multi_valued_field(self):
         with self.configure_plugin(

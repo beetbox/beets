@@ -780,19 +780,19 @@ class Period:
         """
         precision = self.precision
         date = self.date
-        if "year" == self.precision:
+        if self.precision == "year":
             return date.replace(year=date.year + 1, month=1)
-        if "month" == precision:
+        if precision == "month":
             if date.month < 12:
                 return date.replace(month=date.month + 1)
             return date.replace(year=date.year + 1, month=1)
-        if "day" == precision:
+        if precision == "day":
             return date + timedelta(days=1)
-        if "hour" == precision:
+        if precision == "hour":
             return date + timedelta(hours=1)
-        if "minute" == precision:
+        if precision == "minute":
             return date + timedelta(minutes=1)
-        if "second" == precision:
+        if precision == "second":
             return date + timedelta(seconds=1)
         raise ValueError(f"unhandled precision {precision}")
 

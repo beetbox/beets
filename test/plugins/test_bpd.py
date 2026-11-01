@@ -489,7 +489,7 @@ class BPDQueryTest(BPDTestHelper):
                 ("play",), ("currentsong",), ("stop",), ("currentsong",)
             )
         self._assert_ok(*responses)
-        assert "1" == responses[1].data["Id"]
+        assert responses[1].data["Id"] == "1"
         assert "Id" not in responses[3].data
 
     def test_cmd_currentsong_tagtypes(self):
@@ -572,7 +572,7 @@ class BPDQueryTest(BPDTestHelper):
             response1 = client.send_command("random", "1")
             response2 = client2.send_command("idle")
         self._assert_ok(response1, response2)
-        assert "options" == response2.data["changed"]
+        assert response2.data["changed"] == "options"
 
     def test_cmd_noidle(self):
         with self.run_bpd() as client:
@@ -612,10 +612,10 @@ class BPDPlaybackTest(BPDTestHelper):
             )
         self._assert_ok(*responses)
         assert responses[1].data["Id"] == responses[3].data["Id"]
-        assert ["1", "2"] == responses[5].data["Id"]
-        assert "2" == responses[8].data["Id"]
-        assert "1" == responses[9].data["consume"]
-        assert "play" == responses[9].data["state"]
+        assert responses[5].data["Id"] == ["1", "2"]
+        assert responses[8].data["Id"] == "2"
+        assert responses[9].data["consume"] == "1"
+        assert responses[9].data["state"] == "play"
 
     def test_cmd_consume_in_reverse(self):
         with self.run_bpd() as client:
@@ -629,9 +629,9 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("status",),
             )
         self._assert_ok(*responses)
-        assert ["1", "2"] == responses[2].data["Id"]
-        assert "1" == responses[4].data["Id"]
-        assert "play" == responses[5].data["state"]
+        assert responses[2].data["Id"] == ["1", "2"]
+        assert responses[4].data["Id"] == "1"
+        assert responses[5].data["state"] == "play"
 
     def test_cmd_single(self):
         with self.run_bpd() as client:
@@ -645,10 +645,10 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("status",),
             )
         self._assert_ok(*responses)
-        assert "0" == responses[0].data["single"]
-        assert "1" == responses[3].data["single"]
-        assert "play" == responses[3].data["state"]
-        assert "stop" == responses[5].data["state"]
+        assert responses[0].data["single"] == "0"
+        assert responses[3].data["single"] == "1"
+        assert responses[3].data["state"] == "play"
+        assert responses[5].data["state"] == "stop"
 
     def test_cmd_repeat(self):
         with self.run_bpd() as client:
@@ -663,9 +663,9 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("currentsong",),
             )
         self._assert_ok(*responses)
-        assert "1" == responses[2].data["Id"]
-        assert "2" == responses[4].data["Id"]
-        assert "1" == responses[6].data["Id"]
+        assert responses[2].data["Id"] == "1"
+        assert responses[4].data["Id"] == "2"
+        assert responses[6].data["Id"] == "1"
 
     def test_cmd_repeat_with_single(self):
         with self.run_bpd() as client:
@@ -680,9 +680,9 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("currentsong",),
             )
         self._assert_ok(*responses)
-        assert "1" == responses[3].data["Id"]
-        assert "play" == responses[5].data["state"]
-        assert "1" == responses[6].data["Id"]
+        assert responses[3].data["Id"] == "1"
+        assert responses[5].data["state"] == "play"
+        assert responses[6].data["Id"] == "1"
 
     def test_cmd_repeat_in_reverse(self):
         with self.run_bpd() as client:
@@ -695,8 +695,8 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("currentsong",),
             )
         self._assert_ok(*responses)
-        assert "1" == responses[2].data["Id"]
-        assert "2" == responses[4].data["Id"]
+        assert responses[2].data["Id"] == "1"
+        assert responses[4].data["Id"] == "2"
 
     def test_cmd_repeat_with_single_in_reverse(self):
         with self.run_bpd() as client:
@@ -711,9 +711,9 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("currentsong",),
             )
         self._assert_ok(*responses)
-        assert "1" == responses[3].data["Id"]
-        assert "play" == responses[5].data["state"]
-        assert "1" == responses[6].data["Id"]
+        assert responses[3].data["Id"] == "1"
+        assert responses[5].data["state"] == "play"
+        assert responses[6].data["Id"] == "1"
 
     def test_cmd_crossfade(self):
         with self.run_bpd() as client:
@@ -727,13 +727,13 @@ class BPDPlaybackTest(BPDTestHelper):
         self._assert_failed(responses, bpd.ERROR_ARG, pos=3)
         self._assert_failed(response, bpd.ERROR_ARG)
         assert "xfade" not in responses[0].data
-        assert 123 == pytest.approx(int(responses[2].data["xfade"]))
+        assert pytest.approx(int(responses[2].data["xfade"])) == 123
 
     def test_cmd_mixrampdb(self):
         with self.run_bpd() as client:
             responses = client.send_commands(("mixrampdb", "-17"), ("status",))
         self._assert_ok(*responses)
-        assert -17 == pytest.approx(float(responses[1].data["mixrampdb"]))
+        assert pytest.approx(float(responses[1].data["mixrampdb"])) == -17
 
     def test_cmd_mixrampdelay(self):
         with self.run_bpd() as client:
@@ -745,7 +745,7 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("mixrampdelay", "-2"),
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=4)
-        assert 2 == pytest.approx(float(responses[1].data["mixrampdelay"]))
+        assert pytest.approx(float(responses[1].data["mixrampdelay"])) == 2
         assert "mixrampdelay" not in responses[3].data
 
     def test_cmd_setvol(self):
@@ -758,8 +758,8 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("setvol", "101"),
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=4)
-        assert "67" == responses[1].data["volume"]
-        assert "32" == responses[3].data["volume"]
+        assert responses[1].data["volume"] == "67"
+        assert responses[3].data["volume"] == "32"
 
     def test_cmd_volume(self):
         with self.run_bpd() as client:
@@ -767,7 +767,7 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("setvol", "10"), ("volume", "5"), ("volume", "-2"), ("status",)
             )
         self._assert_ok(*responses)
-        assert "13" == responses[3].data["volume"]
+        assert responses[3].data["volume"] == "13"
 
     def test_cmd_replay_gain(self):
         with self.run_bpd() as client:
@@ -777,7 +777,7 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("replay_gain_mode", "notanoption"),
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
-        assert "track" == responses[1].data["replay_gain_mode"]
+        assert responses[1].data["replay_gain_mode"] == "track"
 
 
 class BPDControlTest(BPDTestHelper):
@@ -796,9 +796,9 @@ class BPDControlTest(BPDTestHelper):
                 ("currentsong",),
             )
         self._assert_ok(*responses)
-        assert "stop" == responses[0].data["state"]
-        assert "play" == responses[2].data["state"]
-        assert "2" == responses[4].data["Id"]
+        assert responses[0].data["state"] == "stop"
+        assert responses[2].data["state"] == "play"
+        assert responses[4].data["Id"] == "2"
 
     def test_cmd_playid(self):
         with self.run_bpd() as client:
@@ -811,8 +811,8 @@ class BPDControlTest(BPDTestHelper):
                 client.send_commands(("playid", "2"), ("currentsong",))
             )
         self._assert_ok(*responses)
-        assert "2" == responses[1].data["Id"]
-        assert "2" == responses[4].data["Id"]
+        assert responses[1].data["Id"] == "2"
+        assert responses[4].data["Id"] == "2"
 
     def test_cmd_pause(self):
         with self.run_bpd() as client:
@@ -821,8 +821,8 @@ class BPDControlTest(BPDTestHelper):
                 ("play",), ("pause",), ("status",), ("currentsong",)
             )
         self._assert_ok(*responses)
-        assert "pause" == responses[2].data["state"]
-        assert "1" == responses[3].data["Id"]
+        assert responses[2].data["state"] == "pause"
+        assert responses[3].data["Id"] == "1"
 
     def test_cmd_stop(self):
         with self.run_bpd() as client:
@@ -831,7 +831,7 @@ class BPDControlTest(BPDTestHelper):
                 ("play",), ("stop",), ("status",), ("currentsong",)
             )
         self._assert_ok(*responses)
-        assert "stop" == responses[2].data["state"]
+        assert responses[2].data["state"] == "stop"
         assert "Id" not in responses[3].data
 
     def test_cmd_next(self):
@@ -846,9 +846,9 @@ class BPDControlTest(BPDTestHelper):
                 ("status",),
             )
         self._assert_ok(*responses)
-        assert "1" == responses[1].data["Id"]
-        assert "2" == responses[3].data["Id"]
-        assert "stop" == responses[5].data["state"]
+        assert responses[1].data["Id"] == "1"
+        assert responses[3].data["Id"] == "2"
+        assert responses[5].data["state"] == "stop"
 
     def test_cmd_previous(self):
         with self.run_bpd() as client:
@@ -863,10 +863,10 @@ class BPDControlTest(BPDTestHelper):
                 ("currentsong",),
             )
         self._assert_ok(*responses)
-        assert "2" == responses[1].data["Id"]
-        assert "1" == responses[3].data["Id"]
-        assert "play" == responses[5].data["state"]
-        assert "1" == responses[6].data["Id"]
+        assert responses[1].data["Id"] == "2"
+        assert responses[3].data["Id"] == "1"
+        assert responses[5].data["state"] == "play"
+        assert responses[6].data["Id"] == "1"
 
 
 class BPDQueueTest(BPDTestHelper):
@@ -923,8 +923,8 @@ class BPDQueueTest(BPDTestHelper):
                 ("playlistinfo", "200"),
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=3)
-        assert "1" == responses[1].data["Id"]
-        assert ["1", "2"] == responses[2].data["Id"]
+        assert responses[1].data["Id"] == "1"
+        assert responses[2].data["Id"] == ["1", "2"]
 
     def test_cmd_playlistinfo_tagtypes(self):
         with self.run_bpd() as client:
@@ -942,8 +942,8 @@ class BPDQueueTest(BPDTestHelper):
                 ("playlistid", "2"), ("playlistid",)
             )
         self._assert_ok(*responses)
-        assert "Track Two Title" == responses[0].data["Title"]
-        assert ["1", "2"] == responses[1].data["Track"]
+        assert responses[0].data["Title"] == "Track Two Title"
+        assert responses[1].data["Track"] == ["1", "2"]
 
 
 class BPDPlaylistsTest(BPDTestHelper):
@@ -1044,8 +1044,8 @@ class BPDDatabaseTest(BPDTestHelper):
                 ("list", "album", "artist", "Artist Name", "track"),
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
-        assert "Album Title" == responses[0].data["Album"]
-        assert ["1", "2"] == responses[1].data["Track"]
+        assert responses[0].data["Album"] == "Album Title"
+        assert responses[1].data["Track"] == ["1", "2"]
 
     def test_cmd_list_three_arg_form(self):
         with self.run_bpd() as client:
@@ -1075,8 +1075,8 @@ class BPDDatabaseTest(BPDTestHelper):
         with self.run_bpd() as client:
             response = client.send_command("count", "track", "1")
         self._assert_ok(response)
-        assert "1" == response.data["songs"]
-        assert "0" == response.data["playtime"]
+        assert response.data["songs"] == "1"
+        assert response.data["playtime"] == "0"
 
 
 class BPDMountsTest(BPDTestHelper):
@@ -1147,7 +1147,7 @@ class BPDConnectionTest(BPDTestHelper):
         with self.run_bpd() as client:
             response = client.send_command("tagtypes")
         self._assert_ok(response)
-        assert self.TAGTYPES == set(response.data["tagtype"])
+        assert set(response.data["tagtype"]) == self.TAGTYPES
 
     @unittest.expectedFailure
     def test_tagtypes_mask(self):
