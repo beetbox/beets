@@ -40,11 +40,6 @@ SINGLE_ARTIST_THRESH = 0.25
 # reimports. The following two lists (globally) change this behaviour for
 # certain fields. To alter these lists only when a specific plugin is in use,
 # something like this can be used within that plugin's code:
-#
-# from beets import importer
-# def extend_reimport_fresh_fields_item():
-#     importer.REIMPORT_FRESH_FIELDS_ITEM.extend(['tidal_track_popularity']
-# )
 REIMPORT_FRESH_FIELDS_ITEM = [
     "data_source",
     "bandcamp_album_id",
@@ -1275,7 +1270,7 @@ class ArchiveImportTask(SentinelImportTask):
             for f in archive.infolist():
                 # The date_time will need to adjusted otherwise
                 # the item will have the current date_time of extraction.
-                # date_time is (year, month, day, hour, minute, second); the
+                # date_time is (year, month, day, hour, minute, second); the # noqa: ERA001
                 # trailing (0, 0, -1) pads it to the 9-element tuple
                 # time.mktime expects. The -1 indicates the DST flag is
                 # unknown.

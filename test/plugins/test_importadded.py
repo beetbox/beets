@@ -85,7 +85,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         }
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
-        # Reimport
+        # Reimport  # noqa: ERA001
         self.setup_importer(import_dir=self.lib_path)
         self.importer.run()
         # Verify the reimported items
@@ -128,7 +128,7 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
         }
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
-        # Reimport
+        # Reimport  # noqa: ERA001
         self.setup_importer(import_dir=self.lib_path, singletons=True)
         self.importer.run()
         # Verify the reimported items

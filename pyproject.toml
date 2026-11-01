@@ -312,6 +312,7 @@ select = [
     # "ARG", # flake8-unused-arguments
     # "C4", # flake8-comprehensions
     "E", # pycodestyle
+    "ERA", # eradicate
     "F", # pyflakes
     # "B", # flake8-bugbear
     "G", # flake8-logging-format

@@ -71,9 +71,10 @@ class UseThePlugin(TestHelper):
         """Will disable all outgoing requests and raise an error!
 
         Tests need to mock all requests!
+        Register some "safe" mocks you actually want to allow, if any:
+
+        >>> requests_mock.get("https://example.com/health", json={"status": "ok"})
         """
-        # Register some “safe” mocks you actually want to allow, if any:
-        # requests_mock.get("https://example.com/health", json={"status": "ok"})
 
         # Disable any URL not explicitly mocked
         return

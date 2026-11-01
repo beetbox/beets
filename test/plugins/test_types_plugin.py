@@ -84,11 +84,6 @@ class TypesPluginTest(IOMixin, PluginTestCase):
 
         out = self.list("mybool:false", "$artist $mybool")
 
-        # Dealing with unset fields?
-        # assert 'false False' == out
-        # out = self.list('mybool:', '$artist $mybool')
-        # assert 'unset $mybool' in out
-
     def test_date_modify_and_query(self):
         self.config["types"] = {"mydate": "date"}
         # FIXME parsing should also work with default time format
@@ -112,9 +107,8 @@ class TypesPluginTest(IOMixin, PluginTestCase):
         out = self.list("mydate:..1999-07", "$artist $mydate")
         assert "prince 1999-01-01" == out
 
-        # FIXME some sort of timezone issue here
-        # out = self.list('mydate:1999-12-30', '$artist $mydate')
-        # assert 'britney 1999-12-30' == out
+        out = self.list("mydate:1999-12-30", "$artist $mydate")
+        assert "britney 1999-12-30" == out
 
     def test_unknown_type_error(self):
         self.config["types"] = {"flex": "unkown type"}

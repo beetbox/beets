@@ -552,7 +552,6 @@ class BPDQueryTest(BPDTestHelper):
         def _toggle(c):
             for _ in range(3):
                 rs = c.send_commands(("play",), ("pause",))
-                # time.sleep(0.05)  # uncomment if test is flaky
                 if any(not r.ok for r in rs):
                     raise RuntimeError("Toggler failed")
 
