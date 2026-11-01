@@ -46,6 +46,10 @@ New features
   source. :bug:`6238`
 - :doc:`plugins/autobpm`: Add ``-b``/``--start-bpm`` option to override
   ``beat_track_kwargs.start_bpm`` from the command line.
+- :doc:`plugins/autobpm`: Add ``min_bpm`` and ``max_bpm`` options (and
+  ``-m``/``--min-bpm`` and ``-M``/``--max-bpm`` flags) to restrict the detected
+  BPM to a range, which helps against wrong detections such as syncopated
+  breakbeats.
 
 Bug fixes
 ~~~~~~~~~
