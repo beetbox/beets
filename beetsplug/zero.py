@@ -15,6 +15,7 @@ from beets.ui import Subcommand, input_yn
 if TYPE_CHECKING:
     import optparse
     from collections.abc import Iterable
+    from pathlib import Path
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item, Library
@@ -124,7 +125,7 @@ class ZeroPlugin(BeetsPlugin):
             self.warned = True
         # TODO request write in as-is mode
 
-    def write_event(self, item: Item, path: bytes, tags: JSONDict) -> None:
+    def write_event(self, item: Item, path: Path, tags: JSONDict) -> None:
         if self.config["auto"]:
             self.set_fields(item, tags)
 

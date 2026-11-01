@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import os
 import traceback
 from typing import TYPE_CHECKING
 
-from beets.util import FilesystemError, mkdirall, normpath, syspath
+from beets.util import FilesystemError, mkdirall, normpath
 
 if TYPE_CHECKING:
-    from beets.util import PathLike
+    from pathlib import Path
 
 
 class EmptyPlaylistError(Exception):
@@ -18,9 +19,9 @@ class EmptyPlaylistError(Exception):
 class M3UFile:
     """Reads and writes m3u or m3u8 playlist files."""
 
-    media_list: list[bytes]
+    media_list: list[str]
 
-    def __init__(self, path: PathLike) -> None:
+    def __init__(self, path: Path) -> None:
         """``path`` is the absolute path to the playlist file.
 
         The playlist file type, m3u or m3u8 is determined by 1) the ending
@@ -28,19 +29,17 @@ class M3UFile:
         encoded. Since the list is passed from the outside, this is currently
         out of control of this class.
         """
-        self.path = path
+        self.path = normpath(path)
         self.extm3u = False
         self.media_list = []
 
     def load(self) -> None:
         """Reads the m3u file from disk and sets the object's attributes."""
-        pl_normpath = normpath(self.path)
         try:
-            with open(syspath(pl_normpath), "rb") as pl_file:
-                raw_contents = pl_file.readlines()
+            raw_contents = self.path.read_bytes().splitlines()
         except OSError as exc:
             raise FilesystemError(
-                exc, "read", (pl_normpath,), traceback.format_exc()
+                exc, "read", (self.path,), traceback.format_exc()
             )
 
         self.extm3u = True if raw_contents[0].rstrip() == b"#EXTM3U" else False
@@ -48,13 +47,11 @@ class M3UFile:
             if line.startswith(b"#"):
                 # Support for specific EXTM3U comments could be added here.
                 continue
-            self.media_list.append(normpath(line.rstrip()))
+            self.media_list.append(os.fsdecode(normpath(line.rstrip())))
         if not self.media_list:
             raise EmptyPlaylistError
 
-    def set_contents(
-        self, media_list: list[bytes], extm3u: bool = True
-    ) -> None:
+    def set_contents(self, media_list: list[str], extm3u: bool = True) -> None:
         """Sets self.media_list to a list of media file paths.
 
         Also sets additional flags, changing the final m3u-file's format.
@@ -73,19 +70,18 @@ class M3UFile:
 
         Handles the creation of potential parent directories.
         """
-        header = [b"#EXTM3U"] if self.extm3u else []
+        header = ["#EXTM3U"] if self.extm3u else []
         if not self.media_list:
             raise EmptyPlaylistError
-        contents = header + self.media_list
-        pl_normpath = normpath(self.path)
-        mkdirall(pl_normpath)
+        contents = map(os.fsencode, header + self.media_list)
+        mkdirall(self.path)
 
         try:
-            with open(syspath(pl_normpath), "wb") as pl_file:
+            with self.path.open("wb") as pl_file:
                 for line in contents:
                     pl_file.write(line + b"\n")
                 pl_file.write(b"\n")  # Final linefeed to prevent noeol file.
         except OSError as exc:
             raise FilesystemError(
-                exc, "create", (pl_normpath,), traceback.format_exc()
+                exc, "create", (self.path,), traceback.format_exc()
             )

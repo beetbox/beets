@@ -211,7 +211,7 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
             {"fields": None, "keep_fields": ["year"], "update_database": True}
         ):
             z = ZeroPlugin()
-            z.write_event(item, item.path, tags)
+            z.write_event(item, item.filepath, tags)
 
         assert tags["comments"] is None
         assert tags["year"] == 2016

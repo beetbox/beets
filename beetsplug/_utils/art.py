@@ -47,7 +47,7 @@ def embed_item(
     item: Item,
     imagepath: PathLike,
     maxwidth: int | None = None,
-    itempath: bytes | None = None,
+    itempath: Path | None = None,
     compare_threshold: int = 0,
     ifempty: bool = False,
     as_album: bool = False,
