@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 
 import confuse
 import librosa
@@ -61,6 +61,17 @@ class AutoBPMCLIOpts(Protocol):
     start_bpm: int | None
     min_bpm: int | None
     max_bpm: int | None
+
+
+class BeatTrackKwargs(TypedDict, total=False):
+    """Keyword arguments forwarded to `librosa.beat.beat_track`."""
+
+    start_bpm: float
+    hop_length: int
+    tightness: float
+    trim: bool
+    bpm: float
+    prior: scipy.stats.rv_continuous
 
 
 class AutoBPMPlugin(BeetsPlugin):
@@ -142,13 +153,15 @@ class AutoBPMPlugin(BeetsPlugin):
         start_bpm: int | None = None,
         min_bpm: int | None = None,
         max_bpm: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> BeatTrackKwargs:
         """Combine the configured beat_track kwargs with CLI overrides.
 
         A min/max range becomes a uniform tempo prior, which librosa uses
         instead of the start_bpm based one.
         """
-        kwargs = dict(self.config["beat_track_kwargs"].flatten())
+        kwargs = cast(
+            BeatTrackKwargs, self.config["beat_track_kwargs"].flatten()
+        )
         if start_bpm is not None:
             kwargs["start_bpm"] = start_bpm
 
@@ -205,9 +218,9 @@ class AutoBPMPlugin(BeetsPlugin):
         write: bool = False,
         force: bool = False,
         quiet: bool = False,
-        beat_track_kwargs: dict[str, Any] | None = None,
+        beat_track_kwargs: BeatTrackKwargs | None = None,
     ) -> None:
-        kwargs = beat_track_kwargs or {}
+        kwargs = beat_track_kwargs or BeatTrackKwargs()
         for item in items:
             path = item.filepath
             if bpm := item.bpm:
