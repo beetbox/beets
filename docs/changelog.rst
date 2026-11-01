@@ -169,6 +169,9 @@ Bug fixes
   shares caused by a hard-coded leading dot ('.'). :bug:`7033`
 - :ref:`import-cmd` Fix interactive importer ignoring candidates from manual
   search (``e``) and manual ID (``i``) entry. :bug:`7000`
+- :doc:`plugins/badfiles`: Detach stdin from the controlling terminal when
+  running checker commands, so a checker can no longer leave the terminal in a
+  modified state (e.g. with input echo disabled) after ``beet bad``. :bug:`6750`
 
 ..
     For plugin developers
