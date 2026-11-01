@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 
 import confuse
 import librosa
@@ -62,6 +62,17 @@ class AutoBPMCLIOpts(Protocol):
     # is not a valid attribute name and is only read via config.set_args().
     min_bpm: int | None
     max_bpm: int | None
+
+
+class BeatTrackKwargs(TypedDict, total=False):
+    """Keyword arguments forwarded to `librosa.beat.beat_track`."""
+
+    start_bpm: float
+    hop_length: int
+    tightness: float
+    trim: bool
+    bpm: float
+    prior: scipy.stats.rv_continuous
 
 
 class AutoBPMPlugin(BeetsPlugin):
@@ -146,13 +157,15 @@ class AutoBPMPlugin(BeetsPlugin):
         start_bpm: int | None = None,
         min_bpm: int | None = None,
         max_bpm: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> BeatTrackKwargs:
         """Combine the configured beat_track kwargs with CLI overrides.
 
         A min/max range becomes a uniform tempo prior, which librosa uses
         instead of the start_bpm based one.
         """
-        kwargs = dict(self.config["beat_track_kwargs"].flatten())
+        kwargs = cast(
+            BeatTrackKwargs, self.config["beat_track_kwargs"].flatten()
+        )
         if start_bpm is not None:
             kwargs["start_bpm"] = start_bpm
 
@@ -194,7 +207,12 @@ class AutoBPMPlugin(BeetsPlugin):
     def calculate_bpm(self, items: Iterable[Item], write: bool = False) -> None:
         force = self.config["force"].get(bool)
         quiet = self.config["quiet"].get(bool)
-        kwargs = self.config["beat_track_kwargs"].flatten()
+        kwargs = self.beat_track_kwargs(
+            start_bpm=self.config["start_bpm"].get(confuse.Optional(int)),
+            min_bpm=self.config["min_bpm"].get(confuse.Optional(int)),
+            max_bpm=self.config["max_bpm"].get(confuse.Optional(int)),
+        )
+
         for item in items:
             path = item.filepath
             if bpm := item.bpm:
