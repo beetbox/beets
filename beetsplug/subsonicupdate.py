@@ -156,14 +156,16 @@ class SubsonicUpdate(BeetsPlugin):
     def set_favorite(self, items: Iterable[Item]) -> None:
         """Set favourites on the Subsonic server for all resolvable items."""
         client = self._client()
-        song_ids = [
-            song_id
+        starred_ids = client.starred_song_ids()
+        new_ids = {
+            song_id: None
             for item in items
             if (song_id := self._song_id(client, item))
-        ]
+            and song_id not in starred_ids
+        }
 
-        client.star_songs(song_ids)
-        ui.print_(f"Marked {len(song_ids)} tracks as Subsonic favourites.")
+        client.star_songs(new_ids)
+        ui.print_(f"Marked {len(new_ids)} new tracks as Subsonic favourites.")
 
     def _song_id(self, client: SubsonicClient, item: Item) -> str | None:
         if song_id := item.get("subsonic_id"):

@@ -52,7 +52,9 @@ for the configured user, using the same ``subsonic:`` connection details:
     beet set-favorite QUERY
 
 This works with any `Subsonic API compatible`_ server implementing the
-``search3`` and ``star`` endpoints, such as Navidrome_.
+``search3``, ``getStarred2`` and ``star`` endpoints, such as Navidrome_. Tracks
+that are already favourites are left alone, and only newly marked tracks are
+counted in the summary.
 
 Subsonic servers use their own song IDs, which are different from beets item
 IDs. The plugin first looks for a ``subsonic_id`` field on each selected item
