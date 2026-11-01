@@ -112,6 +112,9 @@ Bug fixes
   while the thread pool is open. It held a CPU core at 100% and starved the
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
+- :doc:`plugins/lyrics`: Keep synced lyrics when the LRC response ends with one
+  or more blank lines, instead of silently falling back to plain lyrics.
+  :bug:`7070`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

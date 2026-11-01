@@ -608,6 +608,35 @@ def lyrics_match(**overrides):
     }
 
 
+class TestVerifySyncedLyrics:
+    @pytest.mark.parametrize(
+        "lyrics_text",
+        [
+            "[00:00.00] synced",
+            "[00:00.00] synced\n\n",
+            "[00:17.23] first line\r\n[02:23.59] last line\r\n\r\n",
+            "\n[00:00.00] synced\n\n",
+        ],
+    )
+    def test_accepts_trailing_blank_lines(self, lyrics_text):
+        assert (
+            lyrics.LRCLyrics.verify_synced_lyrics(149.0, lyrics_text)
+            == lyrics_text
+        )
+
+    @pytest.mark.parametrize(
+        "lyrics_text",
+        [
+            "",
+            "\n\n",
+            "plain lyrics without timestamps",
+            "[02:30.00] timestamp exceeds duration",
+        ],
+    )
+    def test_rejects_invalid_synced_lyrics(self, lyrics_text):
+        assert lyrics.LRCLyrics.verify_synced_lyrics(149.0, lyrics_text) is None
+
+
 class TestLRCLibLyrics(LyricsBackendTest):
     ITEM_DURATION = 999
     SYNCED = "[00:00.00] synced"
