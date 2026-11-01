@@ -41,6 +41,33 @@ endpoint.
 
 .. _subsonic api compatible: https://www.subsonic.org/pages/api.jsp
 
+Marking Favourites
+------------------
+
+The plugin also lets you mark beets query results as favourites (starred songs)
+for the configured user, using the same ``subsonic:`` connection details:
+
+.. code-block:: sh
+
+    beet set-favorite QUERY
+
+This works with any `Subsonic API compatible`_ server implementing the
+``search3`` and ``star`` endpoints, such as Navidrome_.
+
+Subsonic servers use their own song IDs, which are different from beets item
+IDs. The plugin first looks for a ``subsonic_id`` field on each selected item
+and uses that value directly when present. You can populate this as a flexible
+attribute and query it like any other field.
+
+When ``subsonic_id`` is missing, the plugin searches the server using the item's
+artist, album, and title. If that returns no usable match, the plugin tries
+narrower artist/title, title-only and artist-only searches, followed by
+accent-folded variants for metadata containing accents or characters such as
+``Ø`` and ``Æ``. Missing or ambiguous matches are skipped to avoid favouriting
+the wrong track.
+
+.. _navidrome: https://www.navidrome.org/
+
 Configuration
 -------------
 
