@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from beets.autotag import Proposal
     from beets.events import ImportTaskEventArgs
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Item
+    from beets.library import Album, Item, Library
 
 
 # Filename field extraction patterns
@@ -213,6 +213,21 @@ class FromFilenamePlugin(BeetsPlugin):
         self.register_listener(
             "before_choose_candidate", self.before_choose_candidate
         )
+        self.register_listener("item_imported", self.write_found_item)
+        self.register_listener("album_imported", self.write_found_album)
+
+    def write_found_item(self, lib: Library, item: Item) -> None:
+        """
+        Ensure the data we found is written to the imported file.
+        """
+        item.try_write()
+
+    def write_found_album(self, lib: Library, album: Album) -> None:
+        """
+        Ensure the data we found is written to the imported file.
+        """
+        for item in album.items():
+            item.try_write()
 
     def before_choose_candidate(
         self, **kwargs: Unpack[ImportTaskEventArgs]
