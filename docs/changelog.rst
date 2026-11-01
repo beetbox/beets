@@ -44,6 +44,12 @@ New features
   albumartist, the plugin now attempts to fetch genres for each artist listed in
   the multi-valued ``albumartists`` field before falling back to the artist
   source. :bug:`6238`
+- Sorting items by ``initial_key`` now follows the Circle of Fifths, with each
+  major key followed by its relative minor (``C Am G Em D Bm …``), so musical
+  keys are grouped by harmonic compatibility in queries and smart playlists.
+  Unknown or missing keys sort last. Short key forms such as ``Gmin`` and
+  ``Gmaj`` are now normalized like ``G minor`` and ``G major``. Set
+  :ref:`sort_initial_key_harmonic` to ``no`` to keep alphabetical sorting.
 
 Bug fixes
 ~~~~~~~~~

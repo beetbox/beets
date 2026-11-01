@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
+from beets.util.musictheory import normalize_key
 from beetsplug import beatport
 
 
@@ -557,7 +558,7 @@ class BeatportTest(BeetsTestCase):
 
     def test_initial_key_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            assert track.initial_key == test_track.initial_key
+            assert normalize_key(track.initial_key) == test_track.initial_key
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
