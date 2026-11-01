@@ -339,6 +339,7 @@ ignore = [
 "beets/**" = ["PT"]
 "docs/conf.py" = ["ANN"]
 "test/plugins/test_ftintitle.py" = ["E501"]
+"test/plugins/test_subsonicupdate.py" = ["E501"]
 "test/test_util.py" = ["E501"]
 "test/util/test_diff.py" = ["E501"]
 "test/util/test_id_extractors.py" = ["E501"]

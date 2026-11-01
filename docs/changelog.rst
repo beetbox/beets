@@ -46,6 +46,9 @@ New features
   source. :bug:`6238`
 - :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
   socket.
+- :doc:`plugins/subsonicupdate`: Add ``set-favorite`` command which marks beets
+  query results as favourites on Subsonic API compatible servers, such as
+  Navidrome.
 
 Bug fixes
 ~~~~~~~~~
