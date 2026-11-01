@@ -32,7 +32,9 @@ file. The available options are:
 - **preserve_album_artist**: If the artist and the album artist are the same,
   skip the ftintitle processing. Default: ``yes``.
 - **custom_words**: List of additional words that will be treated as a marker
-  for artist features. Default: ``[]``.
+  for artist features. In titles, these words only mark credits in parentheses
+  or square brackets, such as ``(with Artist)``. Unbracketed standard markers
+  such as ``feat. Artist`` still count. Default: ``[]``.
 - **bracket_keywords**: Controls where the featuring text is inserted when the
   title includes bracketed qualifiers such as ``(Remix)`` or ``[Live]``.
   FtInTitle inserts the new text before the first bracket whose contents match
@@ -45,6 +47,9 @@ file. The available options are:
        "instrumental", "live", "mix", "radio", "release", "remaster",
        "remastered", "remix", "rmx", "unabridged", "unreleased",
        "version", "vip"]
+
+Unless ``drop`` is enabled, an artist credit is retained when it cannot be added
+to the title and no matching credit already exists there.
 
 Path Template Values
 --------------------
