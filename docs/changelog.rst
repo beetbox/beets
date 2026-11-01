@@ -47,7 +47,10 @@ New features
 
 Bug fixes
 ~~~~~~~~~
-
+- :doc:`plugins/mbpseudo`: Resolve artist aliases separately for each
+  track instead of applying the first matching album artist alias to all
+  tracks. Preserve artist-credit join phrases and fall back to recording
+  credits when track credits are missing. :bug:`7125`
 - :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
   gracefully by decoding with error handling and skipping tracks that produce
   unparseable data, instead of crashing. :bug:`3527`
