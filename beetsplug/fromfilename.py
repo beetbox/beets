@@ -12,14 +12,20 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from beets import config
+from beets.autotag import Source
+from beets.autotag.match import tag_album, tag_item
 from beets.importer import Action, SingletonImportTask
 from beets.plugins import BeetsPlugin
-from beets.util import displayable_path
+from beets.util import PromptChoice, displayable_path
 
 if TYPE_CHECKING:
     from collections.abc import Iterator, Mapping, Sized, ValuesView
     from typing import Any
 
+    from typing_extensions import Unpack
+
+    from beets.autotag import Proposal
+    from beets.events import ImportTaskEventArgs
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item
 
@@ -204,6 +210,46 @@ class FromFilenamePlugin(BeetsPlugin):
         self.register_listener("import_task_start", self.filename_task)
         self.register_listener("import_task_apply", self.clear_task_data)
         self.register_listener("import_task_choice", self.update_regroup_items)
+        self.register_listener(
+            "before_choose_candidate", self.before_choose_candidate
+        )
+
+    def before_choose_candidate(
+        self, **kwargs: Unpack[ImportTaskEventArgs]
+    ) -> list[PromptChoice]:
+        return [
+            PromptChoice("f", "toggle FromFilename", self.fromfilename_toggle)
+        ]
+
+    def fromfilename_toggle(
+        self, session: ImportSession, task: ImportTask | SingletonImportTask
+    ) -> Proposal:
+        """
+        Restore any backup data, get new proposals from the un-altered data.
+        """
+        autouse = not self.config["autouse"].get(bool)
+        self.config["autouse"] = autouse
+        if not autouse:
+            self.restore_backup_data(task.items)
+        if autouse:
+            self.filename_task(task, session)
+        # Now we have to search for things again...
+        self._log.debug(
+            "fromfilename set to {} - searching for metadata again...", autouse
+        )
+        if task.is_album:
+            item = task.items[0]
+            return tag_album(
+                source=Source.from_items(task.items),
+                search_artist=item.get("artist"),
+                search_name=item.get("album"),
+            )
+        item = task.items[0]
+        return tag_item(
+            source=Source.from_items(task.items),
+            search_artist=item.get("artist"),
+            search_name=item.get("album"),
+        )
 
     def clear_task_data(self, task: ImportTask, session: ImportSession) -> None:
         """When an import task has been applied, we don't need any of the backup

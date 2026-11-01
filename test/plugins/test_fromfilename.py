@@ -955,3 +955,44 @@ class FromfilenameImportTest(
         albums = {album.album for album in self.lib.albums()}
         assert albums == {"This Album"}
 
+    def test_toggle_from_filename(self):
+        """
+        Assert that from filename can be toggled off and on.
+        """
+        # FromeFilename starts enabled
+        # toggle Fromfilename to "False"
+        self.io.addinput("f")
+        # toggle Fromfilename to "True"
+        self.io.addinput("f")
+        # accept what it found!
+        self.importer.add_choice(importer.Action.ASIS)
+
+        self.importer.run()
+        run_output = self.io.getoutput().split("\n")
+        # What we should see with it enabled
+        assert "Album Artist - Album Title" in run_output[4]
+        assert "The Other Track" in run_output[9]
+        # The line where we have dropped fromfilename
+        assert " - " in run_output[14]
+        assert "2 - The Other Track.mp3" in run_output[19]
+        # And on again!
+        assert "Album Artist - Album Title" in run_output[24]
+        assert "The Other Track" in run_output[29]
+
+    def test_toggle_off_no_write(self):
+        """
+        Assert that when fromefilename is toggled off
+        the data found is not written.
+        """
+        # Toggles from filename off
+        self.io.addinput("f")
+        self.importer.add_choice(importer.Action.ASIS)
+        self.importer.run()
+        library_paths = [item.path for item in self.lib.items()]
+        file = MediaFile(library_paths[0])
+        assert not file.title
+        assert not file.album
+        assert not file.albumartist
+        assert not file.artist
+        assert not file.year
+
