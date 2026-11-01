@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from shlex import quote
 
+import platformdirs
+
 import beets
 from beets.test.helper import PluginTestCase
 from beetsplug.playlist import PlaylistQuery
@@ -18,7 +20,7 @@ class PlaylistTestCase(PluginTestCase):
     nonexisting_track_path = Path("nonexisting.mp3")
 
     def get_music_dir(self):
-        return (Path("~") / "Music").expanduser()
+        return platformdirs.user_music_dir()
 
     def setUp(self):
         super().setUp()
