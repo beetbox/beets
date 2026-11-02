@@ -169,7 +169,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         )
         return self.lib.add_album([item])
 
-    def _run_import_stage(self, album: Album) -> str:
+    def _run_import_stage(self, album: Album) :
         """Run the import stage as the importer does, return what it printed."""
         task = Mock(is_album=True, album=album)
         self.io.getoutput()
