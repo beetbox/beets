@@ -18,7 +18,6 @@ from beets.util import cached_classproperty
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
-    from typing import TextIO
 
 
 def skip_marked_items(items: list[pytest.Item], marker_name: str, reason: str):
@@ -150,35 +149,6 @@ def pytest_xdist_auto_num_workers(config: pytest.Config) -> int:
         return logical
 
     return count
-
-
-class _CurrentStderrHandler(logging.StreamHandler):  # type: ignore[type-arg]
-    """Write CLI logs to the active standard error stream.
-
-    Logging is bootstrapped when the CLI runs instead of when this module is
-    imported. That startup can happen while callers have temporarily replaced
-    ``sys.stderr`` for capture or redirection, such as pytest's per-test capture
-    streams. The handler must not retain the stream that happened to be active
-    during the first command invocation because that stream may later be closed.
-    Resolving the stream for each record keeps logs attached to the current CLI
-    environment.
-    """
-
-    @property
-    def stream(self) -> TextIO:
-        return sys.stderr
-
-    @stream.setter
-    def stream(self, stream: TextIO) -> None:
-        pass
-
-
-@pytest.fixture(autouse=True)
-def patch_logging_handler(monkeypatch):
-    """Ensure that beets logs are captured by pytest's capture system."""
-    monkeypatch.setattr(
-        "beets.ui._get_logging_handler", lambda: _CurrentStderrHandler()
-    )
 
 
 @pytest.fixture(autouse=True)

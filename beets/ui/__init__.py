@@ -1043,8 +1043,26 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
     return deferred_error
 
 
+class _CurrentStderrHandler(logging.StreamHandler):  # type: ignore[type-arg]
+    """Write logs to whatever ``sys.stderr`` is at the time of logging.
+
+    A plain stream handler holds on to the stream that was active when logging
+    was set up. That bypasses anything that replaces ``sys.stderr`` later, such
+    as rich's proxy that keeps log lines above a running progress bar, or
+    pytest's per-test capture streams.
+    """
+
+    @property
+    def stream(self) -> TextIO:
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, stream: TextIO) -> None:
+        pass
+
+
 def _get_logging_handler() -> logging.Handler:
-    return logging.StreamHandler()
+    return _CurrentStderrHandler()
 
 
 def _bootstrap_logging() -> None:
