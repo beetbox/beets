@@ -105,4 +105,4 @@ class InfoTest(IOMixin, PluginTestCase):
             "--format",
             "$track. $title - $artist ($length)",
         )
-        assert "02. tïtle 0 - the artist (0:01)\n" == out
+        assert out == "02. tïtle 0 - the artist (0:01)\n"

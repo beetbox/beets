@@ -187,7 +187,7 @@ class RequestHandler:
         Returns None if no specific error type is registered for the given code.
         """
         return next(
-            (e for e in self.explicit_http_errors if e.STATUS == code), None
+            (e for e in self.explicit_http_errors if code == e.STATUS), None
         )
 
     @contextmanager

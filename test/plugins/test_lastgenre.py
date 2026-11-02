@@ -1027,9 +1027,11 @@ class TestIgnorelist(PluginTestHelper):
         self, invalid_config, expected_error_message
     ):
         """Test ignorelist config validation errors in isolated config."""
-        with pytest.raises(confuse.ConfigTypeError) as exc_info:
-            with self.configure_plugin({"ignorelist": invalid_config}):
-                lastgenre.LastGenrePlugin()
+        with (
+            pytest.raises(confuse.ConfigTypeError) as exc_info,
+            self.configure_plugin({"ignorelist": invalid_config}),
+        ):
+            lastgenre.LastGenrePlugin()
 
         assert expected_error_message in str(exc_info.value)
 
@@ -1142,9 +1144,11 @@ class TestAliases(PluginTestHelper):
     )
     def test_aliases_config_format_errors(self, invalid_config, expected_error):
         """Test that invalid aliases config values raise confuse.ConfigTypeError."""
-        with pytest.raises(confuse.ConfigTypeError) as exc_info:
-            with self.configure_plugin({"aliases": invalid_config}):
-                lastgenre.LastGenrePlugin()
+        with (
+            pytest.raises(confuse.ConfigTypeError) as exc_info,
+            self.configure_plugin({"aliases": invalid_config}),
+        ):
+            lastgenre.LastGenrePlugin()
         assert expected_error in str(exc_info.value)
 
     def test_normalize_before_whitelist(self):

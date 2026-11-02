@@ -70,7 +70,7 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         # For backwards compatibility, use any values from the
         # plugin-specific "mpdupdate" section.
-        for key in config["mpd"].keys():
+        for key in config["mpd"].keys():  # noqa: SIM118
             if self.config[key].exists():
                 config["mpd"][key] = self.config[key].get()
 

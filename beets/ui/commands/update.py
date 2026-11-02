@@ -108,10 +108,9 @@ def update_items(
                 not item.albumartist
                 and item.id is not None
                 and (old_item := lib.get_item(item.id))
-            ):
-                if old_item.albumartist == old_item.artist == item.artist:
-                    item.albumartist = old_item.albumartist
-                    item._dirty.discard("albumartist")
+            ) and old_item.albumartist == old_item.artist == item.artist:
+                item.albumartist = old_item.albumartist
+                item._dirty.discard("albumartist")
 
             # Check for and display changes.
             changed = ui.show_model_changes(item, fields=item_fields)

@@ -1,3 +1,4 @@
+import contextlib
 from typing import Any, ClassVar
 from unittest.mock import ANY, Mock, call, patch
 
@@ -56,10 +57,8 @@ class TestMPDStats(PluginTestHelper):
         item.add(self.lib)
 
         log = Mock()
-        try:
+        with contextlib.suppress(KeyboardInterrupt):
             MPDStats(self.lib, log).run()
-        except KeyboardInterrupt:
-            pass
 
         log.info.assert_has_calls(
             [call("pause"), call("playing {}", ANY), call("stop")]

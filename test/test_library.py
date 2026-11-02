@@ -584,13 +584,13 @@ class TestItemFormattedMapping(PytestItemHelper):
         album = self.lib.add_album([item_in_db])
         album["artist"] = "foo"
         album.store()
-        assert "foo" != item_in_db.formatted().get("artist")
+        assert item_in_db.formatted().get("artist") != "foo"
 
     def test_album_flex_field(self, item_in_db):
         album = self.lib.add_album([item_in_db])
         album["flex"] = "foo"
         album.store()
-        assert "foo" == item_in_db.formatted().get("flex")
+        assert item_in_db.formatted().get("flex") == "foo"
 
     def test_album_field_overrides_item_field_for_path(self, item_in_db):
         # Make the album inconsistent with the item.

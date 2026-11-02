@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import itertools
+from contextlib import suppress
 from copy import deepcopy
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Self
@@ -77,11 +78,9 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 mediafile.StorageStyle(custom_tag),
                 mediafile.ASFStorageStyle(custom_tag),
             )
-            try:
+            # ignore errors due to duplicates
+            with suppress(ValueError):
                 self.add_media_field(custom_tag, media_field)
-            except ValueError:
-                # ignore errors due to duplicates
-                pass
 
         self.register_listener("pluginload", self._on_plugins_loaded)
         self.register_listener("album_matched", self._adjust_final_album_match)
@@ -146,7 +145,7 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
         return official_release
 
     def _intercept_mb_release(self, data: Release) -> list[str]:
-        album_id = data["id"] if "id" in data else None
+        album_id = data.get("id", None)
         if self._has_desired_script(data) or not isinstance(album_id, str):
             return []
 
@@ -213,12 +212,13 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
                 locale,
                 aliases_flattened,
             )
-            if alias_dict := _preferred_alias(aliases_flattened, [locale]):
-                if alias := alias_dict.get("name"):
-                    self._log.debug("Got alias '{0}'", alias)
-                    pseudo_release.artist = alias
-                    for track in pseudo_release.tracks:
-                        track.artist = alias
+            if (
+                alias_dict := _preferred_alias(aliases_flattened, [locale])
+            ) and (alias := alias_dict.get("name")):
+                self._log.debug("Got alias '{0}'", alias)
+                pseudo_release.artist = alias
+                for track in pseudo_release.tracks:
+                    track.artist = alias
 
     def _add_custom_tags(
         self, official_release: AlbumInfo, pseudo_release: AlbumInfo

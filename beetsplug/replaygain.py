@@ -298,9 +298,11 @@ class FfmpegBackend(Backend):
             )
         incompatible_ffmpeg = True
         for line in ffmpeg_version_out.stdout.splitlines():
-            if line.startswith(b"configuration:"):
-                if b"--enable-libebur128" in line:
-                    incompatible_ffmpeg = False
+            if (
+                line.startswith(b"configuration:")
+                and b"--enable-libebur128" in line
+            ):
+                incompatible_ffmpeg = False
             if line.startswith(b"libavfilter"):
                 version_parts = (
                     line.split(b" ", 1)[1].split(b"/", 1)[0].split(b".")
@@ -660,12 +662,8 @@ class CommandBackend(Backend):
                 self._log.debug("bad tool output: {}", text)
                 raise ReplayGainError("mp3gain failed")
 
-            # _file = parts[0]
-            # _mp3gain = int(parts[1])
             gain = float(parts[2])
             peak = float(parts[3]) / (1 << 15)
-            # _maxgain = int(parts[4])
-            # _mingain = int(parts[5])
 
             out.append(Gain(gain, peak))
         return out
@@ -1553,9 +1551,6 @@ class ReplayGainPlugin(BeetsPlugin):
         if self.pool is not None:
             self.pool.terminate()
             self.pool.join()
-            # Terminating the processes leaves the ExceptionWatcher's queues
-            # in an unknown state, so don't wait for it.
-            # self.exc_watcher.join()
             self.pool = None
 
     def _interrupt(self, signal: int, frame: FrameType | None) -> None:

@@ -91,7 +91,7 @@ class ModifyTest(ModifyHelper, BeetsTestCase):
 
         self.modify("--nowrite", "title=newTitle")
         item.load()
-        assert 0 == item.mtime
+        assert item.mtime == 0
 
     def test_selective_modify(self):
         title = "Tracktitle"
