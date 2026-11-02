@@ -837,10 +837,8 @@ class SpotifyPlugin(
 
         items_to_update: list[tuple[Item, str]] = []
 
-        for index, item in enumerate(items, start=1):
-            self._log.info(
-                "Processing {}/{} tracks - {} ", index, len(items), item
-            )
+        for item in items:
+            self._log.debug("Processing {}", item)
             # If we're not forcing re-downloading for all tracks, check
             # whether the popularity data is already present
             if not force and "spotify_track_popularity" in item:
@@ -863,7 +861,9 @@ class SpotifyPlugin(
         track_details_by_id = self.get_track_details_by_id(unique_track_ids)
         audio_features_by_id = self.track_audio_features_batch(unique_track_ids)
 
-        for item, spotify_track_id in items_to_update:
+        for item, spotify_track_id in ui.track(
+            items_to_update, "Updating Spotify info..."
+        ):
             if track_details := track_details_by_id.get(spotify_track_id):
                 item.update(track_details)
 

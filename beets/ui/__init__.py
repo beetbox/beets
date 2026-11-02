@@ -17,6 +17,7 @@ from functools import cache
 from typing import TYPE_CHECKING, Any, Literal, TextIO, TypeVar, overload
 
 import confuse
+from rich import progress
 from rich.file_proxy import FileProxy
 
 from beets import config, library, logging, plugins, util
@@ -27,6 +28,7 @@ from beets.util import as_string
 from beets.util.color import colorize
 from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.diff import get_model_changes
+from beets.util.rich import make_console
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -37,6 +39,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+console = make_console()
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
     try:
@@ -1082,6 +1085,18 @@ def _bootstrap_logging() -> None:
     # List configuration sources for user convenience.
     config.log_sources(log)
     log.debug("data directory: {}", util.displayable_path(config.config_dir()))
+
+
+def track(objs: Sequence[T], description: str) -> Iterable[T]:
+    """Iterate over objects while showing a progress bar in interactive terminals."""
+    return progress.track(
+        objs,
+        description,
+        total=len(objs),
+        console=console,
+        disable=not (sys.stdout.isatty() and sys.stderr.isatty()),
+        transient=True,
+    )
 
 
 def main(args: list[str] | None = None) -> None:

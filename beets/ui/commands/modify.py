@@ -134,7 +134,7 @@ def modify_objects(
 
     # Apply changes to database and files
     with lib.transaction():
-        for obj in selected_changes:
+        for obj in ui.track(selected_changes, "Applying changes..."):
             obj.try_sync(write, move, inherit)
 
 

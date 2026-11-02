@@ -67,7 +67,7 @@ def remove_objects(
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        for obj in selected_objs:
+        for obj in ui.track(selected_objs, "Removing..."):
             obj.remove(opts.delete)
 
 

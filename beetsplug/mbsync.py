@@ -83,7 +83,8 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items([*query, "singleton:true"], limit=limit):
+        items = lib.items([*query, "singleton:true"], limit=limit)
+        for item in ui.track(items, "Synchronising singletons..."):
             if not (track_id := item.mb_trackid):
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
@@ -120,7 +121,8 @@ class MBSyncPlugin(BeetsPlugin):
         query and their items.
         """
         # Process matching albums.
-        for album in lib.albums(query, limit=limit):
+        albums = lib.albums(query, limit=limit)
+        for album in ui.track(albums, "Synchronising albums..."):
             if not (album_id := album.mb_albumid):
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue

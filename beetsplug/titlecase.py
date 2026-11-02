@@ -159,7 +159,9 @@ class TitlecasePlugin(BeetsPlugin):
     def commands(self) -> list[ui.Subcommand]:
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             write = ui.should_write()
-            for item in lib.items(args, limit=opts.limit):
+            for item in ui.track(
+                lib.items(args, limit=opts.limit), "Titlecasing items..."
+            ):
                 self._log.info(f"titlecasing {item.title}:")
                 self.titlecase_fields(item)
                 item.store()

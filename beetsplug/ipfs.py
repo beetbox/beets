@@ -78,7 +78,10 @@ class IPFSPlugin(BeetsPlugin):
 
         def func(lib: Library, opts: IPFSCLIOpts, args: list[str]) -> None:
             if opts.add:
-                for album in lib.albums(args, limit=opts.limit):
+                for album in ui.track(
+                    lib.albums(args, limit=opts.limit),
+                    "Adding albums to ipfs...",
+                ):
                     if len(album.items()) == 0:
                         self._log.info(
                             "{} does not contain items, aborting", album

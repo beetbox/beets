@@ -11,7 +11,7 @@ from beets import config, metadata_plugins
 from beets.dbcore import types
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, print_
+from beets.ui import Subcommand, print_, track
 
 from ._utils.musicbrainz import MusicBrainzAPIMixin
 
@@ -221,7 +221,9 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             release_types.extend(rt.split(","))
         calculating_total = self.config["total"].get()
         fmt = config["format_album"].get()
-        for (artist, artist_id), album_ids in album_ids_by_artist.items():
+        for (artist, artist_id), album_ids in track(
+            list(album_ids_by_artist.items()), "Fetching artist albums..."
+        ):
             try:
                 resp = self.mb_api.browse_release_groups(
                     artist=artist_id, type="|".join(release_types)

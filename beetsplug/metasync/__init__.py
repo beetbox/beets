@@ -135,7 +135,7 @@ class MetaSyncPlugin(BeetsPlugin):
             return
 
         # Sync the items with all of the meta sources
-        for item in items:
+        for item in ui.track(items, "Synchronising metadata..."):
             for meta_source in meta_source_instances.values():
                 meta_source.sync_from_source(item)
 
