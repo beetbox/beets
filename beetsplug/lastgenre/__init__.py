@@ -9,6 +9,7 @@ https://gist.github.com/1241307
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from collections import defaultdict
@@ -724,7 +725,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         obj.genres, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genres)
 
-        ui.show_model_changes(obj, fields=["genres"], print_obj=False)
+        # Only print the changes if INFO logs are enabled. That is the case when
+        # running the command, but not during an import (unless it is verbose),
+        # where printed output can appear on top of the importer's prompt.
+        if self._log.isEnabledFor(logging.INFO):
+            ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
     @singledispatchmethod
     def _process(self, obj: LibModel, write: bool) -> None:
