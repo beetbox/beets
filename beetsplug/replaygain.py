@@ -1586,7 +1586,7 @@ class ReplayGainPlugin(BeetsPlugin):
         ):
             self.open_pool(threads)
 
-    def import_end(self, lib: Library, paths: list[bytes]) -> None:
+    def import_end(self, lib: Library, paths: list[Path]) -> None:
         """Handle `import` event -> close pool"""
         self.close_pool()
 

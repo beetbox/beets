@@ -9,7 +9,6 @@ from collections import OrderedDict
 from contextlib import closing
 from enum import Enum
 from functools import cached_property
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol
 
 import confuse
@@ -25,6 +24,7 @@ from beets.util.config import UnknownPairError, sanitize_pairs
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
+    from pathlib import Path
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Library
@@ -1050,12 +1050,9 @@ class FileSystem(LocalArtSource):
             # considered: art in subdirectories is not a candidate.
             ignore = config["ignore"].as_str_seq()
             ignore_hidden = config["ignore_hidden"].get(bool)
-            str_path = str(path)
             _, _, filenames = next(
-                sorted_walk(
-                    str_path, ignore=ignore, ignore_hidden=ignore_hidden
-                ),
-                (str_path, [], []),
+                sorted_walk(path, ignore=ignore, ignore_hidden=ignore_hidden),
+                (path, [], []),
             )
             images = [
                 fn_path
@@ -1455,8 +1452,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            paths = [Path(os.fsdecode(p)) for p in task.paths]
-            candidate = self.art_for_album(task.album, paths, local)
+            candidate = self.art_for_album(task.album, task.paths, local)
 
             if candidate:
                 self.art_candidates[task] = candidate

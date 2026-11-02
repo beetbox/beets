@@ -399,29 +399,61 @@ class WalkTest(BeetsTestCase):
         base_d = self.base / "d"
         base_d.mkdir()
         (base_d / "z").touch()
-        self.str_base = str(self.base)
 
     def test_sorted_files(self):
-        res = list(util.sorted_walk(self.str_base))
-        assert len(res) == 2
-        assert res[0] == (self.str_base, ["d"], ["x", "y"])
-        assert res[1] == (str(self.base / "d"), [], ["z"])
+        res = list(util.sorted_walk(self.base))
+        assert res == [
+            (self.base, [Path("d")], [Path("x"), Path("y")]),
+            (self.base / Path("d"), [], [Path("z")]),
+        ]
+
+    def test_deprecated_sorted_files_str(self):
+        base = str(self.base)
+        with pytest.warns(
+            DeprecationWarning, match="Passing str as 'path' is deprecated"
+        ):
+            res = list(util.sorted_walk(base))
+
+        assert res == [
+            (base, ["d"], ["x", "y"]),
+            (str(self.base / "d"), [], ["z"]),
+        ]
+
+    def test_deprecated_sorted_files_bytes(self):
+        base = os.fsencode(self.base)
+        with pytest.warns(
+            DeprecationWarning, match="Passing bytes as 'path' is deprecated"
+        ):
+            res = list(util.sorted_walk(base))
+
+        assert res == [
+            (base, [b"d"], [b"x", b"y"]),
+            (os.fsencode(self.base / "d"), [], [b"z"]),
+        ]
 
     def test_ignore_file(self):
-        res = list(util.sorted_walk(self.str_base, ("x",)))
-        assert len(res) == 2
-        assert res[0] == (self.str_base, ["d"], ["y"])
-        assert res[1] == (str(self.base / "d"), [], ["z"])
+        res = list(util.sorted_walk(self.base, ("x",)))
+        assert res == [
+            (self.base, [Path("d")], [Path("y")]),
+            (self.base / Path("d"), [], [Path("z")]),
+        ]
 
     def test_ignore_directory(self):
-        res = list(util.sorted_walk(self.str_base, ("d",)))
-        assert len(res) == 1
-        assert res[0] == (self.str_base, [], ["x", "y"])
+        res = list(util.sorted_walk(self.base, ("d",)))
+        assert res == [(self.base, [], [Path("x"), Path("y")])]
+
+    def test_deprecated_ignore_directory_bytes(self):
+        with pytest.warns(
+            DeprecationWarning,
+            match=r"Passing Sequence\[bytes\] as 'ignore' is deprecated",
+        ):
+            res = list(util.sorted_walk(self.base, (b"d",)))
+
+        assert res == [(self.base, [], [Path("x"), Path("y")])]
 
     def test_ignore_everything(self):
-        res = list(util.sorted_walk(self.str_base, ("*",)))
-        assert len(res) == 1
-        assert res[0] == (self.str_base, [], [])
+        res = list(util.sorted_walk(self.base, ("*",)))
+        assert res == [(self.base, [], [])]
 
 
 class UniquePathTest(BeetsTestCase):

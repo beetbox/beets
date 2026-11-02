@@ -158,6 +158,16 @@ For plugin developers
 - New ``Library.contains`` method replaces the ``lib.directory in
   util.ancestry(item.path)`` idiom for testing whether a path or a model lives
   inside the library.
+- The importer now works with :class:`pathlib.Path` instead of ``bytes``
+  throughout: ``ImportSession.paths``, ``ImportTask.toppath``, ``paths`` and
+  ``old_paths``, and the ``paths`` argument of the ``import`` event. The
+  ``PathBytes`` alias is removed, and ``extension.fix_extension``,
+  ``extension.remux_mpeglayer3_wav`` and ``ArchiveImportTask.is_archive`` now
+  take :class:`pathlib.Path`.
+- ``util.sorted_walk`` now expects a :class:`pathlib.Path` and ``str`` ignore
+  patterns. ``str`` and ``bytes`` paths and ``bytes`` ignore patterns keep
+  working, with results returned in the representation of the given path, but
+  emit a :class:`DeprecationWarning` and will be removed in 3.0.0.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -167,6 +177,9 @@ Other changes
 - Beets now officially supports Python 3.15.
 - :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
+- The importer state file now stores :class:`pathlib.Path` objects. Existing
+  state files are converted on load, but older beets versions ignore the
+  converted history, so downgrading resets incremental and resumed imports.
 
 2.14.1 (September 17, 2026)
 ---------------------------
