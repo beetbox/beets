@@ -139,6 +139,10 @@ Bug fixes
   ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
   album's ``media`` is now their common format (``Hybrid SACD``) instead of the
   generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/lyrics`: The ``google`` source now logs a clear message when
+  Google refuses the search request, and the documentation warns that the Google
+  Custom Search JSON API is closed to new customers and will be discontinued on
+  January 1, 2027. :bug:`6761`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

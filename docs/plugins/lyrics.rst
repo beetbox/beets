@@ -214,6 +214,13 @@ Sphinx supports various builders_, see a few suggestions:
 Activate Google Custom Search
 -----------------------------
 
+.. warning::
+
+    Google has closed the Custom Search JSON API to new customers, and existing
+    customers must move to another solution by January 1, 2027. If you cannot
+    get a ``google_API_key`` to work, use the other sources (such as
+    ``lrclib``) instead.
+
 You need to `register for a Google API key
 <https://console.cloud.google.com/apis/credentials>`__. Set the
 ``google_API_key`` configuration option to your key.

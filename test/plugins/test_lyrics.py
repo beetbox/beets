@@ -507,6 +507,21 @@ class TestGoogleLyrics(LyricsBackendTest):
     def test_disabled_without_api_key(self, lyrics_plugin):
         assert not lyrics_plugin.backends
 
+    @pytest.mark.parametrize("status_code", [400, 403])
+    def test_search_refused_by_google(
+        self, backend, requests_mock, caplog, status_code
+    ):
+        """Show a clear message when Google refuses the search request.
+
+        See #6761: the Custom Search JSON API is closed to new customers.
+        """
+        requests_mock.get(lyrics.Google.SEARCH_URL, status_code=status_code)
+
+        assert list(backend.search("Artist", "Title")) == []
+        assert "Custom Search JSON API is closed to new customers" in (
+            caplog.text
+        )
+
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
         result = backend.scrape(lyrics_html).lower()
