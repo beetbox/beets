@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from collections.abc import Sequence
 from contextlib import contextmanager
@@ -66,6 +67,7 @@ class Library(dbcore.Database):
         tuple[int, str | None],
     ]
     replacements: Replacements
+    directory: Path
 
     @cached_property
     def path_formats(self) -> list[PathFormat]:
@@ -88,10 +90,14 @@ class Library(dbcore.Database):
     def __init__(
         self,
         path: PathLike = Path("library.blb"),
-        directory: str | None = None,
+        directory: PathLike | None = None,
         set_music_dir: bool = True,
     ) -> None:
-        self.directory = normpath(directory or platformdirs.user_music_dir())
+        self.directory = normpath(
+            Path(os.fsdecode(directory))
+            if directory
+            else platformdirs.user_music_path()
+        )
         if set_music_dir:
             context.set_music_dir(self.directory)
 
@@ -106,6 +112,11 @@ class Library(dbcore.Database):
         """Temporarily bind this library's directory to path conversion."""
         with context.music_dir(self.directory):
             yield self
+
+    def contains(self, obj: Path | LibModel) -> bool:
+        """Return whether the given path is in the library's directory."""
+        path = obj if isinstance(obj, Path) else obj.filepath
+        return path.is_relative_to(self.directory)
 
     # Adding objects to the database.
 

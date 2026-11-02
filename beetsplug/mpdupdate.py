@@ -27,7 +27,9 @@ class BufferedSocket:
     """Socket abstraction that allows reading by line."""
 
     def __init__(self, host: str, port: int, sep: bytes = b"\n") -> None:
-        if host[0] in ["/", "~"]:
+        if host[0] in ["/", "~", "@"]:
+            if host.startswith("@"):
+                host = "\0" + host[1:]
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.connect(os.path.expanduser(host))
         else:

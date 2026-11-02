@@ -25,6 +25,8 @@ from beets.util import as_string, bytestring_path, normpath
 # Shortcut to path normalization.
 np = util.normpath
 
+_p = pytest.param
+
 
 class PytestItemHelper(TestHelper):
     def get_first_item(self):
@@ -51,6 +53,27 @@ class TestBlobTypeCompatibility:
             blob_type = beets.library.BLOB_TYPE
 
         assert blob_type is bytes
+
+
+class TestLibraryDirectory(PytestItemHelper):
+    @pytest.mark.parametrize(
+        "transformation",
+        [
+            _p(lambda p: p, id="Path"),
+            _p(str, id="str"),
+            _p(os.fsencode, id="bytes"),
+        ],
+    )
+    def test_string_directory_supports_path_like(self, transformation):
+        lib = beets.library.Library(
+            self.temp_path / "string-directory.db",
+            transformation(self.lib_path),
+        )
+        try:
+            assert lib.directory == self.lib_path
+            assert lib.contains(self.lib_path / "song.mp3")
+        finally:
+            lib._close()
 
 
 class TestLoad(PytestItemHelper):
@@ -204,17 +227,17 @@ class TestDestination(PytestItemHelper):
         return super().create_temp_dir(**kwargs)
 
     def test_directory_works_with_trailing_slash(self, item_in_db):
-        self.lib.directory = b"one/"
+        self.lib.directory = Path("one/")
         self.lib.path_formats = [("default", "two")]
         assert item_in_db.destination() == np("one/two")
 
     def test_directory_works_without_trailing_slash(self, item_in_db):
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [("default", "two")]
         assert item_in_db.destination() == np("one/two")
 
     def test_destination_substitutes_metadata_values(self, item_in_db):
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [("default", "$album/$artist $title")]
         item_in_db.title = "three"
         item_in_db.artist = "two"
@@ -222,19 +245,19 @@ class TestDestination(PytestItemHelper):
         assert item_in_db.destination() == np("base/one/two three")
 
     def test_destination_preserves_extension(self, item_in_db):
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [("default", "$title")]
         item_in_db.path = "hey.audioformat"
         assert item_in_db.destination() == np("base/the title.audioformat")
 
     def test_lower_case_extension(self, item_in_db):
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [("default", "$title")]
         item_in_db.path = "hey.MP3"
         assert item_in_db.destination() == np("base/the title.mp3")
 
     def test_destination_pads_some_indices(self, item_in_db):
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [
             ("default", "$track $tracktotal $disc $disctotal $bpm")
         ]
@@ -246,7 +269,7 @@ class TestDestination(PytestItemHelper):
         assert item_in_db.destination() == np("base/01 02 03 04 5")
 
     def test_destination_pads_date_values(self, item_in_db):
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [("default", "$year-$month-$day")]
         item_in_db.year = 1
         item_in_db.month = 2
@@ -312,12 +335,12 @@ class TestDestination(PytestItemHelper):
     def test_default_path_for_non_compilations(self, item_in_db):
         item_in_db.comp = False
         self.lib.add_album([item_in_db])
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [("default", "two"), ("comp:true", "three")]
         assert item_in_db.destination() == np("one/two")
 
     def test_singleton_path(self, item_in_db):
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [
             ("default", "two"),
             ("singleton:true", "four"),
@@ -327,7 +350,7 @@ class TestDestination(PytestItemHelper):
 
     def test_comp_before_singleton_path(self, item_in_db):
         item_in_db.comp = True
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [
             ("default", "two"),
             ("comp:true", "three"),
@@ -338,13 +361,13 @@ class TestDestination(PytestItemHelper):
     def test_comp_path(self, item_in_db):
         item_in_db.comp = True
         self.lib.add_album([item_in_db])
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [("default", "two"), ("comp:true", "three")]
         assert item_in_db.destination() == np("one/three")
 
     def test_multi_value_string_query_path(self, item_in_db):
         item_in_db.genres = ["Classical"]
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [
             ("default", "two"),
             ("genres:=~Classical", "three"),
@@ -353,7 +376,7 @@ class TestDestination(PytestItemHelper):
 
     def test_multi_value_match_query_path(self, item_in_db):
         item_in_db.genres = ["Classical"]
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [
             ("default", "two"),
             ("genres:=Classical", "three"),
@@ -362,7 +385,7 @@ class TestDestination(PytestItemHelper):
 
     def test_multi_value_string_query_path_no_substring_match(self, item_in_db):
         item_in_db.genres = ["Neoclassical"]
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [
             ("default", "two"),
             ("genres:=~Classical", "three"),
@@ -373,7 +396,7 @@ class TestDestination(PytestItemHelper):
         item_in_db.comp = True
         self.lib.add_album([item_in_db])
         item_in_db.albumtype = "sometype"
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [
             ("default", "two"),
             ("albumtype:sometype", "four"),
@@ -385,7 +408,7 @@ class TestDestination(PytestItemHelper):
         item_in_db.comp = True
         self.lib.add_album([item_in_db])
         item_in_db.albumtype = "sometype"
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [
             ("default", "two"),
             ("albumtype:anothertype", "four"),
@@ -467,13 +490,13 @@ class TestDestination(PytestItemHelper):
 
     def test_asciify_character_expanding_to_slash(self, item_in_db, config):
         config["asciify_paths"] = True
-        self.lib.directory = b"lib"
+        self.lib.directory = Path("lib")
         self.lib.path_formats = [("default", "$title")]
         item_in_db.title = "ab\xa2\xbdd"
         assert item_in_db.destination() == np("lib/abC_ 1_2d")
 
     def test_destination_with_replacements(self, item_in_db):
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.replacements = [(re.compile(r"a"), "e")]
         self.lib.path_formats = [("default", "$album/$title")]
         item_in_db.title = "foo"
@@ -487,7 +510,7 @@ class TestDestination(PytestItemHelper):
         # combined with custom replacements that lack the default
         # separator rule must not produce an absolute path that escapes
         # the base directory.
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.replacements = [(re.compile(r"a"), "e")]
         self.lib.path_formats = [("default", "$album/$title")]
         item_in_db.album = ""
@@ -504,7 +527,7 @@ class TestDestination(PytestItemHelper):
 
     def test_destination_with_empty_component(self, item_in_db):
         self.config["empty_component_replace"] = "_"
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [("default", "$album/$artist/$title")]
         item_in_db.title = "three"
         item_in_db.artist = ""
@@ -514,7 +537,7 @@ class TestDestination(PytestItemHelper):
 
     def test_destination_with_empty_final_component(self, item_in_db):
         self.config["empty_component_replace"] = "_"
-        self.lib.directory = b"base"
+        self.lib.directory = Path("base")
         self.lib.path_formats = [("default", "$album/$title")]
         item_in_db.title = ""
         item_in_db.album = "one"
@@ -522,7 +545,7 @@ class TestDestination(PytestItemHelper):
         assert item_in_db.destination() == np("base/one/_.mp3")
 
     def test_album_field_query(self, item_in_db):
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [("default", "two"), ("flex:foo", "three")]
         album = self.lib.add_album([item_in_db])
         assert item_in_db.destination() == np("one/two")
@@ -531,7 +554,7 @@ class TestDestination(PytestItemHelper):
         assert item_in_db.destination() == np("one/three")
 
     def test_album_field_in_template(self, item_in_db):
-        self.lib.directory = b"one"
+        self.lib.directory = Path("one")
         self.lib.path_formats = [("default", "$flex/two")]
         album = self.lib.add_album([item_in_db])
         album["flex"] = "foo"
@@ -622,7 +645,7 @@ class PathFormattingMixin:
 class TestDestinationFunction(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def item(self, setup):
-        self.lib.directory = b"/base"
+        self.lib.directory = Path("/base")
         self.lib.path_formats = [("default", "path")]
         return item(self.lib)
 
@@ -730,7 +753,7 @@ class TestDestinationFunction(TestHelper, PathFormattingMixin):
 class TestDisambiguation(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def items(self, setup):
-        self.lib.directory = b"/base"
+        self.lib.directory = Path("/base")
         self.lib.path_formats = [("default", "path")]
 
         i1 = item()
@@ -876,7 +899,7 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
 class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def items(self, setup):
-        self.lib.directory = b"/base"
+        self.lib.directory = Path("/base")
         self.lib.path_formats = [("default", "path")]
 
         i1 = item()
@@ -1016,7 +1039,7 @@ class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
 class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def items(self, setup):
-        self.lib.directory = b"/base"
+        self.lib.directory = Path("/base")
         self.lib.path_formats = [("default", "path")]
 
         i1 = item(title="Common Title", track=7, disc=1, artist="Some Artist")
@@ -1230,7 +1253,7 @@ class TestTrackDisambiguation(TestHelper, PathFormattingMixin):
         assert lib_items.call_count == 1
 
 
-class TestPluginDestination(TestHelper):
+class TestPluginDestination(TestHelper, PathFormattingMixin):
     @pytest.fixture(autouse=True)
     def item(self, setup):
         # Mock beets.plugins.item_field_getters.
@@ -1245,32 +1268,27 @@ class TestPluginDestination(TestHelper):
         self.old_field_getters = plugins.item_field_getters
         plugins.item_field_getters = field_getters
 
-        self.lib.directory = b"/base"
+        self.lib.directory = Path("/base")
         self.lib.path_formats = [("default", "$artist $foo")]
 
         yield _common.item(self.lib)
 
         plugins.item_field_getters = self.old_field_getters
 
-    def _assert_dest(self, dest, item):
-        with _common.platform_posix():
-            the_dest = item.destination()
-        assert the_dest == b"/base/" + dest
-
     def test_undefined_value_not_substituted(self, item):
-        self._assert_dest(b"the artist $foo", item)
+        self._assert_dest(b"/base/the artist $foo", item)
 
     def test_plugin_value_not_substituted(self, item):
         self._tv_map = {"foo": "bar"}
-        self._assert_dest(b"the artist bar", item)
+        self._assert_dest(b"/base/the artist bar", item)
 
     def test_plugin_value_overrides_attribute(self, item):
         self._tv_map = {"artist": "bar"}
-        self._assert_dest(b"bar $foo", item)
+        self._assert_dest(b"/base/bar $foo", item)
 
     def test_plugin_value_sanitized(self, item):
         self._tv_map = {"foo": "bar/baz"}
-        self._assert_dest(b"the artist bar_baz", item)
+        self._assert_dest(b"/base/the artist bar_baz", item)
 
 
 class TestAlbumInfo(PytestItemHelper):
