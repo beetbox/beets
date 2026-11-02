@@ -50,6 +50,10 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/mbpseudo`: Resolve artist aliases separately for each
+  track instead of applying the first matching album artist alias to all
+  tracks. Preserve artist-credit join phrases and fall back to recording
+  credits when track credits are missing. :bug:`7125`
 - Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
   full traceback at error level when a search fails because the service is
   unreachable. The error message is logged on its own, and the traceback is kept

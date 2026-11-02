@@ -17,7 +17,6 @@ from beets.util.id_extractors import extract_release_id
 from beetsplug.musicbrainz import (
     MusicBrainzPlugin,
     _merge_pseudo_and_actual_album,
-    _preferred_alias,
 )
 
 if TYPE_CHECKING:
@@ -197,28 +196,38 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             return
 
         lang = raw_pseudo_release.get("text_representation", {}).get("language")
-        artist_credits = raw_pseudo_release.get("release_group", {}).get(
-            "artist_credit", []
-        )
-        aliases = [
-            artist_credit.get("artist", {}).get("aliases", [])
-            for artist_credit in artist_credits
-        ]
+        if not lang or len(lang) < 2:
+            return
 
-        if lang and len(lang) >= 2 and len(aliases) > 0:
-            locale = lang[0:2]
-            aliases_flattened = list(itertools.chain.from_iterable(aliases))
-            self._log.debug(
-                "Using locale '{0}' to search aliases {1}",
-                locale,
-                aliases_flattened,
+        languages = [lang[:2]]
+        album_credits = raw_pseudo_release.get("artist_credit") or (
+            raw_pseudo_release.get("release_group", {}).get("artist_credit", [])
+        )
+        if album_credits:
+            pseudo_release.artist = self._parse_artist_credits(
+                album_credits, languages
+            )["artist"]
+
+        tracks_by_id = {
+            track.release_track_id: track for track in pseudo_release.tracks
+        }
+        for medium in raw_pseudo_release.get("media", []):
+            raw_tracks = itertools.chain(
+                [medium["pregap"]] if medium.get("pregap") else [],
+                medium.get("tracks", []),
+                medium.get("data_tracks", []),
             )
-            if alias_dict := _preferred_alias(aliases_flattened, [locale]):
-                if alias := alias_dict.get("name"):
-                    self._log.debug("Got alias '{0}'", alias)
-                    pseudo_release.artist = alias
-                    for track in pseudo_release.tracks:
-                        track.artist = alias
+            for raw_track in raw_tracks:
+                track_info = tracks_by_id.get(raw_track["id"])
+                if track_info is None:
+                    continue
+                track_credits = raw_track.get("artist_credit") or raw_track[
+                    "recording"
+                ].get("artist_credit", [])
+                if track_credits:
+                    track_info.artist = self._parse_artist_credits(
+                        track_credits, languages
+                    )["artist"]
 
     def _add_custom_tags(
         self, official_release: AlbumInfo, pseudo_release: AlbumInfo

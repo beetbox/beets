@@ -298,7 +298,9 @@ class MusicBrainzPlugin(
             )
 
     def _parse_artist_credits(
-        self, artist_credits: list[ArtistCredit]
+        self,
+        artist_credits: list[ArtistCredit],
+        languages: list[str] | None = None,
     ) -> ArtistInfo:
         """Normalize MusicBrainz artist-credit data into tag-friendly fields.
 
@@ -325,7 +327,7 @@ class MusicBrainzPlugin(
 
         for el in artist_credits:
             artists_ids.append(el["artist"]["id"])
-            alias = _preferred_alias(el["artist"].get("aliases", []))
+            alias = _preferred_alias(el["artist"].get("aliases", []), languages)
             artist_object = alias or el["artist"]
             credit_artist_object = (
                 alias if (alias and self.aliases_as_credits) else el
