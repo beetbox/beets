@@ -162,7 +162,7 @@ jobs:
             --extra fetchart \
             --extra chroma \
             --extra sonosupdate
-          poe test -k 'not test_convert_rst_to_md'
+          poe test -n2 -k 'not test_convert_rst_to_md'
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
@@ -184,7 +184,7 @@ jobs:
             --extra chroma \
             --extra sonosupdate
           poe docs
-          poe test-with-coverage
+          poe test-with-coverage -n2
 
       - if: ${{ !cancelled() }}
         name: Upload test results to Codecov
