@@ -139,6 +139,8 @@ Bug fixes
   ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
   album's ``media`` is now their common format (``Hybrid SACD``) instead of the
   generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/export`: Expand glob patterns in ``--include-keys`` so patterns
+  such as ``mb*`` correctly include matching metadata fields. :bug:`5411`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import os
 from typing import TYPE_CHECKING, Any, Literal, Protocol
 
@@ -64,12 +65,28 @@ def tag_data_emitter(path: bytes) -> DataEmitter:
         included_keys: Literal["*"] | list[str],
     ) -> tuple[JSONDict, LibModel]:
         fields: set[str] | list[str]
-        fields = tag_fields() if included_keys == "*" else included_keys
+        available_fields = tag_fields()
+
+        if included_keys == "*":
+            fields = available_fields
+        else:
+            fields = [
+                field
+                for key in included_keys
+                for field in (
+                    fnmatch.filter(sorted(available_fields), key)
+                    if any(char in key for char in "*?[")
+                    else [key]
+                )
+            ]
+
         if "images" in fields:
             # We can't serialize the image data.
             fields.remove("images")
+
         mf = mediafile.MediaFile(syspath(path))
         tags: JSONDict = {}
+
         for field in fields:
             if field == "art":
                 tags[field] = mf.art is not None

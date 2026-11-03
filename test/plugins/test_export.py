@@ -67,3 +67,16 @@ class ExportPluginTest(IOMixin, PluginTestCase):
                 txt = details.text
                 assert tag in self.test_values, tag
                 assert self.test_values[tag] == txt, txt
+
+    def test_include_keys_glob(self):
+        item = self.create_item()
+        item.mb_albumid = "test-album-id"
+        item.write()
+        item.store()
+
+        out = self.run_with_output("export", "-i", "mb*", item.artist)
+        json_data = json.loads(out)[0]
+
+        assert json_data["mb_albumid"] == "test-album-id"
+        assert "mb_artistid" in json_data
+        assert "mb_trackid" in json_data
