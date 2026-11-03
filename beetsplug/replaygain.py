@@ -1602,9 +1602,16 @@ class ReplayGainPlugin(BeetsPlugin):
             write = ui.should_write(opts.write)
             force = opts.force
 
-            # Bypass self.open_pool() if called with  `--threads 0`
-            if opts.threads != 0:
-                threads: int = opts.threads or self.config["threads"].get(int)
+            # Use the CLI thread count when provided;
+            # otherwise, fall back to the configured thread count.
+            threads: int = (
+                opts.threads
+                if opts.threads is not None
+                else self.config["threads"].get(int)
+            )
+
+            # A thread count of 0 disables parallel processing.
+            if threads:
                 self.open_pool(threads)
 
             if opts.album:
