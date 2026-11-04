@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import secrets
 import string
 from binascii import hexlify
@@ -23,6 +24,9 @@ if TYPE_CHECKING:
 # Song IDs are sent as query parameters, so keep URLs well below the usual
 # 8 KB limit of servers and reverse proxies.
 STAR_CHUNK_SIZE = 100
+
+# Query parameters carrying the password, or the token and salt derived from it
+SECRET_PARAM_PAT = re.compile(r"([?&][pts]=)[^&\s]+")
 
 
 class SubsonicError(Exception):
@@ -79,8 +83,10 @@ class SubsonicClient(RequestHandler):
                 "Subsonic server returned a non-JSON response"
             ) from exc
         except requests.exceptions.RequestException as exc:
+            # Error messages may include the request URL with credentials
+            message = SECRET_PARAM_PAT.sub(r"\1***", str(exc))
             raise SubsonicError(
-                f"Error connecting to Subsonic server: {exc}"
+                f"Error connecting to Subsonic server: {message}"
             ) from exc
 
         response = data.get("subsonic-response", {})

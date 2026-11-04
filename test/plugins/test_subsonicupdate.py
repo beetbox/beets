@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 from urllib.parse import parse_qs, urlparse
@@ -499,6 +500,19 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
         with pytest.raises(UserError, match="Wrong username or password"):
             self.run_command("subsonic-set-favorite", f"id:{item.id}")
+
+    @pytest.mark.parametrize("auth", ["token", "password"])
+    def test_hides_credentials_in_http_errors(
+        self, requests_mock: Mocker, auth: str
+    ):
+        self.config["subsonic"]["auth"] = auth
+        item = self.add_item(title="Song", subsonic_id="song-1")
+        requests_mock.get(STAR_URL, status_code=HTTPStatus.UNAUTHORIZED)
+
+        with pytest.raises(UserError, match="401") as exc_info:
+            self.run_command("subsonic-set-favorite", f"id:{item.id}")
+
+        assert not re.search(r"[?&][pts]=[^*]", str(exc_info.value))
 
     @pytest.mark.parametrize("answer, expected_calls", [("y", 3), ("n", 0)])
     def test_confirms_before_favouriting_whole_library(
