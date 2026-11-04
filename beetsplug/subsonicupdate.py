@@ -144,8 +144,14 @@ class SubsonicUpdate(BeetsPlugin):
         )
 
         def set_favorite_func(lib: Library, _: Any, args: list[str]) -> None:
+            items = lib.items(args)
+            if not args and not ui.input_yn(
+                f"Mark all {len(items)} tracks as Subsonic favourites (y/n)?",
+                True,
+            ):
+                return
             try:
-                self.set_favorite(lib.items(args))
+                self.set_favorite(items)
             except SubsonicError as exc:
                 raise UserError(f"Subsonic request failed: {exc}") from exc
 
