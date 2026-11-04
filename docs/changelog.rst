@@ -139,6 +139,10 @@ Bug fixes
   ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
   album's ``media`` is now their common format (``Hybrid SACD``) instead of the
   generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/bareasc`: Fix a crash when a bare-ASCII (``#``) query reaches a
+  row with a ``NULL`` value in one of the searched columns. The ``unidecode``
+  SQLite function now passes ``NULL`` through instead of raising, which
+  previously surfaced as a ``DBCustomFunctionError``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
