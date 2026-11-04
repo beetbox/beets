@@ -321,8 +321,18 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
     @pytest.fixture(autouse=True)
     def subsonic(self, setup: None, requests_mock: Mocker):
-        """Load the plugin without scanning the library on exit."""
-        requests_mock.get(STARRED_URL, json=_ok(starred2={}))
+        """Load the plugin against a fake server that remembers starred songs."""
+        self.starred: set[str] = set()
+
+        def star(request, _):
+            self.starred.update(_params(request.url)["id"])
+            return _ok()
+
+        def starred(*_):
+            return _ok(starred2={"song": [{"id": i} for i in self.starred]})
+
+        requests_mock.get(STAR_URL, json=star)
+        requests_mock.get(STARRED_URL, json=starred)
         self.config["subsonic"].set(
             {
                 "user": "admin",
@@ -335,11 +345,10 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
     def test_uses_stored_subsonic_id(self, requests_mock: Mocker):
         item = self.add_item(title="Song", subsonic_id="song-1")
-        requests_mock.get(STAR_URL, json=_ok())
 
         self.run_command("set-favorite", f"id:{item.id}")
 
-        _, star = requests_mock.request_history
+        _, star, _ = requests_mock.request_history
         params = _params(star.url)
         assert params["id"] == ["song-1"]
         assert params["u"] == ["admin"]
@@ -347,16 +356,19 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         assert "t" in params
         assert "s" in params
 
-    def test_searches_server_when_id_is_missing(self, requests_mock: Mocker):
+    def test_searches_server_and_stores_id_when_missing(
+        self, requests_mock: Mocker
+    ):
         item = self.add_item(artist="Artist", album="Album", title="Song")
         requests_mock.get(SEARCH_URL, json=_songs(SONG))
-        requests_mock.get(STAR_URL, json=_ok())
 
         self.run_command("set-favorite", f"id:{item.id}")
 
-        _, search, star = requests_mock.request_history
+        _, search, star, _ = requests_mock.request_history
         assert _params(search.url)["query"] == ["Artist Album Song"]
         assert _params(star.url)["id"] == ["song-1"]
+        item.load()
+        assert item.subsonic_id == "song-1"
 
     def test_retries_with_folded_unicode_query(self, requests_mock: Mocker):
         item = self.add_item(
@@ -367,11 +379,10 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         requests_mock.get(
             SEARCH_URL, [empty, empty, empty, empty, {"json": _songs(song)}]
         )
-        requests_mock.get(STAR_URL, json=_ok())
 
         self.run_command("set-favorite", f"id:{item.id}")
 
-        *_, folded, star = requests_mock.request_history
+        *_, folded, star, _ = requests_mock.request_history
         assert _params(folded.url)["query"] == ["von bikrav album eternite"]
         assert _params(star.url)["id"] == ["song-1"]
 
@@ -418,16 +429,38 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         assert "No Subsonic match" in caplog.text
 
     def test_stars_and_reports_only_new_favourites(self, requests_mock: Mocker):
-        requests_mock.get(STARRED_URL, json=_ok(starred2={"song": [SONG]}))
-        requests_mock.get(STAR_URL, json=_ok())
+        self.starred.add("song-1")
         self.add_item(title="Song", subsonic_id="song-1")
         self.add_item(title="Other", subsonic_id="song-2")
         self.add_item(title="Other dupe", subsonic_id="song-2")
 
         output = self.run_with_output("set-favorite")
 
-        *_, star = requests_mock.request_history
+        *_, star, _ = requests_mock.request_history
         assert _params(star.url)["id"] == ["song-2"]
+        assert "Marked 1 new tracks as Subsonic favourites." in output
+
+    def test_researches_stale_subsonic_id(
+        self, requests_mock: Mocker, caplog: pytest.LogCaptureFixture
+    ):
+        def star(request, _):
+            # Like Navidrome, skip unknown IDs and still report success
+            self.starred.update(set(_params(request.url)["id"]) - {"gone"})
+            return _ok()
+
+        requests_mock.get(STAR_URL, json=star)
+        requests_mock.get(SEARCH_URL, json=_songs(SONG))
+        item = self.add_item(
+            artist="Artist", album="Album", title="Song", subsonic_id="gone"
+        )
+
+        with caplog.at_level("WARNING"):
+            output = self.run_with_output("set-favorite", f"id:{item.id}")
+
+        item.load()
+        assert item.subsonic_id == "song-1"
+        assert self.starred == {"song-1"}
+        assert "searching for it again" in caplog.text
         assert "Marked 1 new tracks as Subsonic favourites." in output
 
     def test_reports_server_errors(self, requests_mock: Mocker):

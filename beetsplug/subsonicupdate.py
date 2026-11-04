@@ -157,15 +157,46 @@ class SubsonicUpdate(BeetsPlugin):
         """Set favourites on the Subsonic server for all resolvable items."""
         client = self._client()
         starred_ids = client.starred_song_ids()
-        new_ids = {
-            song_id: None
-            for item in items
-            if (song_id := self._song_id(client, item))
-            and song_id not in starred_ids
-        }
+        items_by_id = self._unstarred_items_by_id(client, items, starred_ids)
+        if items_by_id:
+            client.star_songs(items_by_id)
+            # Servers such as Navidrome silently skip unknown IDs, so check
+            # what was actually starred to catch stale stored IDs.
+            starred_ids = client.starred_song_ids()
 
-        client.star_songs(new_ids)
-        ui.print_(f"Marked {len(new_ids)} new tracks as Subsonic favourites.")
+        stale_items = [
+            item
+            for song_id in items_by_id.keys() - starred_ids
+            for item in items_by_id[song_id]
+        ]
+        for item in stale_items:
+            self._log.warning(
+                "Subsonic did not star {0.artist} - {0.title} ({0.subsonic_id})"
+                ", searching for it again",
+                item,
+            )
+            del item["subsonic_id"]
+            item.store()
+
+        # Search results come from the server, so these IDs are known to exist
+        retried = self._unstarred_items_by_id(client, stale_items, starred_ids)
+        client.star_songs(retried)
+
+        new_count = len(items_by_id.keys() & starred_ids) + len(retried)
+        ui.print_(f"Marked {new_count} new tracks as Subsonic favourites.")
+
+    def _unstarred_items_by_id(
+        self,
+        client: SubsonicClient,
+        items: Iterable[Item],
+        starred_ids: set[str],
+    ) -> dict[str, list[Item]]:
+        items_by_id: dict[str, list[Item]] = {}
+        for item in items:
+            song_id = self._song_id(client, item)
+            if song_id and song_id not in starred_ids:
+                items_by_id.setdefault(song_id, []).append(item)
+        return items_by_id
 
     def _song_id(self, client: SubsonicClient, item: Item) -> str | None:
         if song_id := item.get("subsonic_id"):
@@ -182,6 +213,8 @@ class SubsonicUpdate(BeetsPlugin):
                 songs_by_id[str(song["id"])] = song
             matches = self._best_matches(item, songs_by_id.values())
             if len(matches) == 1:
+                item.subsonic_id = matches[0]
+                item.store()
                 return matches[0]
             if len(matches) > 1:
                 self._log.warning(
