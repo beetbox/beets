@@ -89,7 +89,12 @@ class SubsonicClient(RequestHandler):
                 f"Error connecting to Subsonic server: {message}"
             ) from exc
 
-        response = data.get("subsonic-response", {})
+        response = (
+            data.get("subsonic-response") if isinstance(data, dict) else None
+        )
+        if not isinstance(response, dict):
+            raise SubsonicError("Subsonic server returned an invalid response")
+
         status = response.get("status")
         if status == "failed":
             error = response.get("error", {})
