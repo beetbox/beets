@@ -140,7 +140,8 @@ class SubsonicUpdate(BeetsPlugin):
         subsonicupdate_cmd.func = func
 
         set_favorite_cmd = ui.Subcommand(
-            "set-favorite", help="mark queried tracks as Subsonic favourites"
+            "subsonic-set-favorite",
+            help="mark queried tracks as Subsonic favourites",
         )
 
         def set_favorite_func(lib: Library, _: Any, args: list[str]) -> None:
