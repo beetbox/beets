@@ -11,12 +11,18 @@ from typing import TYPE_CHECKING, Any
 
 import requests
 
+from beets.util import chunks
+
 from .requests import RequestHandler
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from beetsplug._typing import JSONDict
+
+# Song IDs are sent as query parameters, so keep URLs well below the usual
+# 8 KB limit of servers and reverse proxies.
+STAR_CHUNK_SIZE = 100
 
 
 class SubsonicError(Exception):
@@ -112,5 +118,5 @@ class SubsonicClient(RequestHandler):
 
     def star_songs(self, song_ids: Iterable[str]) -> None:
         """Mark songs as favourites for the authenticated user."""
-        if ids := list(song_ids):
+        for ids in chunks(list(song_ids), STAR_CHUNK_SIZE):
             self._request("star", {"id": ids})
