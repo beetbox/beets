@@ -66,7 +66,10 @@ artist, album, and title. If that returns no usable match, the plugin tries
 narrower artist/title, title-only and artist-only searches, followed by
 accent-folded variants for metadata containing accents or characters such as
 ``Ø`` and ``Æ``. Missing or ambiguous matches are skipped to avoid favouriting
-the wrong track.
+the wrong track. A unique match is stored in ``subsonic_id``, so later runs skip
+the search for that item. If the server does not star a stored ID, for example
+because the track was retagged and got a new ID, the plugin searches for it
+again.
 
 .. _navidrome: https://www.navidrome.org/
 
