@@ -112,6 +112,8 @@ Bug fixes
   while the thread pool is open. It held a CPU core at 100% and starved the
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
+- :doc:`plugins/web`: Fix relative library paths not resolving across request
+  threads in web plugin endpoints.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
