@@ -226,6 +226,23 @@ class TestSubsonicUpdate(PluginTestHelper):
 
         assert "Subsonic server returned a non-JSON response" in caplog.text
 
+    @pytest.mark.parametrize(
+        "body", ["null", "[]", '{"subsonic-response": null}']
+    )
+    def test_start_scan_failed_invalid_response(
+        self,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+        body: str,
+    ):
+        """Valid JSON of an unexpected shape is reported, not raised."""
+        requests_mock.get(START_SCAN_URL, text=body)
+
+        subsonic.start_scan(self.lib)
+
+        assert "Subsonic server returned an invalid response" in caplog.text
+
     def test_cli_command_starts_scan(self, requests_mock: Mocker):
         """The `subsonicupdate` command triggers a scan."""
         requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)
