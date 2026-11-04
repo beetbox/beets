@@ -71,9 +71,10 @@ class UseThePlugin(TestHelper):
         """Will disable all outgoing requests and raise an error!
 
         Tests need to mock all requests!
+        Register some "safe" mocks you actually want to allow, if any:
+
+        >>> requests_mock.get("https://example.com/health", json={"status": "ok"})
         """
-        # Register some “safe” mocks you actually want to allow, if any:
-        # requests_mock.get("https://example.com/health", json={"status": "ok"})
 
         # Disable any URL not explicitly mocked
         return
@@ -585,9 +586,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "got no results"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_requestexception(
@@ -600,9 +603,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "iTunes search failed: 404 Client Error"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_fallback_match(
@@ -645,9 +650,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "Malformed itunes candidate"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_returns_no_result_when_error_received(
@@ -661,9 +668,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "not found in json. Fields are"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_returns_no_result_with_malformed_response(
@@ -677,9 +686,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "Could not decode json response:"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
 
@@ -1181,9 +1192,13 @@ class TestEnforceRatioConfig:
                 fetchart.FetchArtPlugin()
 
     def test_px(self, config):
-        self._load_with_config(config, "0px 4px 12px 123px".split(), False)
-        self._load_with_config(config, "00px stuff5px".split(), True)
+        self._load_with_config(config, ["0px", "4px", "12px", "123px"], False)
+        self._load_with_config(config, ["00px", "stuff5px"], True)
 
     def test_percent(self, config):
-        self._load_with_config(config, "0% 0.00% 5.1% 5% 100%".split(), False)
-        self._load_with_config(config, "00% 1.234% foo5% 100.1%".split(), True)
+        self._load_with_config(
+            config, ["0%", "0.00%", "5.1%", "5%", "100%"], False
+        )
+        self._load_with_config(
+            config, ["00%", "1.234%", "foo5%", "100.1%"], True
+        )

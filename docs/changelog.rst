@@ -44,10 +44,16 @@ New features
   albumartist, the plugin now attempts to fetch genres for each artist listed in
   the multi-valued ``albumartists`` field before falling back to the artist
   source. :bug:`6238`
+- :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
+  socket.
 
 Bug fixes
 ~~~~~~~~~
 
+- Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
+  full traceback at error level when a search fails because the service is
+  unreachable. The error message is logged on its own, and the traceback is kept
+  at debug level. :bug:`6960`
 - :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
   gracefully by decoding with error handling and skipping tracks that produce
   unparseable data, instead of crashing. :bug:`3527`
@@ -146,6 +152,14 @@ For plugin developers
 - ``beetsplug._utils.art.embed_item`` and
   ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
   arguments, deprecating ``str`` and ``bytes`` in the same way.
+- ``Library.directory`` is now a :class:`pathlib.Path` instead of
+  :class:`bytes`, and the ``Library`` constructor accepts any path-like value
+  for it. Unlike the art utilities above this one has no compatibility shim, so
+  plugins combining it with :mod:`os.path` helpers or comparing it against
+  ``bytes`` paths need updating.
+- New ``Library.contains`` method replaces the ``lib.directory in
+  util.ancestry(item.path)`` idiom for testing whether a path or a model lives
+  inside the library.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -153,6 +167,8 @@ Other changes
 - :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
   ``platformdirs``, which beets already requires.
 - Beets now officially supports Python 3.15.
+- :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
+  case-insensitively, so ``jpg`` also covers ``cover.JPG``.
 
 2.14.1 (September 17, 2026)
 ---------------------------

@@ -150,7 +150,7 @@ def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
     # Iterate over all words.
     previous_fit = False
     for i in range(len(words)):
-        if i == 0:
+        if i == 0:  # noqa: SIM108
             pot_substr = words[i]
         else:
             # (optimistically) add the next word to check the fit

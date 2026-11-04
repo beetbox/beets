@@ -203,15 +203,14 @@ class TitlecasePlugin(BeetsPlugin):
     def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
         # Check we should split this into two substrings.
-        if self.separators:
-            if len(splits := self.separators.findall(text)):
-                split_cased = "".join(
-                    [self.titlecase(s[0], field) + s[1] for s in splits]
-                )
-                # Add on the remaining portion
-                return split_cased + self.titlecase(
-                    text[len(split_cased) :], field
-                )
+        if self.separators and len(splits := self.separators.findall(text)):
+            split_cased = "".join(
+                [self.titlecase(s[0], field) + s[1] for s in splits]
+            )
+            # Add on the remaining portion. Measure it against the
+            # original text, since replacements can change the length.
+            consumed = sum(len(s[0]) + len(s[1]) for s in splits)
+            return split_cased + self.titlecase(text[consumed:], field)
         # Check if A-Z is all uppercase or all lowercase
         if self.all_lowercase and text.islower():
             return text

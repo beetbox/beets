@@ -86,7 +86,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 composer_exists = True
                 parent_composer.append(artist["artist"]["name"])
                 parent_composer_sort.append(artist["artist"]["sort_name"])
-                if "end" in artist.keys():
+                if "end" in artist:
                     parentwork_info["parentwork_date"] = artist["end"]
 
             parentwork_info["parent_composer"] = ", ".join(parent_composer)

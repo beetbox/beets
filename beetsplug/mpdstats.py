@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import os
 import time
 from typing import (
@@ -169,10 +170,8 @@ class MPDClientWrapper:
 
         time.sleep(RETRY_INTERVAL)
 
-        try:
+        with contextlib.suppress(mpd.ConnectionError):
             self.disconnect()
-        except mpd.ConnectionError:
-            pass
 
         self.connect()
         return self.get(command, retries=retries - 1)
@@ -225,10 +224,9 @@ class MPDStats:
         """Calculate a new rating for a song based on play count, skip count,
         old rating and the fact if it was skipped or not.
         """
-        if skipped:
-            rolling = rating - rating / 2.0
-        else:
-            rolling = rating + (1.0 - rating) / 2.0
+        rolling = (
+            rating - rating / 2.0 if skipped else rating + (1.0 - rating) / 2.0
+        )
         stable = (play_count + 1.0) / (play_count + skip_count + 2.0)
         return self.rating_mix * stable + (1.0 - self.rating_mix) * rolling
 
@@ -437,10 +435,8 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             mpd_config.set_args(opts)
 
-            try:
+            with contextlib.suppress(KeyboardInterrupt):
                 MPDStats(lib, self._log).run()
-            except KeyboardInterrupt:
-                pass
 
         cmd.func = func
         return [cmd]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import os
 from typing import TYPE_CHECKING, Any, Protocol
@@ -258,10 +259,8 @@ class IdListConverter(BaseConverter):
     def to_python(self, value: str) -> list[int]:
         ids = []
         for id_ in value.split(","):
-            try:
+            with contextlib.suppress(ValueError):
                 ids.append(int(id_))
-            except ValueError:
-                pass
         return ids
 
     def to_url(self, value: Sequence[int]) -> str:

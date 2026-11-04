@@ -117,7 +117,7 @@ def flatten(obj: LibModel, fields: Container[str] | None) -> JSONDict:
     """
     # Format each value.
     d = {}
-    for key in obj.keys():
+    for key in obj:
         value = obj[key]
         if _safe_value(obj, key, value):
             # A safe value that is faithfully representable in YAML.
@@ -195,10 +195,7 @@ class EditPlugin(plugins.BeetsPlugin):
             return
 
         # Get the fields to edit.
-        if opts.all:
-            fields = None
-        else:
-            fields = self._get_fields(opts.album, opts.field)
+        fields = None if opts.all else self._get_fields(opts.album, opts.field)
         self.edit(opts.album, objs, fields)
 
     def _get_fields(self, album: bool, extra: list[str] | None) -> set[str]:
@@ -582,7 +579,12 @@ class EditPlugin(plugins.BeetsPlugin):
         """
         # Prompt the user for a candidate.
         if task.candidates:
-            sel = ui.input_options((), numrange=(1, len(task.candidates)))
+            sel = ui.input_options(
+                ("Back",), numrange=(1, len(task.candidates))
+            )
+            if not isinstance(sel, int):
+                # "Back": return to the previous prompt.
+                return None
             # Force applying the candidate on the items.
             task.match = task.candidates[sel - 1]
             task.apply_metadata()

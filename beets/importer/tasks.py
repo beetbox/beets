@@ -40,11 +40,6 @@ SINGLE_ARTIST_THRESH = 0.25
 # reimports. The following two lists (globally) change this behaviour for
 # certain fields. To alter these lists only when a specific plugin is in use,
 # something like this can be used within that plugin's code:
-#
-# from beets import importer
-# def extend_reimport_fresh_fields_item():
-#     importer.REIMPORT_FRESH_FIELDS_ITEM.extend(['tidal_track_popularity']
-# )
 REIMPORT_FRESH_FIELDS_ITEM = [
     "data_source",
     "bandcamp_album_id",
@@ -394,11 +389,9 @@ class ImportTask(BaseImportTask):
         log.debug("removing {} old duplicate albums", len(duplicate_albums))
 
         for album in duplicate_albums:
-            artpath = album.artpath
-
             for item in album.items():
                 item.remove(with_album=False)
-                if lib.directory in util.ancestry(item.path):
+                if lib.contains(item):
                     log.debug("deleting duplicate {.filepath}", item)
                     util.remove(item.path)
                     util.prune_dirs(
@@ -407,13 +400,14 @@ class ImportTask(BaseImportTask):
                         clutter=config["clutter"].as_str_seq(),
                     )
 
+            artpath = album.art_filepath
             album.remove(with_items=False)
 
-            if artpath and lib.directory in util.ancestry(artpath):
+            if artpath and lib.contains(artpath):
                 log.debug("deleting duplicate album art {}", artpath)
                 util.remove(artpath)
                 util.prune_dirs(
-                    os.path.dirname(artpath),
+                    artpath.parent,
                     lib.directory,
                     clutter=config["clutter"].as_str_seq(),
                 )
@@ -432,7 +426,7 @@ class ImportTask(BaseImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove(with_album=False)
-            if lib.directory in util.ancestry(item.path):
+            if lib.contains(item):
                 log.debug("deleting superseded {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
@@ -449,13 +443,13 @@ class ImportTask(BaseImportTask):
 
             surviving = list(old_album.items())
             if not surviving:
-                artpath = old_album.artpath
+                artpath = old_album.art_filepath
                 old_album.remove(with_items=False)
-                if artpath and lib.directory in util.ancestry(artpath):
+                if artpath and lib.contains(artpath):
                     log.debug("deleting duplicate album art {}", artpath)
                     util.remove(artpath)
                     util.prune_dirs(
-                        os.path.dirname(artpath),
+                        artpath.parent,
                         lib.directory,
                         clutter=config["clutter"].as_str_seq(),
                     )
@@ -671,7 +665,7 @@ class ImportTask(BaseImportTask):
                 if (
                     operation != util.MoveOperation.MOVE
                     and self.replaced_items[item]
-                    and session.lib.directory in util.ancestry(old_path)
+                    and session.lib.contains(item.filepath)
                 ):
                     item.move()
                     # We moved the item, so remove the
@@ -934,7 +928,7 @@ class SingletonImportTask(ImportTask):
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
             item.remove()
-            if lib.directory in util.ancestry(item.path):
+            if lib.contains(item):
                 log.debug("deleting duplicate {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
@@ -954,7 +948,7 @@ class SingletonImportTask(ImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove()
-            if lib.directory in util.ancestry(item.path):
+            if lib.contains(item):
                 log.debug("deleting superseded {.filepath}", item)
                 util.remove(item.path)
                 util.prune_dirs(
@@ -1183,10 +1177,9 @@ class ArchiveImportTask(SentinelImportTask):
         if not os.path.isfile(path):
             return False
 
-        for path_test, _ in cls.handlers:
-            if path_test(os.fsdecode(path)):
-                return True
-        return False
+        return any(
+            path_test(os.fsdecode(path)) for path_test, _ in cls.handlers
+        )
 
     @util.cached_classproperty
     def handlers(cls) -> list[ArchiveHandler]:
@@ -1276,7 +1269,7 @@ class ArchiveImportTask(SentinelImportTask):
             for f in archive.infolist():
                 # The date_time will need to adjusted otherwise
                 # the item will have the current date_time of extraction.
-                # date_time is (year, month, day, hour, minute, second); the
+                # date_time is (year, month, day, hour, minute, second); the # noqa: ERA001
                 # trailing (0, 0, -1) pads it to the 9-element tuple
                 # time.mktime expects. The -1 indicates the DST flag is
                 # unknown.
@@ -1528,10 +1521,9 @@ def albums_in_dir(path: AnyStr) -> Iterable[tuple[list[AnyStr], list[AnyStr]]]:
 
     _ignore = config["ignore"].as_str_seq()
     ignore: list[AnyStr]
-    if isinstance(path, str):
-        ignore = _ignore
-    else:
-        ignore = list(map(os.fsencode, _ignore))
+    ignore = (
+        _ignore if isinstance(path, str) else list(map(os.fsencode, _ignore))
+    )
     ignore_hidden: bool = config["ignore_hidden"].get(bool)
 
     patterns = (
