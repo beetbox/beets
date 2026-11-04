@@ -374,18 +374,10 @@ class CommonOptionsParserCliTest(IOMixin, BeetsTestCase):
         output = self.run_with_output("stats")
         assert "Approximate total size:" in output
 
-        # # Need to have more realistic library setup for this to work
-        # output = self.run_with_output('stats', '-e')
-        # assert 'Total size:' in output
-
     def test_version(self):
         output = self.run_with_output("version")
         assert "Python version" in output
         assert "no plugins loaded" in output
-
-        # # Need to have plugin loaded
-        # output = self.run_with_output('version')
-        # assert 'plugins: ' in output
 
 
 class TestCommonOptionsParser:

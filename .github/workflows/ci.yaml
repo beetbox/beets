@@ -19,9 +19,9 @@ jobs:
     name: Test base installation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: "3.11"
 
@@ -47,9 +47,9 @@ jobs:
     env:
       IS_MAIN_PYTHON: ${{ matrix.python-version == '3.11' && matrix.platform == 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -76,24 +76,30 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          choco install ffmpeg flac imagemagick -y --no-progress
-          if ($LASTEXITCODE -ne 0) {
-            throw "Windows system dependency installation failed."
+          # Chocolatey install scripts download from upstream hosts (xiph,
+          # SourceForge, ...) that drop connections now and then, so retry
+          # each package on its own with backoff.
+          function Install-ChocoPackage([string]$Name, [string[]]$ExtraArgs = @()) {
+            $maxAttempts = 5
+            for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+              choco install $Name -y --no-progress @ExtraArgs
+              if ($LASTEXITCODE -eq 0) {
+                return
+              }
+              if ($attempt -eq $maxAttempts) {
+                throw "$Name install failed after $maxAttempts attempts."
+              }
+              $delay = 5 * [math]::Pow(2, $attempt - 1)
+              Write-Host "$Name install failed (attempt $attempt), retrying in ${delay}s"
+              Start-Sleep -Seconds $delay
+            }
           }
 
-          $maxAttempts = 3
-          for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
-            # mp3gain's Chocolatey install script pulls from a flaky SourceForge
-            # HTTP URL and has no upstream checksums, so allow it and retry.
-            choco install mp3gain -y --allow-empty-checksums --no-progress
-            if ($LASTEXITCODE -eq 0) {
-              break
-            }
-            if ($attempt -eq $maxAttempts) {
-              throw "mp3gain install failed after $maxAttempts attempts."
-            }
-            Start-Sleep -Seconds 3
-          }
+          Install-ChocoPackage ffmpeg
+          Install-ChocoPackage flac
+          Install-ChocoPackage imagemagick
+          # mp3gain has no upstream checksums
+          Install-ChocoPackage mp3gain -ExtraArgs '--allow-empty-checksums'
 
       - name: Install system dependencies on Ubuntu
         if: matrix.platform == 'ubuntu-latest'
@@ -134,14 +140,14 @@ jobs:
 
       - name: Get changed lyrics files
         id: lyrics-update
-        uses: tj-actions/changed-files@v46
+        uses: tj-actions/changed-files@v47
         with:
           files: |
             beetsplug/lyrics.py
             test/plugins/test_lyrics.py
 
       - name: Add pytest annotator
-        uses: liskin/gh-problem-matcher-wrap@v3
+        uses: liskin/gh-problem-matcher-wrap@v4
         with:
           linters: pytest
           action: add
@@ -162,7 +168,7 @@ jobs:
             --extra fetchart \
             --extra chroma \
             --extra sonosupdate
-          poe test -k 'not test_convert_rst_to_md'
+          poe test -n2 -k 'not test_convert_rst_to_md'
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
@@ -184,7 +190,7 @@ jobs:
             --extra chroma \
             --extra sonosupdate
           poe docs
-          poe test-with-coverage
+          poe test-with-coverage -n2
 
       - if: ${{ !cancelled() }}
         name: Upload test results to Codecov
@@ -194,7 +200,7 @@ jobs:
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Store the coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: .reports/coverage.xml
@@ -206,15 +212,15 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Get the coverage report
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: coverage-report
 
       - name: Upload code coverage
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}

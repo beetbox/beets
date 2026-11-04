@@ -1609,6 +1609,16 @@ class TestImportDuplicateSingleton(ImportHelper):
 
         assert len(self.lib.items()) == 2
 
+    def test_album_track_is_not_duplicate(self):
+        item = self.lib.items().get()
+        self.lib.add_album([item])
+
+        self.config["import"]["duplicate_action"] = "remove"
+        self.importer.run()
+
+        assert item.filepath.exists()
+        assert len(self.lib.items()) == 2
+
     def test_no_autotag_removes_duplicate_singleton(self):
         self.config["import"]["autotag"] = False
         item = self.lib.items().get()
