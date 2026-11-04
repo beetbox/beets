@@ -434,7 +434,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         self.add_item(title="Other", subsonic_id="song-2")
         self.add_item(title="Other dupe", subsonic_id="song-2")
 
-        output = self.run_with_output("set-favorite")
+        output = self.run_with_output("set-favorite", "subsonic_id:song")
 
         *_, star, _ = requests_mock.request_history
         assert _params(star.url)["id"] == ["song-2"]
@@ -444,7 +444,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         for i in range(101):
             self.add_item(title=f"Song {i}", subsonic_id=f"song-{i}")
 
-        self.run_command("set-favorite")
+        self.run_command("set-favorite", "subsonic_id:song")
 
         _, *stars, _ = requests_mock.request_history
         assert [len(_params(s.url)["id"]) for s in stars] == [100, 1]
@@ -478,3 +478,15 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
         with pytest.raises(UserError, match="Wrong username or password"):
             self.run_command("set-favorite", f"id:{item.id}")
+
+    @pytest.mark.parametrize("answer, expected_calls", [("y", 3), ("n", 0)])
+    def test_confirms_before_favouriting_whole_library(
+        self, requests_mock: Mocker, answer, expected_calls
+    ):
+        self.add_item(title="Song", subsonic_id="song-1")
+        self.io.addinput(answer)
+
+        output = self.run_with_output("set-favorite")
+
+        assert "Mark all 1 tracks as Subsonic favourites" in output
+        assert requests_mock.call_count == expected_calls

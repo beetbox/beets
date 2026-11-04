@@ -54,7 +54,8 @@ for the configured user, using the same ``subsonic:`` connection details:
 This works with any `Subsonic API compatible`_ server implementing the
 ``search3``, ``getStarred2`` and ``star`` endpoints, such as Navidrome_. Tracks
 that are already favourites are left alone, and only newly marked tracks are
-counted in the summary.
+counted in the summary. Without a query, the command asks for confirmation
+before marking your whole library.
 
 Subsonic servers use their own song IDs, which are different from beets item
 IDs. The plugin first looks for a ``subsonic_id`` field on each selected item
