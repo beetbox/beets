@@ -49,7 +49,7 @@ for the configured user, using the same ``subsonic:`` connection details:
 
 .. code-block:: sh
 
-    beet set-favorite QUERY
+    beet subsonic-set-favorite QUERY
 
 This works with any `Subsonic API compatible`_ server implementing the
 ``search3``, ``getStarred2`` and ``star`` endpoints, such as Navidrome_. Tracks

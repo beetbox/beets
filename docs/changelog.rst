@@ -49,9 +49,9 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
-- :doc:`plugins/subsonicupdate`: Add ``set-favorite`` command which marks beets
-  query results as favourites on Subsonic API compatible servers, such as
-  Navidrome.
+- :doc:`plugins/subsonicupdate`: Add ``subsonic-set-favorite`` command which
+  marks beets query results as favourites on Subsonic API compatible servers,
+  such as Navidrome.
 
 Bug fixes
 ~~~~~~~~~
