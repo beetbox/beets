@@ -114,6 +114,27 @@ Bug fixes
   without starting any analysis. :bug:`5449`
 - :doc:`plugins/web`: Fix relative library paths not resolving across request
   threads in web plugin endpoints.
+- :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
+  ``separators`` is combined with a ``replace`` rule that changes the length of
+  the text. :bug:`6300`
+- :doc:`plugins/edit`: Add a Back option to the "edit Candidates" prompt so it
+  is possible to return to the importer prompt without picking a candidate.
+  :bug:`6701`
+- :doc:`plugins/permissions`: Stop applying permissions to directories outside
+  the library. A library directory of ``/music`` previously also matched
+  siblings sharing its prefix, such as ``/music2``, and the plugin changed the
+  mode of their parent directories.
+- :doc:`plugins/unimported`: ``ignore_subdirectories`` now matches whole path
+  components instead of a string prefix, so ``pod`` no longer also skips
+  ``podcasts``. A configured value with a trailing slash is matched correctly as
+  well.
+- :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
+  files. :bug:`6915`
+- :doc:`plugins/musicbrainz`: When a release's media differ only in a
+  parenthetical, like the layers of a hybrid SACD (``Hybrid SACD (CD layer)``,
+  ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
+  album's ``media`` is now their common format (``Hybrid SACD``) instead of the
+  generic ``Media``. Releases mixing different formats still get ``Media``.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
