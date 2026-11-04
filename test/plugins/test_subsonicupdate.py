@@ -370,6 +370,20 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         item.load()
         assert item.subsonic_id == "song-1"
 
+    def test_reports_progress_every_tenth_of_tracks(
+        self, caplog: pytest.LogCaptureFixture
+    ):
+        for i in range(25):
+            self.add_item(title=f"Song {i}", subsonic_id=f"song-{i}")
+
+        with caplog.at_level("INFO"):
+            self.run_command("set-favorite", "subsonic_id:song")
+
+        messages = [r.getMessage() for r in caplog.records]
+        progress = [m for m in messages if m.startswith("Processed")]
+        counts = [*range(2, 25, 2), 25]
+        assert progress == [f"Processed {n}/25 tracks" for n in counts]
+
     def test_retries_with_folded_unicode_query(self, requests_mock: Mocker):
         item = self.add_item(
             artist="Von Bikräv", album="Album", title="Éternité"
@@ -430,15 +444,18 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
     def test_stars_and_reports_only_new_favourites(self, requests_mock: Mocker):
         self.starred.add("song-1")
-        self.add_item(title="Song", subsonic_id="song-1")
-        self.add_item(title="Other", subsonic_id="song-2")
-        self.add_item(title="Other dupe", subsonic_id="song-2")
+        self.add_item(artist="A", album="B", title="Song", subsonic_id="song-1")
+        self.add_item(artist="A", album="B", title="New", subsonic_id="song-2")
+        self.add_item(artist="A", album="B", title="Dupe", subsonic_id="song-2")
 
         output = self.run_with_output("set-favorite", "subsonic_id:song")
 
         *_, star, _ = requests_mock.request_history
         assert _params(star.url)["id"] == ["song-2"]
-        assert "Marked 1 new tracks as Subsonic favourites." in output
+        assert output.splitlines() == [
+            "A - B - New",
+            "Marked 1 new tracks as Subsonic favourites.",
+        ]
 
     def test_stars_songs_in_chunks(self, requests_mock: Mocker):
         for i in range(101):

@@ -188,8 +188,15 @@ class SubsonicUpdate(BeetsPlugin):
         retried = self._unstarred_items_by_id(client, stale_items, starred_ids)
         client.star_songs(retried)
 
-        new_count = len(items_by_id.keys() & starred_ids) + len(retried)
-        ui.print_(f"Marked {new_count} new tracks as Subsonic favourites.")
+        # Show one item per song, so duplicates in the library are listed once
+        marked = [
+            song_items[0]
+            for song_id, song_items in items_by_id.items()
+            if song_id in starred_ids
+        ] + [song_items[0] for song_items in retried.values()]
+        for item in marked:
+            ui.print_(format(item))
+        ui.print_(f"Marked {len(marked)} new tracks as Subsonic favourites.")
 
     def _unstarred_items_by_id(
         self,
@@ -197,11 +204,16 @@ class SubsonicUpdate(BeetsPlugin):
         items: Iterable[Item],
         starred_ids: set[str],
     ) -> dict[str, list[Item]]:
+        items = list(items)
+        # Report progress roughly every tenth of the way
+        step = max(1, len(items) // 10)
         items_by_id: dict[str, list[Item]] = {}
-        for item in items:
+        for index, item in enumerate(items, 1):
             song_id = self._song_id(client, item)
             if song_id and song_id not in starred_ids:
                 items_by_id.setdefault(song_id, []).append(item)
+            if index % step == 0 or index == len(items):
+                self._log.info("Processed {}/{} tracks", index, len(items))
         return items_by_id
 
     def _song_id(self, client: SubsonicClient, item: Item) -> str | None:
