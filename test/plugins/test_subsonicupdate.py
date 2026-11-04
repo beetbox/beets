@@ -440,6 +440,15 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         assert _params(star.url)["id"] == ["song-2"]
         assert "Marked 1 new tracks as Subsonic favourites." in output
 
+    def test_stars_songs_in_chunks(self, requests_mock: Mocker):
+        for i in range(101):
+            self.add_item(title=f"Song {i}", subsonic_id=f"song-{i}")
+
+        self.run_command("set-favorite")
+
+        _, *stars, _ = requests_mock.request_history
+        assert [len(_params(s.url)["id"]) for s in stars] == [100, 1]
+
     def test_researches_stale_subsonic_id(
         self, requests_mock: Mocker, caplog: pytest.LogCaptureFixture
     ):
