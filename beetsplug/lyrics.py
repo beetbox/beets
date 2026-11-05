@@ -1233,7 +1233,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             # import_write config value.
             self.config.set(vars(opts))
             items = list(lib.items(args, limit=opts.limit))
-            for item in items:
+            for item in ui.track(items, "Fetching lyrics..."):
                 self.add_item_lyrics(item, ui.should_write())
                 if item.lyrics and opts.print:
                     ui.print_(item.lyrics)

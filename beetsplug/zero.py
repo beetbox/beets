@@ -10,7 +10,7 @@ from mediafile import MediaFile
 
 from beets.importer import Action
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, input_yn
+from beets.ui import Subcommand, input_yn, track
 
 if TYPE_CHECKING:
     import optparse
@@ -90,7 +90,9 @@ class ZeroPlugin(BeetsPlugin):
                 "Remove fields for all items? (Y/n)", True
             ):
                 return
-            for item in lib.items(args, limit=opts.limit):
+            for item in track(
+                lib.items(args, limit=opts.limit), "Zeroing fields..."
+            ):
                 self.process_item(item)
 
         zero_command.parser.add_limit_option()

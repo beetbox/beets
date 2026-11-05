@@ -56,7 +56,9 @@ class ScrubPlugin(BeetsPlugin):
             lib: Library, opts: ScrubCLIOpts, args: list[str]
         ) -> None:
             # Walk through matching files and remove tags.
-            for item in lib.items(args, limit=opts.limit):
+            for item in ui.track(
+                lib.items(args, limit=opts.limit), "Scrubbing items..."
+            ):
                 self._log.info("scrubbing: {.filepath}", item)
                 self._scrub_item(item, opts.write)
 

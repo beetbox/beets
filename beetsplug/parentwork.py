@@ -38,7 +38,9 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()
 
-            for item in lib.items(args, limit=opts.limit):
+            for item in ui.track(
+                lib.items(args, limit=opts.limit), "Fetching parent works..."
+            ):
                 changed = self.find_work(item, force_parent, verbose=True)
                 if changed:
                     item.store()

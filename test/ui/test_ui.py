@@ -1,5 +1,6 @@
 """Tests for the command-line interface."""
 
+import io
 import os
 import platform
 import unittest
@@ -517,3 +518,28 @@ class TestEncoding:
         with patch("sys.stdin") as stdin:
             stdin.encoding = None
             assert ui._in_encoding() == "utf-8"
+
+    @pytest.mark.parametrize(
+        "terminal_encoding, expected",
+        [("utf-8", "Száhala ✓\n".encode()), ("latin-1", b"Sz\xe1hala ?\n")],
+    )
+    def test_print_uses_configured_encoding(
+        self, monkeypatch, config, terminal_encoding, expected
+    ):
+        """Output is encoded as configured, whatever the stream's encoding."""
+        config["terminal_encoding"] = terminal_encoding
+        stdout = io.TextIOWrapper(io.BytesIO(), encoding="ascii")
+        monkeypatch.setattr("sys.stdout", stdout)
+
+        ui.print_("Száhala ✓")
+
+        assert stdout.buffer.getvalue() == expected
+
+    def test_print_to_text_only_stream(self, monkeypatch):
+        """Output reaches streams that have no underlying byte buffer."""
+        stdout = io.StringIO()
+        monkeypatch.setattr("sys.stdout", stdout)
+
+        ui.print_("Száhala ✓")
+
+        assert stdout.getvalue() == "Száhala ✓\n"

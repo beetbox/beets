@@ -76,7 +76,7 @@ def update_items(
 
         # Walk through the items and pick up their changes.
         affected_albums = set()
-        for item in items:
+        for item in ui.track(items, "Updating items..."):
             # Item deleted?
             if not item.path or not os.path.exists(syspath(item.path)):
                 ui.print_(format(item))
@@ -140,7 +140,7 @@ def update_items(
             return
 
         # Modify affected albums to reflect changes in their items.
-        for album_id in affected_albums:
+        for album_id in ui.track(list(affected_albums), "Updating albums..."):
             if album_id is None:  # Singletons.
                 continue
             album = lib.get_album(album_id)

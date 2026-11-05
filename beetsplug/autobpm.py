@@ -8,7 +8,7 @@ import librosa
 import numpy as np
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, should_write
+from beets.ui import Subcommand, should_write, track
 from beets.util.deprecation import deprecate_for_user
 
 if TYPE_CHECKING:
@@ -77,7 +77,7 @@ class AutoBPMPlugin(BeetsPlugin):
         force = self.config["force"].get(bool) or opts.force
         quiet = self.config["quiet"].get(bool) or opts.quiet
         self.calculate_bpm(
-            list(lib.items(args, limit=opts.limit)),
+            track(lib.items(args, limit=opts.limit), "Calculating BPM..."),
             write=should_write(),
             force=force,
             quiet=quiet,

@@ -17,6 +17,8 @@ from functools import cache
 from typing import TYPE_CHECKING, Any, Literal, TextIO, TypeVar, overload
 
 import confuse
+from rich import progress
+from rich.file_proxy import FileProxy
 
 from beets import config, library, logging, plugins, util
 from beets.dbcore import db
@@ -26,6 +28,7 @@ from beets.util import as_string
 from beets.util.color import colorize
 from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.diff import get_model_changes
+from beets.util.rich import make_console
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -36,6 +39,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+console = make_console()
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
     try:
@@ -104,19 +108,16 @@ def print_(*strings: str, end: str = "\n") -> None:
     """
     txt = f"{' '.join(strings or ('',))}{end}"
 
-    # Encode the string and write it to stdout.
-    # On Python 3, sys.stdout expects text strings and uses the
-    # exception-throwing encoding error policy. To avoid throwing
-    # errors and use our configurable encoding override, we use the
-    # underlying bytes buffer instead.
-    if hasattr(sys.stdout, "buffer"):
-        out = txt.encode(_out_encoding(), "replace")
-        sys.stdout.buffer.write(out)
-        sys.stdout.buffer.flush()
+    encoding = _out_encoding()
+    out = txt.encode(encoding, "replace")
+    # Bypass the stream's own strict encoding by writing bytes, except to
+    # text-only streams, such as rich's proxy which keeps output above
+    # a progress bar.
+    if isinstance(sys.stdout, FileProxy) or not hasattr(sys.stdout, "buffer"):
+        sys.stdout.write(out.decode(encoding))
     else:
-        # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
-        # does not exist. We instead just record the text string.
-        sys.stdout.write(txt)
+        sys.stdout.buffer.write(out)
+    sys.stdout.flush()
 
 
 # Configuration wrappers.
@@ -1045,8 +1046,26 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
     return deferred_error
 
 
+class _CurrentStderrHandler(logging.StreamHandler):  # type: ignore[type-arg]
+    """Write logs to whatever ``sys.stderr`` is at the time of logging.
+
+    A plain stream handler holds on to the stream that was active when logging
+    was set up. That bypasses anything that replaces ``sys.stderr`` later, such
+    as rich's proxy that keeps log lines above a running progress bar, or
+    pytest's per-test capture streams.
+    """
+
+    @property
+    def stream(self) -> TextIO:
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, stream: TextIO) -> None:
+        pass
+
+
 def _get_logging_handler() -> logging.Handler:
-    return logging.StreamHandler()
+    return _CurrentStderrHandler()
 
 
 def _bootstrap_logging() -> None:
@@ -1066,6 +1085,18 @@ def _bootstrap_logging() -> None:
     # List configuration sources for user convenience.
     config.log_sources(log)
     log.debug("data directory: {}", util.displayable_path(config.config_dir()))
+
+
+def track(objs: Sequence[T], description: str) -> Iterable[T]:
+    """Iterate over objects while showing a progress bar in interactive terminals."""
+    return progress.track(
+        objs,
+        description,
+        total=len(objs),
+        console=console,
+        disable=not (sys.stdout.isatty() and sys.stderr.isatty()),
+        transient=True,
+    )
 
 
 def main(args: list[str] | None = None) -> None:

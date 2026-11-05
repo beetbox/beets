@@ -46,6 +46,17 @@ New features
   source. :bug:`6238`
 - :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
   socket.
+- Long-running commands now show a progress bar with an estimate of the
+  remaining time when run in an interactive terminal: ``modify``, ``move``,
+  ``remove``, ``update`` and ``write``, as well as the commands provided by
+  :doc:`plugins/acousticbrainz`, :doc:`plugins/autobpm`, :doc:`plugins/bpsync`,
+  :doc:`plugins/chroma`, :doc:`plugins/embedart`, :doc:`plugins/fetchart`,
+  :doc:`plugins/ftintitle`, :doc:`plugins/ipfs`, :doc:`plugins/keyfinder`,
+  :doc:`plugins/lastgenre`, :doc:`plugins/lyrics`, :doc:`plugins/mbsync`,
+  :doc:`plugins/metasync`, :doc:`plugins/missing`, :doc:`plugins/parentwork`,
+  :doc:`plugins/scrub`, :doc:`plugins/spotify`, :doc:`plugins/thumbnails`,
+  :doc:`plugins/titlecase` and :doc:`plugins/zero`. Output and log messages are
+  printed above the bar. :bug:`5711`
 
 Bug fixes
 ~~~~~~~~~
@@ -160,6 +171,8 @@ For plugin developers
 - New ``Library.contains`` method replaces the ``lib.directory in
   util.ancestry(item.path)`` idiom for testing whether a path or a model lives
   inside the library.
+- New ``beets.ui.track`` function wraps a sequence of items or albums to show a
+  progress bar while a command iterates over it. See :ref:`progress-bars`.
 
 Other changes
 ~~~~~~~~~~~~~

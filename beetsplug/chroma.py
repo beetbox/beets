@@ -303,7 +303,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
         def fingerprint_cmd_func(
             lib: Library, opts: optparse.Values, args: list[str]
         ) -> None:
-            for item in lib.items(args, limit=opts.limit):
+            for item in ui.track(
+                lib.items(args, limit=opts.limit), "Fingerprinting items..."
+            ):
                 fingerprint_item(self._log, item, write=ui.should_write())
 
         fingerprint_cmd.parser.add_limit_option()
@@ -359,7 +361,9 @@ class AcoustidPlugin(MetadataSourcePlugin):
             target = (0, opts.search.encode("utf-8"))
             top = TopN(opts.count)
 
-            for item in lib.items(args, limit=opts.limit):
+            for item in ui.track(
+                lib.items(args, limit=opts.limit), "Searching items..."
+            ):
                 fp = fingerprint_item(
                     self._log,
                     item,

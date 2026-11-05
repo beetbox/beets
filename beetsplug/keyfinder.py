@@ -11,7 +11,7 @@ from beets.plugins import BeetsPlugin
 
 if TYPE_CHECKING:
     import optparse
-    from collections.abc import Sequence
+    from collections.abc import Iterable
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item, Library
@@ -37,13 +37,16 @@ class KeyFinderPlugin(BeetsPlugin):
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
         self.find_key(
-            lib.items(args, limit=opts.limit), write=ui.should_write()
+            ui.track(
+                lib.items(args, limit=opts.limit), "Finding initial keys..."
+            ),
+            write=ui.should_write(),
         )
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:
         self.find_key(task.imported_items())
 
-    def find_key(self, items: Sequence[Item], write: bool = False) -> None:
+    def find_key(self, items: Iterable[Item], write: bool = False) -> None:
         overwrite = self.config["overwrite"].get(bool)
         command = [self.config["bin"].as_str()]
         # The KeyFinder GUI program needs the -f flag before the path.

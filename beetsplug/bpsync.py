@@ -89,7 +89,10 @@ class BPSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items([*query, "singleton:true"], limit=limit):
+        for item in ui.track(
+            lib.items([*query, "singleton:true"], limit=limit),
+            "Synchronising singletons...",
+        ):
             if not item.mb_trackid:
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
@@ -155,7 +158,9 @@ class BPSyncPlugin(BeetsPlugin):
         query and their items.
         """
         # Process matching albums.
-        for album in lib.albums(query, limit=limit):
+        for album in ui.track(
+            lib.albums(query, limit=limit), "Synchronising albums..."
+        ):
             # Do we have a valid Beatport album?
             items = self.get_album_tracks(album)
             if not items:

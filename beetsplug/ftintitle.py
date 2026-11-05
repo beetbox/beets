@@ -263,7 +263,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             write = ui.should_write()
 
-            for item in lib.items(args, limit=opts.limit):
+            for item in ui.track(
+                lib.items(args, limit=opts.limit),
+                "Moving featuring artists to title...",
+            ):
                 if self.ft_in_title(item, item.get("albumartist") or ""):
                     item.store()
                     if write:

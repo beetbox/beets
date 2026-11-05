@@ -122,7 +122,7 @@ def move_objects(
         else:
             selected_objs = objs
 
-        for obj in selected_objs:
+        for obj in ui.track(selected_objs, f"{action} {entity}s..."):
             log.debug("moving: {.filepath}", obj)
 
             if opts.export:

@@ -52,3 +52,29 @@ use it like you would a normal ``OptionParser`` in an independent script. Note
 that it offers several methods to add common options: ``--album``, ``--path``,
 ``--format``, and ``--limit``. This feature is versatile and extensively
 documented, try ``pydoc beets.ui.CommonOptionsParser`` for more information.
+
+.. _progress-bars:
+
+Progress Bars
+-------------
+
+Commands that take a while to get through many items or albums should show a
+progress bar. Wrap the sequence in ``beets.ui.track`` and give it a description:
+
+.. code-block:: python
+
+    from beets import ui
+
+
+    def scrub(lib, opts, args):
+        for item in ui.track(lib.items(args), "Scrubbing items..."):
+            ...
+
+The bar is only shown when beets runs in an interactive terminal, so piped and
+redirected output is not affected. Anything printed with ``ui.print_`` or logged
+through the plugin's logger while the bar is active is shown above it.
+
+Only use it in the command function itself. Helpers that also run from import
+stages or event listeners should receive the wrapped sequence from the command
+instead, otherwise a new bar would flash up for every imported album. Avoid
+prompting the user inside the loop.

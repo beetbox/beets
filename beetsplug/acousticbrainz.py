@@ -12,7 +12,7 @@ from beets.dbcore import types
 from beets.exceptions import UserError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator, Sequence
+    from collections.abc import Iterable, Iterator
 
     from beets.importer import ImportSession, ImportTask
     from beets.library import Item, Library
@@ -124,7 +124,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         ) -> None:
             items = lib.items(args, limit=opts.limit)
             self._fetch_info(
-                items,
+                ui.track(items, "Fetching AcousticBrainz data..."),
                 ui.should_write(),
                 opts.force_refetch or self.config["force"].get(bool),
             )
@@ -168,7 +168,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
         return data
 
     def _fetch_info(
-        self, items: Sequence[Item], write: bool, force: bool
+        self, items: Iterable[Item], write: bool, force: bool
     ) -> None:
         """Fetch additional information from AcousticBrainz for the `item`s."""
         tags = self.config["tags"].as_str_seq()

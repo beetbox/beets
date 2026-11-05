@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 import platformdirs
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand
+from beets.ui import Subcommand, track
 from beets.util.artresizer import ArtResizer
 
 if TYPE_CHECKING:
@@ -71,7 +71,9 @@ class ThumbnailsPlugin(BeetsPlugin):
     ) -> None:
         self.config.set_args(opts)
         if self._check_local_ok():
-            for album in lib.albums(args, limit=opts.limit):
+            for album in track(
+                lib.albums(args, limit=opts.limit), "Generating thumbnails..."
+            ):
                 self.process_album(album)
 
     def _check_local_ok(self) -> bool:

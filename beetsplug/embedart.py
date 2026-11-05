@@ -141,7 +141,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.file):
                     return
 
-                for item in items:
+                for item in ui.track(items, "Embedding album art..."):
                     art.embed_item(
                         self._log,
                         item,
@@ -176,7 +176,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.url):
                     tempimg.unlink()
                     return
-                for item in items:
+                for item in ui.track(items, "Embedding album art..."):
                     art.embed_item(
                         self._log,
                         item,
@@ -193,7 +193,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 # Confirm with user.
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
-                for album in albums:
+                for album in ui.track(albums, "Embedding album art..."):
                     art.embed_album(
                         self._log,
                         album,
@@ -243,7 +243,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                         "Only specify a name rather than a path for -n"
                     )
                     return
-                for album in lib.albums(args, limit=opts.limit):
+                for album in ui.track(
+                    lib.albums(args, limit=opts.limit),
+                    "Extracting album art...",
+                ):
                     if opts.associate and (
                         artpath := art.extract_first(
                             self._log, album.filepath / filename, album.items()
