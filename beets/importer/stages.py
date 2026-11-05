@@ -533,6 +533,12 @@ def _fold_into_existing_album(
             "cannot fold tracks into a single existing album; "
             "keeping them as a new album"
         )
+    elif _different_release_groups(task.album, existing_album):
+        log.info(
+            "existing album {} is a different release group; "
+            "keeping new tracks as a new album",
+            existing_album,
+        )
     else:
         new_album = task.album
         for item in task.imported_items():
@@ -542,6 +548,17 @@ def _fold_into_existing_album(
         if new_album is not None and new_album.id != existing_album.id:
             # The freshly created album container is now empty.
             new_album.remove(with_items=False)
+
+
+def _different_release_groups(
+    new_album: library.Album | None, existing_album: library.Album
+) -> bool:
+    """Whether both albums have a release group and they differ. A shared
+    track does not make two releases the same album, e.g. a compilation.
+    """
+    new_group = new_album.mb_releasegroupid if new_album else ""
+    existing_group = existing_album.mb_releasegroupid
+    return bool(new_group and existing_group and new_group != existing_group)
 
 
 def _freshen_items(items: Iterable[library.Item]) -> None:
