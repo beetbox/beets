@@ -171,6 +171,9 @@ Other changes
 - :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
 
+- :doc:`plugins/spotify`: Correct the ``spotifysync`` long option to
+  ``--force`` and document selecting tracks with a query.
+
 2.14.1 (September 17, 2026)
 ---------------------------
 
