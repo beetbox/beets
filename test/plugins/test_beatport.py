@@ -485,10 +485,8 @@ class BeatportTest(BeetsTestCase):
         items[4].url = "the-great-shenanigan-original-mix"
         items[5].url = "charade-original-mix"
 
-        counter = 0
-        for item in items:
-            counter += 1
-            item.track_number = counter
+        for idx, item in enumerate(items, 1):
+            item.track_number = idx
 
         items[0].bpm = 90
         items[1].bpm = 100

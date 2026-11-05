@@ -75,7 +75,7 @@ class SpotifyPluginTest(PluginTestCase):
             length=10,
         )
         item.add(self.lib)
-        assert [] == self.spotify._match_library_tracks(self.lib, "")
+        assert self.spotify._match_library_tracks(self.lib, "") == []
 
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
@@ -105,8 +105,8 @@ class SpotifyPluginTest(PluginTestCase):
         )
         item.add(self.lib)
         results = self.spotify._match_library_tracks(self.lib, "Happy")
-        assert 1 == len(results)
-        assert "6NPVjNh8Jhru9xOmyQigds" == results[0]["id"]
+        assert len(results) == 1
+        assert results[0]["id"] == "6NPVjNh8Jhru9xOmyQigds"
         self.spotify._output_match_results(results)
 
         params = _params(responses.calls[0].request.url)
@@ -166,8 +166,8 @@ class SpotifyPluginTest(PluginTestCase):
         item.add(self.lib)
 
         results = self.spotify._match_library_tracks(self.lib, "Happy")
-        assert 1 == len(results)
-        assert "6NPVjNh8Jhru9xOmyQigds" == results[0]["id"]
+        assert len(results) == 1
+        assert results[0]["id"] == "6NPVjNh8Jhru9xOmyQigds"
 
     @responses.activate
     def test_japanese_track(self):
@@ -207,7 +207,7 @@ class SpotifyPluginTest(PluginTestCase):
 
             # Assertions to verify results
             assert results is not None
-            assert 1 == len(results)
+            assert len(results) == 1
             assert results[0]["name"] == item.title
             assert results[0]["artists"][0]["name"] == item.albumartist
             assert results[0]["album"]["name"] == item.album

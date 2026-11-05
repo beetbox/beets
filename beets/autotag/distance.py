@@ -136,7 +136,7 @@ class Distance:
         """A dictionary from keys to floating-point weights."""
         weights_view = config["match"]["distance_weights"]
         weights = {}
-        for key in weights_view.keys():
+        for key in weights_view.keys():  # noqa: SIM118
             weights[key] = weights_view[key].as_number()
         return weights
 
@@ -353,10 +353,7 @@ class Distance:
         `number1` is bound at 0 and `number2`.
         """
         number = float(max(min(number1, number2), 0))
-        if number2:
-            dist = number / number2
-        else:
-            dist = 0.0
+        dist = number / number2 if number2 else 0.0
         self.add(key, dist)
 
     def add_string(self, key: str, str1: str | None, str2: str | None) -> None:

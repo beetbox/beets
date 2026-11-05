@@ -336,7 +336,7 @@ class DuplicatesPlugin(BeetsPlugin):
         kind = "items" if all(isinstance(o, Item) for o in objs) else "albums"
 
         sort = partial(sorted, reverse=True)
-        if tiebreak and kind in tiebreak.keys():
+        if tiebreak and kind in tiebreak:
             return sort(
                 objs, key=lambda x: tuple(getattr(x, k) for k in tiebreak[kind])
             )

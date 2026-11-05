@@ -280,39 +280,38 @@ lyrics_pages = [
         marks=[xfail_on_ci("letras.mus.br returns 403 FORBIDDEN in CI")],
     ),
     LyricsPage.make(
-        "https://lrclib.net/api/get/23863037",
+        "https://lrclib.net/api/get/36313754",
         """
-        [00:08.35] Lady Madonna, children at your feet
-        [00:12.85] Wonder how you manage to make ends meet
-        [00:17.56] Who finds the money when you pay the rent
-        [00:21.78] Did you think that money was heaven sent
-        [00:26.22] Friday night arrives without a suitcase
-        [00:30.02] Sunday morning creeping like a nun
-        [00:34.53] Monday's child has learned to tie his bootlace
-        [00:39.18] See how they run
-        [00:43.33] Lady Madonna, baby at your breast
-        [00:48.50] Wonders how you manage to feed the rest
+        [00:08.35]Lady Madonna, children at your feet
+        [00:12.85]Wonder how you manage to make ends meet
+        [00:17.56]Who finds the money when you pay the rent
+        [00:21.78]Did you think that money was heaven sent
+        [00:26.22]Friday night arrives without a suitcase
+        [00:30.02]Sunday morning creeping like a nun
+        [00:34.53]Monday's child has learned to tie his bootlace
+        [00:39.18]See how they run
+        [00:43.33]Lady Madonna, baby at your breast
+        [00:48.50]Wonders how you manage to feed the rest
         [00:52.54]
-        [01:01.32] Ba-ba, ba-ba, ba-ba, ba-ba-ba
-        [01:05.03] Ba-ba, ba-ba, ba-ba, ba, ba-ba, ba-ba
-        [01:09.58] Ba-ba, ba-ba, ba-ba, ba-ba-ba
-        [01:14.27] See how they run
-        [01:19.05] Lady Madonna, lying on the bed
-        [01:22.99] Listen to the music playing in your head
+        [01:01.32]Ba-ba, ba-ba, ba-ba, ba-ba-ba
+        [01:05.03]Ba-ba, ba-ba, ba-ba, ba, ba-ba, ba-ba
+        [01:09.58]Ba-ba, ba-ba, ba-ba, ba-ba-ba
+        [01:14.27]See how they run
+        [01:19.05]Lady Madonna, lying on the bed
+        [01:22.99]Listen to the music playing in your head
         [01:27.92]
-        [01:36.33] Tuesday afternoon is never ending
-        [01:40.47] Wednesday morning papers didn't come
-        [01:44.76] Thursday night your stockings needed mending
-        [01:49.35] See how they run
-        [01:53.73] Lady Madonna, children at your feet
-        [01:58.65] Wonder how you manage to make ends meet
+        [01:36.33]Tuesday afternoon is never ending
+        [01:40.47]Wednesday morning papers didn't come
+        [01:44.76]Thursday night your stockings needed mending
+        [01:49.35]See how they run
+        [01:53.73]Lady Madonna, children at your feet
+        [01:58.65]Wonder how you manage to make ends meet
         [02:06.04]
         """,
     ),
     LyricsPage.make(
         "https://api.lrcmux.dev/get?artist=The+Beatles&title=Lady+Madonna&duration=186&format=lrc&level=line&sources=ytmusic",
         """
-        [00:00.00]
         [00:08.71] Lady Madonna, children at your feet
         [00:13.08] Wonder how you manage to make ends meet
         [00:17.43] Who finds the money when you pay the rent?

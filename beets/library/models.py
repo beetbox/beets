@@ -498,7 +498,7 @@ class Album(LibModel):
         the album is not stored automatically, and it will have to be manually
         stored after invoking this method.
         """
-        basedir = basedir or self.db.directory
+        basedir = basedir or os.fsencode(self.db.directory)
 
         # Ensure new metadata is available to items for destination
         # computation.
@@ -926,10 +926,9 @@ class Item(LibModel):
 
         Raise a `ReadError` if the file could not be read.
         """
-        if read_path is None:
-            read_path = self.path
-        else:
-            read_path = os.fsencode(normpath(read_path))
+        read_path = (
+            self.path if read_path is None else os.fsencode(normpath(read_path))
+        )
         try:
             mediafile = MediaFile(syspath(read_path))
         except UnreadableFileError as exc:
@@ -937,9 +936,8 @@ class Item(LibModel):
 
         for key in self._media_fields:
             value = getattr(mediafile, key)
-            if isinstance(value, int):
-                if value.bit_length() > 63:
-                    value = 0
+            if isinstance(value, int) and value.bit_length() > 63:
+                value = 0
             self[key] = value
 
         # Database's mtime should now reflect the on-disk value.
@@ -970,10 +968,7 @@ class Item(LibModel):
 
         Can raise either a `ReadError` or a `WriteError`.
         """
-        if path is None:
-            path = self.path
-        else:
-            path = normpath(path)
+        path = self.path if path is None else normpath(path)
 
         if id3v23 is None:
             id3v23 = beets.config["id3v23"].get(bool)
@@ -1039,11 +1034,12 @@ class Item(LibModel):
         """
         if write:
             self.try_write()
-        if move:
+        if move and (
             # Check whether this file is inside the library directory.
-            if self._db and self._db.directory in util.ancestry(self.path):
-                log.debug("moving {.filepath} to synchronize path", self)
-                self.move(with_album=with_album)
+            self._db and self.db.contains(self)
+        ):
+            log.debug("moving {.filepath} to synchronize path", self)
+            self.move(with_album=with_album)
         self.store()
 
     # Files themselves.
@@ -1251,7 +1247,7 @@ class Item(LibModel):
         is true, returns just the fragment of the path underneath the library
         base directory.
         """
-        basedir = basedir or self.db.directory
+        basedir = basedir or os.fsencode(self.db.directory)
         path_formats = path_formats or self.db.path_formats
 
         for query_str, path_format in path_formats:
@@ -1689,10 +1685,7 @@ class DefaultTemplateFunctions:
         disam_value = db_item.formatted(for_path=True).get(disambiguator)
 
         # Return empty string if disambiguator is empty.
-        if disam_value:
-            res = f" {bracket_l}{disam_value}{bracket_r}"
-        else:
-            res = ""
+        res = f" {bracket_l}{disam_value}{bracket_r}" if disam_value else ""
 
         lib._memotable[memokey] = res
         return res
