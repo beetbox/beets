@@ -3,11 +3,8 @@
 from __future__ import annotations
 
 import os
-import sys
 import time
 from typing import TYPE_CHECKING
-
-import pytest
 
 from beets import plugins as beets_plugins
 from beets import util
@@ -18,7 +15,6 @@ if TYPE_CHECKING:
     from beets.library import Item
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="win32")
 class TestConvertImportAdded(ConvertPluginHelper, ConvertCommand):
     """The convert command must not need to write to the source file.
 

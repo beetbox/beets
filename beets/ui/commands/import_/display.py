@@ -251,10 +251,6 @@ class AlbumChange(Change):
         changed = diff_title or diff_track or diff_length
 
         # Construct lhs and rhs dicts.
-        # Previously, we printed the penalties, however this is no longer
-        # the case, thus the 'info' dictionary is unneeded.
-        # penalties = penalty_string(self.match.distance.tracks[track_info])
-
         lhs = Side(
             f"{self.changed_prefix if changed else '*'} {lhs_track} ",
             lhs_title,

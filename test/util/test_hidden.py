@@ -15,7 +15,7 @@ class HiddenFileTest(unittest.TestCase):
         pass
 
     def test_osx_hidden(self):
-        if not sys.platform == "darwin":
+        if sys.platform != "darwin":
             self.skipTest("sys.platform is not darwin")
             return
 
@@ -32,7 +32,7 @@ class HiddenFileTest(unittest.TestCase):
             assert hidden.is_hidden(f.name)
 
     def test_windows_hidden(self):
-        if not sys.platform == "win32":
+        if sys.platform != "win32":
             self.skipTest("sys.platform is not windows")
             return
 
@@ -41,13 +41,9 @@ class HiddenFileTest(unittest.TestCase):
 
         with tempfile.NamedTemporaryFile() as f:
             # Hide the file using
-            success = ctypes.windll.kernel32.SetFileAttributesW(
+            assert ctypes.windll.kernel32.SetFileAttributesW(
                 f.name, hidden_mask
-            )
-
-            if not success:
-                self.skipTest("unable to set file attributes")
-
+            ), "Could not set file attributes"
             assert hidden.is_hidden(f.name)
 
     def test_other_hidden(self):

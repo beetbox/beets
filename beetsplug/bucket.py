@@ -248,8 +248,7 @@ class BucketPlugin(plugins.BeetsPlugin):
             field = "year"
 
         func: Callable[[str], str]
-        if field == "year":
-            func = self.find_bucket_year
-        else:
-            func = self.find_bucket_alpha
+        func = (
+            self.find_bucket_year if field == "year" else self.find_bucket_alpha
+        )
         return func(text)

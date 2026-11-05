@@ -10,10 +10,18 @@ from collections import defaultdict
 from functools import cached_property, wraps
 from importlib import import_module
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Never,
+    ParamSpec,
+    TypeVar,
+    Unpack,
+    overload,
+)
 
 import mediafile
-from typing_extensions import Never, ParamSpec, Unpack
 
 import beets
 from beets import logging
@@ -872,10 +880,8 @@ def apply_item_changes(
     if pretend:
         return
 
-    from beets import util
-
     # Move the item if it's in the library.
-    if move and lib.directory in util.ancestry(item.path):
+    if move and lib.contains(item):
         item.move(with_album=False)
 
     if write:

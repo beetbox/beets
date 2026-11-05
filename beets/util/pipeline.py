@@ -23,9 +23,17 @@ import contextvars
 import queue
 import sys
 from threading import Lock, Thread
-from typing import TYPE_CHECKING, Any, Generic, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    ParamSpec,
+    TypeVarTuple,
+    Unpack,
+    overload,
+)
 
-from typing_extensions import ParamSpec, TypeVar, TypeVarTuple, Unpack
+from typing_extensions import TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import (
@@ -192,7 +200,7 @@ def stage(
     [3, 4, 5]
     """
 
-    def coro(*args: Unpack[A]) -> Generator[R | T | None, T, None]:
+    def coro(*args: *A) -> Generator[R | T | None, T, None]:
         task: R | T | None = None
         while True:
             task = yield task
@@ -218,7 +226,7 @@ def mutator_stage(
     [{'x': True}, {'a': False, 'x': True}]
     """
 
-    def coro(*args: Unpack[A]) -> Generator[T | None, T, None]:
+    def coro(*args: *A) -> Generator[T | None, T, None]:
         task = None
         while True:
             task = yield task
@@ -433,7 +441,7 @@ class Pipeline(Generic[Tpull, Tstage]):
 
     @overload
     def __init__(
-        self, stages: tuple[Unpack[StagePrefix], Generator[Tpull, Any, Any]]
+        self, stages: tuple[*StagePrefix, Generator[Tpull, Any, Any]]
     ) -> None: ...
 
     @overload

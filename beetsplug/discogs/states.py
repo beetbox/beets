@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import re
 from dataclasses import asdict, dataclass, field
 from functools import cached_property
@@ -250,9 +251,7 @@ class TracklistState:
                 state.medium_indices.append(medium_index or None)
             else:
                 state.next_divisions.append(track["title"])
-                try:
+                with contextlib.suppress(IndexError):
                     state.divisions.pop()
-                except IndexError:
-                    pass
                 state.index_tracks[state.index + 1] = track["title"]
         return state

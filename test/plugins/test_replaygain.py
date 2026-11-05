@@ -1,16 +1,21 @@
+import queue
 import shutil
-from abc import ABC, abstractmethod
+import sys
+import threading
+import time
 from typing import Any, ClassVar
 
 import pytest
 from mediafile import MediaFile
 
-from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
-from beetsplug.replaygain import (
-    FatalGstreamerPluginReplayGainError,
-    GStreamerBackend,
-    MetaflacBackend,
+from beets.library import Item
+from beets.test.helper import (
+    RUNNING_IN_CI,
+    AsIsImporterMixin,
+    ImportHelper,
+    PluginMixin,
 )
+from beetsplug.replaygain import ExceptionWatcher, MetaflacBackend, RgTask
 
 try:
     import gi
@@ -26,9 +31,30 @@ GAIN_PROG = next(
     None,
 )
 
-FFMPEG_AVAILABLE = shutil.which("ffmpeg")
-
-METAFLAC_AVAILABLE = shutil.which("metaflac")
+SKIP_FFMPEG = pytest.mark.skipif(
+    not shutil.which("ffmpeg") and not RUNNING_IN_CI,
+    reason="ffmpeg cannot be found and not running in CI",
+)
+SKIP_GSTREAMER = pytest.mark.skipif(
+    not GST_AVAILABLE and not RUNNING_IN_CI,
+    reason="gstreamer cannot be found and not running in CI",
+)
+XFAIL_GSTREAMER_WIN_PY315 = pytest.mark.xfail(
+    sys.platform == "win32" and sys.version_info >= (3, 15),
+    reason="gstreamer-bundle does not support Python 3.15 on Windows yet",
+    strict=True,
+)
+SKIP_METAFLAC = pytest.mark.skipif(
+    (
+        not shutil.which("metaflac")  # included in ``flac`` package
+        and not RUNNING_IN_CI
+    ),
+    reason="no metaflac command found and not running in CI",
+)
+SKIP_GAIN = pytest.mark.skipif(
+    not GAIN_PROG and not RUNNING_IN_CI,
+    reason="no *gain command found and not running in CI",
+)
 
 
 def reset_replaygain(item):
@@ -54,9 +80,6 @@ class ReplayGainPluginHelper(PluginMixin, ImportHelper):
         return self.plugin_config["backend"]
 
     def setup_beets(self):
-        # Implemented by Mixins, see above. This may decide to skip the test.
-        self.test_backend()
-
         super().setup_beets()
         self.config["replaygain"].set(self.plugin_config)
 
@@ -69,27 +92,12 @@ class ThreadedImportMixin:
         self.config["threaded"] = True
 
 
-class BackendMixin(ABC):
+class BackendMixin:
     plugin_config: ClassVar[dict[str, Any]]
-
-    @abstractmethod
-    def test_backend(self):
-        """Check whether the backend actually has all required functionality."""
 
 
 class GstBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "gstreamer"}
-
-    def test_backend(self):
-        """Check whether the backend actually has all required functionality."""
-        try:
-            # Check if required plugins can be loaded by instantiating a
-            # GStreamerBackend (via its .__init__).
-            self.config["replaygain"]["targetlevel"] = 89
-            GStreamerBackend(self.config["replaygain"], None)
-        except FatalGstreamerPluginReplayGainError as e:
-            # Skip the test if plugins could not be loaded.
-            pytest.skip(str(e))
 
 
 class CmdBackendMixin(BackendMixin):
@@ -214,11 +222,6 @@ class MetaflacBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "metaflac"}
     has_r128_support = False
 
-    def test_backend(self):
-        """Skip the test when the metaflac tool is not installed."""
-        if not METAFLAC_AVAILABLE:
-            pytest.skip("metaflac cannot be found")
-
 
 class ReplayGainCliTest(ReplayGainPluginHelper):
     FNAME: str
@@ -242,14 +245,6 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
             assert mediafile.rg_track_gain is None
 
         self.run_command("replaygain")
-
-        # Skip the test if rg_track_peak and rg_track gain is None, assuming
-        # that it could only happen if the decoder plugins are missing.
-        if all(
-            i.rg_track_peak is None and i.rg_track_gain is None
-            for i in self.lib.items()
-        ):
-            pytest.skip("decoder plugins could not be loaded.")
 
         for item in self.lib.items():
             assert item.rg_track_peak is not None
@@ -337,29 +332,30 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
             assert item.rg_album_gain is not None
 
 
-@pytest.mark.skipif(not GST_AVAILABLE, reason="gstreamer cannot be found")
+@SKIP_GSTREAMER
+@XFAIL_GSTREAMER_WIN_PY315
 class TestReplayGainGstCli(R128Test, ReplayGainCliTest, GstBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
-@pytest.mark.skipif(not GAIN_PROG, reason="no *gain command found")
+@SKIP_GAIN
 class TestReplayGainCmdCli(ReplayGainCliTest, CmdBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
+@SKIP_FFMPEG
 class TestReplayGainFfmpegCli(R128Test, ReplayGainCliTest, FfmpegBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
+@SKIP_FFMPEG
 class TestReplayGainFfmpegNoiseCli(
     R128Test, ReplayGainCliTest, FfmpegBackendMixin
 ):
     FNAME = "whitenoise"
 
 
-@pytest.mark.skipif(not METAFLAC_AVAILABLE, reason="metaflac cannot be found")
+@SKIP_METAFLAC
 class TestReplayGainMetaflacCli(ReplayGainCliTest, MetaflacBackendMixin):
     FNAME = "whitenoise"
 
@@ -368,16 +364,75 @@ class TestReplayGainMetaflacCli(ReplayGainCliTest, MetaflacBackendMixin):
         return super()._add_album(*args, **kwargs)
 
 
-def test_metaflac_backend_parses_replaygain_tags():
+def test_metaflac_backend_parses_gains():
     output = (
-        b"REPLAYGAIN_TRACK_GAIN=-11.55 dB\nREPLAYGAIN_TRACK_PEAK=0.99998772\n"
+        "01.flac: -1.234567 0.123456 1.987654 0.456789\n"
+        "Artist: 02.flac: -1.234567 0.123456 -1.987654 0.987654\n"
     )
-    tags = MetaflacBackend._parse_tags(output)
-    assert MetaflacBackend._parse_gain(tags["REPLAYGAIN_TRACK_GAIN"]) == (
-        pytest.approx(-11.55)
-    )
-    assert float(tags["REPLAYGAIN_TRACK_PEAK"]) == pytest.approx(0.99998772)
-    assert MetaflacBackend._parse_gain("+4.56 dB") == pytest.approx(4.56)
+
+    results = [list(gains) for gains in MetaflacBackend._parse_gains(output)]
+
+    assert results == [
+        pytest.approx([-1.234567, 0.123456, 1.987654, 0.456789]),
+        pytest.approx([-1.234567, 0.123456, -1.987654, 0.987654]),
+    ]
+
+
+def test_metaflac_backend_cannot_compute_album_gain_with_mixed_formats():
+    backend = MetaflacBackend.__new__(MetaflacBackend)
+
+    items = [Item(format="FLAC"), Item(format="MP3"), Item(format="FLAC")]
+    task = RgTask(items, None, 89.0, None, "metaflac", None)
+
+    result = backend.compute_album_gain(task)
+
+    assert result.track_gains is None
+    assert result.album_gain is None
+
+
+class CountingQueue(queue.Queue[BaseException]):
+    def __init__(self):
+        super().__init__()
+        self.get_calls = 0
+
+    def get(self, *args, **kwargs):
+        self.get_calls += 1
+        return super().get(*args, **kwargs)
+
+    def get_nowait(self):
+        self.get_calls += 1
+        return super().get_nowait()
+
+
+class TestExceptionWatcher:
+    def test_does_not_busy_wait(self):
+        exc_queue = CountingQueue()
+        watcher = ExceptionWatcher(exc_queue, lambda: None)
+        watcher.start()
+        time.sleep(0.5)
+        watcher.join()
+
+        assert not watcher.is_alive()
+        # A blocking get wakes up a handful of times; a busy loop would call
+        # it many thousands of times.
+        assert exc_queue.get_calls < 50
+
+    def test_runs_callback_on_exception(self, monkeypatch):
+        raised = []
+        monkeypatch.setattr(
+            threading, "excepthook", lambda args: raised.append(args.exc_value)
+        )
+        callback_called = threading.Event()
+        exc_queue = queue.Queue()
+        watcher = ExceptionWatcher(exc_queue, callback_called.set)
+        watcher.start()
+
+        error = RuntimeError("worker failed")
+        exc_queue.put(error)
+
+        assert callback_called.wait(timeout=5)
+        watcher.join(timeout=5)
+        assert raised == [error]
 
 
 class ImportTest(AsIsImporterMixin, ReplayGainPluginHelper):
@@ -391,22 +446,23 @@ class ImportTest(AsIsImporterMixin, ReplayGainPluginHelper):
             assert item.rg_album_gain is not None
 
 
-@pytest.mark.skipif(not GST_AVAILABLE, reason="gstreamer cannot be found")
+@SKIP_GSTREAMER
+@XFAIL_GSTREAMER_WIN_PY315
 class TestReplayGainGstImport(ImportTest, GstBackendMixin):
     pass
 
 
-@pytest.mark.skipif(not GAIN_PROG, reason="no *gain command found")
+@SKIP_GAIN
 class TestReplayGainCmdImport(ImportTest, CmdBackendMixin):
     pass
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
+@SKIP_FFMPEG
 class TestReplayGainFfmpegImport(ImportTest, FfmpegBackendMixin):
     pass
 
 
-@pytest.mark.skipif(not FFMPEG_AVAILABLE, reason="ffmpeg cannot be found")
+@SKIP_FFMPEG
 class TestReplayGainFfmpegThreadedImport(
     ThreadedImportMixin, ImportTest, FfmpegBackendMixin
 ):

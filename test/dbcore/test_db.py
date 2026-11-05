@@ -626,6 +626,5 @@ class TestException:
         with db.transaction() as tx:
             tx.mutate("insert into test (field_one) values (1)")
 
-        with pytest.raises(DBCustomFunctionError):
-            with db.transaction() as tx:
-                tx.query("select * from test where plz_raise()")
+        with pytest.raises(DBCustomFunctionError), db.transaction() as tx:
+            tx.query("select * from test where plz_raise()")

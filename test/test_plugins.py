@@ -9,7 +9,7 @@ from unittest.mock import ANY, Mock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import config, plugins, ui
+from beets import plugins, ui
 from beets.dbcore import types
 from beets.importer import Action, SingletonImportTask
 from beets.library import Item
@@ -297,7 +297,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             opts, default="a", require=ANY
         )
 
-    def test_plugin_choices_in_ui_input_options_singleton(self):
+    def test_plugin_choices_in_ui_input_options_singleton(self, config):
         """Test the presence of plugin choices on the prompt (singleton)."""
 
         class DummyPlugin(plugins.BeetsPlugin):
@@ -529,11 +529,10 @@ class TestDeprecationCopy:
 
 class TestMusicBrainzPluginLoading:
     @pytest.fixture(autouse=True)
-    def config(self):
-        _config = config
-        _config.sources = []
-        _config.read(user=False, defaults=True)
-        return _config
+    def config(self, config):
+        config.sources = []
+        config.read(user=False, defaults=True)
+        return config
 
     def test_default(self):
         assert "musicbrainz" in plugins.get_plugin_names()

@@ -238,6 +238,9 @@ class ThumbnailsTest(BeetsTestCase):
 class TestPathlibURI:
     """Test PathlibURI class"""
 
+    @pytest.mark.filterwarnings(
+        r"ignore:pathlib.PurePath.as_uri():DeprecationWarning"
+    )
     def test_uri(self):
         test_uri = PathlibURI()
 
