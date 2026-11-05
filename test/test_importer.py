@@ -2071,6 +2071,39 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 2",
         }
 
+    def _prepare_release_groups(self, existing, new):
+        member = self.add_album_member_fixture(
+            artist="Tag Artist", title="Tag Track 1"
+        )
+        album = member.get_album()
+        album.mb_releasegroupid = existing
+        album.store()
+        for media in self.import_media:
+            media.mb_releasegroupid = new
+            media.save()
+        return album
+
+    def test_skip_keeps_different_release_group_as_new_album(self):
+        # The albums only share a track (e.g. a compilation and a studio
+        # album), so the remaining track must not join the existing album.
+        album = self._prepare_release_groups("group a", "group b")
+
+        self._import(action="skip")
+
+        assert len(self.lib.albums()) == 2
+        new_track = self.lib.items("title:'Tag Track 2'").get()
+        assert new_track.album_id != album.id
+        assert new_track.get_album().mb_releasegroupid == "group b"
+        assert {i.title for i in album.items()} == {"Tag Track 1"}
+
+    def test_skip_folds_same_release_group(self):
+        album = self._prepare_release_groups("group a", "group a")
+
+        self._import(action="skip")
+
+        assert len(self.lib.albums()) == 1
+        assert self.lib.items("title:'Tag Track 2'").get().album_id == album.id
+
     def test_skip_falls_back_to_artist_title_without_key_fields(self):
         # The configured key (mb_trackid) is empty on both sides, as on an
         # as-is import, so artist + title is compared instead.
