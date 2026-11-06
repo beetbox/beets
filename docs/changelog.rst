@@ -47,8 +47,8 @@ New features
 - :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
   socket.
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
-  instead of asking for a candidate number again. It still asks when chosen
-  from the candidate list.
+  instead of asking for a candidate number again. It still asks when chosen from
+  the candidate list.
 
 Bug fixes
 ~~~~~~~~~
