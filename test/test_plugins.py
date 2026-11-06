@@ -10,6 +10,7 @@ import pytest
 from mediafile import MediaFile
 
 from beets import plugins, ui
+from beets.autotag.match import Proposal, Recommendation
 from beets.dbcore import types
 from beets.importer import Action, SingletonImportTask
 from beets.library import Item
@@ -460,7 +461,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
         )
 
     def test_plugin_callback_sees_shown_candidate(self):
-        """Callbacks get the candidate on screen as `task.match`."""
+        """Callbacks get the candidate on screen as `task.selected_match`."""
         seen = []
 
         class DummyPlugin(plugins.BeetsPlugin):
@@ -471,21 +472,28 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
                 )
 
             def return_choices(self, session, task):
-                return [PromptChoice("f", "Foo", self.foo)]
+                return [
+                    PromptChoice("f", "Foo", self.foo),
+                    PromptChoice("z", "Zero", self.empty),
+                ]
 
             def foo(self, session, task):
-                seen.append(task.match and task.candidates.index(task.match))
+                match = task.selected_match
+                seen.append(match and task.candidates.index(match))
+
+            def empty(self, session, task):
+                return Proposal([], Recommendation.none)
 
         self.register_plugin(DummyPlugin)
         self.matcher.matching = AutotagStub.GOOD
 
         # Foo on the list; pick 1; Foo on it (back to the list); pick 2;
-        # Foo on it; Skip
-        for sel in ("f", "1", "f", "2", "f", "s"):
+        # Foo on it; pick 1; Zero (no candidates left); Foo; Skip
+        for sel in ("f", "1", "f", "2", "f", "1", "z", "f", "s"):
             self.io.addinput(sel)
         self.importer.run()
 
-        assert seen == [None, 0, 1]
+        assert seen == [None, 0, 1, None]
 
 
 def get_available_plugins():
