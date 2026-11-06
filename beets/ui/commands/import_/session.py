@@ -92,6 +92,7 @@ class TerminalImportSession(importer.ImportSession):
                 task.rec,
                 task.source,
                 choices=choices,
+                task=task,
             )
 
             # We have a specific match selection.
@@ -155,6 +156,7 @@ class TerminalImportSession(importer.ImportSession):
                 task.rec,
                 task.source,
                 choices=choices,
+                task=task,
             )
 
             # We have a specific match selection.
@@ -402,6 +404,7 @@ def choose_candidate(
     rec: Recommendation,
     source: Source,
     choices: list[PromptChoice] = [],
+    task: ImportTask | None = None,
 ) -> AlbumMatch | TrackMatch | PromptChoice:
     """Ask the user for a selection of which candidate to use.
 
@@ -411,6 +414,9 @@ def choose_candidate(
     `rec` is the autotagging recommendation for the candidates.
     `source` is the Source object describing the item or album being imported.
     `choices` is a list of `PromptChoice`s to be used in each prompt.
+    `task`, if given, has its `match` set to the candidate on screen while
+    the user is prompted (None at the candidate list), so `PromptChoice`
+    callbacks can act on it.
 
     Returns one of the following:
     * the result of the choice, which may be SKIP or ASIS
@@ -450,6 +456,8 @@ def choose_candidate(
         require = rec <= Recommendation.low
 
         if not bypass_candidates:
+            if task:
+                task.match = None
             # Display list of candidates.
             ui.print_("")
             ui.print_(f'Finding tags for {source.type} "{source.desc}".')
@@ -497,6 +505,8 @@ def choose_candidate(
 
         # Show what we're about to do.
         show_change(match, source)
+        if task:
+            task.match = match
 
         # Exact match => tag automatically if we're not in timid mode.
         if rec == Recommendation.strong and not config["import"]["timid"]:

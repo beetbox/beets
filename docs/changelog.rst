@@ -160,6 +160,9 @@ For plugin developers
 - New ``Library.contains`` method replaces the ``lib.directory in
   util.ancestry(item.path)`` idiom for testing whether a path or a model lives
   inside the library.
+- Import prompt choice callbacks can now read the candidate on screen from
+  ``task.match``, including one picked by number from the candidate list. It is
+  ``None`` while the candidate list itself is shown.
 
 Other changes
 ~~~~~~~~~~~~~

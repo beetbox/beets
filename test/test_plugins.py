@@ -459,6 +459,34 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             opts, default="a", require=ANY
         )
 
+    def test_plugin_callback_sees_shown_candidate(self):
+        """Callbacks get the candidate on screen as `task.match`."""
+        seen = []
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener(
+                    "before_choose_candidate", self.return_choices
+                )
+
+            def return_choices(self, session, task):
+                return [PromptChoice("f", "Foo", self.foo)]
+
+            def foo(self, session, task):
+                seen.append(task.match and task.candidates.index(task.match))
+
+        self.register_plugin(DummyPlugin)
+        self.matcher.matching = AutotagStub.GOOD
+
+        # Foo on the list; pick 1; Foo on it (back to the list); pick 2;
+        # Foo on it; Skip
+        for sel in ("f", "1", "f", "2", "f", "s"):
+            self.io.addinput(sel)
+        self.importer.run()
+
+        assert seen == [None, 0, 1]
+
 
 def get_available_plugins():
     """Get all available plugins in the beetsplug namespace."""
