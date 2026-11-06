@@ -408,9 +408,20 @@ class LRCLyrics:
 class LRCLib(Backend):
     """Fetch lyrics from the LRCLib API."""
 
-    BASE_URL = "https://lrclib.net/api"
-    GET_URL = f"{BASE_URL}/get"
-    SEARCH_URL = f"{BASE_URL}/search"
+    DEFAULT_URL = "https://lrclib.net/api"
+
+    @cached_property
+    def base_url(self) -> str:
+        base = self.config["lrclib"]["url"].get(str)
+        return base.rstrip("/")
+
+    @cached_property
+    def get_url(self) -> str:
+        return f"{self.base_url}/get"
+
+    @cached_property
+    def search_url(self) -> str:
+        return f"{self.base_url}/search"
 
     def fetch_candidates(
         self, artist: str, title: str, album: str, length: int
@@ -430,10 +441,10 @@ class LRCLib(Backend):
         if album:
             get_params["album_name"] = album
 
-        yield self.get_json(self.SEARCH_URL, params=base_params)
+        yield self.get_json(self.search_url, params=base_params)
 
         with suppress(HTTPNotFoundError):
-            yield [self.get_json(self.GET_URL, params=get_params)]
+            yield [self.get_json(self.get_url, params=get_params)]
 
     @classmethod
     def pick_best_match(cls, lyrics: Iterable[LRCLyrics]) -> LRCLyrics | None:
@@ -451,7 +462,7 @@ class LRCLib(Backend):
             if item := self.pick_best_match(candidates):
                 lyrics = item.get_text(self.config["synced"].get(bool))
                 return Lyrics(
-                    lyrics, self.__class__.name, f"{self.GET_URL}/{item.id}"
+                    lyrics, self.__class__.name, f"{self.get_url}/{item.id}"
                 )
 
         return None
@@ -1157,6 +1168,7 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                     "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
                     "76V-uFL5jks5dNvcGCdarqFjDhP9c"
                 ),
+                "lrclib": {"url": LRCLib.DEFAULT_URL},
                 "lrcmux": {"url": LRCMux.DEFAULT_URL, "sources": []},
                 "fallback": None,
                 "force": False,
