@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 from typing import Any, ClassVar
+from unittest import mock
 
 import pytest
 from mediafile import MediaFile
@@ -15,7 +16,12 @@ from beets.test.helper import (
     ImportHelper,
     PluginMixin,
 )
-from beetsplug.replaygain import ExceptionWatcher, MetaflacBackend, RgTask
+from beetsplug.replaygain import (
+    ExceptionWatcher,
+    MetaflacBackend,
+    ReplayGainPlugin,
+    RgTask,
+)
 
 try:
     import gi
@@ -330,6 +336,34 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
         for item in album.items():
             assert item.rg_track_gain is not None
             assert item.rg_album_gain is not None
+
+
+class TestReplayGainZeroThreads:
+    def test_cli_with_zero_configured_threads(self):
+        plugin = ReplayGainPlugin.__new__(ReplayGainPlugin)
+
+        plugin.config = mock.MagicMock()
+        plugin.config["threads"].get.return_value = 0
+        plugin._log = mock.Mock()
+        plugin.backend_name = "ffmpeg"
+
+        opts = mock.Mock(
+            write=None,
+            force=False,
+            threads=None,
+            album=False,
+            limit=None,
+        )
+        lib = mock.Mock()
+        lib.items.return_value = []
+
+        with (
+            mock.patch.object(plugin, "open_pool", create=True) as open_pool,
+            mock.patch.object(plugin, "close_pool", create=True),
+        ):
+            plugin.command_func(lib, opts, [])
+
+        open_pool.assert_not_called()
 
 
 @SKIP_GSTREAMER
