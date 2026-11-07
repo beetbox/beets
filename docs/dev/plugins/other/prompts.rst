@@ -56,6 +56,12 @@ example, if a particular choice should only be presented if the album has no
 candidates, the relevant checks against ``task.candidates`` should be performed
 inside the plugin's ``before_choose_candidate_event`` accordingly.
 
+While the callback runs, ``task.selected_match`` holds the candidate shown to
+the user, including one they picked by number from the candidate list. It is
+``None`` when the choice was made at the candidate list itself, or when there
+are no candidates. Unlike ``task.match``, it is not the match that will be
+applied.
+
 Please make sure that the short letter for each of the choices provided by the
 plugin is not already in use: the importer will emit a warning and discard all
 but one of the choices using the same letter, giving priority to the core

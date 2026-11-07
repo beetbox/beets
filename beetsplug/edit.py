@@ -577,18 +577,21 @@ class EditPlugin(plugins.BeetsPlugin):
         import session on a *candidate*. The candidate's metadata is
         applied to the original items.
         """
-        # Prompt the user for a candidate.
-        if task.candidates:
+        if not task.candidates:
+            return None
+
+        # Use the candidate on screen, or prompt from the candidate list.
+        if not (match := task.selected_match):
             sel = ui.input_options(
                 ("Back",), numrange=(1, len(task.candidates))
             )
             if not isinstance(sel, int):
                 # "Back": return to the previous prompt.
                 return None
-            # Force applying the candidate on the items.
-            task.match = task.candidates[sel - 1]
-            task.apply_metadata()
+            match = task.candidates[sel - 1]
 
-            return self.importer_edit(session, task)
+        # Force applying the candidate on the items.
+        task.match = match
+        task.apply_metadata()
 
-        return None
+        return self.importer_edit(session, task)

@@ -46,9 +46,12 @@ New features
   source. :bug:`6238`
 - :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
   socket.
+- :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
+  instead of asking for a candidate number again. It still asks when chosen from
+  the candidate list.
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
-
+  
 Bug fixes
 ~~~~~~~~~
 
@@ -162,6 +165,9 @@ For plugin developers
 - New ``Library.contains`` method replaces the ``lib.directory in
   util.ancestry(item.path)`` idiom for testing whether a path or a model lives
   inside the library.
+- Import prompt choice callbacks can now read the candidate on screen from
+  ``task.selected_match``, including one picked by number from the candidate
+  list. It is ``None`` while the candidate list itself is shown.
 
 Other changes
 ~~~~~~~~~~~~~

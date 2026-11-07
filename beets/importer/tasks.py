@@ -231,6 +231,9 @@ class ImportTask(BaseImportTask):
 
     choice_flag: Action | None = None
     match: AlbumMatch | TrackMatch | None = None
+    # The candidate on screen during the interactive prompt, which may not
+    # be applied; `None` while the candidate list is shown.
+    selected_match: AlbumMatch | TrackMatch | None = None
 
     # Set by `group_albums` when items were grouped by tag, not by
     # directory. No scope for a filesystem rescan, so the "Rescan
