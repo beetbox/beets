@@ -185,8 +185,7 @@ Bug fixes
 - :doc:`plugins/lastgenre`: For Various Artists albums, each track now casts a
   single vote for its top valid genre, instead of one vote per returned tag.
   Genres tied for the most votes are all kept (limited by ``count``) instead of
-  an arbitrary one, and the vote results are logged at debug level.
-  :bug:`6931`
+  an arbitrary one, and the vote results are logged at debug level. :bug:`6931`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
