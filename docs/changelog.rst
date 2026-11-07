@@ -53,6 +53,11 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/lastgenre`: For Various Artists albums, each track now casts a
+  single vote for its top valid genre, instead of one vote per returned tag.
+  Genres tied for the most votes are all kept (limited by ``count``) instead of
+  an arbitrary one, and the vote results are logged at debug level.
+  :bug:`6931`
 - Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
   full traceback at error level when a search fails because the service is
   unreachable. The error message is logged on its own, and the traceback is kept

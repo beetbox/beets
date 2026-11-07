@@ -208,6 +208,54 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
 
         assert self.plugin._fetch_va_genres(album) == []
 
+    def _setup_va_album(self, track_genres):
+        """Create a VA album whose tracks return the given Last.fm genres."""
+        self._setup_config()
+        self.config["lastgenre"]["source"] = "track"
+        self.plugin.setup()
+        items = [self.add_item(artist=artist) for artist in track_genres]
+        self.plugin.client.fetch = lambda kind, obj, *args: (
+            track_genres[obj.artist] if kind == "track" else []
+        )
+        return self.lib.add_album(items)
+
+    def test_fetch_va_genres_one_vote_per_track(self):
+        """A track returning several tags still casts a single vote."""
+        album = self._setup_va_album(
+            {
+                "Artist A": ["Jazz", "Blues"],
+                "Artist B": ["Jazz", "Blues"],
+                "Artist C": ["Blues"],
+            }
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["Jazz"]
+
+    def test_fetch_va_genres_keeps_all_tied_genres(self):
+        """All genres tied for the most votes are returned."""
+        album = self._setup_va_album(
+            {"Artist A": ["Rock"], "Artist B": ["Jazz"]}
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["Jazz", "Rock"]
+
+    def test_fetch_va_genres_ties_ordered_by_mentions(self):
+        """Ties are ordered by how many tracks mention the genre."""
+        album = self._setup_va_album(
+            {"Artist A": ["Rock"], "Artist B": ["Jazz", "Rock"]}
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["Rock", "Jazz"]
+
+    def test_fetch_va_genres_votes_for_top_whitelisted_genre(self):
+        """A track votes for its first genre that passes the whitelist."""
+        album = self._setup_va_album(
+            {"Artist A": ["Seen Live", "Rock"], "Artist B": ["Jazz"]}
+        )
+        self.plugin.whitelist = {"rock"}
+
+        assert self.plugin._fetch_va_genres(album) == ["Rock"]
+
     def test_fetch_genre(self):
         class MockPylastElem:
             def __init__(self, name):
