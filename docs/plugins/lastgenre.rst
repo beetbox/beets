@@ -96,8 +96,8 @@ source.
 For Various Artists albums, the artist source is replaced by a vote among the
 album's tracks: each track votes once for its top valid track genre (or artist
 genre if it has none), and the genres with the most votes are used. On a tie,
-all tied genres are kept and the ``count`` option decides how many end up on
-the album.
+all tied genres are kept and the ``count`` option decides how many end up on the
+album.
 
 Multiple Genres
 ~~~~~~~~~~~~~~~
