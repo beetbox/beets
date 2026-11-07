@@ -46,6 +46,9 @@ New features
   source. :bug:`6238`
 - :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
   socket.
+- :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
+  instead of asking for a candidate number again. It still asks when chosen from
+  the candidate list.
 
 Bug fixes
 ~~~~~~~~~
@@ -82,10 +85,9 @@ Bug fixes
   default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
-- :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
-  artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
-  fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
-  Request.
+- :doc:`plugins/fetchart`: Request ``10000x10000-999`` high-resolution artwork
+  from the iTunes Store instead of deprecated ``100000x100000-999``, fixing an
+  issue where Apple's CDN rejected image requests with HTTP 400 Bad Request.
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
@@ -141,6 +143,9 @@ Bug fixes
   ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
   album's ``media`` is now their common format (``Hybrid SACD``) instead of the
   generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
+  so multi-disc albums with shared track numbers stay grouped by disc.
+  :bug:`4061`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -160,6 +165,9 @@ For plugin developers
 - New ``Library.contains`` method replaces the ``lib.directory in
   util.ancestry(item.path)`` idiom for testing whether a path or a model lives
   inside the library.
+- Import prompt choice callbacks can now read the candidate on screen from
+  ``task.selected_match``, including one picked by number from the candidate
+  list. It is ``None`` while the candidate list itself is shown.
 
 Other changes
 ~~~~~~~~~~~~~
