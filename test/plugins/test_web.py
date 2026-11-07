@@ -677,13 +677,9 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response.status_code == 200
 
     def test_item_file_relative_path_outside_main_context(self):
-        libdir = os.fsdecode(self.lib.directory)
-        os.makedirs(libdir, exist_ok=True)
-        path = os.path.join(libdir, "x.mp3")
-        with open(path, "wb") as f:
-            f.write(b"data")
-        item = Item(title="x", path=path.encode())
-        self.lib.add(item)
+        path = self.lib_path / "x.mp3"
+        path.write_bytes(b"data")
+        item = self.add_item(path=os.fsencode(path))
 
         response = contextvars.Context().run(
             self.client.get, f"/item/{item.id}/file"
@@ -691,12 +687,9 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response.status_code == 200
 
     def test_album_art_relative_path_outside_main_context(self):
-        libdir = os.fsdecode(self.lib.directory)
-        os.makedirs(libdir, exist_ok=True)
-        path = os.path.join(libdir, "cover.jpg")
-        with open(path, "wb") as f:
-            f.write(b"art")
-        album = Album(album="x", artpath=path.encode())
+        path = self.lib_path / "cover.jpg"
+        path.write_bytes(b"art")
+        album = Album(album="x", artpath=os.fsencode(path))
         self.lib.add(album)
 
         response = contextvars.Context().run(
