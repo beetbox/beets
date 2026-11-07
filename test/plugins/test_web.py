@@ -1,6 +1,8 @@
 """Tests for the 'web' plugin"""
 
+import contextvars
 import json
+import os
 import platform
 import shutil
 from collections import Counter
@@ -672,6 +674,27 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         response = self.client.get(f"/item/{item_id}/file")
 
+        assert response.status_code == 200
+
+    def test_item_file_relative_path_outside_main_context(self):
+        path = self.lib_path / "x.mp3"
+        path.write_bytes(b"data")
+        item = self.add_item(path=os.fsencode(path))
+
+        response = contextvars.Context().run(
+            self.client.get, f"/item/{item.id}/file"
+        )
+        assert response.status_code == 200
+
+    def test_album_art_relative_path_outside_main_context(self):
+        path = self.lib_path / "cover.jpg"
+        path.write_bytes(b"art")
+        album = Album(album="x", artpath=os.fsencode(path))
+        self.lib.add(album)
+
+        response = contextvars.Context().run(
+            self.client.get, f"/album/{album.id}/art"
+        )
         assert response.status_code == 200
 
 
