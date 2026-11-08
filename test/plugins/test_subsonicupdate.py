@@ -243,6 +243,27 @@ class TestSubsonicUpdate(PluginTestHelper):
 
         assert "Subsonic server returned an invalid response" in caplog.text
 
+    @pytest.mark.parametrize(
+        "scan_status, message",
+        [
+            (None, "Updating Subsonic; scanning 0 tracks"),
+            ("oops", "Subsonic server returned an invalid 'scanStatus'"),
+        ],
+    )
+    def test_start_scan_handles_malformed_scan_status(
+        self,
+        subsonic: SubsonicUpdate,
+        requests_mock: Mocker,
+        caplog: pytest.LogCaptureFixture,
+        scan_status,
+        message,
+    ):
+        requests_mock.get(START_SCAN_URL, json=_ok(scanStatus=scan_status))
+
+        subsonic.start_scan(self.lib)
+
+        assert message in caplog.text
+
     def test_cli_command_starts_scan(self, requests_mock: Mocker):
         """The `subsonicupdate` command triggers a scan."""
         requests_mock.get(START_SCAN_URL, text=SUCCESS_BODY)

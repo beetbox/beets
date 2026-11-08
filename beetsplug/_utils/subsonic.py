@@ -33,6 +33,13 @@ class SubsonicError(Exception):
     """Raised when the server rejects or cannot complete an API request."""
 
 
+def _object(response: JSONDict, key: str) -> JSONDict:
+    value = response.get(key) or {}
+    if not isinstance(value, dict):
+        raise SubsonicError(f"Subsonic server returned an invalid {key!r}")
+    return value
+
+
 def _as_list(value: Any) -> list[Any]:
     if value is None:
         return []
@@ -106,7 +113,7 @@ class SubsonicClient(RequestHandler):
     def start_scan(self) -> int:
         """Start a library scan and return the number of tracks found so far."""
         response = self._request("startScan", {})
-        return response.get("scanStatus", {}).get("count", 0)
+        return _object(response, "scanStatus").get("count", 0)
 
     def search_songs(self, query: str, count: int) -> list[JSONDict]:
         """Find songs using the tag-based search."""
@@ -119,12 +126,12 @@ class SubsonicClient(RequestHandler):
                 "songCount": count,
             },
         )
-        return _as_list(response.get("searchResult3", {}).get("song"))
+        return _as_list(_object(response, "searchResult3").get("song"))
 
     def starred_song_ids(self) -> set[str]:
         """Return IDs of songs the authenticated user has already starred."""
         response = self._request("getStarred2", {})
-        songs = _as_list(response.get("starred2", {}).get("song"))
+        songs = _as_list(_object(response, "starred2").get("song"))
         return {str(song["id"]) for song in songs}
 
     def star_songs(self, song_ids: Iterable[str]) -> None:
