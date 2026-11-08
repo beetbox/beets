@@ -388,7 +388,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
             title="Song", subsonic_id="song-1", subsonic_url=SERVER_URL
         )
 
-        self.run_command("subsonic-set-favorite", f"id:{item.id}")
+        self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
         _, star, _ = requests_mock.request_history
         params = _params(star.url)
@@ -404,7 +404,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         item = self.add_item(artist="Artist", album="Album", title="Song")
         requests_mock.get(SEARCH_URL, json=_songs(SONG))
 
-        self.run_command("subsonic-set-favorite", f"id:{item.id}")
+        self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
         _, search, star, _ = requests_mock.request_history
         assert _params(search.url)["query"] == ["Artist Album Song"]
@@ -425,7 +425,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         )
         requests_mock.get(SEARCH_URL, json=_songs(SONG))
 
-        self.run_command("subsonic-set-favorite", f"id:{item.id}")
+        self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
         assert self.starred == {"song-1"}
         item.load()
@@ -443,7 +443,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
             )
 
         with caplog.at_level("INFO"):
-            self.run_command("subsonic-set-favorite", "subsonic_id:song")
+            self.run_command("subsonic-set-favorite", "-y", "subsonic_id:song")
 
         messages = [r.getMessage() for r in caplog.records]
         progress = [m for m in messages if m.startswith("Processed")]
@@ -460,7 +460,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
             SEARCH_URL, [empty, empty, empty, empty, {"json": _songs(song)}]
         )
 
-        self.run_command("subsonic-set-favorite", f"id:{item.id}")
+        self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
         *_, folded, star, _ = requests_mock.request_history
         assert _params(folded.url)["query"] == ["von bikrav album eternite"]
@@ -488,7 +488,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         requests_mock.get(SEARCH_URL, json=_songs(*songs))
 
         with caplog.at_level("WARNING"):
-            self.run_command("subsonic-set-favorite", f"id:{item.id}")
+            self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
         assert requests_mock.call_count == expected_calls
         assert message in caplog.text
@@ -502,7 +502,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         requests_mock.get(SEARCH_URL, json=_songs(SONG))
 
         with caplog.at_level("WARNING"):
-            self.run_command("subsonic-set-favorite", f"id:{item.id}")
+            self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
         assert not any(
             r.url.startswith(STAR_URL) for r in requests_mock.request_history
@@ -534,7 +534,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         )
 
         output = self.run_with_output(
-            "subsonic-set-favorite", "subsonic_id:song"
+            "subsonic-set-favorite", "-y", "subsonic_id:song"
         )
 
         *_, star, _ = requests_mock.request_history
@@ -552,7 +552,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
                 subsonic_url=SERVER_URL,
             )
 
-        self.run_command("subsonic-set-favorite", "subsonic_id:song")
+        self.run_command("subsonic-set-favorite", "-y", "subsonic_id:song")
 
         _, *stars, _ = requests_mock.request_history
         assert [len(_params(s.url)["id"]) for s in stars] == [100, 1]
@@ -577,7 +577,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
         with caplog.at_level("WARNING"):
             output = self.run_with_output(
-                "subsonic-set-favorite", f"id:{item.id}"
+                "subsonic-set-favorite", "-y", f"id:{item.id}"
             )
 
         item.load()
@@ -593,7 +593,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         requests_mock.get(STAR_URL, text=FAILED_BODY)
 
         with pytest.raises(UserError, match="Wrong username or password"):
-            self.run_command("subsonic-set-favorite", f"id:{item.id}")
+            self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
     @pytest.mark.parametrize("auth", ["token", "password"])
     def test_hides_credentials_in_http_errors(
@@ -606,12 +606,12 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         requests_mock.get(STAR_URL, status_code=HTTPStatus.UNAUTHORIZED)
 
         with pytest.raises(UserError, match="401") as exc_info:
-            self.run_command("subsonic-set-favorite", f"id:{item.id}")
+            self.run_command("subsonic-set-favorite", "-y", f"id:{item.id}")
 
         assert not re.search(r"[?&][pts]=[^*]", str(exc_info.value))
 
     @pytest.mark.parametrize("answer, expected_calls", [("y", 3), ("n", 0)])
-    def test_confirms_before_favouriting_whole_library(
+    def test_confirms_before_favouriting(
         self, requests_mock: Mocker, answer, expected_calls
     ):
         self.add_item(
@@ -619,7 +619,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         )
         self.io.addinput(answer)
 
-        output = self.run_with_output("subsonic-set-favorite")
+        output = self.run_with_output("subsonic-set-favorite", "title+")
 
-        assert "Mark all 1 tracks as Subsonic favourites" in output
+        assert "Mark 1 tracks as Subsonic favourites" in output
         assert requests_mock.call_count == expected_calls

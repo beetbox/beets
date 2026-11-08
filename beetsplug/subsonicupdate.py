@@ -64,6 +64,12 @@ class SubsonicUpdateCLIOpts(Protocol):
     """Options for the `subsonicupdate` command, of which there are none."""
 
 
+class SubsonicSetFavoriteCLIOpts(Protocol):
+    """Options for the `subsonic-set-favorite` command."""
+
+    yes: bool
+
+
 class SubsonicUpdate(BeetsPlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "subsonic_id": types.STRING,
@@ -142,11 +148,16 @@ class SubsonicUpdate(BeetsPlugin):
             help="mark queried tracks as Subsonic favourites",
         )
 
-        def set_favorite_func(lib: Library, _: Any, args: list[str]) -> None:
+        set_favorite_cmd.parser.add_option(
+            "-y", "--yes", action="store_true", help="skip confirmation"
+        )
+
+        def set_favorite_func(
+            lib: Library, opts: SubsonicSetFavoriteCLIOpts, args: list[str]
+        ) -> None:
             items = lib.items(args)
-            if not args and not ui.input_yn(
-                f"Mark all {len(items)} tracks as Subsonic favourites (y/n)?",
-                True,
+            if not opts.yes and not ui.input_yn(
+                f"Mark {len(items)} tracks as Subsonic favourites (y/n)?", True
             ):
                 return
             try:
