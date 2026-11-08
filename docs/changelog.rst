@@ -146,7 +146,9 @@ Bug fixes
 - :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
   so multi-disc albums with shared track numbers stay grouped by disc.
   :bug:`4061`
-
+- :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
+  instead of silently falling back to plain lyrics. :bug:`7070`
+  
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
 
