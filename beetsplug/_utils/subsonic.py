@@ -57,8 +57,13 @@ class SubsonicClient(RequestHandler):
     password: str
     auth: str
 
+    @property
+    def server_url(self) -> str:
+        """Identify the server, regardless of a trailing slash in the config."""
+        return self.base_url.rstrip("/")
+
     def _url(self, endpoint: str) -> str:
-        return f"{self.base_url.rstrip('/')}/rest/{endpoint}"
+        return f"{self.server_url}/rest/{endpoint}"
 
     def _auth_params(self) -> dict[str, str]:
         # Token auth needs API 1.13.0 (Subsonic 5.3), older servers only

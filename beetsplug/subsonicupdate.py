@@ -65,7 +65,10 @@ class SubsonicUpdateCLIOpts(Protocol):
 
 
 class SubsonicUpdate(BeetsPlugin):
-    item_types: ClassVar[dict[str, types.Type]] = {"subsonic_id": types.STRING}
+    item_types: ClassVar[dict[str, types.Type]] = {
+        "subsonic_id": types.STRING,
+        "subsonic_url": types.STRING,
+    }
 
     def __init__(self) -> None:
         super().__init__("subsonic")
@@ -178,6 +181,7 @@ class SubsonicUpdate(BeetsPlugin):
                 item,
             )
             del item["subsonic_id"]
+            del item["subsonic_url"]
             item.store()
 
         # Search results come from the server, so these IDs are known to exist
@@ -213,8 +217,12 @@ class SubsonicUpdate(BeetsPlugin):
         return items_by_id
 
     def _song_id(self, client: SubsonicClient, item: Item) -> str | None:
-        if song_id := item.get("subsonic_id"):
-            return str(song_id)
+        # Song IDs are only unique within a server, and some servers use plain
+        # numbers, so an ID stored for another server may be a different song
+        if item.get("subsonic_url") == client.server_url and (
+            song_id := item.get("subsonic_id")
+        ):
+            return song_id
 
         queries = self._queries(item)
         if not queries:
@@ -228,6 +236,7 @@ class SubsonicUpdate(BeetsPlugin):
             matches = self._best_matches(item, songs_by_id.values())
             if len(matches) == 1:
                 item.subsonic_id = matches[0]
+                item.subsonic_url = client.server_url
                 item.store()
                 return matches[0]
             if len(matches) > 1:

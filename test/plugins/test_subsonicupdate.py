@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 _p = pytest.param
 
+SERVER_URL = "http://localhost:4040"
 START_SCAN_URL = "http://localhost:4040/rest/startScan"
 SEARCH_URL = "http://localhost:4040/rest/search3"
 STAR_URL = "http://localhost:4040/rest/star"
@@ -383,7 +384,9 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         self.load_plugins()
 
     def test_uses_stored_subsonic_id(self, requests_mock: Mocker):
-        item = self.add_item(title="Song", subsonic_id="song-1")
+        item = self.add_item(
+            title="Song", subsonic_id="song-1", subsonic_url=SERVER_URL
+        )
 
         self.run_command("subsonic-set-favorite", f"id:{item.id}")
 
@@ -408,12 +411,36 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         assert _params(star.url)["id"] == ["song-1"]
         item.load()
         assert item.subsonic_id == "song-1"
+        assert item.subsonic_url == SERVER_URL
+
+    def test_ignores_subsonic_id_stored_for_another_server(
+        self, requests_mock: Mocker
+    ):
+        item = self.add_item(
+            artist="Artist",
+            album="Album",
+            title="Song",
+            subsonic_id="7",
+            subsonic_url="http://other:4040",
+        )
+        requests_mock.get(SEARCH_URL, json=_songs(SONG))
+
+        self.run_command("subsonic-set-favorite", f"id:{item.id}")
+
+        assert self.starred == {"song-1"}
+        item.load()
+        assert item.subsonic_id == "song-1"
+        assert item.subsonic_url == SERVER_URL
 
     def test_reports_progress_every_tenth_of_tracks(
         self, caplog: pytest.LogCaptureFixture
     ):
         for i in range(25):
-            self.add_item(title=f"Song {i}", subsonic_id=f"song-{i}")
+            self.add_item(
+                title=f"Song {i}",
+                subsonic_id=f"song-{i}",
+                subsonic_url=SERVER_URL,
+            )
 
         with caplog.at_level("INFO"):
             self.run_command("subsonic-set-favorite", "subsonic_id:song")
@@ -484,9 +511,27 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
     def test_stars_and_reports_only_new_favourites(self, requests_mock: Mocker):
         self.starred.add("song-1")
-        self.add_item(artist="A", album="B", title="Song", subsonic_id="song-1")
-        self.add_item(artist="A", album="B", title="New", subsonic_id="song-2")
-        self.add_item(artist="A", album="B", title="Dupe", subsonic_id="song-2")
+        self.add_item(
+            artist="A",
+            album="B",
+            title="Song",
+            subsonic_id="song-1",
+            subsonic_url=SERVER_URL,
+        )
+        self.add_item(
+            artist="A",
+            album="B",
+            title="New",
+            subsonic_id="song-2",
+            subsonic_url=SERVER_URL,
+        )
+        self.add_item(
+            artist="A",
+            album="B",
+            title="Dupe",
+            subsonic_id="song-2",
+            subsonic_url=SERVER_URL,
+        )
 
         output = self.run_with_output(
             "subsonic-set-favorite", "subsonic_id:song"
@@ -501,7 +546,11 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
 
     def test_stars_songs_in_chunks(self, requests_mock: Mocker):
         for i in range(101):
-            self.add_item(title=f"Song {i}", subsonic_id=f"song-{i}")
+            self.add_item(
+                title=f"Song {i}",
+                subsonic_id=f"song-{i}",
+                subsonic_url=SERVER_URL,
+            )
 
         self.run_command("subsonic-set-favorite", "subsonic_id:song")
 
@@ -519,7 +568,11 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         requests_mock.get(STAR_URL, json=star)
         requests_mock.get(SEARCH_URL, json=_songs(SONG))
         item = self.add_item(
-            artist="Artist", album="Album", title="Song", subsonic_id="gone"
+            artist="Artist",
+            album="Album",
+            title="Song",
+            subsonic_id="gone",
+            subsonic_url=SERVER_URL,
         )
 
         with caplog.at_level("WARNING"):
@@ -534,7 +587,9 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         assert "Marked 1 new tracks as Subsonic favourites." in output
 
     def test_reports_server_errors(self, requests_mock: Mocker):
-        item = self.add_item(title="Song", subsonic_id="song-1")
+        item = self.add_item(
+            title="Song", subsonic_id="song-1", subsonic_url=SERVER_URL
+        )
         requests_mock.get(STAR_URL, text=FAILED_BODY)
 
         with pytest.raises(UserError, match="Wrong username or password"):
@@ -545,7 +600,9 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         self, requests_mock: Mocker, auth: str
     ):
         self.config["subsonic"]["auth"] = auth
-        item = self.add_item(title="Song", subsonic_id="song-1")
+        item = self.add_item(
+            title="Song", subsonic_id="song-1", subsonic_url=SERVER_URL
+        )
         requests_mock.get(STAR_URL, status_code=HTTPStatus.UNAUTHORIZED)
 
         with pytest.raises(UserError, match="401") as exc_info:
@@ -557,7 +614,9 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
     def test_confirms_before_favouriting_whole_library(
         self, requests_mock: Mocker, answer, expected_calls
     ):
-        self.add_item(title="Song", subsonic_id="song-1")
+        self.add_item(
+            title="Song", subsonic_id="song-1", subsonic_url=SERVER_URL
+        )
         self.io.addinput(answer)
 
         output = self.run_with_output("subsonic-set-favorite")

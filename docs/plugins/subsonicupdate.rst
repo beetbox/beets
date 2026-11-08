@@ -58,21 +58,23 @@ counted in the summary. Without a query, the command asks for confirmation
 before marking your whole library.
 
 Subsonic servers use their own song IDs, which are different from beets item
-IDs. The plugin first looks for a ``subsonic_id`` field on each selected item
-and uses that value directly when present. You can populate this as a flexible
-attribute and query it like any other field.
+IDs. The plugin first looks for ``subsonic_id`` and ``subsonic_url`` fields on
+each selected item, and uses the stored ID directly when ``subsonic_url``
+matches the configured ``url``. IDs are only unique within a server, so an ID
+stored for a different server is ignored. You can populate these as flexible
+attributes and query them like any other field.
 
-When ``subsonic_id`` is missing, the plugin searches the server using the item's
-artist, album, and title. If that returns no usable match, the plugin tries
-narrower artist/title, title-only and artist-only searches, followed by
-transliterated variants for metadata containing accents, non-Latin scripts or
-characters such as ``Ø`` and ``Æ``. A song only matches when its title and
-artist are the same as the item's, ignoring case, punctuation and accents, so a
-live or remixed version of a song is never picked in its place. Missing or
-ambiguous matches are skipped to avoid favouriting the wrong track. A unique
-match is stored in ``subsonic_id``, so later runs skip the search for that item.
-If the server does not star a stored ID, for example because the track was
-retagged and got a new ID, the plugin searches for it again.
+Otherwise, the plugin searches the server using the item's artist, album, and
+title. If that returns no usable match, the plugin tries narrower artist/title,
+title-only and artist-only searches, followed by transliterated variants for
+metadata containing accents, non-Latin scripts or characters such as ``Ø`` and
+``Æ``. A song only matches when its title and artist are the same as the item's,
+ignoring case, punctuation and accents, so a live or remixed version of a song
+is never picked in its place. Missing or ambiguous matches are skipped to avoid
+favouriting the wrong track. A unique match is stored in ``subsonic_id`` and
+``subsonic_url``, so later runs skip the search for that item. If the server
+does not star a stored ID, for example because the track was retagged and got a
+new ID, the plugin searches for it again.
 
 .. _navidrome: https://www.navidrome.org/
 
