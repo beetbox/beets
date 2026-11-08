@@ -44,11 +44,6 @@ def _search_text(value: Any) -> str:
     return " ".join(re.sub(r"[^a-z0-9]+", " ", text).split()) or text.strip()
 
 
-def _in(left: Any, right: Any) -> bool:
-    # Pad with spaces so only whole words match: "song" is not in "songbird"
-    return f" {_search_text(left)} " in f" {_search_text(right)} "
-
-
 def _equivalent(left: Any, right: Any) -> bool:
     return _search_text(left) == _search_text(right)
 
@@ -273,24 +268,17 @@ class SubsonicUpdate(BeetsPlugin):
 
     @staticmethod
     def _match_score(item: Item, song: JSONDict) -> int | None:
-        if (item_title := item["title"]) and not _in(
-            item_title, song.get("title")
-        ):
-            return None
-        if (item_artist := item["artist"]) and not _in(
-            item_artist, song.get("artist")
+        # Beets and the server usually read the same files, so the tags should
+        # agree exactly. Anything looser risks starring a live or remix version.
+        if not (
+            _equivalent(item.title, song.get("title"))
+            and _equivalent(item.artist, song.get("artist"))
         ):
             return None
 
-        score = 2
-        if (item_album := item["album"]) and _equivalent(
-            item_album, song.get("album")
-        ):
+        score = 0
+        if item.album and _equivalent(item.album, song.get("album")):
             score += 1
-        if item_title and _equivalent(item_title, song.get("title")):
-            score += 1
-        if item_artist and _equivalent(item_artist, song.get("artist")):
-            score += 1
-        if (track := item["track"]) and track == song.get("track"):
+        if item.track and item.track == song.get("track"):
             score += 1
         return score

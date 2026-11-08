@@ -65,12 +65,14 @@ attribute and query it like any other field.
 When ``subsonic_id`` is missing, the plugin searches the server using the item's
 artist, album, and title. If that returns no usable match, the plugin tries
 narrower artist/title, title-only and artist-only searches, followed by
-accent-folded variants for metadata containing accents or characters such as
-``Ø`` and ``Æ``. Missing or ambiguous matches are skipped to avoid favouriting
-the wrong track. A unique match is stored in ``subsonic_id``, so later runs skip
-the search for that item. If the server does not star a stored ID, for example
-because the track was retagged and got a new ID, the plugin searches for it
-again.
+transliterated variants for metadata containing accents, non-Latin scripts or
+characters such as ``Ø`` and ``Æ``. A song only matches when its title and
+artist are the same as the item's, ignoring case, punctuation and accents, so a
+live or remixed version of a song is never picked in its place. Missing or
+ambiguous matches are skipped to avoid favouriting the wrong track. A unique
+match is stored in ``subsonic_id``, so later runs skip the search for that item.
+If the server does not star a stored ID, for example because the track was
+retagged and got a new ID, the plugin searches for it again.
 
 .. _navidrome: https://www.navidrome.org/
 

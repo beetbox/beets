@@ -444,6 +444,7 @@ class TestSetFavorite(IOMixin, PluginTestHelper):
         [
             _p([], "No Subsonic match", 5, id="no match"),
             _p([{**SONG, "title": "Songbird"}], "No Subsonic match", 5, id="partial word"),
+            _p([{**SONG, "title": "Song (Live Performance)"}], "No Subsonic match", 5, id="other version"),
             _p([{"id": "song-1", "title": "Song"}], "No Subsonic match", 5, id="missing fields"),
             _p([SONG, {**SONG, "id": "song-2"}], "Skipping ambiguous match", 2, id="ambiguous"),
         ],
