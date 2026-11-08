@@ -326,14 +326,15 @@ class Parser:
         while self.pos < len(self.string):
             char = self.string[self.pos]
 
-            if char not in self.special_chars:
+            if char not in self.special_chars and (
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
-                if m := self.special_char_re.search(self.string[self.pos :]):
-                    next_pos = m.start() + self.pos
-                    text_parts.append(self.string[self.pos : next_pos])
-                    self.pos = next_pos
-                    continue
+                m := self.special_char_re.search(self.string[self.pos :])
+            ):
+                next_pos = m.start() + self.pos
+                text_parts.append(self.string[self.pos : next_pos])
+                self.pos = next_pos
+                continue
 
             if self.pos == len(self.string) - 1:
                 # The last character can never begin a structure, so we

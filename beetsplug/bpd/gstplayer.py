@@ -305,5 +305,4 @@ if __name__ == "__main__":
     # A very simple command-line player. Just give it names of audio
     # files on the command line; these are all played in sequence.
     paths = [os.path.abspath(os.path.expanduser(p)) for p in sys.argv[1:]]
-    # play_simple(paths)
     play_complicated(paths)

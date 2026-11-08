@@ -154,10 +154,9 @@ class ExportPlugin(BeetsPlugin):
             file_format=file_format, file_path=file_path, file_mode=file_mode
         )
 
-        if opts.library or opts.album:
-            data_collector = library_data
-        else:
-            data_collector = tag_data
+        data_collector = (
+            library_data if opts.library or opts.album else tag_data
+        )
 
         included_keys = []
         for keys in opts.included_keys:
@@ -207,7 +206,7 @@ class ExportFormat:
         self.encoding = encoding
         # creates a file object to write/append or sets to stdout
         self.out_stream = (
-            open(self.path, self.mode, encoding=self.encoding, newline="")
+            open(self.path, self.mode, encoding=self.encoding, newline="")  # noqa: SIM115
             if self.path
             else sys.stdout
         )

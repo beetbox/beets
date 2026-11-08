@@ -656,7 +656,6 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert res_json["test_patch_f2"] == "Old"
 
         # Patch item by id
-        # patch_json = json.JSONEncoder().encode({"test_patch_f2": "New"})
         response = self.client.patch(
             f"/item/{item_id}", json={"test_patch_f2": "New"}
         )
