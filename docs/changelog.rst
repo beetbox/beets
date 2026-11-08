@@ -173,8 +173,8 @@ Other changes
 - :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
   ``platformdirs``, which beets already requires.
 - Beets now officially supports Python 3.15.
-- :doc:`plugins/duplicates`: Clarify the option ``--full`` to explain
-  how it will work with the action options: copy, move, delete, remove and tag.
+- :doc:`plugins/duplicates`: Clarify the option ``--full`` to explain how it
+  will work with the action options: copy, move, delete, remove and tag.
   :bug:`5408`
 - :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
