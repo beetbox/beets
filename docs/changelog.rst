@@ -146,6 +146,8 @@ Bug fixes
 - :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
   so multi-disc albums with shared track numbers stay grouped by disc.
   :bug:`4061`
+- :doc:`plugins/titlecase`: Fix ``beet completion`` crashing with
+  ``OptionConflictError`` when the plugin is enabled.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
