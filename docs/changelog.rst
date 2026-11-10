@@ -147,7 +147,7 @@ Bug fixes
   so multi-disc albums with shared track numbers stay grouped by disc.
   :bug:`4061`
 - Creating a new library no longer writes a database backup for every migration.
-  Backups are now skipped when the table being migrated has no rows. :bug `7170`
+  Backups are now skipped when the table being migrated has no rows. :bug:`7170`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
