@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from itertools import islice
 from pathlib import Path
-from sqlite3 import Connection, sqlite_version_info
+from sqlite3 import Connection
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -26,14 +26,12 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    Self,
     TypedDict,
     overload,
 )
 
-from typing_extensions import (
-    Self,
-    TypeVar,  # default value support
-)
+from typing_extensions import TypeVar  # default value support
 from unidecode import unidecode
 
 import beets
@@ -490,10 +488,9 @@ class Model(ABC, Generic[D]):
         differ.
         """
         # Choose where to place the value.
-        if key in self._fields:
-            source = self._values_fixed
-        else:
-            source = self._values_flex
+        source = (
+            self._values_fixed if key in self._fields else self._values_flex
+        )
 
         # If the field has a type, filter the value.
         value = self._type(key).normalize(value)
@@ -845,7 +842,7 @@ class Results(Sequence[AnyModel]):
     ) -> AnyModel:
         """Create a Model object for the given row"""
         cols = dict(row)
-        values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
+        values = {k: v for (k, v) in cols.items() if k[:4] != "flex"}
 
         # Construct the Python object
         return self.model_class(
@@ -1250,12 +1247,10 @@ class Database:
 
             return bytestring
 
-        create_function = conn.create_function
-        if sys.version_info >= (3, 8) and sqlite_version_info >= (3, 8, 3):
-            # Let sqlite make extra optimizations
-            create_function = functools.partial(
-                conn.create_function, deterministic=True
-            )
+        # Let sqlite make extra optimizations
+        create_function = functools.partial(
+            conn.create_function, deterministic=True
+        )
 
         create_function("regexp", 2, regexp)
         create_function("unidecode", 1, unidecode)

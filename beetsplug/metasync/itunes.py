@@ -74,9 +74,11 @@ class Itunes(MetaSource):
 
         try:
             self._log.debug("loading iTunes library from {}", library_path)
-            with create_temporary_copy(library_path) as library_copy:
-                with open(library_copy, "rb") as library_copy_f:
-                    raw_library = plistlib.load(library_copy_f)
+            with (
+                create_temporary_copy(library_path) as library_copy,
+                open(library_copy, "rb") as library_copy_f,
+            ):
+                raw_library = plistlib.load(library_copy_f)
         except OSError as e:
             raise ConfigValueError(f"invalid iTunes library: {e.strerror}")
         except Exception:

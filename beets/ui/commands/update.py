@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from beets import library, logging, ui
 from beets.exceptions import UserError
-from beets.util import ancestry, syspath
+from beets.util import FilesystemError, syspath
 from beets.util.color import colorize
 
 if TYPE_CHECKING:
@@ -108,10 +108,9 @@ def update_items(
                 not item.albumartist
                 and item.id is not None
                 and (old_item := lib.get_item(item.id))
-            ):
-                if old_item.albumartist == old_item.artist == item.artist:
-                    item.albumartist = old_item.albumartist
-                    item._dirty.discard("albumartist")
+            ) and old_item.albumartist == old_item.artist == item.artist:
+                item.albumartist = old_item.albumartist
+                item._dirty.discard("albumartist")
 
             # Check for and display changes.
             changed = ui.show_model_changes(item, fields=item_fields)
@@ -120,8 +119,12 @@ def update_items(
             if not pretend:
                 if changed:
                     # Move the item if it's in the library.
-                    if move and lib.directory in ancestry(item.path):
-                        item.move(store=False)
+                    if move and lib.contains(item):
+                        try:
+                            item.move(store=False)
+                        except FilesystemError as exc:
+                            log.error("error moving {.filepath}: {}", item, exc)
+                            continue
 
                     item.store(fields=item_fields)
                     affected_albums.add(item.album_id)
@@ -154,23 +157,26 @@ def update_items(
             album.store(fields=album_fields)
 
             # Move album art (and any inconsistent items).
-            if move and lib.directory in ancestry(first_item.path):
+            if move and lib.contains(first_item):
                 log.debug("moving album {}", album_id)
 
                 # Manually moving and storing the album.
                 items = list(album.items())
-                for item in items:
-                    item.move(store=False, with_album=False)
-                    item.store(fields=item_fields)
-                album.move(store=False)
-                album.store(fields=album_fields)
+                try:
+                    for item in items:
+                        item.move(store=False, with_album=False)
+                        item.store(fields=item_fields)
+                    album.move(store=False)
+                    album.store(fields=album_fields)
+                except FilesystemError as exc:
+                    log.error("error moving album {}: {}", album, exc)
 
 
 def update_func(lib: Library, opts: UpdateCLIOpts, args: list[str]) -> None:
     # Verify that the library folder exists to prevent accidental wipes.
-    if not os.path.isdir(syspath(lib.directory)):
+    if not lib.directory.is_dir():
         ui.print_("Library path is unavailable or does not exist.")
-        ui.print_(os.fsdecode(lib.directory))
+        ui.print_(str(lib.directory))
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
     if opts.album:

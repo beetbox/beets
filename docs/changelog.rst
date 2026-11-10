@@ -9,6 +9,9 @@ below!
 Unreleased
 ----------
 
+Beets now requires Python 3.11 or later since support for EOL Python 3.10 has
+been dropped.
+
 New features
 ~~~~~~~~~~~~
 
@@ -37,6 +40,15 @@ New features
   where the ``bpd`` and ``replaygain`` extras now install GStreamer, its plugins
   and the Python bindings, so that neither plugin needs a separate GStreamer
   installation there.
+- :doc:`plugins/lastgenre`: When no album genre is found for the primary
+  albumartist, the plugin now attempts to fetch genres for each artist listed in
+  the multi-valued ``albumartists`` field before falling back to the artist
+  source. :bug:`6238`
+- :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
+  socket.
+- :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
+  instead of asking for a candidate number again. It still asks when chosen from
+  the candidate list.
 - :doc:`plugins/convert`: Add a ``format_map`` option to choose the target
   format depending on the source format, for example ALAC and WAV to FLAC.
   Formats that are not listed use ``format``, and ``--format`` still overrides
@@ -45,6 +57,10 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
+  full traceback at error level when a search fails because the service is
+  unreachable. The error message is logged on its own, and the traceback is kept
+  at debug level. :bug:`6960`
 - :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
   gracefully by decoding with error handling and skipping tracks that produce
   unparseable data, instead of crashing. :bug:`3527`
@@ -73,10 +89,9 @@ Bug fixes
   default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
-- :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
-  artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
-  fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
-  Request.
+- :doc:`plugins/fetchart`: Request ``10000x10000-999`` high-resolution artwork
+  from the iTunes Store instead of deprecated ``100000x100000-999``, fixing an
+  issue where Apple's CDN rejected image requests with HTTP 400 Bad Request.
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
@@ -100,6 +115,41 @@ Bug fixes
 - Detect ImageMagick on Windows: the version probe kept looking for ``convert``
   after ``magick`` had answered and picked up the unrelated built-in Windows
   tool of that name, reporting the backend as unavailable. :bug:`5414`
+- :ref:`update-cmd`: A filesystem error while moving an item or album is now
+  reported and the update continues with the rest of the library, instead of
+  aborting and leaving it partially updated. :bug:`2419`
+- :doc:`plugins/deezer`: ``deezerupdate`` now stores each track's Deezer rank
+  instead of ``1``. :bug:`7106`
+- :doc:`plugins/replaygain`: Stop the exception watcher thread from busy-waiting
+  while the thread pool is open. It held a CPU core at 100% and starved the
+  other threads, making ``beet replaygain`` on a large library run for hours
+  without starting any analysis. :bug:`5449`
+- :doc:`plugins/web`: Fix relative library paths not resolving across request
+  threads in web plugin endpoints.
+- :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
+  ``separators`` is combined with a ``replace`` rule that changes the length of
+  the text. :bug:`6300`
+- :doc:`plugins/edit`: Add a Back option to the "edit Candidates" prompt so it
+  is possible to return to the importer prompt without picking a candidate.
+  :bug:`6701`
+- :doc:`plugins/permissions`: Stop applying permissions to directories outside
+  the library. A library directory of ``/music`` previously also matched
+  siblings sharing its prefix, such as ``/music2``, and the plugin changed the
+  mode of their parent directories.
+- :doc:`plugins/unimported`: ``ignore_subdirectories`` now matches whole path
+  components instead of a string prefix, so ``pod`` no longer also skips
+  ``podcasts``. A configured value with a trailing slash is matched correctly as
+  well.
+- :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
+  files. :bug:`6915`
+- :doc:`plugins/musicbrainz`: When a release's media differ only in a
+  parenthetical, like the layers of a hybrid SACD (``Hybrid SACD (CD layer)``,
+  ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
+  album's ``media`` is now their common format (``Hybrid SACD``) instead of the
+  generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
+  so multi-disc albums with shared track numbers stay grouped by disc.
+  :bug:`4061`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -111,12 +161,29 @@ For plugin developers
 - ``beetsplug._utils.art.embed_item`` and
   ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
   arguments, deprecating ``str`` and ``bytes`` in the same way.
+- ``Library.directory`` is now a :class:`pathlib.Path` instead of
+  :class:`bytes`, and the ``Library`` constructor accepts any path-like value
+  for it. Unlike the art utilities above this one has no compatibility shim, so
+  plugins combining it with :mod:`os.path` helpers or comparing it against
+  ``bytes`` paths need updating.
+- New ``Library.contains`` method replaces the ``lib.directory in
+  util.ancestry(item.path)`` idiom for testing whether a path or a model lives
+  inside the library.
+- Import prompt choice callbacks can now read the candidate on screen from
+  ``task.selected_match``, including one picked by number from the candidate
+  list. It is ``None`` while the candidate list itself is shown.
 
 Other changes
 ~~~~~~~~~~~~~
 
 - :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
   ``platformdirs``, which beets already requires.
+- Beets now officially supports Python 3.15.
+- :doc:`plugins/duplicates`: Clarify the option ``--full`` to explain how it
+  will work with the action options: copy, move, delete, remove and tag.
+  :bug:`5408`
+- :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
+  case-insensitively, so ``jpg`` also covers ``cover.JPG``.
 
 2.14.1 (September 17, 2026)
 ---------------------------

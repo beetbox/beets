@@ -11,16 +11,9 @@ if TYPE_CHECKING:
     from flask.testing import Client
 
 
-@pytest.fixture(scope="session")
-def helper(session_helper):
-    """Keep the helper temp dir alive past the module-scoped Flask app.
-
-    ``create_app`` opens a configured SQLite library before tests replace it
-    with ``helper.lib``. On Windows, module teardown can otherwise try to
-    delete ``library.db`` while the app still holds a file handle. The API
-    assertions filter known data, so sharing state for the session is harmless.
-    """
-    return session_helper
+@pytest.fixture(scope="module")
+def helper(module_helper):
+    return module_helper
 
 
 @pytest.fixture(scope="module")
@@ -28,6 +21,9 @@ def app(helper):
     from beetsplug.aura import create_app
 
     app = create_app()
+    # Close the on-disk library opened by ``create_app``: we do not use it, and
+    # its open file handle stops Windows removing the temp dir during teardown.
+    app.config["lib"]._close()
     app.config["lib"] = helper.lib
     return app
 
@@ -87,7 +83,8 @@ class TestAuraResponse:
         return get
 
     @pytest.fixture(scope="class")
-    def track_document(self, item, album):
+    @classmethod
+    def track_document(cls, item, album):
         return {
             "type": "track",
             "id": str(item.id),
@@ -108,7 +105,8 @@ class TestAuraResponse:
         }
 
     @pytest.fixture(scope="class")
-    def artist_document(self, item):
+    @classmethod
+    def artist_document(cls, item):
         return {
             "type": "artist",
             "id": item.artist,
@@ -119,7 +117,8 @@ class TestAuraResponse:
         }
 
     @pytest.fixture(scope="class")
-    def album_document(self, album):
+    @classmethod
+    def album_document(cls, album):
         return {
             "type": "album",
             "id": str(album.id),
