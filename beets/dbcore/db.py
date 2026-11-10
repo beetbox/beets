@@ -1061,6 +1061,10 @@ class Migration(ABC):
         if not beets.config["create_backup_before_migrations"].get(bool):
             return
 
+        with self.db.transaction() as tx:
+            if not tx.query(f"SELECT 1 FROM {table} LIMIT 1"):
+                return
+
         dest = os.fsdecode(self.db.path) + f"-before-{table}-{self.name}.bak"
         self.db.create_backup(dest)
 
