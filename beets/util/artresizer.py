@@ -159,23 +159,24 @@ class IMBackend(LocalBackend):
         Raises `LocalBackendNotAvailableError` if not available.
         """
         if cls._version is None:
+            # Stop at the first binary that reports an ImageMagick version:
+            # trying `convert` afterwards would find an unrelated program on
+            # Windows, where it names the built-in filesystem conversion tool.
+            cls._version = _NOT_AVAILABLE
             for cmd_name, legacy in (("magick", False), ("convert", True)):
                 try:
                     out = util.command_output([cmd_name, "--version"]).stdout
                 except (subprocess.CalledProcessError, OSError) as exc:
                     log.debug("ImageMagick version check failed: {}", exc)
-                    cls._version = _NOT_AVAILABLE
-                else:
-                    if b"imagemagick" in out.lower():
-                        pattern = rb".+ (\d+)\.(\d+)\.(\d+).*"
-                        match = re.search(pattern, out)
-                        if match:
-                            cls._version = (
-                                int(match.group(1)),
-                                int(match.group(2)),
-                                int(match.group(3)),
-                            )
-                            cls._legacy = legacy
+                    continue
+
+                if b"imagemagick" not in out.lower():
+                    continue
+
+                if match := re.search(rb".+ (\d+)\.(\d+)\.(\d+).*", out):
+                    cls._version = (int(match[1]), int(match[2]), int(match[3]))
+                    cls._legacy = legacy
+                    break
 
         # cls._version is never None here, but mypy doesn't get that
         if cls._version is _NOT_AVAILABLE or cls._version is None:
@@ -500,10 +501,7 @@ class PILBackend(LocalBackend):
                 # If maximum filesize is set, we attempt to lower the quality
                 # of jpeg conversion by a proportional amount, up to 3 attempts
                 # First, set the maximum quality to either provided, or 95
-                if quality > 0:
-                    lower_qual = quality
-                else:
-                    lower_qual = 95
+                lower_qual = quality if quality > 0 else 95
                 for i in range(5):
                     # 5 attempts is an arbitrary choice
                     filesize = os.stat(syspath(path_out)).st_size

@@ -173,9 +173,8 @@ def move_albums(
 
 def move_func(lib: Library, opts: MoveCLIOpts, args: list[str]) -> None:
     dest = normpath(opts.dest) if opts.dest else None
-    if dest is not None:
-        if not os.path.isdir(syspath(dest)):
-            raise UserError(f"no such directory: {displayable_path(dest)}")
+    if dest is not None and not os.path.isdir(syspath(dest)):
+        raise UserError(f"no such directory: {displayable_path(dest)}")
 
     method = move_albums if opts.album else move_items
     method(lib, args, dest, opts)

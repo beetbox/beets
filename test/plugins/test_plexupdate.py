@@ -207,9 +207,9 @@ class TestUIAuthenticateFlow:
             mock.patch("beetsplug.plexupdate.time.sleep"),
             mock.patch("beetsplug.plexupdate.webbrowser.open"),
             mock.patch.object(api.session, "wait_for_login", return_value=None),
+            pytest.raises(UserError),
         ):
-            with pytest.raises(UserError):
-                api.ui_authenticate_flow()
+            api.ui_authenticate_flow()
 
         # No token is stored when the login is not completed.
         assert api.session.token is None

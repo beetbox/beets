@@ -88,6 +88,11 @@ might want all the albums for a certain artist to carry the same genre. The
 default is "album". When set to "track", the plugin will fetch *both*
 album-level and track-level genres for your music when importing albums.
 
+For multi-artist albums, if Last.fm has no album genre for the primary
+``albumartist``, the plugin also tries the album against each artist listed in
+the multi-valued ``albumartists`` field before falling back to the artist
+source.
+
 Multiple Genres
 ~~~~~~~~~~~~~~~
 

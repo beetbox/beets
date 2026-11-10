@@ -9,7 +9,8 @@ from unittest.mock import ANY, Mock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import config, plugins, ui
+from beets import plugins, ui
+from beets.autotag.match import Proposal, Recommendation
 from beets.dbcore import types
 from beets.importer import Action, SingletonImportTask
 from beets.library import Item
@@ -297,7 +298,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             opts, default="a", require=ANY
         )
 
-    def test_plugin_choices_in_ui_input_options_singleton(self):
+    def test_plugin_choices_in_ui_input_options_singleton(self, config):
         """Test the presence of plugin choices on the prompt (singleton)."""
 
         class DummyPlugin(plugins.BeetsPlugin):
@@ -459,6 +460,41 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             opts, default="a", require=ANY
         )
 
+    def test_plugin_callback_sees_shown_candidate(self):
+        """Callbacks get the candidate on screen as `task.selected_match`."""
+        seen = []
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener(
+                    "before_choose_candidate", self.return_choices
+                )
+
+            def return_choices(self, session, task):
+                return [
+                    PromptChoice("f", "Foo", self.foo),
+                    PromptChoice("z", "Zero", self.empty),
+                ]
+
+            def foo(self, session, task):
+                match = task.selected_match
+                seen.append(match and task.candidates.index(match))
+
+            def empty(self, session, task):
+                return Proposal([], Recommendation.none)
+
+        self.register_plugin(DummyPlugin)
+        self.matcher.matching = AutotagStub.GOOD
+
+        # Foo on the list; pick 1; Foo on it (back to the list); pick 2;
+        # Foo on it; pick 1; Zero (no candidates left); Foo; Skip
+        for sel in ("f", "1", "f", "2", "f", "1", "z", "f", "s"):
+            self.io.addinput(sel)
+        self.importer.run()
+
+        assert seen == [None, 0, 1, None]
+
 
 def get_available_plugins():
     """Get all available plugins in the beetsplug namespace."""
@@ -529,11 +565,10 @@ class TestDeprecationCopy:
 
 class TestMusicBrainzPluginLoading:
     @pytest.fixture(autouse=True)
-    def config(self):
-        _config = config
-        _config.sources = []
-        _config.read(user=False, defaults=True)
-        return _config
+    def config(self, config):
+        config.sources = []
+        config.read(user=False, defaults=True)
+        return config
 
     def test_default(self):
         assert "musicbrainz" in plugins.get_plugin_names()

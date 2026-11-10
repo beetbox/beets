@@ -5,7 +5,6 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from beets import config
 from beets.exceptions import UserError
 from beets.test.helper import BeetsTestCase, IOMixin
 
@@ -28,9 +27,9 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
         cli_config_path.write_text("option: cli overwrite")
         self.cli_config_path = str(cli_config_path)
 
-        config.clear()
-        config["password"].redact = True
-        config._materialized = False
+        self.config.clear()
+        self.config["password"].redact = True
+        self.config._materialized = False
 
     def _run_with_yaml_output(self, *args):
         output = self.run_with_output(*args)
@@ -121,8 +120,8 @@ class ConfigCommandTest(IOMixin, BeetsTestCase):
 
     def test_edit_invalid_config_file(self):
         Path(self.config_path).write_text("invalid: [")
-        config.clear()
-        config._materialized = False
+        self.config.clear()
+        self.config._materialized = False
 
         os.environ["EDITOR"] = "myeditor"
         with patch("os.execlp") as execlp:

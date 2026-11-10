@@ -27,7 +27,9 @@ Each element under ``hooks`` should have these keys:
 - **event**: The name of the event that will trigger this hook. See the
   :ref:`plugin events <plugin_events>` documentation for a list of possible
   values.
-- **command**: The command to run when this hook executes.
+- **command**: The command to run when this hook executes. It is split into
+  arguments the way a shell would, except on Windows, where a backslash keeps
+  its meaning as a path separator instead of escaping the next character.
 
 .. _command-substitution:
 

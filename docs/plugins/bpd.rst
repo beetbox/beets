@@ -23,13 +23,15 @@ with its Python bindings) on your system.
   gst-plugins-base pygobject3``.
 - On Linux, you need to install GStreamer 1.0 and the GObject bindings for
   python. Under Ubuntu, they are called ``python-gi`` and ``gstreamer1.0``.
+- On Windows, there is nothing to install by hand: the ``bpd`` extra ships
+  GStreamer, its plugins and the bindings as Python packages.
 
-You will also need the various GStreamer plugin packages to make everything
-work. See the :doc:`/plugins/chroma` documentation for more information on
-installing GStreamer plugins.
+On Mac OS X and Linux you will also need the various GStreamer plugin packages
+to make everything work. See the :doc:`/plugins/chroma` documentation for more
+information on installing GStreamer plugins.
 
-Once you have system dependencies installed, install ``beets`` with ``bpd``
-extra which installs Python bindings for ``GStreamer``:
+Once you have the system dependencies in place, install ``beets`` with the
+``bpd`` extra:
 
 .. code-block:: console
 
