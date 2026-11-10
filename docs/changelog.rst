@@ -146,8 +146,8 @@ Bug fixes
 - :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
   so multi-disc albums with shared track numbers stay grouped by disc.
   :bug:`4061`
-- creating a new library no longer writes a database backup for every migration.
-  backups are now skipped when the table being migrated has no rows : bug `7170`
+- Creating a new library no longer writes a database backup for every migration.
+  Backups are now skipped when the table being migrated has no rows. :bug `7170`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
