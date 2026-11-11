@@ -49,6 +49,9 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- :doc:`plugins/smartplaylist`: The ``relative_to`` option and ``--relative-to``
+  flag now accept ``library`` to generate paths relative to the library
+  directory, matching the :doc:`plugins/playlist` plugin. :bug:`5348`
 
 Bug fixes
 ~~~~~~~~~

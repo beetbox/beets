@@ -12,7 +12,7 @@ from urllib.request import pathname2url
 
 import confuse
 
-from beets import plugins, ui
+from beets import config, plugins, ui
 from beets.dbcore import Query
 from beets.dbcore.query import ParsingError
 from beets.dbcore.sort import Sort
@@ -91,10 +91,12 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
 
     @cached_property
     def relative_to(self) -> bytes | None:
-        if relative_to := self.config["relative_to"].get():
-            return normpath(relative_to)
-
-        return None
+        value = self.config["relative_to"].get()
+        if not value:
+            return None
+        if value == "library":
+            return normpath(config["directory"].as_filename())
+        return normpath(value)
 
     @cached_property
     def dest_regen(self) -> bool:
@@ -151,10 +153,11 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
         spl_update.parser.add_option(
             "--relative-to",
             dest="relative_to",
-            metavar="PATH",
+            metavar="PATH|library",
             type="string",
             default=self.config["relative_to"].get(),
-            help="generate playlist item paths relative to this path.",
+            help="generate playlist item paths relative to this path, "
+            "or to the library directory with 'library'.",
         )
         spl_update.parser.add_option(
             "--prefix",
