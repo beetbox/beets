@@ -9,6 +9,7 @@ https://gist.github.com/1241307
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from collections import defaultdict
@@ -724,7 +725,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         obj.genres, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genres)
 
-        ui.show_model_changes(obj, fields=["genres"], print_obj=False)
+        # Printing during an import clutters the importer's prompt.
+        if self._log.isEnabledFor(logging.INFO):
+            ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
     @singledispatchmethod
     def _process(self, obj: LibModel, write: bool) -> None:
