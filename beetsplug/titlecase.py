@@ -47,6 +47,7 @@ class TitlecasePlugin(BeetsPlugin):
                 "all_caps": False,
                 "all_lowercase": False,
                 "after_choice": False,
+                "languages": [],
             }
         )
 
@@ -65,6 +66,7 @@ class TitlecasePlugin(BeetsPlugin):
         they are not at the start of a string. Superseded by preserved phrases.
         all_caps - If the alphabet in the string is all uppercase, do not modify.
         all_lowercase - If the alphabet in the string is all lowercase, do not modify.
+        languages - Only titlecase releases whose language is in this list.
         """
         # Register template function
         self.template_funcs["titlecase"] = self.titlecase
@@ -141,6 +143,19 @@ class TitlecasePlugin(BeetsPlugin):
     def the_artist_regexp(self) -> re.Pattern[str]:
         return re.compile(r"\bthe\b")
 
+    @cached_property
+    def languages(self) -> set[str]:
+        return {lang.lower() for lang in self.config["languages"].as_str_seq()}
+
+    def language_allowed(self, language: str | None) -> bool:
+        """Whether metadata in this language should be titlecased.
+
+        Metadata with an unknown language is always titlecased.
+        """
+        if not self.languages or not language:
+            return True
+        return language.lower() in self.languages
+
     def titlecase_callback(self, word: str, **kwargs) -> str | None:
         """Callback function for words to preserve case of."""
         if preserved_word := self.preserve["words"].get(word.upper(), ""):
@@ -151,6 +166,9 @@ class TitlecasePlugin(BeetsPlugin):
         """Calls titlecase fields for AlbumInfo or TrackInfo
         Processes the tracks field for AlbumInfo
         """
+        if not self.language_allowed(getattr(info, "language", None)):
+            self._log.debug("skipping, language is {}", info.language)
+            return
         self.titlecase_fields(info)
         if isinstance(info, AlbumInfo):
             for track in info.tracks:
@@ -175,6 +193,10 @@ class TitlecasePlugin(BeetsPlugin):
         those excluded by the default exclusions and the
         set exclude lists.
         """
+        language = getattr(item, "language", None)
+        if not self.language_allowed(language):
+            self._log.debug("skipping, language is {}", language)
+            return
         for field in self.fields_to_process:
             init_field = getattr(item, field, "")
             if init_field:
