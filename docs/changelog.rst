@@ -49,6 +49,8 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- :doc:`plugins/autobpm`: Add ``-b``/``--start-bpm`` option to override
+  ``beat_track_kwargs.start_bpm`` from the command line.
 
 Bug fixes
 ~~~~~~~~~
