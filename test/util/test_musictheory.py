@@ -19,6 +19,12 @@ from beets.util.musictheory import (
         ("Bbmaj", "A#"),
         ("F#min", "F#m"),
         ("Am", "Am"),
+        ("E♭", "D#"),
+        ("E♭ major", "D#"),
+        ("E♭maj", "D#"),
+        ("B♭m", "A#m"),
+        ("F♯m", "F#m"),
+        ("C♯ minor", "C#m"),
     ],
 )
 def test_normalize_key(raw, expected):

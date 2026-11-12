@@ -70,8 +70,9 @@ def normalize_key(key: str) -> str:
         normalize_key("A minor") == "Am"
         normalize_key("F# major") == "F#"
         normalize_key("Gmin") == "Gm"
+        normalize_key("E♭ major") == "D#"
     """
-    key = key.lower()
+    key = key.lower().replace("♭", "b").replace("♯", "#")
     for flat, sharp in ENHARMONIC.items():
         key = re.sub(flat, sharp, key)
     key = re.sub(rf"([a-g]#?)[\W\s]*(?:{_MINOR_WORDS})\b", r"\1m", key)
