@@ -2,6 +2,8 @@
 
 from unittest.mock import patch
 
+import pytest
+
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, ImportTask
 from beets.library import Item
@@ -385,3 +387,49 @@ class TestTitlecasePlugin(PluginTestCase):
             assert item.album == expected.album
             assert item.title == expected.title
         p.stop()
+
+
+@pytest.mark.parametrize(
+    "languages, language, expected",
+    [
+        pytest.param([], "fra", "Ne Me Quitte Pas", id="no-languages"),
+        pytest.param(["eng"], "fra", "ne me quitte pas", id="not-listed"),
+        pytest.param(["eng"], "mul", "ne me quitte pas", id="multiple"),
+        pytest.param(["eng", "fra"], "fra", "Ne Me Quitte Pas", id="listed"),
+        pytest.param(["ENG"], "eng", "Ne Me Quitte Pas", id="case"),
+        pytest.param(["eng"], None, "Ne Me Quitte Pas", id="unknown"),
+    ],
+)
+def test_received_info_handler_languages(config, languages, language, expected):
+    """https://github.com/beetbox/beets/issues/6362"""
+    config["titlecase"].set(
+        {"fields": ["album", "title"], "languages": languages}
+    )
+    info = AlbumInfo(
+        tracks=[TrackInfo(title="ne me quitte pas")],
+        album="ne me quitte pas",
+        language=language,
+    )
+
+    TitlecasePlugin().received_info_handler(info)
+
+    assert info.album == expected
+    assert info.tracks[0].title == expected
+
+
+@pytest.mark.parametrize(
+    "language, expected",
+    [
+        pytest.param("deu", "der weg", id="not-listed"),
+        pytest.param("eng", "Der Weg", id="listed"),
+        pytest.param("", "Der Weg", id="unknown"),
+    ],
+)
+def test_titlecase_fields_languages(config, language, expected):
+    """https://github.com/beetbox/beets/issues/6362"""
+    config["titlecase"].set({"fields": ["title"], "languages": ["eng"]})
+    item = Item(title="der weg", language=language)
+
+    TitlecasePlugin().titlecase_fields(item)
+
+    assert item.title == expected
