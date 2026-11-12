@@ -1331,18 +1331,18 @@ def as_path(path: PathLike, name: str = "path") -> Path:
     return Path(os.fsdecode(path))
 
 
-def positive_int_option_callback(
+def parse_non_negative_int(
     option: optparse.Option,
     opt_str: str,
     value: int,
     parser: optparse.OptionParser,
 ) -> None:
-    """Validate and store a positive integer option value.
+    """Validate and store a non-negative integer option value.
 
     Meant to be used as an ``optparse`` callback together with
     ``action="callback"`` and ``type="int"``.
     """
-    if value <= 0:
-        raise UserError(f"{opt_str} argument must be a positive integer")
+    if value < 0:
+        raise UserError(f"{opt_str} argument must be a non-negative integer")
     assert option.dest is not None
     setattr(parser.values, option.dest, value)

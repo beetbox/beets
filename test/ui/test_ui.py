@@ -469,6 +469,7 @@ class TestCommonOptionsParser:
         parser.add_limit_option()
 
         assert parser.parse_args([]) == ({"limit": None}, [])
+        assert parser.parse_args(["-l", "0"]) == ({"limit": 0}, [])
         assert parser.parse_args(["-l", "1"]) == ({"limit": 1}, [])
         assert parser.parse_args(["--limit", "2"]) == ({"limit": 2}, [])
 

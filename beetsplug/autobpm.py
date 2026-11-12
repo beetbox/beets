@@ -72,7 +72,7 @@ class AutoBPMPlugin(BeetsPlugin):
             dest="beat_track_kwargs.start_bpm",
             type="int",
             action="callback",
-            callback=util.positive_int_option_callback,
+            callback=util.parse_non_negative_int,
             help=(
                 "Initial BPM guess for beat tracking "
                 "(overrides beat_track_kwargs.start_bpm)"

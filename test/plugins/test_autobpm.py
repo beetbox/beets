@@ -100,10 +100,9 @@ class TestAutoBPMPlugin(ImportHelper, PluginTestHelper):
         assert kwargs["start_bpm"] == 155
         assert kwargs["tightness"] == 100
 
-    @pytest.mark.parametrize("value", ["0", "-5"])
-    def test_command_start_bpm_must_be_positive(self, item, value):
-        with pytest.raises(UserError, match="must be a positive integer"):
-            self.run_command("autobpm", "--start-bpm", value)
+    def test_command_start_bpm_must_be_non_negative(self, item):
+        with pytest.raises(UserError, match="must be a non-negative integer"):
+            self.run_command("autobpm", "--start-bpm", "-5")
 
     def test_import(self, importer):
         importer.run()
