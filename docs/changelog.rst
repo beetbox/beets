@@ -23,6 +23,9 @@ New features
 - :doc:`plugins/lastgenre`: Improve original-genre fallback by applying aliases
   before whitelist filtering, while preserving existing genres regardless of the
   configured count. :bug:`6890`
+- :doc:`plugins/lastgenre`: Use the shared ``lastfm.api_key`` setting (also used
+  by :doc:`plugins/lastimport`) so that a personal Last.fm API key can be used
+  instead of beets's built-in one.
 - :doc:`plugins/subsonicupdate`: Add a ``subsonicupdate`` command that requests
   a library update from the Subsonic server on demand, and an ``auto`` option
   that disables the updates triggered by library and smart playlist changes.

@@ -362,6 +362,20 @@ The available options are:
   the built-in table with your own. See `Genre Normalization (Aliases)`_ for
   details.
 
+Last.fm API Key
+~~~~~~~~~~~~~~~
+
+By default, the plugin uses beets's own Last.fm API key, which every beets
+installation shares. To use your own API key instead, set ``api_key`` in the
+top-level ``lastfm:`` section of your configuration file:
+
+.. code-block:: yaml
+
+    lastfm:
+        api_key: your_api_key
+
+This is the same setting that the :doc:`lastimport` plugin uses.
+
 Running Manually
 ----------------
 

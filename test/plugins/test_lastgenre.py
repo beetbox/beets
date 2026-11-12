@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 import confuse
 import pytest
 
+from beets import plugins
 from beets.library import Album
 from beets.test import _common
 from beets.test.helper import IOMixin, PluginTestCase, PluginTestHelper
@@ -1366,3 +1367,45 @@ class TestAliases(PluginTestHelper):
         assert result == [], (
             "'hip-hop' must be normalized to 'hip hop' then filtered by ignorelist"
         )
+
+
+class TestLastfmApiKey(PluginTestHelper):
+    plugin = "lastgenre"
+
+    def test_default_api_key(self):
+        """Without a configured key the shared beets key is used."""
+        with self.configure_plugin({}):
+            plugin = lastgenre.LastGenrePlugin()
+        assert plugin.client.network.api_key == plugins.LASTFM_KEY
+
+    def test_configured_api_key(self):
+        """A key set in the top-level lastfm section is used."""
+        self.config["lastfm"]["api_key"] = "my-test-key"
+        with self.configure_plugin({}):
+            plugin = lastgenre.LastGenrePlugin()
+        assert plugin.client.network.api_key == "my-test-key"
+
+    @pytest.mark.parametrize(
+        "kind, method_name, args",
+        [
+            ("track", "get_track", ("artist", "title")),
+            ("album", "get_album", ("albumartist", "album")),
+            ("artist", "get_artist", ("artist",)),
+            ("album_artist", "get_artist", ("albumartist",)),
+        ],
+    )
+    def test_fetch_uses_instance_network(self, kind, method_name, args):
+        """fetch() dispatches to the matching method of the instance network."""
+        client = lastgenre.client.LastFmClient(Mock(), 0, {}, [])
+        client.network = Mock()
+        client.fetch_genres = Mock(return_value=["rock"])
+        obj = Mock(
+            artist="artist",
+            title="title",
+            albumartist="albumartist",
+            album="album",
+        )
+
+        assert client.fetch(kind, obj) == ["rock"]
+
+        getattr(client.network, method_name).assert_called_once_with(*args)
