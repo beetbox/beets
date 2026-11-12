@@ -250,6 +250,11 @@ New features
   prompt, without restarting the whole ``beet import`` run.
 - :ref:`list-cmd` Add ``-l / --limit LIMIT`` flag to the ``list`` command to
   limit query results. :bug:`5076`
+- :doc:`plugins/scrub`: Add a ``keep`` option listing tag names to preserve when
+  scrubbing. Names are matched case-insensitively against each format's own
+  naming scheme, so ``SUBBOX_ID`` matches the ID3 frame ``TXXX:SUBBOX_ID``, the
+  MP4 atom ``----:com.apple.iTunes:SUBBOX_ID`` and the Vorbis comment
+  ``subbox_id``. :bug:`6537`
 
 Bug fixes
 ~~~~~~~~~

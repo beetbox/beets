@@ -1,6 +1,23 @@
+import pytest
 from mediafile import MediaFile
 
 from beets.test.helper import AsIsImporterMixin, ImportHelper, PluginMixin
+from beetsplug.scrub import _tag_matches_keep
+
+
+@pytest.mark.parametrize(
+    ("tag", "keep", "matches"),
+    [
+        ("TXXX:SUBBOX_ID", {"subbox_id"}, True),
+        ("COMM:iTunNORM:eng", {"itunnorm"}, True),
+        ("USLT:Lyrics:eng", {"lyrics"}, True),
+        ("----:com.apple.iTunes:SUBBOX_ID", {"subbox_id"}, True),
+        ("subbox_id", {"subbox_id"}, True),
+        ("COMM:iTunNORM:eng", {"eng"}, False),
+    ],
+)
+def test_tag_matches_keep(tag, keep, matches):
+    assert _tag_matches_keep(tag, keep) is matches
 
 
 class TestScrubbedImport(AsIsImporterMixin, PluginMixin, ImportHelper):
