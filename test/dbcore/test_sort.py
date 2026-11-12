@@ -149,6 +149,104 @@ class TestSort:
         assert albumartists == ["Foo", "Baz", "Bar"]
 
 
+class TestSlowSortLimit:
+    @pytest.fixture(autouse=True, scope="class")
+    def setup(self, helper):
+        for title in ("b", "a"):
+            helper.add_item(title=title)
+
+    def test_limit_applies_after_slow_sort(self, helper):
+        # A slow sort on a database-backed field must not get an SQL limit.
+        results = helper.lib.items("", SlowFieldSort("title"), limit=1)
+
+        assert [item.title for item in results] == ["a"]
+
+
+class TestHarmonicSort:
+    @pytest.fixture(autouse=True, scope="class")
+    def setup(self, helper):
+        # Keys are written straight to the database to cover spellings
+        # stored before normalization existed (flats, short forms).
+        stored_keys = {
+            "C": "C",
+            "Gmaj": "Gmaj",
+            "Db": "Db",
+            "Am": "Am",
+            "Gmin": "Gmin",
+            "unknown": "H",
+            "missing": None,
+        }
+        for title, key in stored_keys.items():
+            helper.add_item(title=title)
+            with helper.lib.transaction() as tx:
+                tx.mutate(
+                    "UPDATE items SET initial_key=? WHERE title=?", (key, title)
+                )
+
+    @pytest.mark.parametrize(
+        "query,known,unknown",
+        [
+            _p(
+                "initial_key+",
+                ["C", "Am", "Gmaj", "Db", "Gmin"],
+                {"unknown", "missing"},
+                id="ascending",
+            ),
+            _p(
+                "initial_key-",
+                ["Gmin", "Db", "Gmaj", "Am", "C"],
+                {"unknown", "missing"},
+                id="descending",
+            ),
+        ],
+    )
+    def test_circle_of_fifths_order(
+        self, helper, config, query, known, unknown
+    ):
+        config["sort_initial_key_harmonic"] = True
+
+        titles = [item.title for item in helper.lib.items(query)]
+
+        assert titles[: len(known)] == known
+        assert set(titles[len(known) :]) == unknown
+
+    @pytest.mark.parametrize(
+        "query,expected",
+        [
+            _p(
+                "initial_key+",
+                ["missing", "Am", "C", "Db", "Gmaj", "Gmin", "unknown"],
+                id="ascending",
+            ),
+            _p(
+                "initial_key-",
+                ["unknown", "Gmin", "Gmaj", "Db", "C", "Am", "missing"],
+                id="descending",
+            ),
+        ],
+    )
+    def test_alphabetical_when_disabled(self, helper, config, query, expected):
+        config["sort_initial_key_harmonic"] = False
+
+        titles = [item.title for item in helper.lib.items(query)]
+
+        assert titles == expected
+
+    @pytest.mark.parametrize("query", ["initial_key+", "initial_key-"])
+    def test_python_fallback_matches_sql(self, helper, config, query):
+        config["sort_initial_key_harmonic"] = True
+        sort = beets.library.parse_query_string(query, Item)[1]
+
+        sql_titles = [item.title for item in helper.lib.items(query)]
+        python_titles = [
+            item.title for item in sort.sort(helper.lib.items("title+"))
+        ]
+
+        # Unknown and missing keys are tied, so only compare the known part.
+        assert python_titles[:5] == sql_titles[:5]
+        assert set(python_titles[5:]) == set(sql_titles[5:])
+
+
 class TestCaseSensitivity:
     """If case_insensitive is false, lower-case values should be placed
     after all upper-case values. E.g., `Foo Qux bar`
