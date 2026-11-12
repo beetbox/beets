@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
 from datetime import datetime, timedelta
@@ -293,7 +294,10 @@ class BeatportTrack(BeatportObject):
             self.url = f"https://beatport.com/track/{data['slug']}/{data['id']}"
         self.track_number = data.get("trackNumber")
         self.bpm = data.get("bpm")
-        self.initial_key = str((data.get("key") or {}).get("shortName"))
+        short_name = (data.get("key") or {}).get("shortName")
+        self.initial_key = (
+            html.unescape(str(short_name)) if short_name else None
+        )
 
 
 class BeatportPlugin(MetadataSourcePlugin):

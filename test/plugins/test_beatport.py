@@ -500,7 +500,7 @@ class BeatportTest(BeetsTestCase):
         items[1].initial_key = "Gmaj"
         items[2].initial_key = "Fmaj"
         items[3].initial_key = "Amin"
-        items[4].initial_key = "E&#9837;maj"
+        items[4].initial_key = "D#"
         items[5].initial_key = "Amaj"
 
         for item in items:
@@ -557,6 +557,12 @@ class BeatportTest(BeetsTestCase):
     def test_initial_key_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
             assert normalize_key(track.initial_key) == test_track.initial_key
+
+    def test_initial_key_flat_sign_decoded(self):
+        # "E&#9837;maj" is the HTML entity for E-flat major.
+        assert self.tracks[4].initial_key == "E♭maj"
+        assert normalize_key(self.tracks[4].initial_key) == "D#"
+        assert self.test_tracks[4].initial_key == "D#"
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
