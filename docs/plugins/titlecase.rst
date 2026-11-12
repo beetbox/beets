@@ -64,6 +64,7 @@ Default
         all_lowercase: no
         all_caps: no
         after_choice: no
+        languages: []
 
 .. conf:: auto
     :default: yes
@@ -168,6 +169,23 @@ Default
      you make your selection and creating different weight calculations. If you'd rather
      see the data as received from the database, set this to true to run after you make
      your tag choice.
+
+.. conf:: languages
+    :default: []
+
+    Only titlecase releases whose ``language`` is in this list. Use the codes
+    found in the ``language`` field, which are three-letter ISO 639-3 codes
+    for MusicBrainz releases (for example ``eng``, ``deu`` or ``jpn``, and
+    ``mul`` for releases in multiple languages). Releases with no language
+    set are always titlecased. An empty list titlecases every release.
+
+    This option does not affect the ``%titlecase`` template function.
+
+.. code-block:: yaml
+
+    titlecase:
+      languages:
+        - eng
 
 Dangerous Fields
 ~~~~~~~~~~~~~~~~
