@@ -153,6 +153,9 @@ Bug fixes
   import (unless it is verbose), where they could appear on top of the
   importer's prompt for the next album and make the import look frozen. The
   ``lastgenre`` command still prints them. :bug:`6830`
+- :ref:`import-cmd`: Handle the ``Merge all`` duplicate action when
+  ``import.autotag`` is ``no``, merging new tracks into the existing album
+  instead of creating a duplicate album entry. :bug:`7178`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

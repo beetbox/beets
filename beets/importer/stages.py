@@ -274,21 +274,7 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
     _resolve_duplicates(session, task)
 
     if task.duplicate_action is DuplicateAction.MERGE:
-        # Create a new task for tagging the current items
-        # and duplicates together
-        duplicate_items = task.duplicate_items(session.lib)
-
-        # Duplicates would be reimported so make them look "fresh"
-        _freshen_items(duplicate_items)
-        duplicate_paths = [item.path for item in duplicate_items]
-
-        # Record merged paths in the session so they are not reimported
-        session.mark_merged(duplicate_paths)
-
-        merged_task = ImportTask(
-            None, task.paths + duplicate_paths, task.items + duplicate_items
-        )
-
+        merged_task = _merge_duplicates(session, task)
         return _extend_pipeline(
             [merged_task], lookup_candidates(session), user_query(session)
         )
@@ -297,20 +283,29 @@ def user_query(session: ImportSession, task: ImportTask) -> StageReturn:
     return task
 
 
-@pipeline.mutator_stage
-def import_asis(session: ImportSession, task: ImportTask) -> None:
+@pipeline.stage
+def import_asis(session: ImportSession, task: ImportTask) -> StageReturn:
     """Select the `action.ASIS` choice for all tasks.
 
     This stage replaces the initial_lookup and user_query stages
     when the importer is run without autotagging.
     """
     if task.skip:
-        return
+        return task
+
+    if session.already_merged(task.paths):
+        return pipeline.BUBBLE
 
     log.info("{}", displayable_path(task.paths))
     task.set_choice(Action.ASIS)
     _resolve_duplicates(session, task)
+
+    if task.duplicate_action is DuplicateAction.MERGE:
+        merged_task = _merge_duplicates(session, task)
+        return _extend_pipeline([merged_task], import_asis(session))
+
     _apply_choice(session, task)
+    return task
 
 
 @pipeline.mutator_stage
@@ -456,6 +451,17 @@ def _freshen_items(items: Iterable[library.Item]) -> None:
     for item in items:
         item.id = None
         item.album_id = None
+
+
+def _merge_duplicates(session: ImportSession, task: ImportTask) -> ImportTask:
+    """Create a merged task combining ``task`` with its library duplicates."""
+    duplicate_items = task.duplicate_items(session.lib)
+    _freshen_items(duplicate_items)
+    duplicate_paths = [item.path for item in duplicate_items]
+    session.mark_merged(duplicate_paths)
+    return ImportTask(
+        None, task.paths + duplicate_paths, task.items + duplicate_items
+    )
 
 
 def _extend_pipeline(
