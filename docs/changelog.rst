@@ -53,6 +53,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/missing`: Fix the documentation of the ``--release-types``
+  command-line option and the ``release_types`` configuration option, which
+  still used their old names. :bug:`7172`
 - Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
   full traceback at error level when a search fails because the service is
   unreachable. The error message is logged on its own, and the traceback is kept
