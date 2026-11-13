@@ -1485,6 +1485,20 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert len(self.lib.albums()) == 1
         assert len(self.lib.items()) == 2
 
+    def test_import_asis_skips_already_merged_task(self):
+        from beets.importer import stages
+        from beets.util import pipeline
+
+        task = stages.ImportTask(
+            self.importer.paths[0],
+            [self.importer.paths[0]],
+            list(self.lib.items()),
+        )
+        self.importer.mark_merged(task.paths)
+        stage = stages.import_asis(self.importer)
+        next(stage)
+        assert stage.send(task) is pipeline.BUBBLE
+
     def test_twice_in_import_dir(self):
         pytest.skip(reason="write me")
 
