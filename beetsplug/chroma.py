@@ -228,7 +228,7 @@ class AcoustidPlugin(MetadataSourcePlugin):
     ) -> None:
         return fingerprint_task(self._log, task, session)
 
-    def track_distance(self, item: Item, info: TrackInfo) -> Distance:
+    def track_penalties(self, item: Item, info: TrackInfo) -> Distance:
         dist = Distance()
         if item.path not in _matches or not info.track_id:
             # Match failed or no track ID.
