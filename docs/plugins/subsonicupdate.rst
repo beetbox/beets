@@ -41,6 +41,44 @@ endpoint.
 
 .. _subsonic api compatible: https://www.subsonic.org/pages/api.jsp
 
+Marking Favourites
+------------------
+
+The plugin also lets you mark beets query results as favourites (starred songs)
+for the configured user, using the same ``subsonic:`` connection details:
+
+.. code-block:: sh
+
+    beet subsonic-set-favorite QUERY
+
+This works with any `Subsonic API compatible`_ server implementing the
+``search3``, ``getStarred2`` and ``star`` endpoints, such as Navidrome_. The
+command shows how many tracks the query matched and asks for confirmation before
+marking them; pass ``-y`` (``--yes``) to skip it. Tracks that are already
+favourites are left alone, and only newly marked tracks are listed and counted
+in the summary.
+
+Subsonic servers use their own song IDs, which are different from beets item
+IDs. The plugin first looks for ``subsonic_id`` and ``subsonic_url`` fields on
+each selected item, and uses the stored ID directly when ``subsonic_url``
+matches the configured ``url``. IDs are only unique within a server, so an ID
+stored for a different server is ignored. You can populate these as flexible
+attributes and query them like any other field.
+
+Otherwise, the plugin searches the server using the item's artist, album, and
+title. If that returns no usable match, the plugin tries narrower artist/title,
+title-only and artist-only searches, followed by transliterated variants for
+metadata containing accents, non-Latin scripts or characters such as ``Ø`` and
+``Æ``. A song only matches when its title and artist are the same as the item's,
+ignoring case, punctuation and accents, so a live or remixed version of a song
+is never picked in its place. Missing or ambiguous matches are skipped to avoid
+favouriting the wrong track. A unique match is stored in ``subsonic_id`` and
+``subsonic_url``, so later runs skip the search for that item. If the server
+does not star a stored ID, for example because the track was retagged and got a
+new ID, the plugin searches for it again.
+
+.. _navidrome: https://www.navidrome.org/
+
 Configuration
 -------------
 
