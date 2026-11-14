@@ -7,6 +7,7 @@ import re
 import shutil
 import stat
 import sys
+import threading
 import unicodedata
 import unittest
 from contextlib import contextmanager
@@ -1996,6 +1997,57 @@ class TagLogTest(TestHelper):
         session = _common.import_session(self.lib, loghandler=handler)
         session.tag_log("status", "caf\xe9")  # send unicode
         assert "status caf\xe9" in sio.getvalue()
+
+
+class TestImportStateConcurrency:
+    def test_progress_reset_keeps_concurrent_add(self, tmp_path, monkeypatch):
+        """
+        `beet import a b`: the `read_tasks` thread resets the progress
+        of b while the `manipulate_files` thread records the progress
+        for a. Neither should be lost.
+        """
+        state_path = bytestring_path(str(tmp_path / "state.pickle"))
+
+        toppath_a, toppath_b = b"/music/a", b"/music/b"
+        with ImportState(path=state_path) as state:
+            state.tagprogress[toppath_b] = [b"/music/b/old"]
+
+        reset_saving = threading.Event()
+        add_done = threading.Event()
+        orig_save = ImportState._save
+
+        def slow_save(self):
+            if threading.current_thread().name == "reset":
+                reset_saving.set()
+                add_done.wait(timeout=0.1)
+            orig_save(self)
+
+        monkeypatch.setattr(ImportState, "_save", slow_save)
+
+        def reset():
+            ImportState(path=state_path).progress_reset(toppath_b)
+
+        def add():
+            reset_saving.wait()
+            ImportState(path=state_path).progress_add(
+                toppath_a, b"/music/a/album"
+            )
+            add_done.set()
+
+        threads = [
+            threading.Thread(target=reset, name="reset"),
+            threading.Thread(target=add, name="add"),
+        ]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join()
+
+        assert ImportState(path=state_path).tagprogress == {
+            toppath_a: [b"/music/a/album"]
+        }
 
 
 class TestResumeImport(ImportHelper):
