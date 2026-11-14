@@ -188,6 +188,13 @@ class SummarizeItemsTest(BeetsTestCase):
         summary = summarize_items([self.item, i2, i2], False)
         assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
 
+    def test_summarize_flac_item(self):
+        self.item.update(
+            {"format": "FLAC", "samplerate": 44100, "bitdepth": 16}
+        )
+        summary = summarize_items([self.item], True)
+        assert summary == "FLAC, 4kbps, 44.1kHz/16 bit, 10:54, 987.0 B"
+
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
 class SummarizeItemsFieldsTest(BeetsTestCase):
