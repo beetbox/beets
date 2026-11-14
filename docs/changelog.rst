@@ -53,6 +53,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
+  or ``mb_trackid`` now detect duplicates when a metadata-source match is
+  applied, instead of treating the key as missing. :bug:`7067`
 - :doc:`plugins/missing`: Fix the documentation of the ``--release-types``
   command-line option and the ``release_types`` configuration option, which
   still used their old names. :bug:`7172`

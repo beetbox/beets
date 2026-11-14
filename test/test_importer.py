@@ -24,6 +24,7 @@ from mediafile import MediaFile
 
 from beets import importer, logging, plugins, ui, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
+from beets.autotag.match import TrackMatch
 from beets.importer.state import ImportState
 from beets.importer.tasks import (
     ImportTaskFactory,
@@ -2584,3 +2585,52 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
 
         self.run_asis_importer()
         assert dest.exists()
+
+
+class TestDuplicateKeysUseLibraryFieldNames(BeetsTestCase):
+    """Duplicate detection of applied matches must see library field names.
+
+    ``AlbumInfo.album_id`` / ``TrackInfo.track_id`` are exposed to the library
+    as ``mb_albumid`` / ``mb_trackid``, which is what ``duplicate_keys`` use.
+    """
+
+    def test_album_duplicate_found_by_mb_albumid(self):
+        existing = self.add_item_fixture(
+            albumartist="artist", album="album", mb_albumid="rel-1"
+        )
+        self.lib.add_album([existing])
+        self.config["import"]["duplicate_keys"]["album"] = ["mb_albumid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.ImportTask(None, [new_item.path], [new_item])
+        info = AlbumInfo(
+            tracks=[],
+            album="other album",
+            album_id="rel-1",
+            artist="other artist",
+        )
+        task.match = AlbumMatch(
+            distance=Distance(),
+            info=info,
+            mapping={},
+            extra_items=[],
+            extra_tracks=[],
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert len(task.find_duplicates(self.lib)) == 1
+
+    def test_singleton_duplicate_found_by_mb_trackid(self):
+        self.add_item_fixture(title="title", mb_trackid="track-1")
+        self.config["import"]["duplicate_keys"]["item"] = ["mb_trackid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.SingletonImportTask(None, new_item)
+        task.match = TrackMatch(
+            distance=Distance(),
+            info=TrackInfo(title="other title", track_id="track-1"),
+            item=new_item,
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert len(task.find_duplicates(self.lib)) == 1
