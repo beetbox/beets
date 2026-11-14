@@ -670,6 +670,20 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         )
         assert self.lib.albums()[0].mb_albumid == ""
 
+    def test_edit_shown_candidate(self):
+        """edit Candidates on a candidate's change screen edits that
+        candidate without prompting for a number.
+        """
+        m = ModifyFileMocker(replacements={"Applied Track": "Edited Track"})
+        # pick 2, edit Candidates, Apply changes.
+        for sel in ("2", "c", "a"):
+            self.io.addinput(sel)
+        with patch("beetsplug.edit.edit", side_effect=m.action):
+            self.importer.run()
+
+        assert all("Edited Track " in i.title for i in self.lib.items())
+        assert self.lib.albums()[0].mb_albumid == "albumid M"
+
     def test_edit_retag_apply(self):
         """Import the album using a candidate, then retag and edit and apply
         changes.
