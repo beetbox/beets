@@ -308,6 +308,11 @@ lyrics_pages = [
         [01:58.65]Wonder how you manage to make ends meet
         [02:06.04]
         """,
+        marks=[
+            xfail_on_ci(
+                "lrclib.net search results change over time", strict=False
+            )
+        ],
     ),
     LyricsPage.make(
         "https://api.lrcmux.dev/get?artist=The+Beatles&title=Lady+Madonna&duration=186&format=lrc&level=line&sources=ytmusic",
@@ -337,6 +342,7 @@ lyrics_pages = [
         [01:53.90] Lady Madonna, children at your feet
         [01:58.42] Wonder how you manage to make ends meet
         """,
+        marks=[xfail_on_ci("lrcmux timestamps change over time", strict=False)],
     ),
     LyricsPage.make(
         "https://www.lyricsmania.com/lady_madonna_lyrics_the_beatles.html",
