@@ -53,6 +53,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/missing`: Fix the documentation of the ``--release-types``
+  command-line option and the ``release_types`` configuration option, which
+  still used their old names. :bug:`7172`
 - Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
   full traceback at error level when a search fails because the service is
   unreachable. The error message is logged on its own, and the traceback is kept
@@ -148,6 +151,13 @@ Bug fixes
 - :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
   so multi-disc albums with shared track numbers stay grouped by disc.
   :bug:`4061`
+- :doc:`plugins/lastgenre`: The genre changes are no longer printed during an
+  import (unless it is verbose), where they could appear on top of the
+  importer's prompt for the next album and make the import look frozen. The
+  ``lastgenre`` command still prints them. :bug:`6830`
+- Path formats: an empty ``${}`` inside a function call argument no longer
+  truncates the argument list and leaks the rest of the template as literal
+  text.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
