@@ -2000,11 +2000,7 @@ class TagLogTest(TestHelper):
 
 
 class TestImportStateConcurrency:
-    def test_progress_reset_keeps_concurrent_add(
-        self,
-        tmp_path,
-        monkeypatch
-    ):
+    def test_progress_reset_keeps_concurrent_add(self, tmp_path, monkeypatch):
         """
         `beet import a b`: the `read_tasks` thread resets the progress
         of b while the `manipulate_files` thread records the progress
