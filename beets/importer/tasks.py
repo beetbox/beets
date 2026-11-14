@@ -327,8 +327,10 @@ class ImportTask(BaseImportTask):
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             return self.source.data.copy()
         if self.choice_flag is Action.APPLY and self.match:
-            # Use library field names (e.g. ``mb_albumid``, ``mb_trackid``),
-            # as the duplicate keys are expressed in those.
+            # Library field names (e.g. ``mb_albumid``), which
+            # ``duplicate_keys`` refer to.
+            # Copy since ``item_data`` is cached and callers mutate the
+            # result.
             return self.match.info.item_data.copy()
         assert False
 
@@ -575,7 +577,8 @@ class ImportTask(BaseImportTask):
             info["albumartist"] = info["artist"]
 
         if info.get("albumartist") is None:
-            # As-is import with no artist. Skip check.
+            # No album artist to query: an as-is import with none, or an
+            # applied match where ``item_data`` dropped a ``None`` artist.
             return []
 
         # Construct a query to find duplicates with this metadata. We
