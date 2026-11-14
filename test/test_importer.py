@@ -2000,19 +2000,47 @@ class TagLogTest(TestHelper):
 
 
 class TestImportStateConcurrency:
-    def test_concurrent_history_add(self, tmp_path):
+    def test_progress_reset_keeps_concurrent_add(
+        self,
+        tmp_path,
+        monkeypatch
+    ):
+        """
+        `beet import a b`: the `read_tasks` thread resets the progress
+        of b while the `manipulate_files` thread records the progress
+        for a. Neither should be lost.
+        """
         state_path = bytestring_path(str(tmp_path / "state.pickle"))
-        n_threads = 20
-        barrier = threading.Barrier(n_threads)
 
-        def add(i):
-            barrier.wait()
-            ImportState(path=state_path).history_add(
-                [bytestring_path(f"path{i}")]
+        toppath_a, toppath_b = b"/music/a", b"/music/b"
+        with ImportState(path=state_path) as state:
+            state.tagprogress[toppath_b] = [b"/music/b/old"]
+
+        reset_saving = threading.Event()
+        add_done = threading.Event()
+        orig_save = ImportState._save
+
+        def slow_save(self):
+            if threading.current_thread().name == "reset":
+                reset_saving.set()
+                add_done.wait(timeout=0.1)
+            orig_save(self)
+
+        monkeypatch.setattr(ImportState, "_save", slow_save)
+
+        def reset():
+            ImportState(path=state_path).progress_reset(toppath_b)
+
+        def add():
+            reset_saving.wait()
+            ImportState(path=state_path).progress_add(
+                toppath_a, b"/music/a/album"
             )
+            add_done.set()
 
         threads = [
-            threading.Thread(target=add, args=(i,)) for i in range(n_threads)
+            threading.Thread(target=reset, name="reset"),
+            threading.Thread(target=add, name="add"),
         ]
 
         for t in threads:
@@ -2021,7 +2049,9 @@ class TestImportStateConcurrency:
         for t in threads:
             t.join()
 
-        assert len(ImportState(path=state_path).taghistory) == n_threads
+        assert ImportState(path=state_path).tagprogress == {
+            toppath_a: [b"/music/a/album"]
+        }
 
 
 class TestResumeImport(ImportHelper):
