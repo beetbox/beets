@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 # Global logger.
 log = logging.getLogger("beets")
 
-_lock = threading.RLock()
+_lock = threading.Lock()
 
 
 @dataclass
@@ -62,7 +62,11 @@ class ImportState:
 
     def __enter__(self) -> Self:
         _lock.acquire()
-        self._open()  # read latest state
+        try:
+            self._open()  # read latest state
+        except BaseException:
+            _lock.release()
+            raise
         return self
 
     def __exit__(
@@ -77,33 +81,34 @@ class ImportState:
             _lock.release()
 
     def _open(self) -> None:
-        with _lock:
-            try:
-                with open(self.path, "rb") as f:
-                    state = pickle.load(f)
-                    # Read the states
-                    self.tagprogress = state.get("tagprogress", {})
-                    self.taghistory = state.get("taghistory", set())
-            except Exception as exc:
-                # The `pickle` module can emit all sorts of exceptions during
-                # unpickling, including ImportError. We use a catch-all
-                # exception to avoid enumerating them all (the docs don't even have a
-                # full list!).
-                log.debug("state file could not be read: {}", exc)
+        try:
+            with open(self.path, "rb") as f:
+                state = pickle.load(f)
+                # Read the states
+                self.tagprogress = state.get("tagprogress", {})
+                self.taghistory = state.get("taghistory", set())
+        except Exception as exc:
+            # The `pickle` module can emit all sorts of exceptions during
+            # unpickling, including ImportError. We use a catch-all
+            # exception to avoid enumerating them all (the docs don't even have a
+            # full list!).
+            log.debug("state file could not be read: {}", exc)
 
     def _save(self) -> None:
-        with _lock:
-            try:
-                with open(self.path, "wb") as f:
-                    pickle.dump(
-                        {
-                            "tagprogress": self.tagprogress,
-                            "taghistory": self.taghistory,
-                        },
-                        f,
-                    )
-            except OSError as exc:
-                log.error("state file could not be written: {}", exc)
+        tmp_path = self.path + b".tmp"
+        try:
+            with open(tmp_path, "wb") as f:
+                pickle.dump(
+                    {
+                        "tagprogress": self.tagprogress,
+                        "taghistory": self.taghistory,
+                    },
+                    f,
+                )
+            # Atomic swap so readers never see a partially written file
+            os.replace(tmp_path, self.path)
+        except OSError as exc:
+            log.error("state file could not be written: {}", exc)
 
     # -------------------------------- Tagprogress ------------------------------- #
 
