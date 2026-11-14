@@ -132,6 +132,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "aliases": True,
             }
         )
+        config["lastfm"].add({"api_key": plugins.LASTFM_KEY})
+        config["lastfm"]["api_key"].redact = True
         self.setup()
 
     def setup(self) -> None:
@@ -151,6 +153,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self.config["min_weight"].get(int),
             self.ignore_patterns,
             self.alias_patterns,
+            api_key=config["lastfm"]["api_key"].as_str(),
         )
 
     def _load_whitelist(self) -> Whitelist:
