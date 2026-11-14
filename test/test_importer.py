@@ -2019,6 +2019,7 @@ class TestImportStateConcurrency:
         def slow_save(self):
             if threading.current_thread().name == "reset":
                 reset_saving.set()
+                # With the lock, `add` is blocked on it, so this is expected to time out
                 add_done.wait(timeout=0.1)
             orig_save(self)
 
@@ -2028,7 +2029,9 @@ class TestImportStateConcurrency:
             ImportState(path=state_path).progress_reset(toppath_b)
 
         def add():
-            reset_saving.wait()
+
+            assert reset_saving.wait(timeout=5), "reset did not reach _save"
+
             ImportState(path=state_path).progress_add(
                 toppath_a, b"/music/a/album"
             )
@@ -2043,7 +2046,9 @@ class TestImportStateConcurrency:
             t.start()
 
         for t in threads:
-            t.join()
+            t.join(timeout=5)
+
+        assert not any(t.is_alive() for t in threads), "thread(s) hung"
 
         assert ImportState(path=state_path).tagprogress == {
             toppath_a: [b"/music/a/album"]
