@@ -46,10 +46,16 @@ New features
   source. :bug:`6238`
 - :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
   socket.
+- :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
+  instead of asking for a candidate number again. It still asks when chosen from
+  the candidate list.
 
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/missing`: Fix the documentation of the ``--release-types``
+  command-line option and the ``release_types`` configuration option, which
+  still used their old names. :bug:`7172`
 - Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
   full traceback at error level when a search fails because the service is
   unreachable. The error message is logged on its own, and the traceback is kept
@@ -82,10 +88,9 @@ Bug fixes
   default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
-- :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
-  artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
-  fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
-  Request.
+- :doc:`plugins/fetchart`: Request ``10000x10000-999`` high-resolution artwork
+  from the iTunes Store instead of deprecated ``100000x100000-999``, fixing an
+  issue where Apple's CDN rejected image requests with HTTP 400 Bad Request.
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
@@ -118,6 +123,8 @@ Bug fixes
   while the thread pool is open. It held a CPU core at 100% and starved the
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
+- :doc:`plugins/web`: Fix relative library paths not resolving across request
+  threads in web plugin endpoints.
 - :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
   ``separators`` is combined with a ``replace`` rule that changes the length of
   the text. :bug:`6300`
@@ -142,9 +149,16 @@ Bug fixes
 - :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
   so multi-disc albums with shared track numbers stay grouped by disc.
   :bug:`4061`
+- :doc:`plugins/lastgenre`: The genre changes are no longer printed during an
+  import (unless it is verbose), where they could appear on top of the
+  importer's prompt for the next album and make the import look frozen. The
+  ``lastgenre`` command still prints them. :bug:`6830`
+- Path formats: an empty ``${}`` inside a function call argument no longer
+  truncates the argument list and leaks the rest of the template as literal
+  text.
 - :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
   instead of silently falling back to plain lyrics. :bug:`7070`
-  
+
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -163,6 +177,9 @@ For plugin developers
 - New ``Library.contains`` method replaces the ``lib.directory in
   util.ancestry(item.path)`` idiom for testing whether a path or a model lives
   inside the library.
+- Import prompt choice callbacks can now read the candidate on screen from
+  ``task.selected_match``, including one picked by number from the candidate
+  list. It is ``None`` while the candidate list itself is shown.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -170,6 +187,9 @@ Other changes
 - :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
   ``platformdirs``, which beets already requires.
 - Beets now officially supports Python 3.15.
+- :doc:`plugins/duplicates`: Clarify the option ``--full`` to explain how it
+  will work with the action options: copy, move, delete, remove and tag.
+  :bug:`5408`
 - :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
 

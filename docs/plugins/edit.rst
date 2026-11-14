@@ -38,7 +38,8 @@ adds two new options to the user prompt:
 - ``eDit``: use this option for using the original items' metadata as the
   starting point for your edits.
 - ``edit Candidates``: use this option for using a candidate's metadata as the
-  starting point for your edits.
+  starting point for your edits. When a candidate is on screen, that candidate
+  is used; from the candidate list, you are asked which one to edit.
 
 When editing an album during import (i.e., after you have chosen ``eDit`` or
 ``edit Candidates`` for an album import), the fields listed in ``albumfields``
