@@ -153,6 +153,9 @@ Bug fixes
   import (unless it is verbose), where they could appear on top of the
   importer's prompt for the next album and make the import look frozen. The
   ``lastgenre`` command still prints them. :bug:`6830`
+- Path formats: an empty ``${}`` inside a function call argument no longer
+  truncates the argument list and leaks the rest of the template as literal
+  text.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
