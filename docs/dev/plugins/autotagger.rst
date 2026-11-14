@@ -92,14 +92,20 @@ plugins** for potential matches:
 - For **albums**, it calls :py:meth:`~MetadataSourcePlugin.candidates`.
 - For **singletons**, it calls :py:meth:`~MetadataSourcePlugin.item_candidates`.
 
-The results are combined and scored. By default, candidate ranking is handled
-automatically by the beets core, but you can customize weighting by overriding:
+The results are combined and scored by the beets core. Any plugin (not only
+metadata sources) can add penalties to that score by overriding
+``BeetsPlugin.album_penalties(items, album_info, mapping)`` or
+``BeetsPlugin.track_penalties(item, info)`` to return a ``Distance``. Each
+penalty key needs a weight, which the plugin can register with
+``config["match"]["distance_weights"].add({"my_key": 5.0})``. A penalty of
+``0.0`` pulls the candidate closer and ``1.0`` pushes it away:
 
-- :py:meth:`~MetadataSourcePlugin.album_distance`
-- :py:meth:`~MetadataSourcePlugin.track_distance`
+.. code-block:: python
 
-This is optional, if not overridden, both methods return a constant distance of
-`0.5`.
+    def album_penalties(self, items, album_info, mapping):
+        dist = Distance()
+        dist.add_expr("discid", album_info.album_id not in self.discid_releases)
+        return dist
 
 ID-based lookups
 ----------------

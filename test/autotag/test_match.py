@@ -2,9 +2,10 @@ from typing import ClassVar
 
 import pytest
 
-from beets import metadata_plugins
+from beets import metadata_plugins, plugins
 from beets.autotag import (
     AlbumInfo,
+    Distance,
     Source,
     TrackInfo,
     assign_items,
@@ -12,6 +13,7 @@ from beets.autotag import (
     tag_item,
 )
 from beets.library import Item
+from beets.plugins import BeetsPlugin
 
 
 class TestAssignment:
@@ -194,3 +196,53 @@ class TestTagMultipleDataSources:
         proposal = tag_item(source)
 
         self.check_proposal(proposal)
+
+
+class TestPluginDistance:
+    """Plugins can add penalties via `album_penalties` and `track_penalties`."""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, monkeypatch):
+        monkeypatch.setitem(Distance._weights, "discid", 5.0)
+        monkeypatch.setitem(Distance._weights, "fingerprint", 5.0)
+
+        def album(album_id):
+            track = TrackInfo(title="Title", track_id=f"t-{album_id}")
+            return AlbumInfo([track], album="Album", album_id=album_id)
+
+        class StubSource:
+            data_source = "Source"
+            data_source_mismatch_penalty = 0
+
+            def candidates(self, *_, **__):
+                yield from (album("other"), album("ripped"))
+
+        monkeypatch.setattr(
+            metadata_plugins,
+            "find_metadata_source_plugins",
+            lambda: [StubSource()],
+        )
+
+        class DiscIdPlugin(BeetsPlugin):
+            def album_penalties(self, items, album_info, mapping):
+                dist = Distance()
+                dist.add_expr("discid", album_info.album_id != "ripped")
+                return dist
+
+            def track_penalties(self, item, info):
+                dist = Distance()
+                dist.add_expr("fingerprint", info.track_id != "t-ripped")
+                return dist
+
+        monkeypatch.setattr(plugins, "_instances", [DiscIdPlugin()])
+
+    def test_penalties_rank_candidates(self):
+        source = Source.from_items([Item(title="Title", album="Album")])
+
+        best, other = tag_album(source).candidates
+
+        assert best.info.album_id == "ripped"
+        assert other.distance._penalties["discid"] == [1.0]
+        assert best.distance._penalties["discid"] == [0.0]
+        track_dist = other.distance.tracks[other.info.tracks[0]]
+        assert track_dist._penalties["fingerprint"] == [1.0]

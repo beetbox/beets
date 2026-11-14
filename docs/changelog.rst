@@ -178,6 +178,11 @@ For plugin developers
 - Import prompt choice callbacks can now read the candidate on screen from
   ``task.selected_match``, including one picked by number from the candidate
   list. It is ``None`` while the candidate list itself is shown.
+- Any plugin can now influence candidate ranking by overriding the new
+  ``BeetsPlugin.album_penalties`` and ``BeetsPlugin.track_penalties`` hooks to
+  return a ``Distance`` with extra penalties. Old ``album_distance`` and
+  ``track_distance`` methods are still ignored. The :doc:`plugins/chroma`
+  fingerprint bonus, ignored since 2.5.0, now uses the new hook and works again.
 
 Other changes
 ~~~~~~~~~~~~~

@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
-from beets import config, metadata_plugins
+from beets import config, metadata_plugins, plugins
 from beets.util import as_string, cached_classproperty
 from beets.util.color import colorize
 
@@ -431,6 +431,8 @@ def track_distance(
         dist.add_expr("medium", item.disc != track_info.medium)
 
     dist.add_data_source(item.get("data_source"), track_info.data_source)
+
+    dist.update(plugins.track_penalties(item, track_info))
 
     return dist
 
