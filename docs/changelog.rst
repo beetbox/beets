@@ -49,6 +49,10 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- New :ref:`duplicate_summary_fields` option: choose what the importer shows on
+  the ``Old:`` and ``New:`` lines when it finds a duplicate, e.g. ``media`` or
+  ``label`` to tell a CD from a digital release. Plugins can replace these lines
+  entirely with the new ``import_duplicate_summary`` event.
 
 Bug fixes
 ~~~~~~~~~

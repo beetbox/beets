@@ -340,6 +340,14 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
     @overload
     def register_listener(
         self,
+        event: events.ImportDuplicateSummaryEventType,
+        func: Callable[
+            [Unpack[events.ImportDuplicateSummaryEventArgs]], str | None
+        ],
+    ) -> None: ...
+    @overload
+    def register_listener(
+        self,
         event: events.ImportTaskEventType,
         func: Callable[[Unpack[events.ImportTaskEventArgs]], None],
     ) -> None: ...
@@ -753,6 +761,11 @@ def send(
     event: events.ImportTaskCreatedEventType,
     **arguments: Unpack[events.ImportTaskEventArgs],
 ) -> list[list[ImportTask]]: ...
+@overload
+def send(
+    event: events.ImportDuplicateSummaryEventType,
+    **arguments: Unpack[events.ImportDuplicateSummaryEventArgs],
+) -> list[str]: ...
 @overload
 def send(
     event: events.ImportTaskEventType,

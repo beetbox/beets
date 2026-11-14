@@ -1,5 +1,4 @@
 import os
-import unittest
 from unittest.mock import Mock, patch
 
 import pytest
@@ -153,7 +152,7 @@ class ShowChangeTestCase(IOMixin, BeetsTestCase):
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
-class SummarizeItemsTest(unittest.TestCase):
+class SummarizeItemsTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         item = library.Item()
@@ -188,3 +187,26 @@ class SummarizeItemsTest(unittest.TestCase):
 
         summary = summarize_items([self.item, i2, i2], False)
         assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
+
+
+@patch("beets.library.Item.try_filesize", Mock(return_value=987))
+class SummarizeItemsFieldsTest(BeetsTestCase):
+    def setUp(self):
+        super().setUp()
+        self.item = library.Item(
+            bitrate=4321, length=654, format="F", media="Digital Media"
+        )
+
+    def test_custom_fields(self):
+        self.config["import"]["duplicate_summary_fields"] = (
+            "items media year format filesize"
+        )
+        # Empty fields (year) are left out.
+        assert (
+            summarize_items([self.item], False)
+            == "1 items, Digital Media, F, 987.0 B"
+        )
+
+    def test_info_overrides_item_metadata(self):
+        self.config["import"]["duplicate_summary_fields"] = "media format"
+        assert summarize_items([self.item], False, {"media": "CD"}) == "CD, F"

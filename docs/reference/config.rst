@@ -932,6 +932,37 @@ is applied, which would, considering the default, look like this:
 
 Default: ``no``.
 
+.. _duplicate_summary_fields:
+
+duplicate_summary_fields
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The parts shown, in order, on the ``Old:`` and ``New:`` summary lines when the
+importer asks what to do with a duplicate. A few names summarize all the tracks:
+
+- ``items``: the number of tracks (albums only).
+- ``format``: the file format, or a count per format when they differ.
+- ``bitrate``: the average bitrate.
+- ``samplerate``: sample rate and bit depth (FLAC only).
+- ``length``: the total duration.
+- ``filesize``: the total size on disk.
+
+Any other field name (for example ``media``, ``year``, ``label`` or
+``catalognum``) shows that field's value. For the ``New:`` line this is the
+metadata about to be applied, so you can tell a CD from a digital release before
+choosing. Empty fields are left out. For example:
+
+.. code-block:: yaml
+
+    import:
+        duplicate_summary_fields: items media year label format bitrate length
+
+Default: ``items format bitrate samplerate length filesize``.
+
+To build the whole line yourself, for example from album-wide data, write a
+plugin that listens for the ``import_duplicate_summary`` event (see
+:doc:`/dev/plugins/events`).
+
 .. _bell:
 
 bell

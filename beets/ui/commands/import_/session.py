@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import chain
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from beets import config, importer, logging, plugins, ui
 from beets.autotag import (
@@ -14,7 +14,7 @@ from beets.autotag import (
     tag_item,
 )
 from beets.importer import DuplicateAction, SingletonImportTask
-from beets.library import Album
+from beets.library import Album, Item
 from beets.util import PromptChoice, displayable_path
 from beets.util.color import colorize
 from beets.util.units import human_bytes, human_seconds_short
@@ -22,11 +22,11 @@ from beets.util.units import human_bytes, human_seconds_short
 from .display import show_change
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from beets.autotag import Source
     from beets.importer import ImportSession, ImportTask
-    from beets.library import AlbumOrItem, Item
+    from beets.library import AlbumOrItem
     from beets.util import PathBytes
 
 # Global logger.
@@ -179,9 +179,23 @@ class TerminalImportSession(importer.ImportSession):
                     task.rec = post_choice.recommendation
 
     def _report_item_summary(
-        self, prefix: Literal["Old", "New"], items: list[Item], is_album: bool
+        self,
+        task: importer.ImportTask,
+        prefix: Literal["Old", "New"],
+        items: list[Item],
+        info: Mapping[str, Any] | None = None,
     ) -> None:
-        ui.print_(f"{prefix}: {summarize_items(items, not is_album)}")
+        summary = summarize_items(items, not task.is_album, info)
+        # A plugin may replace the line; the first one to answer wins.
+        if results := plugins.send(
+            "import_duplicate_summary",
+            task=task,
+            side="old" if prefix == "Old" else "new",
+            items=items,
+            summary=summary,
+        ):
+            summary = results[0]
+        ui.print_(f"{prefix}: {summary}")
         if self.config["duplicate_verbose_prompt"].get(bool):
             for dup in items:
                 print(f"  {dup}")
@@ -192,7 +206,6 @@ class TerminalImportSession(importer.ImportSession):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
-        is_album = task.is_album
         log.warning("This {.source.type} is already in the library!", task)
 
         if config["import"]["quiet"]:
@@ -203,16 +216,18 @@ class TerminalImportSession(importer.ImportSession):
         # user can make an informed decision.
         for duplicate in found_duplicates:
             self._report_item_summary(
+                task,
                 "Old",
                 (
                     list(duplicate.items())
                     if isinstance(duplicate, Album)
                     else [duplicate]
                 ),
-                is_album,
             )
 
-        self._report_item_summary("New", task.imported_items(), is_album)
+        # Files aren't tagged yet, so show the metadata about to be applied.
+        info = task.chosen_info() if task.apply else None
+        self._report_item_summary(task, "New", task.imported_items(), info)
 
         return ui.input_options(DuplicateAction.strict_options())
 
@@ -321,45 +336,61 @@ class TerminalImportSession(importer.ImportSession):
         return choices + extra_choices
 
 
-def summarize_items(items: Sequence[Item], singleton: bool) -> str:
+def summarize_items(
+    items: Sequence[Item],
+    singleton: bool,
+    info: Mapping[str, Any] | None = None,
+) -> str:
     """Produces a brief summary line describing a set of items. Used for
     manually resolving duplicates during import.
 
     `items` is a list of `Item` objects. `singleton` indicates whether
     this is an album or single-item import (if the latter, them `items`
     should only have one element).
+
+    The parts shown come from the `import.duplicate_summary_fields`
+    option. A few names are aggregated over all items; any other name
+    is the formatted value of that field in `info` (the metadata about
+    to be applied) or, without it, on the first item.
     """
     summary_parts = []
-    if not singleton:
-        summary_parts.append(f"{len(items)} items")
-
-    format_counts: dict[str, int] = {}
-    for item in items:
-        format_counts[item.format] = format_counts.get(item.format, 0) + 1
-    if len(format_counts) == 1:
-        # A single format.
-        summary_parts.append(items[0].format)
-    else:
-        # Enumerate all the formats by decreasing frequencies:
-        for fmt, count in sorted(
-            format_counts.items(),
-            key=lambda fmt_and_count: (-fmt_and_count[1], fmt_and_count[0]),
-        ):
-            summary_parts.append(f"{fmt} {count}")
-
-    if items:
-        average_bitrate = sum([item.bitrate for item in items]) / len(items)
-        total_duration = sum([item.length for item in items])
-        total_filesize = sum([item.filesize for item in items])
-        summary_parts.append(f"{int(average_bitrate / 1000)}kbps")
-        if items[0].format == "FLAC":
-            sample_bits = (
-                f"{round(int(items[0].samplerate) / 1000, 1)}kHz"
-                f"/{items[0].bitdepth} bit"
-            )
-            summary_parts.append(sample_bits)
-        summary_parts.append(human_seconds_short(total_duration))
-        summary_parts.append(human_bytes(total_filesize))
+    obj = Item(**info) if info is not None else (items[0] if items else None)
+    fields = config["import"]["duplicate_summary_fields"].as_str_seq()
+    for field in fields:
+        if field == "items":
+            if not singleton:
+                summary_parts.append(f"{len(items)} items")
+        elif field == "format":
+            format_counts = Counter(item.format for item in items)
+            if len(format_counts) == 1:
+                # A single format.
+                summary_parts.append(items[0].format)
+            else:
+                # Enumerate all the formats by decreasing frequencies:
+                for fmt, count in sorted(
+                    format_counts.items(), key=lambda fc: (-fc[1], fc[0])
+                ):
+                    summary_parts.append(f"{fmt} {count}")
+        elif not items:
+            continue
+        elif field == "bitrate":
+            average_bitrate = sum(item.bitrate for item in items) / len(items)
+            summary_parts.append(f"{int(average_bitrate / 1000)}kbps")
+        elif field == "samplerate":
+            if items[0].format == "FLAC":
+                summary_parts.append(
+                    f"{round(int(items[0].samplerate) / 1000, 1)}kHz"
+                    f"/{items[0].bitdepth} bit"
+                )
+        elif field == "length":
+            total_duration = sum(item.length for item in items)
+            summary_parts.append(human_seconds_short(total_duration))
+        elif field == "filesize":
+            total_filesize = sum(item.filesize for item in items)
+            summary_parts.append(human_bytes(total_filesize))
+        # Check the raw value so unset fields (e.g. year 0) are left out.
+        elif obj and obj.get(field):
+            summary_parts.append(obj.formatted()[field])
 
     return ", ".join(summary_parts)
 
