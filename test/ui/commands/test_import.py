@@ -29,7 +29,7 @@ class ImportTest(BeetsTestCase):
                 "duplicate-replace C:\\music\\Bill Evans\\Trio '65\n"
                 "skip C:\\music\\Michael Jackson\\Bad\n"
                 "skip C:\\music\\Soulwax\\Any Minute Now\n"
-                "skip C:\\music\\Band; The\\Album\\01.mp3; C:\\music\\Band; The\\Album\\02.mp3\n"
+                "skip C:\\music\\Band; The\\Album\\01.mp3; C:\\music\\Band; The\\Album\\02.mp3\n"  # noqa: E501
             )
             expected_paths = [
                 "C:\\music\\Beatles, The\\The Beatles",

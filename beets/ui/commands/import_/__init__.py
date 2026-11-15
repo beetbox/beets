@@ -47,7 +47,7 @@ def paths_from_logfile(path: str) -> Iterator[str]:
 
             chunks = paths.split("; ")
             if len(chunks) > 1 and os.path.isabs(chunks[0]):
-                merged = []
+                merged: list[str] = []
                 for chunk in chunks:
                     if not merged or os.path.isabs(chunk):
                         merged.append(chunk)
