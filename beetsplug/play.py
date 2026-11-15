@@ -6,7 +6,9 @@ import os
 import random
 import shlex
 import subprocess
+from functools import cached_property
 from os.path import relpath
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from beets import config, ui, util
@@ -46,8 +48,8 @@ PLS_MARKER = "$playlist"
 def play(
     command_str: str,
     selection: Sequence[LibModel],
-    paths: Sequence[bytes],
-    open_args: Sequence[bytes],
+    paths: Sequence[Path],
+    open_args: Sequence[Path],
     log: Logger,
     item_type: str = "track",
     keep_open: bool = False,
@@ -88,6 +90,12 @@ class PlayPlugin(BeetsPlugin):
             "before_choose_candidate", self.before_choose_candidate_listener
         )
 
+    @cached_property
+    def relative_to(self) -> Path | None:
+        if relative_to := config["play"]["relative_to"].as_optional_path():
+            return util.normpath(relative_to)
+        return None
+
     def commands(self) -> list[Subcommand]:
         play_command = Subcommand(
             "play", help="send music to a player as a playlist"
@@ -115,7 +123,7 @@ class PlayPlugin(BeetsPlugin):
         play_command.func = self._play_command
         return [play_command]
 
-    def _make_relative(self, paths: list[bytes], start: bytes) -> list[bytes]:
+    def _make_relative(self, paths: list[Path], start: Path) -> list[Path]:
         """Make each of the paths relative to the given starting point.
 
         A path that has no relative form - on Windows, one that lives on
@@ -124,7 +132,7 @@ class PlayPlugin(BeetsPlugin):
         relative, absolute = [], []
         for path in paths:
             try:
-                relative.append(relpath(path, start))
+                relative.append(Path(relpath(path, start)))
             except ValueError:
                 absolute.append(path)
                 relative.append(path)
@@ -134,8 +142,8 @@ class PlayPlugin(BeetsPlugin):
                 "{} path(s) have no relative form from relative_to '{}' and "
                 "stay absolute, starting with '{}'",
                 len(absolute),
-                util.displayable_path(start),
-                util.displayable_path(absolute[0]),
+                start,
+                absolute[0],
             )
 
         return relative
@@ -147,9 +155,6 @@ class PlayPlugin(BeetsPlugin):
         from query, determine if tracks or albums are to be played.
         """
         use_folders = config["play"]["use_folders"].get(bool)
-        relative_to = config["play"]["relative_to"].get()
-        if relative_to:
-            relative_to = util.normpath(relative_to)
         # Perform search by album and add folders rather than tracks to
         # playlist.
         selection: Sequence[LibModel]
@@ -162,16 +167,18 @@ class PlayPlugin(BeetsPlugin):
                 if use_folders:
                     paths.append(album.item_dir())
                 else:
-                    paths.extend(item.path for item in sort.sort(album.items()))
+                    paths.extend(
+                        item.filepath for item in sort.sort(album.items())
+                    )
             item_type = "album"
 
         # Perform item query and add tracks to playlist.
         else:
             selection = lib.items(args, limit=opts.limit)
-            paths = [item.path for item in selection]
+            paths = [item.filepath for item in selection]
             item_type = "track"
 
-        if relative_to:
+        if relative_to := self.relative_to:
             paths = self._make_relative(paths, relative_to)
 
         if not selection:
@@ -182,15 +189,12 @@ class PlayPlugin(BeetsPlugin):
             random.shuffle(paths)
 
         open_args = self._playlist_or_paths(paths)
-        open_args_str = [
-            p.decode("utf-8") for p in self._playlist_or_paths(paths)
-        ]
         command_str = self._command_str(opts.args)
 
         if PLS_MARKER in command_str:
             if not config["play"]["raw"]:
                 command_str = command_str.replace(
-                    PLS_MARKER, "".join(open_args_str)
+                    PLS_MARKER, "".join(map(str, open_args))
                 )
                 self._log.debug(
                     "command altered by PLS_MARKER to: {}", command_str
@@ -219,7 +223,7 @@ class PlayPlugin(BeetsPlugin):
         # Don't include the marker in the command.
         return command_str.replace(f" {ARGS_MARKER}", "")
 
-    def _playlist_or_paths(self, paths: list[bytes]) -> list[bytes]:
+    def _playlist_or_paths(self, paths: list[Path]) -> list[Path]:
         """Return either the raw paths of items or a playlist of the items."""
         if config["play"]["raw"]:
             return paths
@@ -229,7 +233,7 @@ class PlayPlugin(BeetsPlugin):
         self,
         selection: Sequence[LibModel],
         command_str: str,
-        open_args: Sequence[bytes],
+        open_args: Sequence[Path],
         item_type: str = "track",
     ) -> bool:
         """Prompt user whether to abort if playlist exceeds threshold. If
@@ -254,7 +258,7 @@ class PlayPlugin(BeetsPlugin):
 
         return False
 
-    def _create_tmp_playlist(self, paths_list: Iterable[bytes]) -> bytes:
+    def _create_tmp_playlist(self, paths_list: Iterable[Path]) -> Path:
         """Create a temporary .m3u file. Return the filename."""
         utf8_bom = config["play"]["bom"].get(bool)
         filename = get_temp_filename(__name__, suffix=".m3u")
@@ -263,9 +267,9 @@ class PlayPlugin(BeetsPlugin):
                 m3u.write(b"\xef\xbb\xbf")
 
             for item in paths_list:
-                m3u.write(item + b"\n")
+                m3u.write(os.fsencode(item) + b"\n")
 
-        return os.fsencode(filename)
+        return filename
 
     def before_choose_candidate_listener(
         self, session: ImportSession, task: ImportTask
@@ -276,7 +280,7 @@ class PlayPlugin(BeetsPlugin):
     def importer_play(self, session: ImportSession, task: ImportTask) -> None:
         """Get items from current import task and send to play function."""
         selection = task.items
-        paths = [item.path for item in selection]
+        paths = [item.filepath for item in selection]
 
         open_args = self._playlist_or_paths(paths)
         command_str = self._command_str()

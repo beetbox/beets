@@ -616,7 +616,11 @@ class ConvertPlugin(BeetsPlugin):
         # Remove item from the path.
         dest = os.path.join(*util.components(dest)[:-1])
 
-        dest = album.art_destination(album.artpath, item_dir=dest)
+        dest = os.fsencode(
+            album.art_destination(
+                album.artpath, item_dir=Path(os.fsdecode(dest))
+            )
+        )
         if album.artpath == dest:
             return
 
