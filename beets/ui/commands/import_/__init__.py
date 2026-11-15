@@ -45,7 +45,17 @@ def paths_from_logfile(path: str) -> Iterator[str]:
             if verb not in {"asis", "skip", "duplicate-skip"}:
                 raise ValueError(f"line {i} contains unknown verb {verb}")
 
-            yield os.path.commonpath(paths.split("; "))
+            chunks = paths.split("; ")
+            if len(chunks) > 1 and os.path.isabs(chunks[0]):
+                merged = []
+                for chunk in chunks:
+                    if not merged or os.path.isabs(chunk):
+                        merged.append(chunk)
+                    else:
+                        merged[-1] += "; " + chunk
+                chunks = merged
+
+            yield os.path.commonpath(chunks)
 
 
 def parse_logfiles(logfiles: list[str]) -> Iterator[str]:
