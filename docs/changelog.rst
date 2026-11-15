@@ -53,6 +53,9 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
+  or ``mb_trackid`` now detect duplicates when a metadata-source match is
+  applied, instead of treating the key as missing. :bug:`7067`
 - :doc:`plugins/missing`: Fix the documentation of the ``--release-types``
   command-line option and the ``release_types`` configuration option, which
   still used their old names. :bug:`7172`
@@ -77,6 +80,8 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Fix a race condition between concurrent importer threads where updates to
+  ``state.pickle`` could lose tagging progress or incremental-import history.
 - Fix word wrapping of colored diff output for a word containing two or more
   separately-highlighted spans, which was incorrectly split into two words at
   the second highlighted span.
@@ -156,6 +161,8 @@ Bug fixes
 - Path formats: an empty ``${}`` inside a function call argument no longer
   truncates the argument list and leaks the rest of the template as literal
   text.
+- :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
+  instead of silently falling back to plain lyrics. :bug:`7070`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
