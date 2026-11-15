@@ -161,6 +161,8 @@ Bug fixes
 - Path formats: an empty ``${}`` inside a function call argument no longer
   truncates the argument list and leaks the rest of the template as literal
   text.
+- :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
+  instead of silently falling back to plain lyrics. :bug:`7070`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
