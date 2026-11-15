@@ -240,7 +240,9 @@ combine the option with ``--local``:
     beet lyrics --local --write-files
 
 A file which already contains the same lyrics is left alone, so its modification
-time does not change. Embedded lyrics can still be removed on these runs.
+time does not change. Files are written as UTF-8 with LF line endings, so any
+CRLF in the stored lyrics becomes LF. Embedded lyrics can still be removed on
+these runs.
 
 With ``remove_embedded`` enabled the lyrics are deleted from the track's tags
 once its lyrics file has been written, which turns copying into moving:
@@ -255,7 +257,8 @@ Both the ``lyrics`` tag (``USLT`` on MP3s) and the ID3 ``SYLT`` frame are
 cleared; the database keeps the lyrics either way. Only these lyrics tags are
 changed, so whatever else is on disk stays as it is. Tags which hold lyrics that
 differ from the text just written are never deleted --- the plugin logs a
-warning instead, so lyrics that exist nowhere else survive. Keep in mind that
+warning instead, so lyrics that exist nowhere else survive. Every ``SYLT`` frame
+has to match, since clearing the tag deletes all of them. Keep in mind that
 commands which rewrite all tags, notably :ref:`write-cmd`, put the lyrics back
 into the file; rerun ``beet lyrics --local --write-files --remove-embedded`` to
 remove them again.

@@ -1145,6 +1145,19 @@ BACKEND_BY_NAME = {
 }
 
 
+def sylt_frames(mediafile: MediaFile) -> list[list[tuple[str, int]]]:
+    """Return the ``(text, timestamp)`` pairs of every SYLT frame.
+
+    :attr:`MediaFile.synced_lyrics` reads only the first frame, while
+    clearing the tag deletes all of them.
+    """
+    tags = getattr(mediafile.mgfile, "tags", None)
+    if getall := getattr(tags, "getall", None):
+        return [list(frame.text) for frame in getall("SYLT")]
+
+    return []
+
+
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "lyrics_url": types.STRING,
@@ -1405,7 +1418,9 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         text, synced = content
 
         path = os.path.splitext(item.path)[0] + (b".lrc" if synced else b".txt")
-        payload = f"{text}\n"
+        # Write LF: the check below reads text, which folds CRLF, so keeping
+        # the CRLF of stored lyrics would rewrite the file on every run.
+        payload = f"{text}\n".replace("\r\n", "\n")
         try:
             if Path(syspath(path)).read_text(encoding="utf-8") == payload:
                 self.debug(
@@ -1482,16 +1497,23 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             )
             return
 
-        embedded = {}
-        if mediafile.lyrics:
-            embedded["lyrics"] = mediafile.lyrics.strip()
-        sylt = mediafile.synced_lyrics
-        if sylt and sylt != Lyrics(text).sylt:
-            embedded["synced_lyrics"] = sylt_to_lrc(sylt).strip()
-
-        if not embedded and not sylt:
+        lyrics = Lyrics(text)
+        frames = sylt_frames(mediafile)
+        if not (mediafile.lyrics or frames):
             return
-        if any(value != text.strip() for value in embedded.values()):
+
+        embedded = []
+        if mediafile.lyrics:
+            embedded.append(mediafile.lyrics.strip())
+        # Clearing the tag deletes every SYLT frame, so all of them have to
+        # match, not only the first one which mediafile reads back.
+        embedded += [
+            sylt_to_lrc(frame).strip()
+            for frame in frames
+            if frame != lyrics.sylt
+        ]
+
+        if any(value != text.strip() for value in embedded):
             self.warn(
                 "🔴 Kept embedded lyrics in {}: they differ from the lyrics file",
                 displayable_path(item.path),

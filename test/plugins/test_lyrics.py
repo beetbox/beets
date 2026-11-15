@@ -1272,6 +1272,23 @@ class TestLyricsFiles(LyricsPluginMixin):
     @pytest.mark.parametrize(
         "plugin_config", [{"local": True, "write_files": True}]
     )
+    def test_embedded_instrumental_marker_writes_no_file(
+        self, helper, lyrics_plugin
+    ):
+        """An embedded marker alone is no lyrics, so it gets no text file."""
+        item = helper.add_item_fixture(format="MP3", lyrics=self.PLAIN)
+        assert item.try_write(tags={"lyrics": "[Instrumental]"})
+        item.lyrics = ""
+        item.store()
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert not item.filepath.with_suffix(".txt").exists()
+        assert not item.filepath.with_suffix(".lrc").exists()
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
     def test_unchanged_file_keeps_its_modification_time(
         self, helper, lyrics_plugin, tmp_path
     ):
@@ -1281,6 +1298,27 @@ class TestLyricsFiles(LyricsPluginMixin):
         )
         file = tmp_path / "song.txt"
         file.write_text(self.PLAIN + "\n", encoding="utf-8", newline="\n")
+        modified = 1_600_000_000
+        os.utime(file, (modified, modified))
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert file.stat().st_mtime == modified
+
+    @pytest.mark.parametrize(
+        "plugin_config", [{"local": True, "write_files": True}]
+    )
+    def test_lyrics_with_crlf_are_written_as_lf_and_then_unchanged(
+        self, helper, lyrics_plugin, tmp_path
+    ):
+        """Storing CRLF would rewrite identical bytes and make players rescan."""
+        text = "line one\r\nline two"
+        item = helper.add_item(path=str(tmp_path / "song.mp3"), lyrics=text)
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        file = tmp_path / "song.txt"
+        assert file.read_bytes() == b"line one\nline two\n"
         modified = 1_600_000_000
         os.utime(file, (modified, modified))
 
@@ -1383,6 +1421,55 @@ class TestLyricsFiles(LyricsPluginMixin):
             "lyrics from elsewhere"
         )
         assert "Kept embedded lyrics" in caplog.text
+
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [{"local": True, "write_files": True, "remove_embedded": True}],
+    )
+    @pytest.mark.parametrize("all_frames_match", [False, True])
+    def test_extra_sylt_frames_are_kept_or_removed(
+        self, helper, lyrics_plugin, all_frames_match, caplog
+    ):
+        """Clearing SYLT deletes all frames, so all of them must match."""
+        import mutagen.id3
+        from mediafile import MediaFile
+
+        hidden = [("lyrics held nowhere else", 1000)]
+        item = helper.add_item_fixture(format="MP3", lyrics=self.SYNCED)
+        assert item.try_write(
+            tags={
+                "synced_lyrics": (
+                    Lyrics(self.SYNCED).sylt if all_frames_match else hidden
+                )
+            }
+        )
+        audio = mutagen.File(item.path)
+        audio.tags.add(
+            mutagen.id3.SYLT(
+                encoding=3,
+                lang="eng",
+                format=2,
+                type=1,
+                text=Lyrics(self.SYNCED).sylt,
+            )
+        )
+        audio.save()
+        # Only the first frame is visible to mediafile, and it does match.
+        assert MediaFile(item.path).synced_lyrics == Lyrics(self.SYNCED).sylt
+
+        lyrics_plugin.add_item_lyrics(item, write=False)
+
+        assert (
+            item.filepath.with_suffix(".lrc").read_text(encoding="utf-8")
+            == self.SYNCED + "\n"
+        )
+        frames = mutagen.File(item.path).tags.getall("SYLT")
+        if all_frames_match:
+            assert not frames
+            assert "Kept embedded lyrics" not in caplog.text
+        else:
+            assert len(frames) == 2, "lyrics never copied must survive"
+            assert "Kept embedded lyrics" in caplog.text
 
     @pytest.mark.parametrize(
         "plugin_config", [{"local": True, "write_files": True}]
