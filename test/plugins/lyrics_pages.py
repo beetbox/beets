@@ -457,6 +457,7 @@ lyrics_pages = [
         artist="Amy Winehouse",
         track_title="Jazz N' Blues",
         url_title="Amy Winehouse - Jazz N' Blues lyrics complete",
+        marks=[xfail_on_ci("Seems like it's dead?")],
     ),
     LyricsPage.make(
         "https://www.musica.com/letras.asp?letra=59862",
