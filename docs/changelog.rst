@@ -163,6 +163,8 @@ Bug fixes
   text.
 - :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
   instead of silently falling back to plain lyrics. :bug:`7070`
+- :doc:`plugins/info`: Fix a :class:`TypeError` when printing list-valued tag
+  fields with non-string elements, such as ``synced_lyrics``. :bug:`7183`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

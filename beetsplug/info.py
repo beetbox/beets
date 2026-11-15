@@ -135,8 +135,8 @@ def print_data(
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
-            formatted[key] = "; ".join(value)
-        if value is not None:
+            formatted[key] = "; ".join(str(v) for v in value)
+        elif value is not None:
             formatted[key] = value
 
     if len(formatted) == 0:
@@ -148,10 +148,7 @@ def print_data(
         ui.print_(displayable_path(path))
 
     for field in sorted(formatted):
-        value = formatted[field]
-        if isinstance(value, list):
-            value = "; ".join(value)
-        ui.print_(f"{field:>{maxwidth}}: {value}")
+        ui.print_(f"{field:>{maxwidth}}: {formatted[field]}")
 
 
 def print_data_keys(data: JSONDict, item: LibModel | None = None) -> None:
