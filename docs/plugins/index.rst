@@ -322,7 +322,8 @@ Interoperability
     Get thumbnails with the cover art on your album folders.
 
 :doc:`subsonicupdate <subsonicupdate>`
-    Automatically notifies Subsonic_ whenever the beets library changes.
+    Automatically notifies Subsonic_ whenever the beets library changes and
+    marks beets query results as Subsonic favourites.
 
 .. _aura: https://auraspec.readthedocs.io/en/latest/
 
