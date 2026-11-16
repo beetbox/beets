@@ -112,6 +112,11 @@ class TestSyltToLrc:
                 "[00:02.123] millisecond precision is preserved",
                 id="preserves-milliseconds",
             ),
+            pytest.param(
+                [("past ninety-nine minutes", 6_000_000)],
+                "[100:00.00] past ninety-nine minutes",
+                id="three-digit-minutes",
+            ),
         ],
     )
     def test_sylt_to_lrc(self, sylt, expected):
@@ -122,3 +127,15 @@ class TestSyltToLrc:
         lrc = "[00:00.05] first\n[01:30.50] second"
 
         assert sylt_to_lrc(Lyrics(lrc).sylt) == lrc
+
+    def test_roundtrip_three_digit_minutes(self):
+        """Timestamps past 99 minutes stay synced instead of turning plain."""
+        lrc = "[100:00.00] very long track\n[100:01.50] second line"
+        lyrics = Lyrics(lrc)
+
+        assert lyrics.synced
+        assert lyrics.sylt == [
+            ("very long track", 6_000_000),
+            ("second line", 6_001_500),
+        ]
+        assert sylt_to_lrc(lyrics.sylt) == lrc
