@@ -7,6 +7,7 @@ import re
 import shutil
 import stat
 import sys
+import threading
 import unicodedata
 import unittest
 from contextlib import contextmanager
@@ -23,7 +24,7 @@ import pytest
 from mediafile import MediaFile
 
 from beets import importer, logging, plugins, ui, util
-from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
+from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
 from beets.importer.state import ImportState
 from beets.importer.tasks import (
     ImportTaskFactory,
@@ -1998,6 +1999,62 @@ class TagLogTest(TestHelper):
         assert "status caf\xe9" in sio.getvalue()
 
 
+class TestImportStateConcurrency:
+    def test_progress_reset_keeps_concurrent_add(self, tmp_path, monkeypatch):
+        """
+        `beet import a b`: the `read_tasks` thread resets the progress
+        of b while the `manipulate_files` thread records the progress
+        for a. Neither should be lost.
+        """
+        state_path = bytestring_path(str(tmp_path / "state.pickle"))
+
+        toppath_a, toppath_b = b"/music/a", b"/music/b"
+        with ImportState(path=state_path) as state:
+            state.tagprogress[toppath_b] = [b"/music/b/old"]
+
+        reset_saving = threading.Event()
+        add_done = threading.Event()
+        orig_save = ImportState._save
+
+        def slow_save(self):
+            if threading.current_thread().name == "reset":
+                reset_saving.set()
+                # With the lock, `add` is blocked on it, so this is expected to time out
+                add_done.wait(timeout=0.1)
+            orig_save(self)
+
+        monkeypatch.setattr(ImportState, "_save", slow_save)
+
+        def reset():
+            ImportState(path=state_path).progress_reset(toppath_b)
+
+        def add():
+
+            assert reset_saving.wait(timeout=5), "reset did not reach _save"
+
+            ImportState(path=state_path).progress_add(
+                toppath_a, b"/music/a/album"
+            )
+            add_done.set()
+
+        threads = [
+            threading.Thread(target=reset, name="reset"),
+            threading.Thread(target=add, name="add"),
+        ]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join(timeout=5)
+
+        assert not any(t.is_alive() for t in threads), "thread(s) hung"
+
+        assert ImportState(path=state_path).tagprogress == {
+            toppath_a: [b"/music/a/album"]
+        }
+
+
 class TestResumeImport(ImportHelper):
     @patch("beets.plugins.send")
     def test_resume_album(self, plugins_send):
@@ -2584,3 +2641,74 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
 
         self.run_asis_importer()
         assert dest.exists()
+
+
+class TestDuplicateKeysUseLibraryFieldNames(BeetsTestCase):
+    """Duplicate detection of applied matches must see library field names.
+
+    ``AlbumInfo.album_id`` / ``TrackInfo.track_id`` are exposed to the library
+    as ``mb_albumid`` / ``mb_trackid``, which is what ``duplicate_keys`` use.
+    """
+
+    def test_album_duplicate_found_by_mb_albumid(self):
+        existing = self.add_item_fixture(
+            albumartist="artist", album="album", mb_albumid="rel-1"
+        )
+        self.lib.add_album([existing])
+        self.config["import"]["duplicate_keys"]["album"] = ["mb_albumid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.ImportTask(None, [new_item.path], [new_item])
+        info = AlbumInfo(
+            tracks=[],
+            album="other album",
+            album_id="rel-1",
+            artist="other artist",
+        )
+        task.match = AlbumMatch(
+            distance=Distance(),
+            info=info,
+            mapping={},
+            extra_items=[],
+            extra_tracks=[],
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert len(task.find_duplicates(self.lib)) == 1
+
+    def test_singleton_duplicate_found_by_mb_trackid(self):
+        self.add_item_fixture(title="title", mb_trackid="track-1")
+        self.config["import"]["duplicate_keys"]["item"] = ["mb_trackid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.SingletonImportTask(None, new_item)
+        task.match = TrackMatch(
+            distance=Distance(),
+            info=TrackInfo(title="other title", track_id="track-1"),
+            item=new_item,
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert len(task.find_duplicates(self.lib)) == 1
+
+    def test_applied_album_without_artist_skips_duplicate_check(self):
+        existing = self.add_item_fixture(
+            albumartist="artist", album="album", mb_albumid="rel-1"
+        )
+        self.lib.add_album([existing])
+        self.config["import"]["duplicate_keys"]["album"] = ["mb_albumid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.ImportTask(None, [new_item.path], [new_item])
+        task.match = AlbumMatch(
+            distance=Distance(),
+            info=AlbumInfo(
+                tracks=[], album="album", album_id="rel-1", artist=None
+            ),
+            mapping={},
+            extra_items=[],
+            extra_tracks=[],
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert task.find_duplicates(self.lib) == []
