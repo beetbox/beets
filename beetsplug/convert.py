@@ -40,6 +40,7 @@ _temp_files: list[bytes] = []
 
 class ConvertCLIOpts(Protocol):
     album: bool
+    format: str | None
     keep_new: bool
     limit: int | None
     yes: bool | None
@@ -47,6 +48,9 @@ class ConvertCLIOpts(Protocol):
 
 # Some convenient alternate names for formats.
 ALIASES = {"windows media": "wma", "vorbis": "ogg"}
+
+# Alternate names for the source formats in `format_map`, as beets names them.
+SOURCE_ALIASES = {"wav": "wave"}
 
 LOSSLESS_FORMATS = ["ape", "flac", "alac", "wave", "aiff"]
 
@@ -68,6 +72,8 @@ def replace_ext(path: bytes, ext: bytes) -> bytes:
 class ConvertPlugin(BeetsPlugin):
     def __init__(self) -> None:
         super().__init__()
+        # Set by `convert_func` when `--format` is given on the command line.
+        self.cli_format: str | None = None
         self.config.add(
             {
                 "dest": None,
@@ -76,6 +82,7 @@ class ConvertPlugin(BeetsPlugin):
                 "hardlink": False,
                 "threads": os.cpu_count(),
                 "format": "mp3",
+                "format_map": {},
                 "id3v23": "inherit",
                 "write_metadata": True,
                 "formats": {
@@ -170,8 +177,10 @@ class ConvertPlugin(BeetsPlugin):
             "-f",
             "--format",
             action="store",
-            default=self.config["format"].get(),
-            help="set the target format of the tracks",
+            help=(
+                "set the target format of the tracks, overriding the format"
+                " and format_map options"
+            ),
         )
         cmd.parser.add_option(
             "-y",
@@ -271,9 +280,27 @@ class ConvertPlugin(BeetsPlugin):
         return not self.hardlink and self.config["link"].get(bool)
 
     @cached_property
-    def command(self) -> FormatCommand:
-        """Return the command template and the extension from the config."""
-        fmt = ALIASES.get(self.fmt, self.fmt)
+    def format_map(self) -> dict[str, str]:
+        """Map lower-case source formats to lower-case target formats."""
+        return {
+            SOURCE_ALIASES.get(source.lower(), source.lower()): target.lower()
+            for source, target in self.config["format_map"].get(dict).items()
+        }
+
+    def get_target_format(self, item: Item) -> str:
+        """Return the format to convert `item` to.
+
+        The `--format` option wins, then `format_map` for the format of the
+        item, then the `format` option.
+        """
+        if self.cli_format:
+            return self.fmt
+        return self.format_map.get(item.format.lower(), self.fmt)
+
+    def get_command(self, item: Item) -> FormatCommand:
+        """Return the command template and the extension to convert `item`."""
+        target = self.get_target_format(item)
+        fmt = ALIASES.get(target, target)
 
         try:
             format_info = self.config["formats"][fmt].get(dict)
@@ -401,11 +428,11 @@ class ConvertPlugin(BeetsPlugin):
         maxbr = self.config["max_bitrate"].get(Optional(int))
         if maxbr is not None and item.bitrate >= 1000 * maxbr:
             return True
-        return self.fmt != item.format.lower()
+        return self.get_target_format(item) != item.format.lower()
 
     def get_item_destination(self, item: Item) -> bytes:
         extension = (
-            os.fsdecode(self.command.ext)
+            os.fsdecode(self.get_command(item).ext)
             if (
                 self.should_transcode(item)
                 and not self.config["keep_new"].get(bool)
@@ -427,7 +454,7 @@ class ConvertPlugin(BeetsPlugin):
             self.hardlink,
             self.refresh,
         )
-        command, ext = self.command
+        command, ext = self.get_command(item)
 
         dest = self.get_item_destination(item)
 
@@ -671,7 +698,11 @@ class ConvertPlugin(BeetsPlugin):
     def convert_func(
         self, lib: Library, opts: ConvertCLIOpts, args: list[str]
     ) -> None:
-        self.config.set(vars(opts))
+        self.cli_format = opts.format
+        # An absent `--format` must not overwrite the `format` option.
+        self.config.set(
+            {k: v for k, v in vars(opts).items() if k != "format" or v}
+        )
         pretend = self.pretend
 
         if opts.album:
@@ -711,7 +742,9 @@ class ConvertPlugin(BeetsPlugin):
                 # When keeping new files in the library, destination paths
                 # keep original files and extensions.
                 if not opts.keep_new and self.should_transcode(item):
-                    item_path = replace_ext(item_path, self.command.ext)
+                    item_path = replace_ext(
+                        item_path, self.get_command(item).ext
+                    )
 
                 items_paths.append(os.path.relpath(item_path, pl_dir))
 
@@ -731,7 +764,7 @@ class ConvertPlugin(BeetsPlugin):
         library.
         """
         if self.should_transcode(item):
-            command, ext = self.command
+            command, ext = self.get_command(item)
 
             # Create a temporary file for the conversion.
             tmpdir = self.config["tmpdir"].get()

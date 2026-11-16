@@ -300,6 +300,117 @@ class TestNeverConvertLossyFiles(ConvertPluginHelper, ConvertCommand):
         assert self.file_endswith(converted, convert_fmt) is should_convert
 
 
+class TestFormatMap(ConvertPluginHelper, ConvertCommand):
+    """Test the `format_map` option: the target format depends on the source
+    format of each file.
+    """
+
+    def setup_beets(self):
+        super().setup_beets()
+        self.config["convert"] = {
+            "paths": {"default": "converted"},
+            "format": "mp3",
+            "format_map": {"flac": "ogg"},
+            "formats": {
+                "mp3": self.tagged_copy_cmd("mp3"),
+                "ogg": self.tagged_copy_cmd("ogg"),
+                "opus": {
+                    "command": self.tagged_copy_cmd("opus"),
+                    "extension": "ops",
+                },
+            },
+        }
+
+    @pytest.mark.parametrize(
+        "source_ext,format_map,args,expected_file,expected_tag",
+        [
+            _p(
+                "flac", {"flac": "ogg"}, (), "converted.ogg", "ogg", id="mapped"
+            ),
+            _p(
+                "ogg",
+                {"flac": "ogg"},
+                (),
+                "converted.mp3",
+                "mp3",
+                id="unmapped",
+            ),
+            _p("flac", {"FLAC": "ogg"}, (), "converted.ogg", "ogg", id="case"),
+            _p(
+                "flac",
+                {"flac": "ogg"},
+                ("--format", "opus"),
+                "converted.ops",
+                "opus",
+                id="cli-format-overrides",
+            ),
+            _p("flac", {}, (), "converted.mp3", "mp3", id="empty-map"),
+        ],
+    )
+    def test_target_format(
+        self, source_ext, format_map, args, expected_file, expected_tag
+    ):
+        [item] = self.add_item_fixtures(ext=source_ext)
+        self.config["convert"]["format_map"] = format_map
+
+        self.io.addinput("y")
+        self.run_convert_path(item, *args)
+
+        converted = self.convert_dest / expected_file
+        assert self.file_endswith(converted, expected_tag)
+
+    def test_source_already_in_target_format_is_copied(self):
+        [item] = self.add_item_fixtures(ext="ogg")
+        self.config["convert"]["format_map"] = {"ogg": "ogg"}
+
+        self.io.addinput("y")
+        self.run_convert_path(item)
+
+        # The file is copied as is: the stub command did not run.
+        assert not self.file_endswith(
+            self.convert_dest / "converted.ogg", "ogg"
+        )
+
+    def test_mixed_sources_in_one_run(self):
+        self.add_item_fixtures(ext="flac")
+        self.add_item_fixtures(ext="ogg")
+
+        self.run_command("convert", "--yes")
+
+        # flac is mapped to ogg, ogg falls back to the `format` option.
+        assert self.file_endswith(self.convert_dest / "converted.ogg", "ogg")
+        assert self.file_endswith(self.convert_dest / "converted.mp3", "mp3")
+
+    def test_playlist_entry_uses_mapped_extension(self):
+        [item] = self.add_item_fixtures(ext="flac")
+
+        self.io.addinput("y")
+        self.run_convert_path(item, "--playlist", "playlist.m3u8")
+
+        lines = (self.convert_dest / "playlist.m3u8").read_text().splitlines()
+        assert lines[1] == "converted.ogg"
+
+
+class TestGetTargetFormat(PluginTestHelper):
+    """Test how the target format is chosen for a single item."""
+
+    plugin = "convert"
+
+    @pytest.mark.parametrize(
+        "item_format,format_map,expected",
+        [
+            _p("WAVE", {"wav": "flac"}, "flac", id="wav-alias"),
+            _p("WAVE", {"wave": "flac"}, "flac", id="wave"),
+            _p("ALAC", {"alac": "flac"}, "flac", id="alac"),
+            _p("MP3", {"alac": "flac"}, "mp3", id="not-in-map"),
+        ],
+    )
+    def test_get_target_format(self, config, item_format, format_map, expected):
+        config["convert"]["format_map"] = format_map
+        plugin = convert.ConvertPlugin()
+        assert plugin.get_target_format(Item(format=item_format)) == expected
+
+
 class TestNoConvert(PluginTestHelper):
     """Test the effect of the `no_convert` option."""
 
