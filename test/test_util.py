@@ -364,6 +364,12 @@ class SafeMoveCopyTest(FilePathTestCase):
         util.move(self.path, self.path)
         assert self.path.exists()
 
+    def test_case_only_move(self):
+        case_dest = self.path.with_name(self.path.name.swapcase())
+        util.move(self.path, case_dest)
+        assert case_dest.exists()
+        assert case_dest.name in os.listdir(case_dest.parent)
+
     def test_self_copy(self):
         util.copy(self.path, self.path)
         assert self.path.exists()

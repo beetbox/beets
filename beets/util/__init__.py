@@ -503,9 +503,16 @@ def move(path: PathLike, dest: PathLike, replace: bool = False) -> None:
         raise FilesystemError("source is directory", "move", (path, dest))
     if os.path.isdir(syspath(dest)):
         raise FilesystemError("destination is directory", "move", (path, dest))
-    if samefile(path, dest):
+    src_abs = os.path.abspath(syspath(path))
+    dst_abs = os.path.abspath(syspath(dest))
+    case_only_rename = (
+        samefile(path, dest)
+        and src_abs != dst_abs
+        and os.path.normcase(src_abs) == os.path.normcase(dst_abs)
+    )
+    if samefile(path, dest) and not case_only_rename:
         return
-    if os.path.exists(syspath(dest)) and not replace:
+    if not case_only_rename and os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError("file exists", "rename", (path, dest))
 
     # First, try renaming the file.
