@@ -135,7 +135,7 @@ def print_data(
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
-            formatted[key] = "; ".join(str(v) for v in value)
+            formatted[key] = "; ".join(map(str, value))
         elif value is not None:
             formatted[key] = value
 
