@@ -163,6 +163,10 @@ Bug fixes
   text.
 - :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
   instead of silently falling back to plain lyrics. :bug:`7070`
+- :doc:`plugins/lyrics`: The ``google`` source now logs a clear message when
+  Google refuses the search request, and the documentation warns that the Google
+  Custom Search JSON API is closed to new customers and will be discontinued on
+  January 1, 2027. :bug:`6761`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
