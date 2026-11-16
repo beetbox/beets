@@ -240,7 +240,9 @@ class TestLyricsPlugin(LyricsPluginMixin):
         expected_log_match,
     ):
         """Errors are logged with the backend name."""
-        requests_mock.get(lyrics.LRCLib.SEARCH_URL, **request_kwargs)
+        requests_mock.get(
+            lyrics_plugin.backends[0].search_url, **request_kwargs
+        )
 
         assert lyrics_plugin.get_lyrics("", "", "", 0.0) is None
         assert caplog.messages
@@ -619,10 +621,26 @@ class TestLRCLibLyrics(LyricsBackendTest):
 
     @pytest.fixture
     def fetch_lyrics(self, backend, requests_mock, response_data):
-        requests_mock.get(backend.GET_URL, status_code=HTTPStatus.NOT_FOUND)
-        requests_mock.get(backend.SEARCH_URL, json=response_data)
+        requests_mock.get(backend.get_url, status_code=HTTPStatus.NOT_FOUND)
+        requests_mock.get(backend.search_url, json=response_data)
 
         return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
+
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [
+            pytest.param(
+                {"lrclib": {"url": "http://localhost:3000/api"}}, id="localhost"
+            ),
+            pytest.param(
+                {"lrclib": {"url": "http://localhost:3000/api/"}},
+                id="with-slash",
+            ),
+        ],
+    )
+    def test_custom_url(self, backend):
+        assert backend.get_url == "http://localhost:3000/api/get"
+        assert backend.search_url == "http://localhost:3000/api/search"
 
     @pytest.mark.parametrize("response_data", [[lyrics_match()]])
     @pytest.mark.parametrize(
