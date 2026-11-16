@@ -316,6 +316,22 @@ sorting lexicographic fields. When set to ``no``, lower-case values will be
 placed after upper-case values (e.g., *Bar Qux foo*), while ``yes`` would result
 in the more expected *Bar foo Qux*. Default: ``yes``.
 
+.. _sort_initial_key_harmonic:
+
+sort_initial_key_harmonic
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether sorting items by ``initial_key``
+follows the Circle of Fifths instead of alphabetical order. Each major key is
+directly followed by its relative minor, then the next pair around the circle
+(``C Am G Em D Bm A F#m E C#m B G#m F# D#m C# A#m G# Fm D# Cm A# Gm F Dm``).
+Ascending sorts (``initial_key+``) go around the circle by fifths, descending
+sorts (``initial_key-``) go the other way, by fourths. Flat spellings such as
+``Db`` and short forms such as ``Gmin`` are treated like their canonical
+equivalents. Unknown or missing keys always sort last in both directions. Set
+this to ``no`` to sort ``initial_key`` alphabetically like any other text field.
+Default: ``yes``.
+
 .. _original_date:
 
 original_date
