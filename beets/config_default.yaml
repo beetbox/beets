@@ -54,6 +54,7 @@ import:
         item: artist title
     duplicate_action: ask
     duplicate_verbose_prompt: no
+    duplicate_summary_fields: items format bitrate samplerate length filesize
     bell: no
     set_fields: {}
     ignored_alias_types: []

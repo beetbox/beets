@@ -6,9 +6,9 @@ test_importer module. But here the test importer inherits from
 
 from unittest import mock
 
-from beets import importer
+from beets import importer, plugins
 from beets.autotag.hooks import TrackInfo
-from beets.test.helper import TerminalImportMixin
+from beets.test.helper import PluginMixin, TerminalImportMixin
 from test import test_importer
 
 
@@ -129,3 +129,53 @@ class TestImportDuplicateAlbumUpgrade(
         super().setup_beets()
         self.config["import"]["duplicate_action"] = "ask"
         self.importer.add_duplicate_action(importer.DuplicateAction.UPGRADE)
+
+
+@mock.patch(
+    "beets.metadata_plugins.candidates",
+    mock.Mock(side_effect=test_importer.album_candidates_mock),
+)
+class TestDuplicateSummaryFields(PluginMixin, TerminalImportMixin):
+    plugin = "musicbrainz"
+
+    def test_summary_shows_configured_fields(self):
+        album = self.add_album_fixture()
+        album.update({"albumartist": "artist", "album": "album"})
+        album.store()
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "albumartist album"}
+        )
+        self.config["import"]["duplicate_summary_fields"] = "items album flex"
+        self.importer.io.addinput("a")  # apply the match
+        self.importer.io.addinput("s")  # skip the duplicate
+        self.importer.run()
+
+        output = self.importer.io.getoutput()
+        assert "Old: 1 items, album\n" in output
+        # The new line shows the match's metadata, not the untagged files'.
+        assert "New: 1 items, album, flex\n" in output
+
+    def test_plugin_can_replace_summary(self):
+        album = self.add_album_fixture()
+        album.update({"albumartist": "artist", "album": "album"})
+        album.store()
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(
+            duplicate_keys={"album": "albumartist album"}
+        )
+
+        def summary(task, side, items, summary):
+            if side == "new":
+                return f"{len(items)} tracks, was: {summary}"
+            return None  # keep the default line
+
+        plugin = plugins.BeetsPlugin("summary_test")
+        plugin.register_listener("import_duplicate_summary", summary)
+        self.importer.io.addinput("a")
+        self.importer.io.addinput("s")
+        self.importer.run()
+
+        output = self.importer.io.getoutput()
+        assert "Old: 1 items, MP3," in output
+        assert "New: 1 tracks, was: 1 items, MP3," in output

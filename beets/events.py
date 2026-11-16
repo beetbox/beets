@@ -24,6 +24,7 @@ ItemPathEventType = Literal[
 BeforeChooseCandidateEventType = Literal["before_choose_candidate"]
 ImportTaskBeforeChoiceEventType = Literal["import_task_before_choice"]
 ImportTaskCreatedEventType = Literal["import_task_created"]
+ImportDuplicateSummaryEventType = Literal["import_duplicate_summary"]
 ImportTaskEventType = Literal[
     "import_task_apply",
     "import_task_choice",
@@ -55,6 +56,7 @@ EventType = (
     | BeforeChooseCandidateEventType
     | ImportTaskBeforeChoiceEventType
     | ImportTaskCreatedEventType
+    | ImportDuplicateSummaryEventType
     | ImportTaskEventType
     | ImportEventType
     | AlbumImportedEventType
@@ -89,6 +91,13 @@ class ItemPathEventArgs(TypedDict):
 class ImportTaskEventArgs(TypedDict):
     session: ImportSession
     task: ImportTask
+
+
+class ImportDuplicateSummaryEventArgs(TypedDict):
+    task: ImportTask
+    side: Literal["old", "new"]
+    items: list[Item]
+    summary: str
 
 
 class ImportEventArgs(TypedDict):

@@ -190,6 +190,18 @@ registration process in this case:
         May return a list of ``PromptChoices`` to append to the prompt (see
         :ref:`append_prompt_choices`).
 
+``import_duplicate_summary``
+    :Parameters: ``task`` (|ImportTask|), ``side`` (``"old"`` or ``"new"``),
+        ``items`` (list of |Item|), ``summary`` (str)
+    :Description: Called for each ``Old:`` and ``New:`` line shown when the
+        importer asks what to do with a duplicate. ``items`` are the existing
+        library items (``old``) or the items being imported (``new``); for
+        ``new``, the chosen match's metadata is available via
+        ``task.chosen_info()`` because the files are not tagged yet. ``summary``
+        is the default line built from :ref:`duplicate_summary_fields`. Return a
+        string to replace it, or ``None`` to keep it. If several plugins return
+        a string, the first one wins.
+
 ``mb_track_extract``
     :Parameters: ``data`` (dict)
     :Description: Called after metadata is obtained from MusicBrainz for a
