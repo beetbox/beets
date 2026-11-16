@@ -873,9 +873,26 @@ class Google(SearchBackend):
             "excludeTerms": ", ".join(self.EXCLUDE_PAGES),
         }
 
-        data: GoogleCustomSearchAPI.Response = self.get_json(
-            self.SEARCH_URL, params=params
-        )
+        try:
+            data: GoogleCustomSearchAPI.Response = self.get_json(
+                self.SEARCH_URL, params=params
+            )
+        except requests.HTTPError as exc:
+            if exc.response is not None and exc.response.status_code in {
+                HTTPStatus.BAD_REQUEST,
+                HTTPStatus.FORBIDDEN,
+            }:
+                self.warn(
+                    "Google refused the search request (HTTP {}). Check your"
+                    " `google_API_key` and `google_engine_ID`. Note that the"
+                    " Google Custom Search JSON API is closed to new customers"
+                    " and will be discontinued on January 1, 2027. Consider"
+                    " using the other lyrics sources instead.",
+                    exc.response.status_code,
+                )
+                return
+            raise
+
         for item in data.get("items", []):
             yield self.make_search_result(artist, title, item)
 
