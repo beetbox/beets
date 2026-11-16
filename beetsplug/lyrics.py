@@ -412,8 +412,7 @@ class LRCLib(Backend):
 
     @cached_property
     def base_url(self) -> str:
-        base = self.config["lrclib"]["url"].get(str)
-        return base.rstrip("/")
+        return self.config["lrclib"]["url"].get(str).rstrip("/")
 
     @cached_property
     def get_url(self) -> str:
