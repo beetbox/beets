@@ -48,8 +48,9 @@ class Lyrics:
 
     ORIGINAL_PAT = re.compile(r"[^\n]+ / ")
     TRANSLATION_PAT = re.compile(r" / [^\n]+")
-    LINE_PARTS_PAT = re.compile(r"^(\[\d\d:\d\d\.\d{2,3}\]|) *(.*)$")
-    LRC_TIMESTAMP_PAT = re.compile(r"\[(\d{2}):(\d{2})\.(\d{2,3})\]")
+    #: LRC timestamps, whose minutes may run past two digits, and their text.
+    LINE_PARTS_PAT = re.compile(r"^(\[\d{2,}:\d{2}\.\d{2,3}\]|) *(.*)$")
+    LRC_TIMESTAMP_PAT = re.compile(r"\[(\d{2,}):(\d{2})\.(\d{2,3})\]")
 
     text: str
     backend: str | None = None

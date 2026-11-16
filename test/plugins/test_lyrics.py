@@ -1064,6 +1064,11 @@ class TestLyricsSyltProperty:
                 id="over-one-minute",
             ),
             pytest.param(
+                "[100:00.00] past ninety-nine minutes",
+                [("past ninety-nine minutes", 6_000_000)],
+                id="over-hundred-minutes",
+            ),
+            pytest.param(
                 "plain lyrics without timestamps",
                 [],
                 id="plain-lyrics-have-no-sylt",
@@ -1200,6 +1205,9 @@ class TestLyricsFiles(LyricsPluginMixin):
         [
             pytest.param(PLAIN, ".txt", id="plain"),
             pytest.param(SYNCED, ".lrc", id="synced"),
+            pytest.param(
+                "[100:00.00] a very long track", ".lrc", id="synced-long-track"
+            ),
         ],
     )
     def test_fetched_lyrics_are_written_to_a_file(
