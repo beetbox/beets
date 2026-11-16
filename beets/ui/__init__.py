@@ -167,15 +167,16 @@ def input_(prompt: str | None = None) -> str:
     # raw_input incorrectly sends prompts to stderr, not stdout, so we
     # use print_() explicitly to display prompts.
     # https://bugs.python.org/issue1927
-    if prompt:
-        print_(prompt, end=" ")
+    while True:
+        if prompt:
+            print_(prompt, end=" ")
 
-    try:
-        resp = input()
-    except EOFError:
-        raise UserError("stdin stream ended while input required")
-
-    return resp
+        try:
+            return input()
+        except UnicodeDecodeError:
+            print_("Could not decode input; please try again.")
+        except EOFError:
+            raise UserError("stdin stream ended while input required")
 
 
 @overload

@@ -517,3 +517,13 @@ class TestEncoding:
         with patch("sys.stdin") as stdin:
             stdin.encoding = None
             assert ui._in_encoding() == "utf-8"
+
+
+class InputUnicodeErrorTest(IOMixin, unittest.TestCase):
+    def test_input_retries_on_unicode_decode_error(self):
+        err = UnicodeDecodeError("utf-8", b"\xff\xfe", 0, 1, "invalid start byte")
+        with patch("builtins.input", side_effect=[err, "valid artist"]):
+            result = ui.input_("Artist:")
+
+        assert result == "valid artist"
+        assert "Could not decode input; please try again." in self.io.getoutput()
