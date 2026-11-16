@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+import unicodedata
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Literal
 
@@ -60,11 +61,20 @@ class PlaylistQuery(InQuery[bytes]):
                             # ignore comments, and extm3u extension
                             continue
 
-                        paths.append(
-                            beets.util.normpath(
-                                os.path.join(relative_to_bytes, line.rstrip())
-                            )
+                        normalized_path = beets.util.normpath(
+                            os.path.join(relative_to_bytes, line.rstrip())
                         )
+                        paths.append(normalized_path)
+                        try:
+                            decoded = normalized_path.decode("utf-8")
+                        except UnicodeDecodeError:
+                            continue
+                        for form in ("NFC", "NFD"):
+                            variant = unicodedata.normalize(
+                                form, decoded
+                            ).encode("utf-8")
+                            if variant != normalized_path:
+                                paths.append(variant)
                     break
             except OSError:
                 paths.clear()

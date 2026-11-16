@@ -203,3 +203,28 @@ class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
             map(Path, self.relative_playlist_path.read_text().splitlines())
         )
         assert lines == expected_paths
+
+
+class PlaylistUnicodeNormalizationTest(PluginTestCase):
+    plugin = "playlist"
+
+    def test_query_matches_nfc_and_nfd_paths(self):
+        nfd_path = beets.util.normpath(
+            os.path.join(
+                beets.util.bytestring_path(self.temp_path),
+                "Gregor Cu\u0308rten.flac".encode(),
+            )
+        )
+        nfc_line = os.path.join(
+            str(self.temp_path), "Gregor C\u00fcrten.flac"
+        )
+        self.add_item(path=nfd_path, title="unicode nfd track")
+
+        playlist_dir = self.temp_path / "playlists"
+        playlist_dir.mkdir(parents=True, exist_ok=True)
+        playlist_file = playlist_dir / "unicode.m3u8"
+        playlist_file.write_bytes((nfc_line + "\n").encode("utf-8"))
+
+        self.config["playlist"]["playlist_dir"] = str(playlist_dir)
+        results = self.lib.items(f"playlist:{quote(str(playlist_file))}")
+        assert [i.title for i in results] == ["unicode nfd track"]
