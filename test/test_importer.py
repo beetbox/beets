@@ -2059,6 +2059,50 @@ class ImportTrackDuplicateResolutionTest(ImportHelper, BeetsTestCase):
             "Tag Track 2",
         }
 
+    def _remove_import_track(self, title):
+        """Drop the source file of ``title`` from the folder to import."""
+        media = next(m for m in self.import_media if m.title == title)
+        os.remove(media.path)
+        self.import_media.remove(media)
+
+    def test_folds_only_missing_tracks_into_existing_album(self):
+        # The folder only holds the track missing from an existing album: no
+        # track is a duplicate but the album is, so the track completes that
+        # album instead of being skipped with it.
+        self._import(action="skip")
+        self.lib.items("title:'Tag Track 2'").get().remove(delete=True)
+        self._remove_import_track("Tag Track 1")
+
+        self._import(action="skip")
+
+        assert len(self.lib.albums()) == 1
+        album = self.lib.albums().get()
+        assert {i.title for i in album.items()} == {
+            "Tag Track 1",
+            "Tag Track 2",
+        }
+        assert self.lib.items("title:'Tag Track 2'").get().filepath.exists()
+
+    def test_keep_imports_only_missing_tracks_as_new_album(self):
+        self._import(action="skip")
+        self.lib.items("title:'Tag Track 2'").get().remove(delete=True)
+        self._remove_import_track("Tag Track 1")
+
+        self._import(action="skip", track_action="keep")
+
+        assert len(self.lib.albums()) == 2
+        assert len(self.lib.items()) == 2
+
+    def test_only_missing_tracks_keep_album_check_when_disabled(self):
+        # Without `duplicate_tracks`, the album-level action still applies.
+        self._import(action="skip")
+        self.lib.items("title:'Tag Track 2'").get().remove(delete=True)
+        self._remove_import_track("Tag Track 1")
+
+        self._import(action="skip", enabled=False)
+
+        assert {i.title for i in self.lib.items()} == {"Tag Track 1"}
+
     def test_skip_matches_existing_album_member(self):
         # A matching track that already belongs to an album in the library
         # (not a singleton) must still be caught, and the remaining new track

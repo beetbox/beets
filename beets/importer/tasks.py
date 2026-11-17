@@ -186,6 +186,9 @@ class TrackDuplicates:
     """The tracks of an import task that duplicate existing library items:
     ``duplicates`` maps each task item to the library items it duplicates,
     ``actions`` maps the same items to the action chosen for them.
+    ``checked`` tells whether the tracks were checked at all, and
+    ``existing_album_id`` names the album to add the tracks to when none of
+    them is a duplicate but the album as a whole is.
     """
 
     duplicates: dict[library.Item, list[library.Item]] = dataclass_field(
@@ -194,6 +197,8 @@ class TrackDuplicates:
     actions: dict[library.Item, DuplicateAction] = dataclass_field(
         default_factory=dict
     )
+    checked: bool = False
+    existing_album_id: int | None = None
 
     @staticmethod
     def _candidate_pairs(
@@ -261,7 +266,7 @@ class TrackDuplicates:
         if seen_keys is not None:
             seen_keys |= claimed
 
-        return cls(duplicates)
+        return cls(duplicates, checked=True)
 
     def __bool__(self) -> bool:
         return bool(self.duplicates)

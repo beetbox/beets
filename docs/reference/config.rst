@@ -936,6 +936,13 @@ of another album.
 Tracks found to be duplicates are resolved according to
 :ref:`duplicate_tracks_action`.
 
+When the album is a duplicate of exactly one existing album but *none* of the
+incoming tracks is (for example, a folder holding only the tracks missing from
+that album), the tracks are added to the existing album instead of the whole
+import being resolved by :ref:`duplicate_action`. Set
+:ref:`duplicate_tracks_action` to ``keep`` to import them as a new album
+instead.
+
 Default: ``no``.
 
 .. _duplicate_tracks_action:

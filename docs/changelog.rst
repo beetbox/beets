@@ -57,8 +57,9 @@ New features
   the whole-album duplicate check via the :ref:`duplicate_tracks_action` option
   (falling back to :ref:`duplicate_action` when unset), including per-track
   decisions. ``skip`` drops already-imported tracks and adds the remaining new
-  tracks to the existing album, completing a partially-imported album. Disabled
-  by default.
+  tracks to the existing album, completing a partially-imported album. An import
+  that only holds tracks missing from an existing album is added to that album
+  too. Disabled by default.
 
 Bug fixes
 ~~~~~~~~~

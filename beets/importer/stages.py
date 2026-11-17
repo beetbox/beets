@@ -416,8 +416,9 @@ def _apply_choice(session: ImportSession, task: ImportTask) -> None:
 
     task.add(session.lib)
 
-    # When duplicate tracks were skipped, complete the existing album with
-    # the remaining new tracks instead of keeping them as a new album.
+    # When duplicate tracks were skipped, or the task only adds tracks missing
+    # from an existing album, complete that album with the new tracks instead
+    # of keeping them as a new album.
     _fold_into_existing_album(session, task, skipped)
 
     # If ``set_fields`` is set, set those fields to the
@@ -513,18 +514,24 @@ def _fold_into_existing_album(
     session: ImportSession, task: ImportTask, skipped: list[library.Item]
 ) -> None:
     """Fold the newly added tracks into the existing album the skipped
-    tracks' duplicates belong to. Matched singletons have no ``album_id``
-    and do not affect the target; an ambiguous target keeps the new album.
+    tracks' duplicates belong to, or, when no track was a duplicate, into
+    the album the whole task duplicates. Matched singletons have no
+    ``album_id`` and do not affect the target; an ambiguous target keeps the
+    new album.
     """
-    if not skipped or task.skip or not task.is_album:
+    if task.skip or not task.is_album:
         return
-
-    album_ids = {
-        match.album_id
-        for item in skipped
-        for match in task.track_duplicates.old_items(item)
-        if match.album_id is not None
-    }
+    if skipped:
+        album_ids = {
+            match.album_id
+            for item in skipped
+            for match in task.track_duplicates.old_items(item)
+            if match.album_id is not None
+        }
+    elif task.track_duplicates.existing_album_id is not None:
+        album_ids = {task.track_duplicates.existing_album_id}
+    else:
+        return
     existing_album = (
         session.lib.get_album(album_ids.pop()) if len(album_ids) == 1 else None
     )
