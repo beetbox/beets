@@ -15,6 +15,7 @@ class InfoTest(IOMixin, PluginTestCase):
         mediafile.albumartist = "AAA"
         mediafile.disctitle = "DDD"
         mediafile.genres = ["a", "b", "c"]
+        mediafile.synced_lyrics = [("hello", 1000), ("world", 2000)]
         mediafile.composer = None
         mediafile.save()
 
@@ -23,6 +24,7 @@ class InfoTest(IOMixin, PluginTestCase):
         assert "albumartist: AAA" in out
         assert "disctitle: DDD" in out
         assert "genres: a; b; c" in out
+        assert "synced_lyrics: ('hello', 1000); ('world', 2000)" in out
         assert "composer:" not in out
 
     def test_item_query(self):
