@@ -22,6 +22,11 @@ class TestTitlecasePlugin(PluginTestCase):
         with self.configure_plugin({"auto": False, "after_choice": True}):
             assert len(TitlecasePlugin().import_stages) == 0
 
+    def test_commands_can_be_requested_twice(self):
+        """``beet completion`` asks every plugin for its commands again."""
+        plugin = TitlecasePlugin()
+        assert plugin.commands() == plugin.commands()
+
     def test_basic_titlecase(self):
         """Check that default behavior is as expected."""
         testcases = [

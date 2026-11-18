@@ -167,6 +167,8 @@ Bug fixes
   instead of silently falling back to plain lyrics. :bug:`7070`
 - :doc:`plugins/info`: Fix a :class:`TypeError` when printing list-valued tag
   fields with non-string elements, such as ``synced_lyrics``. :bug:`7183`
+- :doc:`plugins/titlecase`: Fix ``beet completion`` crashing with
+  ``OptionConflictError`` when the plugin is enabled.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
