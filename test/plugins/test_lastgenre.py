@@ -160,6 +160,19 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert album.genres == ["Original Genre"]
         assert album.items()[0].genres == ["Original Genre"]
 
+    def test_item_imported_processes_singleton(self):
+        item = self.create_item(
+            album="Singleton Album",
+            albumartist="Singleton Artist",
+            artist="Singleton Artist",
+            title="Singleton Track",
+        )
+
+        with patch.object(self.plugin, "_process") as process:
+            self.plugin.item_imported(self.lib, item)
+
+        process.assert_called_once_with(item, write=False)
+
     def test_no_duplicate(self):
         """Remove duplicated genres."""
         self._setup_config(count=99)

@@ -137,6 +137,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Setup plugin from config options"""
         if self.config["auto"]:
             self.import_stages = [self.imported]
+            self.register_listener("item_imported", self.item_imported)
 
         self.whitelist: Whitelist = self._load_whitelist()
         self.c14n_branches: CanonTree
@@ -823,4 +824,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [lastgenre_cmd]
 
     def imported(self, _: ImportSession, task: ImportTask) -> None:
-        self._process(task.album if task.is_album else task.item, write=False)  # type: ignore[attr-defined]
+        if task.is_album:
+            self._process(task.album, write=False)
+
+    def item_imported(self, _: library.Library, item: Item) -> None:
+        self._process(item, write=False)
