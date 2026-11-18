@@ -15,12 +15,12 @@ import re
 from collections import defaultdict
 from functools import cached_property, singledispatchmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, Unpack
 
 import confuse
 import yaml
 
-from beets import config, library, plugins, ui
+from beets import config, events, library, plugins, ui
 from beets.library import Album, Item
 from beets.util import plurality, unique_list
 from beetsplug.lastgenre.utils import is_ignored, normalize_genre
@@ -830,5 +830,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if task.is_album:
             self._process(task.album, write=False)
 
-    def item_imported(self, _: library.Library, item: Item) -> None:
-        self._process(item, write=False)
+    def item_imported(
+        self, **kwargs: Unpack[events.ItemImportedEventArgs]
+    ) -> None:
+        self._process(kwargs["item"], write=False)

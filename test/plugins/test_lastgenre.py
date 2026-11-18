@@ -169,7 +169,7 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         )
 
         with patch.object(self.plugin, "_process") as process:
-            self.plugin.item_imported(self.lib, item)
+            self.plugin.item_imported(lib=self.lib, item=item)
 
         process.assert_called_once_with(item, write=False)
 
