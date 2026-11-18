@@ -231,6 +231,9 @@ class ImportTask(BaseImportTask):
 
     choice_flag: Action | None = None
     match: AlbumMatch | TrackMatch | None = None
+    # The candidate on screen during the interactive prompt, which may not
+    # be applied; `None` while the candidate list is shown.
+    selected_match: AlbumMatch | TrackMatch | None = None
 
     # Set by `group_albums` when items were grouped by tag, not by
     # directory. No scope for a filesystem rescan, so the "Rescan
@@ -324,7 +327,11 @@ class ImportTask(BaseImportTask):
         if self.choice_flag in (Action.ASIS, Action.RETAG):
             return self.source.data.copy()
         if self.choice_flag is Action.APPLY and self.match:
-            return self.match.info.copy()
+            # Library field names (e.g. ``mb_albumid``), which
+            # ``duplicate_keys`` refer to.
+            # Copy since ``item_data`` is cached and callers mutate the
+            # result.
+            return self.match.info.item_data.copy()
         assert False
 
     def imported_items(self) -> list[library.Item]:
@@ -565,10 +572,13 @@ class ImportTask(BaseImportTask):
         album name as the task.
         """
         info = self.chosen_info()
-        info["albumartist"] = info["artist"]
+        if "artist" in info:
+            # As-is import: the files' ``artist`` is the album artist.
+            info["albumartist"] = info["artist"]
 
-        if info["artist"] is None:
-            # As-is import with no artist. Skip check.
+        if info.get("albumartist") is None:
+            # No album artist to query: an as-is import with none, or an
+            # applied match where ``item_data`` dropped a ``None`` artist.
             return []
 
         # Construct a query to find duplicates with this metadata. We
