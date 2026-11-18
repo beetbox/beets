@@ -160,6 +160,19 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert album.genres == ["Original Genre"]
         assert album.items()[0].genres == ["Original Genre"]
 
+    def test_item_imported_processes_singleton(self):
+        item = self.create_item(
+            album="Singleton Album",
+            albumartist="Singleton Artist",
+            artist="Singleton Artist",
+            title="Singleton Track",
+        )
+
+        with patch.object(self.plugin, "_process") as process:
+            self.plugin.item_imported(lib=self.lib, item=item)
+
+        process.assert_called_once_with(item, write=False)
+
     def _add_album_for_import(self) -> Album:
         item = self.create_item(
             album="Import Album",
