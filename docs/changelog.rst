@@ -167,8 +167,8 @@ Bug fixes
   instead of silently falling back to plain lyrics. :bug:`7070`
 - :doc:`plugins/info`: Fix a :class:`TypeError` when printing list-valued tag
   fields with non-string elements, such as ``synced_lyrics``. :bug:`7183`
-- :doc:`plugins/lastgenre`: Fix lastgenre not triggering on singleton imports
-  in auto mode. :bug:`7190`
+- :doc:`plugins/lastgenre`: Fix lastgenre not triggering on singleton imports in
+  auto mode. :bug:`7190`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
