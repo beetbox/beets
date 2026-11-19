@@ -709,6 +709,36 @@ class TestCandidates(TidalPluginTest):
         assert len(candidates) == 1
         assert candidates[0].album == "Query Album"
 
+    def test_search_albums_respects_search_limit(self):
+        """search_albums_by_query must honour the configured search_limit."""
+        # Return three album IDs from the API; config limit is 1.
+        self.tidal.config["search_limit"] = 1
+        self.tidal.api.search_results = Mock(
+            return_value=_make_search_doc("albums", ["1", "2", "3"])
+        )
+
+        track = _make_track("101", "Album Track", "PT3M", "ISRC001", ["1001"])
+        album, track_lookup, artist_lookup = _make_album(
+            "1", "Limited Album", [track], ["1001"]
+        )
+        self.tidal.api.get_albums = Mock(
+            return_value={
+                "data": [album],
+                "included": [*artist_lookup.values(), *track_lookup.values()],
+            }
+        )
+
+        candidates = list(self.tidal.search_albums_by_query("some query"))
+
+        # Only album "1" should have been requested despite three IDs returned
+        call_args = self.tidal.api.get_albums.call_args
+        requested_ids = call_args.kwargs.get(
+            "ids", call_args.args[0] if call_args.args else []
+        )
+        assert requested_ids == ["1"]
+        assert len(candidates) == 1
+        assert candidates[0].album == "Limited Album"
+
     def test_album_search_handles_empty_response(self):
         self.tidal.api.search_results = Mock(return_value={"data": []})
         self.tidal.api.get_albums = Mock()
@@ -770,6 +800,26 @@ class TestItemCandidates(TidalPluginTest):
         candidates = list(self.tidal.search_tracks_by_query("missing track"))
 
         assert candidates == []
+
+    def test_search_tracks_respects_search_limit(self):
+        """search_tracks_by_query must honour the configured search_limit."""
+        self.tidal.config["search_limit"] = 1
+
+        # Return two tracks from the search doc; limit should allow only one.
+        track1 = _make_track("501", "Track One", "PT3M", "ISRC501", ["1001"])
+        track2 = _make_track("502", "Track Two", "PT3M", "ISRC502", ["1001"])
+        artist = _make_artist("1001", "Some Artist")
+        self.tidal.api.search_results = Mock(
+            return_value={
+                **_make_search_doc("tracks", ["501", "502"]),
+                "included": [track1, track2, artist],
+            }
+        )
+
+        results = list(self.tidal.search_tracks_by_query("some query"))
+
+        assert len(results) == 1
+        assert results[0].title == "Track One"
 
 
 class TestStaticHelpers:

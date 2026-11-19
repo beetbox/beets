@@ -211,9 +211,10 @@ class TidalPlugin(MetadataSourcePlugin):
             for item in search_doc.get("included", [])
             if item["type"] == "artists"
         }
+        limit = self.config["search_limit"].get(int)
         for track_rel in search_doc["data"][0]["relationships"]["tracks"][
             "data"
-        ]:
+        ][:limit]:
             if track := track_by_id.get(track_rel["id"]):
                 yield self._get_track_info(track, artist_by_id=artist_by_id)
             else:
@@ -233,11 +234,12 @@ class TidalPlugin(MetadataSourcePlugin):
         if not search_doc["data"]:
             return
 
+        limit = self.config["search_limit"].get(int)
         album_ids = [
             album_rel["id"]
             for album_rel in search_doc["data"][0]["relationships"]["albums"][
                 "data"
-            ]
+            ][:limit]
         ]
         yield from filter(None, self.search_albums_by_ids(tidal_ids=album_ids))
 
