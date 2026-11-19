@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import sys
 from collections import Counter, defaultdict
 from functools import cached_property, singledispatchmethod
 from pathlib import Path
@@ -322,9 +323,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     # Genre list processing.
 
     def _resolve_genres(
-        self, tags: list[str], artist: str | None = None
+        self,
+        tags: list[str],
+        artist: str | None = None,
+        count: int | None = None,
     ) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
+
+        ``count`` overrides the configured genre limit.
 
         - Returns an empty list if the input tags list is empty.
         - If aliases are configured, variant spellings are normalised first
@@ -355,7 +361,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for tag in tags
             ]
 
-        count = self.config["count"].get(int)
+        if count is None:
+            count = self.config["count"].get(int)
 
         # Canonicalization (if enabled)
         if self.canonicalize:
@@ -597,12 +604,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         for item in album.items():
             item_genres = []
             if "track" in self.sources:
-                item_genres = self._filter_valid(
-                    self.client.fetch("track", item), item.artist
+                item_genres = self._resolve_genres(
+                    self.client.fetch("track", item),
+                    artist=item.artist,
+                    count=sys.maxsize,
                 )
             if not item_genres:
-                item_genres = self._filter_valid(
-                    self.client.fetch("artist", item), item.artist
+                item_genres = self._resolve_genres(
+                    self.client.fetch("artist", item),
+                    artist=item.artist,
+                    count=sys.maxsize,
                 )
             if item_genres:
                 votes[item_genres[0]] += 1
