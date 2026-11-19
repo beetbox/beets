@@ -49,10 +49,18 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
+  can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
 
 Bug fixes
 ~~~~~~~~~
 
+- Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
+  or ``mb_trackid`` now detect duplicates when a metadata-source match is
+  applied, instead of treating the key as missing. :bug:`7067`
+- :doc:`plugins/missing`: Fix the documentation of the ``--release-types``
+  command-line option and the ``release_types`` configuration option, which
+  still used their old names. :bug:`7172`
 - Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
   full traceback at error level when a search fails because the service is
   unreachable. The error message is logged on its own, and the traceback is kept
@@ -74,6 +82,8 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Fix a race condition between concurrent importer threads where updates to
+  ``state.pickle`` could lose tagging progress or incremental-import history.
 - Fix word wrapping of colored diff output for a word containing two or more
   separately-highlighted spans, which was incorrectly split into two words at
   the second highlighted span.
@@ -146,6 +156,27 @@ Bug fixes
 - :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
   so multi-disc albums with shared track numbers stay grouped by disc.
   :bug:`4061`
+- :doc:`plugins/lastgenre`: The genre changes are no longer printed during an
+  import (unless it is verbose), where they could appear on top of the
+  importer's prompt for the next album and make the import look frozen. The
+  ``lastgenre`` command still prints them. :bug:`6830`
+- Path formats: an empty ``${}`` inside a function call argument no longer
+  truncates the argument list and leaks the rest of the template as literal
+  text.
+- :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
+  instead of silently falling back to plain lyrics. :bug:`7070`
+- :doc:`plugins/info`: Fix a :class:`TypeError` when printing list-valued tag
+  fields with non-string elements, such as ``synced_lyrics``. :bug:`7183`
+- :doc:`plugins/titlecase`: Fix ``beet completion`` crashing with
+  ``OptionConflictError`` when the plugin is enabled.
+- Autotagger: Match tracks by their MusicBrainz release track ID as well as
+  their recording ID. Media of one release can share recordings, like the CD and
+  SACD layers of a hybrid SACD, and files from the second medium were assigned
+  to the first medium's tracks, overwriting their release track IDs. When
+  reimporting, this favours the exact release the files were tagged with and
+  penalizes other releases of the same recordings. Items tagged from a source
+  without release track IDs store their track ID in its place, so a MusicBrainz
+  candidate gets this penalty for them, as it already did for the recording ID.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
