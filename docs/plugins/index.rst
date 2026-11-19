@@ -486,6 +486,11 @@ drop2beets_
 dsedivec_
     Has two plugins: ``edit`` and ``moveall``.
 
+beets-fdup_
+    Finds duplicate tracks by fuzzy matching fields such as artist and title, so
+    tracks whose tags differ still match. Labels versions such as live
+    recordings, remixes and remasters.
+
 beets-filetote_
     Helps bring non-music extra files, attachments, and artifacts during imports
     and CLI file manipulation actions (``beet move``, etc.).
@@ -626,6 +631,8 @@ beets-youtube_
 .. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 
 .. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
+
+.. _beets-fdup: https://github.com/RACGriffiths/beets-fdup
 
 .. _beets-filetote: https://github.com/gtronset/beets-filetote
 

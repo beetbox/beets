@@ -64,6 +64,8 @@ Default configuration:
         keep_synced: no
         google_API_key: null
         google_engine_ID: 009217259823014548361:lndtuqkycfu
+        lrclib:
+          url: https://lrclib.net/api
         lrcmux:
           url: https://api.lrcmux.dev
           sources: []
@@ -116,6 +118,11 @@ The available options are:
 - **google_engine_ID**: The custom search engine to use. Default: The `beets
   custom search engine`_, which gathers an updated list of sources known to be
   scrapeable.
+- **lrclib**:
+
+  - **url**: Base URL of the lrclib_ instance to use. Override this to point at
+    a self-hosted instance. Make sure that ``/api`` is at the end of the URL.
+
 - **lrcmux**:
 
   - **url**: Base URL of the lrcmux_ instance to use. Override this to point at
