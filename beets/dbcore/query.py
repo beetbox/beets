@@ -14,6 +14,7 @@ from re import Pattern
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 from beets import context, util
+from beets.util import Replacements
 from beets.util.units import raw_seconds_short
 
 from . import pathutils
@@ -398,6 +399,50 @@ class RegexpQuery(StringFieldQuery[Pattern[str]]):
     @classmethod
     def string_match(cls, pattern: Pattern[str], value: str) -> bool:
         return pattern.search(cls._normalize(value)) is not None
+
+
+class RegexpReplaceQuery(StringFieldQuery[tuple[str, Replacements]]):
+    """A query that matches for an exact equal after a set of regular
+    expression replacements has been applied.
+    """
+
+    def __init__(
+        self,
+        field_name: str,
+        query: str,
+        replacements: Replacements,
+        fast: bool = True,
+    ) -> None:
+        query = self._apply(replacements, query)
+        super().__init__(field_name, (query, tuple(replacements)), fast)
+
+    def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
+        # I wanted to do [*[p[0].pattern, p[1]] for p in self.pattern],
+        # but it turns out python doesn't support that.  :(
+        clause = self.field
+        values = []
+
+        for p in self.pattern[1]:
+            values.extend([p[0].pattern, p[1]])
+            clause = f"regexp_replace({clause}, ?, ?)"
+
+        values.append(self.pattern[0])
+        clause = f" {clause} = ?"
+
+        return clause, values
+
+    @staticmethod
+    def _apply(replacements: Replacements, value: str) -> str:
+        value = unicodedata.normalize("NFC", value)
+        for pattern, repl in replacements:
+            value = pattern.sub(repl, value)
+        return value
+
+    @classmethod
+    def string_match(
+        cls, pattern: tuple[str, Replacements], value: str
+    ) -> bool:
+        return cls._apply(pattern[1], value) == pattern[0]
 
 
 class BooleanQuery(MatchQuery[int]):
