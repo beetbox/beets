@@ -41,12 +41,28 @@ _MUTAGEN_FORMATS = {
 }
 
 
+def _tag_matches_keep(tag: str, keep: set[str]) -> bool:
+    parts = tag.split(":")
+    frame = parts[0].upper()
+
+    if frame == "TXXX":
+        name = ":".join(parts[1:])
+    elif frame in {"COMM", "USLT"} and len(parts) > 2:
+        name = ":".join(parts[1:-1])
+    elif parts[0] == "----" and len(parts) > 1:
+        name = parts[-1]
+    else:
+        name = tag
+
+    return name.casefold() in keep
+
+
 class ScrubPlugin(BeetsPlugin):
     """Removes extraneous metadata from files' tags."""
 
     def __init__(self) -> None:
         super().__init__()
-        self.config.add({"auto": True})
+        self.config.add({"auto": True, "keep": []})
 
         if self.config["auto"]:
             self.register_listener("import_task_files", self.import_task_files)
@@ -84,7 +100,8 @@ class ScrubPlugin(BeetsPlugin):
         return classes
 
     def _scrub(self, path: bytes) -> None:
-        """Remove all tags from a file."""
+        """Remove tags from a file, except those configured to keep."""
+        keep = {tag.casefold() for tag in self.config["keep"].as_str_seq()}
         for cls in self._mutagen_classes():
             # Try opening the file with this type, but just skip in the
             # event of any error.
@@ -95,15 +112,22 @@ class ScrubPlugin(BeetsPlugin):
             if f.tags is None:
                 continue
 
-            # Remove the tag for this type.
+            # Remove tags for this type.
             try:
-                f.delete()
+                if keep:
+                    for tag in list(f):
+                        if not _tag_matches_keep(tag, keep):
+                            del f[tag]
+                    f.save()
+                else:
+                    f.delete()
             except NotImplementedError:
                 # Some Mutagen metadata subclasses (namely, ASFTag) do not
                 # support .delete(), presumably because it is impossible to
-                # remove them. In this case, we just remove all the tags.
-                for tag in f:
-                    del f[tag]
+                # remove them. Remove tags individually instead.
+                for tag in list(f):
+                    if not keep or not _tag_matches_keep(tag, keep):
+                        del f[tag]
                 f.save()
             except (OSError, mutagen.MutagenError) as exc:
                 self._log.error(
