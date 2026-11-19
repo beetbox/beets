@@ -163,6 +163,8 @@ Bug fixes
   text.
 - :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
   instead of silently falling back to plain lyrics. :bug:`7070`
+- :ref:`import-cmd` Fix importing from a logfile (``--from-logfile`` option)
+  when paths contain |semicolon_space| characters. :bug:`4941`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
