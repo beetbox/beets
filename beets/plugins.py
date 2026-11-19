@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
     from confuse import Subview
 
-    from beets.autotag import AlbumInfo, TrackInfo
+    from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore.db import FieldQueryType
     from beets.dbcore.types import Type
     from beets.importer import Action, ImportSession, ImportTask
@@ -286,6 +286,25 @@ class BeetsPlugin(metaclass=BeetsPluginMeta):
     def queries(self) -> dict[str, FieldQueryType]:
         """Return a dict mapping prefixes to Query subclasses."""
         return {}
+
+    def track_penalties(self, item: Item, info: TrackInfo) -> Distance | None:
+        """Return extra penalties for matching `item` to `info`, or None.
+
+        Penalty keys need a weight in ``match.distance_weights``.
+        """
+        return None
+
+    def album_penalties(
+        self,
+        items: Sequence[Item],
+        album_info: AlbumInfo,
+        mapping: dict[Item, TrackInfo],
+    ) -> Distance | None:
+        """Return extra penalties for matching `items` to `album_info`, or None.
+
+        Penalty keys need a weight in ``match.distance_weights``.
+        """
+        return None
 
     def add_media_field(
         self, name: str, descriptor: mediafile.MediaField
@@ -657,6 +676,31 @@ def notify_info_yielded(
         return wrapper
 
     return decorator
+
+
+def track_penalties(item: Item, info: TrackInfo) -> Distance:
+    """Return the track penalties added by all loaded plugins."""
+    from beets.autotag.distance import Distance
+
+    dist = Distance()
+    for plugin in find_plugins():
+        if (plugin_dist := plugin.track_penalties(item, info)) is not None:
+            dist.update(plugin_dist)
+    return dist
+
+
+def album_penalties(
+    items: Sequence[Item], album_info: AlbumInfo, mapping: dict[Item, TrackInfo]
+) -> Distance:
+    """Return the album penalties added by all loaded plugins."""
+    from beets.autotag.distance import Distance
+
+    dist = Distance()
+    for plugin in find_plugins():
+        plugin_dist = plugin.album_penalties(items, album_info, mapping)
+        if plugin_dist is not None:
+            dist.update(plugin_dist)
+    return dist
 
 
 def template_funcs() -> TFuncMap[str]:
