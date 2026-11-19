@@ -213,6 +213,8 @@ Other changes
   :bug:`5408`
 - :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
+- :doc:`plugins/export`: Clarify that the ``--include-keys`` option accepts
+  field names rather than glob patterns. :bug:`5411`
 
 2.14.1 (September 17, 2026)
 ---------------------------
