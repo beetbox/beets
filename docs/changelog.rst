@@ -51,6 +51,10 @@ New features
   the candidate list.
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
+- :doc:`plugins/lyrics`: Lyrics can be written to ``.lrc`` and ``.txt`` files
+  next to the tracks (``write_files``, ``--write-files``) for players that
+  expect them there, and ``remove_embedded`` deletes the lyrics tags afterwards
+  so that the lyrics end up in a single place. :bug:`6396`
 
 Bug fixes
 ~~~~~~~~~

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import itertools
 import math
+import os
 import re
+import tempfile
 import textwrap
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
@@ -19,15 +21,17 @@ from urllib.parse import quote, quote_plus, urlencode, urlparse
 import requests
 from bs4 import BeautifulSoup
 from confuse import Optional
+from mediafile import MediaFile, UnreadableFileError
 from unidecode import unidecode
 
-from beets import plugins, ui
+from beets import config, plugins, ui
 from beets.autotag import string_dist
 from beets.dbcore import types
 from beets.dbcore.query import FalseQuery
 from beets.library import Item, parse_query_string
+from beets.util import FilesystemError, displayable_path, mkdirall, syspath
 from beets.util.config import sanitize_choices
-from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics
+from beets.util.lyrics import INSTRUMENTAL_LYRICS, Lyrics, sylt_to_lrc
 
 from ._utils.requests import (
     BeetsHTTPError,
@@ -59,7 +63,9 @@ if TYPE_CHECKING:
 class LyricsCLIOpts(Protocol):
     limit: int | None
     print: bool
+    remove_embedded: bool
     rest_directory: str | None
+    write_files: bool
 
 
 class CaptchaError(requests.exceptions.HTTPError):
@@ -1122,6 +1128,19 @@ BACKEND_BY_NAME = {
 }
 
 
+def sylt_frames(mediafile: MediaFile) -> list[list[tuple[str, int]]]:
+    """Return the ``(text, timestamp)`` pairs of every SYLT frame.
+
+    :attr:`MediaFile.synced_lyrics` reads only the first frame, while
+    clearing the tag deletes all of them.
+    """
+    tags = getattr(mediafile.mgfile, "tags", None)
+    if getall := getattr(tags, "getall", None):
+        return [list(frame.text) for frame in getall("SYLT")]
+
+    return []
+
+
 class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
     item_types: ClassVar[dict[str, types.Type]] = {
         "lyrics_url": types.STRING,
@@ -1174,8 +1193,10 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
                 "keep_synced": False,
                 "local": False,
                 "print": False,
+                "remove_embedded": False,
                 "rest_directory": None,
                 "synced": False,
+                "write_files": False,
                 # Musixmatch and Tekstowo are disabled by default as they
                 # currently block requests with the beets user agent.
                 "sources": [
@@ -1238,6 +1259,18 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             default=self.config["local"].get(),
             help="do not fetch missing lyrics",
         )
+        cmd.parser.add_option(
+            "--write-files",
+            action="store_true",
+            default=self.config["write_files"].get(),
+            help="write lyrics to .lrc/.txt files next to the tracks",
+        )
+        cmd.parser.add_option(
+            "--remove-embedded",
+            action="store_true",
+            default=self.config["remove_embedded"].get(),
+            help="remove the lyrics tags of tracks whose lyrics file was written",
+        )
 
         def func(lib: Library, opts: LyricsCLIOpts, args: list[str]) -> None:
             # The "write to files" option corresponds to the
@@ -1266,8 +1299,9 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
             # matches nothing, so all items proceed normally
             query = FalseQuery()
 
-        for item in filterfalse(query.match, task.imported_items()):
-            self.add_item_lyrics(item, False)
+        if not self.config["local"]:
+            for item in filterfalse(query.match, task.imported_items()):
+                self.fetch_item_lyrics(item, False)
 
     def find_lyrics(self, item: Item) -> Lyrics | None:
         """Return the first lyrics match from the configured source search."""
@@ -1281,12 +1315,24 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         return next(filter(None, matches), None)
 
     def add_item_lyrics(self, item: Item, write: bool) -> None:
-        """Fetch and store lyrics for a single item. If ``write``, then the
-        lyrics will also be written to the file itself.
+        """Fetch lyrics for a single item and store them. If ``write``, then
+        the lyrics will also be written to the file itself, and if
+        ``write_files`` is set, to a sidecar file next to it.
         """
-        if self.config["local"]:
-            return
+        write_files = self.config["write_files"].get(bool)
+        moves_to_file = write_files and self.config["remove_embedded"].get(bool)
 
+        if not self.config["local"]:
+            # Lyrics which move to a sidecar file need not be embedded.
+            self.fetch_item_lyrics(item, write and not moves_to_file)
+
+        if write_files:
+            self.write_lyrics_file(item)
+
+    def fetch_item_lyrics(self, item: Item, write: bool) -> None:
+        """Fetch lyrics for a single item and store them in the database. If
+        ``write``, then the lyrics will also be written to the file itself.
+        """
         if not self.config["force"] and item.lyrics:
             self.info("🔵 Lyrics already present: {}", item)
             return
@@ -1342,6 +1388,140 @@ class LyricsPlugin(LyricsRequestHandler, plugins.BeetsPlugin):
         elif new_lyrics:
             # Instrumental matches update only the `lyrics_*` fields.
             item.store()
+
+    def write_lyrics_file(self, item: Item) -> None:
+        """Write the lyrics of ``item`` to a sidecar file next to it: a
+        ``.lrc`` file when synced, a ``.txt`` file otherwise. A file which
+        already holds the same text keeps its modification time, and
+        ``remove_embedded`` additionally deletes the lyrics tags.
+        """
+        if (content := self.lyrics_for_file(item)) is None:
+            self.debug("🔵 No lyrics to write: {}", item)
+            return
+        text, synced = content
+
+        path = os.path.splitext(item.path)[0] + (b".lrc" if synced else b".txt")
+        # Write LF: the check below reads text, which folds CRLF, so keeping
+        # the CRLF of stored lyrics would rewrite the file on every run.
+        payload = f"{text}\n".replace("\r\n", "\n")
+        try:
+            if Path(syspath(path)).read_text(encoding="utf-8") == payload:
+                self.debug(
+                    "🔵 Lyrics file is up to date: {}", displayable_path(path)
+                )
+                if self.config["remove_embedded"].get(bool):
+                    self.remove_embedded_lyrics(item, text)
+                return
+        except (OSError, UnicodeDecodeError):
+            pass  # Missing or not UTF-8: write it below.
+
+        try:
+            mkdirall(path)
+            with tempfile.TemporaryDirectory(
+                dir=syspath(os.path.dirname(path))
+            ) as directory:
+                temporary = Path(directory) / "lyrics"
+                with temporary.open("w", encoding="utf-8", newline="\n") as f:
+                    f.write(payload)
+                with suppress(FileNotFoundError):
+                    temporary.chmod(os.stat(syspath(path)).st_mode)
+                os.replace(temporary, syspath(path))
+        except (OSError, FilesystemError) as exc:
+            self.warn(
+                "Could not write lyrics file {}: {}",
+                displayable_path(path),
+                exc,
+            )
+            return
+
+        self.info("🟢 Wrote lyrics file {}", displayable_path(path))
+        if self.config["remove_embedded"].get(bool):
+            self.remove_embedded_lyrics(item, text)
+
+    def lyrics_for_file(self, item: Item) -> tuple[str, bool] | None:
+        """Return the ``(text, synced)`` lyrics to write, preferring the ones
+        in the database over the ones embedded in the file.
+        """
+        if (lyrics := Lyrics.from_item(item)).text.strip():
+            return lyrics.text.rstrip(), lyrics.synced
+
+        return self.embedded_lyrics(item)
+
+    def embedded_lyrics(self, item: Item) -> tuple[str, bool] | None:
+        """Return the ``(text, synced)`` lyrics embedded in the item's file."""
+        with suppress(OSError, UnreadableFileError):
+            mediafile = MediaFile(syspath(item.path))
+
+            if (sylt := mediafile.synced_lyrics) and (
+                text := sylt_to_lrc(sylt).strip()
+            ):
+                return text, True
+
+            lyrics = Lyrics((mediafile.lyrics or "").strip())
+            if lyrics.text:
+                return lyrics.text, lyrics.synced
+
+        return None
+
+    def remove_embedded_lyrics(self, item: Item, text: str) -> None:
+        """Delete the lyrics tags of ``item``'s file, keeping them when they
+        differ from ``text`` so that lyrics held nowhere else are not lost.
+        Unlike :meth:`Item.try_write`, other tags are left as they are on disk.
+        """
+        try:
+            mediafile = MediaFile(
+                syspath(item.path), id3v23=config["id3v23"].get(bool)
+            )
+        except (OSError, UnreadableFileError) as exc:
+            self.warn(
+                "Could not read lyrics tags from {}: {}",
+                displayable_path(item.path),
+                exc,
+            )
+            return
+
+        lyrics = Lyrics(text)
+        frames = sylt_frames(mediafile)
+        if not (mediafile.lyrics or frames):
+            return
+
+        embedded = []
+        if mediafile.lyrics:
+            embedded.append(mediafile.lyrics.strip())
+        # Clearing the tag deletes every SYLT frame, so all of them have to
+        # match, not only the first one which mediafile reads back.
+        embedded += [
+            sylt_to_lrc(frame).strip()
+            for frame in frames
+            if frame != lyrics.sylt
+        ]
+
+        if any(value != text.strip() for value in embedded):
+            self.warn(
+                "🔴 Kept embedded lyrics in {}: they differ from the lyrics file",
+                displayable_path(item.path),
+            )
+            return
+
+        # Keep a copy in the database before dropping it from the file.
+        if not (item.lyrics or "").strip():
+            item.lyrics = text
+
+        # `None` deletes a tag, except SYLT, which needs an empty list.
+        try:
+            mediafile.update({"lyrics": None, "synced_lyrics": []})
+            mediafile.save()
+        except (OSError, UnreadableFileError) as exc:
+            self.warn(
+                "Could not remove lyrics tags from {}: {}",
+                displayable_path(item.path),
+                exc,
+            )
+            return
+
+        item.mtime = item.current_mtime()
+        item.store()
+        self.info("🟢 Removed embedded lyrics: {}", item)
 
     def get_lyrics(self, artist: str, title: str, *args) -> Lyrics | None:
         """Get first found lyrics, trying each source in turn."""
