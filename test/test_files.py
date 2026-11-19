@@ -43,7 +43,7 @@ class MoveTest(BeetsTestCase):
         assert self.dest.exists()
 
     def test_move_to_custom_dir(self):
-        self.i.move(basedir=os.fsencode(self.otherdir))
+        self.i.move(basedir=self.otherdir)
         assert (self.otherdir / "one" / "two" / "three.mp3").exists()
 
     def test_move_departs(self):
@@ -88,7 +88,7 @@ class MoveTest(BeetsTestCase):
 
     def test_move_changes_path(self):
         self.i.move()
-        assert self.i.path == util.normpath(os.fsencode(self.dest))
+        assert self.i.filepath == self.dest
 
     def test_copy_already_at_destination(self):
         self.i.move()
@@ -134,7 +134,7 @@ class MoveTest(BeetsTestCase):
 
     def test_move_avoids_collision_with_existing_file(self):
         # Make a conflicting file at the destination.
-        dest = Path(os.fsdecode(self.i.destination()))
+        dest = self.i.destination()
         util.mkdirall(dest)
         dest.touch()
 
@@ -157,7 +157,7 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_changes_path(self):
         self.i.move(operation=MoveOperation.LINK)
-        assert self.i.path == util.normpath(os.fsencode(self.dest))
+        assert self.i.filepath == self.dest
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_arrives(self):
@@ -178,7 +178,7 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_changes_path(self):
         self.i.move(operation=MoveOperation.HARDLINK)
-        assert self.i.path == util.normpath(os.fsencode(self.dest))
+        assert self.i.filepath == self.dest
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_from_symlink(self):
@@ -211,7 +211,7 @@ class AlbumFileTest(BeetsTestCase):
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Alternate destination dir.
-        self.otherdir = os.fsencode(self.temp_path / "testotherdir")
+        self.otherdir = self.temp_path / "testotherdir"
 
     def test_albuminfo_move_changes_paths(self):
         self.ai.album = "newAlbumName"
@@ -272,13 +272,12 @@ class ArtFileTest(BeetsTestCase):
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
         # Make an art file too.
-        art_bytes = self.lib.get_album(self.i).art_destination("something.jpg")
-        self.art = Path(os.fsdecode(art_bytes))
+        self.art = self.lib.get_album(self.i).art_destination("something.jpg")
         self.art.touch()
-        self.ai.artpath = art_bytes
+        self.ai.artpath = os.fsencode(self.art)
         self.ai.store()
         # Alternate destination dir.
-        self.otherdir = os.fsencode(self.temp_path / "testotherdir")
+        self.otherdir = self.temp_path / "testotherdir"
 
     def test_art_deleted_when_items_deleted(self):
         assert self.art.exists()
@@ -295,7 +294,7 @@ class ArtFileTest(BeetsTestCase):
         assert self.i.path != oldpath
         assert not self.art.exists()
         newart = self.lib.get_album(self.i).art_destination(self.art)
-        assert Path(os.fsdecode(newart)).exists()
+        assert newart.exists()
 
     def test_art_moves_with_album_to_custom_dir(self):
         # Move the album to another directory.
@@ -338,7 +337,7 @@ class ArtFileTest(BeetsTestCase):
         ai.set_art(newart)
 
         # Set the art again.
-        ai.set_art(ai.artpath)
+        ai.set_art(ai.art_filepath)
         assert ai.art_filepath.exists()
 
     def test_setart_to_existing_but_unset_art_works(self):
@@ -368,7 +367,7 @@ class ArtFileTest(BeetsTestCase):
         i2.move(operation=MoveOperation.COPY)
 
         # Make a file at the destination.
-        artdest = Path(os.fsdecode(ai.art_destination(newart)))
+        artdest = ai.art_destination(newart)
         artdest.touch()
 
         # Set the art - should replace the existing file, not create a suffixed

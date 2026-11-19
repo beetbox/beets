@@ -4,12 +4,13 @@ music and items' embedded album art.
 
 from __future__ import annotations
 
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import TYPE_CHECKING
 
 import mediafile
 
-from beets.util import as_path, bytestring_path, displayable_path, syspath
+from beets.util import as_path, syspath
 from beets.util.artresizer import ArtResizer
 
 if TYPE_CHECKING:
@@ -33,7 +34,7 @@ def mediafile_image(
 def get_art(log: Logger, item: Item) -> bytes | None:
     # Extract the art.
     try:
-        mf = mediafile.MediaFile(syspath(item.path))
+        mf = mediafile.MediaFile(item.filepath)
     except mediafile.UnreadableFileError as exc:
         log.warning("Could not extract art from {.filepath}: {}", item, exc)
         return None
@@ -157,7 +158,7 @@ def check_art_similarity(
     This must only be called if `ArtResizer.shared.can_compare` is `True`.
     """
     with NamedTemporaryFile(delete=True) as f:
-        art = extract(log, f.name, item)
+        art = extract(log, Path(f.name), item)
 
         if not art:
             return True
@@ -168,9 +169,8 @@ def check_art_similarity(
         return artresizer.compare(art, imagepath, compare_threshold)
 
 
-def extract(log: Logger, outpath: PathLike, item: Item) -> bytes | None:
+def extract(log: Logger, outpath: Path, item: Item) -> Path | None:
     art = get_art(log, item)
-    outpath = bytestring_path(outpath)
     if not art:
         log.info("No album art present in {}, skipping.", item)
         return None
@@ -180,19 +180,16 @@ def extract(log: Logger, outpath: PathLike, item: Item) -> bytes | None:
     if not ext:
         log.warning("Unknown image type in {.filepath}.", item)
         return None
-    outpath += bytestring_path(f".{ext}")
+    outpath = outpath.with_suffix(f".{ext}")
 
-    log.info(
-        "Extracting album art from: {} to: {}", item, displayable_path(outpath)
-    )
-    with open(syspath(outpath), "wb") as f:
-        f.write(art)
+    log.info("Extracting album art from: {} to: {}", item, outpath)
+    outpath.write_bytes(art)
     return outpath
 
 
 def extract_first(
-    log: Logger, outpath: PathLike, items: Iterable[Item]
-) -> bytes | None:
+    log: Logger, outpath: Path, items: Iterable[Item]
+) -> Path | None:
     for item in items:
         real_path = extract(log, outpath, item)
         if real_path:

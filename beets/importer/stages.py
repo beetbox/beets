@@ -3,8 +3,6 @@ from __future__ import annotations
 import contextvars
 import itertools
 import logging
-import os
-from pathlib import Path
 from typing import TYPE_CHECKING, TypeAlias
 
 from beets import config, plugins
@@ -85,9 +83,7 @@ def query_tasks(session: ImportSession) -> Iterator[BaseImportTask]:
             items = list(album.items())
             _freshen_items(items)
 
-            task = ImportTask(
-                None, [Path(os.fsdecode(album.item_dir()))], items
-            )
+            task = ImportTask(None, [album.item_dir()], items)
             for task in task.handle_created(session):
                 yield task
 
