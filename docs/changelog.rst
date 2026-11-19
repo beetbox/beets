@@ -49,6 +49,9 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- :doc:`plugins/titlecase`: Add a ``languages`` option to only titlecase
+  releases in the listed languages, so that, for example, French or Japanese
+  titles are left alone. :bug:`6362`
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
 
