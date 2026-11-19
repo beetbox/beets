@@ -216,6 +216,9 @@ Other changes
 - :doc:`plugins/export`: Clarify that the ``--include-keys`` option accepts
   field names rather than glob patterns. :bug:`5411`
 
+- :doc:`plugins/spotify`: Correct the ``spotifysync`` long option to
+  ``--force`` and document selecting tracks with a query.
+
 2.14.1 (September 17, 2026)
 ---------------------------
 
