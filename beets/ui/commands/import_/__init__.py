@@ -28,6 +28,24 @@ class ImportCLIOpts(Protocol):
     from_logfiles: list[str] | None
 
 
+def get_common_path(paths_string: str) -> str:
+    """Return the common path of a string of paths separated by '; '.
+
+    Handle paths that contain '; ' in their names.
+    """
+    chunks = paths_string.split("; ")
+    if len(chunks) > 1 and os.path.isabs(chunks[0]):
+        merged: list[str] = []
+        for chunk in chunks:
+            if not merged or os.path.isabs(chunk):
+                merged.append(chunk)
+            else:
+                merged[-1] += "; " + chunk
+        chunks = merged
+
+    return os.path.commonpath(chunks)
+
+
 def paths_from_logfile(path: str) -> Iterator[str]:
     """Parse the logfile and yield skipped paths to pass to the `import`
     command.
@@ -45,7 +63,7 @@ def paths_from_logfile(path: str) -> Iterator[str]:
             if verb not in {"asis", "skip", "duplicate-skip"}:
                 raise ValueError(f"line {i} contains unknown verb {verb}")
 
-            yield os.path.commonpath(paths.split("; "))
+            yield get_common_path(paths)
 
 
 def parse_logfiles(logfiles: list[str]) -> Iterator[str]:

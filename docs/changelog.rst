@@ -170,6 +170,18 @@ Bug fixes
   instead of silently falling back to plain lyrics. :bug:`7070`
 - :doc:`plugins/info`: Fix a :class:`TypeError` when printing list-valued tag
   fields with non-string elements, such as ``synced_lyrics``. :bug:`7183`
+- :doc:`plugins/titlecase`: Fix ``beet completion`` crashing with
+  ``OptionConflictError`` when the plugin is enabled.
+- Autotagger: Match tracks by their MusicBrainz release track ID as well as
+  their recording ID. Media of one release can share recordings, like the CD and
+  SACD layers of a hybrid SACD, and files from the second medium were assigned
+  to the first medium's tracks, overwriting their release track IDs. When
+  reimporting, this favours the exact release the files were tagged with and
+  penalizes other releases of the same recordings. Items tagged from a source
+  without release track IDs store their track ID in its place, so a MusicBrainz
+  candidate gets this penalty for them, as it already did for the recording ID.
+- :ref:`import-cmd` Fix importing from a logfile (``--from-logfile`` option)
+  when paths contain |semicolon_space| characters. :bug:`4941`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -204,6 +216,8 @@ Other changes
   :bug:`5408`
 - :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
+- :doc:`plugins/export`: Clarify that the ``--include-keys`` option accepts
+  field names rather than glob patterns. :bug:`5411`
 
 2.14.1 (September 17, 2026)
 ---------------------------
