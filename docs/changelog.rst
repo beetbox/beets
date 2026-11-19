@@ -130,6 +130,13 @@ Bug fixes
   while the thread pool is open. It held a CPU core at 100% and starved the
   other threads, making ``beet replaygain`` on a large library run for hours
   without starting any analysis. :bug:`5449`
+- :doc:`plugins/ftintitle`: Handle bracketed featured credits followed by more
+  artist text, and leave malformed artist brackets unsplit.
+- :doc:`plugins/ftintitle`: Preserve commas and generic separators in
+  ``artist_sort``, removing only explicit featuring markers.
+- :doc:`plugins/ftintitle`: Recognize custom featuring words in titles only in
+  brackets, and retain artist credits that cannot be included in the title
+  unless ``drop`` is enabled.
 - :doc:`plugins/web`: Fix relative library paths not resolving across request
   threads in web plugin endpoints.
 - :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
