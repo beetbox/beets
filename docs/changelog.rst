@@ -177,6 +177,8 @@ Bug fixes
   penalizes other releases of the same recordings. Items tagged from a source
   without release track IDs store their track ID in its place, so a MusicBrainz
   candidate gets this penalty for them, as it already did for the recording ID.
+- :ref:`import-cmd` Fix importing from a logfile (``--from-logfile`` option)
+  when paths contain |semicolon_space| characters. :bug:`4941`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
