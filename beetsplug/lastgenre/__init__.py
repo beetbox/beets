@@ -9,6 +9,7 @@ https://gist.github.com/1241307
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from collections import defaultdict
@@ -681,26 +682,33 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
-        if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.client.fetch("track", obj):
-                if resolved := self._try_resolve_stage(
+        if (
+            isinstance(obj, library.Item)
+            and "track" in self.sources
+            and (new_genres := self.client.fetch("track", obj))
+            and (
+                resolved := self._try_resolve_stage(
                     "track", keep_genres, new_genres, artist=obj.artist
-                ):
-                    return resolved
+                )
+            )
+        ):
+            return resolved
 
-        if "album" in self.sources:
-            if resolved := self._try_resolve_album_stage(obj, keep_genres):
-                return resolved
+        if "album" in self.sources and (
+            resolved := self._try_resolve_album_stage(obj, keep_genres)
+        ):
+            return resolved
 
         if "artist" in self.sources:
             stage_label, new_genres, stage_artist = self._fetch_artist_stage(
                 obj
             )
-            if new_genres:
-                if resolved := self._try_resolve_stage(
+            if new_genres and (
+                resolved := self._try_resolve_stage(
                     stage_label, keep_genres, new_genres, artist=stage_artist
-                ):
-                    return resolved
+                )
+            ):
+                return resolved
 
         if resolved := self._try_resolve_original_fallback(
             obj, existing_genres, keep_genres
@@ -717,7 +725,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         obj.genres, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genres)
 
-        ui.show_model_changes(obj, fields=["genres"], print_obj=False)
+        # Printing during an import clutters the importer's prompt.
+        if self._log.isEnabledFor(logging.INFO):
+            ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
     @singledispatchmethod
     def _process(self, obj: LibModel, write: bool) -> None:

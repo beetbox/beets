@@ -295,12 +295,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """Possibly delete the album art file for an album (if the
         appropriate configuration option is enabled).
         """
-        if self.config["remove_art_file"] and album.artpath:
-            if os.path.isfile(syspath(album.artpath)):
-                self._log.debug("Removing album art file for {}", album)
-                os.remove(syspath(album.artpath))
-                album.artpath = None
-                album.store()
+        if (
+            self.config["remove_art_file"]
+            and album.artpath
+            and os.path.isfile(syspath(album.artpath))
+        ):
+            self._log.debug("Removing album art file for {}", album)
+            os.remove(syspath(album.artpath))
+            album.artpath = None
+            album.store()
 
     def import_task_files(
         self, session: ImportSession, task: ImportTask

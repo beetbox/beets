@@ -20,18 +20,18 @@ jobs:
     steps:
       - name: Generate release app token
         id: release-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           token: ${{ steps.release-token.outputs.token }}
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -47,7 +47,7 @@ jobs:
           # make sure project version is updated in the lock file as well
           uv lock
 
-      - uses: EndBug/add-and-commit@v9
+      - uses: EndBug/add-and-commit@v11
         id: commit_and_tag
         name: Commit the changes and create tag
         with:
@@ -61,12 +61,12 @@ jobs:
     outputs:
       changelog: ${{ steps.generate_changelog.outputs.changelog }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ env.NEW_TAG }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -93,7 +93,7 @@ jobs:
         run: poe build
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-package-distributions
           path: dist/
@@ -109,7 +109,7 @@ jobs:
       id-token: write
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
           path: dist/
@@ -124,7 +124,7 @@ jobs:
       CHANGELOG: ${{ needs.build.outputs.changelog }}
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: python-package-distributions
           path: dist/

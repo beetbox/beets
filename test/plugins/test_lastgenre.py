@@ -160,6 +160,48 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         assert album.genres == ["Original Genre"]
         assert album.items()[0].genres == ["Original Genre"]
 
+    def _add_album_for_import(self) -> Album:
+        item = self.create_item(
+            album="Import Album",
+            albumartist="Import Artist",
+            artist="Import Artist",
+            title="Import Track",
+        )
+        return self.lib.add_album([item])
+
+    def _run_import_stage(self, album):
+        """Run the import stage as the importer does, return what it printed."""
+        task = Mock(is_album=True, album=album)
+        self.io.getoutput()
+
+        with patch.object(
+            self.plugin, "_get_genre", return_value=(["Rock"], "test")
+        ):
+            for stage in self.plugin.get_import_stages():
+                stage(Mock(), task)
+
+        return self.io.getoutput()
+
+    def test_import_stage_does_not_print_genre_changes(self):
+        """The import stage must not print by default.
+
+        See #6830: the printed genre changes appeared on top of the importer's
+        prompt for the next album, which made the import look frozen.
+        """
+        self.config["verbose"] = 0
+        album = self._add_album_for_import()
+
+        assert self._run_import_stage(album) == ""
+
+        album.load()
+        assert album.genres == ["Rock"]
+
+    def test_import_stage_prints_genre_changes_when_verbose(self):
+        self.config["verbose"] = 1
+        album = self._add_album_for_import()
+
+        assert "genres:" in self._run_import_stage(album)
+
     def test_no_duplicate(self):
         """Remove duplicated genres."""
         self._setup_config(count=99)
@@ -1027,9 +1069,11 @@ class TestIgnorelist(PluginTestHelper):
         self, invalid_config, expected_error_message
     ):
         """Test ignorelist config validation errors in isolated config."""
-        with pytest.raises(confuse.ConfigTypeError) as exc_info:
-            with self.configure_plugin({"ignorelist": invalid_config}):
-                lastgenre.LastGenrePlugin()
+        with (
+            pytest.raises(confuse.ConfigTypeError) as exc_info,
+            self.configure_plugin({"ignorelist": invalid_config}),
+        ):
+            lastgenre.LastGenrePlugin()
 
         assert expected_error_message in str(exc_info.value)
 
@@ -1142,9 +1186,11 @@ class TestAliases(PluginTestHelper):
     )
     def test_aliases_config_format_errors(self, invalid_config, expected_error):
         """Test that invalid aliases config values raise confuse.ConfigTypeError."""
-        with pytest.raises(confuse.ConfigTypeError) as exc_info:
-            with self.configure_plugin({"aliases": invalid_config}):
-                lastgenre.LastGenrePlugin()
+        with (
+            pytest.raises(confuse.ConfigTypeError) as exc_info,
+            self.configure_plugin({"aliases": invalid_config}),
+        ):
+            lastgenre.LastGenrePlugin()
         assert expected_error in str(exc_info.value)
 
     def test_normalize_before_whitelist(self):

@@ -6,6 +6,7 @@ use of the wide range of MPD clients.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import inspect
 import math
 import random
@@ -277,21 +278,23 @@ class BaseServer:
         """Serve MPD and control connections in one event loop."""
         self.startup_time = time.time()
 
-        async with await asyncio.start_server(
-            ControlConnection.handler(self),
-            self.ctrl_host,
-            self.ctrl_port,
-            family=socket.AF_INET,
-        ) as control_server:
-            async with await asyncio.start_server(
+        async with (
+            await asyncio.start_server(
+                ControlConnection.handler(self),
+                self.ctrl_host,
+                self.ctrl_port,
+                family=socket.AF_INET,
+            ) as control_server,
+            await asyncio.start_server(
                 MPDConnection.handler(self),
                 self.host,
                 self.port,
                 family=socket.AF_INET,
-            ) as mpd_server:
-                await asyncio.gather(
-                    control_server.serve_forever(), mpd_server.serve_forever()
-                )
+            ) as mpd_server,
+        ):
+            await asyncio.gather(
+                control_server.serve_forever(), mpd_server.serve_forever()
+            )
 
     def dispatch_events(self) -> None:
         """If any clients have idle events ready, send them."""
@@ -787,10 +790,7 @@ class BaseServer:
 
     def cmd_playid(self, conn: MPDConnection, track_id: int = 0) -> None:
         track_id = cast_arg(int, track_id)
-        if track_id == -1:
-            index = -1
-        else:
-            index = self._id_to_index(track_id)
+        index = -1 if track_id == -1 else self._id_to_index(track_id)
         return self.cmd_play(conn, index)
 
     def cmd_stop(self, conn: MPDConnection | None) -> None:
@@ -871,10 +871,8 @@ class Connection:
                 await cls(server, reader, writer).run()
             finally:
                 writer.close()
-                try:
+                with contextlib.suppress(ConnectionError):
                     await writer.wait_closed()
-                except ConnectionError:
-                    pass
 
         return _handle
 
@@ -979,7 +977,7 @@ class MPDConnection(Connection):
                 else:
                     clist.append(Command(line))
 
-            elif line == CLIST_BEGIN or line == CLIST_VERBOSE_BEGIN:
+            elif line in (CLIST_BEGIN, CLIST_VERBOSE_BEGIN):
                 # Begin a command list.
                 clist = CommandList([], line == CLIST_VERBOSE_BEGIN)
 

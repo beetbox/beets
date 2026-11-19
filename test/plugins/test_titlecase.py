@@ -22,6 +22,11 @@ class TestTitlecasePlugin(PluginTestCase):
         with self.configure_plugin({"auto": False, "after_choice": True}):
             assert len(TitlecasePlugin().import_stages) == 0
 
+    def test_commands_can_be_requested_twice(self):
+        """``beet completion`` asks every plugin for its commands again."""
+        plugin = TitlecasePlugin()
+        assert plugin.commands() == plugin.commands()
+
     def test_basic_titlecase(self):
         """Check that default behavior is as expected."""
         testcases = [
@@ -85,6 +90,25 @@ class TestTitlecasePlugin(PluginTestCase):
         for testcase in testcases:
             separators, given, expected = testcase
             with self.configure_plugin({"separators": separators}):
+                assert TitlecasePlugin().titlecase(given) == expected
+
+    def test_separators_with_length_changing_replace(self):
+        testcases = [
+            (
+                [("…", "...")],
+                "What Goes Around…/…Comes Around (Interlude)",
+                "What Goes Around.../...Comes Around (Interlude)",
+            ),
+            (
+                [("...", "…")],
+                "What Goes Around.../...Comes Around (Interlude)",
+                "What Goes Around…/…Comes Around (Interlude)",
+            ),
+        ]
+        for replace, given, expected in testcases:
+            with self.configure_plugin(
+                {"separators": ["/"], "replace": replace}
+            ):
                 assert TitlecasePlugin().titlecase(given) == expected
 
     def test_all_caps(self):

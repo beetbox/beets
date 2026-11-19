@@ -326,14 +326,15 @@ class Parser:
         while self.pos < len(self.string):
             char = self.string[self.pos]
 
-            if char not in self.special_chars:
+            if char not in self.special_chars and (
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
-                if m := self.special_char_re.search(self.string[self.pos :]):
-                    next_pos = m.start() + self.pos
-                    text_parts.append(self.string[self.pos : next_pos])
-                    self.pos = next_pos
-                    continue
+                m := self.special_char_re.search(self.string[self.pos :])
+            ):
+                next_pos = m.start() + self.pos
+                text_parts.append(self.string[self.pos : next_pos])
+                self.pos = next_pos
+                continue
 
             if self.pos == len(self.string) - 1:
                 # The last character can never begin a structure, so we
@@ -405,8 +406,13 @@ class Parser:
             # A symbol like ${this}.
             self.pos += 1  # Skip opening.
             closer = self.string.find(GROUP_CLOSE, self.pos)
-            if closer == -1 or closer == self.pos:
-                # No closing brace found or identifier is empty.
+            if closer == -1:
+                # No closing brace found.
+                self.parts.append(self.string[start_pos : self.pos])
+            elif closer == self.pos:
+                # Empty identifier: consume through the closing brace so it
+                # cannot be mistaken for an enclosing call's terminator.
+                self.pos = closer + 1
                 self.parts.append(self.string[start_pos : self.pos])
             else:
                 # Closer found.

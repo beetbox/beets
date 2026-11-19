@@ -94,9 +94,8 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
             ["ffprobe", "-version"], capture_output=True, shell=shell
         ).stderr.decode("utf-8")
         != ""
-    ):
-        if logger:
-            logger.error("ffprobe needed to determine file extension")
+    ) and logger:
+        logger.error("ffprobe needed to determine file extension")
     output = subprocess.run(
         [
             "ffprobe",
@@ -112,9 +111,8 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
     )
     out = output.stdout.decode("utf-8")
     err = output.stderr.decode("utf-8")
-    if err != "":
-        if logger:
-            logger.error("Error with ffprobe\n", err)
+    if err != "" and logger:
+        logger.error("Error with ffprobe\n", err)
     # `splitlines` rather than splitting on "\n": ffprobe terminates its
     # lines with CRLF on Windows.
     for line in out.splitlines():

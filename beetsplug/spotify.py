@@ -843,10 +843,9 @@ class SpotifyPlugin(
             )
             # If we're not forcing re-downloading for all tracks, check
             # whether the popularity data is already present
-            if not force:
-                if "spotify_track_popularity" in item:
-                    self._log.debug("Popularity already present for: {}", item)
-                    continue
+            if not force and "spotify_track_popularity" in item:
+                self._log.debug("Popularity already present for: {}", item)
+                continue
             try:
                 spotify_track_id = item.spotify_track_id
             except AttributeError:

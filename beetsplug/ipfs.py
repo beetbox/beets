@@ -107,9 +107,8 @@ class IPFSPlugin(BeetsPlugin):
         return [cmd]
 
     def auto_add(self, session: ImportSession, task: ImportTask) -> None:
-        if task.is_album:
-            if self.ipfs_add(task.album):
-                task.album.store()
+        if task.is_album and self.ipfs_add(task.album):
+            task.album.store()
 
     def ipfs_play(
         self, lib: Library, opts: IPFSCLIOpts, args: list[str]
@@ -142,9 +141,9 @@ class IPFSPlugin(BeetsPlugin):
         self._log.info("Adding {} to ipfs", album_dir)
 
         if self.config["nocopy"]:
-            cmd = "ipfs add --nocopy -q -r".split()
+            cmd = ["ipfs", "add", "--nocopy", "-q", "-r"]
         else:
-            cmd = "ipfs add -q -r".split()
+            cmd = ["ipfs", "add", "-q", "-r"]
         cmd.append(os.fsdecode(album_dir))
         try:
             output = util.command_output(cmd).stdout.split()
@@ -186,7 +185,7 @@ class IPFSPlugin(BeetsPlugin):
 
     def ipfs_get_from_hash(self, lib: Library, _hash: str) -> bool | None:
         try:
-            cmd = "ipfs get".split()
+            cmd = ["ipfs", "get"]
             cmd.append(_hash)
             util.command_output(cmd)
         except (OSError, subprocess.CalledProcessError) as err:
@@ -208,9 +207,9 @@ class IPFSPlugin(BeetsPlugin):
             self.ipfs_added_albums(lib, tmp.name)
             try:
                 if self.config["nocopy"]:
-                    cmd = "ipfs add --nocopy -q ".split()
+                    cmd = ["ipfs", "add", "--nocopy", "-q"]
                 else:
-                    cmd = "ipfs add -q ".split()
+                    cmd = ["ipfs", "add", "-q"]
                 cmd.append(tmp.name)
                 output = util.command_output(cmd).stdout
             except (OSError, subprocess.CalledProcessError) as err:
@@ -222,10 +221,7 @@ class IPFSPlugin(BeetsPlugin):
 
     def ipfs_import(self, lib: Library, args: Sequence[str]) -> bool | None:
         _hash = args[0]
-        if len(args) > 1:
-            lib_name = args[1]
-        else:
-            lib_name = _hash
+        lib_name = args[1] if len(args) > 1 else _hash
         remote_libs = self._remote_libs_path(lib)
         if not os.path.exists(remote_libs):
             try:
@@ -263,10 +259,9 @@ class IPFSPlugin(BeetsPlugin):
         return None
 
     def already_added(self, check: Album, jlib: Library) -> bool:
-        for jalbum in jlib.albums():
-            if jalbum.mb_albumid == check.mb_albumid:
-                return True
-        return False
+        return any(
+            jalbum.mb_albumid == check.mb_albumid for jalbum in jlib.albums()
+        )
 
     def ipfs_list(
         self, lib: Library, args: Sequence[str], limit: int | None = None

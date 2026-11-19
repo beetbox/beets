@@ -98,7 +98,16 @@ def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
     # Add global options
     options["_global"] = {
         "flags": ["-v", "--verbose"],
-        "opts": "-l --library -c --config -d --directory -h --help".split(" "),
+        "opts": [
+            "-l",
+            "--library",
+            "-c",
+            "--config",
+            "-d",
+            "--directory",
+            "-h",
+            "--help",
+        ],
     }
 
     # Add flags common to all commands

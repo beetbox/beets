@@ -486,6 +486,11 @@ drop2beets_
 dsedivec_
     Has two plugins: ``edit`` and ``moveall``.
 
+beets-fdup_
+    Finds duplicate tracks by fuzzy matching fields such as artist and title, so
+    tracks whose tags differ still match. Labels versions such as live
+    recordings, remixes and remasters.
+
 beets-filetote_
     Helps bring non-music extra files, attachments, and artifacts during imports
     and CLI file manipulation actions (``beet move``, etc.).
@@ -550,6 +555,10 @@ beets-plexsync_
     Allows you to sync your Plex library with your beets library, create smart
     playlists in Plex, and import online playlists (from services like Spotify)
     into Plex.
+
+beets-pysacd_
+    Imports SACD ISO images: converts each layer to DSF or FLAC with pysacd_, on
+    its own medium of the MusicBrainz release.
 
 beets-setlister_
     Generate playlists from the setlists of a given artist.
@@ -623,6 +632,8 @@ beets-youtube_
 
 .. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
 
+.. _beets-fdup: https://github.com/RACGriffiths/beets-fdup
+
 .. _beets-filetote: https://github.com/gtronset/beets-filetote
 
 .. _beets-fillmissing: https://github.com/amiv1/beets-fillmissing
@@ -655,6 +666,8 @@ beets-youtube_
 
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
 
+.. _beets-pysacd: https://github.com/aclater/beets-pysacd
+
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
 .. _beets-usertag: https://github.com/edgars-supe/beets-usertag
@@ -682,6 +695,8 @@ beets-youtube_
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 
 .. _ibroadcast: https://ibroadcast.com/
+
+.. _pysacd: https://github.com/aclater/pysacd
 
 .. _subsonic api: https://www.subsonic.org/pages/api.jsp
 

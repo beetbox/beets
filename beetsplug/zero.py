@@ -176,7 +176,4 @@ def _match_progs(value: str, progs: Iterable[re.Pattern[str]]) -> bool:
     """
     if not progs:
         return True
-    for prog in progs:
-        if prog.search(str(value)):
-            return True
-    return False
+    return any(prog.search(str(value)) for prog in progs)

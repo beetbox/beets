@@ -470,9 +470,7 @@ class NumericQuery(FieldQuery[str]):
             return value == self.point
         if self.rangemin is not None and value < self.rangemin:
             return False
-        if self.rangemax is not None and value > self.rangemax:
-            return False
-        return True
+        return not (self.rangemax is not None and value > self.rangemax)
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
@@ -780,19 +778,19 @@ class Period:
         """
         precision = self.precision
         date = self.date
-        if "year" == self.precision:
+        if self.precision == "year":
             return date.replace(year=date.year + 1, month=1)
-        if "month" == precision:
+        if precision == "month":
             if date.month < 12:
                 return date.replace(month=date.month + 1)
             return date.replace(year=date.year + 1, month=1)
-        if "day" == precision:
+        if precision == "day":
             return date + timedelta(days=1)
-        if "hour" == precision:
+        if precision == "hour":
             return date + timedelta(hours=1)
-        if "minute" == precision:
+        if precision == "minute":
             return date + timedelta(minutes=1)
-        if "second" == precision:
+        if precision == "second":
             return date + timedelta(seconds=1)
         raise ValueError(f"unhandled precision {precision}")
 
@@ -834,9 +832,7 @@ class DateInterval:
     def contains(self, date: datetime) -> bool:
         if self.start is not None and date < self.start:
             return False
-        if self.end is not None and date >= self.end:
-            return False
-        return True
+        return not (self.end is not None and date >= self.end)
 
     def __str__(self) -> str:
         return f"[{self.start}, {self.end})"
@@ -880,7 +876,7 @@ class DateQuery(FieldQuery[str]):
             clause_parts.append(f"{self.field} < ?")
             subvals.append(int(self.interval.end.timestamp()))
 
-        if clause_parts:
+        if clause_parts:  # noqa: SIM108
             # One- or two-sided interval.
             clause = " AND ".join(clause_parts)
         else:

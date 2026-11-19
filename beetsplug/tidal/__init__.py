@@ -164,11 +164,12 @@ class TidalPlugin(MetadataSourcePlugin):
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
-        if isrc := item.get("isrc"):
-            if candidates := list(
+        if (isrc := item.get("isrc")) and (
+            candidates := list(
                 filter(None, self.search_tracks_by_ids(isrcs=[isrc]))
-            ):
-                return candidates
+            )
+        ):
+            return candidates
 
         for query in self._item_queries(item):
             candidates += self.search_tracks_by_query(query)

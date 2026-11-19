@@ -294,7 +294,7 @@ class TestMatch:
     )
     def test_match(self, item, q, should_match):
         assert q.match(item) == should_match
-        assert not NotQuery(q).match(item) == should_match
+        assert NotQuery(q).match(item) != should_match
 
 
 class TestPathQuery:

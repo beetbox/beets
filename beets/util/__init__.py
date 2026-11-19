@@ -518,25 +518,22 @@ def move(path: PathLike, dest: PathLike, replace: bool = False) -> None:
         tempfile_prefix = beets.config["tempfile_prefix"].get(Optional(str))
         if tempfile_prefix is None:
             tempfile_prefix = "."
-        tmp = tempfile.NamedTemporaryFile(
-            suffix=".beets",
-            prefix=f"{tempfile_prefix}{os.fsdecode(basename)}.",
-            dir=syspath(dirname),
-            delete=False,
-        )
-        try:
-            with open(syspath(path), "rb") as f:
-                shutil.copyfileobj(f, tmp)
-        finally:
-            tmp.close()
+        with (
+            tempfile.NamedTemporaryFile(
+                suffix=".beets",
+                prefix=f"{tempfile_prefix}{os.fsdecode(basename)}.",
+                dir=syspath(dirname),
+                delete=False,
+            ) as tmp,
+            open(syspath(path), "rb") as f,
+        ):
+            shutil.copyfileobj(f, tmp)
 
-        try:
+        # Ignore errors because it doesn't matter too much.  We may be on a
+        # filesystem that doesn't support this.
+        with suppress(OSError):
             # Copy file metadata
             shutil.copystat(syspath(path), tmp.name)
-        except OSError:
-            # Ignore errors because it doesn't matter too much.  We may be on a
-            # filesystem that doesn't support this.
-            pass
 
         # Move the copied file into place.
         tmp_filename = tmp.name
