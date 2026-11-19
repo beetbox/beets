@@ -24,8 +24,6 @@ if TYPE_CHECKING:
     Keys are formatted as 'entity.arg1-arg2-...' (e.g., 'album.artist-title').
     Values are lists of lowercase genre strings."""
 
-LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
-
 PYLAST_EXCEPTIONS = (
     pylast.WSError,
     pylast.MalformedResponseError,
@@ -37,15 +35,12 @@ class LastFmClient:
     """Client for fetching genres from Last.fm."""
 
     FETCH_METHODS: ClassVar[
-        dict[
-            str,
-            tuple[Callable[..., Any], Callable[[LibModel], tuple[str, ...]]],
-        ]
+        dict[str, tuple[str, Callable[[LibModel], tuple[str, ...]]]]
     ] = {
-        "track": (LASTFM.get_track, lambda obj: (obj.artist, obj.title)),
-        "album": (LASTFM.get_album, lambda obj: (obj.albumartist, obj.album)),
-        "artist": (LASTFM.get_artist, lambda obj: (obj.artist,)),
-        "album_artist": (LASTFM.get_artist, lambda obj: (obj.albumartist,)),
+        "track": ("get_track", lambda obj: (obj.artist, obj.title)),
+        "album": ("get_album", lambda obj: (obj.albumartist, obj.album)),
+        "artist": ("get_artist", lambda obj: (obj.artist,)),
+        "album_artist": ("get_artist", lambda obj: (obj.albumartist,)),
     }
 
     def __init__(
@@ -54,6 +49,7 @@ class LastFmClient:
         min_weight: int,
         ignore_patterns: IgnorePatternsByArtist,
         alias_patterns: list[AliasPatternWithReplacement],
+        api_key: str = plugins.LASTFM_KEY,
     ) -> None:
         """Initialize the client.
 
@@ -65,6 +61,9 @@ class LastFmClient:
         self.ignore_patterns: IgnorePatternsByArtist = ignore_patterns
         self.alias_patterns: list[AliasPatternWithReplacement] = alias_patterns
         self.genre_cache: GenreCache = {}
+        self.network = pylast.LastFMNetwork(
+            api_key=api_key or plugins.LASTFM_KEY
+        )
 
     def fetch_genres(
         self, obj: pylast.Album | pylast.Artist | pylast.Track
@@ -126,5 +125,6 @@ class LastFmClient:
 
         Use ``args`` if provided, otherwise derive arguments from the object.
         """
-        method, arg_fn = self.FETCH_METHODS[kind]
+        method_name, arg_fn = self.FETCH_METHODS[kind]
+        method = getattr(self.network, method_name)
         return self._last_lookup(kind, method, *(args or arg_fn(obj)))
