@@ -156,8 +156,10 @@ class SmartPlaylistPlugin(plugins.BeetsPlugin):
             metavar="PATH|library",
             type="string",
             default=self.config["relative_to"].get(),
-            help="generate playlist item paths relative to this path, "
-            "or to the library directory with 'library'.",
+            help=(
+                "generate playlist item paths relative to this path, "
+                "or to the library directory with 'library'."
+            ),
         )
         spl_update.parser.add_option(
             "--prefix",
