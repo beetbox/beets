@@ -6,14 +6,13 @@ import pickle
 import threading
 from bisect import bisect_left, insort
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
 from beets import config
 
 if TYPE_CHECKING:
     from types import TracebackType
-
-    from beets.util import PathBytes
 
 
 # Global logger.
@@ -48,14 +47,14 @@ class ImportState:
     ```
     """
 
-    tagprogress: dict[PathBytes, list[PathBytes]]
-    taghistory: set[tuple[PathBytes, ...]]
-    path: PathBytes
+    tagprogress: dict[bytes, list[bytes]]
+    taghistory: set[tuple[bytes, ...]]
+    path: Path
 
     def __init__(
-        self, readonly: bool = False, path: PathBytes | None = None
+        self, readonly: bool = False, path: Path | None = None
     ) -> None:
-        self.path = path or os.fsencode(config["statefile"].as_filename())
+        self.path = path or config["statefile"].as_path()
         self.tagprogress = {}
         self.taghistory = set()
         self._open()
@@ -80,9 +79,17 @@ class ImportState:
         finally:
             _lock.release()
 
+    @property
+    def history_dirs(self) -> set[tuple[Path, ...]]:
+        """Return imported directory history as a set of `Path` tuples."""
+        return {
+            tuple(Path(os.fsdecode(p)) for p in paths)
+            for paths in self.taghistory
+        }
+
     def _open(self) -> None:
         try:
-            with open(self.path, "rb") as f:
+            with self.path.open("rb") as f:
                 state = pickle.load(f)
                 # Read the states
                 self.tagprogress = state.get("tagprogress", {})
@@ -95,9 +102,9 @@ class ImportState:
             log.debug("state file could not be read: {}", exc)
 
     def _save(self) -> None:
-        tmp_path = self.path + b".tmp"
+        tmp_path = Path(f"{self.path}.tmp")
         try:
-            with open(tmp_path, "wb") as f:
+            with tmp_path.open("wb") as f:
                 pickle.dump(
                     {
                         "tagprogress": self.tagprogress,
@@ -106,45 +113,47 @@ class ImportState:
                     f,
                 )
             # Atomic swap so readers never see a partially written file
-            os.replace(tmp_path, self.path)
+            tmp_path.replace(self.path)
         except OSError as exc:
             log.error("state file could not be written: {}", exc)
 
     # -------------------------------- Tagprogress ------------------------------- #
 
-    def progress_add(self, toppath: PathBytes, *paths: PathBytes) -> None:
+    def progress_add(self, toppath: Path, *paths: Path) -> None:
         """Record that the files under all of the `paths` have been imported
         under `toppath`.
         """
         with self as state:
-            imported = state.tagprogress.setdefault(toppath, [])
-            for path in paths:
+            imported = state.tagprogress.setdefault(os.fsencode(toppath), [])
+            for path in map(os.fsencode, paths):
                 if imported and imported[-1] <= path:
                     imported.append(path)
                 else:
                     insort(imported, path)
 
-    def progress_has_element(self, toppath: PathBytes, path: PathBytes) -> bool:
+    def progress_has_element(self, toppath: Path, path: Path) -> bool:
         """Return whether `path` has been imported in `toppath`."""
-        imported = self.tagprogress.get(toppath, [])
-        i = bisect_left(imported, path)
-        return i != len(imported) and imported[i] == path
+        bytes_path = os.fsencode(path)
+        imported = self.tagprogress.get(os.fsencode(toppath), [])
+        i = bisect_left(imported, bytes_path)
+        return i != len(imported) and imported[i] == bytes_path
 
-    def progress_has(self, toppath: PathBytes) -> bool:
+    def progress_has(self, toppath: Path) -> bool:
         """Return `True` if there exist paths that have already been
         imported under `toppath`.
         """
-        return toppath in self.tagprogress
+        return os.fsencode(toppath) in self.tagprogress
 
-    def progress_reset(self, toppath: PathBytes | None) -> None:
+    def progress_reset(self, toppath: Path | None) -> None:
         """Reset the progress for `toppath`."""
+        toppath_bytes = os.fsencode(toppath) if toppath else None
         with self as state:
-            if toppath in state.tagprogress:
-                del state.tagprogress[toppath]
+            if toppath_bytes in state.tagprogress:
+                del state.tagprogress[toppath_bytes]
 
     # -------------------------------- Taghistory -------------------------------- #
 
-    def history_add(self, paths: list[PathBytes]) -> None:
+    def history_add(self, paths: list[Path]) -> None:
         """Add the paths to the history."""
         with self as state:
-            state.taghistory.add(tuple(paths))
+            state.taghistory.add(tuple(map(os.fsencode, paths)))

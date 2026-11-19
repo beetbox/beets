@@ -50,7 +50,7 @@ from beets.test.helper import (
     TestHelper,
     is_importable,
 )
-from beets.util import bytestring_path, syspath
+from beets.util import syspath
 
 
 class PathsMixin:
@@ -156,14 +156,13 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
         assert self.track_lib_path.exists()
 
 
-def create_archive(session):
-    handle, path = mkstemp(dir=session.temp_path)
-    path = bytestring_path(path)
+def create_archive(session) -> Path:
+    handle, str_path = mkstemp(dir=session.temp_path)
+    path = Path(str_path)
     os.close(handle)
-    archive = ZipFile(os.fsdecode(path), mode="w")
-    archive.write(_common.RSRC / "full.mp3", "full.mp3")
-    archive.close()
-    return bytestring_path(path)
+    with ZipFile(path, mode="w") as archive:
+        archive.write(_common.RSRC / "full.mp3", "full.mp3")
+    return path
 
 
 class TestRmTemp(TestHelper):
@@ -184,35 +183,33 @@ class TestRmTemp(TestHelper):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
-        tmp_path = Path(os.fsdecode(archive_task.toppath))
-        assert tmp_path.exists()
+        assert archive_task.toppath.exists()
         archive_task.finalize(self)
-        assert not tmp_path.exists()
+        assert not archive_task.toppath.exists()
 
     def test_archive_removed_on_move_complete(self):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
-        for root, _, files in os.walk(archive_task.toppath):
-            for f in files:
-                os.remove(os.path.join(root, f))
-        assert Path(os.fsdecode(zip_path)).exists()
+        for file in archive_task.toppath.rglob("*"):
+            file.unlink()
+        assert zip_path.exists()
         archive_task.cleanup(move=True)
-        assert not Path(os.fsdecode(zip_path)).exists()
+        assert not zip_path.exists()
 
     def test_archive_preserved_on_move_partial(self):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
         archive_task.cleanup(move=True)
-        assert Path(os.fsdecode(zip_path)).exists()
+        assert zip_path.exists()
 
     def test_archive_preserved_on_copy(self):
         zip_path = create_archive(self)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
         archive_task.cleanup(copy=True)
-        assert Path(os.fsdecode(zip_path)).exists()
+        assert zip_path.exists()
 
     def test_tempdir_removed_in_all_modes(self):
         for cleanup_kwargs in (
@@ -224,7 +221,7 @@ class TestRmTemp(TestHelper):
             zip_path = create_archive(self)
             archive_task = importer.ArchiveImportTask(zip_path)
             archive_task.extract()
-            tmp_path = Path(os.fsdecode(archive_task.toppath))
+            tmp_path = archive_task.toppath
             assert tmp_path.exists(), f"extract failed for {cleanup_kwargs}"
             archive_task.cleanup(**cleanup_kwargs)
             assert not tmp_path.exists(), (
@@ -248,10 +245,10 @@ class TestImportZip(AsIsImporterMixin, ImportHelper):
 
 class TestImportTar(TestImportZip):
     def create_archive(self):
-        (handle, path) = mkstemp(dir=self.temp_path)
-        path = bytestring_path(path)
+        (handle, str_path) = mkstemp(dir=self.temp_path)
+        path = Path(str_path)
         os.close(handle)
-        archive = TarFile(os.fsdecode(path), mode="w")
+        archive = TarFile(path, mode="w")
         archive.add(_common.RSRC / "full.mp3", "full.mp3")
         archive.close()
         return path
@@ -335,7 +332,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         util.copy(resource_path, single_path)
         import_files = [self.import_path / "album", single_path]
         self.setup_importer()
-        self.importer.paths = list(map(os.fsencode, import_files))
+        self.importer.paths = import_files
 
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.add_choice(importer.Action.ASIS)
@@ -395,7 +392,7 @@ class TestImportFormat(ImportHelper):
         resource_path = self.import_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [os.fsencode(resource_path)]
+        self.importer.paths = [resource_path]
         self.importer.run()
         assert self.lib.items().get().path.endswith(b".mp3")
 
@@ -406,7 +403,7 @@ class TestImportFormat(ImportHelper):
         new_path = self.temp_path / "no_ext.mp3"
         util.copy(temp_resource_path, new_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [os.fsencode(temp_resource_path)]
+        self.importer.paths = [temp_resource_path]
         with caplog.at_level("DEBUG"):
             self.importer.run()
         assert (
@@ -418,7 +415,7 @@ class TestImportFormat(ImportHelper):
     def test_recognize_format_not_music(self):
         resource_path = _common.RSRC / "no_ext_not_music"
         self.setup_importer(autotag=False)
-        self.importer.paths = [os.fsencode(resource_path)]
+        self.importer.paths = [resource_path]
         self.importer.run()
         assert len(self.lib.items()) == 0
 
@@ -428,7 +425,7 @@ class TestImportFormat(ImportHelper):
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [os.fsencode(resource_path)]
+        self.importer.paths = [resource_path]
         self.importer.run()
         assert not Path(self.temp_path / "no_ext").exists()
 
@@ -438,7 +435,7 @@ class TestImportFormat(ImportHelper):
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
         self.setup_importer(autotag=False)
-        self.importer.paths = [os.fsencode(resource_path)]
+        self.importer.paths = [resource_path]
         self.importer.run()
         assert Path(self.temp_path / "no_ext").exists()
 
@@ -867,17 +864,14 @@ class ImportRescanTest(AutotagImportTestCase):
         ) as mock_factory:
             self._run_with_cleanup_before_first_prompt(lambda: None)
 
-        scanned_toppaths = [
+        scanned_toppaths = {
             call.args[0] for call in mock_factory.call_args_list
-        ]
-        album_path_bytes = os.fsencode(str(self.album_path))
-        import_path_bytes = os.fsencode(str(self.import_path))
+        }
 
         # Discovery is scoped to the album's own directory; `toppath` is
         # only touched by the initial scan and the task-emitting factory
         # (see `rescan_tasks`), never by a discovery walk.
-        assert scanned_toppaths.count(album_path_bytes) == 1
-        assert scanned_toppaths.count(import_path_bytes) == 2
+        assert scanned_toppaths == {self.album_path, self.import_path}
 
 
 class TestRescanChoiceAvailability(
@@ -1277,7 +1271,7 @@ class InferAlbumDataTest(unittest.TestCase):
         self.items = [i1, i2, i3]
 
         self.task = importer.ImportTask(
-            paths=["a path"], toppath="top path", items=self.items
+            paths=[Path("a path")], toppath=Path("top path"), items=self.items
         )
 
     def test_asis_homogenous_single_artist(self):
@@ -1424,9 +1418,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         # Imported item has the same albumartist and album as the one in the
         # library album. We use album metadata (not item metadata) since
         # duplicate detection uses album-level fields.
-        import_file = os.path.join(
-            self.importer.paths[0], b"album", b"track_1.mp3"
-        )
+        import_file = self.importer.paths[0] / "album" / "track_1.mp3"
         import_file = MediaFile(import_file)
         import_file.artist = album.albumartist
         import_file.albumartist = album.albumartist
@@ -1478,7 +1470,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
 
         item = self.lib.items().get()
         import_file = MediaFile(
-            os.path.join(self.importer.paths[0], b"album", b"track_1.mp3")
+            self.importer.paths[0] / "album" / "track_1.mp3"
         )
         import_file.artist = item["artist"]
         import_file.albumartist = item["artist"]
@@ -1629,9 +1621,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         # Imported item has the same artist and title as the one in the
         # library. We use item metadata since duplicate detection uses
         # item-level fields for singletons.
-        import_file = os.path.join(
-            self.importer.paths[0], b"album", b"track_1.mp3"
-        )
+        import_file = self.importer.paths[0] / "album" / "track_1.mp3"
         import_file = MediaFile(import_file)
         import_file.artist = item.artist
         import_file.title = item.title
@@ -1988,14 +1978,14 @@ class TagLogTest(TestHelper):
         sio = StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(self.lib, loghandler=handler)
-        session.tag_log("status", "path")
+        session.tag_log("status", ["path"])
         assert "status path" in sio.getvalue()
 
     def test_tag_log_unicode(self):
         sio = StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(self.lib, loghandler=handler)
-        session.tag_log("status", "caf\xe9")  # send unicode
+        session.tag_log("status", ["caf\xe9"])  # send unicode
         assert "status caf\xe9" in sio.getvalue()
 
 
@@ -2006,11 +1996,12 @@ class TestImportStateConcurrency:
         of b while the `manipulate_files` thread records the progress
         for a. Neither should be lost.
         """
-        state_path = bytestring_path(str(tmp_path / "state.pickle"))
+        state_path = tmp_path / "state.pickle"
 
-        toppath_a, toppath_b = b"/music/a", b"/music/b"
+        toppath_a, toppath_b = Path("/music/a"), Path("/music/b")
+        album_path = toppath_a / "album"
         with ImportState(path=state_path) as state:
-            state.tagprogress[toppath_b] = [b"/music/b/old"]
+            state.tagprogress[os.fsencode(toppath_b)] = [b"/music/b/old"]
 
         reset_saving = threading.Event()
         add_done = threading.Event()
@@ -2032,9 +2023,7 @@ class TestImportStateConcurrency:
 
             assert reset_saving.wait(timeout=5), "reset did not reach _save"
 
-            ImportState(path=state_path).progress_add(
-                toppath_a, b"/music/a/album"
-            )
+            ImportState(path=state_path).progress_add(toppath_a, album_path)
             add_done.set()
 
         threads = [
@@ -2051,7 +2040,7 @@ class TestImportStateConcurrency:
         assert not any(t.is_alive() for t in threads), "thread(s) hung"
 
         assert ImportState(path=state_path).tagprogress == {
-            toppath_a: [b"/music/a/album"]
+            os.fsencode(toppath_a): [os.fsencode(album_path)]
         }
 
 
@@ -2158,7 +2147,7 @@ class AlbumsInDirTest(BeetsTestCase):
         _mkmp3(album2_dir / "album2song.mp3")
         _mkmp3(album3_dir / "album3song.mp3")
         _mkmp3(album4_dir / "album4song.mp3")
-        self.base = str(base)
+        self.base = base
 
     def test_finds_all_albums(self):
         albums = list(albums_in_dir(self.base))
@@ -2167,7 +2156,7 @@ class AlbumsInDirTest(BeetsTestCase):
     def test_separates_contents(self):
         found = []
         for _, album in albums_in_dir(self.base):
-            found.append(re.search(r"album(.)song", album[0]).group(1))
+            found.append(re.search(r"album(.)song", str(album[0])).group(1))
         assert "1" in found
         assert "2" in found
         assert "3" in found
@@ -2175,7 +2164,7 @@ class AlbumsInDirTest(BeetsTestCase):
 
     def test_finds_multiple_songs(self):
         for _, album in albums_in_dir(self.base):
-            n = re.search(r"album(.)song", album[0]).group(1)
+            n = re.search(r"album(.)song", str(album[0])).group(1)
             if n == "1":
                 assert len(album) == 2
             else:
@@ -2226,10 +2215,6 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         if files:
             for path in self.files:
                 _mkmp3(path)
-
-        self.dirs = list(map(str, self.dirs))
-        self.files = list(map(str, self.files))
-        self.base = str(self.base)
 
     def _normalize_path(self, path: Path) -> Path:
         """Normalize a path's Unicode combining form according to the
@@ -2314,9 +2299,9 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
                     disc = album_dir / f"{marker}{suffix}"
                     disc.mkdir()
                     _mkmp3(disc / "song.mp3")
-                    discs.append(str(disc))
+                    discs.append(disc)
 
-                albums = list(albums_in_dir(str(base)))
+                albums = list(albums_in_dir(base))
                 assert len(albums) == 1
                 root, items = albums[0]
                 for disc in discs:
@@ -2337,7 +2322,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
             d.mkdir()
             _mkmp3(d / "song.mp3")
 
-        albums = list(albums_in_dir(str(base)))
+        albums = list(albums_in_dir(base))
         assert len(albums) == 2
 
 
@@ -2605,8 +2590,8 @@ class TestImportId(ImportHelper):
     def test_candidates_album(self):
         """Test directly ImportTask.lookup_candidates()."""
         task = importer.ImportTask(
-            paths=os.fsencode(self.import_path),
-            toppath="top path",
+            paths=[self.import_path],
+            toppath=Path("top path"),
             items=[_common.item()],
         )
 
@@ -2619,7 +2604,7 @@ class TestImportId(ImportHelper):
     def test_candidates_singleton(self):
         """Test directly SingletonImportTask.lookup_candidates()."""
         task = importer.SingletonImportTask(
-            toppath="top path", item=_common.item()
+            toppath=Path("top path"), item=_common.item()
         )
 
         task.lookup_candidates([self.ID_RECORDING_0, self.ID_RECORDING_1])

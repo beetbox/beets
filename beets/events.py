@@ -93,7 +93,7 @@ class ImportTaskEventArgs(TypedDict):
 
 class ImportEventArgs(TypedDict):
     lib: Library
-    paths: list[bytes]
+    paths: list[Path]
 
 
 class AlbumImportedEventArgs(TypedDict):
