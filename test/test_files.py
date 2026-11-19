@@ -108,7 +108,6 @@ class MoveTest(BeetsTestCase):
         assert "C_DOS" in self.i.path.decode()
 
     def test_move_file_with_multiple_colons(self):
-        # print(self.config["replace"])
         self.i.artist = "COM:DOS"
         self.i.move()
         assert "COM_DOS" in self.i.path.decode()

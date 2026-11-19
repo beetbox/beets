@@ -81,10 +81,7 @@ class MultipleSort(Sort):
         return ", ".join(order_strings)
 
     def is_slow(self) -> bool:
-        for sort in self.sorts:
-            if sort.is_slow():
-                return True
-        return False
+        return any(sort.is_slow() for sort in self.sorts)
 
     def sort(self, items: Sequence[AnyModel]) -> Sequence[AnyModel]:
         slow_sorts = []

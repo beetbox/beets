@@ -2,11 +2,13 @@ from types import SimpleNamespace
 
 from beets import plugins
 from beets.autotag import Recommendation
+from beets.library import Item
 from beets.test.helper import (
     AutotagImportTestCase,
     PluginMixin,
     TerminalImportMixin,
 )
+from beetsplug.mbsubmit import MBSubmitPlugin
 
 
 class MBSubmitPluginTest(
@@ -66,3 +68,30 @@ class MBSubmitPluginTest(
         )
         shorts = [c.short for choices in results for c in choices]
         assert shorts == []
+
+    def _overlapping_multidisc_items(self):
+        return [
+            Item(disc=2, track=1, title="D2T1", artist="A", length=1),
+            Item(disc=1, track=2, title="D1T2", artist="A", length=1),
+            Item(disc=2, track=2, title="D2T2", artist="A", length=1),
+            Item(disc=1, track=1, title="D1T1", artist="A", length=1),
+        ]
+
+    def test_mbsubmit_sorts_by_disc_then_track(self):
+        MBSubmitPlugin()._mbsubmit(self._overlapping_multidisc_items())
+        assert self.io.getoutput() == (
+            "01. D1T1 - A (0:01)\n"
+            "02. D1T2 - A (0:01)\n"
+            "01. D2T1 - A (0:01)\n"
+            "02. D2T2 - A (0:01)\n"
+        )
+
+    def test_print_tracks_sorts_by_disc_then_track(self):
+        task = SimpleNamespace(items=self._overlapping_multidisc_items())
+        MBSubmitPlugin().print_tracks(session=None, task=task)
+        assert self.io.getoutput() == (
+            "01. D1T1 - A (0:01)\n"
+            "02. D1T2 - A (0:01)\n"
+            "01. D2T1 - A (0:01)\n"
+            "02. D2T2 - A (0:01)\n"
+        )

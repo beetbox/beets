@@ -319,3 +319,9 @@ ee4d6eef36269fbf99e0f566487ab21069be279f
 11d41aee7d3253ae702d1519a1b8f78df4596132
 # typing: various consistency fixes
 5c3695da262ec64e52ec8057302fe2d852b62afa
+# Enable and fix eradicate issues
+eb0ecd7e7cf1fd59e65c9d004af830f85d4c434b
+# Fix yoda conditions
+cd1ad4c190c2a1333b7359ff8209ac7b9f04eaf1
+# Enable flake8-simplify
+40635708d739f42eec7ca57abb3e0dec22461422

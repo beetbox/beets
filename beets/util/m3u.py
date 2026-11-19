@@ -43,7 +43,7 @@ class M3UFile:
                 exc, "read", (pl_normpath,), traceback.format_exc()
             )
 
-        self.extm3u = True if raw_contents[0].rstrip() == b"#EXTM3U" else False
+        self.extm3u = raw_contents[0].rstrip() == b"#EXTM3U"
         for line in raw_contents[1:]:
             if line.startswith(b"#"):
                 # Support for specific EXTM3U comments could be added here.

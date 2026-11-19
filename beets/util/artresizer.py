@@ -501,10 +501,7 @@ class PILBackend(LocalBackend):
                 # If maximum filesize is set, we attempt to lower the quality
                 # of jpeg conversion by a proportional amount, up to 3 attempts
                 # First, set the maximum quality to either provided, or 95
-                if quality > 0:
-                    lower_qual = quality
-                else:
-                    lower_qual = 95
+                lower_qual = quality if quality > 0 else 95
                 for i in range(5):
                     # 5 attempts is an arbitrary choice
                     filesize = os.stat(syspath(path_out)).st_size

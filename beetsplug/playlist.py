@@ -46,30 +46,29 @@ class PlaylistQuery(InQuery[bytes]):
                 continue
 
             try:
-                f = open(beets.util.syspath(playlist_path), mode="rb")
+                with open(beets.util.syspath(playlist_path), mode="rb") as f:
+                    if config["relative_to"].get() == "library":
+                        relative_to = beets.config["directory"].as_filename()
+                    elif config["relative_to"].get() == "playlist":
+                        relative_to = os.path.dirname(playlist_path)
+                    else:
+                        relative_to = config["relative_to"].as_filename()
+                    relative_to_bytes = beets.util.bytestring_path(relative_to)
+
+                    for line in f:
+                        if line[0] == "#":
+                            # ignore comments, and extm3u extension
+                            continue
+
+                        paths.append(
+                            beets.util.normpath(
+                                os.path.join(relative_to_bytes, line.rstrip())
+                            )
+                        )
+                    break
             except OSError:
+                paths.clear()
                 continue
-
-            if config["relative_to"].get() == "library":
-                relative_to = beets.config["directory"].as_filename()
-            elif config["relative_to"].get() == "playlist":
-                relative_to = os.path.dirname(playlist_path)
-            else:
-                relative_to = config["relative_to"].as_filename()
-            relative_to_bytes = beets.util.bytestring_path(relative_to)
-
-            for line in f:
-                if line[0] == "#":
-                    # ignore comments, and extm3u extension
-                    continue
-
-                paths.append(
-                    beets.util.normpath(
-                        os.path.join(relative_to_bytes, line.rstrip())
-                    )
-                )
-            f.close()
-            break
         super().__init__("path", paths)
 
 

@@ -67,7 +67,9 @@ file. The available options mirror the command-line options:
   </reference/pathformat>`. The usage is inspired by, and therefore similar to,
   the :ref:`list <list-cmd>` command. Default: :ref:`format_item`
 - **full**: List every track or album that has duplicates, not just the
-  duplicates themselves. Default: ``no``
+  duplicates themselves. The action options (copy, move, delete, remove, tag)
+  apply to all versions including the original one when ``--full`` is used.
+  Default: ``no``
 - **keys**: Define in which track or album fields duplicates are to be searched.
   By default, the plugin uses the musicbrainz track and album IDs for this
   purpose. Using the ``keys`` option (as a YAML list in the configuration file,

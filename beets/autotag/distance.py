@@ -136,7 +136,7 @@ class Distance:
         """A dictionary from keys to floating-point weights."""
         weights_view = config["match"]["distance_weights"]
         weights = {}
-        for key in weights_view.keys():
+        for key in weights_view.keys():  # noqa: SIM118
             weights[key] = weights_view[key].as_number()
         return weights
 
@@ -353,10 +353,7 @@ class Distance:
         `number1` is bound at 0 and `number2`.
         """
         number = float(max(min(number1, number2), 0))
-        if number2:
-            dist = number / number2
-        else:
-            dist = 0.0
+        dist = number / number2 if number2 else 0.0
         self.add(key, dist)
 
     def add_string(self, key: str, str1: str | None, str2: str | None) -> None:
@@ -428,6 +425,13 @@ def track_distance(
     # Track ID.
     if item.mb_trackid:
         dist.add_expr("track_id", item.mb_trackid != track_info.track_id)
+
+    # Release track ID. Media of one release can share recordings (e.g. the
+    # CD and SACD layers of a hybrid disc), so this tells their tracks apart.
+    if item.mb_releasetrackid and track_info.release_track_id:
+        dist.add_expr(
+            "track_id", item.mb_releasetrackid != track_info.release_track_id
+        )
 
     # Penalize mismatching disc numbers.
     if track_info.medium and item.disc:

@@ -253,10 +253,9 @@ class ImportSession:
             [ImportState().progress_has_element(toppath, p) for p in paths]
         ):
             return True
-        if self.config["incremental"] and tuple(paths) in self.history_dirs:
-            return True
-
-        return False
+        return bool(
+            self.config["incremental"] and tuple(paths) in self.history_dirs
+        )
 
     _history_dirs = None
 

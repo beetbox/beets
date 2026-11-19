@@ -44,10 +44,27 @@ New features
   albumartist, the plugin now attempts to fetch genres for each artist listed in
   the multi-valued ``albumartists`` field before falling back to the artist
   source. :bug:`6238`
+- :doc:`plugins/mpdupdate`: Add support for connecting to mpd via abstract
+  socket.
+- :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
+  instead of asking for a candidate number again. It still asks when chosen from
+  the candidate list.
+- :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
+  can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
 
 Bug fixes
 ~~~~~~~~~
 
+- Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
+  or ``mb_trackid`` now detect duplicates when a metadata-source match is
+  applied, instead of treating the key as missing. :bug:`7067`
+- :doc:`plugins/missing`: Fix the documentation of the ``--release-types``
+  command-line option and the ``release_types`` configuration option, which
+  still used their old names. :bug:`7172`
+- Metadata source plugins such as :doc:`plugins/musicbrainz` no longer print a
+  full traceback at error level when a search fails because the service is
+  unreachable. The error message is logged on its own, and the traceback is kept
+  at debug level. :bug:`6960`
 - :doc:`plugins/absubmit`: Handle invalid JSON output from the extractor
   gracefully by decoding with error handling and skipping tracks that produce
   unparseable data, instead of crashing. :bug:`3527`
@@ -65,6 +82,8 @@ Bug fixes
   file was read-only. :bug:`6954`
 - :doc:`plugins/discogs`: Normalize ``Digital Media`` and ``WEB`` to Discogs'
   ``File`` format when using ``media`` in ``extra_tags`` search filters.
+- Fix a race condition between concurrent importer threads where updates to
+  ``state.pickle`` could lose tagging progress or incremental-import history.
 - Fix word wrapping of colored diff output for a word containing two or more
   separately-highlighted spans, which was incorrectly split into two words at
   the second highlighted span.
@@ -76,10 +95,9 @@ Bug fixes
   default file. Use ``yes``, ``no`` or a file path. :bug:`5994`
 - Stop replacing ``\`` with ``/`` in ``util.path_as_posix`` on Unix, since ``\``
   is a valid character in filenames on Unix. :bug:`7062`
-- :doc:`plugins/fetchart`: Request modern ``3000x3000bb`` high-resolution
-  artwork from the iTunes Store instead of deprecated ``100000x100000-999``,
-  fixing an issue where Apple's CDN rejected image requests with HTTP 400 Bad
-  Request.
+- :doc:`plugins/fetchart`: Request ``10000x10000-999`` high-resolution artwork
+  from the iTunes Store instead of deprecated ``100000x100000-999``, fixing an
+  issue where Apple's CDN rejected image requests with HTTP 400 Bad Request.
 - :doc:`plugins/lyrics`: Store ``lyrics_instrumental``, ``lyrics_backend`` and
   ``lyrics_url`` for instrumental matches on items without lyrics, which were
   previously discarded.
@@ -119,6 +137,55 @@ Bug fixes
 - :doc:`plugins/ftintitle`: Recognize custom featuring words in titles only in
   brackets, and retain artist credits that cannot be included in the title
   unless ``drop`` is enabled.
+- :doc:`plugins/web`: Fix relative library paths not resolving across request
+  threads in web plugin endpoints.
+- :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
+  ``separators`` is combined with a ``replace`` rule that changes the length of
+  the text. :bug:`6300`
+- :doc:`plugins/edit`: Add a Back option to the "edit Candidates" prompt so it
+  is possible to return to the importer prompt without picking a candidate.
+  :bug:`6701`
+- :doc:`plugins/permissions`: Stop applying permissions to directories outside
+  the library. A library directory of ``/music`` previously also matched
+  siblings sharing its prefix, such as ``/music2``, and the plugin changed the
+  mode of their parent directories.
+- :doc:`plugins/unimported`: ``ignore_subdirectories`` now matches whole path
+  components instead of a string prefix, so ``pod`` no longer also skips
+  ``podcasts``. A configured value with a trailing slash is matched correctly as
+  well.
+- :doc:`plugins/replaygain`: Fix ReplayGain metaflac backend altering input
+  files. :bug:`6915`
+- :doc:`plugins/musicbrainz`: When a release's media differ only in a
+  parenthetical, like the layers of a hybrid SACD (``Hybrid SACD (CD layer)``,
+  ``Hybrid SACD (SACD layer, 2 channels)``) or the sides of a DualDisc, the
+  album's ``media`` is now their common format (``Hybrid SACD``) instead of the
+  generic ``Media``. Releases mixing different formats still get ``Media``.
+- :doc:`plugins/mbsubmit`: Sort printed tracks by disc and then by track number,
+  so multi-disc albums with shared track numbers stay grouped by disc.
+  :bug:`4061`
+- :doc:`plugins/lastgenre`: The genre changes are no longer printed during an
+  import (unless it is verbose), where they could appear on top of the
+  importer's prompt for the next album and make the import look frozen. The
+  ``lastgenre`` command still prints them. :bug:`6830`
+- Path formats: an empty ``${}`` inside a function call argument no longer
+  truncates the argument list and leaks the rest of the template as literal
+  text.
+- :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
+  instead of silently falling back to plain lyrics. :bug:`7070`
+- :doc:`plugins/info`: Fix a :class:`TypeError` when printing list-valued tag
+  fields with non-string elements, such as ``synced_lyrics``. :bug:`7183`
+- :doc:`plugins/titlecase`: Fix ``beet completion`` crashing with
+  ``OptionConflictError`` when the plugin is enabled.
+- Autotagger: Match tracks by their MusicBrainz release track ID as well as
+  their recording ID. Media of one release can share recordings, like the CD and
+  SACD layers of a hybrid SACD, and files from the second medium were assigned
+  to the first medium's tracks, overwriting their release track IDs. When
+  reimporting, this favours the exact release the files were tagged with and
+  penalizes other releases of the same recordings. Items tagged from a source
+  without release track IDs store their track ID in its place, so a MusicBrainz
+  candidate gets this penalty for them, as it already did for the recording ID.
+- :ref:`import-cmd` Fix importing from a logfile (``--from-logfile`` option)
+  when paths contain |semicolon_space| characters. :bug:`4941`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
@@ -130,6 +197,17 @@ For plugin developers
 - ``beetsplug._utils.art.embed_item`` and
   ``beetsplug._utils.art.mediafile_image`` now expect :class:`pathlib.Path`
   arguments, deprecating ``str`` and ``bytes`` in the same way.
+- ``Library.directory`` is now a :class:`pathlib.Path` instead of
+  :class:`bytes`, and the ``Library`` constructor accepts any path-like value
+  for it. Unlike the art utilities above this one has no compatibility shim, so
+  plugins combining it with :mod:`os.path` helpers or comparing it against
+  ``bytes`` paths need updating.
+- New ``Library.contains`` method replaces the ``lib.directory in
+  util.ancestry(item.path)`` idiom for testing whether a path or a model lives
+  inside the library.
+- Import prompt choice callbacks can now read the candidate on screen from
+  ``task.selected_match``, including one picked by number from the candidate
+  list. It is ``None`` while the candidate list itself is shown.
 
 Other changes
 ~~~~~~~~~~~~~
@@ -137,6 +215,13 @@ Other changes
 - :doc:`plugins/thumbnails`: Drop the ``pyxdg`` dependency in favour of
   ``platformdirs``, which beets already requires.
 - Beets now officially supports Python 3.15.
+- :doc:`plugins/duplicates`: Clarify the option ``--full`` to explain how it
+  will work with the action options: copy, move, delete, remove and tag.
+  :bug:`5408`
+- :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
+  case-insensitively, so ``jpg`` also covers ``cover.JPG``.
+- :doc:`plugins/export`: Clarify that the ``--include-keys`` option accepts
+  field names rather than glob patterns. :bug:`5411`
 
 2.14.1 (September 17, 2026)
 ---------------------------

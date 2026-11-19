@@ -15,7 +15,7 @@ class HiddenFileTest(unittest.TestCase):
         pass
 
     def test_osx_hidden(self):
-        if not sys.platform == "darwin":
+        if sys.platform != "darwin":
             self.skipTest("sys.platform is not darwin")
             return
 
@@ -32,7 +32,7 @@ class HiddenFileTest(unittest.TestCase):
             assert hidden.is_hidden(f.name)
 
     def test_windows_hidden(self):
-        if not sys.platform == "win32":
+        if sys.platform != "win32":
             self.skipTest("sys.platform is not windows")
             return
 

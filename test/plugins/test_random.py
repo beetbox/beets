@@ -42,10 +42,11 @@ class TestEqualChancePermutation:
         mean = sum(data) / len(data)
         stdev = math.sqrt(sum((p - mean) ** 2 for p in data) / (len(data) - 1))
         quot, rem = divmod(len(data), 2)
-        if rem:
-            median = sorted(data)[quot]
-        else:
-            median = sum(sorted(data)[quot - 1 : quot + 1]) / 2
+        median = (
+            sorted(data)[quot]
+            if rem
+            else sum(sorted(data)[quot - 1 : quot + 1]) / 2
+        )
         return mean, stdev, median
 
     def test_equal_permutation(self):
@@ -73,7 +74,7 @@ class TestEqualChancePermutation:
 
         _, stdev1, median1 = experiment("artist")
         _, stdev2, median2 = experiment("track")
-        assert 0 == pytest.approx(median1, abs=1)
+        assert pytest.approx(median1, abs=1) == 0
         assert len(self.items) // 2 == pytest.approx(median2, abs=1)
         assert stdev2 > stdev1
 

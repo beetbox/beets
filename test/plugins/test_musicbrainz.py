@@ -339,6 +339,36 @@ class TestParseMedia(MusicBrainzPluginTestMixin):
         assert t[3].index == 4
         assert t[3].disctitle == "Second Medium"
 
+    @pytest.mark.parametrize(
+        "formats, expected",
+        [
+            (["CD", "CD"], "CD"),
+            (
+                [
+                    "Hybrid SACD (CD layer)",
+                    "Hybrid SACD (SACD layer, 2 channels)",
+                    "Hybrid SACD (SACD layer, multichannel)",
+                ],
+                "Hybrid SACD",
+            ),
+            (["DualDisc (CD side)", "DualDisc (DVD side)"], "DualDisc"),
+            (['12" Vinyl', "DVD-Video"], "Media"),
+            (["CD", None], "Media"),
+        ],
+    )
+    def test_album_media(self, mb, formats, expected):
+        release = release_factory(
+            media=[
+                medium_factory(format=f, position=i)
+                for i, f in enumerate(formats, 1)
+            ]
+        )
+
+        d = mb.album_info(release)
+
+        assert d.media == expected
+        assert [t.media for t in d.tracks] == formats
+
     def test_track_overrides_recording(self, mb):
         release = release_factory(
             media__0__tracks=[

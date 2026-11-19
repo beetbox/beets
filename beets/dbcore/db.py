@@ -488,10 +488,9 @@ class Model(ABC, Generic[D]):
         differ.
         """
         # Choose where to place the value.
-        if key in self._fields:
-            source = self._values_fixed
-        else:
-            source = self._values_flex
+        source = (
+            self._values_fixed if key in self._fields else self._values_flex
+        )
 
         # If the field has a type, filter the value.
         value = self._type(key).normalize(value)
@@ -843,7 +842,7 @@ class Results(Sequence[AnyModel]):
     ) -> AnyModel:
         """Create a Model object for the given row"""
         cols = dict(row)
-        values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
+        values = {k: v for (k, v) in cols.items() if k[:4] != "flex"}
 
         # Construct the Python object
         return self.model_class(

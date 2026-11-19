@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import json
 import os
 from typing import TYPE_CHECKING, Any, Protocol
@@ -13,7 +14,7 @@ from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
-from beets import ui, util
+from beets import context, ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
 
@@ -258,10 +259,8 @@ class IdListConverter(BaseConverter):
     def to_python(self, value: str) -> list[int]:
         ids = []
         for id_ in value.split(","):
-            try:
+            with contextlib.suppress(ValueError):
                 ids.append(int(id_))
-            except ValueError:
-                pass
         return ids
 
     def to_url(self, value: Sequence[int]) -> str:
@@ -299,6 +298,7 @@ app.url_map.converters["everything"] = EverythingConverter
 @app.before_request
 def before_request() -> None:
     g.lib = app.config["lib"]
+    context.set_music_dir(g.lib.directory)
 
 
 # Items.

@@ -102,7 +102,7 @@ class ScrubPlugin(BeetsPlugin):
                 # Some Mutagen metadata subclasses (namely, ASFTag) do not
                 # support .delete(), presumably because it is impossible to
                 # remove them. In this case, we just remove all the tags.
-                for tag in f.keys():
+                for tag in f:
                     del f[tag]
                 f.save()
             except (OSError, mutagen.MutagenError) as exc:

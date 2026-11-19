@@ -21,6 +21,7 @@ from typing import (
     TypeVar,
 )
 
+import requests
 import unidecode
 from confuse import NotFoundError
 
@@ -424,6 +425,12 @@ class SearchApiMetadataSourcePlugin(
         self._log.debug("Searching for '{}' with {}", query, filters)
         try:
             response_data = self.get_search_response(params)
+        except requests.exceptions.RequestException as e:
+            if config["raise_on_error"].get(bool):
+                raise
+            self._log.error("Error searching {.data_source}: {}", self, e)
+            self._log.debug("Search request failed", exc_info=True)
+            return ()
         except Exception as e:
             if config["raise_on_error"].get(bool):
                 raise
