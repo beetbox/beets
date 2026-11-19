@@ -175,9 +175,8 @@ Bug fixes
   to the first medium's tracks, overwriting their release track IDs. When
   reimporting, this favours the exact release the files were tagged with and
   penalizes other releases of the same recordings. Items tagged from a source
-  without release track IDs store their track ID in its place, so a
-  MusicBrainz candidate gets this penalty for them, as it already did for the
-  recording ID.
+  without release track IDs store their track ID in its place, so a MusicBrainz
+  candidate gets this penalty for them, as it already did for the recording ID.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
