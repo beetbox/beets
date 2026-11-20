@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from beets import config, logging, plugins, util
 from beets.util import displayable_path, normpath, pipeline, syspath
@@ -47,6 +47,10 @@ class ImportSession:
     _merged_items: set[PathBytes]
     _merged_dirs: set[PathBytes]
 
+    #: Per-track duplicate keys claimed by the tasks of this run. Touched
+    #: only by the single ``resolve_duplicates`` stage, so it needs no lock.
+    seen_track_keys: set[tuple[Any, ...]]
+
     def __init__(
         self,
         lib: library.Library,
@@ -74,6 +78,7 @@ class ImportSession:
         self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
+        self.seen_track_keys = set()
 
         # Normalize the paths.
         self.paths = list(map(normpath, paths or []))
@@ -155,10 +160,10 @@ class ImportSession:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.duplicate_action is DuplicateAction.REMOVE:
                 self.tag_log("duplicate-replace", paths)
-            elif task.choice_flag in (Action.ASIS, Action.APPLY):
-                self.tag_log("duplicate-keep", paths)
             elif task.skip:
                 self.tag_log("duplicate-skip", paths)
+            elif task.choice_flag in (Action.ASIS, Action.APPLY):
+                self.tag_log("duplicate-keep", paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is Action.ASIS:
@@ -172,18 +177,93 @@ class ImportSession:
     def choose_match(self, task: ImportTask) -> AlbumMatch | Action:
         raise NotImplementedError
 
+    def _configured_duplicate_action(
+        self, option: str, choices: dict[str, str]
+    ) -> DuplicateAction:
+        """Read the duplicate action configured under ``option``, accepting
+        only ``choices``.
+        """
+        choice = self.config[option].as_choice(choices)
+        log.debug("default {}: {}", option, choice)
+        return DuplicateAction(choice)  # type: ignore[call-arg]
+
     def get_duplicate_action(
         self, task: ImportTask, found_duplicates: list[AlbumOrItem]
     ) -> DuplicateAction:
         """Get the configured duplicate action."""
-        choice = config["import"]["duplicate_action"].as_choice(
-            DuplicateAction.choices()
+        return self._configured_duplicate_action(
+            "duplicate_action", DuplicateAction.choices()
         )
-        log.debug("default action for duplicates: {}", choice)
-        return DuplicateAction(choice)  # type: ignore[call-arg]
 
     def choose_item(self, task: SingletonImportTask) -> TrackMatch | Action:
         raise NotImplementedError
+
+    def get_track_duplicate_actions(
+        self,
+        task: ImportTask,
+        track_duplicates: dict[library.Item, list[library.Item]],
+    ) -> dict[library.Item, DuplicateAction]:
+        """Get the configured action for each duplicating track, given a
+        map of each task item to the library items it duplicates.
+        """
+        return dict.fromkeys(
+            track_duplicates, self._configured_track_duplicate_action()
+        )
+
+    def _configured_track_duplicate_action(self) -> DuplicateAction:
+        """The configured action for duplicate tracks."""
+        # A missing option counts as unset: fall back to `duplicate_action`.
+        tracks_action = self.config["duplicate_tracks_action"]
+        if tracks_action.exists() and tracks_action.get():
+            return self._configured_duplicate_action(
+                "duplicate_tracks_action", DuplicateAction.track_choices()
+            )
+
+        action = self._configured_duplicate_action(
+            "duplicate_action", DuplicateAction.choices()
+        )
+        if action is DuplicateAction.MERGE:
+            # MERGE is not offered per track.
+            log.debug(
+                "merge is not available for duplicate tracks; keeping all"
+            )
+            action = DuplicateAction.KEEP
+        return action
+
+    def resolve_duplicates(
+        self,
+        task: ImportTask,
+        found_duplicates: list[AlbumOrItem],
+        track_duplicates: dict[library.Item, list[library.Item]],
+    ) -> None:
+        """Decide what to do about ``task``'s album- and track-level
+        duplicates: the album-level action applies when every track is a
+        duplicate, per-track resolution when only some are. When the tracks
+        were checked and none is a duplicate of a single existing album, the
+        task only adds missing tracks to that album.
+        """
+        checked = task.track_duplicates.checked
+        partial = checked and len(track_duplicates) < len(task.imported_items())
+        completes_album = (
+            partial and not track_duplicates and len(found_duplicates) == 1
+        )
+
+        if completes_album:
+            if (
+                self._configured_track_duplicate_action()
+                is DuplicateAction.KEEP
+            ):
+                log.debug("keeping missing tracks as a new album")
+            else:
+                task.track_duplicates.existing_album_id = found_duplicates[0].id
+        elif found_duplicates and not (partial and track_duplicates):
+            task.duplicate_action = self.get_duplicate_action(
+                task, found_duplicates
+            )
+        elif track_duplicates:
+            task.track_duplicates.actions = self.get_track_duplicate_actions(
+                task, track_duplicates
+            )
 
     def run(self) -> None:
         """Run the import task."""
