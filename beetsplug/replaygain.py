@@ -1602,9 +1602,14 @@ class ReplayGainPlugin(BeetsPlugin):
             write = ui.should_write(opts.write)
             force = opts.force
 
-            # Bypass self.open_pool() if called with  `--threads 0`
-            if opts.threads != 0:
-                threads: int = opts.threads or self.config["threads"].get(int)
+            # Bypass self.open_pool() if called with `--threads 0` or if
+            # `threads: 0` is set in the config
+            threads: int = (
+                opts.threads
+                if opts.threads is not None
+                else self.config["threads"].get(int)
+            )
+            if threads:
                 self.open_pool(threads)
 
             if opts.album:
