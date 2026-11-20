@@ -182,6 +182,9 @@ Bug fixes
   candidate gets this penalty for them, as it already did for the recording ID.
 - :ref:`import-cmd` Fix importing from a logfile (``--from-logfile`` option)
   when paths contain |semicolon_space| characters. :bug:`4941`
+- :doc:`plugins/subsonicplaylist`: Use ``warning()`` instead of the deprecated
+  ``warn()`` logger method, and log error messages returned by the Subsonic
+  server verbatim so that braces in them no longer break logging.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
