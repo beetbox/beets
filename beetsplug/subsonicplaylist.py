@@ -83,7 +83,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                 )
                 items = lib.items(and_query)
                 if not items:
-                    self._log.warn(
+                    self._log.warning(
                         "{} | track not found ({})", playlist_tag, query
                     )
                     continue
@@ -98,7 +98,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         playlist = ElementTree.fromstring(xml)[0]
         if playlist.attrib.get("code", "200") != "200":
             alt_error = "error getting playlist, but no error message found"
-            self._log.warn(playlist.attrib.get("message", alt_error))
+            self._log.warning("{}", playlist.attrib.get("message", alt_error))
             return None
 
         name = playlist.attrib.get("name", "undefined")
@@ -122,7 +122,9 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                     alt_error = (
                         "error getting playlists, but no error message found"
                     )
-                    self._log.warn(playlists.attrib.get("message", alt_error))
+                    self._log.warning(
+                        "{}", playlists.attrib.get("message", alt_error)
+                    )
                     return
                 for name in self.config["playlist_names"].as_str_seq():
                     for playlist in playlists:
