@@ -218,15 +218,15 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         album = self.lib.add_album([item1, item2, item3])
 
         track_genres = {
-            "Artist A": ["Rock"],
-            "Artist B": ["Rock"],
-            "Artist C": ["Jazz"],
+            "Artist A": ["rock"],
+            "Artist B": ["rock"],
+            "Artist C": ["jazz"],
         }
         self.plugin.client.fetch = lambda kind, obj, *args: (
             track_genres[obj.artist] if kind == "track" else []
         )
 
-        assert self.plugin._fetch_va_genres(album) == ["Rock"]
+        assert self.plugin._fetch_va_genres(album) == ["rock"]
 
     def test_fetch_va_genres_falls_back_to_artist_genre(self):
         """When a track has no genre, fall back to its artist's genre."""
@@ -235,10 +235,10 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         album = self.lib.add_album([item])
 
         self.plugin.client.fetch = lambda kind, obj, *args: (
-            ["Jazz"] if kind == "artist" else []
+            ["jazz"] if kind == "artist" else []
         )
 
-        assert self.plugin._fetch_va_genres(album) == ["Jazz"]
+        assert self.plugin._fetch_va_genres(album) == ["jazz"]
 
     def test_fetch_va_genres_empty_when_nothing_found(self):
         """Return an empty list when neither track nor artist genres exist."""
@@ -249,6 +249,67 @@ class LastGenrePluginTest(IOMixin, PluginTestCase):
         self.plugin.client.fetch = lambda kind, obj, *args: []
 
         assert self.plugin._fetch_va_genres(album) == []
+
+    def _setup_va_album(self, track_genres, **config):
+        """Create a VA album whose tracks return the given Last.fm genres."""
+        self.config["lastgenre"]["source"] = "track"
+        self._setup_config(**config)
+        items = [self.add_item(artist=artist) for artist in track_genres]
+        self.plugin.client.fetch = lambda kind, obj, *args: (
+            track_genres[obj.artist] if kind == "track" else []
+        )
+        return self.lib.add_album(items)
+
+    def test_fetch_va_genres_one_vote_per_track(self):
+        """A track returning several tags still casts a single vote."""
+        album = self._setup_va_album(
+            {
+                "Artist A": ["jazz", "blues"],
+                "Artist B": ["jazz", "blues"],
+                "Artist C": ["blues"],
+            }
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["jazz"]
+
+    def test_fetch_va_genres_keeps_all_tied_genres(self):
+        """All genres tied for the most votes are returned."""
+        album = self._setup_va_album(
+            {"Artist A": ["rock"], "Artist B": ["jazz"]}
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["jazz", "rock"]
+
+    def test_fetch_va_genres_ties_ordered_by_mentions(self):
+        """Ties are ordered by how many tracks mention the genre."""
+        album = self._setup_va_album(
+            {"Artist A": ["rock"], "Artist B": ["jazz", "rock"]}
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["rock", "jazz"]
+
+    def test_fetch_va_genres_votes_for_top_whitelisted_genre(self):
+        """A track votes for its first genre that passes the whitelist."""
+        album = self._setup_va_album(
+            {"Artist A": ["seen live", "rock"], "Artist B": ["jazz"]}
+        )
+        self.plugin.whitelist = {"rock"}
+
+        assert self.plugin._fetch_va_genres(album) == ["rock"]
+
+    def test_fetch_va_genres_votes_for_whitelisted_c14n_parent(self):
+        """A track with only non-whitelisted tags votes for their parent."""
+        album = self._setup_va_album(
+            {
+                "Artist A": ["delta blues"],
+                "Artist B": ["country blues"],
+                "Artist C": ["jazz"],
+            },
+            canonical=True,
+            whitelist={"blues", "jazz"},
+        )
+
+        assert self.plugin._fetch_va_genres(album) == ["blues"]
 
     def test_fetch_genre(self):
         class MockPylastElem:

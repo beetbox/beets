@@ -12,7 +12,8 @@ from __future__ import annotations
 import logging
 import os
 import re
-from collections import defaultdict
+import sys
+from collections import Counter, defaultdict
 from functools import cached_property, singledispatchmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -22,7 +23,7 @@ import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
-from beets.util import plurality, unique_list
+from beets.util import unique_list
 from beetsplug.lastgenre.utils import is_ignored, normalize_genre
 
 from .client import LastFmClient
@@ -322,9 +323,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     # Genre list processing.
 
     def _resolve_genres(
-        self, tags: list[str], artist: str | None = None
+        self,
+        tags: list[str],
+        artist: str | None = None,
+        count: int | None = None,
     ) -> list[str]:
         """Canonicalize, sort and filter a list of genres.
+
+        ``count`` overrides the configured genre limit.
 
         - Returns an empty list if the input tags list is empty.
         - If aliases are configured, variant spellings are normalised first
@@ -355,7 +361,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for tag in tags
             ]
 
-        count = self.config["count"].get(int)
+        if count is None:
+            count = self.config["count"].get(int)
 
         # Canonicalization (if enabled)
         if self.canonicalize:
@@ -583,27 +590,45 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return None
 
     def _fetch_va_genres(self, album: Album) -> list[str]:
-        """Fetch the most popular track or artist genre for a Various Artists album."""
-        item_genres = []
+        """Vote for the most popular genres of a Various Artists album.
+
+        Each track casts a single vote for its top valid genre (its first
+        track genre that passes the whitelist and ignorelist, falling back to
+        its artist genres). All genres tied for the most votes are returned,
+        so that the ``count`` option decides how many are kept. Ties are
+        ordered by the number of tracks that mention the genre at all, then
+        alphabetically.
+        """
+        votes: Counter[str] = Counter()
+        mentions: Counter[str] = Counter()
         for item in album.items():
-            item_genre = None
+            item_genres = []
             if "track" in self.sources:
-                item_genre = self.client.fetch("track", item)
-            if not item_genre:
-                item_genre = self.client.fetch("artist", item)
-            if item_genre:
-                item_genres += item_genre
+                item_genres = self._resolve_genres(
+                    self.client.fetch("track", item),
+                    artist=item.artist,
+                    count=sys.maxsize,
+                )
+            if not item_genres:
+                item_genres = self._resolve_genres(
+                    self.client.fetch("artist", item),
+                    artist=item.artist,
+                    count=sys.maxsize,
+                )
+            if item_genres:
+                votes[item_genres[0]] += 1
+                mentions.update(set(item_genres))
 
-        if item_genres:
-            most_popular, rank = plurality(item_genres)
-            self._log.debug(
-                'Most popular track genre "{}" ({}) for VA album.',
-                most_popular,
-                rank,
-            )
-            return [most_popular]
+        if not votes:
+            return []
 
-        return []
+        ranking = sorted(votes, key=lambda g: (-votes[g], -mentions[g], g))
+        self._log.debug(
+            "VA album track genre votes: {}",
+            ", ".join(f"{g} ({votes[g]})" for g in ranking),
+        )
+        top_votes = votes[ranking[0]]
+        return [g for g in ranking if votes[g] == top_votes]
 
     def _fetch_artist_stage(
         self, obj: LibModel
