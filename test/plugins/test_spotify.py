@@ -524,6 +524,15 @@ class SpotifyPluginTest(PluginTestCase):
 
         assert write_event_index < database_change_index
 
+    def test_fetch_info_reports_tracks_without_id(self):
+        item = self.add_item_fixture(title="Track 1", artist="Artist")
+
+        with self.assertLogs("beets", level="INFO") as captured_logs:
+            self.spotify._fetch_info(self.lib, [item], write=True, force=True)
+
+        messages = " ".join(captured_logs.output)
+        assert "Skipped 1 track(s) without a spotify_track_id" in messages
+
     @responses.activate
     def test_track_audio_features_batch_disables_on_403(self):
         responses.add(
