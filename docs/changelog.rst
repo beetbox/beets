@@ -182,6 +182,10 @@ Bug fixes
   candidate gets this penalty for them, as it already did for the recording ID.
 - :ref:`import-cmd` Fix importing from a logfile (``--from-logfile`` option)
   when paths contain |semicolon_space| characters. :bug:`4941`
+- :doc:`plugins/lyrics`: The ``google`` source now logs a clear message when
+  Google refuses the search request, and the documentation warns that the Google
+  Custom Search JSON API is closed to new customers and will be discontinued on
+  January 1, 2027. :bug:`6761`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
