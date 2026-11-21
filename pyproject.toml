@@ -6,7 +6,7 @@ authors = [{ name = "Adrian Sampson", email = "adrian@radbox.org" }]
 maintainers = [{ name = "Serene-Arc" }]
 license = { text = "MIT" }
 readme = "README.rst"
-requires-python = ">=3.11,<3.16"
+requires-python = ">=3.11.5,<3.16"
 classifiers = [
     "Topic :: Multimedia :: Sound/Audio",
     "Topic :: Multimedia :: Sound/Audio :: Players :: MP3",

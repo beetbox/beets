@@ -218,6 +218,9 @@ Other changes
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
 - :doc:`plugins/export`: Clarify that the ``--include-keys`` option accepts
   field names rather than glob patterns. :bug:`5411`
+- Beets now requires Python 3.11.5 or later. Every fixed release of
+  ``soupsieve`` (3.0.2 and up) needs it, so with 3.11.0 to 3.11.4 still
+  supported the lockfile kept a vulnerable ``soupsieve`` for those versions.
 
 2.14.1 (September 17, 2026)
 ---------------------------
