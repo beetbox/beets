@@ -58,6 +58,11 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Album art: the rendered ``art_filename`` is now truncated like track paths
+  are. A long template such as ``$album`` on an album with a very long title
+  used to produce a filename the filesystem refuses to create, so copying the
+  cover failed with ``Invalid argument`` even though the track files next to
+  it had been shortened correctly.
 - Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
   or ``mb_trackid`` now detect duplicates when a metadata-source match is
   applied, instead of treating the key as missing. :bug:`7067`

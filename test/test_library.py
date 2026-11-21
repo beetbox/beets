@@ -1418,6 +1418,16 @@ class TestArtDestination(TestHelper):
         art = ai.art_destination("something.jpg")
         assert b"artYimage" in art
 
+    def test_art_filename_is_truncated(self, item_and_album, config):
+        _i, ai = item_and_album
+        config["art_filename"] = "$album"
+        ai.album = "A" * 300
+
+        art = ai.art_destination("something.jpg")
+
+        assert len(os.path.basename(art).decode()) <= util.get_max_filename_length()
+        assert art.endswith(b".jpg")
+
 
 class TestPathString(PytestItemHelper):
     def test_item_path_is_bytestring(self, item_in_db):

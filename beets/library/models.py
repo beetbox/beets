@@ -568,11 +568,16 @@ class Album(LibModel):
         subpath = self.evaluate_template(filename_tmpl, for_path=True)
         if beets.config["asciify_paths"]:
             subpath = util.asciify_path(subpath)
-        subpath = util.sanitize_path(subpath, replacements=self.db.replacements)
-        subpath_bytes = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
-        dest = os.path.join(item_dir, subpath_bytes + ext)
+        # ``legalize_path`` also truncates overlong components. Without it a
+        # long ``art_filename`` template can produce a component that the
+        # filesystem refuses to create, even though the track files next to it
+        # were shortened correctly.
+        subpath, _ = util.legalize_path(subpath, self.db.replacements, ext)
+        subpath_bytes = bytestring_path(subpath)
+
+        dest = os.path.join(item_dir, subpath_bytes)
 
         return bytestring_path(dest)
 
