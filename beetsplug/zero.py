@@ -26,6 +26,7 @@ __author__ = "baobab@heresiarch.info"
 
 
 ARTWORK_FIELDS = {"images", "art"}
+GENRE_FIELDS = {"genre", "genres"}
 
 
 class ZeroPlugin(BeetsPlugin):
@@ -72,6 +73,10 @@ class ZeroPlugin(BeetsPlugin):
             # one of them is present
             if keep & ARTWORK_FIELDS:
                 keep.update(ARTWORK_FIELDS)
+            # ensure that all genre fields are added when at least
+            # one of them is present
+            if keep & GENRE_FIELDS:
+                keep.update(GENRE_FIELDS)
             for field in MediaFile.fields():
                 if field not in keep and field not in (
                     "id",
