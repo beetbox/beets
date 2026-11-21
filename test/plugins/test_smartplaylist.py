@@ -299,6 +299,7 @@ class SmartPlaylistTest(PlaylistDirMixin, BeetsTestCase):
 class TestGetItemURI:
     @pytest.fixture
     def plugin(self, config, plugin_config):
+        config["directory"] = "/imported"
         plugin_config = {"prefix": "http://beets:8337/files", **plugin_config}
         config["smartplaylist"].set(plugin_config)
 
@@ -338,6 +339,20 @@ class TestGetItemURI:
                 },
                 b"http://beets:8337/item/3/file",
                 id="uri_format takes precedence",
+            ),
+            _p(
+                {"relative_to": "library", "prefix": "", "forward_slash": True},
+                b"path/with/dont/move/tagada.mp3",
+                id="relative_to library uses library directory",
+            ),
+            _p(
+                {
+                    "relative_to": "/imported/path",
+                    "prefix": "",
+                    "forward_slash": True,
+                },
+                b"with/dont/move/tagada.mp3",
+                id="relative_to path still works",
             ),
         ],
     )

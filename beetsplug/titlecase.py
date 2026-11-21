@@ -74,6 +74,7 @@ class TitlecasePlugin(BeetsPlugin):
             "titlecase",
             help="Apply titlecasing to metadata specified in config.",
         )
+        self._command.parser.add_limit_option()
 
         if self.config["auto"].get(bool):
             if self.config["after_choice"].get(bool):
@@ -166,7 +167,6 @@ class TitlecasePlugin(BeetsPlugin):
                 if write:
                     item.try_write()
 
-        self._command.parser.add_limit_option()
         self._command.func = func
         return [self._command]
 

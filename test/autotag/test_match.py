@@ -101,6 +101,42 @@ class TestAssignment:
 
         assert assign_items(items, trackinfo) == expected
 
+    def test_release_track_id_picks_medium_with_shared_recordings(self):
+        # A hybrid SACD lists its CD and SACD layers as two media whose
+        # tracks share recordings: only the release track IDs differ.
+        def info(medium, index):
+            return TrackInfo(
+                title=f"title {index}",
+                length=100.0 * index,
+                index=(medium - 1) * 2 + index,
+                medium=medium,
+                medium_index=index,
+                track_id=f"rec-{index}",
+                release_track_id=f"rt-{medium}-{index}",
+            )
+
+        tracks = [info(m, i) for m in (1, 2) for i in (1, 2)]
+        # Files from the second layer, tagged as physical disc 1.
+        items = [
+            Item(
+                title=f"title {i}",
+                length=100.0 * i,
+                track=i,
+                disc=1,
+                mb_trackid=f"rec-{i}",
+                mb_releasetrackid=f"rt-2-{i}",
+            )
+            for i in (1, 2)
+        ]
+
+        item_info_pairs, _, extra_tracks = assign_items(items, tracks)
+
+        assert [t.release_track_id for _, t in item_info_pairs] == [
+            "rt-2-1",
+            "rt-2-2",
+        ]
+        assert [t.medium for t in extra_tracks] == [1, 1]
+
 
 class TestTagMultipleDataSources:
     @pytest.fixture

@@ -49,6 +49,11 @@ New features
 - :doc:`plugins/edit`: ``edit Candidates`` now edits the candidate on screen
   instead of asking for a candidate number again. It still asks when chosen from
   the candidate list.
+- :doc:`plugins/smartplaylist`: The ``relative_to`` option and ``--relative-to``
+  flag now accept ``library`` to generate paths relative to the library
+  directory, matching the :doc:`plugins/playlist` plugin. :bug:`5348`
+- :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
+  can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
 
 Bug fixes
 ~~~~~~~~~
@@ -163,6 +168,20 @@ Bug fixes
   text.
 - :doc:`plugins/lyrics`: Keep synced LRCLib lyrics that end with a blank line
   instead of silently falling back to plain lyrics. :bug:`7070`
+- :doc:`plugins/info`: Fix a :class:`TypeError` when printing list-valued tag
+  fields with non-string elements, such as ``synced_lyrics``. :bug:`7183`
+- :doc:`plugins/titlecase`: Fix ``beet completion`` crashing with
+  ``OptionConflictError`` when the plugin is enabled.
+- Autotagger: Match tracks by their MusicBrainz release track ID as well as
+  their recording ID. Media of one release can share recordings, like the CD and
+  SACD layers of a hybrid SACD, and files from the second medium were assigned
+  to the first medium's tracks, overwriting their release track IDs. When
+  reimporting, this favours the exact release the files were tagged with and
+  penalizes other releases of the same recordings. Items tagged from a source
+  without release track IDs store their track ID in its place, so a MusicBrainz
+  candidate gets this penalty for them, as it already did for the recording ID.
+- :ref:`import-cmd` Fix importing from a logfile (``--from-logfile`` option)
+  when paths contain |semicolon_space| characters. :bug:`4941`
 - :doc:`plugins/lyrics`: The ``google`` source now logs a clear message when
   Google refuses the search request, and the documentation warns that the Google
   Custom Search JSON API is closed to new customers and will be discontinued on
@@ -201,6 +220,11 @@ Other changes
   :bug:`5408`
 - :doc:`plugins/unimported`: ``ignore_extensions`` is now matched
   case-insensitively, so ``jpg`` also covers ``cover.JPG``.
+- :doc:`plugins/export`: Clarify that the ``--include-keys`` option accepts
+  field names rather than glob patterns. :bug:`5411`
+- Beets now requires Python 3.11.5 or later. Every fixed release of
+  ``soupsieve`` (3.0.2 and up) needs it, so with 3.11.0 to 3.11.4 still
+  supported the lockfile kept a vulnerable ``soupsieve`` for those versions.
 
 2.14.1 (September 17, 2026)
 ---------------------------
