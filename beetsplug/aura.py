@@ -6,7 +6,7 @@ import os
 import re
 from dataclasses import dataclass
 from mimetypes import guess_type
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, Self
 
 from flask import (
     Blueprint,
@@ -16,7 +16,6 @@ from flask import (
     request,
     send_file,
 )
-from typing_extensions import Self
 
 from beets import config
 from beets.dbcore import AndQuery, MatchQuery
@@ -77,11 +76,9 @@ TRACK_ATTR_MAP = {
     "comments": "comments",
     # Optional for Audio Metadata
     # TODO: Support the mimetype attribute, format != mime type
-    # "mimetype": track.format,
+    # "mimetype": track.format,  # noqa: ERA001
     "duration": "length",
     "framerate": "samplerate",
-    # I don't think beets has a framecount field
-    # "framecount": ???,
     "channels": "channels",
     "bitrate": "bitrate",
     "bitdepth": "bitdepth",
@@ -597,10 +594,7 @@ def safe_filename(fn: str) -> bool:
         return False
 
     # In single names, rule out Unix directory traversal names.
-    if fn in (".", ".."):
-        return False
-
-    return True
+    return fn not in (".", "..")
 
 
 class ImageDocument(AURADocument):
@@ -657,8 +651,6 @@ class ImageDocument(AURADocument):
             image_id: A string in the form
                 "<parent_type>-<parent_id>-<img_filename>".
         """
-        # Could be called as a static method, so can't use
-        # self.get_image_path()
         image_path = ImageDocument.get_image_path(lib, image_id)
         if not image_path:
             return None

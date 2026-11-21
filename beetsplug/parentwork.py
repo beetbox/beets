@@ -38,7 +38,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()
 
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 changed = self.find_work(item, force_parent, verbose=True)
                 if changed:
                     item.store()
@@ -58,6 +58,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
             help="re-fetch when parent work is already present",
         )
 
+        command.parser.add_limit_option()
         command.func = func
         return [command]
 
@@ -85,7 +86,7 @@ class ParentWorkPlugin(MusicBrainzAPIMixin, BeetsPlugin):
                 composer_exists = True
                 parent_composer.append(artist["artist"]["name"])
                 parent_composer_sort.append(artist["artist"]["sort_name"])
-                if "end" in artist.keys():
+                if "end" in artist:
                     parentwork_info["parentwork_date"] = artist["end"]
 
             parentwork_info["parent_composer"] = ", ".join(parent_composer)

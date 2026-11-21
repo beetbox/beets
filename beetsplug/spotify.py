@@ -43,6 +43,7 @@ class SpotifyCLIOpts(Protocol):
 
 class SpotifySyncCLIOpts(Protocol):
     force_refetch: bool
+    limit: int | None
 
 
 class TrackDetails(TypedDict):
@@ -580,11 +581,12 @@ class SpotifyPlugin(
             default=False,
             help="re-download data when already present",
         )
+        sync_cmd.parser.add_limit_option()
 
         def func(
             lib: Library, opts: SpotifySyncCLIOpts, args: list[str]
         ) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             self._fetch_info(lib, items, ui.should_write(), opts.force_refetch)
 
         sync_cmd.func = func
@@ -841,10 +843,9 @@ class SpotifyPlugin(
             )
             # If we're not forcing re-downloading for all tracks, check
             # whether the popularity data is already present
-            if not force:
-                if "spotify_track_popularity" in item:
-                    self._log.debug("Popularity already present for: {}", item)
-                    continue
+            if not force and "spotify_track_popularity" in item:
+                self._log.debug("Popularity already present for: {}", item)
+                continue
             try:
                 spotify_track_id = item.spotify_track_id
             except AttributeError:

@@ -3,11 +3,10 @@ from __future__ import annotations
 import logging
 import os
 import pickle
+import threading
 from bisect import bisect_left, insort
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Self
 
 from beets import config
 
@@ -19,6 +18,8 @@ if TYPE_CHECKING:
 
 # Global logger.
 log = logging.getLogger("beets")
+
+_lock = threading.Lock()
 
 
 @dataclass
@@ -60,6 +61,12 @@ class ImportState:
         self._open()
 
     def __enter__(self) -> Self:
+        _lock.acquire()
+        try:
+            self._open()  # read latest state
+        except BaseException:
+            _lock.release()
+            raise
         return self
 
     def __exit__(
@@ -68,7 +75,10 @@ class ImportState:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        self._save()
+        try:
+            self._save()
+        finally:
+            _lock.release()
 
     def _open(self) -> None:
         try:
@@ -85,8 +95,9 @@ class ImportState:
             log.debug("state file could not be read: {}", exc)
 
     def _save(self) -> None:
+        tmp_path = self.path + b".tmp"
         try:
-            with open(self.path, "wb") as f:
+            with open(tmp_path, "wb") as f:
                 pickle.dump(
                     {
                         "tagprogress": self.tagprogress,
@@ -94,6 +105,8 @@ class ImportState:
                     },
                     f,
                 )
+            # Atomic swap so readers never see a partially written file
+            os.replace(tmp_path, self.path)
         except OSError as exc:
             log.error("state file could not be written: {}", exc)
 

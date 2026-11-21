@@ -27,6 +27,7 @@ ImportAction = Literal["abort", "skip", "continue"]
 
 
 class BadCLIOpts(Protocol):
+    limit: int | None
     verbose: bool
 
 
@@ -260,7 +261,7 @@ class BadFiles(BeetsPlugin):
 
     def command(self, lib: Library, opts: BadCLIOpts, args: list[str]) -> None:
         # Get items from arguments
-        items = lib.items(args)
+        items = lib.items(args, limit=opts.limit)
         self.verbose = opts.verbose
 
         def check_and_print(item: Item) -> None:
@@ -281,5 +282,6 @@ class BadFiles(BeetsPlugin):
             dest="verbose",
             help="view results for both the bad and uncorrupted files",
         )
+        bad_command.parser.add_limit_option()
         bad_command.func = self.command
         return [bad_command]

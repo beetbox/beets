@@ -74,6 +74,7 @@ class TitlecasePlugin(BeetsPlugin):
             "titlecase",
             help="Apply titlecasing to metadata specified in config.",
         )
+        self._command.parser.add_limit_option()
 
         if self.config["auto"].get(bool):
             if self.config["after_choice"].get(bool):
@@ -159,7 +160,7 @@ class TitlecasePlugin(BeetsPlugin):
     def commands(self) -> list[ui.Subcommand]:
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
             write = ui.should_write()
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 self._log.info(f"titlecasing {item.title}:")
                 self.titlecase_fields(item)
                 item.store()
@@ -202,15 +203,14 @@ class TitlecasePlugin(BeetsPlugin):
     def titlecase(self, text: str, field: str = "") -> str:
         """Titlecase the given text."""
         # Check we should split this into two substrings.
-        if self.separators:
-            if len(splits := self.separators.findall(text)):
-                split_cased = "".join(
-                    [self.titlecase(s[0], field) + s[1] for s in splits]
-                )
-                # Add on the remaining portion
-                return split_cased + self.titlecase(
-                    text[len(split_cased) :], field
-                )
+        if self.separators and len(splits := self.separators.findall(text)):
+            split_cased = "".join(
+                [self.titlecase(s[0], field) + s[1] for s in splits]
+            )
+            # Add on the remaining portion. Measure it against the
+            # original text, since replacements can change the length.
+            consumed = sum(len(s[0]) + len(s[1]) for s in splits)
+            return split_cased + self.titlecase(text[consumed:], field)
         # Check if A-Z is all uppercase or all lowercase
         if self.all_lowercase and text.islower():
             return text

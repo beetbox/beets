@@ -94,9 +94,8 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
             ["ffprobe", "-version"], capture_output=True, shell=shell
         ).stderr.decode("utf-8")
         != ""
-    ):
-        if logger:
-            logger.error("ffprobe needed to determine file extension")
+    ) and logger:
+        logger.error("ffprobe needed to determine file extension")
     output = subprocess.run(
         [
             "ffprobe",
@@ -112,10 +111,11 @@ def fix_extension(path_bytes: PathBytes, logger: Logger | None = None) -> bytes:
     )
     out = output.stdout.decode("utf-8")
     err = output.stderr.decode("utf-8")
-    if err != "":
-        if logger:
-            logger.error("Error with ffprobe\n", err)
-    for line in out.split("\n"):
+    if err != "" and logger:
+        logger.error("Error with ffprobe\n", err)
+    # `splitlines` rather than splitting on "\n": ffprobe terminates its
+    # lines with CRLF on Windows.
+    for line in out.splitlines():
         if line.startswith("format_name="):
             formats = line.split("=")[1].split(",")
     detected_format = ""
@@ -171,9 +171,4 @@ def remux_mpeglayer3_wav(path: AnyPath) -> AnyPath | None:
     mp3_path.write_bytes(mp3_data)
 
     util.remove(path)
-
-    if isinstance(path, str):
-        return str(mp3_path)
-    if isinstance(path, bytes):
-        return os.fsencode(mp3_path)
-    return mp3_path
+    return util.as_path_like(mp3_path, like=path)

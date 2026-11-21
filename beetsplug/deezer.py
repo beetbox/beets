@@ -49,9 +49,10 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
         )
 
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             self.deezerupdate(list(items), ui.should_write())
 
+        deezer_update_cmd.parser.add_limit_option()
         deezer_update_cmd.func = func
 
         return [deezer_update_cmd]
@@ -278,7 +279,7 @@ class DeezerPlugin(SearchApiMetadataSourcePlugin[IDResponse]):
                 self._log.debug("Invalid Deezer track_id: {}", e)
                 continue
             else:
-                if track and (rank := track.get("rank") is not None):
+                if track and (rank := track.get("rank")) is not None:
                     self._log.debug(
                         "Deezer track: {} has {} rank", deezer_track_id, rank
                     )

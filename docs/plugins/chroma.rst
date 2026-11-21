@@ -161,7 +161,8 @@ short token string. Then, add the key to your ``config.yaml`` as the value
         apikey: AbCd1234
 
 Then, run ``beet submit``. (You can also provide a query to submit a subset of
-your library.) The command will use stored fingerprints if they're available;
+your library.) Use ``-l``/``--limit`` to cap the matched tracks before
+submitting. The command will use stored fingerprints if they're available;
 otherwise it will fingerprint each file before submitting it.
 
 .. _get an api key: https://acoustid.org/api-key
@@ -196,7 +197,8 @@ to restrict the search:
     beet chromasearch -s FINGERPRINT artist:"rolling stones"
 
 By default, the command returns the top 5 closest matches in your library. You
-can change the number of results using the ``-c`` (``--count``) option.
+can change the number of results using the ``-c`` (``--count``) option. Use
+``-l``/``--limit`` to cap the tracks searched before ranking results.
 
 When an exact match is found, the search normally stops early. To continue
 searching for additional similar items even after an exact match, use the

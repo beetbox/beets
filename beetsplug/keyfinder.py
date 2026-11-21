@@ -29,13 +29,16 @@ class KeyFinderPlugin(BeetsPlugin):
         cmd = ui.Subcommand(
             "keyfinder", help="detect and add initial key from audio"
         )
+        cmd.parser.add_limit_option()
         cmd.func = self.command
         return [cmd]
 
     def command(
         self, lib: Library, opts: optparse.Values, args: list[str]
     ) -> None:
-        self.find_key(lib.items(args), write=ui.should_write())
+        self.find_key(
+            lib.items(args, limit=opts.limit), write=ui.should_write()
+        )
 
     def imported(self, session: ImportSession, task: ImportTask) -> None:
         self.find_key(task.imported_items())

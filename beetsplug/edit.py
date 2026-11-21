@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import codecs
 import os
 import shlex
 import subprocess
@@ -118,7 +117,7 @@ def flatten(obj: LibModel, fields: Container[str] | None) -> JSONDict:
     """
     # Format each value.
     d = {}
-    for key in obj.keys():
+    for key in obj:
         value = obj[key]
         if _safe_value(obj, key, value):
             # A safe value that is faithfully representable in YAML.
@@ -196,10 +195,7 @@ class EditPlugin(plugins.BeetsPlugin):
             return
 
         # Get the fields to edit.
-        if opts.all:
-            fields = None
-        else:
-            fields = self._get_fields(opts.album, opts.field)
+        fields = None if opts.all else self._get_fields(opts.album, opts.field)
         self.edit(opts.album, objs, fields)
 
     def _get_fields(self, album: bool, extra: list[str] | None) -> set[str]:
@@ -427,7 +423,7 @@ class EditPlugin(plugins.BeetsPlugin):
             while True:
                 edit(new.name, self._log)
 
-                with codecs.open(new.name, encoding="utf-8") as f:
+                with open(new.name, encoding="utf-8") as f:
                     new_str = f.read()
                 if new_str == old_str:
                     ui.print_("No changes; aborting.")
@@ -581,13 +577,21 @@ class EditPlugin(plugins.BeetsPlugin):
         import session on a *candidate*. The candidate's metadata is
         applied to the original items.
         """
-        # Prompt the user for a candidate.
-        if task.candidates:
-            sel = ui.input_options((), numrange=(1, len(task.candidates)))
-            # Force applying the candidate on the items.
-            task.match = task.candidates[sel - 1]
-            task.apply_metadata()
+        if not task.candidates:
+            return None
 
-            return self.importer_edit(session, task)
+        # Use the candidate on screen, or prompt from the candidate list.
+        if not (match := task.selected_match):
+            sel = ui.input_options(
+                ("Back",), numrange=(1, len(task.candidates))
+            )
+            if not isinstance(sel, int):
+                # "Back": return to the previous prompt.
+                return None
+            match = task.candidates[sel - 1]
 
-        return None
+        # Force applying the candidate on the items.
+        task.match = match
+        task.apply_metadata()
+
+        return self.importer_edit(session, task)

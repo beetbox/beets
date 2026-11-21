@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 from beets import ui
-from beets.exceptions import UserError
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -33,8 +32,6 @@ def list_items(
 
 
 def list_func(lib: Library, opts: ListCLIOpts, args: list[str]) -> None:
-    if opts.limit is not None and opts.limit < 0:
-        raise UserError("-l / --limit argument must be a non-negative integer")
     list_items(lib, args, opts)
 
 
@@ -44,7 +41,5 @@ list_cmd.parser.set_usage(
     + "\nExample: %prog -f '$album: $title' artist:beatles"
 )
 list_cmd.parser.add_all_common_options()
-list_cmd.parser.add_option(
-    "-l", "--limit", type=int, help="limit query results"
-)
+list_cmd.parser.add_limit_option()
 list_cmd.func = list_func

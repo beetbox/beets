@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Protocol
 
-from beets import library, ui, util
+from beets import library, ui
 from beets.autotag import AlbumMatch, Distance, TrackMatch
 from beets.plugins import BeetsPlugin, apply_item_changes
 from beets.util.deprecation import deprecate_for_user
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 
 class BPSyncCLIOpts(Protocol):
+    limit: int | None
     move: bool | None
     pretend: bool
     write: bool | None
@@ -63,6 +64,7 @@ class BPSyncPlugin(BeetsPlugin):
             help="don't write updated metadata to files",
         )
         cmd.parser.add_format_option()
+        cmd.parser.add_limit_option()
         cmd.func = self.func
         return [cmd]
 
@@ -72,8 +74,8 @@ class BPSyncPlugin(BeetsPlugin):
         pretend = opts.pretend
         write = ui.should_write(opts.write)
 
-        self.singletons(lib, args, move, pretend, write)
-        self.albums(lib, args, move, pretend, write)
+        self.singletons(lib, args, move, pretend, write, opts.limit)
+        self.albums(lib, args, move, pretend, write, opts.limit)
 
     def singletons(
         self,
@@ -82,11 +84,12 @@ class BPSyncPlugin(BeetsPlugin):
         move: bool,
         pretend: bool,
         write: bool,
+        limit: int | None,
     ) -> None:
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items([*query, "singleton:true"]):
+        for item in lib.items([*query, "singleton:true"], limit=limit):
             if not item.mb_trackid:
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
@@ -146,12 +149,13 @@ class BPSyncPlugin(BeetsPlugin):
         move: bool,
         pretend: bool,
         write: bool,
+        limit: int | None,
     ) -> None:
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
         # Process matching albums.
-        for album in lib.albums(query):
+        for album in lib.albums(query, limit=limit):
             # Do we have a valid Beatport album?
             items = self.get_album_tracks(album)
             if not items:
@@ -198,6 +202,6 @@ class BPSyncPlugin(BeetsPlugin):
                 album.store()
 
                 # Move album art (and any inconsistent items).
-                if move and lib.directory in util.ancestry(items[0].path):
+                if move and lib.contains(items[0]):
                     self._log.debug("moving album {}", album)
                     album.move()

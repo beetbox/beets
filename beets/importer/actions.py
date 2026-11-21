@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from enum import Enum
-
-from typing_extensions import Self
+from enum import Enum, StrEnum
+from typing import Self
 
 
 class Action(Enum):
@@ -22,7 +21,7 @@ class Action(Enum):
     # match, so the user can clean up files without restarting the import.
 
 
-class DuplicateAction(str, Enum):
+class DuplicateAction(StrEnum):
     text: str
 
     def __new__(cls, code: str, text: str) -> Self:

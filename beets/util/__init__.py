@@ -20,7 +20,7 @@ from collections.abc import Sequence
 from contextlib import suppress
 from copy import deepcopy
 from enum import Enum
-from functools import cache, cached_property
+from functools import cache, cached_property, partial
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -33,16 +33,19 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    Self,
     TypeVar,
     cast,
+    overload,
 )
 
+import confuse
 from confuse import Optional
-from typing_extensions import Self
 from unidecode import unidecode
 
 import beets
 from beets.util import hidden
+from beets.util.deprecation import deprecate_for_maintainers
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator
@@ -174,12 +177,22 @@ class PromptChoice(NamedTuple):
     callback: Callable[[ImportSession, ImportTask], Action | None] | None
 
 
-def normpath(path: PathLike) -> bytes:
+@overload
+def normpath(path: Path) -> Path: ...
+@overload
+def normpath(path: str | bytes) -> bytes: ...
+def normpath(path: PathLike | Path) -> bytes | Path:
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
+    # TODO: use path.expanduser().resolve() once beets.util.pathutils are
+    # migrated to pathlib. Path.resolve() expands Windows paths like
+    # RUNNER~1 -> runneradmin, while os utils do not. We're keeping legacy
+    # logic temporarily for consistency with paths stored in the db.
     str_path = os.fsdecode(path)
     str_path = os.path.normpath(os.path.abspath(os.path.expanduser(str_path)))
+    if isinstance(path, Path):
+        return Path(str_path)
     return bytestring_path(str_path)
 
 
@@ -317,9 +330,9 @@ def prune_dirs(
     emptiness. If root is not provided, then only path may be removed
     (i.e., no recursive removal).
     """
-    path = normpath(path)
-    root = normpath(root) if root else None
-    ancestors = ancestry(path)
+    path = Path(os.fsdecode(normpath(path)))
+    root = Path(os.fsdecode(normpath(root))) if root else None
+    ancestors = list(reversed(path.parents))
 
     if root is None:
         # Only remove the top directory.
@@ -505,25 +518,22 @@ def move(path: PathLike, dest: PathLike, replace: bool = False) -> None:
         tempfile_prefix = beets.config["tempfile_prefix"].get(Optional(str))
         if tempfile_prefix is None:
             tempfile_prefix = "."
-        tmp = tempfile.NamedTemporaryFile(
-            suffix=".beets",
-            prefix=f"{tempfile_prefix}{os.fsdecode(basename)}.",
-            dir=syspath(dirname),
-            delete=False,
-        )
-        try:
-            with open(syspath(path), "rb") as f:
-                shutil.copyfileobj(f, tmp)
-        finally:
-            tmp.close()
+        with (
+            tempfile.NamedTemporaryFile(
+                suffix=".beets",
+                prefix=f"{tempfile_prefix}{os.fsdecode(basename)}.",
+                dir=syspath(dirname),
+                delete=False,
+            ) as tmp,
+            open(syspath(path), "rb") as f,
+        ):
+            shutil.copyfileobj(f, tmp)
 
-        try:
+        # Ignore errors because it doesn't matter too much.  We may be on a
+        # filesystem that doesn't support this.
+        with suppress(OSError):
             # Copy file metadata
             shutil.copystat(syspath(path), tmp.name)
-        except OSError:
-            # Ignore errors because it doesn't matter too much.  We may be on a
-            # filesystem that doesn't support this.
-            pass
 
         # Move the copied file into place.
         tmp_filename = tmp.name
@@ -678,6 +688,27 @@ CHAR_REPLACE = [
 ]
 
 
+def get_empty_component_replace() -> Callable[[str], str] | None:
+    """Return a callable filling in empty path components, if configured.
+
+    Every empty component is filled, including a leading one and a path that
+    is empty altogether. Both the native and the alternative separator are
+    recognised, since path templates are written with forward slashes
+    regardless of the platform.
+    """
+    replacement: str | Literal[False] | None = beets.config[
+        "empty_component_replace"
+    ].get(confuse.OneOf([confuse.Choice([False, None]), confuse.String()]))
+    if not replacement:
+        return None
+
+    seps = "".join(re.escape(s) for s in (os.sep, os.altsep) if s)
+
+    return partial(
+        re.compile(rf"(?:^|(?<=[{seps}]))(?=[{seps}]|$)").sub, replacement
+    )
+
+
 def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
@@ -687,8 +718,10 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     of the default set of replacements; it must be a list of (compiled
     regex, replacement string) pairs.
     """
-    replacements = replacements or CHAR_REPLACE
+    if replace_empty := get_empty_component_replace():
+        path = replace_empty(path)
 
+    replacements = replacements or CHAR_REPLACE
     comps = components(path)
     if not comps:
         return ""
@@ -1172,7 +1205,7 @@ def get_temp_filename(
     prefix: str = "",
     path: PathLike | None = None,
     suffix: str = "",
-) -> bytes:
+) -> Path:
     """Return temporary filename for the given module and prefix.
 
     The filename starts with the given `prefix`.
@@ -1189,7 +1222,7 @@ def get_temp_filename(
         dir=tempdir, prefix=prefix, suffix=suffix
     )
     os.close(descriptor)
-    return bytestring_path(filename)
+    return Path(filename)
 
 
 def unique_list(elements: Iterable[T]) -> list[T]:
@@ -1264,3 +1297,33 @@ class Likelies(AttrDict[Any]):
     media: str
     albumdisambig: str
     data_source: str
+
+
+def as_path_like(path: Path, like: AnyPath) -> AnyPath:
+    """Return the given path in the same representation as ``like``.
+
+    Lets Path-based internals serve callers that still pass ``str`` or
+    ``bytes`` paths.
+    """
+    if isinstance(like, bytes):
+        return os.fsencode(path)
+    if isinstance(like, str):
+        return str(path)
+    return path
+
+
+def as_path(path: PathLike, name: str = "path") -> Path:
+    """Convert a legacy ``str``/``bytes`` path argument to ``Path``.
+
+    Warns maintainers of third-party code that non-``Path`` arguments are on
+    their way out.
+    """
+    if isinstance(path, Path):
+        return path
+
+    deprecate_for_maintainers(
+        f"Passing {type(path).__name__} as '{name}'",
+        "'pathlib.Path'",
+        stacklevel=3,
+    )
+    return Path(os.fsdecode(path))

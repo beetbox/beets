@@ -26,16 +26,17 @@ Command-Line Options
 The ``export`` command has these command-line options:
 
 - ``--include-keys`` or ``-i``: Choose the properties to include in the output
-  data. The argument is a comma-separated list of simple glob patterns where
-  ``*`` matches any string. For example:
+  data. The argument is a comma-separated list of field names. For example:
 
   ::
 
-      $ beet export -i 'title,mb*' beatles
+      $ beet export -i 'title,mb_artistid' beatles
 
-  will include the ``title`` property and all properties starting with ``mb``.
-  You can add the ``-i`` option multiple times to the command line.
+  will include the ``title`` and ``mb_artistid`` properties. You can add the
+  ``-i`` option multiple times to the command line.
 
+- ``--limit``: Cap the matched items or albums before exporting. The short
+  ``-l`` option is already used by ``--library``.
 - ``--library`` or ``-l``: Show data from the library database instead of the
   files' tags.
 - ``--album`` or ``-a``: Show data from albums instead of tracks (implies

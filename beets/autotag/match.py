@@ -420,13 +420,18 @@ def tag_album(
 
         rec = _recommendation(list(candidates.values()))
         log.debug("Album ID match recommendation is {}", rec)
-        if candidates and not config["import"]["timid"]:
-            # If we have a very good MBID match, return immediately.
-            # Otherwise, this match will compete against metadata-based
-            # matches.
-            if rec == Recommendation.strong:
-                log.debug("ID match.")
-                return Proposal(list(candidates.values()), rec)
+        if (
+            candidates
+            and not config["import"]["timid"]
+            and (
+                # If we have a very good MBID match, return immediately.
+                # Otherwise, this match will compete against metadata-based
+                # matches.
+                rec == Recommendation.strong
+            )
+        ):
+            log.debug("ID match.")
+            return Proposal(list(candidates.values()), rec)
 
         # Search terms.
         if not (search_artist and search_name):

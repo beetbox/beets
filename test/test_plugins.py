@@ -1,7 +1,7 @@
 import importlib
 import itertools
-import logging
 import pkgutil
+import subprocess
 import sys
 from typing import ClassVar
 from unittest.mock import ANY, Mock, patch
@@ -9,7 +9,8 @@ from unittest.mock import ANY, Mock, patch
 import pytest
 from mediafile import MediaFile
 
-from beets import config, plugins, ui
+from beets import plugins, ui
+from beets.autotag.match import Proposal, Recommendation
 from beets.dbcore import types
 from beets.importer import Action, SingletonImportTask
 from beets.library import Item
@@ -297,7 +298,7 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             opts, default="a", require=ANY
         )
 
-    def test_plugin_choices_in_ui_input_options_singleton(self):
+    def test_plugin_choices_in_ui_input_options_singleton(self, config):
         """Test the presence of plugin choices on the prompt (singleton)."""
 
         class DummyPlugin(plugins.BeetsPlugin):
@@ -459,6 +460,41 @@ class TestPromptChoices(TerminalImportMixin, PluginImportHelper):
             opts, default="a", require=ANY
         )
 
+    def test_plugin_callback_sees_shown_candidate(self):
+        """Callbacks get the candidate on screen as `task.selected_match`."""
+        seen = []
+
+        class DummyPlugin(plugins.BeetsPlugin):
+            def __init__(self):
+                super().__init__()
+                self.register_listener(
+                    "before_choose_candidate", self.return_choices
+                )
+
+            def return_choices(self, session, task):
+                return [
+                    PromptChoice("f", "Foo", self.foo),
+                    PromptChoice("z", "Zero", self.empty),
+                ]
+
+            def foo(self, session, task):
+                match = task.selected_match
+                seen.append(match and task.candidates.index(match))
+
+            def empty(self, session, task):
+                return Proposal([], Recommendation.none)
+
+        self.register_plugin(DummyPlugin)
+        self.matcher.matching = AutotagStub.GOOD
+
+        # Foo on the list; pick 1; Foo on it (back to the list); pick 2;
+        # Foo on it; pick 1; Zero (no candidates left); Foo; Skip
+        for sel in ("f", "1", "f", "2", "f", "1", "z", "f", "s"):
+            self.io.addinput(sel)
+        self.importer.run()
+
+        assert seen == [None, 0, 1, None]
+
 
 def get_available_plugins():
     """Get all available plugins in the beetsplug namespace."""
@@ -471,7 +507,7 @@ def get_available_plugins():
     ]
 
 
-class TestImportPlugin(PluginMixin):
+class TestImportPlugin:
     @pytest.fixture(params=get_available_plugins())
     def plugin_name(self, request):
         """Fixture to provide the name of each available plugin."""
@@ -484,20 +520,6 @@ class TestImportPlugin(PluginMixin):
 
         return name
 
-    def unload_plugins(self):
-        """Unimport plugins before each test to avoid conflicts."""
-        super().unload_plugins()
-        for mod in list(sys.modules):
-            if mod.startswith("beetsplug."):
-                del sys.modules[mod]
-
-    @pytest.fixture(autouse=True)
-    def cleanup(self):
-        """Ensure plugins are unimported before and after each test."""
-        self.unload_plugins()
-        yield
-        self.unload_plugins()
-
     @pytest.mark.skipif(
         not RUNNING_IN_CI,
         reason=(
@@ -505,14 +527,20 @@ class TestImportPlugin(PluginMixin):
             " guarantee in the local environment."
         ),
     )
-    def test_import_plugin(self, caplog, plugin_name):
-        """Test that a plugin is importable without an error."""
-        caplog.set_level(logging.WARNING)
-        self.load_plugins(plugin_name)
-
-        assert "PluginImportError" not in caplog.text, (
-            f"Plugin '{plugin_name}' has issues during import."
+    def test_import_plugin(self, plugin_name):
+        """Check that each plugin imports in a fresh interpreter."""
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import importlib, sys; importlib.import_module(sys.argv[1])",
+                f"beetsplug.{plugin_name}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
+        assert result.returncode == 0, result.stdout + result.stderr
 
 
 class TestDeprecationCopy:
@@ -537,11 +565,10 @@ class TestDeprecationCopy:
 
 class TestMusicBrainzPluginLoading:
     @pytest.fixture(autouse=True)
-    def config(self):
-        _config = config
-        _config.sources = []
-        _config.read(user=False, defaults=True)
-        return _config
+    def config(self, config):
+        config.sources = []
+        config.read(user=False, defaults=True)
+        return config
 
     def test_default(self):
         assert "musicbrainz" in plugins.get_plugin_names()

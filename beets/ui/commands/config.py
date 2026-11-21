@@ -18,7 +18,7 @@ class ConfigCLIOpts(Protocol):
     defaults: bool
     edit: bool | None
     redact: bool
-    config: str | None
+    configs: list[str]
 
 
 def config_func(lib: Library, opts: ConfigCLIOpts, args: list[str]) -> None:
@@ -63,7 +63,7 @@ def config_edit(cli_options: ConfigCLIOpts) -> None:
     """Open a program to edit the user configuration.
     An empty config file is created if no existing config file exists.
     """
-    path = cli_options.config or config.user_config_path()
+    path = next(iter(cli_options.configs), config.user_config_path())
     editor = editor_command()
 
     if not editor:

@@ -55,7 +55,7 @@ class MBSubmitPlugin(BeetsPlugin):
     def before_choose_candidate_event(
         self, session: ImportSession, task: ImportTask
     ) -> list[PromptChoice]:
-        if task.rec and task.rec <= self.threshold:
+        if task.rec is not None and task.rec <= self.threshold:
             return [
                 PromptChoice("p", "Print tracks", self.print_tracks),
                 PromptChoice("o", "Open files with Picard", self.picard),
@@ -77,8 +77,12 @@ class MBSubmitPlugin(BeetsPlugin):
     def fmt(self) -> str:
         return self.config["format"].as_str()
 
+    @staticmethod
+    def _item_sort_key(item: Item) -> tuple[int, int]:
+        return (item.disc or 0, item.track or 0)
+
     def print_tracks(self, session: ImportSession, task: ImportTask) -> None:
-        for i in sorted(task.items, key=lambda i: i.track):
+        for i in sorted(task.items, key=self._item_sort_key):
             ui.print_(format(i, self.fmt))
 
     def commands(self) -> list[ui.Subcommand]:
@@ -88,14 +92,15 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
         def func(lib: Library, opts: optparse.Values, args: list[str]) -> None:
-            items = lib.items(args)
+            items = lib.items(args, limit=opts.limit)
             self._mbsubmit(items)
 
+        mbsubmit_cmd.parser.add_limit_option()
         mbsubmit_cmd.func = func
 
         return [mbsubmit_cmd]
 
     def _mbsubmit(self, items: Sequence[Item]) -> None:
         """Print track information to be submitted to MusicBrainz."""
-        for i in sorted(items, key=lambda i: i.track):
+        for i in sorted(items, key=self._item_sort_key):
             ui.print_(format(i, self.fmt))

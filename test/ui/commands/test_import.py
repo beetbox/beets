@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from beets import config, library
+from beets import library
 from beets.autotag import AlbumInfo, AlbumMatch, Source, TrackInfo, distance
 from beets.exceptions import UserError
 from beets.test import _common
@@ -16,8 +16,8 @@ from beets.ui.commands.import_.session import summarize_items
 
 class ImportTest(BeetsTestCase):
     def test_quiet_timid_disallowed(self):
-        config["import"]["quiet"] = True
-        config["import"]["timid"] = True
+        self.config["import"]["quiet"] = True
+        self.config["import"]["timid"] = True
         with pytest.raises(UserError):
             self.run_command("import")
 
@@ -29,11 +29,13 @@ class ImportTest(BeetsTestCase):
                 "duplicate-replace C:\\music\\Bill Evans\\Trio '65\n"
                 "skip C:\\music\\Michael Jackson\\Bad\n"
                 "skip C:\\music\\Soulwax\\Any Minute Now\n"
+                "skip C:\\music\\Band; The\\Album\\01.mp3; C:\\music\\Band; The\\Album\\02.mp3\n"  # noqa: E501
             )
             expected_paths = [
                 "C:\\music\\Beatles, The\\The Beatles",
                 "C:\\music\\Michael Jackson\\Bad",
                 "C:\\music\\Soulwax\\Any Minute Now",
+                "C:\\music\\Band; The\\Album",
             ]
         else:
             logfile_content = (
@@ -42,11 +44,13 @@ class ImportTest(BeetsTestCase):
                 "duplicate-replace /music/Bill Evans/Trio '65\n"
                 "skip /music/Michael Jackson/Bad\n"
                 "skip /music/Soulwax/Any Minute Now\n"
+                "skip /music/Band; The/Album/01.mp3; /music/Band; The/Album/02.mp3\n"
             )
             expected_paths = [
                 "/music/Beatles, The/The Beatles",
                 "/music/Michael Jackson/Bad",
                 "/music/Soulwax/Any Minute Now",
+                "/music/Band; The/Album",
             ]
 
         logfile = self.temp_path / "logfile.log"

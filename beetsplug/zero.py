@@ -110,9 +110,10 @@ class ZeroPlugin(BeetsPlugin):
                 "Remove fields for all items? (Y/n)", True
             ):
                 return
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 self.process_item(item)
 
+        zero_command.parser.add_limit_option()
         zero_command.func = zero_fields
         return [zero_command]
 
@@ -195,7 +196,4 @@ def _match_progs(value: str, progs: Iterable[re.Pattern[str]]) -> bool:
     """
     if not progs:
         return True
-    for prog in progs:
-        if prog.search(str(value)):
-            return True
-    return False
+    return any(prog.search(str(value)) for prog in progs)

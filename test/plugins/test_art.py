@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -11,7 +10,7 @@ from unittest.mock import patch
 import confuse
 import pytest
 
-from beets import config, importer, logging, util
+from beets import importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, Distance
 from beets.library import Album
 from beets.test import _common
@@ -55,7 +54,7 @@ class DummyRemoteArtSource(fetchart.RemoteArtSource):
         self,
         album,
         plugin: fetchart.FetchArtPlugin,
-        paths: Sequence[bytes] | None,
+        paths: Sequence[Path] | None,
     ) -> Iterator[fetchart.Candidate]:
         return iter(())
 
@@ -72,26 +71,28 @@ class UseThePlugin(TestHelper):
         """Will disable all outgoing requests and raise an error!
 
         Tests need to mock all requests!
+        Register some "safe" mocks you actually want to allow, if any:
+
+        >>> requests_mock.get("https://example.com/health", json={"status": "ok"})
         """
-        # Register some “safe” mocks you actually want to allow, if any:
-        # requests_mock.get("https://example.com/health", json={"status": "ok"})
 
         # Disable any URL not explicitly mocked
         return
 
     @pytest.fixture(autouse=True, scope="class")
-    def cleanup(self):
+    @classmethod
+    def cleanup(cls):
         try:
             yield
         finally:
-            for module in self.modules:
+            for module in cls.modules:
                 clean_module_tempdir(module)
 
     @pytest.fixture
-    def dpath(self) -> bytes:
+    def dpath(self) -> Path:
         dpath = self.temp_path / "arttest"
         dpath.mkdir()
-        return os.fsencode(dpath)
+        return dpath
 
 
 class CAAData:
@@ -248,8 +249,8 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         image_request_mock.get(self.URL, content_type="image/png")
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
-        assert os.path.splitext(candidate.path)[1] == b".png"
-        assert Path(os.fsdecode(candidate.path)).exists()
+        assert candidate.path.suffix == ".png"
+        assert candidate.path.exists()
 
     def test_does_not_rely_on_server_content_type(
         self, source, candidate, settings, image_request_mock
@@ -259,8 +260,8 @@ class TestFetchImage(UseThePlugin, FetchImageHelper):
         )
         source.fetch_image(candidate, settings)
         assert candidate.path is not None
-        assert os.path.splitext(candidate.path)[1] == b".png"
-        assert Path(os.fsdecode(candidate.path)).exists()
+        assert candidate.path.suffix == ".png"
+        assert candidate.path.exists()
 
 
 class TestFSArt(UseThePlugin):
@@ -273,27 +274,66 @@ class TestFSArt(UseThePlugin):
         return fetchart.FileSystem(logger, self.plugin.config)
 
     def test_finds_jpg_in_directory(self, source, dpath, settings) -> None:
-        _common.touch(os.path.join(dpath, b"a.jpg"))
+        candidate_path = dpath / "a.jpg"
+        candidate_path.touch()
         candidate = next(source.get(Album(), settings, [dpath]))
-        assert candidate.path == os.path.join(dpath, b"a.jpg")
+        assert candidate.path == candidate_path
+
+    def test_uppercase_extension(self, source, dpath, settings) -> None:
+        candidate_path = dpath / "a.JPG"
+        candidate_path.touch()
+        candidate = next(source.get(Album(), settings, [dpath]))
+        assert candidate.path == candidate_path
 
     def test_appropriately_named_file_takes_precedence(
         self, source, dpath, settings
     ) -> None:
-        _common.touch(os.path.join(dpath, b"a.jpg"))
-        _common.touch(os.path.join(dpath, b"art.jpg"))
+        (dpath / "a.jpg").touch()
+        candidate_path = dpath / "art.jpg"
+        candidate_path.touch()
         candidate = next(source.get(Album(), settings, [dpath]))
-        assert candidate.path == os.path.join(dpath, b"art.jpg")
+        assert candidate.path == candidate_path
+
+    def test_ignores_art_in_subdirectories(
+        self, source, dpath, settings
+    ) -> None:
+        settings.cover_names = ("cover",)
+        top_level = dpath / "cover.jpg"
+        top_level.touch()
+        nested_dir = dpath / "nested"
+        nested_dir.mkdir()
+        (nested_dir / "cover.jpg").touch()
+
+        candidates = list(source.get(Album(), settings, [dpath]))
+
+        # A list, so that a nested file resolved to the top-level path would
+        # show up as a duplicate rather than being silently deduplicated.
+        assert [candidate.path for candidate in candidates] == [top_level]
+
+    def test_cover_name_matches_stem_not_extension(
+        self, source, dpath, settings
+    ) -> None:
+        settings.cover_names = ("jpg",)
+        settings.cautious = True
+        (dpath / "photo.jpg").touch()
+        named_cover = dpath / "jpg.jpg"
+        named_cover.touch()
+
+        candidates = list(source.get(Album(), settings, [dpath]))
+
+        assert [
+            (candidate.path, candidate.match) for candidate in candidates
+        ] == [(named_cover, fetchart.MetadataMatch.EXACT)]
 
     def test_non_image_file_not_identified(
         self, source, dpath, settings
     ) -> None:
-        _common.touch(os.path.join(dpath, b"a.txt"))
+        (dpath / "a.txt").touch()
         with pytest.raises(StopIteration):
             next(source.get(Album(), settings, [dpath]))
 
     def test_cautious_skips_fallback(self, source, dpath, settings) -> None:
-        _common.touch(os.path.join(dpath, b"a.jpg"))
+        (dpath / "a.jpg").touch()
         settings.cautious = True
         with pytest.raises(StopIteration):
             next(source.get(Album(), settings, [dpath]))
@@ -312,25 +352,25 @@ class TestFSArt(UseThePlugin):
     def test_precedence_amongst_correct_files(
         self, source, dpath, settings
     ) -> None:
-        images = [b"front-cover.jpg", b"front.jpg", b"back.jpg"]
-        paths = [os.path.join(dpath, i) for i in images]
+        images = ["front-cover.jpg", "front.jpg", "back.jpg"]
+        paths = [dpath / i for i in images]
         for p in paths:
-            _common.touch(p)
-        settings.cover_names = [b"cover", b"front", b"back"]
+            p.touch()
+        settings.cover_names = ["cover", "front", "back"]
         candidates = [
             candidate.path
             for candidate in source.get(Album(), settings, [dpath])
         ]
         assert candidates == paths
 
-    @patch("os.path.samefile")
+    @patch("pathlib.Path.samefile")
     def test_is_candidate_fallback_os_error(
         self, mock_samefile, source
     ) -> None:
         mock_samefile.side_effect = OSError("os error")
         fallback = self.temp_path / "a.jpg"
         self.plugin.fallback = str(fallback)
-        candidate = fetchart.Candidate(logger, source.ID, os.fsencode(fallback))
+        candidate = fetchart.Candidate(logger, source.ID, fallback)
         result = self.plugin._is_candidate_fallback(candidate)
         mock_samefile.assert_called_once()
         assert not result
@@ -357,12 +397,13 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
     def test_main_interface_gives_precedence_to_fs_art(
         self, dpath, image_request_mock
     ):
-        _common.touch(os.path.join(dpath, b"art.jpg"))
+        candidate_path = dpath / "art.jpg"
+        candidate_path.touch()
         image_request_mock.get(self.AMAZON_URL)
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
-        assert candidate.path == os.path.join(dpath, b"art.jpg")
+        assert candidate.path == candidate_path
 
     def test_main_interface_falls_back_to_amazon(
         self, dpath, image_request_mock
@@ -371,7 +412,7 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         album = Album(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath])
         assert candidate is not None
-        assert not candidate.path.startswith(dpath)
+        assert dpath not in candidate.path.parents
 
     def test_main_interface_tries_amazon_before_aao(
         self, dpath, image_request_mock
@@ -423,11 +464,12 @@ class TestCombined(UseThePlugin, FetchImageHelper, CAAData):
         assert not image_request_mock.mocker.called
 
     def test_local_only_gets_fs_image(self, dpath, image_request_mock):
-        _common.touch(os.path.join(dpath, b"art.jpg"))
+        candidate_path = dpath / "art.jpg"
+        candidate_path.touch()
         album = Album(mb_albumid=self.MBID, asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [dpath], local_only=True)
         assert candidate is not None
-        assert candidate.path == os.path.join(dpath, b"art.jpg")
+        assert candidate.path == candidate_path
         assert not image_request_mock.mocker.called
 
 
@@ -528,10 +570,13 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         candidate = next(source.get(album, settings, []))
         assert candidate.url == "https://example.com/image/1200x1200bb.jpg"
 
-        # high_resolution: 3000x3000bb
+        # high_resolution: 10000x10000-999
         source._config["high_resolution"] = True
         candidate_high = next(source.get(album, settings, []))
-        assert candidate_high.url == "https://example.com/image/3000x3000bb.jpg"
+        assert (
+            candidate_high.url
+            == "https://example.com/image/10000x10000-999.jpg"
+        )
 
     def test_itunesstore_no_result(
         self, source, settings, album, image_request_mock, caplog
@@ -544,9 +589,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "got no results"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_requestexception(
@@ -559,9 +606,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "iTunes search failed: 404 Client Error"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_fallback_match(
@@ -604,9 +653,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "Malformed itunes candidate"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_returns_no_result_when_error_received(
@@ -620,9 +671,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "not found in json. Fields are"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
     def test_itunesstore_returns_no_result_with_malformed_response(
@@ -636,9 +689,11 @@ class TestITunesStore(UseThePlugin, FetchImageHelper):
         )
         expected = "Could not decode json response:"
 
-        with caplog.at_level("DEBUG", logger="beets.test_art"):
-            with pytest.raises(StopIteration):
-                next(source.get(album, settings, []))
+        with (
+            caplog.at_level("DEBUG", logger="beets.test_art"),
+            pytest.raises(StopIteration),
+        ):
+            next(source.get(album, settings, []))
         assert expected in caplog.messages[1]
 
 
@@ -945,14 +1000,10 @@ class TestArtImporter(UseThePlugin):
         self._fetch_art(True)
         assert self.art_file.exists()
 
-    def test_delete_original_file(self):
-        prev_move = config["import"]["move"].get()
-        try:
-            config["import"]["move"] = True
-            self._fetch_art(True)
-            assert not self.art_file.exists()
-        finally:
-            config["import"]["move"] = prev_move
+    def test_delete_original_file(self, config):
+        config["import"]["move"] = True
+        self._fetch_art(True)
+        assert not self.art_file.exists()
 
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = self.i.filepath.parent / "cover.jpg"
@@ -991,18 +1042,19 @@ class AlbumArtOperationMixin(UseThePlugin):
     IMAGE_WIDTH_HEIGHT_DIFF = IMAGE_WIDTH - IMAGE_HEIGHT
 
     @pytest.fixture(autouse=True, scope="class")
-    def fs_mock(self, cleanup):
+    @classmethod
+    def fs_mock(cls, cleanup):
         def fs_source_get(_self, album, settings, paths):
             if paths:
                 yield fetchart.Candidate(
-                    logger, source_name=_self.ID, path=self.IMAGE_PATH
+                    logger, source_name=_self.ID, path=cls.IMAGE_PATH
                 )
 
         with patch("beetsplug.fetchart.FileSystem.get", fs_source_get):
             yield
 
     def get_album_art(self):
-        return self.plugin.art_for_album(Album(), [""], True)
+        return self.plugin.art_for_album(Album(), [Path()], True)
 
 
 @REQUIRES_ARTRESIZER
@@ -1120,7 +1172,7 @@ class TestDeprecatedConfig:
     # overwritten by BeetsTestCase or be set after constructing the
     # plugin object
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, config):
         config["fetchart"]["remote_priority"] = True
         self.plugin = fetchart.FetchArtPlugin()
 
@@ -1131,7 +1183,7 @@ class TestDeprecatedConfig:
 class TestEnforceRatioConfig:
     """Throw some data at the regexes."""
 
-    def _load_with_config(self, values, should_raise):
+    def _load_with_config(self, config, values, should_raise):
         if should_raise:
             for v in values:
                 config["fetchart"]["enforce_ratio"] = v
@@ -1142,10 +1194,14 @@ class TestEnforceRatioConfig:
                 config["fetchart"]["enforce_ratio"] = v
                 fetchart.FetchArtPlugin()
 
-    def test_px(self):
-        self._load_with_config("0px 4px 12px 123px".split(), False)
-        self._load_with_config("00px stuff5px".split(), True)
+    def test_px(self, config):
+        self._load_with_config(config, ["0px", "4px", "12px", "123px"], False)
+        self._load_with_config(config, ["00px", "stuff5px"], True)
 
-    def test_percent(self):
-        self._load_with_config("0% 0.00% 5.1% 5% 100%".split(), False)
-        self._load_with_config("00% 1.234% foo5% 100.1%".split(), True)
+    def test_percent(self, config):
+        self._load_with_config(
+            config, ["0%", "0.00%", "5.1%", "5%", "100%"], False
+        )
+        self._load_with_config(
+            config, ["00%", "1.234%", "foo5%", "100.1%"], True
+        )

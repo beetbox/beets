@@ -42,12 +42,12 @@ def is_hidden(path: PathLike) -> bool:
 
     # On OS X, we check for an FS-provided attribute.
     if sys.platform == "darwin":
-        if hasattr(os.stat_result, "st_flags") and hasattr(stat, "UF_HIDDEN"):
-            if path.lstat().st_flags & stat.UF_HIDDEN:
-                return True
+        if (
+            hasattr(os.stat_result, "st_flags")
+            and hasattr(stat, "UF_HIDDEN")
+            and path.lstat().st_flags & stat.UF_HIDDEN
+        ):
+            return True
 
     # On all non-Windows platforms, we check for a '.'-prefixed file name.
-    if path.name.startswith("."):
-        return True
-
-    return False
+    return bool(path.name.startswith("."))

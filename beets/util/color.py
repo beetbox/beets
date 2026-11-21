@@ -188,10 +188,7 @@ def color_split(colored_text: str, index: int) -> tuple[str, str]:
         else:
             if ANSI_CODE_REGEX.match(part):
                 # This is a color code
-                if part == RESET_COLOR:
-                    found_color_code = None
-                else:
-                    found_color_code = part
+                found_color_code = None if part == RESET_COLOR else part
                 pre_split += part
             else:
                 if index < length:

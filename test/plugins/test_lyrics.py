@@ -159,9 +159,9 @@ class TestHtml:
 
 class TestSearchBackend:
     @pytest.fixture
-    def backend(self, dist_thresh):
+    def backend(self, config, dist_thresh):
+        config["lyrics"]["dist_thresh"] = dist_thresh
         plugin = lyrics.LyricsPlugin()
-        plugin.config.set({"dist_thresh": dist_thresh})
         return lyrics.SearchBackend(plugin.config, plugin._log)
 
     @pytest.mark.parametrize(
@@ -240,7 +240,9 @@ class TestLyricsPlugin(LyricsPluginMixin):
         expected_log_match,
     ):
         """Errors are logged with the backend name."""
-        requests_mock.get(lyrics.LRCLib.SEARCH_URL, **request_kwargs)
+        requests_mock.get(
+            lyrics_plugin.backends[0].search_url, **request_kwargs
+        )
 
         assert lyrics_plugin.get_lyrics("", "", "", 0.0) is None
         assert caplog.messages
@@ -360,6 +362,24 @@ class TestLyricsPlugin(LyricsPluginMixin):
         with pytest.raises(AttributeError):
             item.lyrics_translation_language
 
+    def test_store_instrumental_lyrics_info(
+        self, monkeypatch, helper, lyrics_plugin
+    ):
+        lyrics = Lyrics(
+            "[Instrumental]", "lrclib", url="https://lrclib.net/api/1"
+        )
+        monkeypatch.setattr(lyrics_plugin, "find_lyrics", lambda _: lyrics)
+        item = helper.add_item(id=1, lyrics="")
+
+        lyrics_plugin.add_item_lyrics(item, False)
+
+        item = helper.lib.get_item(item.id)
+
+        assert item.lyrics == ""
+        assert item.lyrics_instrumental == "1"
+        assert item.lyrics_backend == lyrics.backend
+        assert item.lyrics_url == lyrics.url
+
     def test_imported_skips_auto_ignored_items(
         self, lyrics_plugin, monkeypatch
     ):
@@ -400,7 +420,8 @@ class LyricsBackendTest(LyricsPluginMixin):
 @pytest.mark.on_lyrics_update
 class TestLyricsSources(LyricsBackendTest):
     @pytest.fixture(scope="class")
-    def plugin_config(self):
+    @classmethod
+    def plugin_config(cls):
         return {"google_API_key": "test", "synced": True}
 
     @pytest.fixture(
@@ -467,7 +488,8 @@ class TestGoogleLyrics(LyricsBackendTest):
     """Test scraping heuristics on a fake html page."""
 
     @pytest.fixture(scope="class")
-    def backend_name(self):
+    @classmethod
+    def backend_name(cls):
         return "google"
 
     @pytest.fixture
@@ -475,7 +497,8 @@ class TestGoogleLyrics(LyricsBackendTest):
         return {"google_API_key": "test"}
 
     @pytest.fixture(scope="class")
-    def file_name(self):
+    @classmethod
+    def file_name(cls):
         return "examplecom/beetssong"
 
     @pytest.fixture
@@ -485,6 +508,21 @@ class TestGoogleLyrics(LyricsBackendTest):
     @pytest.mark.parametrize("plugin_config", [{}])
     def test_disabled_without_api_key(self, lyrics_plugin):
         assert not lyrics_plugin.backends
+
+    @pytest.mark.parametrize("status_code", [400, 403])
+    def test_search_refused_by_google(
+        self, backend, requests_mock, caplog, status_code
+    ):
+        """Show a clear message when Google refuses the search request.
+
+        See #6761: the Custom Search JSON API is closed to new customers.
+        """
+        requests_mock.get(lyrics.Google.SEARCH_URL, status_code=status_code)
+
+        assert list(backend.search("Artist", "Title")) == []
+        assert "Custom Search JSON API is closed to new customers" in (
+            caplog.text
+        )
 
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
@@ -535,7 +573,8 @@ class TestGoogleLyrics(LyricsBackendTest):
 
 class TestGeniusLyrics(LyricsBackendTest):
     @pytest.fixture(scope="class")
-    def backend_name(self):
+    @classmethod
+    def backend_name(cls):
         return "genius"
 
     @pytest.mark.parametrize(
@@ -554,7 +593,8 @@ class TestGeniusLyrics(LyricsBackendTest):
 
 class TestTekstowoLyrics(LyricsBackendTest):
     @pytest.fixture(scope="class")
-    def backend_name(self):
+    @classmethod
+    def backend_name(cls):
         return "tekstowo"
 
     @pytest.mark.parametrize(
@@ -590,15 +630,32 @@ class TestLRCLibLyrics(LyricsBackendTest):
     SYNCED = "[00:00.00] synced"
 
     @pytest.fixture(scope="class")
-    def backend_name(self):
+    @classmethod
+    def backend_name(cls):
         return "lrclib"
 
     @pytest.fixture
     def fetch_lyrics(self, backend, requests_mock, response_data):
-        requests_mock.get(backend.GET_URL, status_code=HTTPStatus.NOT_FOUND)
-        requests_mock.get(backend.SEARCH_URL, json=response_data)
+        requests_mock.get(backend.get_url, status_code=HTTPStatus.NOT_FOUND)
+        requests_mock.get(backend.search_url, json=response_data)
 
         return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
+
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [
+            pytest.param(
+                {"lrclib": {"url": "http://localhost:3000/api"}}, id="localhost"
+            ),
+            pytest.param(
+                {"lrclib": {"url": "http://localhost:3000/api/"}},
+                id="with-slash",
+            ),
+        ],
+    )
+    def test_custom_url(self, backend):
+        assert backend.get_url == "http://localhost:3000/api/get"
+        assert backend.search_url == "http://localhost:3000/api/search"
 
     @pytest.mark.parametrize("response_data", [[lyrics_match()]])
     @pytest.mark.parametrize(
@@ -646,6 +703,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 ],
                 "[00:01.234] 3-decimal synced lyrics",
                 id="synced with 3-decimal millisecond timestamp",
+            ),
+            pytest.param(
+                [lyrics_match(syncedLyrics=f"{SYNCED}\r\n\r\n")],
+                f"{SYNCED}\n",
+                id="synced with trailing blank line",
             ),
             pytest.param(
                 [lyrics_match(duration=1)], None, id="none: duration too short"
@@ -720,7 +782,8 @@ class TestLRCMuxLyrics(LyricsBackendTest):
     PLAIN = "plain"
 
     @pytest.fixture(scope="class")
-    def backend_name(self):
+    @classmethod
+    def backend_name(cls):
         return "lrcmux"
 
     @pytest.mark.parametrize(

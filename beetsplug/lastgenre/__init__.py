@@ -9,6 +9,7 @@ https://gist.github.com/1241307
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from collections import defaultdict
@@ -155,11 +156,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _load_whitelist(self) -> Whitelist:
         """Load the whitelist from a text file.
 
-        Default whitelist is used if config is True, empty string or set to "nothing".
+        Default whitelist is used if config is True. An empty or null value is
+        rejected with a UserError.
         """
         whitelist = set()
         wl_filename = self.config["whitelist"].get()
-        if wl_filename in (True, "", None):  # Indicates the default whitelist.
+        if wl_filename in ("", None):
+            raise ui.UserError(
+                "Invalid whitelist setting: expected yes, no, or a file path"
+            )
+        if wl_filename is True:  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
             self._log.debug("Loading whitelist {}", wl_filename)
@@ -173,14 +179,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _load_c14n_tree(self) -> tuple[CanonTree, bool]:
         """Load the canonicalization tree from a YAML file.
 
-        Default tree is used if config is True, empty string, set to "nothing"
-        or if prefer_specific is enabled.
+        Default tree is used if config is True or if prefer_specific is
+        enabled. An empty or null value is rejected with a UserError.
         """
         c14n_branches: CanonTree = []
         c14n_filename = self.config["canonical"].get()
+        if c14n_filename in ("", None):
+            raise ui.UserError(
+                "Invalid canonical setting: expected yes, no, or a file path"
+            )
         canonicalize = c14n_filename is not False
         # Default tree
-        if c14n_filename in (True, "", None) or (
+        if c14n_filename is True or (
             # prefer_specific requires a tree, load default tree
             not canonicalize and self.config["prefer_specific"].get()
         ):
@@ -529,6 +539,49 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             "original fallback", keep_genres, [], artist=artist
         )
 
+    def _try_resolve_album_stage(
+        self, obj: LibModel, keep_genres: list[str]
+    ) -> tuple[list[str], str] | None:
+        """Try to resolve album genres for an Item or Album object.
+
+        Fall back to multi-valued albumartists if no genre is found for the
+        main albumartist.
+        """
+        new_genres = self.client.fetch("album", obj)
+
+        if new_genres and (
+            resolved := self._try_resolve_stage(
+                "album", keep_genres, new_genres, artist=obj.albumartist
+            )
+        ):
+            return resolved
+
+        if not new_genres and obj.albumartist != config["va_name"].as_str():
+            self._log.extra_debug(
+                'No album genre found for "{}", '
+                "trying multi-valued albumartists field...",
+                obj.albumartist,
+            )
+            multi_album_genres = []
+            for albumartist in obj.albumartists:
+                self._log.extra_debug(
+                    'Fetching album genre for "{}"', albumartist
+                )
+                multi_album_genres += self.client.fetch(
+                    "album", obj, albumartist, obj.album
+                )
+            if multi_album_genres and (
+                resolved := self._try_resolve_stage(
+                    "multi-valued albumartist album",
+                    keep_genres,
+                    multi_album_genres,
+                    artist=None,
+                )
+            ):
+                return resolved
+
+        return None
+
     def _fetch_va_genres(self, album: Album) -> list[str]:
         """Fetch the most popular track or artist genre for a Various Artists album."""
         item_genres = []
@@ -565,7 +618,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if obj.albumartist != config["va_name"].as_str():
             new_genres = self.client.fetch("album_artist", obj)
             if new_genres:
-                return "album artist", new_genres, obj.albumartist
+                return "albumartist", new_genres, obj.albumartist
 
             self._log.extra_debug(
                 'No album artist genre found for "{}", '
@@ -581,8 +634,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 )
             if new_genres:
                 # Already filtered per-artist in client
-                return "multi-valued album artist", new_genres, None
-            return "album artist", [], None
+                return "multi-valued albumartist", new_genres, None
+            return "albumartist", [], None
 
         # For "Various Artists", pick the most popular track genre.
         assert isinstance(obj, Album)  # Type narrowing for mypy
@@ -629,29 +682,33 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
-        if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.client.fetch("track", obj):
-                if resolved := self._try_resolve_stage(
+        if (
+            isinstance(obj, library.Item)
+            and "track" in self.sources
+            and (new_genres := self.client.fetch("track", obj))
+            and (
+                resolved := self._try_resolve_stage(
                     "track", keep_genres, new_genres, artist=obj.artist
-                ):
-                    return resolved
+                )
+            )
+        ):
+            return resolved
 
-        if "album" in self.sources:
-            if new_genres := self.client.fetch("album", obj):
-                if resolved := self._try_resolve_stage(
-                    "album", keep_genres, new_genres, artist=obj.albumartist
-                ):
-                    return resolved
+        if "album" in self.sources and (
+            resolved := self._try_resolve_album_stage(obj, keep_genres)
+        ):
+            return resolved
 
         if "artist" in self.sources:
             stage_label, new_genres, stage_artist = self._fetch_artist_stage(
                 obj
             )
-            if new_genres:
-                if resolved := self._try_resolve_stage(
+            if new_genres and (
+                resolved := self._try_resolve_stage(
                     stage_label, keep_genres, new_genres, artist=stage_artist
-                ):
-                    return resolved
+                )
+            ):
+                return resolved
 
         if resolved := self._try_resolve_original_fallback(
             obj, existing_genres, keep_genres
@@ -668,7 +725,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         obj.genres, label = self._get_genre(obj)
         self._log.debug("Resolved ({}): {}", label, obj.genres)
 
-        ui.show_model_changes(obj, fields=["genres"], print_obj=False)
+        # Printing during an import clutters the importer's prompt.
+        if self._log.isEnabledFor(logging.INFO):
+            ui.show_model_changes(obj, fields=["genres"], print_obj=False)
 
     @singledispatchmethod
     def _process(self, obj: LibModel, write: bool) -> None:

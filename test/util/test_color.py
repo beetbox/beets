@@ -5,15 +5,15 @@ from beets.util.color import color_split, uncolorize
 
 class ColorTestCase(TestCase):
     def test_uncolorize(self):
-        assert "test" == uncolorize("test")
+        assert uncolorize("test") == "test"
         txt = uncolorize("\x1b[31mtest\x1b[39;49;00m")
-        assert "test" == txt
+        assert txt == "test"
         txt = uncolorize("\x1b[31mtest\x1b[39;49;00m test")
-        assert "test test" == txt
+        assert txt == "test test"
         txt = uncolorize("\x1b[31mtest\x1b[39;49;00mtest")
-        assert "testtest" == txt
+        assert txt == "testtest"
         txt = uncolorize("test \x1b[31mtest\x1b[39;49;00m test")
-        assert "test test test" == txt
+        assert txt == "test test test"
 
     def test_color_split(self):
         exp = ("test", "")

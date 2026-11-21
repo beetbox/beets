@@ -43,6 +43,7 @@ class TidalCLIOpts(Protocol):
 class TidalSyncCLIOpts(Protocol):
     album: bool
     force: bool
+    limit: int | None
     write: bool
 
 
@@ -163,11 +164,12 @@ class TidalPlugin(MetadataSourcePlugin):
         # Tidal allows to lookup via isrc and barcode (nice!)
         # We just return early here as a lookup via isrc should
         # return a 100% match
-        if isrc := item.get("isrc"):
-            if candidates := list(
+        if (isrc := item.get("isrc")) and (
+            candidates := list(
                 filter(None, self.search_tracks_by_ids(isrcs=[isrc]))
-            ):
-                return candidates
+            )
+        ):
+            return candidates
 
         for query in self._item_queries(item):
             candidates += self.search_tracks_by_query(query)
@@ -664,6 +666,7 @@ class TidalPlugin(MetadataSourcePlugin):
             default=False,
             help="write updated tags to media files (default: False)",
         )
+        tidalsync_cmd.parser.add_limit_option()
         tidalsync_cmd.parser.set_usage(
             "Usage: beet tidalsync <query> [options]"
         )
@@ -675,11 +678,15 @@ class TidalPlugin(MetadataSourcePlugin):
 
             if opts.album:
                 self.sync_album_popularity(
-                    lib.albums(query), write=opts.write, force=opts.force
+                    lib.albums(query, limit=opts.limit),
+                    write=opts.write,
+                    force=opts.force,
                 )
             else:
                 self.sync_item_popularity(
-                    lib.items(query), write=opts.write, force=opts.force
+                    lib.items(query, limit=opts.limit),
+                    write=opts.write,
+                    force=opts.force,
                 )
 
         tidalsync_cmd.func = sync_func

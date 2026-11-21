@@ -99,7 +99,7 @@ def setup_library(request: pytest.FixtureRequest, helper):
     request.cls.lib = helper.lib
 
 
-@pytest.mark.usefixtures("setup_library")
+@pytest.mark.usefixtures("setup_library", "config")
 class TestSort:
     @pytest.mark.parametrize(
         "model,query,expected_ids",
@@ -155,7 +155,8 @@ class TestCaseSensitivity:
     """
 
     @pytest.fixture(autouse=True, scope="class")
-    def setup(self, helper):
+    @classmethod
+    def setup(cls, helper):
         helper.lib.add(Album(album="album", albumartist="bar"))
         helper.lib.add(Album(album="Album", albumartist="Bar"))
         helper.add_item(artist="artist", flex1="flex1", track=10)

@@ -7,6 +7,7 @@ import re
 import shutil
 import stat
 import sys
+import threading
 import unicodedata
 import unittest
 from contextlib import contextmanager
@@ -22,8 +23,8 @@ from zipfile import ZipFile
 import pytest
 from mediafile import MediaFile
 
-from beets import config, importer, logging, plugins, ui, util
-from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo
+from beets import importer, logging, plugins, ui, util
+from beets.autotag import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
 from beets.importer.state import ImportState
 from beets.importer.tasks import (
     ImportTaskFactory,
@@ -36,6 +37,7 @@ from beets.test import _common
 from beets.test.helper import (
     NEEDS_FFPROBE,
     NEEDS_REFLINK,
+    RUNNING_IN_CI,
     AsIsImporterMixin,
     AutotagImportHelper,
     AutotagImportTestCase,
@@ -49,7 +51,6 @@ from beets.test.helper import (
     is_importable,
 )
 from beets.util import bytestring_path, syspath
-from beets.util.extension import remux_mpeglayer3_wav
 
 
 class PathsMixin:
@@ -84,7 +85,7 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
         assert self.track_lib_path.exists()
 
     def test_threaded_import_copy_arrives(self):
-        config["threaded"] = True
+        self.config["threaded"] = True
 
         self.run_asis_importer()
         assert self.track_lib_path.exists()
@@ -93,7 +94,7 @@ class TestNonAutotaggedImport(PathsMixin, AsIsImporterMixin, ImportHelper):
         assert self.album_path.exists()
         assert self.track_import_path.exists()
         (self.album_path / "alog.log").touch()
-        config["clutter"] = ["*.log"]
+        self.config["clutter"] = ["*.log"]
 
         self.run_asis_importer(move=True)
 
@@ -257,7 +258,7 @@ class TestImportTar(TestImportZip):
 
 
 @pytest.mark.skipif(
-    not (is_importable("rarfile") and shutil.which("unrar")),
+    not (is_importable("rarfile") and shutil.which("unrar") and RUNNING_IN_CI),
     reason="rarfile or unrar program not found",
 )
 class TestImportRar(TestImportZip):
@@ -265,16 +266,13 @@ class TestImportRar(TestImportZip):
         return _common.RSRC / "archive.rar"
 
 
-@pytest.mark.skipif(not is_importable("py7zr"), reason="py7zr is not available")
+@pytest.mark.skipif(
+    not (is_importable("py7zr") and RUNNING_IN_CI),
+    reason="py7zr is not available",
+)
 class TestImport7z(TestImportZip):
     def create_archive(self):
         return _common.RSRC / "archive.7z"
-
-
-@pytest.mark.skip(reason="Implement me!")
-class TestImportPasswordRar(TestImportZip):
-    def create_archive(self):
-        return _common.RSRC / "password.rar"
 
 
 class ImportSingletonTest(AutotagImportTestCase):
@@ -305,7 +303,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert (self.lib_path / "singletons" / "Applied Track 1.mp3").exists()
 
     def test_apply_from_scratch_removes_other_metadata(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         for mediafile in self.import_media:
             mediafile.comments = "Tag Comment"
@@ -351,7 +349,7 @@ class ImportSingletonTest(AutotagImportTestCase):
         collection = "To Listen"
         disc = 0
 
-        config["import"]["set_fields"] = {
+        self.config["import"]["set_fields"] = {
             "genres": "; ".join(genres),
             "collection": collection,
             "disc": disc,
@@ -425,7 +423,7 @@ class TestImportFormat(ImportHelper):
         assert len(self.lib.items()) == 0
 
     def test_recognize_format_change_original(self):
-        config["import"]["fix_ext_inplace"] = True
+        self.config["import"]["fix_ext_inplace"] = True
         resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
@@ -435,7 +433,7 @@ class TestImportFormat(ImportHelper):
         assert not Path(self.temp_path / "no_ext").exists()
 
     def test_recognize_format_keep_original(self):
-        config["import"]["fix_ext_inplace"] = False
+        self.config["import"]["fix_ext_inplace"] = False
         resource_src = _common.RSRC / "no_ext"
         resource_path = self.temp_path / "no_ext"
         util.copy(resource_src, resource_path)
@@ -472,7 +470,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
         assert item.filepath.exists()
 
     def test_apply_from_scratch_removes_other_metadata(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         for mediafile in self.import_media:
             mediafile.genres = ["Tag Genre"]
@@ -483,14 +481,14 @@ class TestImport(PathsMixin, AutotagImportHelper):
         assert not self.lib.items().get().genres
 
     def test_apply_from_scratch_keeps_format(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
 
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
         assert self.lib.items().get().format == "MP3"
 
     def test_apply_from_scratch_keeps_bitrate(self):
-        config["import"]["from_scratch"] = True
+        self.config["import"]["from_scratch"] = True
         bitrate = 80000
 
         self.importer.add_choice(importer.Action.APPLY)
@@ -500,7 +498,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
     def test_apply_with_move_deletes_import(self):
         assert self.track_import_path.exists()
 
-        config["import"]["move"] = True
+        self.config["import"]["move"] = True
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -509,7 +507,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
     def test_apply_with_delete_deletes_import(self):
         assert self.track_import_path.exists()
 
-        config["import"]["delete"] = True
+        self.config["import"]["delete"] = True
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
 
@@ -574,7 +572,7 @@ class TestImport(PathsMixin, AutotagImportHelper):
         disc = 0
         comments = "managed by beets"
 
-        config["import"]["set_fields"] = {
+        self.config["import"]["set_fields"] = {
             "genres": "; ".join(genres),
             "collection": collection,
             "disc": disc,
@@ -1156,7 +1154,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         medium.title = "New Title"
         medium.save()
 
-        config["import"]["copy"] = False
+        self.config["import"]["copy"] = False
         self.reimporter.add_choice(importer.Action.ASIS)
         self.reimporter.run()
 
@@ -1164,7 +1162,7 @@ class ImportExistingTest(PathsMixin, AutotagImportTestCase):
         assert not self.applied_track_path.with_name("New Title.mp3").exists()
 
     def test_outside_file_is_copied(self):
-        config["import"]["copy"] = False
+        self.config["import"]["copy"] = False
         self.importer.run()
         assert self.lib.items().get().filepath == self.track_import_path
 
@@ -1227,7 +1225,7 @@ class GroupAlbumsImportTest(AutotagImportTestCase):
         assert artists == {"Artist B", "Tag Artist"}
 
     def test_incremental(self):
-        config["import"]["incremental"] = True
+        self.config["import"]["incremental"] = True
         self.import_media[0].album = "Album B"
         self.import_media[0].save()
 
@@ -1241,7 +1239,7 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
         super().setUp()
         self.importer.clear_choices()
         self.importer.default_choice = importer.Action.ASIS
-        config["import"]["group_albums"] = True
+        self.config["import"]["group_albums"] = True
 
 
 class ChooseCandidateTest(AutotagImportTestCase):
@@ -1417,7 +1415,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert len(self.lib.albums()) == 1
 
     def test_no_autotag_removes_duplicate_album(self):
-        config["import"]["autotag"] = False
+        self.config["import"]["autotag"] = False
         album = self.lib.albums().get()
         item = self.lib.items().get()
         assert item.title == "t\xeftle 0"
@@ -1474,7 +1472,9 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         pytest.skip(reason="write me")
 
     def test_keep_when_extra_key_is_different(self):
-        config["import"]["duplicate_keys"]["album"] = "albumartist album flex"
+        self.config["import"]["duplicate_keys"]["album"] = (
+            "albumartist album flex"
+        )
 
         item = self.lib.items().get()
         import_file = MediaFile(
@@ -1599,7 +1599,7 @@ class TestImportDuplicateSingleton(ImportHelper):
         assert item.mb_trackid == "old trackid"
 
     def test_keep_when_extra_key_is_different(self):
-        config["import"]["duplicate_keys"]["item"] = "artist title flex"
+        self.config["import"]["duplicate_keys"]["item"] = "artist title flex"
         item = self.lib.items().get()
         item.flex = "different"
         item.store()
@@ -1610,8 +1610,18 @@ class TestImportDuplicateSingleton(ImportHelper):
 
         assert len(self.lib.items()) == 2
 
+    def test_album_track_is_not_duplicate(self):
+        item = self.lib.items().get()
+        self.lib.add_album([item])
+
+        self.config["import"]["duplicate_action"] = "remove"
+        self.importer.run()
+
+        assert item.filepath.exists()
+        assert len(self.lib.items()) == 2
+
     def test_no_autotag_removes_duplicate_singleton(self):
-        config["import"]["autotag"] = False
+        self.config["import"]["autotag"] = False
         item = self.lib.items().get()
         assert item.mb_trackid == "old trackid"
         assert item.filepath.exists()
@@ -1987,6 +1997,62 @@ class TagLogTest(TestHelper):
         session = _common.import_session(self.lib, loghandler=handler)
         session.tag_log("status", "caf\xe9")  # send unicode
         assert "status caf\xe9" in sio.getvalue()
+
+
+class TestImportStateConcurrency:
+    def test_progress_reset_keeps_concurrent_add(self, tmp_path, monkeypatch):
+        """
+        `beet import a b`: the `read_tasks` thread resets the progress
+        of b while the `manipulate_files` thread records the progress
+        for a. Neither should be lost.
+        """
+        state_path = bytestring_path(str(tmp_path / "state.pickle"))
+
+        toppath_a, toppath_b = b"/music/a", b"/music/b"
+        with ImportState(path=state_path) as state:
+            state.tagprogress[toppath_b] = [b"/music/b/old"]
+
+        reset_saving = threading.Event()
+        add_done = threading.Event()
+        orig_save = ImportState._save
+
+        def slow_save(self):
+            if threading.current_thread().name == "reset":
+                reset_saving.set()
+                # With the lock, `add` is blocked on it, so this is expected to time out
+                add_done.wait(timeout=0.1)
+            orig_save(self)
+
+        monkeypatch.setattr(ImportState, "_save", slow_save)
+
+        def reset():
+            ImportState(path=state_path).progress_reset(toppath_b)
+
+        def add():
+
+            assert reset_saving.wait(timeout=5), "reset did not reach _save"
+
+            ImportState(path=state_path).progress_add(
+                toppath_a, b"/music/a/album"
+            )
+            add_done.set()
+
+        threads = [
+            threading.Thread(target=reset, name="reset"),
+            threading.Thread(target=add, name="add"),
+        ]
+
+        for t in threads:
+            t.start()
+
+        for t in threads:
+            t.join(timeout=5)
+
+        assert not any(t.is_alive() for t in threads), "thread(s) hung"
+
+        assert ImportState(path=state_path).tagprogress == {
+            toppath_a: [b"/music/a/album"]
+        }
 
 
 class TestResumeImport(ImportHelper):
@@ -2566,18 +2632,6 @@ class TestImportId(ImportHelper):
 class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
     """Test remuxing of WAVE_FORMAT_MPEGLAYER3 WAV files."""
 
-    def test_remux_mpeglayer3_wav(self):
-        src = _common.RSRC / "mpeglayer3.wav"
-        dest = self.temp_path / "mpeglayer3.wav"
-        shutil.copy(src, syspath(dest))
-
-        mp3_path = remux_mpeglayer3_wav(dest)
-
-        assert mp3_path is not None
-        assert mp3_path.suffix == ".mp3"
-        assert mp3_path.exists()
-        assert not dest.exists()
-
     def test_remux_mpeglayer3_wav_disabled(self):
         """When remux_mp3_in_wav is disabled, WAV file should not be remuxed."""
         self.config["import"]["remux_mp3_in_wav"] = False
@@ -2587,3 +2641,74 @@ class TestMpeglayerWavImport(AsIsImporterMixin, ImportHelper):
 
         self.run_asis_importer()
         assert dest.exists()
+
+
+class TestDuplicateKeysUseLibraryFieldNames(BeetsTestCase):
+    """Duplicate detection of applied matches must see library field names.
+
+    ``AlbumInfo.album_id`` / ``TrackInfo.track_id`` are exposed to the library
+    as ``mb_albumid`` / ``mb_trackid``, which is what ``duplicate_keys`` use.
+    """
+
+    def test_album_duplicate_found_by_mb_albumid(self):
+        existing = self.add_item_fixture(
+            albumartist="artist", album="album", mb_albumid="rel-1"
+        )
+        self.lib.add_album([existing])
+        self.config["import"]["duplicate_keys"]["album"] = ["mb_albumid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.ImportTask(None, [new_item.path], [new_item])
+        info = AlbumInfo(
+            tracks=[],
+            album="other album",
+            album_id="rel-1",
+            artist="other artist",
+        )
+        task.match = AlbumMatch(
+            distance=Distance(),
+            info=info,
+            mapping={},
+            extra_items=[],
+            extra_tracks=[],
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert len(task.find_duplicates(self.lib)) == 1
+
+    def test_singleton_duplicate_found_by_mb_trackid(self):
+        self.add_item_fixture(title="title", mb_trackid="track-1")
+        self.config["import"]["duplicate_keys"]["item"] = ["mb_trackid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.SingletonImportTask(None, new_item)
+        task.match = TrackMatch(
+            distance=Distance(),
+            info=TrackInfo(title="other title", track_id="track-1"),
+            item=new_item,
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert len(task.find_duplicates(self.lib)) == 1
+
+    def test_applied_album_without_artist_skips_duplicate_check(self):
+        existing = self.add_item_fixture(
+            albumartist="artist", album="album", mb_albumid="rel-1"
+        )
+        self.lib.add_album([existing])
+        self.config["import"]["duplicate_keys"]["album"] = ["mb_albumid"]
+
+        new_item = Item(path=b"/nonexistent/new.mp3")
+        task = importer.ImportTask(None, [new_item.path], [new_item])
+        task.match = AlbumMatch(
+            distance=Distance(),
+            info=AlbumInfo(
+                tracks=[], album="album", album_id="rel-1", artist=None
+            ),
+            mapping={},
+            extra_items=[],
+            extra_tracks=[],
+        )
+        task.choice_flag = importer.Action.APPLY
+
+        assert task.find_duplicates(self.lib) == []

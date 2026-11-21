@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 class BareascCLIOpts(Protocol):
     album: bool
+    limit: int | None
 
 
 class BareascQuery(StringFieldQuery[str]):
@@ -73,6 +74,7 @@ class BareascPlugin(BeetsPlugin):
             + "\nExample: %prog -f '$album: $title' artist:beatles"
         )
         cmd.parser.add_all_common_options()
+        cmd.parser.add_limit_option()
         cmd.func = self.unidecode_list
         return [cmd]
 
@@ -83,10 +85,10 @@ class BareascPlugin(BeetsPlugin):
         album = opts.album
         # Copied from commands.py - list_items
         if album:
-            for album_obj in lib.albums(args):
+            for album_obj in lib.albums(args, limit=opts.limit):
                 bare = unidecode(str(album_obj))
                 print_(bare)
         else:
-            for item in lib.items(args):
+            for item in lib.items(args, limit=opts.limit):
                 bare = unidecode(str(item))
                 print_(bare)

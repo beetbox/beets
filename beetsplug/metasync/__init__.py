@@ -25,6 +25,7 @@ SOURCES = {"amarok": "Amarok", "itunes": "Itunes"}
 
 
 class MetaSyncCLIOpts(Protocol):
+    limit: int | None
     pretend: bool | None
     sources: list[str]
 
@@ -90,6 +91,7 @@ class MetaSyncPlugin(BeetsPlugin):
             help="comma-separated list of sources to sync",
         )
         cmd.parser.add_format_option()
+        cmd.parser.add_limit_option()
         cmd.func = self.func
         return [cmd]
 
@@ -106,7 +108,7 @@ class MetaSyncPlugin(BeetsPlugin):
         sources = sources or self.config["source"].as_str_seq()
 
         meta_source_instances = {}
-        items = lib.items(args)
+        items = lib.items(args, limit=opts.limit)
 
         # Avoid needlessly instantiating meta sources (can be expensive)
         if not items:

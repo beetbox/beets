@@ -11,7 +11,7 @@ from beets import util
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.library import Library
+    from beets.library import Item, Library
 
 
 class Node(NamedTuple):
@@ -20,6 +20,22 @@ class Node(NamedTuple):
 
     dirs: dict[str, Node]
     # Maps directory names to child nodes.
+
+
+def item_components(item: Item) -> list[str]:
+    """Return an item's path components relative to the library directory."""
+    return util.components(
+        util.as_string(item.destination(relative_to_libdir=True))
+    )
+
+
+def item_path(item: Item) -> str:
+    """Return an item's location in the tree as a "/"-separated path.
+
+    ``Item.destination`` uses the platform's path separator, whereas the tree -
+    and the clients addressing files in it - always use "/".
+    """
+    return "/".join(item_components(item))
 
 
 def _insert(node: Node, path: Sequence[str], itemid: int) -> None:
@@ -47,7 +63,5 @@ def libtree(lib: Library) -> Node:
     for item in lib.items():
         if item.id is None:
             continue
-        dest = item.destination(relative_to_libdir=True)
-        parts = util.components(util.as_string(dest))
-        _insert(root, parts, item.id)
+        _insert(root, item_components(item), item.id)
     return root

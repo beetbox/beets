@@ -66,8 +66,6 @@ class TestImportConvert(AsIsImporterMixin, ImportHelper, ConvertPluginHelper):
         item = self.lib.items().get()
         assert self.file_endswith(item.filepath, "convert")
 
-    # FIXME: fails on windows
-    @pytest.mark.skipif(sys.platform == "win32", reason="win32")
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config["convert"]["command"] = "false"

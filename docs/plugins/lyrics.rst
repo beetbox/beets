@@ -64,6 +64,8 @@ Default configuration:
         keep_synced: no
         google_API_key: null
         google_engine_ID: 009217259823014548361:lndtuqkycfu
+        lrclib:
+          url: https://lrclib.net/api
         lrcmux:
           url: https://api.lrcmux.dev
           sources: []
@@ -116,6 +118,11 @@ The available options are:
 - **google_engine_ID**: The custom search engine to use. Default: The `beets
   custom search engine`_, which gathers an updated list of sources known to be
   scrapeable.
+- **lrclib**:
+
+  - **url**: Base URL of the lrclib_ instance to use. Override this to point at
+    a self-hosted instance. Make sure that ``/api`` is at the end of the URL.
+
 - **lrcmux**:
 
   - **url**: Base URL of the lrcmux_ instance to use. Override this to point at
@@ -156,7 +163,9 @@ lyrics will be added to the beets database and, if ``import.write`` is on,
 embedded into files' metadata.
 
 The ``-p, --print`` option to the ``lyrics`` command makes it print lyrics out
-to the console so you can view the fetched (or previously-stored) lyrics.
+to the console so you can view the fetched (or previously-stored) lyrics. Use
+``--limit`` to cap the matched tracks before fetching lyrics. The short ``-l``
+option is already used by ``--local``.
 
 The ``-f, --force`` option forces the command to fetch lyrics, even for tracks
 that already have lyrics.
@@ -211,6 +220,13 @@ Sphinx supports various builders_, see a few suggestions:
 
 Activate Google Custom Search
 -----------------------------
+
+.. warning::
+
+    Google has closed the Custom Search JSON API to new customers, and existing
+    customers must move to another solution by January 1, 2027. If you cannot
+    get a ``google_API_key`` to work, use the other sources (such as ``lrclib``)
+    instead.
 
 You need to `register for a Google API key
 <https://console.cloud.google.com/apis/credentials>`__. Set the

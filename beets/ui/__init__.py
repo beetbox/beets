@@ -612,6 +612,33 @@ class CommonOptionsParser(optparse.OptionParser):
         )
         self.add_option(opt)
 
+    def _set_limit(
+        self,
+        option: optparse.Option,
+        opt_str: str,
+        value: int,
+        parser: optparse.OptionParser,
+    ) -> None:
+        """Validate and store a maximum query result count."""
+        if value < 0:
+            raise UserError(
+                f"{opt_str} argument must be a non-negative integer"
+            )
+        assert option.dest is not None
+        setattr(parser.values, option.dest, value)
+
+    def add_limit_option(
+        self, flags: Sequence[str] = ("-l", "--limit")
+    ) -> None:
+        """Add an option to cap the number of matched query results."""
+        self.add_option(
+            *flags,
+            type="int",
+            action="callback",
+            callback=self._set_limit,
+            help="limit query results",
+        )
+
     def add_all_common_options(self) -> None:
         """Add album, path and format options."""
         self.add_album_option()
@@ -841,12 +868,11 @@ def _ensure_db_directory_exists(path: Path) -> None:
     newpath = os.path.dirname(dbpath)
     if not newpath:
         return
-    if not os.path.isdir(newpath):
-        if input_yn(
-            f"The database directory {util.displayable_path(newpath)} does not"
-            " exist. Create it (Y/n)?"
-        ):
-            os.makedirs(newpath)
+    if not os.path.isdir(newpath) and input_yn(
+        f"The database directory {util.displayable_path(newpath)} does not"
+        " exist. Create it (Y/n)?"
+    ):
+        os.makedirs(newpath)
 
 
 def _open_library(config: confuse.LazyConfig) -> library.Library:
@@ -854,7 +880,7 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
     dbpath = config["library"].as_path()
     _ensure_db_directory_exists(dbpath)
     try:
-        lib = library.Library(dbpath, config["directory"].as_filename())
+        lib = library.Library(dbpath, config["directory"].as_path())
         lib.get_item(0)  # Test database connection.
     except (sqlite3.OperationalError, sqlite3.DatabaseError) as db_error:
         error_str = str(db_error).lower()
@@ -866,20 +892,17 @@ def _open_library(config: confuse.LazyConfig) -> library.Library:
             or "attempt to write a readonly" in error_str
         ):
             # Prefer directory of the db path for a helpful permissions hint.
-            db_dir = os.path.dirname(os.fspath(dbpath)) or os.curdir
             raise UserError(
                 f"database file {dbpath_display} could not be opened. "
                 f"This may be due to a permissions issue. If the database "
                 f"does not exist yet, please check that the file or directory "
-                f"{util.displayable_path(db_dir)} is writable."
+                f"{dbpath.parent} is writable."
             ) from db_error
         raise UserError(
             f"database file {dbpath_display} could not be opened: {db_error}"
         ) from db_error
     log.debug(
-        "library database: {}\nlibrary directory: {}",
-        util.displayable_path(lib.path),
-        util.displayable_path(lib.directory),
+        "library database: {}\nlibrary directory: {}", lib.path, lib.directory
     )
     return lib
 
@@ -908,7 +931,12 @@ def _raw_main(args: list[str] | None) -> None:
         help="log more details (use twice for even more)",
     )
     parser.add_option(
-        "-c", "--config", dest="config", help="path to configuration file"
+        "-c",
+        "--config",
+        dest="configs",
+        action="append",
+        default=[],
+        help="path to configuration file",
     )
 
     def parse_csl_callback(
@@ -999,7 +1027,7 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
         # It also ensures confuse's source list is populated before set_file() adds the
         #  --config overlay.
         config.read()
-        if overlay_path := getattr(options, "config", None):
+        for overlay_path in options.configs:
             config.set_file(overlay_path)
     except confuse.ConfigError as e:
         deferred_error = e

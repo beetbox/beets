@@ -24,6 +24,7 @@ class MoveCLIOpts(Protocol):
     copy: bool
     dest: str | None
     export: bool
+    limit: int | None
     pretend: bool
     timid: bool
 
@@ -152,7 +153,7 @@ def move_items(
     def get_paths(objs: Iterable[Item]) -> list[tuple[bytes, bytes]]:
         return [(obj.path, obj.destination(basedir=dest)) for obj in objs]
 
-    objs = list(lib.items(query))
+    objs = list(lib.items(query, limit=opts.limit))
     move_objects(objs, isitemmoved, "item", get_paths, dest=dest, opts=opts)
 
 
@@ -166,15 +167,14 @@ def move_albums(
             for item in obj.items()
         ]
 
-    objs = list(lib.albums(query))
+    objs = list(lib.albums(query, limit=opts.limit))
     move_objects(objs, isalbummoved, "album", get_paths, dest=dest, opts=opts)
 
 
 def move_func(lib: Library, opts: MoveCLIOpts, args: list[str]) -> None:
     dest = normpath(opts.dest) if opts.dest else None
-    if dest is not None:
-        if not os.path.isdir(syspath(dest)):
-            raise UserError(f"no such directory: {displayable_path(dest)}")
+    if dest is not None and not os.path.isdir(syspath(dest)):
+        raise UserError(f"no such directory: {displayable_path(dest)}")
 
     method = move_albums if opts.album else move_items
     method(lib, args, dest, opts)
@@ -214,4 +214,5 @@ move_cmd.parser.add_option(
     help="copy without changing the database path",
 )
 move_cmd.parser.add_album_option()
+move_cmd.parser.add_limit_option()
 move_cmd.func = move_func

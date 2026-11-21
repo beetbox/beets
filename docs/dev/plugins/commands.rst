@@ -49,6 +49,6 @@ Try running ``pydoc beets.ui`` to see what's available.
 You can add command-line options to your new command using the ``parser`` member
 of the ``Subcommand`` class, which is a ``CommonOptionsParser`` instance. Just
 use it like you would a normal ``OptionParser`` in an independent script. Note
-that it offers several methods to add common options: ``--album``, ``--path``
-and ``--format``. This feature is versatile and extensively documented, try
-``pydoc beets.ui.CommonOptionsParser`` for more information.
+that it offers several methods to add common options: ``--album``, ``--path``,
+``--format``, and ``--limit``. This feature is versatile and extensively
+documented, try ``pydoc beets.ui.CommonOptionsParser`` for more information.

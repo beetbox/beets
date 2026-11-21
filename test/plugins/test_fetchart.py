@@ -161,7 +161,7 @@ class TestFetchartCli(IOMixin, PluginTestHelper):
     def test_colorization(self):
         self.config["ui"]["color"] = True
         out = self.run_with_output("fetchart")
-        assert " - the älbum: \x1b[1;31mno art found\x1b[39;49;00m\n" == out
+        assert out == " - the älbum: \x1b[1;31mno art found\x1b[39;49;00m\n"
 
     def test_set_art_oserror_is_handled_gracefully(self):
         """OSError (e.g. PermissionError) in set_art is logged as a warning,

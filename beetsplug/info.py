@@ -30,11 +30,15 @@ class InfoCLIOpts(Protocol):
     included_keys: list[str]
     keys_only: bool | None
     library: bool | None
+    limit: int | None
     summarize: bool | None
 
 
 def tag_data(
-    lib: Library, args: Iterable[str], album: bool = False
+    lib: Library,
+    args: Iterable[str],
+    album: bool = False,
+    limit: int | None = None,
 ) -> Iterator[DataEmitter]:
     query = []
     for arg in args:
@@ -45,7 +49,7 @@ def tag_data(
             query.append(arg)
 
     if query:
-        for item in lib.items(query):
+        for item in lib.items(query, limit=limit):
             yield tag_data_emitter(item.path)
 
 
@@ -60,10 +64,7 @@ def tag_data_emitter(path: bytes) -> DataEmitter:
         included_keys: Literal["*"] | list[str],
     ) -> tuple[JSONDict, LibModel]:
         fields: set[str] | list[str]
-        if included_keys == "*":
-            fields = tag_fields()
-        else:
-            fields = included_keys
+        fields = tag_fields() if included_keys == "*" else included_keys
         if "images" in fields:
             # We can't serialize the image data.
             fields.remove("images")
@@ -84,9 +85,14 @@ def tag_data_emitter(path: bytes) -> DataEmitter:
 
 
 def library_data(
-    lib: Library, args: Sequence[str], album: bool = False
+    lib: Library,
+    args: Sequence[str],
+    album: bool = False,
+    limit: int | None = None,
 ) -> Iterator[DataEmitter]:
-    for item in lib.albums(args) if album else lib.items(args):
+    for item in (
+        lib.albums(args, limit=limit) if album else lib.items(args, limit=limit)
+    ):
         yield library_data_emitter(item)
 
 
@@ -129,8 +135,8 @@ def print_data(
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
-            formatted[key] = "; ".join(value)
-        if value is not None:
+            formatted[key] = "; ".join(map(str, value))
+        elif value is not None:
             formatted[key] = value
 
     if len(formatted) == 0:
@@ -142,10 +148,7 @@ def print_data(
         ui.print_(displayable_path(path))
 
     for field in sorted(formatted):
-        value = formatted[field]
-        if isinstance(value, list):
-            value = "; ".join(value)
-        ui.print_(f"{field:>{maxwidth}}: {value}")
+        ui.print_(f"{field:>{maxwidth}}: {formatted[field]}")
 
 
 def print_data_keys(data: JSONDict, item: LibModel | None = None) -> None:
@@ -194,6 +197,7 @@ class InfoPlugin(BeetsPlugin):
             "-k", "--keys-only", action="store_true", help="show only the keys"
         )
         cmd.parser.add_format_option(target="item")
+        cmd.parser.add_limit_option(flags=("--limit",))
         return [cmd]
 
     def run(self, lib: Library, opts: InfoCLIOpts, args: list[str]) -> None:
@@ -210,10 +214,9 @@ class InfoPlugin(BeetsPlugin):
         dictionary and only prints that. If two files have different values
         for the same tag, the value is set to '[various]'
         """
-        if opts.library or opts.album:
-            data_collector = library_data
-        else:
-            data_collector = tag_data
+        data_collector = (
+            library_data if opts.library or opts.album else tag_data
+        )
 
         included_keys = []
         for keys in opts.included_keys:
@@ -223,7 +226,9 @@ class InfoPlugin(BeetsPlugin):
 
         first = True
         summary: dict[str, Any] = {}
-        for data_emitter in data_collector(lib, args, album=opts.album):
+        for data_emitter in data_collector(
+            lib, args, album=opts.album, limit=opts.limit
+        ):
             try:
                 data, item = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:
