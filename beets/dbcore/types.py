@@ -351,7 +351,12 @@ class DateType(Float):
             return time.mktime(
                 time.strptime(string, beets.config["time_format"].as_str())
             )
-        except ValueError:
+        except (ValueError, OverflowError, OSError):
+            # ValueError: the string is not a formatted date.
+            # OverflowError / OSError: the platform cannot represent that
+            # local time. Windows, for instance, rejects any time that maps
+            # to a negative timestamp, which includes the unix epoch itself
+            # in every timezone east of UTC.
             # Fall back to a plain timestamp number.
             try:
                 return float(string)

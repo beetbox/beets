@@ -58,6 +58,11 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Date fields: parsing a date the platform cannot represent no longer raises
+  ``OverflowError``. On Windows every local time that maps to a negative
+  timestamp is rejected by ``mktime``, which includes the unix epoch itself in
+  any timezone east of UTC; such values now fall back to an empty date the
+  same way an unparseable string already did.
 - Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
   or ``mb_trackid`` now detect duplicates when a metadata-source match is
   applied, instead of treating the key as missing. :bug:`7067`
