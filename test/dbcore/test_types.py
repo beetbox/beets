@@ -20,6 +20,23 @@ def test_datetype(config):
     assert t.null == t.parse("1973-11-29")
 
 
+def test_datetype_parse_falls_back_when_mktime_overflows(config, monkeypatch):
+    """An unrepresentable time must not escape from parse().
+
+    Windows raises OverflowError for any local time that maps to a negative
+    timestamp, and the unix epoch is 1970-01-01 00:00 UTC, so
+    ``1970-01-01 00:00:00`` is already negative in a timezone east of UTC.
+    """
+
+    def overflow(*_args, **_kwargs):
+        raise OverflowError("mktime argument out of range")
+
+    monkeypatch.setattr(time, "mktime", overflow)
+
+    t = types.DATE
+    assert t.null == t.parse("1970-01-01 00:00:00")
+
+
 def test_pathtype():
     t = types.PathType()
 
