@@ -836,6 +836,7 @@ class SpotifyPlugin(
         self._log.debug("Total {} tracks", len(items))
 
         items_to_update: list[tuple[Item, str]] = []
+        skipped_without_id = 0
 
         for index, item in enumerate(items, start=1):
             self._log.info(
@@ -849,10 +850,19 @@ class SpotifyPlugin(
             try:
                 spotify_track_id = item.spotify_track_id
             except AttributeError:
+                skipped_without_id += 1
                 self._log.debug("No track_id present for: {}", item)
                 continue
 
             items_to_update.append((item, spotify_track_id))
+
+        if skipped_without_id:
+            # Silence here makes the command look like it worked when it
+            # actually fetched nothing for those tracks.
+            self._log.info(
+                "Skipped {} track(s) without a spotify_track_id.",
+                skipped_without_id,
+            )
 
         if not items_to_update:
             return

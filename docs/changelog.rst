@@ -58,6 +58,10 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/spotify`: ``beet spotifysync`` now prints how many tracks were
+  skipped because they have no ``spotify_track_id``. Before, that was only a
+  debug-level message, so the command looked like it succeeded while fetching
+  nothing. :bug:`7158`
 - Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
   or ``mb_trackid`` now detect duplicates when a metadata-source match is
   applied, instead of treating the key as missing. :bug:`7067`
