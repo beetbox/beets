@@ -58,6 +58,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/zero`: Preserve both ``genre`` and ``genres`` when either is
+  listed in ``keep_fields``.
 - Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
   or ``mb_trackid`` now detect duplicates when a metadata-source match is
   applied, instead of treating the key as missing. :bug:`7067`
