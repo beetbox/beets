@@ -316,3 +316,31 @@ class ZeroPluginTest(IOMixin, PluginTestCase):
         assert mf.images, (
             "images should be preserved when 'images' is in keep_fields"
         )
+
+    def test_keep_fields_genres_preserves_genre(self):
+        path = self.create_mediafile_fixture()
+        mf = MediaFile(path)
+        mf.genre = "Rock"
+        mf.save()
+        item = Item.from_path(path)
+
+        with self.configure_plugin({"fields": None, "keep_fields": ["genres"]}):
+            item.write()
+
+        mf = MediaFile(path)
+        assert mf.genre == "Rock"
+        assert mf.genres == ["Rock"]
+
+    def test_keep_fields_genre_preserves_genres(self):
+        path = self.create_mediafile_fixture()
+        mf = MediaFile(path)
+        mf.genre = "Rock"
+        mf.save()
+        item = Item.from_path(path)
+
+        with self.configure_plugin({"fields": None, "keep_fields": ["genre"]}):
+            item.write()
+
+        mf = MediaFile(path)
+        assert mf.genre == "Rock"
+        assert mf.genres == ["Rock"]
