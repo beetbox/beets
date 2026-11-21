@@ -58,7 +58,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
-- :doc:`plugins/replaygain`: Avoid crash when ``threads`` is set to 0 in configuration.
+- :doc:`plugins/replaygain`: Avoid crash when ``threads`` is set to 0 in
+  configuration.
 - Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
   or ``mb_trackid`` now detect duplicates when a metadata-source match is
   applied, instead of treating the key as missing. :bug:`7067`
