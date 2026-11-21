@@ -688,6 +688,25 @@ CHAR_REPLACE = [
 ]
 
 
+# Windows keeps these names out of the filesystem: a file or directory called
+# ``CON``, ``NUL``, ``COM1`` and friends cannot be created there, with or
+# without an extension (``CON.txt`` is reserved as well). Like CHAR_REPLACE
+# above we avoid them on every platform, since Samba shares run into the same
+# wall. https://learn.microsoft.com/windows/win32/fileio/naming-a-file
+WINDOWS_RESERVED_NAMES = frozenset(
+    ["con", "prn", "aux", "nul", "conin$", "conout$"]
+    + [f"com{i}" for i in range(1, 10)]
+    + [f"lpt{i}" for i in range(1, 10)]
+)
+
+
+def _avoid_reserved_name(component: str) -> str:
+    """Prefix an underscore when a path component is a reserved device name."""
+    if component.split(".", 1)[0].lower() in WINDOWS_RESERVED_NAMES:
+        return "_" + component
+    return component
+
+
 def get_empty_component_replace() -> Callable[[str], str] | None:
     """Return a callable filling in empty path components, if configured.
 
@@ -728,7 +747,7 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     for i, comp in enumerate(comps):
         for regex, repl in replacements:
             comp = regex.sub(repl, comp)
-        comps[i] = comp
+        comps[i] = _avoid_reserved_name(comp)
     return os.path.join(*comps)
 
 

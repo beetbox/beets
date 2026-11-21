@@ -58,6 +58,11 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- Path components that Windows reserves for devices (``CON``, ``PRN``, ``AUX``,
+  ``NUL``, ``COM1``-``COM9`` and ``LPT1``-``LPT9``) are now prefixed with an
+  underscore, with or without an extension. Importing an album or artist with
+  such a name no longer fails when beets tries to create the directory on
+  Windows.
 - Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
   or ``mb_trackid`` now detect duplicates when a metadata-source match is
   applied, instead of treating the key as missing. :bug:`7067`

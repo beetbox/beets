@@ -163,6 +163,20 @@ class TestSanitizePath:
             p = util.sanitize_path("one/two /three")
         assert " " not in p
 
+    @pytest.mark.parametrize(
+        "name", ["CON", "con", "CON.txt", "NUL", "aux.mp3", "COM1", "LPT9"]
+    )
+    def test_reserved_device_names_get_a_prefix(self, name):
+        assert util.sanitize_path(name) == "_" + name
+
+    @pytest.mark.parametrize("name", ["normal", "console", "con_", "COM10", "LPT0"])
+    def test_ordinary_names_are_left_alone(self, name):
+        assert util.sanitize_path(name) == name
+
+    def test_reserved_device_name_is_fixed_inside_a_path(self):
+        path = os.path.join("one", "CON", "three")
+        assert util.sanitize_path(path) == os.path.join("one", "_CON", "three")
+
     def test_sanitize_path_works_on_empty_string(self):
         with _common.platform_posix():
             p = util.sanitize_path("")
