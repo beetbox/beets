@@ -186,6 +186,9 @@ Bug fixes
   Google refuses the search request, and the documentation warns that the Google
   Custom Search JSON API is closed to new customers and will be discontinued on
   January 1, 2027. :bug:`6761`
+- :doc:`plugins/zero`: Preserve paired and aliased fields (such as ``genre`` and
+  ``genres``, ``artist`` and ``artists``) when using ``keep_fields``.
+  :bug:`7069`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
