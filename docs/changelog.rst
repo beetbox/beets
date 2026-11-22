@@ -58,6 +58,8 @@ New features
 Bug fixes
 ~~~~~~~~~
 
+- :doc:`plugins/embedart`: Use configured ``quality`` when automatically
+  embedding art on ``art_set``. :bug:`7207`
 - Import: ``duplicate_keys`` that use library field names such as ``mb_albumid``
   or ``mb_trackid`` now detect duplicates when a metadata-source match is
   applied, instead of treating the key as missing. :bug:`7067`
