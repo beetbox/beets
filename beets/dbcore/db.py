@@ -1234,6 +1234,11 @@ class Database:
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
 
+        def regexp_replace(
+            value: AnyStr, pattern: AnyStr, replacement: AnyStr
+        ) -> AnyStr:
+            return re.sub(pattern, replacement, value)
+
         def bytelower(bytestring: AnyStr | None) -> AnyStr | None:
             """A custom ``bytelower`` sqlite function so we can compare
             bytestrings in a semi case insensitive fashion.
@@ -1255,6 +1260,7 @@ class Database:
         create_function("regexp", 2, regexp)
         create_function("unidecode", 1, unidecode)
         create_function("bytelower", 1, bytelower)
+        create_function("regexp_replace", 3, regexp_replace)
 
     def _close(self) -> None:
         """Close the all connections to the underlying SQLite database

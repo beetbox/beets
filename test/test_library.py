@@ -892,8 +892,19 @@ class TestDisambiguation(TestHelper, PathFormattingMixin):
         album2.flex = "flex2"
         album1.store()
         album2.store()
-        self._setf("foo%aunique{albumartist album flex,year}/$title")
         self._assert_dest(b"/base/foo/the title", i1)
+
+    def test_path_disambiguation(self, items):
+        i1, i2 = items
+        album1 = self.lib.get_album(i1)
+        album1.album = "t/t_e"
+        album2 = self.lib.get_album(i2)
+        album2.album = "t_t/e"
+        album1.store()
+        album2.store()
+        self._setf("foo%aunique{album,year,}/$title")
+        self._assert_dest(b"/base/foo 2001/the title", i1)
+        self._assert_dest(b"/base/foo 2002/the title", i2)
 
 
 class TestSingletonDisambiguation(TestHelper, PathFormattingMixin):
