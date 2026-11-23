@@ -1486,18 +1486,25 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert len(self.lib.items()) == 2
 
     def test_import_asis_skips_already_merged_task(self):
-        from beets.importer import stages
-        from beets.util import pipeline
+        self.config["import"]["autotag"] = False
+        album = self.lib.albums().get()
+        existing_dir = album.items().get().filepath.parent
 
-        task = stages.ImportTask(
-            self.importer.paths[0],
-            [self.importer.paths[0]],
-            list(self.lib.items()),
+        import_file = MediaFile(
+            os.path.join(self.importer.paths[0], b"album", b"track_1.mp3")
         )
-        self.importer.mark_merged(task.paths)
-        stage = stages.import_asis(self.importer)
-        next(stage)
-        assert stage.send(task) is pipeline.BUBBLE
+        import_file.artist = album.albumartist
+        import_file.albumartist = album.albumartist
+        import_file.album = album.album
+        import_file.title = "new title"
+        import_file.save()
+
+        self.importer.paths = [self.importer.paths[0], bytes(existing_dir)]
+        self.config["import"]["duplicate_action"] = "merge"
+        self.importer.run()
+
+        assert len(self.lib.albums()) == 1
+        assert len(self.lib.items()) == 2
 
     def test_twice_in_import_dir(self):
         pytest.skip(reason="write me")
