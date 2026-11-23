@@ -47,6 +47,15 @@ COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 MAX_RECORDINGS = 5
 MAX_RELEASES = 5
 
+
+def _user_apikey() -> str | None:
+    """Return the user's AcoustID API key from the config, or None."""
+    try:
+        return config["acoustid"]["apikey"].as_str() or None
+    except confuse.ConfigError:
+        return None
+
+
 # Stores the Acoustid match information for each track. This is
 # populated when an import task begins and then used when searching for
 # candidates. It maps audio file paths to (recording_ids, release_ids)
@@ -287,9 +296,8 @@ class AcoustidPlugin(MetadataSourcePlugin):
         def submit_cmd_func(
             lib: Library, opts: optparse.Values, args: list[str]
         ) -> None:
-            try:
-                apikey = config["acoustid"]["apikey"].as_str()
-            except confuse.NotFoundError:
+            apikey = _user_apikey()
+            if not apikey:
                 raise UserError("no Acoustid user API key provided")
             submit_items(self._log, apikey, lib.items(args, limit=opts.limit))
 
