@@ -127,7 +127,12 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     _fingerprints[path] = fp
     try:
         res = acoustid.lookup(
-            API_KEY, fp, duration, meta="recordings releases", timeout=10
+            API_KEY,
+            fp,
+            duration,
+            meta="recordings releases",
+            timeout=10,
+            userkey=_user_apikey(),
         )
     except acoustid.AcoustidError as exc:
         log.debug(
