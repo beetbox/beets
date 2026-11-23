@@ -54,6 +54,9 @@ New features
   directory, matching the :doc:`plugins/playlist` plugin. :bug:`5348`
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
+- :doc:`plugins/embedart`: Add a ``resize_existing`` option that downscales
+  existing embedded art wider than ``maxwidth`` after an album is imported, even
+  when no replacement art is fetched. :bug:`7068`
 
 Bug fixes
 ~~~~~~~~~

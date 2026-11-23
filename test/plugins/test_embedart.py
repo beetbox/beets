@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 import shutil
 import tempfile
@@ -9,7 +10,8 @@ from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
-from mediafile import MediaFile
+from mediafile import Image, ImageType, MediaFile
+from PIL import Image as PILImage
 
 from beets import logging
 from beets.exceptions import UserError
@@ -306,6 +308,115 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         self.run_command("embedart", "-y", "-u", "http://example.com/test.html")
         mediafile = MediaFile(item.filepath)
         assert not mediafile.images
+
+    def _import_with_images(self, images, write=True, **options):
+        """Import a file embedding `images` with `resize_existing` enabled and
+        return the imported item.
+        """
+        path = self.create_mediafile_fixture(target_dir=self.import_path)
+        mediafile = MediaFile(path)
+        mediafile.images = images
+        mediafile.save()
+        self.import_media.append(path)
+
+        # Force re-init the plugin to register the listener
+        self.unload_plugins()
+        with self.configure_plugin({"resize_existing": True, **options}):
+            importer = self.setup_importer(autotag=False, write=write)
+            importer.run()
+
+        return self.lib.items()[0]
+
+    def _large_image(self, **kwargs) -> Image:
+        return Image(self.abbey_similarpath.read_bytes(), **kwargs)
+
+    @staticmethod
+    def _widths(item) -> list[int]:
+        return [
+            PILImage.open(io.BytesIO(image.data)).size[0]
+            for image in MediaFile(item.filepath).images
+        ]
+
+    @NEEDS_FFPROBE
+    def test_resize_existing_downscales_on_import(self):
+        item = self._import_with_images(
+            [self._large_image(type=ImageType.front)], maxwidth=300
+        )
+
+        assert self._widths(item) == [300]
+
+    @NEEDS_FFPROBE
+    def test_resize_existing_keeps_every_image(self):
+        small = Image(
+            self.small_artpath.read_bytes(),
+            type=ImageType.back,
+            desc="small back",
+        )
+        large = self._large_image(type=ImageType.leaflet, desc="large leaflet")
+
+        item = self._import_with_images([small, large], maxwidth=300)
+
+        images = MediaFile(item.filepath).images
+        assert [(i.type, i.desc) for i in images] == [
+            (ImageType.back, "small back"),
+            (ImageType.leaflet, "large leaflet"),
+        ]
+        assert images[0].data == small.data
+        assert self._widths(item)[1] == 300
+
+    @NEEDS_FFPROBE
+    def test_resize_existing_keeps_small_art_untouched(self):
+        small = Image(self.abbey_artpath.read_bytes(), type=ImageType.front)
+
+        item = self._import_with_images([small], maxwidth=1000)
+
+        assert MediaFile(item.filepath).images[0].data == small.data
+
+    @NEEDS_FFPROBE
+    def test_resize_existing_disabled_by_default(self):
+        path = self.create_mediafile_fixture(target_dir=self.import_path)
+        mediafile = MediaFile(path)
+        mediafile.images = [self._large_image(type=ImageType.front)]
+        mediafile.save()
+        self.import_media.append(path)
+
+        self.unload_plugins()
+        with self.configure_plugin({"maxwidth": 300}):
+            importer = self.setup_importer(autotag=False, write=True)
+            importer.run()
+
+        assert self._widths(self.lib.items()[0]) == [500]
+
+    @NEEDS_FFPROBE
+    def test_resize_existing_respects_write_disabled(self):
+        item = self._import_with_images(
+            [self._large_image(type=ImageType.front)], write=False, maxwidth=300
+        )
+
+        assert self._widths(item) == [500]
+
+    @NEEDS_FFPROBE
+    def test_resize_existing_without_maxwidth_warns(self, caplog):
+        with caplog.at_level(logging.WARNING):
+            item = self._import_with_images(
+                [self._large_image(type=ImageType.front)]
+            )
+
+        assert "'resize_existing' needs 'maxwidth'" in caplog.text
+        assert self._widths(item) == [500]
+
+    @NEEDS_FFPROBE
+    def test_resize_existing_warns_when_size_is_unknown(self, caplog):
+        with (
+            patch.object(ArtResizer.shared, "get_size", return_value=None),
+            caplog.at_level(logging.WARNING),
+        ):
+            item = self._import_with_images(
+                [self._large_image(type=ImageType.front)], maxwidth=300
+            )
+
+        assert "Could not get the size of an embedded image" in caplog.text
+        assert self._widths(item) == [500]
 
     @NEEDS_FFPROBE
     def test_clearart_on_import_disabled(self):

@@ -8,6 +8,7 @@ from mimetypes import guess_extension
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
+import mediafile
 import requests
 
 from beets import config, ui
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from beets.importer import ImportSession, ImportTask
-    from beets.library import Album, LibModel, Library
+    from beets.library import Album, Item, LibModel, Library
 
 
 class EmbedArtCLIOpts(Protocol):
@@ -79,6 +80,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 "remove_art_file": False,
                 "quality": 0,
                 "clearart_on_import": False,
+                "resize_existing": False,
             }
         )
 
@@ -101,6 +103,16 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         if self.config["clearart_on_import"].get(bool):
             self.register_listener("import_task_files", self.import_task_files)
+
+        if self.config["resize_existing"].get(bool):
+            if self.config["maxwidth"].get(int):
+                self.register_listener(
+                    "album_imported", self.resize_existing_album
+                )
+            else:
+                self._log.warning(
+                    "'resize_existing' needs 'maxwidth' to be set: ignoring it"
+                )
 
     def commands(self) -> list[ui.Subcommand]:
         # Embed command.
@@ -290,6 +302,72 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 self.config["ifempty"].get(bool),
             )
             self.remove_artfile(album)
+
+    def resize_existing_album(self, lib: Library, album: Album) -> None:
+        """Downscale the embedded images of an imported album that are wider
+        than ``maxwidth``, whether or not new art was fetched.
+        """
+        if not ui.should_write():
+            return  # Respect `import: write: no`.
+
+        for item in album.items():
+            self.resize_existing_item(item)
+
+    def resize_existing_item(self, item: Item) -> None:
+        """Shrink the item's embedded images that are wider than ``maxwidth``.
+
+        The images that are small enough are kept as they are, and the type
+        and description of every image are preserved.
+        """
+        try:
+            mf = mediafile.MediaFile(syspath(item.path))
+        except mediafile.UnreadableFileError as exc:
+            self._log.warning("Could not read {.filepath}: {}", item, exc)
+            return
+
+        originals = mf.images
+        images = [self._downscale(item, image) for image in originals]
+        if any(new is not old for new, old in zip(images, originals)):
+            item.try_write(tags={"images": images})
+
+    def _downscale(self, item: Item, image: mediafile.Image) -> mediafile.Image:
+        """Return `image` resized to ``maxwidth``, or `image` itself if it
+        does not need to be (or cannot be) resized.
+        """
+        if image.mime_type not in ("image/jpeg", "image/png"):
+            return image  # Only JPEG and PNG can be safely re-encoded.
+
+        maxwidth = self.config["maxwidth"].get(int)
+        suffix = guess_extension(image.mime_type) or ".jpg"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / f"art{suffix}"
+            path.write_bytes(image.data)
+
+            size = ArtResizer.shared.get_size(path)
+            if size is None:
+                self._log.warning(
+                    "Could not get the size of an embedded image in {.filepath}:"
+                    " leaving it as it is",
+                    item,
+                )
+                return image
+            if size[0] <= maxwidth:
+                return image
+
+            self._log.debug(
+                "Resizing embedded art of {.filepath} to {} pixels wide",
+                item,
+                maxwidth,
+            )
+            resized = ArtResizer.shared.resize(
+                maxwidth, path, quality=self.config["quality"].get(int)
+            )
+            if resized == path:
+                return image  # The resizer failed and already logged why.
+
+            return mediafile.Image(
+                resized.read_bytes(), desc=image.desc, type=image.type
+            )
 
     def remove_artfile(self, album: Album) -> None:
         """Possibly delete the album art file for an album (if the
