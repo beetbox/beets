@@ -69,6 +69,9 @@ _matches: dict[bytes, tuple[list[str], list[str]]] = {}
 _fingerprints: dict[bytes, str] = {}
 _acoustids: dict[bytes, str] = {}
 
+# Whether we already warned that no user API key is configured.
+_warned_missing_apikey = False
+
 
 def prefix(it: Iterable[Any], count: int) -> Iterator[Any]:
     """Truncate an iterable to at most `count` items."""
@@ -107,6 +110,14 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     """Gets metadata for a file from Acoustid and populates the
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
+    global _warned_missing_apikey
+    if not _user_apikey() and not _warned_missing_apikey:
+        log.warning(
+            "no AcoustID user API key configured (acoustid.apikey); "
+            "fingerprint lookups will stop working on January 1, 2027. "
+            "Get a key at https://acoustid.org/api-key"
+        )
+        _warned_missing_apikey = True
     try:
         # Prefer fpcalc directly to avoid GStreamer fd leaks (#5171).
         # Fall back to the Chromaprint library for library-only installs.
