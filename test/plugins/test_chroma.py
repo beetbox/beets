@@ -4,6 +4,7 @@ import pytest
 
 from beets import config, metadata_plugins
 from beets.autotag import AlbumInfo, TrackInfo
+from beets.exceptions import UserError
 from beets.library import Item
 from beets.test.helper import ImportHelper, IOMixin, PluginMixin
 
@@ -282,3 +283,9 @@ class TestChromaUserApiKey(IOMixin, PluginMixin, ImportHelper):
         chroma.acoustid_match(log, b"/file")
 
         log.warning.assert_not_called()
+
+    def test_submit_without_user_key_fails(self, fingerprint_file, lookup):
+        config["acoustid"]["apikey"] = None
+
+        with pytest.raises(UserError, match="no Acoustid user API key"):
+            self.run_command("submit")
