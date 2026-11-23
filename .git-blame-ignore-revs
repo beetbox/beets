@@ -325,3 +325,5 @@ eb0ecd7e7cf1fd59e65c9d004af830f85d4c434b
 cd1ad4c190c2a1333b7359ff8209ac7b9f04eaf1
 # Enable flake8-simplify
 40635708d739f42eec7ca57abb3e0dec22461422
+# Migrate color utility tests to pytest
+e2035efa63ba37fde98a3100f54b83c577a7a882
