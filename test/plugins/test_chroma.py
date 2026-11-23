@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from beets import metadata_plugins
+from beets import config, metadata_plugins
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.library import Item
 from beets.test.helper import ImportHelper, IOMixin, PluginMixin
@@ -238,3 +238,47 @@ class TestChromaCandidates(PluginMixin):
 
         assert result == [fake_track]
         mb_plugin.track_for_id.assert_called_with("rec-id-1")
+
+
+EMPTY_LOOKUP = {"status": "ok", "results": []}
+
+
+@patch("acoustid.lookup", return_value=EMPTY_LOOKUP)
+@patch("acoustid.fingerprint_file", return_value=(30, FINGERPRINT_1.encode()))
+class TestChromaUserApiKey(IOMixin, PluginMixin, ImportHelper):
+    plugin = "chroma"
+
+    @pytest.fixture(autouse=True)
+    def reset_warning(self, monkeypatch):
+        monkeypatch.setattr(chroma, "_warned_missing_apikey", False)
+
+    def test_lookup_sends_user_key(self, fingerprint_file, lookup):
+        config["acoustid"]["apikey"] = "userkey"
+
+        chroma.acoustid_match(MagicMock(), b"/file")
+
+        assert lookup.call_args.kwargs["userkey"] == "userkey"
+
+    def test_lookup_without_user_key(self, fingerprint_file, lookup):
+        config["acoustid"]["apikey"] = None
+
+        chroma.acoustid_match(MagicMock(), b"/file")
+
+        assert lookup.call_args.kwargs["userkey"] is None
+
+    def test_warns_once_without_user_key(self, fingerprint_file, lookup):
+        config["acoustid"]["apikey"] = None
+        log = MagicMock()
+
+        chroma.acoustid_match(log, b"/file")
+        chroma.acoustid_match(log, b"/file")
+
+        assert log.warning.call_count == 1
+
+    def test_no_warning_with_user_key(self, fingerprint_file, lookup):
+        config["acoustid"]["apikey"] = "userkey"
+        log = MagicMock()
+
+        chroma.acoustid_match(log, b"/file")
+
+        log.warning.assert_not_called()
