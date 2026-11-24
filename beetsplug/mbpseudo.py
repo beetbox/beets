@@ -217,8 +217,12 @@ class MusicBrainzPseudoReleasePlugin(MusicBrainzPlugin):
             ) and (alias := alias_dict.get("name")):
                 self._log.debug("Got alias '{0}'", alias)
                 pseudo_release.artist = alias
-                for track in pseudo_release.tracks:
-                    track.artist = alias
+                # Preserve guest artists and joint track credits.
+                if len(artist_credits) == 1:
+                    artist_id = artist_credits[0]["artist"]["id"]
+                    for track in pseudo_release.tracks:
+                        if track.artists_ids == [artist_id]:
+                            track.artist = alias
 
     def _add_custom_tags(
         self, official_release: AlbumInfo, pseudo_release: AlbumInfo

@@ -305,3 +305,30 @@ class TestMBPseudoPluginCustomTagsOnly(TestMBPseudoMixin):
         assert album_info["album_artist_transl"] == "Lilas Ikuta"
         assert album_info.tracks[0]["title_transl"] == "In Bloom"
         assert album_info.tracks[0]["artist_transl"] == "Lilas Ikuta"
+
+    def test_album_alias_preserves_other_track_artists(
+        self, config, mbpseudo_plugin, pseudo_release
+    ):
+        config["import"]["languages"] = []
+        credit = pseudo_release["release_group"]["artist_credit"][0]
+        artist_id = credit["artist"]["id"]
+        album = AlbumInfo(
+            tracks=[
+                TrackInfo(artist="Original name", artists_ids=[artist_id]),
+                TrackInfo(artist="Guest", artists_ids=["guest"]),
+                TrackInfo(
+                    artist="Original name & Guest",
+                    artists_ids=[artist_id, "guest"],
+                ),
+            ],
+            artist="Original name",
+        )
+
+        mbpseudo_plugin._replace_artist_with_alias(pseudo_release, album)
+
+        assert album.artist == "Lilas Ikuta"
+        assert [track.artist for track in album.tracks] == [
+            "Lilas Ikuta",
+            "Guest",
+            "Original name & Guest",
+        ]
