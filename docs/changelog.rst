@@ -189,6 +189,8 @@ Bug fixes
 - :doc:`plugins/zero`: Preserve paired and aliased fields (such as ``genre`` and
   ``genres``, ``artist`` and ``artists``) when using ``keep_fields``.
   :bug:`7069`
+- :doc:`plugins/mbpseudo`: Keep track artist credits in translated tags
+  when they differ from the album artist. :bug:`7125`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
