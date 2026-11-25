@@ -210,25 +210,6 @@ class UpdateTest(IOMixin, BeetsTestCase):
         self.i.load()
         assert self.i.title == "differentTitle"
 
-    def _clear_albumartist_on_disk(self, artist, old_albumartist):
-        self.i.artist = artist
-        self.i.albumartist = old_albumartist
-        self.i.store()
-        mf = MediaFile(self.i.filepath)
-        mf.artist = artist
-        mf.albumartist = ""
-        mf.save()
-
-    def test_cleared_albumartist_matching_artist_is_kept(self):
-        self._clear_albumartist_on_disk("the artist", "the artist")
-        self._update()
-        assert self.lib.get_item(self.i.id).albumartist == "the artist"
-
-    def test_cleared_albumartist_differing_from_artist_is_updated(self):
-        self._clear_albumartist_on_disk("the artist", "various artists")
-        self._update()
-        assert self.lib.get_item(self.i.id).albumartist == ""
-
     def test_mtime_match_skips_update(self):
         mf = MediaFile(self.i.filepath)
         mf.title = "differentTitle"

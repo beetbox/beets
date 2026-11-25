@@ -20,22 +20,6 @@ if TYPE_CHECKING:
 log = logging.getLogger("beets")
 
 
-def _should_restore_albumartist(lib: Library, item: Item) -> bool:
-    """Return whether the album artist cleared by re-reading the file
-    should be restored, because it just repeated the unchanged track
-    artist. (Hacky but necessary for preserving album-level metadata
-    for non-autotagged imports.)
-    """
-    if item.albumartist or item.id is None:
-        return False
-
-    old_item = lib.get_item(item.id)
-    return (
-        old_item is not None
-        and old_item.albumartist == old_item.artist == item.artist
-    )
-
-
 class UpdateCLIOpts(Protocol):
     album: bool
     exclude_fields: list[str] | None
@@ -93,10 +77,8 @@ def update_items(
         # Walk through the items and pick up their changes.
         affected_albums = set()
         for item in items:
-            file_deleted = not item.path or not os.path.exists(
-                syspath(item.path)
-            )
-            if file_deleted:
+            # Item deleted?
+            if not item.path or not os.path.exists(syspath(item.path)):
                 ui.print_(format(item))
                 ui.print_(colorize("text_error", "  deleted"))
                 if not pretend:
@@ -104,8 +86,8 @@ def update_items(
                 affected_albums.add(item.album_id)
                 continue
 
-            unchanged_since_last_check = item.current_mtime() <= item.mtime
-            if unchanged_since_last_check:
+            # Did the item change since last checked?
+            if item.current_mtime() <= item.mtime:
                 log.debug(
                     "skipping {0.filepath} because mtime is up to date ({0.mtime})",
                     item,
@@ -119,8 +101,15 @@ def update_items(
                 log.error("error reading {.filepath}: {}", item, exc)
                 continue
 
-            if _should_restore_albumartist(lib, item):
-                item.albumartist = item.artist
+            # Special-case album artist when it matches track artist. (Hacky
+            # but necessary for preserving album-level metadata for non-
+            # autotagged imports.)
+            if (
+                not item.albumartist
+                and item.id is not None
+                and (old_item := lib.get_item(item.id))
+            ) and old_item.albumartist == old_item.artist == item.artist:
+                item.albumartist = old_item.albumartist
                 item._dirty.discard("albumartist")
 
             # Check for and display changes.

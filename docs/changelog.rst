@@ -228,9 +228,6 @@ Other changes
 - Beets now requires Python 3.11.5 or later. Every fixed release of
   ``soupsieve`` (3.0.2 and up) needs it, so with 3.11.0 to 3.11.4 still
   supported the lockfile kept a vulnerable ``soupsieve`` for those versions.
-- Internal refactoring with no change in behaviour: the importer's duplicate
-  removal now uses a single helper to delete files and prune empty directories,
-  and the ``update`` command's per-item checks are easier to read.
 
 2.14.1 (September 17, 2026)
 ---------------------------
