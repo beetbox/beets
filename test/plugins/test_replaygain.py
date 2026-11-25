@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 from typing import Any, ClassVar
+from unittest import mock
 
 import pytest
 from mediafile import MediaFile
@@ -15,7 +16,12 @@ from beets.test.helper import (
     ImportHelper,
     PluginMixin,
 )
-from beetsplug.replaygain import ExceptionWatcher, MetaflacBackend, RgTask
+from beetsplug.replaygain import (
+    ExceptionWatcher,
+    MetaflacBackend,
+    ReplayGainPlugin,
+    RgTask,
+)
 
 try:
     import gi
@@ -330,6 +336,61 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
         for item in album.items():
             assert item.rg_track_gain is not None
             assert item.rg_album_gain is not None
+
+
+class TestReplayGainThreadsCli:
+    def _create_plugin(self, configured_threads: int) -> ReplayGainPlugin:
+        plugin = ReplayGainPlugin.__new__(ReplayGainPlugin)
+        plugin.config = mock.MagicMock()
+        plugin.config["threads"].get.return_value = configured_threads
+        plugin._log = mock.Mock()
+        plugin.backend_name = "ffmpeg"
+        return plugin
+
+    def test_cli_with_zero_configured_threads_does_not_crash(self):
+        plugin = self._create_plugin(configured_threads=0)
+        plugin.pool = None
+        plugin.backend_instance = mock.Mock(do_parallel=True)
+        opts = mock.Mock(
+            write=None, force=False, threads=None, album=False, limit=None
+        )
+        lib = mock.Mock()
+        lib.items.return_value = []
+
+        plugin.command_func(lib, opts, [])
+        assert plugin.pool is None
+
+    def test_cli_with_zero_threads_flag(self):
+        plugin = self._create_plugin(configured_threads=4)
+        opts = mock.Mock(
+            write=None, force=False, threads=0, album=False, limit=None
+        )
+        lib = mock.Mock()
+        lib.items.return_value = []
+
+        with (
+            mock.patch.object(plugin, "open_pool", create=True) as open_pool,
+            mock.patch.object(plugin, "close_pool", create=True),
+        ):
+            plugin.command_func(lib, opts, [])
+
+        open_pool.assert_not_called()
+
+    def test_cli_with_threads_flag_overrides_zero_config(self):
+        plugin = self._create_plugin(configured_threads=0)
+        opts = mock.Mock(
+            write=None, force=False, threads=2, album=False, limit=None
+        )
+        lib = mock.Mock()
+        lib.items.return_value = []
+
+        with (
+            mock.patch.object(plugin, "open_pool", create=True) as open_pool,
+            mock.patch.object(plugin, "close_pool", create=True),
+        ):
+            plugin.command_func(lib, opts, [])
+
+        open_pool.assert_called_once_with(2)
 
 
 @SKIP_GSTREAMER
