@@ -229,6 +229,9 @@ Other changes
   ``soupsieve`` (3.0.2 and up) needs it, so with 3.11.0 to 3.11.4 still
   supported the lockfile kept a vulnerable ``soupsieve`` for those versions.
 
+- :doc:`plugins/spotify`: Correct the ``spotifysync`` long option to
+  ``--force`` and document selecting tracks with a query.
+
 2.14.1 (September 17, 2026)
 ---------------------------
 
