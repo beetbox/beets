@@ -20,6 +20,22 @@ if TYPE_CHECKING:
 log = logging.getLogger("beets")
 
 
+def _should_restore_albumartist(lib: Library, item: Item) -> bool:
+    """Return whether the album artist cleared by re-reading the file
+    should be restored, because it just repeated the unchanged track
+    artist. (Hacky but necessary for preserving album-level metadata
+    for non-autotagged imports.)
+    """
+    if item.albumartist or item.id is None:
+        return False
+
+    old_item = lib.get_item(item.id)
+    return (
+        old_item is not None
+        and old_item.albumartist == old_item.artist == item.artist
+    )
+
+
 class UpdateCLIOpts(Protocol):
     album: bool
     exclude_fields: list[str] | None
@@ -101,15 +117,8 @@ def update_items(
                 log.error("error reading {.filepath}: {}", item, exc)
                 continue
 
-            # Special-case album artist when it matches track artist. (Hacky
-            # but necessary for preserving album-level metadata for non-
-            # autotagged imports.)
-            if (
-                not item.albumartist
-                and item.id is not None
-                and (old_item := lib.get_item(item.id))
-            ) and old_item.albumartist == old_item.artist == item.artist:
-                item.albumartist = old_item.albumartist
+            if _should_restore_albumartist(lib, item):
+                item.albumartist = item.artist
                 item._dirty.discard("albumartist")
 
             # Check for and display changes.
