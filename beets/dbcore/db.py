@@ -1061,6 +1061,7 @@ class Migration(ABC):
         if not beets.config["create_backup_before_migrations"].get(bool):
             return
 
+        # Skip migration if target table is empty
         with self.db.transaction() as tx:
             if not tx.query(f"SELECT 1 FROM {table} LIMIT 1"):
                 return
