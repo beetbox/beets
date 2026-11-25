@@ -20,7 +20,11 @@ if TYPE_CHECKING:
 
 
 class AutoBPMCLIOpts(Protocol):
+    force: bool | None
     limit: int | None
+    quiet: bool | None
+    # --start-bpm is not listed: its dotted dest ("beat_track_kwargs.start_bpm")
+    # is not a valid attribute name and is only read via config.set_args().
 
 
 class AutoBPMPlugin(BeetsPlugin):
