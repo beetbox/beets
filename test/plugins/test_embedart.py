@@ -141,6 +141,20 @@ class TestEmbedartCli(PluginMixin, IOMixin, ImportHelper, FetchImageHelper):
         with pytest.raises(UserError):
             self.run_command("embedart", "-y", "-f", "/doesnotexist")
 
+    def test_process_album_uses_configured_quality(self):
+        from beets import plugins
+
+        self._setup_data()
+        album = self.add_album_fixture()
+        with (
+            self.configure_plugin({"auto": True, "quality": 85}),
+            patch("beetsplug.embedart.art.embed_album") as mock_embed,
+        ):
+            plugins.send("art_set", album=album)
+            mock_embed.assert_called_once_with(
+                unittest.mock.ANY, album, 0, True, 0, False, quality=85
+            )
+
     def test_embed_non_image_file(self):
         album = self.add_album_fixture()
         logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
