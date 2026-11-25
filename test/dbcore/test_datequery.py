@@ -10,7 +10,6 @@ from beets.dbcore.query import (
     DateInterval,
     DateQuery,
     InvalidQueryArgumentValueError,
-    _parse_periods,
 )
 from beets.test.helper import ItemInDBTestCase
 
@@ -77,8 +76,7 @@ class TestDateInterval:
         ],
     )  # fmt: skip
     def test_intervals(self, pattern, datestr, include):
-        (start, end) = _parse_periods(pattern)
-        interval = DateInterval.from_periods(start, end)
+        interval = DateInterval.parse(pattern)
         assert interval.contains(datetime.fromisoformat(datestr)) == include
 
     @pytest.mark.parametrize(
@@ -95,8 +93,8 @@ class TestDateInterval:
         self, reversed_pattern, forward_pattern
     ):
         """A range given back to front means the same as the forward one."""
-        reversed_ = DateInterval.from_periods(*_parse_periods(reversed_pattern))
-        forward = DateInterval.from_periods(*_parse_periods(forward_pattern))
+        reversed_ = DateInterval.parse(reversed_pattern)
+        forward = DateInterval.parse(forward_pattern)
 
         assert (reversed_.start, reversed_.end) == (forward.start, forward.end)
 
