@@ -211,10 +211,6 @@ For plugin developers
 - Import prompt choice callbacks can now read the candidate on screen from
   ``task.selected_match``, including one picked by number from the candidate
   list. It is ``None`` while the candidate list itself is shown.
-- The reimport bookkeeping of import tasks (finding, removing and preserving the
-  metadata of replaced library entries) has moved into a new ``ReplacedEntries``
-  class, available as ``task.replaced``. ``task.replaced_items`` and
-  ``task.replaced_albums`` keep working.
 
 Other changes
 ~~~~~~~~~~~~~
