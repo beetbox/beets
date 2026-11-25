@@ -340,4 +340,29 @@ $('#header').disableSelection();
 // Audio player setup.
 $('#player').player();
 
+// Color scheme toggle.
+var themeMedia = matchMedia('(prefers-color-scheme: dark)');
+var themeModes = ['auto', 'light', 'dark'];
+var themeMode = localStorage.getItem('beets.theme') || 'auto';
+function applyTheme() {
+    var dark = themeMode === 'dark' ||
+        (themeMode === 'auto' && themeMedia.matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    $('#themeToggle')
+        .text({auto: '\u{1F313} Auto', light: '\u2600\uFE0F Light',
+               dark: '\u{1F319} Dark'}[themeMode])
+        .attr('title', 'Color scheme: ' + themeMode);
+}
+applyTheme();
+$('#themeToggle').on('click', function () {
+    themeMode = themeModes[(themeModes.indexOf(themeMode) + 1) % themeModes.length];
+    localStorage.setItem('beets.theme', themeMode);
+    applyTheme();
+});
+themeMedia.addEventListener('change', function () {
+    if (themeMode === 'auto') {
+        applyTheme();
+    }
+});
+
 });

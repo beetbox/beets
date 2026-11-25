@@ -54,6 +54,9 @@ New features
   directory, matching the :doc:`plugins/playlist` plugin. :bug:`5348`
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
+- :doc:`plugins/web`: Add a color scheme button to the web UI header that cycles
+  between auto (following the OS preference), light and dark, and remembers the
+  choice in the browser.
 
 Bug fixes
 ~~~~~~~~~
