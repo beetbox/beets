@@ -536,6 +536,9 @@ beets-more_
 beets-mosaic_
     Generates a montage of a mosaic from cover art.
 
+beets-moreart_
+    Fetches back, spine, and disc art from various sources.
+
 beets-mpd-utils_
     Plugins to interface with MPD_. Comes with ``mpd_tracker`` (track play/skip
     counts from MPD) and ``mpd_dj`` (auto-add songs to your queue.)
@@ -655,6 +658,8 @@ beets-youtube_
 .. _beets-jiosaavn: https://github.com/arsaboo/beets-jiosaavn
 
 .. _beets-more: https://forgejo.sny.sh/sun/beetsplug/src/branch/main/more
+
+.. _beets-moreart: https://github.com/jaedonswanson/beets-moreart
 
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
 
