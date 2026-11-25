@@ -93,8 +93,10 @@ def update_items(
         # Walk through the items and pick up their changes.
         affected_albums = set()
         for item in items:
-            # Item deleted?
-            if not item.path or not os.path.exists(syspath(item.path)):
+            file_deleted = not item.path or not os.path.exists(
+                syspath(item.path)
+            )
+            if file_deleted:
                 ui.print_(format(item))
                 ui.print_(colorize("text_error", "  deleted"))
                 if not pretend:
@@ -102,8 +104,8 @@ def update_items(
                 affected_albums.add(item.album_id)
                 continue
 
-            # Did the item change since last checked?
-            if item.current_mtime() <= item.mtime:
+            unchanged_since_last_check = item.current_mtime() <= item.mtime
+            if unchanged_since_last_check:
                 log.debug(
                     "skipping {0.filepath} because mtime is up to date ({0.mtime})",
                     item,
