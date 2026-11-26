@@ -1413,6 +1413,16 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         assert not old_artpath.exists()
         assert len(self.lib.albums()) == 1
 
+    def _prepare_duplicate_import_file(self, album, title="new title"):
+        import_file = MediaFile(
+            os.path.join(self.importer.paths[0], b"album", b"track_1.mp3")
+        )
+        import_file.artist = album.albumartist
+        import_file.albumartist = album.albumartist
+        import_file.album = album.album
+        import_file.title = title
+        import_file.save()
+
     def test_no_autotag_removes_duplicate_album(self):
         self.config["import"]["autotag"] = False
         album = self.lib.albums().get()
@@ -1423,15 +1433,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
         # Imported item has the same albumartist and album as the one in the
         # library album. We use album metadata (not item metadata) since
         # duplicate detection uses album-level fields.
-        import_file = os.path.join(
-            self.importer.paths[0], b"album", b"track_1.mp3"
-        )
-        import_file = MediaFile(import_file)
-        import_file.artist = album.albumartist
-        import_file.albumartist = album.albumartist
-        import_file.album = album.album
-        import_file.title = "new title"
-        import_file.save()
+        self._prepare_duplicate_import_file(album)
 
         self.config["import"]["duplicate_action"] = "remove"
         self.importer.run()
@@ -1470,14 +1472,7 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
     def test_merge_duplicate_album_no_autotag(self):
         self.config["import"]["autotag"] = False
         album = self.lib.albums().get()
-        import_file = MediaFile(
-            os.path.join(self.importer.paths[0], b"album", b"track_1.mp3")
-        )
-        import_file.artist = album.albumartist
-        import_file.albumartist = album.albumartist
-        import_file.album = album.album
-        import_file.title = "new title"
-        import_file.save()
+        self._prepare_duplicate_import_file(album)
 
         self.config["import"]["duplicate_action"] = "merge"
         self.importer.run()
@@ -1487,24 +1482,23 @@ class TestImportDuplicateAlbum(PluginMixin, ImportHelper):
 
     def test_import_asis_skips_already_merged_task(self):
         self.config["import"]["autotag"] = False
+        self.config["import"]["copy"] = False
+        self.config["import"]["move"] = False
         album = self.lib.albums().get()
-        existing_dir = album.items().get().filepath.parent
+        existing_item = album.items().get()
+        existing_item.write()
+        existing_dir = existing_item.filepath.parent
 
-        import_file = MediaFile(
-            os.path.join(self.importer.paths[0], b"album", b"track_1.mp3")
-        )
-        import_file.artist = album.albumartist
-        import_file.albumartist = album.albumartist
-        import_file.album = album.album
-        import_file.title = "new title"
-        import_file.save()
+        self._prepare_duplicate_import_file(album)
 
         self.importer.paths = [self.importer.paths[0], bytes(existing_dir)]
         self.config["import"]["duplicate_action"] = "merge"
         self.importer.run()
 
+        items = list(self.lib.items())
         assert len(self.lib.albums()) == 1
-        assert len(self.lib.items()) == 2
+        assert len(items) == 2
+        assert [i.path for i in items].count(existing_item.path) == 1
 
     def test_twice_in_import_dir(self):
         pytest.skip(reason="write me")
