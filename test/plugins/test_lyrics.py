@@ -240,7 +240,9 @@ class TestLyricsPlugin(LyricsPluginMixin):
         expected_log_match,
     ):
         """Errors are logged with the backend name."""
-        requests_mock.get(lyrics.LRCLib.SEARCH_URL, **request_kwargs)
+        requests_mock.get(
+            lyrics_plugin.backends[0].search_url, **request_kwargs
+        )
 
         assert lyrics_plugin.get_lyrics("", "", "", 0.0) is None
         assert caplog.messages
@@ -507,6 +509,21 @@ class TestGoogleLyrics(LyricsBackendTest):
     def test_disabled_without_api_key(self, lyrics_plugin):
         assert not lyrics_plugin.backends
 
+    @pytest.mark.parametrize("status_code", [400, 403])
+    def test_search_refused_by_google(
+        self, backend, requests_mock, caplog, status_code
+    ):
+        """Show a clear message when Google refuses the search request.
+
+        See #6761: the Custom Search JSON API is closed to new customers.
+        """
+        requests_mock.get(lyrics.Google.SEARCH_URL, status_code=status_code)
+
+        assert list(backend.search("Artist", "Title")) == []
+        assert "Custom Search JSON API is closed to new customers" in (
+            caplog.text
+        )
+
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
         result = backend.scrape(lyrics_html).lower()
@@ -619,10 +636,26 @@ class TestLRCLibLyrics(LyricsBackendTest):
 
     @pytest.fixture
     def fetch_lyrics(self, backend, requests_mock, response_data):
-        requests_mock.get(backend.GET_URL, status_code=HTTPStatus.NOT_FOUND)
-        requests_mock.get(backend.SEARCH_URL, json=response_data)
+        requests_mock.get(backend.get_url, status_code=HTTPStatus.NOT_FOUND)
+        requests_mock.get(backend.search_url, json=response_data)
 
         return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
+
+    @pytest.mark.parametrize(
+        "plugin_config",
+        [
+            pytest.param(
+                {"lrclib": {"url": "http://localhost:3000/api"}}, id="localhost"
+            ),
+            pytest.param(
+                {"lrclib": {"url": "http://localhost:3000/api/"}},
+                id="with-slash",
+            ),
+        ],
+    )
+    def test_custom_url(self, backend):
+        assert backend.get_url == "http://localhost:3000/api/get"
+        assert backend.search_url == "http://localhost:3000/api/search"
 
     @pytest.mark.parametrize("response_data", [[lyrics_match()]])
     @pytest.mark.parametrize(
@@ -670,6 +703,11 @@ class TestLRCLibLyrics(LyricsBackendTest):
                 ],
                 "[00:01.234] 3-decimal synced lyrics",
                 id="synced with 3-decimal millisecond timestamp",
+            ),
+            pytest.param(
+                [lyrics_match(syncedLyrics=f"{SYNCED}\r\n\r\n")],
+                f"{SYNCED}\n",
+                id="synced with trailing blank line",
             ),
             pytest.param(
                 [lyrics_match(duration=1)], None, id="none: duration too short"

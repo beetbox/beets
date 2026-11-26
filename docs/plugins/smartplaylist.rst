@@ -166,7 +166,9 @@ options are:
   ``false``.
 - **relative_to**: Generate paths in the playlist files relative to a base
   directory. If you intend to use this plugin to generate playlists for MPD,
-  point this to your MPD music directory. Default: Use absolute paths.
+  point this to your MPD music directory. Instead of a fixed path, it can also
+  be set to ``library`` to use the library directory. Default: Use absolute
+  paths.
 - **forward_slash**: Forces forward slashes in the generated playlist files. If
   you intend to use this plugin to generate playlists for MPD on Windows, set
   this to yes. Default: Use system separator.

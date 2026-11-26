@@ -109,6 +109,7 @@ class PathConversionTest(unittest.TestCase):
         assert outpath == "C:\\caf\xe9".encode()
 
 
+@pytest.mark.usefixtures("config")
 class TestSanitizePath:
     """An empty path component is filled in on every platform separator."""
 
