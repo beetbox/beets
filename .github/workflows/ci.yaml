@@ -78,12 +78,17 @@ jobs:
         run: |
           # Chocolatey install scripts download from upstream hosts (xiph,
           # SourceForge, ...) that drop connections now and then, so retry
-          # each package on its own with backoff.
-          function Install-ChocoPackage([string]$Name, [string[]]$ExtraArgs = @()) {
+          # each package on its own with backoff. choco exits 0 even when the
+          # feed is down and nothing gets installed, so success is judged by
+          # whether the package's binary can be found afterwards.
+          Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+          function Install-ChocoPackage([string]$Name, [string]$Binary, [string[]]$ExtraArgs = @()) {
             $maxAttempts = 5
             for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
               choco install $Name -y --no-progress @ExtraArgs
-              if ($LASTEXITCODE -eq 0) {
+              $exitCode = $LASTEXITCODE
+              Update-SessionEnvironment
+              if ($exitCode -eq 0 -and (Get-Command $Binary -ErrorAction SilentlyContinue)) {
                 return
               }
               if ($attempt -eq $maxAttempts) {
@@ -95,11 +100,11 @@ jobs:
             }
           }
 
-          Install-ChocoPackage ffmpeg
-          Install-ChocoPackage flac
-          Install-ChocoPackage imagemagick
+          Install-ChocoPackage ffmpeg ffmpeg
+          Install-ChocoPackage flac metaflac
+          Install-ChocoPackage imagemagick magick
           # mp3gain has no upstream checksums
-          Install-ChocoPackage mp3gain -ExtraArgs '--allow-empty-checksums'
+          Install-ChocoPackage mp3gain mp3gain -ExtraArgs '--allow-empty-checksums'
 
       - name: Install system dependencies on Ubuntu
         if: matrix.platform == 'ubuntu-latest'
