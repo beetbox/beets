@@ -563,6 +563,10 @@ beets-pysacd_
     Imports SACD ISO images: converts each layer to DSF or FLAC with pysacd_, on
     its own medium of the MusicBrainz release.
 
+beets-romanize_
+    Gives your music Latin-script paths and/or tags, while keeping your beets
+    library metadata in its original scripts.
+
 beets-setlister_
     Generate playlists from the setlists of a given artist.
 
@@ -672,6 +676,8 @@ beets-youtube_
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
 
 .. _beets-pysacd: https://github.com/aclater/beets-pysacd
+
+.. _beets-romanize: https://github.com/ctrueden/beets-romanize
 
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 
