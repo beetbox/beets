@@ -54,6 +54,9 @@ New features
   directory, matching the :doc:`plugins/playlist` plugin. :bug:`5348`
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
+- :doc:`plugins/chroma`: Send the user's AcoustID API key (``acoustid.apikey``)
+  with fingerprint lookups, which AcoustID requires from January 1, 2027, and
+  warn once when it is missing. :bug:`7196`
 
 Bug fixes
 ~~~~~~~~~

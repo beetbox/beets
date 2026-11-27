@@ -47,6 +47,15 @@ COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 MAX_RECORDINGS = 5
 MAX_RELEASES = 5
 
+
+def _user_apikey() -> str | None:
+    """Return the user's AcoustID API key from the config, or None."""
+    try:
+        return config["acoustid"]["apikey"].as_str() or None
+    except confuse.ConfigError:
+        return None
+
+
 # Stores the Acoustid match information for each track. This is
 # populated when an import task begins and then used when searching for
 # candidates. It maps audio file paths to (recording_ids, release_ids)
@@ -59,6 +68,9 @@ _matches: dict[bytes, tuple[list[str], list[str]]] = {}
 # autotagging.
 _fingerprints: dict[bytes, str] = {}
 _acoustids: dict[bytes, str] = {}
+
+# Whether we already warned that no user API key is configured.
+_warned_missing_apikey = False
 
 
 def prefix(it: Iterable[Any], count: int) -> Iterator[Any]:
@@ -98,6 +110,14 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     """Gets metadata for a file from Acoustid and populates the
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
+    global _warned_missing_apikey
+    if not _user_apikey() and not _warned_missing_apikey:
+        log.warning(
+            "no AcoustID user API key configured (acoustid.apikey); "
+            "fingerprint lookups will stop working on January 1, 2027. "
+            "Get a key at https://acoustid.org/api-key"
+        )
+        _warned_missing_apikey = True
     try:
         # Prefer fpcalc directly to avoid GStreamer fd leaks (#5171).
         # Fall back to the Chromaprint library for library-only installs.
@@ -118,7 +138,12 @@ def acoustid_match(log: Logger, path: bytes) -> None:
     _fingerprints[path] = fp
     try:
         res = acoustid.lookup(
-            API_KEY, fp, duration, meta="recordings releases", timeout=10
+            API_KEY,
+            fp,
+            duration,
+            meta="recordings releases",
+            timeout=10,
+            userkey=_user_apikey(),
         )
     except acoustid.AcoustidError as exc:
         log.debug(
@@ -287,9 +312,8 @@ class AcoustidPlugin(MetadataSourcePlugin):
         def submit_cmd_func(
             lib: Library, opts: optparse.Values, args: list[str]
         ) -> None:
-            try:
-                apikey = config["acoustid"]["apikey"].as_str()
-            except confuse.NotFoundError:
+            apikey = _user_apikey()
+            if not apikey:
                 raise UserError("no Acoustid user API key provided")
             submit_items(self._log, apikey, lib.items(args, limit=opts.limit))
 

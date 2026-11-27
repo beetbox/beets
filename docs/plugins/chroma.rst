@@ -165,6 +165,10 @@ your library.) Use ``-l``/``--limit`` to cap the matched tracks before
 submitting. The command will use stored fingerprints if they're available;
 otherwise it will fingerprint each file before submitting it.
 
+The same ``apikey`` is also sent with fingerprint lookups during import. From
+January 1, 2027, AcoustID requires it for lookups as well, so set it even if you
+never submit fingerprints. You can `get an API key`_ the same way.
+
 .. _get an api key: https://acoustid.org/api-key
 
 Fingerprint Search
