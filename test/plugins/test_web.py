@@ -697,6 +697,14 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         )
         assert response.status_code == 200
 
+    def test_index_has_color_scheme_toggle(self):
+        response = self.client.get("/")
+        html = response.data.decode("utf-8")
+
+        assert response.status_code == 200
+        assert 'id="themeToggle"' in html
+        assert "beets.theme" in html
+
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):
     """Tests for XSS vulnerability in the web plugin templates.

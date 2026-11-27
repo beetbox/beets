@@ -7,6 +7,15 @@
         <meta name="keywords"
               content="beets, media, music, library, metadata, player, tagger, grep, transcoder, organizer">
         <title>beets</title>
+        <script>
+        (function () {
+            var mode = localStorage.getItem('beets.theme') || 'auto';
+            if (mode === 'dark' || (mode === 'auto' &&
+                    matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.dataset.theme = 'dark';
+            }
+        })();
+        </script>
         <link rel="stylesheet"
               href="{{ url_for('static', filename='beets.css') }}"
               type="text/css">
@@ -27,6 +36,7 @@
                     <span class="currentTime"></span>
                 </span>
             </div>
+            <button id="themeToggle" title="Color scheme: auto">&#127763; Auto</button>
         </div>
         <div id="entities">
             <form id="queryForm">

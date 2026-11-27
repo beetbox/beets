@@ -41,7 +41,9 @@ Usage
 -----
 
 Type queries into the little search box. Double-click a track to play it with
-HTML5 Audio.
+HTML5 Audio. The button in the header cycles the color scheme between auto
+(following the operating system), light and dark, and remembers the choice in
+the browser.
 
 Configuration
 -------------
