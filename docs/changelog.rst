@@ -192,6 +192,9 @@ Bug fixes
 - The initial beets setup no longer writes a database backup for every
   migration. Backups are now skipped when the table being migrated has no rows.
   :bug:`7170`
+- :doc:`plugins/subsonicplaylist`: Use ``warning()`` instead of the deprecated
+  ``warn()`` logger method, and log error messages returned by the Subsonic
+  server verbatim so that braces in them no longer break logging.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
