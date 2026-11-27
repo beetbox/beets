@@ -454,11 +454,17 @@ def _freshen_items(items: Iterable[library.Item]) -> None:
 
 
 def _merge_duplicates(session: ImportSession, task: ImportTask) -> ImportTask:
-    """Create a merged task combining ``task`` with its library duplicates."""
+    # Create a new task for tagging the current items
+    # and duplicates together
     duplicate_items = task.duplicate_items(session.lib)
+
+    # Duplicates would be reimported so make them look "fresh"
     _freshen_items(duplicate_items)
     duplicate_paths = [item.path for item in duplicate_items]
+
+    # Record merged paths in the session so they are not reimported
     session.mark_merged(duplicate_paths)
+
     return ImportTask(
         None, task.paths + duplicate_paths, task.items + duplicate_items
     )
