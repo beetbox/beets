@@ -25,6 +25,7 @@ from .state import ImportState
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping, Sequence
+    from pathlib import Path
 
     from beets.autotag import Recommendation, TrackMatch
 
@@ -158,6 +159,20 @@ def resolve_upgrade_target(
 
     kept, superseded, album_id = best
     return kept, superseded, [album_id] if album_id else []
+
+
+def _delete_library_file(
+    lib: library.Library, path: Path, description: str
+) -> None:
+    """Delete a file inside the library directory and prune any
+    directories left empty by its removal.
+    """
+    if lib.contains(path):
+        log.debug("deleting {} {}", description, path)
+        util.remove(path)
+        util.prune_dirs(
+            path.parent, lib.directory, clutter=config["clutter"].as_str_seq()
+        )
 
 
 class BaseImportTask:
@@ -398,26 +413,13 @@ class ImportTask(BaseImportTask):
         for album in duplicate_albums:
             for item in album.items():
                 item.remove(with_album=False)
-                if lib.contains(item):
-                    log.debug("deleting duplicate {.filepath}", item)
-                    util.remove(item.path)
-                    util.prune_dirs(
-                        os.path.dirname(item.path),
-                        lib.directory,
-                        clutter=config["clutter"].as_str_seq(),
-                    )
+                _delete_library_file(lib, item.filepath, "duplicate")
 
             artpath = album.art_filepath
             album.remove(with_items=False)
 
-            if artpath and lib.contains(artpath):
-                log.debug("deleting duplicate album art {}", artpath)
-                util.remove(artpath)
-                util.prune_dirs(
-                    artpath.parent,
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            if artpath:
+                _delete_library_file(lib, artpath, "duplicate album art")
 
     def _remove_upgrade_duplicates(self, lib: library.Library) -> None:
         """Remove only the old items superseded by an upgrade.
@@ -433,14 +435,7 @@ class ImportTask(BaseImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove(with_album=False)
-            if lib.contains(item):
-                log.debug("deleting superseded {.filepath}", item)
-                util.remove(item.path)
-                util.prune_dirs(
-                    os.path.dirname(item.path),
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            _delete_library_file(lib, item.filepath, "superseded")
 
         grafted = False
         for album_id in self._upgrade_old_albums or []:
@@ -452,14 +447,8 @@ class ImportTask(BaseImportTask):
             if not surviving:
                 artpath = old_album.art_filepath
                 old_album.remove(with_items=False)
-                if artpath and lib.contains(artpath):
-                    log.debug("deleting duplicate album art {}", artpath)
-                    util.remove(artpath)
-                    util.prune_dirs(
-                        artpath.parent,
-                        lib.directory,
-                        clutter=config["clutter"].as_str_seq(),
-                    )
+                if artpath:
+                    _delete_library_file(lib, artpath, "duplicate album art")
             elif not grafted:
                 # Partial overlap: keep the album together by moving the
                 # kept new items onto the surviving old album, rather than
@@ -938,14 +927,7 @@ class SingletonImportTask(ImportTask):
         log.debug("removing {} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
             item.remove()
-            if lib.contains(item):
-                log.debug("deleting duplicate {.filepath}", item)
-                util.remove(item.path)
-                util.prune_dirs(
-                    os.path.dirname(item.path),
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            _delete_library_file(lib, item.filepath, "duplicate")
 
     def _remove_upgrade_duplicates(self, lib: library.Library) -> None:
         """Remove the superseded old item(s).
@@ -958,14 +940,7 @@ class SingletonImportTask(ImportTask):
         log.debug("upgrade: removing {} superseded item(s)", len(superseded))
         for item in superseded:
             item.remove()
-            if lib.contains(item):
-                log.debug("deleting superseded {.filepath}", item)
-                util.remove(item.path)
-                util.prune_dirs(
-                    os.path.dirname(item.path),
-                    lib.directory,
-                    clutter=config["clutter"].as_str_seq(),
-                )
+            _delete_library_file(lib, item.filepath, "superseded")
 
     def add(self, lib: library.Library) -> None:
         with lib.transaction():
