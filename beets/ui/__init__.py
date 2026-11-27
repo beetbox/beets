@@ -1035,7 +1035,7 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
         # so that logging and other subsystems can read basic settings.
         config.read(user=False, defaults=True)
 
-    # Even if the earlier config loading fails we seperatly try to set the
+    # Even if the earlier config loading fails we separately try to set the
     # cli options
     try:
         config.set_args(options)

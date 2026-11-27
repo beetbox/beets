@@ -26,7 +26,7 @@ except ValueError as e:
     # trying to specify the required version. This is problematic in the test
     # suite where test_bpd.py has a call to
     # pytest.importorskip("beetsplug.bpd"). Re-raising as an ImportError
-    # makes it so the test collector functions as inteded.
+    # makes it so the test collector functions as intended.
     raise ImportError from e
 
 from gi.repository import GLib, Gst
