@@ -192,6 +192,9 @@ Bug fixes
 - The initial beets setup no longer writes a database backup for every
   migration. Backups are now skipped when the table being migrated has no rows.
   :bug:`7170`
+- :ref:`import-cmd`: Handle the ``Merge all`` duplicate action when
+  ``import.autotag`` is ``no``, merging new tracks into the existing album
+  instead of creating a duplicate album entry. :bug:`7178`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
