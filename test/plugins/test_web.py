@@ -4,6 +4,7 @@ import contextvars
 import json
 import os
 import platform
+import re
 import shutil
 from collections import Counter
 from pathlib import Path
@@ -696,6 +697,16 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
             self.client.get, f"/album/{album.id}/art"
         )
         assert response.status_code == 200
+
+    def test_index_assets_are_served(self):
+        response = self.client.get("/")
+        html = response.data.decode("utf-8")
+        assets = re.findall(r'(?:src|href)="(/static/[^"]+)"', html)
+
+        assert response.status_code == 200
+        assert assets
+        for asset in assets:
+            assert self.client.get(asset).status_code == 200, asset
 
 
 class TestWebXSS(WebPluginMixin, PytestTestHelper):
