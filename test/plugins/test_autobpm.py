@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 import pytest
 
 from beets.test.helper import ImportHelper, PluginTestHelper
+from beets.ui import UserError
 
 pytestmark = pytest.mark.requires_import("librosa")
 
@@ -11,6 +14,15 @@ class TestAutoBPMPlugin(ImportHelper, PluginTestHelper):
     @pytest.fixture
     def item(self):
         return self.add_item_fixture()
+
+    @pytest.fixture
+    def beat_track_spy(self):
+        import librosa
+
+        with patch(
+            "librosa.beat.beat_track", wraps=librosa.beat.beat_track
+        ) as spy:
+            yield spy
 
     @pytest.fixture
     def importer(self):
@@ -57,13 +69,41 @@ class TestAutoBPMPlugin(ImportHelper, PluginTestHelper):
         item.bpm = 10
         item.store()
 
+        # CLI options are overlaid onto the global config and persist, so run
+        # the default (non-quiet) command first.
+        with caplog.at_level("DEBUG"):
+            self.run_command("autobpm")
+        assert any("already exists" in msg for msg in caplog.messages)
+
+        caplog.clear()
         with caplog.at_level("DEBUG"):
             self.run_command("autobpm", "--quiet")
         assert not any("already exists" in msg for msg in caplog.messages)
 
-        with caplog.at_level("DEBUG"):
-            self.run_command("autobpm")
-        assert any("already exists" in msg for msg in caplog.messages)
+    @pytest.mark.parametrize("flag", ["-b", "--start-bpm"])
+    def test_command_start_bpm_overrides_config(
+        self, item, beat_track_spy, flag
+    ):
+        item.bpm = None
+        item.store()
+
+        self.unload_plugins()
+        self.config[self.plugin]["beat_track_kwargs"] = {
+            "start_bpm": 100,
+            "tightness": 100,
+        }
+        self.load_plugins()
+
+        self.run_command("autobpm", flag, "155")
+
+        kwargs = beat_track_spy.call_args.kwargs
+        assert kwargs["start_bpm"] == 155
+        assert kwargs["tightness"] == 100
+
+    @pytest.mark.parametrize("value", ["0", "-5"])
+    def test_command_start_bpm_must_be_positive(self, item, value):
+        with pytest.raises(UserError, match="must be a positive integer"):
+            self.run_command("autobpm", "--start-bpm", value)
 
     def test_import(self, importer):
         importer.run()

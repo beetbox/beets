@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Protocol
 import librosa
 import numpy as np
 
+from beets import util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, should_write
 from beets.util.deprecation import deprecate_for_user
@@ -19,9 +20,11 @@ if TYPE_CHECKING:
 
 
 class AutoBPMCLIOpts(Protocol):
-    force: bool
+    force: bool | None
     limit: int | None
-    quiet: bool
+    quiet: bool | None
+    # --start-bpm is not listed: its dotted dest ("beat_track_kwargs.start_bpm")
+    # is not a valid attribute name and is only read via config.set_args().
 
 
 class AutoBPMPlugin(BeetsPlugin):
@@ -56,7 +59,7 @@ class AutoBPMPlugin(BeetsPlugin):
             "--force",
             dest="force",
             action="store_true",
-            default=False,
+            default=None,
             help="Overwrite existing BPM values",
         )
         cmd.parser.add_option(
@@ -64,8 +67,20 @@ class AutoBPMPlugin(BeetsPlugin):
             "--quiet",
             dest="quiet",
             action="store_true",
-            default=False,
+            default=None,
             help="Suppress message when item already has BPM",
+        )
+        cmd.parser.add_option(
+            "-b",
+            "--start-bpm",
+            dest="beat_track_kwargs.start_bpm",
+            type="int",
+            action="callback",
+            callback=util.parse_positive_int,
+            help=(
+                "Initial BPM guess for beat tracking "
+                "(overrides beat_track_kwargs.start_bpm)"
+            ),
         )
         cmd.parser.add_limit_option()
         cmd.func = self.command
@@ -74,29 +89,18 @@ class AutoBPMPlugin(BeetsPlugin):
     def command(
         self, lib: Library, opts: AutoBPMCLIOpts, args: list[str]
     ) -> None:
-        force = self.config["force"].get(bool) or opts.force
-        quiet = self.config["quiet"].get(bool) or opts.quiet
+        self.config.set_args(vars(opts), dots=True)
         self.calculate_bpm(
-            list(lib.items(args, limit=opts.limit)),
-            write=should_write(),
-            force=force,
-            quiet=quiet,
+            list(lib.items(args, limit=opts.limit)), write=should_write()
         )
 
     def imported(self, _, task: ImportTask) -> None:
-        self.calculate_bpm(
-            task.imported_items(),
-            force=self.config["force"].get(bool),
-            quiet=self.config["quiet"].get(bool),
-        )
+        self.calculate_bpm(task.imported_items())
 
-    def calculate_bpm(
-        self,
-        items: Iterable[Item],
-        write: bool = False,
-        force: bool = False,
-        quiet: bool = False,
-    ) -> None:
+    def calculate_bpm(self, items: Iterable[Item], write: bool = False) -> None:
+        force = self.config["force"].get(bool)
+        quiet = self.config["quiet"].get(bool)
+        kwargs = self.config["beat_track_kwargs"].flatten()
         for item in items:
             path = item.filepath
             if bpm := item.bpm:
@@ -110,7 +114,7 @@ class AutoBPMPlugin(BeetsPlugin):
                 self._log.error("Failed to load {}: {}", path, exc)
                 continue
 
-            kwargs = self.config["beat_track_kwargs"].flatten()
+            self._log.debug("beat_track kwargs for {}: {}", path, kwargs)
             try:
                 tempo, _ = librosa.beat.beat_track(y=y, sr=sr, **kwargs)
             except Exception as exc:

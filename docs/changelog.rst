@@ -54,6 +54,8 @@ New features
   directory, matching the :doc:`plugins/playlist` plugin. :bug:`5348`
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
+- :doc:`plugins/autobpm`: Add ``-b``/``--start-bpm`` option to override
+  ``beat_track_kwargs.start_bpm`` from the command line.
 
 Bug fixes
 ~~~~~~~~~
@@ -189,6 +191,9 @@ Bug fixes
 - :doc:`plugins/zero`: Preserve paired and aliased fields (such as ``genre`` and
   ``genres``, ``artist`` and ``artists``) when using ``keep_fields``.
   :bug:`7069`
+- The initial beets setup no longer writes a database backup for every
+  migration. Backups are now skipped when the table being migrated has no rows.
+  :bug:`7170`
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~

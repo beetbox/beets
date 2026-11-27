@@ -22,7 +22,7 @@ from beets import config, library, logging, plugins, util
 from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.exceptions import UserError
-from beets.util import as_string
+from beets.util import as_string, parse_positive_int
 from beets.util.color import colorize
 from beets.util.deprecation import deprecate_for_maintainers
 from beets.util.diff import get_model_changes
@@ -612,21 +612,6 @@ class CommonOptionsParser(optparse.OptionParser):
         )
         self.add_option(opt)
 
-    def _set_limit(
-        self,
-        option: optparse.Option,
-        opt_str: str,
-        value: int,
-        parser: optparse.OptionParser,
-    ) -> None:
-        """Validate and store a maximum query result count."""
-        if value < 0:
-            raise UserError(
-                f"{opt_str} argument must be a non-negative integer"
-            )
-        assert option.dest is not None
-        setattr(parser.values, option.dest, value)
-
     def add_limit_option(
         self, flags: Sequence[str] = ("-l", "--limit")
     ) -> None:
@@ -635,7 +620,7 @@ class CommonOptionsParser(optparse.OptionParser):
             *flags,
             type="int",
             action="callback",
-            callback=self._set_limit,
+            callback=parse_positive_int,
             help="limit query results",
         )
 
@@ -1035,7 +1020,7 @@ def _bootstrap_config(options: optparse.Values) -> confuse.ConfigError | None:
         # so that logging and other subsystems can read basic settings.
         config.read(user=False, defaults=True)
 
-    # Even if the earlier config loading fails we seperatly try to set the
+    # Even if the earlier config loading fails we separately try to set the
     # cli options
     try:
         config.set_args(options)

@@ -18,7 +18,7 @@ file (config.yaml_):
         - listenbrainz
 
 You can then configure the plugin by providing your Listenbrainz token (see
-intructions here_) and username:
+instructions here_) and username:
 
 ::
 

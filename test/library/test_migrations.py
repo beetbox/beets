@@ -347,6 +347,19 @@ class TestMigrationBackup(MigrationTestHelper):
         ]
         assert len(backups) == expected_count
 
+    def test_no_backup_for_empty_table(self):
+        self.config["create_backup_before_migrations"] = True
+        db_path = self.lib.path
+
+        self.lib._migrate()
+
+        backups = [
+            f
+            for f in db_path.parent.iterdir()
+            if os.fsdecode(f).endswith(".bak")
+        ]
+        assert not backups
+
 
 class TestInstrumentalLyricsInFlexFieldMigration(MigrationTestHelper):
     """Verify legacy instrumental markers move out of canonical lyrics."""
