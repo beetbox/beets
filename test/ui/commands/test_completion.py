@@ -4,9 +4,10 @@ import subprocess
 
 import pytest
 
+from beets import ui
 from beets.test import _common
 from beets.test.helper import RUNNING_IN_CI, IOMixin
-from beets.ui.commands.completion import BASH_COMPLETION_PATH
+from beets.ui.commands.completion import BASH_COMPLETION_PATH, completion_script
 
 from ..test_ui import TestPluginTestCase
 
@@ -54,3 +55,18 @@ class CompletionTest(IOMixin, TestPluginTestCase):
             "test/test_completion.sh did not execute properly. "
             f"Output:{tester.stdout.decode('utf-8')}"
         )
+
+
+def test_completion_script_hyphenated_command_name():
+    """Regression test for #2836.
+
+    Hyphens are not valid in bash variable names, so a command such as
+    ``foo-bar`` must produce ``opts__foo_bar`` in the generated script.
+    """
+    cmd = ui.Subcommand("foo-bar", help="dummy command")
+    cmd.parser.add_option("--some-opt", help="an option")
+
+    script = "".join(completion_script([cmd]))
+
+    assert "local opts__foo_bar=" in script
+    assert "opts__foo-bar" not in script
