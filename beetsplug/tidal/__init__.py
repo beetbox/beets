@@ -642,7 +642,7 @@ class TidalPlugin(MetadataSourcePlugin):
 
         # It would be nice to combine both auth and sync commands but
         # currently not really supported in beets. We might be able to
-        # revist this if our subcommand parsing changes
+        # revisit this if our subcommand parsing changes
         sync_help = (
             "Synchronize Tidal popularity data for library items and albums"
         )

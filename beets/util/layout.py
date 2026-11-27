@@ -82,7 +82,7 @@ def split_into_lines(string: str, first_width: int, width: int) -> list[str]:
         for m in ESC_TEXT_REGEX.finditer(string):
             # m contains four groups:
             # pretext - any text before escape sequence
-            # esc - intitial escape sequence
+            # esc - initial escape sequence
             # text - text, no escape sequence, may contain spaces
             # reset - ASCII colour reset
             space_before_text = False
