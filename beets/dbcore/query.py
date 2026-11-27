@@ -663,19 +663,6 @@ class FalseQuery(Query):
 # Time/date queries.
 
 
-def _parse_periods(pattern: str) -> tuple[Period | None, Period | None]:
-    """Parse a string containing two dates separated by two dots (..).
-    Return a pair of `Period` objects.
-    """
-    parts = pattern.split("..", 1)
-    if len(parts) == 1:
-        instant = Period.parse(parts[0])
-        return (instant, instant)
-    start = Period.parse(parts[0])
-    end = Period.parse(parts[1])
-    return (start, end)
-
-
 class Period:
     """A period of time given by a date, time and precision.
 
@@ -829,6 +816,17 @@ class DateInterval:
         start_date = start.date if start is not None else None
         return cls(start_date, end_date)
 
+    @classmethod
+    def parse(cls, pattern: str) -> DateInterval:
+        """Create an interval from a date, or from two dates separated by
+        two dots (..), either of which may be omitted.
+        """
+        parts = pattern.split("..", 1)
+        if len(parts) == 1:
+            instant = Period.parse(parts[0])
+            return cls.from_periods(instant, instant)
+        return cls.from_periods(Period.parse(parts[0]), Period.parse(parts[1]))
+
     def contains(self, date: datetime) -> bool:
         if self.start is not None and date < self.start:
             return False
@@ -852,8 +850,7 @@ class DateQuery(FieldQuery[str]):
         self, field_name: str, pattern: str, fast: bool = True
     ) -> None:
         super().__init__(field_name, pattern, fast)
-        start, end = _parse_periods(pattern)
-        self.interval = DateInterval.from_periods(start, end)
+        self.interval = DateInterval.parse(pattern)
 
     def match(self, obj: Model) -> bool:
         if self.field_name not in obj:
