@@ -54,6 +54,8 @@ New features
   directory, matching the :doc:`plugins/playlist` plugin. :bug:`5348`
 - :doc:`plugins/lyrics`: Add support for a custom ``lrclib`` backend URL. You
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
+- :doc:`plugins/autobpm`: Add ``-b``/``--start-bpm`` option to override
+  ``beat_track_kwargs.start_bpm`` from the command line.
 
 Bug fixes
 ~~~~~~~~~
