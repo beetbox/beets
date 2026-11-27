@@ -194,6 +194,9 @@ Bug fixes
 - The initial beets setup no longer writes a database backup for every
   migration. Backups are now skipped when the table being migrated has no rows.
   :bug:`7170`
+- :doc:`plugins/playlist`: Match playlist entries that point inside the active
+  library directory when paths are stored library-relative. :bug:`6784`
+- :doc:`plugins/playlist`: Ignore blank lines in M3U playlists.
 
 For plugin developers
 ~~~~~~~~~~~~~~~~~~~~~
