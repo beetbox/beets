@@ -197,6 +197,142 @@ class BaseImportTask:
         self.items = list(items) if items is not None else []
 
 
+class ReplacedEntries:
+    """The library items and albums that an import replaces because
+    their files are being imported again (a reimport).
+    """
+
+    def __init__(
+        self,
+        items: dict[library.Item, list[library.Item]],
+        albums: dict[util.PathBytes, library.Album],
+    ) -> None:
+        # Maps each imported item to the existing items at the same path.
+        self.items = items
+        # Maps album paths to the existing albums those items belonged to.
+        self.albums = albums
+
+    @classmethod
+    def find(
+        cls, lib: library.Library, imported_items: Iterable[library.Item]
+    ) -> ReplacedEntries:
+        """Look up the existing items and albums in `lib` that share a
+        path with one of `imported_items`.
+        """
+        items: dict[library.Item, list[library.Item]] = defaultdict(list)
+        albums: dict[util.PathBytes, library.Album] = {}
+        replaced_album_ids = set()
+        for item in imported_items:
+            dup_items = list(lib.items(query=PathQuery("path", item.path)))
+            items[item] = dup_items
+            for dup_item in dup_items:
+                if (
+                    not dup_item.album_id
+                    or dup_item.album_id in replaced_album_ids
+                ):
+                    continue
+                replaced_album = dup_item._cached_album
+                if replaced_album:
+                    replaced_album_ids.add(dup_item.album_id)
+                    albums[replaced_album.path] = replaced_album
+        return cls(items, albums)
+
+    def remove(self, imported_items: list[library.Item]) -> None:
+        """Remove the replaced items from the library."""
+        for item in imported_items:
+            for dup_item in self.items[item]:
+                log.debug("Replacing item {.id}: {.filepath}", dup_item, item)
+                dup_item.remove()
+        log.debug(
+            "{} of {} items replaced",
+            sum(bool(v) for v in self.items.values()),
+            len(imported_items),
+        )
+
+    def preserve_metadata(
+        self, album: library.Album | None, imported_items: list[library.Item]
+    ) -> None:
+        """Carry metadata of the replaced entries over to the newly
+        imported `album` (if any) and `imported_items`.
+        """
+        if album is not None:
+            replaced_album = self.albums.get(album.path)
+            if replaced_album:
+                album_fields = self._reduce_and_log(
+                    album,
+                    replaced_album._values_flex,
+                    REIMPORT_FRESH_FIELDS_ALBUM,
+                )
+                album.added = replaced_album.added
+                album.update(album_fields)
+                album.artpath = replaced_album.artpath
+                album.store()
+                log.debug(
+                    "Reimported album {0.id}. Preserving attribute ['added']. "
+                    "Path: {0.filepath}",
+                    album,
+                )
+                log.debug(
+                    "Reimported album {0.id}. Preserving flexible"
+                    " attributes {1}. Path: {0.filepath}",
+                    album,
+                    list(album_fields.keys()),
+                )
+
+        for item in imported_items:
+            for dup_item in self.items[item]:
+                if dup_item.added and dup_item.added != item.added:
+                    item.added = dup_item.added
+                    log.debug(
+                        "Reimported item {0.id}. Preserving attribute ['added']. "
+                        "Path: {0.filepath}",
+                        item,
+                    )
+                item_fields = self._reduce_and_log(
+                    item, dup_item._values_flex, REIMPORT_FRESH_FIELDS_ITEM
+                )
+                item.update(item_fields)
+                log.debug(
+                    "Reimported item {0.id}. Preserving flexible attributes {1}. "
+                    "Path: {0.filepath}",
+                    item,
+                    list(item_fields.keys()),
+                )
+                item.store()
+
+    @staticmethod
+    def _reduce_and_log(
+        new_obj: library.LibModel,
+        existing_fields: Mapping[str, Any],
+        overwrite_keys: list[str],
+    ) -> Mapping[str, Any]:
+        """Some flexible attributes should be overwritten (rather than
+        preserved) on reimports; Copies existing_fields, logs and removes
+        entries that should not be preserved and returns a dict containing
+        those fields left to actually be preserved.
+        """
+        noun = "album" if isinstance(new_obj, library.Album) else "item"
+        existing_fields = dict(existing_fields)
+        overwritten_fields = [
+            k
+            for k in existing_fields
+            if k in overwrite_keys
+            and new_obj.get(k)
+            and existing_fields.get(k) != new_obj.get(k)
+        ]
+        if overwritten_fields:
+            log.debug(
+                "Reimported {0} {1.id}. Not preserving flexible attributes {2}. "
+                "Path: {1.filepath}",
+                noun,
+                new_obj,
+                overwritten_fields,
+            )
+            for key in overwritten_fields:
+                del existing_fields[key]
+        return existing_fields
+
+
 class ImportTask(BaseImportTask):
     """Represents a single set of items to be imported along with its
     intermediate state. May represent an album or a single item.
@@ -242,6 +378,9 @@ class ImportTask(BaseImportTask):
 
     # Set by `add()`; only valid afterwards (see class docstring).
     album: library.Album
+
+    # Set by `record_replaced()`, which `add()` calls.
+    replaced: ReplacedEntries
 
     # Keep track of the current task item
     candidates: Sequence[AlbumMatch | TrackMatch] | None = None
@@ -716,123 +855,29 @@ class ImportTask(BaseImportTask):
             self.reimport_metadata(lib)
 
     def record_replaced(self, lib: library.Library) -> None:
-        """Records the replaced items and albums in the `replaced_items`
-        and `replaced_albums` dictionaries.
-        """
-        self.replaced_items = defaultdict(list)
-        self.replaced_albums: dict[util.PathBytes, library.Album] = (
-            defaultdict()
-        )
-        replaced_album_ids = set()
-        for item in self.imported_items():
-            dup_items = list(lib.items(query=PathQuery("path", item.path)))
-            self.replaced_items[item] = dup_items
-            for dup_item in dup_items:
-                if (
-                    not dup_item.album_id
-                    or dup_item.album_id in replaced_album_ids
-                ):
-                    continue
-                replaced_album = dup_item._cached_album
-                if replaced_album:
-                    replaced_album_ids.add(dup_item.album_id)
-                    self.replaced_albums[replaced_album.path] = replaced_album
+        """Record the library entries that this task's items replace."""
+        self.replaced = ReplacedEntries.find(lib, self.imported_items())
+
+    @property
+    def replaced_items(self) -> dict[library.Item, list[library.Item]]:
+        return self.replaced.items
+
+    @property
+    def replaced_albums(self) -> dict[util.PathBytes, library.Album]:
+        return self.replaced.albums
 
     def reimport_metadata(self, lib: library.Library) -> None:
         """For reimports, preserves metadata for reimported items and
         albums.
         """
-
-        def _reduce_and_log(
-            new_obj: library.LibModel,
-            existing_fields: Mapping[str, Any],
-            overwrite_keys: list[str],
-        ) -> Mapping[str, Any]:
-            """Some flexible attributes should be overwritten (rather than
-            preserved) on reimports; Copies existing_fields, logs and removes
-            entries that should not be preserved and returns a dict containing
-            those fields left to actually be preserved.
-            """
-            noun = "album" if isinstance(new_obj, library.Album) else "item"
-            existing_fields = dict(existing_fields)
-            overwritten_fields = [
-                k
-                for k in existing_fields
-                if k in overwrite_keys
-                and new_obj.get(k)
-                and existing_fields.get(k) != new_obj.get(k)
-            ]
-            if overwritten_fields:
-                log.debug(
-                    "Reimported {0} {1.id}. Not preserving flexible attributes {2}. "
-                    "Path: {1.filepath}",
-                    noun,
-                    new_obj,
-                    overwritten_fields,
-                )
-                for key in overwritten_fields:
-                    del existing_fields[key]
-            return existing_fields
-
-        if self.is_album:
-            replaced_album = self.replaced_albums.get(self.album.path)
-            if replaced_album:
-                album_fields = _reduce_and_log(
-                    self.album,
-                    replaced_album._values_flex,
-                    REIMPORT_FRESH_FIELDS_ALBUM,
-                )
-                self.album.added = replaced_album.added
-                self.album.update(album_fields)
-                self.album.artpath = replaced_album.artpath
-                self.album.store()
-                log.debug(
-                    "Reimported album {0.album.id}. Preserving attribute ['added']. "
-                    "Path: {0.album.filepath}",
-                    self,
-                )
-                log.debug(
-                    "Reimported album {0.album.id}. Preserving flexible"
-                    " attributes {1}. Path: {0.album.filepath}",
-                    self,
-                    list(album_fields.keys()),
-                )
-
-        for item in self.imported_items():
-            dup_items = self.replaced_items[item]
-            for dup_item in dup_items:
-                if dup_item.added and dup_item.added != item.added:
-                    item.added = dup_item.added
-                    log.debug(
-                        "Reimported item {0.id}. Preserving attribute ['added']. "
-                        "Path: {0.filepath}",
-                        item,
-                    )
-                item_fields = _reduce_and_log(
-                    item, dup_item._values_flex, REIMPORT_FRESH_FIELDS_ITEM
-                )
-                item.update(item_fields)
-                log.debug(
-                    "Reimported item {0.id}. Preserving flexible attributes {1}. "
-                    "Path: {0.filepath}",
-                    item,
-                    list(item_fields.keys()),
-                )
-                item.store()
+        album = self.album if self.is_album else None
+        self.replaced.preserve_metadata(album, self.imported_items())
 
     def remove_replaced(self, lib: library.Library) -> None:
         """Removes all the items from the library that have the same
         path as an item from this task.
         """
-        for item in self.imported_items():
-            for dup_item in self.replaced_items[item]:
-                log.debug("Replacing item {.id}: {.filepath}", dup_item, item)
-                dup_item.remove()
-        log.debug(
-            "{} of {} items replaced",
-            sum(bool(v) for v in self.replaced_items.values()),
-            len(self.imported_items()),
-        )
+        self.replaced.remove(self.imported_items())
 
     def choose_match(self, session: ImportSession) -> None:
         """Ask the session which match should apply and apply it."""
