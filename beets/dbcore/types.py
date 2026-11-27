@@ -370,6 +370,9 @@ class BasePathType(Type[bytes, N]):
     query = query.PathQuery
     model_type = bytes
 
+    def format(self, value: bytes | N) -> str:
+        return util.displayable_path(cast(bytes, value or b""))
+
     def parse(self, string: str) -> bytes:
         return util.normpath(string)
 
@@ -401,17 +404,11 @@ class NullPathType(BasePathType[None]):
     def null(self) -> None:
         return None
 
-    def format(self, value: bytes | None) -> str:
-        return util.displayable_path(value or b"")
-
 
 class PathType(BasePathType[bytes]):
     @property
     def null(self) -> bytes:
         return b""
-
-    def format(self, value: bytes) -> str:
-        return util.displayable_path(value or b"")
 
 
 class MusicalKey(String):
