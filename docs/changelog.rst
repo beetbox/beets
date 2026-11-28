@@ -56,6 +56,9 @@ New features
   can now use the ``lrclib.url`` option in the configuration file. :bug:`7118`
 - :doc:`plugins/autobpm`: Add ``-b``/``--start-bpm`` option to override
   ``beat_track_kwargs.start_bpm`` from the command line.
+- :doc:`plugins/web`: The ``/album/<id>/art`` endpoint now falls back to
+  extracting art embedded in the album's media files when the album has no
+  ``artpath``.
 
 Bug fixes
 ~~~~~~~~~
@@ -137,6 +140,8 @@ Bug fixes
   without starting any analysis. :bug:`5449`
 - :doc:`plugins/web`: Fix relative library paths not resolving across request
   threads in web plugin endpoints.
+- :doc:`plugins/web`: Fix album responses crashing for albums without cover art
+  when ``include_paths`` is enabled. ``artpath`` is now ``null`` for them.
 - :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
   ``separators`` is combined with a ``replace`` rule that changes the length of
   the text. :bug:`6300`

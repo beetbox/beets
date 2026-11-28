@@ -277,7 +277,9 @@ For albums, the following endpoints are provided:
 The interface and response format is similar to the item API, except replacing
 the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/album/``
 or ``/album/5,7``. In addition we can request the cover art of an album with
-``GET /album/5/art``. You can also add the '?expand' flag to get the individual
+``GET /album/5/art``. If the album has no cover art file, the art embedded in
+one of its tracks is returned instead; if neither is available, a *404* status
+code is returned. You can also add the '?expand' flag to get the individual
 items of an album.
 
 ``DELETE`` is only allowed if ``readonly`` configuration option is set to

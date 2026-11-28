@@ -4,19 +4,22 @@ from __future__ import annotations
 
 import base64
 import contextlib
+import io
 import json
 import os
 from typing import TYPE_CHECKING, Any, Protocol
 
 import flask
+import mediafile
 from flask import jsonify
 from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
-from beets import context, ui, util
+from beets import context, logging, ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
+from beetsplug._utils import art
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
@@ -32,6 +35,9 @@ if TYPE_CHECKING:
     g = LibraryCtx()
 else:
     from flask import g
+
+# Note: This is the same logger as WebPlugin._log, for use outside the plugin.
+log = logging.getLogger("beets.web")
 
 
 class WebCLIOpts(Protocol):
@@ -72,7 +78,8 @@ def _rep(obj: LibModel, expand: bool = False) -> JSONDict | None:
 
     if isinstance(obj, beets.library.Album):
         if app.config.get("INCLUDE_PATHS", False):
-            out["artpath"] = util.displayable_path(out["artpath"])
+            if out["artpath"] is not None:
+                out["artpath"] = util.displayable_path(out["artpath"])
         else:
             del out["artpath"]
         if expand:
@@ -391,8 +398,21 @@ def album_query(queries: Sequence[str]) -> Any:
 @app.route("/album/<int:album_id>/art")
 def album_art(album_id: int) -> Any:
     album = g.lib.get_album(album_id)
-    if album and album.artpath:
+    if not album:
+        return flask.abort(404)
+
+    if album.artpath and os.path.isfile(util.syspath(album.artpath)):
         return flask.send_file(album.artpath.decode())
+
+    # Fallback: extract embedded art from the album's items.
+    for item in album.items():
+        if data := art.get_art(log, item):
+            return flask.send_file(
+                io.BytesIO(data),
+                mimetype=mediafile.image_mime_type(data)
+                or "application/octet-stream",
+            )
+
     return flask.abort(404)
 
 
