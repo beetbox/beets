@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 
+import confuse
 import librosa
 import numpy as np
+import scipy.stats
 
-from beets import util
+from beets import ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, should_write
 from beets.util.deprecation import deprecate_for_user
@@ -18,6 +20,39 @@ if TYPE_CHECKING:
     from beets.importer import ImportTask
     from beets.library import Item, Library
 
+# Bounds used when only one of min_bpm/max_bpm is given.
+DEFAULT_MIN_BPM = 40
+DEFAULT_MAX_BPM = 320
+
+# The tempos librosa can pick from depend on the sample rate, the hop length
+# and the autocorrelation window. These mirror librosa defaults, see
+# https://librosa.org/doc/latest/api/generated/librosa.load.html (sr) and
+# https://librosa.org/doc/latest/api/generated/librosa.feature.tempo.html
+# (hop_length, ac_size, max_tempo). beat_track exposes only the hop length.
+# Audio is loaded at SAMPLE_RATE explicitly.
+SAMPLE_RATE = 22050
+DEFAULT_HOP_LENGTH = 512
+AUTOCORRELATION_SECONDS = 8.0
+# librosa ignores tempo candidates at or above this value.
+LIBROSA_MAX_TEMPO = 320
+
+
+def has_tempo_candidates(low: int, high: int, hop_length: int) -> bool:
+    """Whether librosa has a tempo bin inside the closed range [low, high].
+
+    librosa only scores discrete tempos derived from autocorrelation lags, so
+    a narrow range can contain none. All scores would then be -inf and the
+    estimate would be infinite.
+    """
+    window = librosa.time_to_frames(
+        AUTOCORRELATION_SECONDS, sr=SAMPLE_RATE, hop_length=hop_length
+    ).item()
+    tempos = librosa.tempo_frequencies(
+        window, sr=SAMPLE_RATE, hop_length=hop_length
+    )
+    usable = (tempos >= low) & (tempos <= high) & (tempos < LIBROSA_MAX_TEMPO)
+    return bool(usable.any())
+
 
 class AutoBPMCLIOpts(Protocol):
     force: bool | None
@@ -25,6 +60,19 @@ class AutoBPMCLIOpts(Protocol):
     quiet: bool | None
     # --start-bpm is not listed: its dotted dest ("beat_track_kwargs.start_bpm")
     # is not a valid attribute name and is only read via config.set_args().
+    min_bpm: int | None
+    max_bpm: int | None
+
+
+class BeatTrackKwargs(TypedDict, total=False):
+    """Keyword arguments forwarded to `librosa.beat.beat_track`."""
+
+    start_bpm: float
+    hop_length: int
+    tightness: float
+    trim: bool
+    bpm: float
+    prior: scipy.stats.rv_continuous
 
 
 class AutoBPMPlugin(BeetsPlugin):
@@ -35,6 +83,8 @@ class AutoBPMPlugin(BeetsPlugin):
                 "auto": True,
                 "force": False,
                 "quiet": False,
+                "min_bpm": None,
+                "max_bpm": None,
                 "beat_track_kwargs": {},
             }
         )
@@ -82,9 +132,66 @@ class AutoBPMPlugin(BeetsPlugin):
                 "(overrides beat_track_kwargs.start_bpm)"
             ),
         )
+        cmd.parser.add_option(
+            "-m",
+            "--min-bpm",
+            dest="min_bpm",
+            type="int",
+            default=None,
+            help="Lowest BPM to consider (overrides min_bpm)",
+        )
+        cmd.parser.add_option(
+            "-M",
+            "--max-bpm",
+            dest="max_bpm",
+            type="int",
+            default=None,
+            help="Highest BPM to consider (overrides max_bpm)",
+        )
         cmd.parser.add_limit_option()
         cmd.func = self.command
         return [cmd]
+
+    def beat_track_kwargs(
+        self,
+        start_bpm: int | None = None,
+        min_bpm: int | None = None,
+        max_bpm: int | None = None,
+    ) -> BeatTrackKwargs:
+        """Combine the configured beat_track kwargs with CLI overrides.
+
+        A min/max range becomes a uniform tempo prior, which librosa uses
+        instead of the start_bpm based one.
+        """
+        kwargs = cast(
+            BeatTrackKwargs, self.config["beat_track_kwargs"].flatten()
+        )
+        if start_bpm is not None:
+            kwargs["start_bpm"] = start_bpm
+
+        if min_bpm is None:
+            min_bpm = self.config["min_bpm"].get(confuse.Optional(int))
+        if max_bpm is None:
+            max_bpm = self.config["max_bpm"].get(confuse.Optional(int))
+
+        self._log.debug("beat_track kwargs: {}", dict(kwargs))
+        if min_bpm is not None or max_bpm is not None:
+            low = DEFAULT_MIN_BPM if min_bpm is None else min_bpm
+            high = DEFAULT_MAX_BPM if max_bpm is None else max_bpm
+            if low >= high:
+                raise ui.UserError(
+                    f"autobpm: min_bpm ({low}) must be lower than "
+                    f"max_bpm ({high})"
+                )
+            hop_length = kwargs.get("hop_length", DEFAULT_HOP_LENGTH)
+            if not has_tempo_candidates(low, high, hop_length):
+                raise ui.UserError(
+                    f"autobpm: no tempo can be detected between min_bpm "
+                    f"({low}) and max_bpm ({high}), widen the range"
+                )
+            self._log.debug("restricting BPM to {}-{}", low, high)
+            kwargs["prior"] = scipy.stats.uniform(loc=low, scale=high - low)
+        return kwargs
 
     def command(
         self, lib: Library, opts: AutoBPMCLIOpts, args: list[str]
@@ -100,7 +207,12 @@ class AutoBPMPlugin(BeetsPlugin):
     def calculate_bpm(self, items: Iterable[Item], write: bool = False) -> None:
         force = self.config["force"].get(bool)
         quiet = self.config["quiet"].get(bool)
-        kwargs = self.config["beat_track_kwargs"].flatten()
+        kwargs = self.beat_track_kwargs(
+            start_bpm=self.config["start_bpm"].get(confuse.Optional(int)),
+            min_bpm=self.config["min_bpm"].get(confuse.Optional(int)),
+            max_bpm=self.config["max_bpm"].get(confuse.Optional(int)),
+        )
+
         for item in items:
             path = item.filepath
             if bpm := item.bpm:
@@ -109,7 +221,9 @@ class AutoBPMPlugin(BeetsPlugin):
                 if not force:
                     continue
             try:
-                y, sr = librosa.load(item.filepath, res_type="kaiser_fast")
+                y, sr = librosa.load(
+                    item.filepath, sr=SAMPLE_RATE, res_type="kaiser_fast"
+                )
             except Exception as exc:
                 self._log.error("Failed to load {}: {}", path, exc)
                 continue
@@ -121,9 +235,14 @@ class AutoBPMPlugin(BeetsPlugin):
                 self._log.error("Failed to measure BPM for {}: {}", path, exc)
                 continue
 
-            bpm = round(
-                float(tempo[0] if isinstance(tempo, np.ndarray) else tempo)
-            )
+            tempo = float(tempo[0] if isinstance(tempo, np.ndarray) else tempo)
+            if not np.isfinite(tempo):
+                self._log.error(
+                    "Failed to measure BPM for {}: got {}", path, tempo
+                )
+                continue
+
+            bpm = round(tempo)
 
             item["bpm"] = bpm
             self._log.info("Computed BPM for {}: {}", path, bpm)
