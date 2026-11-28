@@ -140,6 +140,8 @@ Bug fixes
   without starting any analysis. :bug:`5449`
 - :doc:`plugins/web`: Fix relative library paths not resolving across request
   threads in web plugin endpoints.
+- :doc:`plugins/web`: Fix album responses crashing for albums without cover art
+  when ``include_paths`` is enabled. ``artpath`` is now ``null`` for them.
 - :doc:`plugins/titlecase`: Fix characters being dropped or duplicated when
   ``separators`` is combined with a ``replace`` rule that changes the length of
   the text. :bug:`6300`
