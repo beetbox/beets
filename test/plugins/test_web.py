@@ -680,7 +680,7 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
         assert response.mimetype == mime_type
         assert response.data == expected
 
-    def test_get_album_art_embedded_skips_unusable_tracks(self):
+    def test_get_album_art_embedded_skips_unusable_tracks(self, caplog):
         no_art = Item.from_path(self.create_mediafile_fixture())
         unreadable = Item.from_path(self.create_mediafile_fixture())
         with_art = Item.from_path(self.create_mediafile_fixture(images=["png"]))
@@ -694,6 +694,10 @@ class TestWebPlugin(WebPluginMixin, PytestTestHelper):
 
         assert response.status_code == 200
         assert response.data == expected
+        assert any(
+            "Could not extract art from" in msg and "missing.mp3" in msg
+            for msg in caplog.messages
+        )
 
     def test_get_album_art_embedded_stale_artpath(self):
         path = self.create_mediafile_fixture(images=["png"])

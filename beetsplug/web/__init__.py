@@ -16,9 +16,10 @@ from unidecode import unidecode
 from werkzeug.routing import BaseConverter, PathConverter
 
 import beets.library
-from beets import context, ui, util
+from beets import context, logging, ui, util
 from beets.dbcore.query import PathQuery
 from beets.plugins import BeetsPlugin
+from beetsplug._utils import art
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Iterator, Sequence
@@ -34,6 +35,9 @@ if TYPE_CHECKING:
     g = LibraryCtx()
 else:
     from flask import g
+
+# Note: This is the same logger as WebPlugin._log, for use outside the plugin.
+log = logging.getLogger("beets.web")
 
 
 class WebCLIOpts(Protocol):
@@ -401,14 +405,10 @@ def album_art(album_id: int) -> Any:
 
     # Fallback: extract embedded art from the album's items.
     for item in album.items():
-        try:
-            mf = mediafile.MediaFile(util.syspath(item.path))
-        except mediafile.UnreadableFileError:
-            continue
-        if art := mf.art:
+        if data := art.get_art(log, item):
             return flask.send_file(
-                io.BytesIO(art),
-                mimetype=mediafile.image_mime_type(art)
+                io.BytesIO(data),
+                mimetype=mediafile.image_mime_type(data)
                 or "application/octet-stream",
             )
 
